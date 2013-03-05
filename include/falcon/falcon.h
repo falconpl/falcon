@@ -45,10 +45,6 @@
 
 #include <falcon/symbol.h>
 
-#include <falcon/classes/classuser.h>
-#include <falcon/property.h>
-#include <falcon/method.h>
-
 #include <falcon/item.h>
 #include <falcon/itemid.h>
 

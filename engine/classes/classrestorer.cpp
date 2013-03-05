@@ -25,7 +25,6 @@
 #include <falcon/errors/paramerror.h>
 #include <falcon/errors/codeerror.h>
 #include <falcon/stdsteps.h>
-#include <falcon/usercarrier.h>
 #include <falcon/stdhandlers.h>
 
 #include <falcon/module.h>
@@ -36,12 +35,82 @@
 namespace Falcon {
 
 
+//====================================================
+// Properties.
+//
+
+static void  get_hasNext( const Class*, const String &, void* instance, Item& value )
+{ 
+   Restorer* restorer = static_cast<Restorer*>(instance);
+   value.setBoolean( restorer->hasNext() );
+}
+
+
+FALCON_DECLARE_FUNCTION( next, "" );
+void Function_next::invoke( VMContext* ctx, int32 )
+{  
+   Restorer* restorer = static_cast<Restorer*>(ctx->self().asInst());
+   Class* cls;
+   void* data;
+   bool first;
+   if( restorer->next( cls, data, first ) )
+   {
+      if (cls->isFlatInstance())
+      {
+         ctx->returnFrame( *static_cast<Item*>(data) );
+      }
+      else {
+         // Never send to the garbage, the restorer knows how to do that.
+         ctx->returnFrame( Item(cls, data) );
+      }
+   }
+   else
+   {
+      ctx->raiseError(new CodeError( ErrorParam(e_arracc, __LINE__, SRC )
+         .origin( ErrorParam::e_orig_runtime )
+         .extra( "No more items in next()") ) );
+   }
+}
+
+FALCON_DECLARE_FUNCTION( restore, "stream:Stream" );
+void Function_restore::invoke( VMContext* ctx, int32 )
+{
+   static Class* clsStream = Engine::handlers()->streamClass();
+   static PStep* retStep = &Engine::instance()->stdSteps()->m_returnFrame;
+   
+   fassert( clsStream != 0 );
+   
+   Item* i_item = ctx->param(0);
+   if( i_item == 0 )
+   {
+      throw paramError();
+   }      
+
+   Class* cls; void* data;
+   i_item->forceClassInst( cls, data ); 
+   
+   if( ! cls->isDerivedFrom( clsStream ) )
+   {
+      throw paramError();
+   }
+   
+   Restorer* restorer = static_cast<Restorer*>(ctx->self().asInst());
+   Stream* streamc = static_cast<Stream*>(cls->getParentData(clsStream,data));
+
+   // prepare not to return the frame now but later.
+   ctx->pushCode( retStep );
+   restorer->restore(ctx, streamc, ctx->process()->modSpace() );
+}
+
+
 ClassRestorer::ClassRestorer():
-   ClassUser("Restorer"),
-   FALCON_INIT_PROPERTY( hasNext ),
-   FALCON_INIT_METHOD( next ),
-   FALCON_INIT_METHOD( restore )
-{}
+   Class("Restorer")
+{
+   addProperty( "hasNext", &get_hasNext );
+   addMethod( new Function_next );
+   addMethod( new Function_restore );
+}
+
 
 ClassRestorer::~ClassRestorer()
 {}
@@ -90,77 +159,7 @@ void ClassRestorer::op_next( VMContext* ctx, void* instance ) const
    
 }
 */
-//====================================================
-// Properties.
-//
 
-FALCON_DEFINE_PROPERTY_GET_P( ClassRestorer, hasNext )
-{ 
-   Restorer* restorer = static_cast<Restorer*>(instance);
-   value.setBoolean( restorer->hasNext() );
-}
-
-FALCON_DEFINE_PROPERTY_SET( ClassRestorer, hasNext )( void*, const Item& )
-{ 
-   throw new ParamError( ErrorParam(e_prop_ro, __LINE__, SRC ).extra(name()));
-}
-
-FALCON_DEFINE_METHOD_P1( ClassRestorer, restore )
-{
-   static Class* clsStream = Engine::handlers()->streamClass();
-   static PStep* retStep = &Engine::instance()->stdSteps()->m_returnFrame;
-   
-   fassert( clsStream != 0 );
-   
-   Item* i_item = ctx->param(0);
-   if( i_item == 0 )
-   {
-      throw paramError();
-   }      
-
-   Class* cls; void* data;
-   i_item->forceClassInst( cls, data ); 
-   
-   if( ! cls->isDerivedFrom( clsStream ) )
-   {
-      throw paramError();
-   }
-   
-   Restorer* restorer = static_cast<Restorer*>(ctx->self().asInst());
-   Stream* streamc = static_cast<Stream*>(cls->getParentData(clsStream,data));
-
-   // prepare not to return the frame now but later.
-   ctx->pushCode( retStep );
-   restorer->restore(ctx, streamc, ctx->process()->modSpace() );
-}
-
-
-FALCON_DEFINE_METHOD_P1( ClassRestorer, next )
-{  
-   Restorer* restorer = static_cast<Restorer*>(ctx->self().asInst());
-   Class* cls;
-   void* data;
-   bool first;
-   if( restorer->next( cls, data, first ) )
-   {
-      if (cls->isFlatInstance())
-      {
-         ctx->returnFrame( *static_cast<Item*>(data) );
-      }
-      else {
-         // Never send to the garbage, the restorer knows how to do that.
-         ctx->returnFrame( Item(cls, data) );
-      }
-   }
-   else
-   {
-      ctx->raiseError(new CodeError( ErrorParam(e_arracc, __LINE__, SRC )
-         .origin( ErrorParam::e_orig_runtime )
-         .extra( "No more items in next()") ) );
-   }
-}
-
-   
 }
 
 /* end of classrestorer.cpp */

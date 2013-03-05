@@ -29,6 +29,8 @@
 #include <falcon/datareader.h>
 #include <falcon/itemarray.h>
 #include <falcon/stdsteps.h>
+#include <falcon/function.h>
+
 
 #include <falcon/errors/paramerror.h>
 #include <falcon/errors/accesserror.h>
@@ -39,7 +41,6 @@
 
 namespace Falcon {
 namespace Ext {
-
 
 class WaiterData
 {
@@ -59,16 +60,297 @@ public:
 };
 
 
-ClassWaiter::ClassWaiter():
-   ClassUser("Waiter"),
 
-   FALCON_INIT_PROPERTY( len ),
 
-   FALCON_INIT_METHOD( wait ),
-   FALCON_INIT_METHOD( tryWait ),
-   FALCON_INIT_METHOD( add ),
-   FALCON_INIT_METHOD( remove )
+//========================================================================
+
+static void get_len( const Class*, const String&, void* instance, Item& value )
 {
+   value =(int64) static_cast<WaiterData*>(instance)->m_waited.length();
+}
+
+//========================================================================
+
+
+void ClassWaiter::internal_wait( VMContext* ctx, int64 to )
+{
+   static Class* clsShared = Engine::handlers()->sharedClass();
+   static PStep* stepInvoke = &Engine::instance()->stdSteps()->m_reinvoke;
+
+   WaiterData* self = static_cast<WaiterData*>(ctx->self().asInst());
+   if( ctx != self->m_owner )
+   {
+      throw FALCON_SIGN_ERROR(AccessError, e_ctx_ownership);
+   }
+
+   // return if we have pending signals -- we'll be called back.
+   if( ctx->releaseAcquired())
+   {
+      ctx->pushCode(stepInvoke);
+      return;
+   }
+
+   ItemArray* array = &self->m_waited;
+
+   ctx->initWait();
+   uint32 start = self->m_pos;
+   uint32 len = array->length();
+   self->m_pos++;
+   if( self->m_pos >= len ) {
+      self->m_pos = 0;
+   }
+
+   // roll the loop
+   for( uint32 i = start; i < len; ++i )
+   {
+      Item& param = array->at(i);
+      Class* cls = 0;
+      void* inst = 0;
+      param.asClassInst(cls, inst);
+
+      Shared* sh = static_cast<Shared*>(cls->getParentData( clsShared, inst ));
+      ctx->addWait(sh);
+   }
+
+   for( uint32 i = 0; i < start; ++i )
+   {
+      Item& param = array->at(i);
+      Class* cls = 0;
+      void* inst = 0;
+      param.asClassInst(cls, inst);
+
+      Shared* sh = static_cast<Shared*>(cls->getParentData( clsShared, inst ));
+      ctx->addWait(sh);
+   }
+
+   Shared* sh = ctx->engageWait(to);
+   if( sh != 0 )
+   {
+      returnOrInvoke( ctx, sh );
+   }
+   else if( to  == 0 )
+   {
+      // return nil immediately
+      ctx->returnFrame();
+   }
+   else {
+      // try later.
+      ctx->pushCode( &m_stepAfterWait );
+   }
+}
+
+
+void ClassWaiter::returnOrInvoke( VMContext* ctx, Shared* sh )
+{
+   WaiterData* self = static_cast<WaiterData*>(ctx->self().asInst());
+
+   // return the resource?
+   WaiterData::CallbackMap::iterator cbmp = self->m_callbacks.find( sh );
+   if( cbmp == self->m_callbacks.end() )
+   {
+      ctx->returnFrame(Item(sh->handler(), sh));
+   }
+   else {
+      // prepare a step to analyze the function result.
+      ctx->pushCode( &m_stepAfterCall );
+
+      // invoke the function.
+      ctx->pushData( cbmp->second );
+      ctx->pushData( Item(sh->handler(),sh) );
+      Class* cls = 0;
+      void* inst = 0;
+      cbmp->second.asClassInst(cls, inst);
+      cls->op_call(ctx,1,inst);
+   }
+}
+
+void ClassWaiter::PStepAfterCall::apply_(const PStep*, VMContext* ctx )
+{
+   static PStep* reinvoke = &Engine::instance()->stdSteps()->m_reinvoke;
+
+   Item& result = ctx->topData();
+   // get the return value from the invoked function.
+   if( result.isOob())
+   {
+      // the function is asking us to return.
+      result.setOob(false);
+      ctx->returnFrame(result);
+   }
+   else {
+      ctx->popData();
+      // we just need to re-loop
+      ctx->resetCode(reinvoke);
+   }
+}
+
+void ClassWaiter::PStepAfterWait::apply_(const PStep*, VMContext* ctx )
+{
+   // did we have a success?
+   Shared* shared = ctx->getSignaledResouce();
+   if( shared != 0 )
+   {
+      ctx->popCode();
+      ClassWaiter* waiter = static_cast<ClassWaiter*>(ctx->self().asClass());
+      shared->decref(); // extra ref not needed if we're in garbage system
+      waiter->returnOrInvoke( ctx, shared );
+   }
+   else {
+      // we timed out
+      ctx->returnFrame();
+   }
+}
+
+
+
+namespace CWaiter {
+/*#
+    @method wait Waiter
+    @brief Waits on all the shared resources added up to date.
+    @optparam timeout Number of milliseconds to wait for an event.
+    @return The signaled resource or nil at timeout.
+
+    If @b timeout is -1, or not given, waits indefinitely. If it's zero,
+    it just checks for any signaled resource and then exits. If it's
+    greater than zero, waits for the required amount of time.
+
+    If the timeout expires before the resource is signaled, this method
+    returns nil.
+ */
+FALCON_DECLARE_FUNCTION( wait, "timeout:[N]" );
+
+/*#
+    @method tryWait Waiter
+    @brief Checks if any of the shared resources added up to date is currently signaled.
+    @return The signaled resource or nil if none is signaled.
+ */
+FALCON_DECLARE_FUNCTION( tryWait, "" );
+
+/*#
+    @method add Waiter
+    @brief Adds a resource to the wait set.
+    @param shared The resource to be added.
+    @return The @b self object to allow chaining more add methods.
+
+ */
+FALCON_DECLARE_FUNCTION( add, "shared:Shared" );
+
+
+/*#
+    @method remove Waiter
+    @brief Removes a resource from the wait set.
+    @param shared The resource to be removed.
+
+    If the resource is not present in the waiting set,
+    the method silently fails.
+ */
+FALCON_DECLARE_FUNCTION( remove, "shared:Shared" );
+
+
+void Function_wait::invoke(VMContext* ctx, int32 )
+{
+   int64 timeout = -1;
+   Item* i_timeout = ctx->param(0);
+   if( i_timeout != 0 )
+   {
+      if( ! i_timeout->isOrdinal() )
+      {
+         throw paramError(__LINE__, SRC);
+      }
+      timeout = i_timeout->forceInteger();
+   }
+
+   static_cast<ClassWaiter*>(methodOf())->internal_wait( ctx, timeout );
+}
+
+
+void Function_tryWait::invoke(VMContext* ctx, int32 )
+{
+   static_cast<ClassWaiter*>(methodOf())->internal_wait( ctx, 0 );
+}
+
+void Function_add::invoke(VMContext* ctx, int32 )
+{
+   static Class* clsShared = Engine::handlers()->sharedClass();
+
+   WaiterData* self = static_cast<WaiterData*>(ctx->self().asInst());
+   if( ctx != self->m_owner )
+   {
+      throw FALCON_SIGN_ERROR(AccessError, e_ctx_ownership);
+   }
+
+   Item* i_added = ctx->param(0);
+   Item* i_callback = ctx->param(1);
+
+   Class* cls = 0;
+   void* inst = 0;
+
+   if( i_added == 0
+            || ! i_added->asClassInst(cls, inst)
+            || ! cls->isDerivedFrom(clsShared)
+     )
+   {
+      throw paramError(__LINE__, SRC);
+   }
+
+   self->m_waited.append(*i_added);
+   Shared* sh = static_cast<Shared*>(cls->getParentData(clsShared, inst));
+   sh->onWaiterWaiting(ctx);
+
+   if( i_callback != 0 )
+   {
+      self->m_callbacks[sh] = *i_callback;
+   }
+
+   ctx->returnFrame(ctx->self());
+}
+
+
+void Function_remove::invoke(VMContext* ctx, int32 )
+{
+   static Class* clsShared = Engine::handlers()->sharedClass();
+
+   WaiterData* self = static_cast<WaiterData*>(ctx->self().asInst());
+   if( ctx != self->m_owner )
+   {
+      throw FALCON_SIGN_ERROR(AccessError, e_ctx_ownership);
+   }
+
+   Item* i_added = ctx->param(0);
+   Class* cls = 0;
+   void* inst = 0;
+   if( i_added == 0
+            || ! i_added->asClassInst(cls, inst)
+            || ! cls->isDerivedFrom(clsShared)
+            )
+   {
+      throw paramError(__LINE__, SRC);
+   }
+
+   int32 pos = self->m_waited.find(*i_added);
+   if( pos < 0)
+   {
+      self->m_waited.remove(pos);
+      Shared* sh = static_cast<Shared*>(cls->getParentData(clsShared, inst));
+      self->m_callbacks.erase(sh);
+   }
+
+   ctx->returnFrame();
+}
+}
+
+//=================================================================
+
+//=================================================================
+
+ClassWaiter::ClassWaiter():
+   Class("Waiter")
+{
+   addProperty( "len", &get_len );
+
+   addMethod( new CWaiter::Function_wait );
+   addMethod( new CWaiter::Function_tryWait );
+   addMethod( new CWaiter::Function_add );
+   addMethod( new CWaiter::Function_remove );
 }
 
 ClassWaiter::~ClassWaiter()
@@ -229,245 +511,6 @@ void ClassWaiter::unflatten( VMContext*, ItemArray& arr, void* inst ) const
    fassert( arr[0].asClass() == self->m_waited.handler() );
 
    self->m_waited.merge( *static_cast<ItemArray*>(arr[0].asInst()) );
-}
-
-
-
-//========================================================================
-
-FALCON_DEFINE_PROPERTY_GET_P( ClassWaiter, len )
-{
-   value =(int64) static_cast<WaiterData*>(instance)->m_waited.length();
-}
-
-
-FALCON_DEFINE_PROPERTY_SET_P0( ClassWaiter, len )
-{
-   throw readOnlyError();
-}
-
-
-//========================================================================
-
-
-void ClassWaiter::internal_wait( VMContext* ctx, int64 to )
-{
-   static Class* clsShared = Engine::handlers()->sharedClass();
-   static PStep* stepInvoke = &Engine::instance()->stdSteps()->m_reinvoke;
-
-   WaiterData* self = static_cast<WaiterData*>(ctx->self().asInst());
-   if( ctx != self->m_owner )
-   {
-      throw FALCON_SIGN_ERROR(AccessError, e_ctx_ownership);
-   }
-
-   // return if we have pending signals -- we'll be called back.
-   if( ctx->releaseAcquired())
-   {
-      ctx->pushCode(stepInvoke);
-      return;
-   }
-
-   ItemArray* array = &self->m_waited;
-
-   ctx->initWait();
-   uint32 start = self->m_pos;
-   uint32 len = array->length();
-   self->m_pos++;
-   if( self->m_pos >= len ) {
-      self->m_pos = 0;
-   }
-
-   // roll the loop
-   for( uint32 i = start; i < len; ++i )
-   {
-      Item& param = array->at(i);
-      Class* cls = 0;
-      void* inst = 0;
-      param.asClassInst(cls, inst);
-
-      Shared* sh = static_cast<Shared*>(cls->getParentData( clsShared, inst ));
-      ctx->addWait(sh);
-   }
-
-   for( uint32 i = 0; i < start; ++i )
-   {
-      Item& param = array->at(i);
-      Class* cls = 0;
-      void* inst = 0;
-      param.asClassInst(cls, inst);
-
-      Shared* sh = static_cast<Shared*>(cls->getParentData( clsShared, inst ));
-      ctx->addWait(sh);
-   }
-
-   Shared* sh = ctx->engageWait(to);
-   if( sh != 0 )
-   {
-      returnOrInvoke( ctx, sh );
-   }
-   else if( to  == 0 )
-   {
-      // return nil immediately
-      ctx->returnFrame();
-   }
-   else {
-      // try later.
-      ctx->pushCode( &m_stepAfterWait );
-   }
-}
-
-
-void ClassWaiter::returnOrInvoke( VMContext* ctx, Shared* sh )
-{
-   WaiterData* self = static_cast<WaiterData*>(ctx->self().asInst());
-
-   // return the resource?
-   WaiterData::CallbackMap::iterator cbmp = self->m_callbacks.find( sh );
-   if( cbmp == self->m_callbacks.end() )
-   {
-      ctx->returnFrame(Item(sh->handler(), sh));
-   }
-   else {
-      // prepare a step to analyze the function result.
-      ctx->pushCode( &m_stepAfterCall );
-
-      // invoke the function.
-      ctx->pushData( cbmp->second );
-      ctx->pushData( Item(sh->handler(),sh) );
-      Class* cls = 0;
-      void* inst = 0;
-      cbmp->second.asClassInst(cls, inst);
-      cls->op_call(ctx,1,inst);
-   }
-}
-
-void ClassWaiter::PStepAfterCall::apply_(const PStep*, VMContext* ctx )
-{
-   static PStep* reinvoke = &Engine::instance()->stdSteps()->m_reinvoke;
-
-   Item& result = ctx->topData();
-   // get the return value from the invoked function.
-   if( result.isOob())
-   {
-      // the function is asking us to return.
-      result.setOob(false);
-      ctx->returnFrame(result);
-   }
-   else {
-      ctx->popData();
-      // we just need to re-loop
-      ctx->resetCode(reinvoke);
-   }
-}
-
-void ClassWaiter::PStepAfterWait::apply_(const PStep*, VMContext* ctx )
-{
-   // did we have a success?
-   Shared* shared = ctx->getSignaledResouce();
-   if( shared != 0 )
-   {
-      ctx->popCode();
-      ClassWaiter* waiter = static_cast<ClassWaiter*>(ctx->self().asClass());
-      shared->decref(); // extra ref not needed if we're in garbage system
-      waiter->returnOrInvoke( ctx, shared );
-   }
-   else {
-      // we timed out
-      ctx->returnFrame();
-   }
-}
-
-
-
-FALCON_DEFINE_METHOD_P1( ClassWaiter, wait )
-{
-   int64 timeout = -1;
-   Item* i_timeout = ctx->param(0);
-   if( i_timeout != 0 )
-   {
-      if( ! i_timeout->isOrdinal() )
-      {
-         throw paramError(__LINE__, SRC);
-      }
-      timeout = i_timeout->forceInteger();
-   }
-
-   static_cast<ClassWaiter*>(methodOf())->internal_wait( ctx, timeout );
-}
-
-FALCON_DEFINE_METHOD_P1( ClassWaiter, tryWait )
-{
-   static_cast<ClassWaiter*>(methodOf())->internal_wait( ctx, 0 );
-}
-
-FALCON_DEFINE_METHOD_P1( ClassWaiter, add )
-{
-   static Class* clsShared = Engine::handlers()->sharedClass();
-
-   WaiterData* self = static_cast<WaiterData*>(ctx->self().asInst());
-   if( ctx != self->m_owner )
-   {
-      throw FALCON_SIGN_ERROR(AccessError, e_ctx_ownership);
-   }
-
-   Item* i_added = ctx->param(0);
-   Item* i_callback = ctx->param(1);
-
-   Class* cls = 0;
-   void* inst = 0;
-
-   if( i_added == 0
-            || ! i_added->asClassInst(cls, inst)
-            || ! cls->isDerivedFrom(clsShared)
-     )
-   {
-      throw paramError(__LINE__, SRC);
-   }
-
-   self->m_waited.append(*i_added);
-   Shared* sh = static_cast<Shared*>(cls->getParentData(clsShared, inst));
-   sh->onWaiterWaiting(ctx);
-
-   if( i_callback != 0 )
-   {
-      self->m_callbacks[sh] = *i_callback;
-   }
-
-   ctx->returnFrame(ctx->self());
-}
-
-
-FALCON_DEFINE_METHOD_P1( ClassWaiter, remove )
-{
-   static Class* clsShared = Engine::handlers()->sharedClass();
-
-   WaiterData* self = static_cast<WaiterData*>(ctx->self().asInst());
-   if( ctx != self->m_owner )
-   {
-      throw FALCON_SIGN_ERROR(AccessError, e_ctx_ownership);
-   }
-
-   Item* i_added = ctx->param(0);
-   Class* cls = 0;
-   void* inst = 0;
-   if( i_added == 0
-            || ! i_added->asClassInst(cls, inst)
-            || ! cls->isDerivedFrom(clsShared)
-            )
-   {
-      throw paramError(__LINE__, SRC);
-   }
-
-   int32 pos = self->m_waited.find(*i_added);
-   if( pos < 0)
-   {
-      self->m_waited.remove(pos);
-      Shared* sh = static_cast<Shared*>(cls->getParentData(clsShared, inst));
-      self->m_callbacks.erase(sh);
-   }
-
-   ctx->returnFrame();
 }
 
 

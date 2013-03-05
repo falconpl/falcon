@@ -184,6 +184,9 @@ public:
     */
    void setSysCRLF();
 
+   void gcMark( uint32 mark ) { m_mark = mark; }
+   uint32 currentMark() const { return m_mark; }
+
 protected:
    Transcoder* m_encoder;
    bool m_bWasCR;
@@ -198,6 +201,8 @@ protected:
    Mutex m_mtx;
 
    bool rawWrite( const String& str, length_t start=0, length_t count=String::npos );
+private:
+   uint32 m_mark;
 };
 
 }

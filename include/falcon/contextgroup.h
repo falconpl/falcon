@@ -63,6 +63,7 @@ class FALCON_DYN_CLASS ContextGroup {
 public:
    const static uint32 ANY_PROCESSOR=0xFFFFFFFF;
 
+   ContextGroup();
    /** Creates the group with a number of processors.
     \param owner The virtual machine owning this group.
     \param parent The context that started this group, if any.
@@ -169,6 +170,8 @@ public:
 
    VMContext* getContext(uint32 count);
    uint32 getContextCount();
+   void configure( VMachine* owner, VMContext* parent=0, uint32 processors=ANY_PROCESSOR );
+
 private:
    class Private;
    Private* _p;
@@ -179,11 +182,9 @@ private:
    uint32 m_processors;
    atomic_int m_terminated;
 
-   ContextGroup();
+   
    virtual ~ContextGroup();
 
-   void configure( VMachine* owner, VMContext* parent=0, uint32 processors=ANY_PROCESSOR );
-   friend class Ext::ClassParallel;
 
    FALCON_REFERENCECOUNT_DECLARE_INCDEC( ContextGroup );
 };

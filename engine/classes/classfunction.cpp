@@ -64,7 +64,7 @@ void ClassFunction::enumerateParents( ClassEnumerator& cb ) const
 {
    static Class* cls = Engine::handlers()->mantraClass();
    
-   cb( cls, true );
+   cb( cls );
 }
 
 void* ClassFunction::getParentData( const Class* parent, void* data ) const
@@ -80,7 +80,7 @@ void ClassFunction::enumerateProperties( void* instance, Class::PropertyEnumerat
 {
    static Class* cls = Engine::handlers()->mantraClass();
 
-   cb("params", false);
+   cb("params");
    cls->enumerateProperties(instance, cb);
 }
 

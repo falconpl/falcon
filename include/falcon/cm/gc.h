@@ -17,9 +17,7 @@
 #define FALCON_CORE_GC_H
 
 #include <falcon/fassert.h>
-#include <falcon/property.h>
-#include <falcon/method.h>
-#include <falcon/classes/classuser.h>
+#include <falcon/class.h>
 #include <falcon/collectoralgorithm.h>
 
 namespace Falcon {
@@ -36,7 +34,7 @@ namespace Ext {
  @prop marks Contexts marked since last time @a GC.reset() was invoked
  @prop sweeps Count of sweep loops since last time @a GC.reset() was invoked
  */
-class ClassGC: public ClassUser
+class ClassGC: public Class
 {
 public:
    
@@ -53,90 +51,6 @@ public:
    virtual bool gcCheckInstance( void* instance, uint32 mark ) const;
 
    virtual bool op_init( VMContext* ctx, void*, int pcount ) const;
-private:   
-   
-   //====================================================
-   // Properties.
-   //
-   FALCON_DECLARE_PROPERTY( contexts )
-   
-   FALCON_DECLARE_PROPERTY( memory )
-   FALCON_DECLARE_PROPERTY( items )
-   FALCON_DECLARE_PROPERTY( enabled )
-   FALCON_DECLARE_PROPERTY( status )
-   /*#
-     @property algorithm GC
-     @brief Show or select which automatic collection algorithm is used.
-
-     The algorithm
-    */
-   FALCON_DECLARE_PROPERTY( algorithm )
-   /*#
-     @property limit GC
-     @brief Current limit for "green zone" in automatic algorithms.
-
-    */
-   FALCON_DECLARE_PROPERTY( limit )
-
-   /*#
-     @property baseLimit GC
-     @brief Minimum value for the limit property.
-
-    */
-   FALCON_DECLARE_PROPERTY( baseLimit )
-
-   FALCON_DECLARE_PROPERTY( sweeps )
-   FALCON_DECLARE_PROPERTY( marks )
-
-   FALCON_DECLARE_PROPERTY_CONSTANT( MANUAL, FALCON_COLLECTOR_ALGORITHM_MANUAL )
-   FALCON_DECLARE_PROPERTY_CONSTANT( FIXED, FALCON_COLLECTOR_ALGORITHM_FIXED )
-   FALCON_DECLARE_PROPERTY_CONSTANT( STRICT, FALCON_COLLECTOR_ALGORITHM_STRICT )
-   FALCON_DECLARE_PROPERTY_CONSTANT( SMOOTH, FALCON_COLLECTOR_ALGORITHM_SMOOTH )
-   FALCON_DECLARE_PROPERTY_CONSTANT( LOOSE, FALCON_COLLECTOR_ALGORITHM_LOOSE )
-   FALCON_DECLARE_PROPERTY_CONSTANT( DEFAULT, FALCON_COLLECTOR_ALGORITHM_LOOSE )
-
-   /*#
-    @method perform GC
-    @brief Suggests or forces a full garbage collecting.
-    @optparam force True to ask for a total garbage collection.
-    @optparam wait True to wait until the collection is complete.
-
-    If @b force is false, then the current context only is scheduled for
-    inspection as soon as possible. This can cause a delay in the
-    execution of subsequent instructions. However, the calling context
-    might not see the memory immediately freed, as reclaim happens
-    at a later stage.
-
-    If @b force is true, then all the existing contexts are marked
-    for inspection, and inspected as soon as possible. If @b wait
-    is also true, then the calling context stays blocked until all
-    the currently existing contexts are checked, and all the garbage
-    memory is actually reclaimed.
-
-    @note If @b force is false, @b wait is ignored. To see memory
-    effectively reclaimed in a single agent application after this
-    call, set both parameters to true nevertheless.
-    */
-   FALCON_DECLARE_METHOD( perform, "force:[B], wait:[B]" );
-
-   /*#
-    @method suggest GC
-    @brief Invites the GC to inspect the oldest or all the contexts
-    @optparam all True to ask for inspection on all the contexts.
-
-    The method returns immediately; the GC will try to collect
-    the available memory as soon as possible.
-    */
-   FALCON_DECLARE_METHOD( suggest, "all:[B]" );
-
-   /*#
-    @method reset GC
-    @brief Clears count of sweep and mark loops.
-
-    After this call, the @a GC.marks and @a GC.sweeps counters
-    will be reset to 0.
-    */
-   FALCON_DECLARE_METHOD( reset, "all:[B]" );
 };
 
 }

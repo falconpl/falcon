@@ -31,7 +31,8 @@ TextReader::TextReader( Stream* stream ):
    Reader( stream ),
    m_pushedChr((char_t)-1),
    m_cTokens( 0 ),
-   m_cTSize( 0 )
+   m_cTSize( 0 ),
+   m_mark(0)
 {
    m_decoder = Engine::instance()->getTranscoder("C");
    makeDefaultSeps();
@@ -43,7 +44,8 @@ TextReader::TextReader( Stream* stream, Transcoder* decoder ):
    m_pushedChr(-1),
    m_decoder( decoder ),
    m_cTokens( 0 ),
-   m_cTSize( 0 )
+   m_cTSize( 0 ),
+   m_mark(0)
 {
    makeDefaultSeps();
 }

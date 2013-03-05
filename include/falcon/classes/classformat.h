@@ -17,12 +17,9 @@
 #define _FALCON_CLASSFORMAT_H_
 
 #include <falcon/setup.h>
-#include <falcon/classes/classuser.h>
-#include <falcon/property.h>
-#include <falcon/method.h>
 #include <falcon/string.h>
+#include <falcon/class.h>
 
-#include <falcon/pstep.h>
 namespace Falcon
 {
 
@@ -30,7 +27,7 @@ namespace Falcon
  Class explicitly holding a format.
  */
 
-class FALCON_DYN_CLASS ClassFormat: public ClassUser
+class FALCON_DYN_CLASS ClassFormat: public Class
 {
 public:
 
@@ -53,33 +50,6 @@ public:
    //=============================================================
    virtual bool op_init( VMContext* ctx, void*, int32 pcount ) const;
    virtual void op_compare( VMContext* ctx, void* self ) const;
-
-private:
-
-   //====================================================
-   // Properties.
-   //
-   FALCON_DECLARE_PROPERTY( original );
-
-   FALCON_DECLARE_METHOD( format, "X" );
-   FALCON_DECLARE_METHOD( parse, "S" );
-
-   /*
-   FALCON_DECLARE_PROPERTY( isText );
-
-   FALCON_DECLARE_METHOD( cmpi, "S" );
-   FALCON_DECLARE_METHOD( endsWith, "S" );
-   FALCON_DECLARE_METHOD( fill, "S" );
-   FALCON_DECLARE_METHOD( join, "..." );
-   FALCON_DECLARE_METHOD( merge, "A" );
-   FALCON_DECLARE_METHOD( replace, "S,S" );
-   FALCON_DECLARE_METHOD( replicate, "N" );
-   FALCON_DECLARE_METHOD( rfind, "S" );
-   FALCON_DECLARE_METHOD( rsplit, "S" );
-   FALCON_DECLARE_METHOD( splittr, "S" );
-   FALCON_DECLARE_METHOD( startsWith, "S" );
-   FALCON_DECLARE_METHOD( wmatch, "S" );
-   */
 };
 
 }

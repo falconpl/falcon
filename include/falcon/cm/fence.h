@@ -21,10 +21,8 @@
 #include <falcon/function.h>
 #include <falcon/string.h>
 #include <falcon/shared.h>
-#include <falcon/classes/classuser.h>
 #include <falcon/classes/classshared.h>
 
-#include <falcon/method.h>
 #include <falcon/atomic.h>
 
 namespace Falcon {
@@ -97,67 +95,6 @@ public:
    virtual void* createInstance() const;
 
    virtual bool op_init( VMContext* ctx, void*, int pcount ) const;
-
-private:
-   /*#
-     @property level Fence
-     @brief Current signal level of the fence.
-
-     This is a read/only property.
-    */
-   FALCON_DECLARE_PROPERTY( level );
-
-   /*#
-     @property isEvent Fence
-     @brief True if the current fence has event semantic
-
-     This is a read/only property.
-    */
-   FALCON_DECLARE_PROPERTY( isEvent );
-
-   /*#
-     @property count Fence
-     @brief Count of signals that this fence waits on.
-
-     This is property can be changed at runtime, but the
-     count level doesn't affect the level. In other words,
-     the count change becomes effective after
-     the first waiter has waken up.
-
-     For example,
-     if a fence with count 5 received 2 signals, and it is
-     now at level 3, setting count to 2 won't cause the
-     waiters to wake up; the fence still need to receive
-     3 signals before waiters are waken up.
-    */
-   FALCON_DECLARE_PROPERTY( count );
-
-   /*#
-     @method signal Fence
-     @brief Signals the fence
-     @optparam count Count of signals to be sent to the fence.
-
-      The parameter @b count must be greater or equal to 1.
-    */
-   FALCON_DECLARE_METHOD( signal, "count:[N]" );
-
-   /*#
-     @method tryWait Semaphore
-     @brief Check if the semaphore is signaled.
-     @return true if the semaphore is signaled, false otherwise.
-
-     The check eventually resets the semaphore if it's currently signaled.
-    */
-   FALCON_DECLARE_METHOD( tryWait, "" );
-
-   /*#
-     @method wait Event
-     @brief Waits until the event is set.
-     @optparam timeout A timeout in milliseconds to wait for.
-
-    */
-   FALCON_DECLARE_METHOD( wait, "timeout:[N]" );
-
 };
 
 }

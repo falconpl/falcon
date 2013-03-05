@@ -125,7 +125,7 @@ bool ClassRange::gcCheckInstance( void* self, uint32 mark ) const
 
 void ClassRange::enumerateProperties( void*, PropertyEnumerator& cb ) const
 {
-   cb( "times", true );
+   cb( "times" );
 }
 
 

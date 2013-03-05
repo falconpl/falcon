@@ -16,9 +16,6 @@
 #ifndef FALCON_CORE_TEXTSTREAM_H
 #define FALCON_CORE_TEXTSTREAM_H
 
-#include <falcon/classes/classuser.h>
-#include <falcon/property.h>
-#include <falcon/method.h>
 #include <falcon/types.h>
 #include <falcon/textreader.h>
 #include <falcon/textwriter.h>
@@ -34,7 +31,7 @@ namespace Ext {
 
 
 /** Holder for the stream and its TextReader/TextWriter helpers. */
-class FALCON_DYN_CLASS TextStreamCarrier: public UserCarrier
+class FALCON_DYN_CLASS TextStreamCarrier
 {
 public:
    // we won't be separating the text readers and writers.
@@ -73,24 +70,6 @@ private:
    
    // keeping a reference for simplicity
    ClassStream* m_stream;
-   //====================================================
-   // Properties.
-   //
-   FALCON_DECLARE_PROPERTY( encoding );
-   
-   FALCON_DECLARE_METHOD( write, "text:S, count:[N], start:[N]" );
-   FALCON_DECLARE_METHOD( read, "text:S, count:[N]" );   
-   FALCON_DECLARE_METHOD( grab, "count:N" );
-   FALCON_DECLARE_METHOD( readLine, "text:S, maxCount:[N]" );   
-   FALCON_DECLARE_METHOD( grabLine, "maxCount:[N]" );   
-   FALCON_DECLARE_METHOD( readChar, "text:S, append:[B]" );
-   FALCON_DECLARE_METHOD( getChar, "" );
-   FALCON_DECLARE_METHOD( ungetChar, "char:S|N" );
-   FALCON_DECLARE_METHOD( putChar, "char:S|N" );
-   FALCON_DECLARE_METHOD( sync, "" );
-   FALCON_DECLARE_METHOD( flush, "" );
-   FALCON_DECLARE_METHOD( close, "" );
-   
 };
 
 }

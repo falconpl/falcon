@@ -18,9 +18,7 @@
 
 #include <falcon/setup.h>
 #include <falcon/fassert.h>
-#include <falcon/classes/classuser.h>
-#include <falcon/property.h>
-#include <falcon/method.h>
+#include <falcon/class.h>
 #include <falcon/pstep.h>
 
 namespace Falcon {
@@ -156,11 +154,16 @@ an error, it will be one of our Consumer
 or Producer instance (presumably, the control agent initiated with a function
 won't raise any error), hence we're able to address its @b name property.
 */
-class ClassParallel: public ClassUser
+class ClassParallel: public Class
 {
 public:
    ClassParallel();
    virtual ~ClassParallel();
+
+   virtual void dispose( void* instance ) const;
+   virtual void* clone( void* instance ) const;
+   virtual void gcMarkInstance( void* instance, uint32 mark ) const;
+   virtual bool gcCheckInstance( void* instance, uint32 mark ) const;
 
    /*
    virtual void store( VMContext* ctx, DataWriter* stream, void* instance ) const;
@@ -172,7 +175,6 @@ public:
    virtual bool op_init( VMContext* ctx, void* instance, int pcount ) const;
    //virtual void op_toString( VMContext* ctx, void* self ) const;
 
-private:
 
    class FALCON_DYN_CLASS PStepGetResults: public PStep
    {
@@ -193,13 +195,6 @@ private:
    };
 
    PStepAfterWait m_afterWait;
-
-   FALCON_DECLARE_STATIC_METHOD( wait, "..." );
-   FALCON_DECLARE_STATIC_METHOD( tryWait, "..." );
-   FALCON_DECLARE_STATIC_METHOD( timedWait, "timeout:N,..." );
-   FALCON_DECLARE_METHOD( add, "C..." );
-   FALCON_DECLARE_METHOD( launch, "..." );
-   FALCON_DECLARE_METHOD( launchWithResults, "..." );
 };
 
 }

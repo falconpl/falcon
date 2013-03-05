@@ -36,6 +36,7 @@ class Module;
 class ExprInherit;
 class ItemArray;
 class Error;
+class Function;
 
 #define FALCON_CLASS_CREATE_AT_INIT ((void*)1)
 
@@ -991,6 +992,104 @@ public:
     */
    int clearPriority() const { return m_clearPriority; }
 
+   typedef void (*setter)( const Class* cls, const String& name, void *instance, const Item& value );
+   typedef void (*getter)( const Class* cls, const String& name, void *instance, Item& value );
+
+
+   /**
+      Adds a property to the class.
+      \param name The name of hte property
+      \param set A function invoked to set the property
+      \param get A function invoked to get the property
+      \param isHidden If true, the property is found when searched, but won't be 
+             displayed in automatic rendering of the class.
+      \param isStatic If true, the property is static (found on the class).
+
+      If a property has no setter function it's considered read-only.
+      You can also set the getter function to 0 to make it write-only; this will make it also automatically hidden.
+
+      \note Existing properties having the same name will be overwritten.
+   */
+   void addProperty( const String& name, getter get, setter set=0, bool isStatic = false, bool isHidden = false );
+
+   /** Adds a function to the class (as a method). 
+      \param func The method code.
+      \param isStatic If true, the method is considere static (to be applied to the class).      
+      
+      The given method function is owned by the class and will be disposed as the class is destroyed. 
+      If this function returns false, the method is not actually added to the class.
+
+      \note the name of the property is assumed to be the name declared by the Function instance.
+      \note Existing properties having the same name will be overwritten.
+   */
+   void addMethod( Function* func, bool isStatic = false );
+
+   /** Adds a function to the class (as a method). 
+      \param name The name of the method to be added.
+      \param func The method code.
+      \param prototype The method prototype.
+      \param isStatic If true, the method is considere static (to be applied to the class).
+      \return true if the method can be added, false if the method was already present.
+      
+      This version takes a C function that should just push the desired result on top
+      of the stack. 
+
+      If the function returns false, the method is not actually added to the class.
+      \note Function return (returnFrame()) is handled by the underlying Function
+         code.
+      \note Existing properties having the same name will be overwritten.
+   */
+   void addMethod( const String& name, ext_func_t func, const String& prototype, bool isStatic = false );
+
+   /** Sets a function to be the constructor code (invoked at init).    
+      \param Function the constructor function.
+
+      \note The function is forcefully terminated as this invocation is complete.
+      If more steps are required in the initialization of the class, the op_init() must
+      be reimplemented.
+   */
+   void setConstuctor( Function* func );
+
+   /** Sets a function to be the constructor code (invoked at init). 
+      \param func the constructor function.
+      \param prototype The constructor function prototype.
+      
+   */
+   void setConstuctor( const String& name, ext_func_t func, const String& prototype );
+
+   /** Adds a class-wide constant. 
+      \param name the name of the constant.
+      \param value The value that the constant should assume.
+      \return true if the name was free, false if it was already assigned.
+      \note Existing properties having the same name will be overwritten.
+   */
+   void addConstant( const String& name, const Item& value );
+
+   /** Sets the parent of this class.
+      \param parent the parent class.
+
+      This method is used to implement a simple single-parentship inheritance system.
+      More sophisticated inheritance schemes require the subclasses to reimplement
+      getParentData() and isDerivedFrom() methods.
+
+      The parent class method should be able to handle the same type of entity
+      handled by this child class. In othre words, the structure or class handled by
+      the methods in the parent class must be a super-structure or super-class of the
+      data handled by this class. Again, more sophisticated approaches require the 
+      class system that needs to be implemented to reimplement getParentData() and isDerivedFrom()
+      methods.
+
+      When an instance of this class is invoked, the parents constructors are \b not called.
+      This class constructor must handle the initialization of the created object entierly. 
+      A different initialization scheme requires the classes involved to reimplement
+      directly the op_init() method of this class.
+   */
+   void setParent( Class* parent );
+
+   /** GCMark this class.
+   */
+   virtual void gcMark( uint32 mark );
+
 protected:
    bool m_bIsfalconClass;
    bool m_bIsErrorClass;
@@ -1002,6 +1101,12 @@ protected:
    int64 m_typeID;
 
    int32 m_clearPriority;
+
+private:
+   Class* m_parent;
+
+   class Private;
+   Private* _p;
 };
 
 }

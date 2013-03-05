@@ -189,10 +189,10 @@ void ClassDict::enumerateProperties( void*, PropertyEnumerator& cb ) const
 {
    for ( int cnt = 0; cnt < ( DictProperties::NUM_OF_PROPERTIES - 1 ); cnt++ )
    {
-      cb( DictProperties::properties[ cnt ], false );
+      cb( DictProperties::properties[ cnt ] );
    }
 
-   cb( DictProperties::properties[ DictProperties::NUM_OF_PROPERTIES - 1 ], true );
+   cb( DictProperties::properties[ DictProperties::NUM_OF_PROPERTIES - 1 ] );
 }
 
 void ClassDict::enumeratePV( void*, Class::PVEnumerator& ) const

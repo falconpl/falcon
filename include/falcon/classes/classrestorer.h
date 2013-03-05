@@ -18,11 +18,8 @@
 
 #include <falcon/pseudofunc.h>
 #include <falcon/fassert.h>
-#include <falcon/classes/classuser.h>
-#include <falcon/property.h>
-#include <falcon/method.h>
+#include <falcon/class.h>
 
-#include <falcon/usercarrier.h>
 #include <falcon/path.h>
 
 namespace Falcon {
@@ -31,7 +28,7 @@ namespace Falcon {
  *    Class interfacing restorers in the VM.
  *
  */
-class ClassRestorer: public ClassUser
+class ClassRestorer: public Class
 {
 public:
    
@@ -53,11 +50,6 @@ public:
    virtual void op_iter( VMContext* ctx, void* instance ) const;
    virtual void op_next( VMContext* ctx, void* instance ) const;
     */
-private:   
-   
-   FALCON_DECLARE_PROPERTY( hasNext );
-   FALCON_DECLARE_METHOD( next, "" );
-   FALCON_DECLARE_METHOD( restore, "stream:Stream" );
 };
 
 }

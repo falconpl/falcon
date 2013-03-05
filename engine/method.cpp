@@ -19,6 +19,7 @@
 #include <falcon/method.h>
 #include <falcon/item.h>
 #include <falcon/stdhandlers.h>
+#include <falcon/property.h>
 
 #include <falcon/classes/classuser.h>
 
@@ -26,12 +27,16 @@
 
 namespace Falcon {
 
-Method::Method( ClassUser* owner, const String& name, Module* mod, bool isStatic ):
+   class MethodProp: public Property
+   {
+   public:
+
+   };
+
+Method::Method( const String& name, Module* mod, bool isStatic ):
    Function( name, mod ),
-   m_prop( this, (isStatic ? 0 :owner), name ),
    m_bIsStatic( isStatic )
 {
-   methodOf( owner );
    if( isStatic )
    {
       owner->addStatic(&m_prop);

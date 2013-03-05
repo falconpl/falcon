@@ -28,8 +28,78 @@
 #include <falcon/errors/accesserror.h>
 #include <falcon/errors/accesstypeerror.h>
 #include <falcon/stdhandlers.h>
+#include <falcon/extfunc.h>
+
+#include <falcon/function.h>
+#include <falcon/extfunc.h>
+
+#include <map>
 
 namespace Falcon {
+
+static void setReadOnly( const Class*, const String& name, void *, const Item& )
+{
+   throw new AccessError( ErrorParam( e_prop_ro, __LINE__, SRC ).extra(name) );
+}
+
+static void getWriteOnly( const Class*, const String& name, void *, Item& )
+{
+   throw new AccessError( ErrorParam( e_prop_wo, __LINE__, SRC ).extra(name) );
+}
+
+class Property
+{
+public:
+   Class::setter setFunc;
+   Class::getter getFunc;
+
+   Item value;
+   bool bHidden;
+   bool bStatic;
+   bool bConst;
+   Property() {}
+
+   Property( Class::getter getf, Class::setter setf, bool s, bool h, bool c, Item& v )
+   {
+      set( getf, setf, s, h, c, v );
+   }
+   ~Property() {}
+
+   void set( Class::getter getf, Class::setter setf, bool s, bool h, bool c, const Item& v )
+   {
+      if ( getf == 0 )
+      {
+         h = true;
+         getf = &getWriteOnly;
+      }
+
+      getFunc = getf;
+      setFunc = setf == 0 ? setReadOnly : setf;
+
+      bStatic = s;
+      bHidden = h;
+      bConst = c;
+      value = v;
+   }
+};
+
+
+class Class::Private
+{
+public:
+   typedef std::map<String, Property> PropertyMap;
+   PropertyMap m_props;
+   
+   typedef std::map<String, Function*> MethodMap;
+   MethodMap m_methods;
+
+   Function* m_constructor;
+
+   Private() {}
+   ~Private() {
+   }
+};
+
 
 Class::Class( const String& name ):
    Mantra( name, 0, 0, 0 ),
@@ -41,7 +111,10 @@ Class::Class( const String& name ):
    m_clearPriority( 0 )
 {
    m_category = e_c_class;
+   _p = new Private;
+   m_parent = 0;
 }
+
 
 Class::Class( const String& name, int64 tid ):
    Mantra( name, 0, 0, 0 ),
@@ -53,7 +126,10 @@ Class::Class( const String& name, int64 tid ):
    m_clearPriority( 0 )
 {
    m_category = e_c_class;
+   _p = new Private;
+   m_parent = 0;
 }
+
 
 Class::Class( const String& name, Module* module, int line, int chr ):
    Mantra( name, module, line, chr ),
@@ -65,7 +141,10 @@ Class::Class( const String& name, Module* module, int line, int chr ):
    m_clearPriority( 0 )
 {
    m_category = e_c_class;
+   _p = new Private;
+   m_parent = 0;
 }
+
 
 Class::Class( const String& name, int64 tid, Module* module, int line, int chr ):
    Mantra( name, module, line, chr ),
@@ -77,6 +156,8 @@ Class::Class( const String& name, int64 tid, Module* module, int line, int chr )
    m_clearPriority( 0 )
 {
    m_category = e_c_class;
+   _p = new Private;
+   m_parent = 0;
 }
 
 
@@ -85,6 +166,17 @@ Class::~Class()
    TRACE1( "Destroying class %s.%s",
       m_module != 0 ? m_module->name().c_ize() : "<internal>",
       m_name.c_ize() );
+
+   Private::MethodMap::iterator iter = _p->m_methods.begin();
+   while( _p->m_methods.end() != iter )
+   {
+      if( iter->second->methodOf() == this )
+      {
+         delete iter->second;
+      }
+      ++iter;
+   }
+   delete _p;
 }
 
 
@@ -94,27 +186,30 @@ Class* Class::handler() const
    return meta;
 }
 
-Class* Class::getParent( const String& ) const
+Class* Class::getParent( const String& name ) const
 {
-   // normally does nothing
-   return 0;
+   if( m_parent == 0 || m_parent->name() != name ) { 
+      return 0;
+   }
+   return m_parent;
 }
 
 
 bool Class::isDerivedFrom( const Class* cls ) const
 {
-   return this == cls;
+   return this == cls || (m_parent != 0 && cls->isDerivedFrom(m_parent));
 }
 
 
-void Class::enumerateParents( Class::ClassEnumerator&  ) const
+void Class::enumerateParents( Class::ClassEnumerator& pe ) const
 {
-   // normally does nothing
+   if( m_parent != 0 ) { pe(m_parent); }
 }
 
 void* Class::getParentData( const Class* parent, void* data ) const
 {
    if( parent == this ) return data;
+   if( m_parent != 0 ) return m_parent->getParentData( parent, data );
    return 0;
 }
 
@@ -163,26 +258,196 @@ bool Class::gcCheckInstance( void*, uint32 ) const
 }
 
 
-void Class::describe( void*, String& target, int, int ) const
+void Class::describe( void* instance, String& target, int depth, int maxlen) const
 {
-   target = "<" + name() + "*>";
+   String temp;
+   
+   target.reserve(128);
+   target.size(0);
+   
+   target.append("Class " );
+   target.append(name());
+
+   if( depth == 0 )
+   {
+       target += "{...}";
+   }
+   else
+   {
+      Private::PropertyMap::const_iterator iter = _p->m_props.begin();
+      bool bFirst = true;
+      
+      target += '{';
+      
+      while( iter != _p->m_props.end() )
+      {
+         const Property* prop = &iter->second;
+         if( ! prop->bHidden )
+         {
+            Item value;
+            prop->getFunc( this, iter->first, instance, value );
+
+            if( ! (value.isFunction() || value.isMethod()) )
+            {
+               if( bFirst )
+               {
+                  bFirst = false;
+               }
+               else
+               {
+                  target += ','; target += ' ';
+               }
+
+               value.describe( temp, depth-1, maxlen );
+               target.append( iter->first );
+               target.append('=');
+               target.append(temp);
+               temp.size(0);
+            }
+         }
+         
+         ++iter;
+      }
+            
+      target += '}';
+   }
 }
 
 
-void Class::enumerateProperties( void*, Class::PropertyEnumerator& ) const
+void Class::enumerateProperties( void*, Class::PropertyEnumerator& pe ) const
 {
-   // normally does nothing
+   Private::PropertyMap::iterator iter = _p->m_props.begin();
+   while( iter != _p->m_props.end() )
+   {
+      pe( iter->first );
+      ++iter;
+   }
 }
 
-void Class::enumeratePV( void*, Class::PVEnumerator& ) const
+
+void Class::enumeratePV( void* inst, Class::PVEnumerator& pve) const
 {
-   // normally does nothing
+   Private::PropertyMap::iterator iter = _p->m_props.begin();
+   while( iter != _p->m_props.end() )
+   {
+      Property& prop = iter->second;
+      if( prop.bConst )
+      {
+         pve( iter->first, prop.value );
+      }
+      else if( prop.getFunc != 0 ) 
+      {
+         Item temp;
+         prop.getFunc(this, iter->first, inst, temp );
+         pve( iter->first, temp );
+      }
+      ++iter;
+   }
 }
 
 
-bool Class::hasProperty( void*, const String& ) const
+bool Class::hasProperty( void* inst, const String& prop ) const
 {
-   return false;
+   Private::PropertyMap::iterator iter = _p->m_props.find( prop );
+   return iter != _p->m_props.end();
+}
+
+
+//==========================================================
+// Property management
+//==========================================================
+
+void Class::addProperty( const String& name, getter get, setter set, bool isStatic, bool isHidden )
+{
+   _p->m_props[name].set(get, set, isStatic, isHidden, false, Item() );
+}
+
+
+void Class::addMethod( Function* func, bool isStatic )
+{
+   _p->m_props[func->name()].set( 0, 0, isStatic, true, true, func );
+   Private::MethodMap::iterator pos = _p->m_methods.find(func->name());
+   
+   if( pos != _p->m_methods.end() )
+   {
+      delete pos->second;
+      pos->second = func;
+   }
+   else {   
+      _p->m_methods[func->name()] = func;
+   }
+
+   if( func->methodOf() == 0 )
+   {
+      func->methodOf(this);
+   }
+}
+
+
+void Class::addMethod( const String& name, ext_func_t func, const String& prototype, bool isStatic )
+{
+   Function* f = new ExtFunc(name, func, 0, 0);
+   f->parseDescription( prototype );
+   addMethod( f, isStatic );
+}
+
+void Class::setConstuctor( Function* func )
+{
+   delete _p->m_constructor;
+   _p->m_constructor = func;
+   func->methodOf( this );   
+}
+
+ 
+void Class::setConstuctor( const String& name, ext_func_t func, const String& prototype )
+{
+   Function* f = new ExtFunc(name, func, 0, 0);
+   f->parseDescription( prototype );
+   setConstuctor( f );
+}
+
+
+void Class::addConstant( const String& name, const Item& value )
+{
+   _p->m_props[name].set(0, 0, true, true, true, value );
+}
+
+
+void Class::setParent( Class* parent )
+{
+   m_parent = parent;
+   // copy all the properties here.
+   Private::PropertyMap& props = parent->_p->m_props;
+   Private::PropertyMap::iterator iter = props.begin();
+   while( iter != props.end() )
+   {
+      Property& prop = iter->second;
+      _p->m_props[iter->first] = prop; // use default copy
+      ++iter;
+   }
+}
+
+void Class::gcMark( uint32 mark )
+{
+   if( m_mark != mark )
+   {
+      Mantra::gcMark(mark);
+
+      // copy all the properties here.
+      Private::PropertyMap& props = _p->m_props;
+      Private::PropertyMap::iterator iter = props.begin();
+      while( iter != props.end() )
+      {
+         Property& prop = iter->second;
+         prop.value.gcMark(mark); // this will include our mehtods.
+         ++iter;
+      }
+
+      if( _p->m_constructor != 0 )
+      {
+         _p->m_constructor->gcMark(mark);
+      }
+   }
 }
 
 
@@ -223,8 +488,14 @@ void Class::onInheritanceResolved( ExprInherit* )
 // VM Operator override.
 //
 
-bool Class::op_init( VMContext*, void*, int32 ) const
+bool Class::op_init( VMContext* ctx, void* inst, int32 pCount ) const
 {
+   if( _p->m_constructor != 0 )
+   {
+      ctx->callInternal( _p->m_constructor, pCount, Item(this,inst) );
+      return true;
+   }
+
    throw FALCON_SIGN_XERROR( OperandError, e_invop, .extra("init") );
 }
 
@@ -391,12 +662,34 @@ void Class::op_setIndex(VMContext* ctx, void* ) const
 }
 
 
-void Class::op_getProperty( VMContext* ctx, void* data, const String& property ) const
+void Class::op_getProperty( VMContext* ctx, void* data, const String& prop ) const
 {
    static BOM* bom = Engine::instance()->getBom();
 
+   Private::PropertyMap::iterator iter = _p->m_props.find( prop );
+   if( iter != _p->m_props.end() )
+   {
+      Property& prop = iter->second;
+      if( prop.bConst ) {
+         if( prop.value.type() == FLC_CLASS_ID_FUNC )
+         {
+            Function* func = static_cast<Function*>(prop.value.asInst());
+            ctx->topData().setUser(this, data);
+            ctx->topData().methodize(func);
+         }
+         else {
+            ctx->topData() = prop.value;
+         }
+      }
+      else {
+         prop.getFunc( this, iter->first, data, ctx->topData() );
+      }
+
+      return;
+   }
+
    // try to find a valid BOM propery.
-   BOM::handler handler = bom->get( property );
+   BOM::handler handler = bom->get( prop );
    if ( handler != 0  )
    {
       handler( ctx, this, data );
@@ -404,21 +697,45 @@ void Class::op_getProperty( VMContext* ctx, void* data, const String& property )
    else
    {
       FALCON_RESIGN_XERROR( AccessError, e_prop_acc, ctx,
-                   .extra(property) );
+                   .extra(prop) );
    }
 }
 
 
-void Class::op_setProperty( VMContext* ctx, void*, const String& prop ) const
+void Class::op_setProperty( VMContext* ctx, void* data, const String& prop ) const
 {
+   Private::PropertyMap::iterator iter = _p->m_props.find( prop );
+   if( iter != _p->m_props.end() )
+   {
+      Property& prop = iter->second;
+      if( !prop.bConst )
+      {
+         ctx->popData();
+         prop.setFunc( this, iter->first, data, ctx->topData() );
+      }
+      return;
+   }
    FALCON_RESIGN_XERROR( AccessError, e_prop_acc, ctx,
-                .extra(prop) );
+                   .extra(prop) );
 }
 
 
 void Class::op_getClassProperty( VMContext* ctx, const String& prop) const
 {
    static BOM* bom = Engine::instance()->getBom();
+
+   Private::PropertyMap::iterator iter = _p->m_props.find( prop );
+   if( iter != _p->m_props.end() && iter->second.bStatic )
+   {
+      Property& prop = iter->second;
+      if( prop.bConst ) {
+         ctx->topData() = prop.value;
+      }
+      else {
+         prop.getFunc( this, iter->first, 0, ctx->topData() );
+      }
+      return;
+   }
 
    // try to find a valid BOM propery.
    BOM::handler handler = bom->get( prop );

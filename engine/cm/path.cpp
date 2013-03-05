@@ -23,6 +23,7 @@
 #include <falcon/path.h>
 #include <falcon/errors/paramerror.h>
 #include <falcon/errors/codeerror.h>
+#include <falcon/errors/accesserror.h>
 
 #include <falcon/datawriter.h>
 #include <falcon/datareader.h>
@@ -32,31 +33,363 @@
 namespace Falcon {
 namespace Ext {
 
+   
+FALCON_DECLARE_FUNCTION( absolutize, "parent:[S]" );
+FALCON_DECLARE_FUNCTION( relativize, "parent:S" );
+FALCON_DECLARE_FUNCTION( canonize, "" );
+FALCON_DECLARE_FUNCTION( cwd, "" );
+//==============================================================
+
+class PathCarrier
+{
+public:
+   Path m_path;
+   uint32 m_mark;
+   
+   
+   PathCarrier():
+   m_mark(0)
+   {}
+   
+   PathCarrier( const PathCarrier& other ):
+      m_path( other.m_path ),
+      m_mark(0)
+   {}
+   
+   ~PathCarrier()
+   {
+   }
+
+};
+
+//====================================================
+// Properties.
+//
+   
+static void set_resource( const Class*, const String&, void* instance, const Item& value )
+{
+   if( ! value.isString() )
+   {
+      throw new AccessError( ErrorParam( e_inv_prop_value, __LINE__, SRC )
+         .extra("S") );
+   }
+
+   if( ! static_cast<PathCarrier*>(instance)->m_path.resource(*value.asString()) )
+   {
+      throw new ParamError( ErrorParam( e_malformed_uri, __LINE__, SRC ) );
+   }
+}
+
+
+static void get_resource( const Class*, const String&, void* instance, Item& value )
+{
+   value = FALCON_GC_HANDLE( new String(static_cast<PathCarrier*>(instance)->m_path.resource()));
+}
+
+
+static void set_location( const Class*, const String&, void* instance, const Item& value )
+{
+   if( ! value.isString() )
+   {
+      throw new AccessError( ErrorParam( e_inv_prop_value, __LINE__, SRC )
+         .extra("S") );
+   }
+
+   if( ! static_cast<PathCarrier*>(instance)->m_path.location(*value.asString()) )
+   {
+      throw new ParamError( ErrorParam( e_malformed_uri, __LINE__, SRC ) );
+   }
+}
+
+
+static void get_location( const Class*, const String&, void* instance, Item& value )
+{
+   value = FALCON_GC_HANDLE( new String(static_cast<PathCarrier*>(instance)->m_path.location()));
+}
+
+
+static void set_fulloc( const Class*, const String&, void* instance, const Item& value )
+{
+   if( ! value.isString() )
+   {
+      throw new AccessError( ErrorParam( e_inv_prop_value, __LINE__, SRC )
+         .extra("S") );
+   }
+
+   if( ! static_cast<PathCarrier*>(instance)->m_path.fulloc(*value.asString()) )
+   {
+      throw new ParamError( ErrorParam( e_malformed_uri, __LINE__, SRC ) );
+   }
+}
+  
+
+static void get_fulloc( const Class*, const String&, void* instance, Item& value )
+{
+   PathCarrier* pc = static_cast<PathCarrier*>(instance);
+   String* loc = new String;
+   pc->m_path.getFullLocation(*loc);   
+   value = FALCON_GC_HANDLE(loc) ;
+}
+
+  
+static void set_file( const Class*, const String&, void* instance, const Item& value )
+{
+   if( ! value.isString() )
+   {
+      throw new AccessError( ErrorParam( e_inv_prop_value, __LINE__, SRC )
+         .extra("S") );
+   }
+
+   if( ! static_cast<PathCarrier*>(instance)->m_path.file(*value.asString()) )
+   {
+      throw new ParamError( ErrorParam( e_malformed_uri, __LINE__, SRC ) );
+   }
+}
+
+   
+static void get_file( const Class*, const String&, void* instance, Item& value )
+{
+   value = FALCON_GC_HANDLE( new String(static_cast<PathCarrier*>(instance)->m_path.file()));
+}
+
+
+static void set_ext( const Class*, const String&, void* instance, const Item& value )
+{
+   if( ! value.isString() )
+   {
+      throw new AccessError( ErrorParam( e_inv_prop_value, __LINE__, SRC )
+         .extra("S") );
+   }
+
+   if( ! static_cast<PathCarrier*>(instance)->m_path.ext(*value.asString()) )
+   {
+      throw new ParamError( ErrorParam( e_malformed_uri, __LINE__, SRC ) );
+   }
+}
+
+static void get_ext( const Class*, const String&, void* instance, Item& value )
+{
+   value = FALCON_GC_HANDLE( new String(static_cast<PathCarrier*>(instance)->m_path.ext()));
+}
+
+
+static void set_filext( const Class*, const String&, void* instance, const Item& value )
+{
+   if( ! value.isString() )
+   {
+      throw new AccessError( ErrorParam( e_inv_prop_value, __LINE__, SRC )
+         .extra("S") );
+   }
+
+   if( ! static_cast<PathCarrier*>(instance)->m_path.fileext(*value.asString()) )
+   {
+      throw new ParamError( ErrorParam( e_malformed_uri, __LINE__, SRC ) );
+   }
+}
+
+
+static void get_filext( const Class*, const String&, void* instance, Item& value )
+{
+   value = FALCON_GC_HANDLE( new String(static_cast<PathCarrier*>(instance)->m_path.fileext()));
+}
+
+
+static void set_encoded( const Class*, const String&, void* instance, const Item& value )
+{
+   if( ! value.isString() )
+   {
+      throw new AccessError( ErrorParam( e_inv_params, __LINE__, SRC )
+         .extra("S") );
+   }
+
+   if( ! static_cast<PathCarrier*>(instance)->m_path.parse(*value.asString()) )
+   {
+      throw new ParamError( ErrorParam( e_malformed_uri, __LINE__, SRC ) );
+   }
+}
+
+
+static void get_encoded( const Class*, const String&, void* instance, Item& value )
+{
+   value = FALCON_GC_HANDLE( new String(static_cast<PathCarrier*>(instance)->m_path.encode()));
+}
+
+
+static void set_wlocation( const Class*, const String&, void* instance, const Item& value )
+{   
+   if( ! value.isString() )
+   {
+      throw new AccessError( ErrorParam( e_inv_params, __LINE__, SRC )
+         .extra("S") );
+   }
+
+   if( ! static_cast<PathCarrier*>(instance)->m_path.location(*value.asString()) )
+   {
+      throw new ParamError( ErrorParam( e_malformed_uri, __LINE__, SRC ) );
+   }
+}
+
+static void get_wlocation( const Class*, const String&, void* instance, Item& value )
+{
+   PathCarrier* pc = static_cast<PathCarrier*>(instance);
+   String* temp = new String;
+   pc->m_path.getWinLocation(*temp);   
+   value = FALCON_GC_HANDLE(temp);
+}
+
+
+static void set_wfulloc( const Class*, const String&, void* instance, const Item& value )
+{
+   if( ! value.isString() )
+   {
+      throw new AccessError( ErrorParam( e_inv_prop_value, __LINE__, SRC )
+         .extra("S") );
+   }
+
+   if( ! static_cast<PathCarrier*>(instance)->m_path.fulloc(*value.asString()) )
+   {
+      throw new ParamError( ErrorParam( e_malformed_uri, __LINE__, SRC ) );
+   }
+}
+
+
+static void get_wfulloc( const Class*, const String&, void* instance, Item& value )
+{
+   PathCarrier* pc = static_cast<PathCarrier*>(instance);
+   String* temp = new String;
+   pc->m_path.getFullWinLocation(*temp);   
+   value = FALCON_GC_HANDLE( temp );
+}
+
+
+static void set_wencoded( const Class*, const String&, void* instance, const Item& value )
+{
+   if( ! value.isString() )
+   {
+      throw new AccessError( ErrorParam( e_inv_prop_value, __LINE__, SRC )
+         .extra("S") );
+   }
+
+   if( ! static_cast<PathCarrier*>(instance)->m_path.parse(*value.asString()) )
+   {
+      throw new ParamError( ErrorParam( e_malformed_uri, __LINE__, SRC ) );
+   }
+}
+
+
+static void get_wencoded( const Class*, const String&, void* instance, Item& value )
+{
+   PathCarrier* pc = static_cast<PathCarrier*>(instance);
+   String* temp = new String;
+   pc->m_path.getWinFormat(*temp);   
+   value = FALCON_GC_HANDLE( temp );
+}
+
+
+void Function_absolutize::invoke( VMContext* ctx, int32 pCount )
+{
+   Item* i_path = ctx->param(0);
+   if( i_path != 0 && !(i_path->isString()||i_path->isNil()) )
+   {
+      throw paramError();
+   }
+   
+   PathCarrier* pc = static_cast<PathCarrier*>(ctx->self().asInst());
+   if( i_path == 0 || i_path->isNil() )
+   {
+      pc->m_path.absolutize();
+   }
+   else
+   {
+      pc->m_path.absolutize( *i_path->asString() );
+   }
+   
+   ctx->returnFrame();   
+}
+
+
+void Function_relativize::invoke( VMContext* ctx, int32 pCount )
+{
+   Item* i_path = ctx->param(0);
+   if( i_path == 0 || ! i_path->isString() )
+   {
+      throw paramError();
+   }
+   
+   PathCarrier* pc = static_cast<PathCarrier*>(ctx->self().asInst());
+   Item ret; 
+   ret.setBoolean( pc->m_path.relativize( *i_path->asString() ) );
+   ctx->returnFrame(ret);   
+}
+
+
+void Function_canonize::invoke( VMContext* ctx, int32 pCount )
+{
+   PathCarrier* pc = static_cast<PathCarrier*>(ctx->self().asInst());
+   pc->m_path.canonicize();
+   ctx->returnFrame();
+}
+
+
+
+void Function_cwd::invoke( VMContext* ctx, int32 pCount )
+{   
+   String temp;
+   Path::currentWorkDirectory( temp );
+   ctx->returnFrame( temp );
+}
+
+
+//==============================================================
+
 
 ClassPath::ClassPath():
-   ClassUser("Path"),
-   
-   FALCON_INIT_PROPERTY( resource ),
-   FALCON_INIT_PROPERTY( location ),
-   FALCON_INIT_PROPERTY( fulloc ),
-   FALCON_INIT_PROPERTY( file ),
-   FALCON_INIT_PROPERTY( ext ),
-   FALCON_INIT_PROPERTY( filext ),
-   FALCON_INIT_PROPERTY( encoded ),
-   
-   FALCON_INIT_PROPERTY( wlocation ),
-   FALCON_INIT_PROPERTY( wfulloc ),
-   FALCON_INIT_PROPERTY( wencoded ),
-
-   FALCON_INIT_METHOD( absolutize ),
-   FALCON_INIT_METHOD( relativize ),
-   FALCON_INIT_METHOD( canonicize ),
-   FALCON_INIT_METHOD( cwd )
+   Class("Path")
 {
+   addProperty( "resource", &get_resource, &set_resource );
+   addProperty( "location", &get_location, &set_location );
+   addProperty( "fulloc", &get_fulloc, &set_fulloc );
+   addProperty( "file", &get_file, &set_file );
+   addProperty( "ext", &get_ext, &set_ext );
+   addProperty( "filext", &get_filext, &set_filext );
+   addProperty( "encoded", &get_encoded, &set_encoded );
+   addProperty( "wlocation", &get_wlocation, &set_wlocation );
+   addProperty( "wfulloc", &get_wfulloc, &set_wfulloc );
+   addProperty( "wencoded", &get_wencoded, &set_wencoded );
+
+   addMethod( new Function_absolutize );
+   addMethod( new Function_relativize );
+   addMethod( new Function_canonize );
+   addMethod( new Function_cwd, true );
 }
 
 ClassPath::~ClassPath()
 {}
+
+
+void ClassPath::dispose( void* instance ) const
+{
+   PathCarrier* pc = static_cast<PathCarrier*>(instance);
+   delete pc;
+}
+
+void* ClassPath::clone( void* instance ) const
+{
+   PathCarrier* pc = static_cast<PathCarrier*>(instance);
+   return new PathCarrier( *pc );
+}
+
+void ClassPath::gcMarkInstance( void* instance, uint32 mark ) const
+{
+   PathCarrier* pc = static_cast<PathCarrier*>(instance);
+   pc->m_mark = mark;
+}
+
+bool ClassPath::gcCheckInstance( void* instance, uint32 mark ) const
+{
+   PathCarrier* pc = static_cast<PathCarrier*>(instance);
+   return pc->m_mark >= mark;
+}
 
 
 void ClassPath::store( VMContext*, DataWriter* stream, void* instance ) const
@@ -70,7 +403,7 @@ void ClassPath::restore( VMContext* ctx, DataReader* stream ) const
 {
    String pathName;
    stream->read( pathName );
-   PathCarrier* pc = new PathCarrier(carriedProps());
+   PathCarrier* pc = new PathCarrier();
    try {
       pc->m_path.parse( pathName );
       ctx->pushData( Item( this, pc ) );
@@ -84,7 +417,7 @@ void ClassPath::restore( VMContext* ctx, DataReader* stream ) const
 
 void* ClassPath::createInstance() const
 {
-   return new PathCarrier( carriedProps() );
+   return new PathCarrier( );
 }
 
 
@@ -125,220 +458,6 @@ void ClassPath::op_toString( VMContext* ctx, void* self ) const
 {
    PathCarrier* uc = static_cast<PathCarrier*>(self);
    ctx->topData().setString( uc->m_path.encode() ); // garbages
-}
-
-
-//====================================================
-// Properties.
-//
-   
-FALCON_DEFINE_PROPERTY_SET_P( ClassPath, resource )
-{
-   checkType( value.isString(), "S" );
-   if( ! static_cast<PathCarrier*>(instance)->m_path.resource(*value.asString()) )
-   {
-      throw new ParamError( ErrorParam( e_malformed_uri, __LINE__, SRC ) );
-   }
-}
-
-FALCON_DEFINE_PROPERTY_GETS_P( ClassPath, resource )
-{
-   return static_cast<PathCarrier*>(instance)->m_path.resource();
-}
-
-
-FALCON_DEFINE_PROPERTY_SET_P( ClassPath, location )
-{
-   checkType( value.isString(), "S" );
-   if( ! static_cast<PathCarrier*>(instance)->m_path.location(*value.asString()) )
-   {
-      throw new ParamError( ErrorParam( e_malformed_uri, __LINE__, SRC ) );
-   }
-}
-
-FALCON_DEFINE_PROPERTY_GETS_P( ClassPath, location )
-{
-   return static_cast<PathCarrier*>(instance)->m_path.location();
-}
-
-
-FALCON_DEFINE_PROPERTY_SET_P( ClassPath, fulloc )
-{
-   checkType( value.isString(), "S" );
-   if( ! static_cast<PathCarrier*>(instance)->m_path.fulloc(*value.asString()) )
-   {
-      throw new ParamError( ErrorParam( e_malformed_uri, __LINE__, SRC ) );
-   }
-}
-
-FALCON_DEFINE_PROPERTY_GETS_P( ClassPath, fulloc )
-{
-   PathCarrier* pc = static_cast<PathCarrier*>(instance);
-   pc->m_path.getFullLocation(pc->m_fulloc);   
-   return pc->m_fulloc;
-}
-   
-  
-FALCON_DEFINE_PROPERTY_SET_P( ClassPath, file )
-{
-   checkType( value.isString(), "S" );
-   if( ! static_cast<PathCarrier*>(instance)->m_path.file(*value.asString()) )
-   {
-      throw new ParamError( ErrorParam( e_malformed_uri, __LINE__, SRC ) );
-   }
-}
-
-FALCON_DEFINE_PROPERTY_GETS_P( ClassPath, file )
-{
-   return static_cast<PathCarrier*>(instance)->m_path.file();
-}
-   
-
-FALCON_DEFINE_PROPERTY_SET_P( ClassPath, ext )
-{
-   checkType( value.isString(), "S" );
-   if( ! static_cast<PathCarrier*>(instance)->m_path.ext(*value.asString()) )
-   {
-      throw new ParamError( ErrorParam( e_malformed_uri, __LINE__, SRC ) );
-   }
-}
-
-FALCON_DEFINE_PROPERTY_GETS_P( ClassPath, ext )
-{
-   return static_cast<PathCarrier*>(instance)->m_path.ext();
-}
-
-FALCON_DEFINE_PROPERTY_SET_P( ClassPath, filext )
-{
-   checkType( value.isString(), "S" );
-   if( ! static_cast<PathCarrier*>(instance)->m_path.fileext(*value.asString()) )
-   {
-      throw new ParamError( ErrorParam( e_malformed_uri, __LINE__, SRC ) );
-   }
-}
-
-FALCON_DEFINE_PROPERTY_GETS_P( ClassPath, filext )
-{
-   return static_cast<PathCarrier*>(instance)->m_path.fileext();
-}
-
-
-FALCON_DEFINE_PROPERTY_SET_P( ClassPath, encoded )
-{
-   checkType( value.isString(), "S" );
-   if( ! static_cast<PathCarrier*>(instance)->m_path.parse(*value.asString()) )
-   {
-      throw new ParamError( ErrorParam( e_malformed_uri, __LINE__, SRC ) );
-   }
-}
-
-FALCON_DEFINE_PROPERTY_GETS_P( ClassPath, encoded )
-{
-   return static_cast<PathCarrier*>(instance)->m_path.encode();
-}
-
-
-FALCON_DEFINE_PROPERTY_SET_P( ClassPath, wlocation )
-{
-   checkType( value.isString(), "S" );
-   if( ! static_cast<PathCarrier*>(instance)->m_path.location(*value.asString()) )
-   {
-      throw new ParamError( ErrorParam( e_malformed_uri, __LINE__, SRC ) );
-   }
-}
-
-FALCON_DEFINE_PROPERTY_GETS_P( ClassPath, wlocation )
-{
-   PathCarrier* pc = static_cast<PathCarrier*>(instance);
-   pc->m_path.getWinLocation(pc->m_winLoc);   
-   return pc->m_winLoc;
-}
-
-
-FALCON_DEFINE_PROPERTY_SET_P( ClassPath, wfulloc )
-{
-   checkType( value.isString(), "S" );
-   if( ! static_cast<PathCarrier*>(instance)->m_path.fulloc(*value.asString()) )
-   {
-      throw new ParamError( ErrorParam( e_malformed_uri, __LINE__, SRC ) );
-   }
-}
-
-FALCON_DEFINE_PROPERTY_GETS_P( ClassPath, wfulloc )
-{
-   PathCarrier* pc = static_cast<PathCarrier*>(instance);
-   pc->m_path.getFullWinLocation(pc->m_fullWinLoc);   
-   return pc->m_fullWinLoc;
-}
-
-
-FALCON_DEFINE_PROPERTY_SET_P( ClassPath, wencoded )
-{
-   checkType( value.isString(), "S" );
-   if( ! static_cast<PathCarrier*>(instance)->m_path.parse(*value.asString()) )
-   {
-      throw new ParamError( ErrorParam( e_malformed_uri, __LINE__, SRC ) );
-   }
-}
-
-FALCON_DEFINE_PROPERTY_GETS_P( ClassPath, wencoded )
-{
-   PathCarrier* pc = static_cast<PathCarrier*>(instance);
-   pc->m_path.getWinFormat(pc->m_winpath);   
-   return pc->m_winpath;
-}
-   
-
-FALCON_DEFINE_METHOD_P1( ClassPath, absolutize )
-{
-   Item* i_path = ctx->param(0);
-   if( i_path != 0 && !(i_path->isString()||i_path->isNil()) )
-   {
-      throw paramError();
-   }
-   
-   PathCarrier* pc = static_cast<PathCarrier*>(ctx->self().asInst());
-   if( i_path == 0 || i_path->isNil() )
-   {
-      pc->m_path.absolutize();
-   }
-   else
-   {
-      pc->m_path.absolutize( *i_path->asString() );
-   }
-   
-   ctx->returnFrame();   
-}
-
-
-FALCON_DEFINE_METHOD_P1( ClassPath, relativize )
-{
-   Item* i_path = ctx->param(0);
-   if( i_path == 0 || ! i_path->isString() )
-   {
-      throw paramError();
-   }
-   
-   PathCarrier* pc = static_cast<PathCarrier*>(ctx->self().asInst());
-   Item ret; 
-   ret.setBoolean( pc->m_path.relativize( *i_path->asString() ) );
-   ctx->returnFrame(ret);   
-}
-
-
-FALCON_DEFINE_METHOD_P1( ClassPath, canonicize )
-{
-   PathCarrier* pc = static_cast<PathCarrier*>(ctx->self().asInst());
-   pc->m_path.canonicize();
-   ctx->returnFrame();
-}
-
-
-FALCON_DEFINE_METHOD_P1( ClassPath, cwd )
-{   
-   String temp;
-   Path::currentWorkDirectory( temp );
-   ctx->returnFrame( temp );
 }
 
 

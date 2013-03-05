@@ -23,8 +23,6 @@
 #include <falcon/shared.h>
 #include <falcon/classes/classshared.h>
 
-#include <falcon/method.h>
-
 namespace Falcon {
 namespace Ext {
 
@@ -46,37 +44,6 @@ public:
    //
    virtual void* createInstance() const;
    virtual bool op_init( VMContext* ctx, void*, int pcount ) const;
-
-private:
-
-   /*#
-     @method signal Semaphore
-     @brief Signals the semaphore
-     @optparam count Count of signals to be sent to the semaphore.
-
-      The parameter @b count must be greater or equal to 1.
-    */
-   FALCON_DECLARE_METHOD( post, "count:[N]" );
-
-   /*#
-     @method tryWait Semaphore
-     @brief Check if the semaphore is signaled.
-     @return true if the semaphore is signaled, false otherwise.
-
-     The check eventually resets the semaphore if it's currently signaled.
-    */
-   FALCON_DECLARE_METHOD( tryWait, "" );
-
-   /*#
-     @method wait Semaphore
-     @brief Wait for the semaphore to be  to be open.
-     @optparam timeout Milliseconds to wait for the barrier to be open.
-     @return true if the semaphore is signaled during the wait, false if the given timeout expires.
-
-     If @b timeout is less than zero, the wait is endless; if @b timeout is zero,
-     the wait exits immediately.
-    */
-   FALCON_DECLARE_METHOD( wait, "timeout:[N]" );
 };
 
 }

@@ -262,8 +262,7 @@ void Error::enumerateSteps( Error::StepEnumerator &rator ) const
    {
       const TraceStep& ts = *iter;
       ++iter;
-      bool last = iter == _p->m_steps.end();
-      if( ! rator( ts, last ) ) break;
+      if( ! rator( ts ) ) break;
    }
 }
 
@@ -275,8 +274,7 @@ void Error::enumerateErrors( Error::ErrorEnumerator &rator ) const
    {
       Error* error = *iter;
       ++iter;
-      bool last = iter == _p->m_subErrors.end();
-      if( ! rator( *error, last ) ) break;
+      if( ! rator( *error ) ) break;
    }
 }
 

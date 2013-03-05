@@ -32,7 +32,8 @@ TextWriter::TextWriter( Stream* stream ):
    m_bCRLF(false),
    m_bLineFlush(false),
    m_twBufSize(0),
-   m_twBuffer(0)
+   m_twBuffer(0),
+   m_mark(0)
 {
    m_encoder = Engine::instance()->getTranscoder("C");
    m_chrStr.reserve(2);
@@ -46,7 +47,8 @@ TextWriter::TextWriter( Stream* stream, Transcoder* decoder ):
    m_bCRLF(false),
    m_bLineFlush(false),
    m_twBufSize(0),
-   m_twBuffer(0)
+   m_twBuffer(0),
+   m_mark(0)
 {
    m_chrStr.reserve(2);
 }

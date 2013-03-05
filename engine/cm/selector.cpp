@@ -30,49 +30,6 @@
 namespace Falcon {
 namespace Ext {
 
-ClassSelector::ClassSelector():
-         ClassShared("Selector"),
-         FALCON_INIT_METHOD(add),
-         FALCON_INIT_METHOD(update),
-         FALCON_INIT_METHOD(addRead),
-         FALCON_INIT_METHOD(addWrite),
-         FALCON_INIT_METHOD(addErr),
-
-         FALCON_INIT_METHOD(getRead),
-         FALCON_INIT_METHOD(getWrite),
-         FALCON_INIT_METHOD(getErr),
-         FALCON_INIT_METHOD(get),
-
-         FALCON_INIT_METHOD(tryWait),
-         FALCON_INIT_METHOD(wait)
-{
-   static Class* shared = Engine::handlers()->sharedClass();
-   addParent( shared );
-}
-
-
-ClassSelector::~ClassSelector()
-{
-}
-
-
-void* ClassSelector::createInstance() const
-{
-   return FALCON_CLASS_CREATE_AT_INIT;
-}
-
-
-bool ClassSelector::op_init( VMContext* ctx, void*, int pcount ) const
-{
-   Item* i_mode = ctx->opcodeParams(pcount);
-
-   bool fair = i_mode == 0 ? false : i_mode->isTrue();
-   Selector* sel = new Selector( &ctx->vm()->contextManager(), this, fair );
-   ctx->stackResult(pcount+1, FALCON_GC_HANDLE(sel) );
-
-   return true;
-}
-
 
 static void internal_selector_add( VMContext* ctx, int32, bool bAdd )
 {
@@ -117,12 +74,140 @@ static void internal_selector_add( VMContext* ctx, int32, bool bAdd )
 }
 
 
-FALCON_DEFINE_METHOD_P( ClassSelector, add )
+
+/*#
+  @method add Selector
+  @brief Adds a stream to the selector with a given mode
+  @param stream The stream to be added
+  @optparam mode Mode of read-write all.
+
+ */
+FALCON_DECLARE_FUNCTION( selector_add, "stream:Stream, mode:[N]" );
+
+/*#
+  @method update Selector
+  @brief Changes the stream selection mode.
+  @param stream The stream to be updated
+  @param mode Mode of read-write.
+
+ */
+FALCON_DECLARE_FUNCTION( selector_update, "stream:Stream, mode:N" );
+
+/*#
+  @method addRead Selector
+  @brief Adds a stream to the selector for read operations
+  @param stream The stream to be added for reading.
+ */
+FALCON_DECLARE_FUNCTION( selector_addRead, "stream:Stream" );
+
+/*#
+  @method addWrite Selector
+  @brief Adds a stream to the selector for write operations
+  @param stream The stream to be added for writing.
+ */
+FALCON_DECLARE_FUNCTION( selector_addWrite, "stream:Stream" );
+
+/*#
+  @method addWrite Selector
+  @brief Adds a stream to the selector for errors and out-of-band operations
+  @param stream The stream to be added for errors or out of band data.
+ */
+FALCON_DECLARE_FUNCTION( selector_addErr, "stream:Stream" );
+
+
+
+/*#
+  @method getRead Selector
+  @brief Gets the next ready-for-read stream.
+  @return Next ready stream.
+
+  If this selector is created in fair mode, the get operation will
+  exit the critical section acquired at wait success.
+
+  If the method is not in fair mode, and there are multiple waiters
+  for this selector, the get method might return nil, as the ready
+  streams might get dequeued by other agents before this method is
+  complete.
+
+  Also, the method will return nil if the wait successful for other
+  operations.
+ */
+FALCON_DECLARE_FUNCTION( selector_getRead, "" );
+
+/*#
+  @method getWrite Selector
+  @brief Gets the next ready-for-write stream.
+  @return Next ready stream.
+
+  If this selector is created in fair mode, the get operation will
+  exit the critical section acquired at wait success.
+
+  If the method is not in fair mode, and there are multiple waiters
+  for this selector, the get method might return nil, as the ready
+  streams might get dequeued by other agents before this method is
+  complete.
+
+  Also, the method will return nil if the wait successful for other
+  operations.
+ */
+FALCON_DECLARE_FUNCTION( selector_getWrite, "" );
+
+/*#
+  @method getErr Selector
+  @brief Gets the next out-of-band signaled stream.
+  @return Next ready stream.
+
+  If this selector is created in fair mode, the get operation will
+  exit the critical section acquired at wait success.
+
+  If the method is not in fair mode, and there are multiple waiters
+  for this selector, the get method might return nil, as the ready
+  streams might get dequeued by other agents before this method is
+  complete.
+
+  Also, the method will return nil if the wait successful for other
+  operations.
+ */
+FALCON_DECLARE_FUNCTION( selector_getErr, "" );
+
+
+/*#
+  @method get Selector
+  @brief Gets the next ready stream.
+  @return Next ready stream.
+
+  This method returns the first ready stream, peeked in order in:
+  - Out of band data signaled queue.
+  - Ready for read signaled queue.
+  - Ready for write signaled queue.
+
+  The method doesn't indicate what the operation the stream is ready
+  for; so if this method is used, other means need to be available
+  to know how to use the returned stream.
+
+  If this selector is created in fair mode, the get operation will
+  exit the critical section acquired at wait success.
+
+  If the method is not in fair mode, and there are multiple waiters
+  for this selector, the get method might return nil, as the ready
+  streams might get dequeued by other agents before this method is
+  complete.
+
+  Also, the method will return nil if the wait successful for other
+  operations.
+ */
+FALCON_DECLARE_FUNCTION( selector_get, "" );
+
+
+
+
+void Function_selector_add::invoke(VMContext* ctx, int32 pCount )
 {
    internal_selector_add(ctx, pCount, true );
 }
 
-FALCON_DEFINE_METHOD_P( ClassSelector, update )
+
+void Function_selector_update::invoke(VMContext* ctx, int32 pCount )
 {
    internal_selector_add(ctx, pCount, false );
 }
@@ -149,25 +234,26 @@ static void internal_add_mode( VMContext* ctx, int32, int32 mode )
 }
 
 
-FALCON_DEFINE_METHOD_P( ClassSelector, addRead )
+void Function_selector_addRead::invoke(VMContext* ctx, int32 pCount )
+
 {
    internal_add_mode( ctx, pCount, Selector::mode_read );
 }
 
 
-FALCON_DEFINE_METHOD_P( ClassSelector, addWrite )
+void Function_selector_addWrite::invoke(VMContext* ctx, int32 pCount )
 {
    internal_add_mode( ctx, pCount, Selector::mode_write );
 }
 
 
-FALCON_DEFINE_METHOD_P( ClassSelector, addErr )
+void Function_selector_addErr::invoke(VMContext* ctx, int32 pCount )
 {
    internal_add_mode( ctx, pCount, Selector::mode_err );
 }
 
 
-FALCON_DEFINE_METHOD_P1( ClassSelector, getRead )
+void Function_selector_getRead::invoke(VMContext* ctx, int32 pCount )
 {
    Selector* sel = static_cast<Selector*>(ctx->self().asInst());
    Stream* stream = sel->getNextReadyRead();
@@ -182,7 +268,7 @@ FALCON_DEFINE_METHOD_P1( ClassSelector, getRead )
 }
 
 
-FALCON_DEFINE_METHOD_P1( ClassSelector, getWrite )
+void Function_selector_getWrite::invoke(VMContext* ctx, int32 )
 {
    Selector* sel = static_cast<Selector*>(ctx->self().asInst());
    Stream* stream = sel->getNextReadyWrite();
@@ -197,7 +283,7 @@ FALCON_DEFINE_METHOD_P1( ClassSelector, getWrite )
 }
 
 
-FALCON_DEFINE_METHOD_P1( ClassSelector, getErr )
+void Function_selector_getErr::invoke(VMContext* ctx, int32 )
 {
    Selector* sel = static_cast<Selector*>(ctx->self().asInst());
    Stream* stream = sel->getNextReadyErr();
@@ -211,7 +297,8 @@ FALCON_DEFINE_METHOD_P1( ClassSelector, getErr )
    }
 }
 
-FALCON_DEFINE_METHOD_P1( ClassSelector, get )
+
+void Function_selector_get::invoke(VMContext* ctx, int32 )
 {
    Selector* sel = static_cast<Selector*>(ctx->self().asInst());
    Stream* stream = sel->getNextReadyErr();
@@ -230,16 +317,51 @@ FALCON_DEFINE_METHOD_P1( ClassSelector, get )
 
 
 
-FALCON_DEFINE_METHOD_P( ClassSelector, tryWait )
+//=========================================================
+//
+//=========================================================
+
+
+ClassSelector::ClassSelector():
+         ClassShared("Selector")
 {
-   ClassShared::genericClassTryWait(methodOf(), ctx, pCount);
+   static Class* shared = Engine::handlers()->sharedClass();
+   setParent( shared );
+
+   addMethod( new Function_selector_add);
+   addMethod( new Function_selector_update);
+   addMethod( new Function_selector_addRead);
+   addMethod( new Function_selector_addWrite);
+   addMethod( new Function_selector_addErr);
+
+   addMethod( new Function_selector_getRead);
+   addMethod( new Function_selector_getWrite);
+   addMethod( new Function_selector_getErr);
+   addMethod( new Function_selector_get);
 }
 
-FALCON_DEFINE_METHOD_P( ClassSelector, wait )
+
+ClassSelector::~ClassSelector()
 {
-   ClassShared::genericClassWait(methodOf(), ctx, pCount);
 }
 
+
+void* ClassSelector::createInstance() const
+{
+   return FALCON_CLASS_CREATE_AT_INIT;
+}
+
+
+bool ClassSelector::op_init( VMContext* ctx, void*, int pcount ) const
+{
+   Item* i_mode = ctx->opcodeParams(pcount);
+
+   bool fair = i_mode == 0 ? false : i_mode->isTrue();
+   Selector* sel = new Selector( &ctx->vm()->contextManager(), this, fair );
+   ctx->stackResult(pcount+1, FALCON_GC_HANDLE(sel) );
+
+   return true;
+}
 
 }
 }

@@ -21,10 +21,7 @@
 #include <falcon/function.h>
 #include <falcon/string.h>
 #include <falcon/shared.h>
-#include <falcon/classes/classuser.h>
 #include <falcon/classes/classshared.h>
-
-#include <falcon/method.h>
 #include <falcon/atomic.h>
 
 namespace Falcon {
@@ -73,40 +70,7 @@ public:
    //=============================================================
    //
    virtual void* createInstance() const;
-
    virtual bool op_init( VMContext* ctx, void*, int pcount ) const;
-
-private:
-
-   /*#
-     @method set Event
-     @brief Sets the event
-
-    */
-   FALCON_DECLARE_METHOD( set, "" );
-
-
-   /*#
-     @method tryWait Event
-     @brief Check if the event is signaled.
-     @return true if the event is signaled, false otherwise.
-
-     The check eventually resets the event if it's currently signaled.
-    */
-   FALCON_DECLARE_METHOD( tryWait, "" );
-
-   /*#
-     @method wait Event
-     @brief Waits until the event is set.
-     @optparam timeout A number of milliseconds to wait for the event to be posted.
-     @return True if the wait was succesful, false if the timeout expired without
-        the event being signaled.
-
-     If @b timeout is less than zero, the wait method waits forever. If it's
-     zero, it's equivalent to @a Event.tryWait.
-    */
-   FALCON_DECLARE_METHOD( wait, "timeout:[N]" );
-
 };
 
 }

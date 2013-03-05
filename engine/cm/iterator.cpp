@@ -25,6 +25,7 @@
 #include <falcon/datawriter.h>
 #include <falcon/datareader.h>
 #include <falcon/itemarray.h>
+#include <falcon/function.h>
 
 #include <falcon/errors/paramerror.h>
 #include <falcon/errors/accesserror.h>
@@ -33,14 +34,72 @@ namespace Falcon {
 namespace Ext {
 
 
+static void get_source( const Class*, const String&, void* instance, Item& value )
+{
+   IteratorCarrier* ic = static_cast<IteratorCarrier*>( instance );
+   value = ic->source();
+}
+
+
+FALCON_DECLARE_FUNCTION( rewind, "" );
+void Function_rewind::invoke(VMContext* ctx, int32 )
+{
+   IteratorCarrier* ic = static_cast<IteratorCarrier*>( ctx->self().asInst() );
+   ic->m_ready = false;
+   ic->m_srciter.setNil();
+   ctx->returnFrame();
+}
+
+FALCON_DECLARE_FUNCTION( next, "retOnFinish:[X]" );
+void Function_next::invoke(VMContext* ctx, int32 )
+{
+   IteratorCarrier* ic = static_cast<IteratorCarrier*>( ctx->self().asInst() );
+   TRACE1( "ClassIterator::next %s", ctx->self().describe(2,50).c_ize() );
+
+   Class* cls=0;
+   void* inst=0;
+   ic->m_source.asClassInst( cls, inst );
+
+   ClassIterator* cli = static_cast<ClassIterator*>(methodOf());
+   long depth = 0;
+   if( ! ic->m_ready )
+   {
+      ctx->pushCode( &cli->m_stepMethodNext_NextNext );
+      ctx->pushCode( &cli->m_stepMethodNext_IterNext );
+      depth = ctx->codeDepth();
+      ctx->pushData( Item(cli, ic) );
+      ctx->pushData( ic->m_source );
+      cls->op_iter(ctx, inst);
+   }
+   else {
+      ctx->pushCode( &cli->m_stepMethodNext_NextNext );
+      depth = ctx->codeDepth();
+      ctx->pushData( Item(cli, ic) );
+      ctx->pushData( ic->m_source );
+      ctx->pushData( ic->m_srciter );
+      cls->op_next(ctx, inst);
+   }
+
+   // descend immediately if possible
+   if( ctx->codeDepth() == depth )
+   {
+      ctx->currentCode().m_step->apply( ctx->currentCode().m_step, ctx );
+   }
+
+   // otherwise, wait our turn to be called back
+}
+
+
 
 ClassIterator::ClassIterator():
-   ClassUser("Iterator"),
-   FALCON_INIT_METHOD( next ),
-   FALCON_INIT_METHOD( rewind ),
-   FALCON_INIT_PROPERTY( source )
+   Class("Iterator")
 {
+   addProperty( "source", &get_source );
+   addMethod( new Function_rewind );
+   m_Method_next = new Function_next;
+   addMethod( m_Method_next );
 }
+
 
 ClassIterator::~ClassIterator()
 {}
@@ -49,7 +108,7 @@ ClassIterator::~ClassIterator()
 void ClassIterator::invokeDirectNextMethod( VMContext* ctx, void* instance, int32 pcount )
 {
    ctx->self().setUser(this, instance);
-   m_Method_next.invoke(ctx, pcount);
+   m_Method_next->invoke(ctx, pcount);
 }
 
 
@@ -248,64 +307,6 @@ void ClassIterator::PStepNextNext::apply_( const PStep*, VMContext* ctx )
    }
 }
 
-
-FALCON_DEFINE_PROPERTY_GET_P( ClassIterator, source )
-{
-   IteratorCarrier* ic = static_cast<IteratorCarrier*>( instance );
-   value = ic->m_source;
-}
-
-FALCON_DEFINE_PROPERTY_SET_P0( ClassIterator, source )
-{
-   throw FALCON_SIGN_ROPROP_ERROR( "source" );
-}
-
-
-FALCON_DEFINE_METHOD_P1( ClassIterator, rewind )
-{
-   IteratorCarrier* ic = static_cast<IteratorCarrier*>( ctx->self().asInst() );
-   ic->m_ready = false;
-   ic->m_srciter.setNil();
-   ctx->returnFrame();
-}
-
-FALCON_DEFINE_METHOD_P1( ClassIterator, next )
-{
-   IteratorCarrier* ic = static_cast<IteratorCarrier*>( ctx->self().asInst() );
-   TRACE1( "ClassIterator::next %s", ctx->self().describe(2,50).c_ize() );
-
-   Class* cls=0;
-   void* inst=0;
-   ic->m_source.asClassInst( cls, inst );
-
-   ClassIterator* cli = static_cast<ClassIterator*>(methodOf());
-   long depth = 0;
-   if( ! ic->m_ready )
-   {
-      ctx->pushCode( &cli->m_stepMethodNext_NextNext );
-      ctx->pushCode( &cli->m_stepMethodNext_IterNext );
-      depth = ctx->codeDepth();
-      ctx->pushData( Item(cli, ic) );
-      ctx->pushData( ic->m_source );
-      cls->op_iter(ctx, inst);
-   }
-   else {
-      ctx->pushCode( &cli->m_stepMethodNext_NextNext );
-      depth = ctx->codeDepth();
-      ctx->pushData( Item(cli, ic) );
-      ctx->pushData( ic->m_source );
-      ctx->pushData( ic->m_srciter );
-      cls->op_next(ctx, inst);
-   }
-
-   // descend immediately if possible
-   if( ctx->codeDepth() == depth )
-   {
-      ctx->currentCode().m_step->apply( ctx->currentCode().m_step, ctx );
-   }
-
-   // otherwise, wait our turn to be called back
-}
 
 void ClassIterator::PStepMethodNext_IterNext::apply_( const PStep* , VMContext* ctx )
 {

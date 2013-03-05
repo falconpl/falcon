@@ -81,9 +81,9 @@ void* ClassModule::createInstance() const
 
 void ClassModule::enumerateProperties( void*, Class::PropertyEnumerator& cb ) const
 {
-   cb("attributes", true);
-   cb("name", true);
-   cb("uri", false );
+   cb("attributes" );
+   cb("name" );
+   cb("uri");
 }
 
 

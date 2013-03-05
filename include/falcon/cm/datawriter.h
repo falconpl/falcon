@@ -18,14 +18,12 @@
 #define FALCON_CORE_DATAWRITER_H
 
 #include <falcon/types.h>
-#include <falcon/property.h>
-#include <falcon/method.h>
-#include <falcon/classes/classuser.h>
+#include <falcon/class.h>
 
 namespace Falcon {
 namespace Ext {
 
-class ClassDataWriter: public ClassUser
+class ClassDataWriter: public Class
 {
 public:
    ClassDataWriter( Class* clsStream );
@@ -47,30 +45,6 @@ public:
    
 private:
    Class* m_clsStream;
-   
-   //====================================================
-   // Properties.
-   //
-   
-   FALCON_DECLARE_PROPERTY( endianity );
-   FALCON_DECLARE_PROPERTY( sysEndianity );
-   
-   FALCON_DECLARE_METHOD( write, "data:S|M, count:[N], start:[N]" );
-   FALCON_DECLARE_METHOD( writeBool, "data:B" );
-   FALCON_DECLARE_METHOD( writeChar, "data:S" );
-   FALCON_DECLARE_METHOD( writeByte, "data:N" );
-   FALCON_DECLARE_METHOD( writeI16, "data:N" );
-   FALCON_DECLARE_METHOD( writeU16, "data:N" );
-   FALCON_DECLARE_METHOD( writeI32, "data:N" );
-   FALCON_DECLARE_METHOD( writeU32, "data:N" );
-   FALCON_DECLARE_METHOD( writeI64, "data:N" );
-   FALCON_DECLARE_METHOD( writeU64, "data:N" );
-   FALCON_DECLARE_METHOD( writeF32, "data:N" );
-   FALCON_DECLARE_METHOD( writeF64, "data:N" );
-   FALCON_DECLARE_METHOD( writeString, "data:S" );
-   FALCON_DECLARE_METHOD( writeItem, "data:X" );
-   
-   FALCON_DECLARE_METHOD( flush, "" );
 };
 
 }

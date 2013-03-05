@@ -24,6 +24,7 @@
 #include <falcon/datareader.h>
 #include <falcon/datawriter.h>
 #include <falcon/stdhandlers.h>
+#include <falcon/function.h>
 
 #include <falcon/errors/accesserror.h>
 #include <falcon/errors/codeerror.h>
@@ -31,11 +32,65 @@
 
 namespace Falcon {
 
-ClassArray::ClassArray():
-   ClassUser("Array", FLC_CLASS_ID_ARRAY ),
-   FALCON_INIT_METHOD(alloc),
-   FALCON_INIT_METHOD(reserve)
+
+FALCON_DECLARE_FUNCTION(alloc,"size:[N>1]");
+void Function_alloc::invoke(VMContext* ctx, int32 )
 {
+   Item* i_size = ctx->param(0);
+
+   if( i_size != 0 && ! i_size->isOrdinal() )
+   {
+      throw paramError(__LINE__, SRC );
+   }
+
+   if( i_size == 0 )
+   {
+      ItemArray* array = new ItemArray;
+      ctx->returnFrame(FALCON_GC_HANDLE(array));
+   }
+   else {
+      if( i_size->forceInteger() < 0 )
+      {
+         throw paramError(__LINE__, SRC );
+      }
+      else
+      {
+         ItemArray* array = new ItemArray;
+         array->reserve((length_t)i_size->forceInteger());
+         ctx->returnFrame(FALCON_GC_HANDLE(array));
+      }
+   }
+}
+
+
+FALCON_DECLARE_FUNCTION(reserve,"size:N>1");
+void Function_reserve::invoke(VMContext* ctx, int32 )
+{
+   Item* i_size = ctx->param(0);
+   if( i_size == 0 || ! i_size->isOrdinal() || i_size->forceInteger() < 0 )
+   {
+      throw paramError(__LINE__, SRC );
+   }
+
+   Class* cls = 0;
+   void* data = 0;
+   ctx->self().asClassInst(cls, data);
+
+   ItemArray* array = static_cast<ItemArray*>( cls->getParentData(methodOf(), data) );
+
+   array->reserve((length_t)i_size->forceInteger());
+   ctx->returnFrame(Item(array->handler(), array));
+}
+
+
+ClassArray::ClassArray():
+   Class("Array", FLC_CLASS_ID_ARRAY )
+{
+
+   addMethod( new Function_alloc, true );
+   addMethod( new Function_reserve, true );
+
+   
 }
 
 
@@ -544,53 +599,6 @@ void ClassArray::op_next( VMContext* ctx, void* instance ) const
    }
 }
 
-
-FALCON_DEFINE_METHOD_P1(ClassArray, alloc )
-{
-   Item* i_size = ctx->param(0);
-
-   if( i_size != 0 && ! i_size->isOrdinal() )
-   {
-      throw paramError(__LINE__, SRC );
-   }
-
-   if( i_size == 0 )
-   {
-      ItemArray* array = new ItemArray;
-      ctx->returnFrame(FALCON_GC_HANDLE(array));
-   }
-   else {
-      if( i_size->forceInteger() < 0 )
-      {
-         throw paramError(__LINE__, SRC );
-      }
-      else
-      {
-         ItemArray* array = new ItemArray;
-         array->reserve((length_t)i_size->forceInteger());
-         ctx->returnFrame(FALCON_GC_HANDLE(array));
-      }
-   }
-}
-
-
-FALCON_DEFINE_METHOD_P1(ClassArray, reserve )
-{
-   Item* i_size = ctx->param(0);
-   if( i_size == 0 || ! i_size->isOrdinal() || i_size->forceInteger() < 0 )
-   {
-      throw paramError(__LINE__, SRC );
-   }
-
-   Class* cls = 0;
-   void* data = 0;
-   ctx->self().asClassInst(cls, data);
-
-   ItemArray* array = static_cast<ItemArray*>( cls->getParentData(methodOf(), data) );
-
-   array->reserve((length_t)i_size->forceInteger());
-   ctx->returnFrame(Item(array->handler(), array));
-}
 
 }
 

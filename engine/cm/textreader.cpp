@@ -20,6 +20,7 @@
 #include <falcon/transcoder.h>
 #include <falcon/vmcontext.h>
 #include <falcon/stdhandlers.h>
+#include <falcon/function.h>
 
 #include <falcon/cm/textstream.h>
 
@@ -28,116 +29,11 @@
 namespace Falcon {
 namespace Ext {
 
-
-//================================================================
-//
-
-ClassTextReader::ClassTextReader( ClassStream* clsStream ):
-   ClassUser( "TextReader" ),
-   m_clsStream( clsStream ),
-   
-   FALCON_INIT_PROPERTY( encoding ),
-   
-   FALCON_INIT_METHOD( read ),
-   FALCON_INIT_METHOD( grab ),
-   FALCON_INIT_METHOD( readLine ),
-   FALCON_INIT_METHOD( grabLine ),
-   FALCON_INIT_METHOD( readEof ),
-   FALCON_INIT_METHOD( grabEof ),
-   FALCON_INIT_METHOD( readRecord ),
-   FALCON_INIT_METHOD( grabRecord ),
-   FALCON_INIT_METHOD( readToken ),
-   FALCON_INIT_METHOD( grabToken ),
-   
-   FALCON_INIT_METHOD( readChar ),
-   FALCON_INIT_METHOD( getChar ),
-   FALCON_INIT_METHOD( ungetChar ),   
-   
-   FALCON_INIT_METHOD( getStream ),      
-   FALCON_INIT_METHOD( sync ),
-   FALCON_INIT_METHOD( close )
-{
-   
-}
-
-ClassTextReader::~ClassTextReader()
-{
-}
-
-
-void* ClassTextReader::createInstance() const
-{
-   return FALCON_CLASS_CREATE_AT_INIT;
-}
-
-bool ClassTextReader::op_init( VMContext* ctx, void* , int pcount ) const
-{
-   static Engine* eng = Engine::instance();
-   
-   // if we have 2 parameters, the second one is the encoding.
-   String* encoding = 0;
-   Stream* stc = 0;
-   Transcoder* tc = 0;
-   
-   if( pcount > 0 )
-   {
-      Class* cls;
-      void* data;
-      Item* params = ctx->opcodeParams(pcount);
-      
-      if( params[0].asClassInst(cls, data) && cls->isDerivedFrom(m_clsStream) )
-      {
-         stc = static_cast<Stream*>(data);
-         if( pcount > 1 )
-         {
-            if ( params[1].isString() )
-            {
-               encoding = params[1].asString();
-            }
-            else
-            {
-               // force a param error.
-               stc = 0;
-            }
-         }
-      }
-   }
-   
-   // if we're here with stc == 0, we have a param error.
-   if( stc == 0 )
-   {
-      throw new ParamError( ErrorParam( e_inv_params, __LINE__, SRC )
-         .origin(ErrorParam::e_orig_runtime)
-         .extra( "Stream,[S]" ) );      
-   }
-   
-   // is the encoding correct?
-   if( encoding != 0 ) 
-   {
-      tc = eng->getTranscoder( *encoding );
-      if( tc == 0 )
-      {
-         throw new ParamError( ErrorParam( e_param_range, __LINE__, SRC )
-            .origin(ErrorParam::e_orig_runtime)
-            .extra( "Unknown encoding " + *encoding ) );      
-      }
-   }
-   
-   TextReader* twc = new TextReader(stc);
-   if( tc != 0 )
-   {
-      twc->setEncoding(tc);
-   }
-   ctx->opcodeParam(pcount) = FALCON_GC_STORE(this, twc);
-   
-   return false;
-}
-
 //=================================================================
 // Properties
 //
 
-FALCON_DEFINE_PROPERTY_SET_P( ClassTextReader, encoding )
+static void set_encoding( const Class*, const String&, void* instance, const Item& value )
 {
    static Engine* eng = Engine::instance();
    
@@ -165,17 +61,44 @@ FALCON_DEFINE_PROPERTY_SET_P( ClassTextReader, encoding )
 }
 
 
-FALCON_DEFINE_PROPERTY_GET_P( ClassTextReader, encoding )
+static void get_encoding( const Class*, const String&, void* instance, Item& value )
 {
    TextReader* sc = static_cast<TextReader*>(instance);
    value = sc->transcoder()->name();
+}
+
+static void get_underlying( const Class*, const String&, void* instance, Item& value )
+{
+   TextReader* sc = static_cast<TextReader*>(instance);
+   value = Item( sc->underlying()->handler(), sc->underlying());
 }
 
 //=================================================================
 // Methods
 //
 
-FALCON_DEFINE_METHOD_P1( ClassTextReader, read )
+namespace CTextReader {
+
+FALCON_DECLARE_FUNCTION( read, "text:S, count:N" );
+FALCON_DECLARE_FUNCTION( grab, "count:N" );
+FALCON_DECLARE_FUNCTION( readLine, "text:S, count:[N]" );
+FALCON_DECLARE_FUNCTION( grabLine, "count:[N]" );
+FALCON_DECLARE_FUNCTION( readEof, "text:S" );
+FALCON_DECLARE_FUNCTION( grabEof, "" );
+FALCON_DECLARE_FUNCTION( readRecord, "text:S, marker:S, count:[N]" );
+FALCON_DECLARE_FUNCTION( grabRecord, "marker:S, count:[N]" );
+FALCON_DECLARE_FUNCTION( readToken, "text:S, tokens:A, count:[N]" );
+FALCON_DECLARE_FUNCTION( grabToken, "tokens:A, count:[N]" );
+
+FALCON_DECLARE_FUNCTION( readChar, "text:S, append:[B]" );
+FALCON_DECLARE_FUNCTION( getChar, "" );
+FALCON_DECLARE_FUNCTION( ungetChar, "char:S|N" );   
+
+FALCON_DECLARE_FUNCTION( getStream, "" );      
+FALCON_DECLARE_FUNCTION( sync, "" );
+FALCON_DECLARE_FUNCTION( close, "" );
+
+void Function_read::invoke(VMContext* ctx, int32 )
 {
    Item* i_data = ctx->param(0);
    Item* i_count = ctx->param(1);
@@ -193,7 +116,7 @@ FALCON_DEFINE_METHOD_P1( ClassTextReader, read )
 }
 
 
-FALCON_DEFINE_METHOD_P1( ClassTextReader, grab )
+void Function_grab::invoke(VMContext* ctx, int32 )
 {
    static Class* clsString = Engine::handlers()->stringClass();
    Item* i_count = ctx->param(0);
@@ -226,7 +149,7 @@ FALCON_DEFINE_METHOD_P1( ClassTextReader, grab )
 }
 
 
-FALCON_DEFINE_METHOD_P1( ClassTextReader, readLine )
+void Function_readLine::invoke(VMContext* ctx, int32 )
 {
    Item* i_data = ctx->param(0);
    Item* i_count = ctx->param(1);
@@ -253,7 +176,7 @@ FALCON_DEFINE_METHOD_P1( ClassTextReader, readLine )
 }
 
 
-FALCON_DEFINE_METHOD_P1( ClassTextReader, grabLine )
+void Function_grabLine::invoke(VMContext* ctx, int32 )
 {
    static Class* clsString = Engine::handlers()->stringClass();
    Item* i_count = ctx->param(0);
@@ -287,7 +210,7 @@ FALCON_DEFINE_METHOD_P1( ClassTextReader, grabLine )
 }
 
 
-FALCON_DEFINE_METHOD_P1( ClassTextReader, readEof )
+void Function_readEof::invoke(VMContext* ctx, int32 )
 {
    Item* i_data = ctx->param(0);   
    
@@ -303,7 +226,7 @@ FALCON_DEFINE_METHOD_P1( ClassTextReader, readEof )
 }
 
 
-FALCON_DEFINE_METHOD_P1( ClassTextReader, grabEof )
+void Function_grabEof::invoke(VMContext* ctx, int32 )
 {  
    static Class* clsString = Engine::handlers()->stringClass();
    String* str = new String;   
@@ -321,7 +244,7 @@ FALCON_DEFINE_METHOD_P1( ClassTextReader, grabEof )
 }
 
 
-FALCON_DEFINE_METHOD_P1( ClassTextReader, readRecord )
+void Function_readRecord::invoke(VMContext* ctx, int32 )
 {
    Item* i_data = ctx->param(0);
    Item* i_sep = ctx->param(1);   
@@ -350,7 +273,7 @@ FALCON_DEFINE_METHOD_P1( ClassTextReader, readRecord )
 }
 
 
-FALCON_DEFINE_METHOD_P1( ClassTextReader, grabRecord )
+void Function_grabRecord::invoke(VMContext* ctx, int32 )
 {
    static Class* clsString = Engine::handlers()->stringClass();
 
@@ -420,7 +343,7 @@ static bool internal_readToken( VMContext* ctx, String& target, ItemArray* iarr,
    }
 }
 
-FALCON_DEFINE_METHOD_P1( ClassTextReader, readToken )
+void Function_readToken::invoke(VMContext* ctx, int32 )
 {
    Item* i_data = ctx->param(0);
    Item* i_seps = ctx->param(1);   
@@ -440,7 +363,7 @@ FALCON_DEFINE_METHOD_P1( ClassTextReader, readToken )
 }
 
 
-FALCON_DEFINE_METHOD_P1( ClassTextReader, grabToken )
+void Function_grabToken::invoke(VMContext* ctx, int32 )
 {
    static Class* clsString = Engine::handlers()->stringClass();
 
@@ -470,7 +393,7 @@ FALCON_DEFINE_METHOD_P1( ClassTextReader, grabToken )
 }
 
 
-FALCON_DEFINE_METHOD_P1( ClassTextReader, readChar )
+void Function_readChar::invoke(VMContext* ctx, int32 )
 {
    Item* i_data = ctx->param(0);
    Item* i_append = ctx->param(1);
@@ -500,7 +423,8 @@ FALCON_DEFINE_METHOD_P1( ClassTextReader, readChar )
    ctx->returnFrame(true); 
 }
 
-FALCON_DEFINE_METHOD_P1( ClassTextReader, getChar )
+
+void Function_getChar::invoke(VMContext* ctx, int32 )
 {   
    TextReader* sc = static_cast<TextReader*>(ctx->self().asInst());
    char_t chr = sc->getChar();
@@ -516,7 +440,7 @@ FALCON_DEFINE_METHOD_P1( ClassTextReader, getChar )
 
 
 
-FALCON_DEFINE_METHOD_P1( ClassTextReader, ungetChar )
+void Function_ungetChar::invoke(VMContext* ctx, int32 )
 {
    Item* i_data = ctx->param(0);
 
@@ -552,26 +476,146 @@ FALCON_DEFINE_METHOD_P1( ClassTextReader, ungetChar )
 }
 
 
-FALCON_DEFINE_METHOD_P1( ClassTextReader, sync )
+void Function_sync::invoke(VMContext* ctx, int32 )
 {   
    TextReader* sc = static_cast<TextReader*>(ctx->self().asInst());
    sc->changeStream( sc->underlying(), true );
    ctx->returnFrame();
 }
 
-FALCON_DEFINE_METHOD_P1( ClassTextReader, close )
+
+void Function_close::invoke(VMContext* ctx, int32 )
 {
    TextReader* sc = static_cast<TextReader*>(ctx->self().asInst());
    sc->underlying()->close();
    ctx->returnFrame();
 }
-
-FALCON_DEFINE_METHOD_P1( ClassTextReader, getStream )
-{     
-   TextReader* sc = static_cast<TextReader*>(ctx->self().asInst());
-   ctx->returnFrame( Item( sc->underlying()->handler(), sc->underlying()) );
 }
 
+//================================================================
+//
+
+ClassTextReader::ClassTextReader( ClassStream* clsStream ):
+   Class( "TextReader" ),
+   m_clsStream( clsStream )
+{
+   addProperty( "encoding", &get_encoding, &set_encoding );
+   addProperty( "underlying", &get_underlying );
+   
+   addMethod( new CTextReader::Function_read );
+   addMethod( new CTextReader::Function_grab );
+   addMethod( new CTextReader::Function_readLine );
+   addMethod( new CTextReader::Function_grabLine );
+   addMethod( new CTextReader::Function_readEof );
+   addMethod( new CTextReader::Function_grabEof );
+   addMethod( new CTextReader::Function_readRecord );
+   addMethod( new CTextReader::Function_grabRecord );
+   addMethod( new CTextReader::Function_readToken );
+   addMethod( new CTextReader::Function_grabToken );
+   
+   addMethod( new CTextReader::Function_readChar );
+   addMethod( new CTextReader::Function_getChar );
+   addMethod( new CTextReader::Function_ungetChar );   
+      
+   addMethod( new CTextReader::Function_sync );
+   addMethod( new CTextReader::Function_close );
+}
+
+ClassTextReader::~ClassTextReader()
+{
+}
+
+
+void* ClassTextReader::createInstance() const
+{
+   return FALCON_CLASS_CREATE_AT_INIT;
+}
+
+void ClassTextReader::dispose( void* instance ) const
+{
+   TextReader* tr = static_cast<TextReader*>(instance);
+   delete tr;
+}
+
+void* ClassTextReader::clone( void* instance ) const
+{
+   return 0;
+}
+
+void ClassTextReader::gcMarkInstance( void* instance, uint32 mark ) const
+{
+   TextReader* tr = static_cast<TextReader*>(instance);
+   tr->gcMark( mark );
+}
+
+bool ClassTextReader::gcCheckInstance( void* instance, uint32 mark ) const
+{
+   TextReader* tr = static_cast<TextReader*>(instance);
+   return tr->currentMark() > mark;
+}
+
+bool ClassTextReader::op_init( VMContext* ctx, void* , int pcount ) const
+{
+   static Engine* eng = Engine::instance();
+   
+   // if we have 2 parameters, the second one is the encoding.
+   String* encoding = 0;
+   Stream* stc = 0;
+   Transcoder* tc = 0;
+   
+   if( pcount > 0 )
+   {
+      Class* cls;
+      void* data;
+      Item* params = ctx->opcodeParams(pcount);
+      
+      if( params[0].asClassInst(cls, data) && cls->isDerivedFrom(m_clsStream) )
+      {
+         stc = static_cast<Stream*>(data);
+         if( pcount > 1 )
+         {
+            if ( params[1].isString() )
+            {
+               encoding = params[1].asString();
+            }
+            else
+            {
+               // force a param error.
+               stc = 0;
+            }
+         }
+      }
+   }
+   
+   // if we're here with stc == 0, we have a param error.
+   if( stc == 0 )
+   {
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__, SRC )
+         .origin(ErrorParam::e_orig_runtime)
+         .extra( "Stream,[S]" ) );      
+   }
+   
+   // is the encoding correct?
+   if( encoding != 0 ) 
+   {
+      tc = eng->getTranscoder( *encoding );
+      if( tc == 0 )
+      {
+         throw new ParamError( ErrorParam( e_param_range, __LINE__, SRC )
+            .origin(ErrorParam::e_orig_runtime)
+            .extra( "Unknown encoding " + *encoding ) );      
+      }
+   }
+   
+   TextReader* twc = new TextReader(stc);
+   if( tc != 0 )
+   {
+      twc->setEncoding(tc);
+   }
+   ctx->opcodeParam(pcount) = FALCON_GC_STORE(this, twc);
+   
+   return false;
+}
 
 }
 }

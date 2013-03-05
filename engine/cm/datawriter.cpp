@@ -24,104 +24,33 @@
 #include <falcon/errors/accesserror.h>
 #include <falcon/errors/paramerror.h>
 #include <falcon/vmcontext.h>
+#include <falcon/function.h>
 
 namespace Falcon {
 namespace Ext {
 
-ClassDataWriter::ClassDataWriter( Class* clsStream ):
-   ClassUser("DataWriter"),
-   m_clsStream( clsStream ),
-   FALCON_INIT_PROPERTY( endianity ),
-   FALCON_INIT_PROPERTY( sysEndianity ),
-   
-   FALCON_INIT_METHOD( write ),
-   FALCON_INIT_METHOD( writeBool ),
-   FALCON_INIT_METHOD( writeChar ),
-   FALCON_INIT_METHOD( writeByte ),
-   FALCON_INIT_METHOD( writeI16 ),
-   FALCON_INIT_METHOD( writeU16 ),
-   FALCON_INIT_METHOD( writeI32 ),
-   FALCON_INIT_METHOD( writeU32 ),
-   FALCON_INIT_METHOD( writeI64 ),
-   FALCON_INIT_METHOD( writeU64 ),
-   FALCON_INIT_METHOD( writeF32 ),
-   FALCON_INIT_METHOD( writeF64 ),
-   FALCON_INIT_METHOD( writeString ),
-   FALCON_INIT_METHOD( writeItem ),
-   
-   FALCON_INIT_METHOD( flush )
-{
-}
+FALCON_DECLARE_FUNCTION( write, "data:S|M, count:[N], start:[N]" );
+FALCON_DECLARE_FUNCTION( writeBool, "data:B" );
+FALCON_DECLARE_FUNCTION( writeChar, "data:S" );
+FALCON_DECLARE_FUNCTION( writeByte, "data:N" );
+FALCON_DECLARE_FUNCTION( writeI16, "data:N" );
+FALCON_DECLARE_FUNCTION( writeU16, "data:N" );
+FALCON_DECLARE_FUNCTION( writeI32, "data:N" );
+FALCON_DECLARE_FUNCTION( writeU32, "data:N" );
+FALCON_DECLARE_FUNCTION( writeI64, "data:N" );
+FALCON_DECLARE_FUNCTION( writeU64, "data:N" );
+FALCON_DECLARE_FUNCTION( writeF32, "data:N" );
+FALCON_DECLARE_FUNCTION( writeF64, "data:N" );
+FALCON_DECLARE_FUNCTION( writeString, "data:S" );
+FALCON_DECLARE_FUNCTION( writeItem, "data:X" );
 
-ClassDataWriter::~ClassDataWriter()
-{
-}
-
-   
-void ClassDataWriter::dispose( void* instance ) const
-{
-   DataWriter* wr = static_cast<DataWriter*>(instance);
-   delete wr;
-}
-
-
-void* ClassDataWriter::clone( void* instance ) const
-{
-   // nothing to clone, it can be shared.
-   DataWriter* wr = static_cast<DataWriter*>(instance);
-   return new DataWriter(*wr);
-}
-
-
-void ClassDataWriter::gcMarkInstance( void* instance, uint32 mark ) const
-{
-   DataWriter* wr = static_cast<DataWriter*>(instance);
-   wr->gcMark( mark );
-}
-
-
-bool ClassDataWriter::gcCheckInstance( void* instance, uint32 mark ) const
-{
-   DataWriter* wr = static_cast<DataWriter*>(instance);
-   return wr->gcMark() >= mark;
-}
-
-
-void* ClassDataWriter::createInstance() const
-{
-   return new DataWriter;
-}
-
-bool ClassDataWriter::op_init( VMContext* ctx, void* instance, int pcount ) const
-{   
-   if( pcount >= 1 )
-   {
-      Class* cls=0;
-      void* data=0;
-      
-      Item* params = ctx->opcodeParams(pcount);
-      params[0].asClassInst( cls, data );
-      if( cls->isDerivedFrom(m_clsStream) )
-      {
-         DataWriter* wr = static_cast<DataWriter*>(instance);            
-         wr->changeStream( 
-                  static_cast<Stream*>(cls->getParentData(m_clsStream,data)),
-                  false );
-         return false;
-      }      
-   }
-   
-   throw new ParamError( ErrorParam( e_inv_params, __LINE__, SRC )
-         .origin(ErrorParam::e_orig_runtime)
-         .extra( "Stream" ) );      
-}
-
+FALCON_DECLARE_FUNCTION( flush, "" );
 
 //=================================================================
 // Properties
 //
 
-FALCON_DEFINE_PROPERTY_SET_P( ClassDataWriter, endianity )
+static void set_endianity( const Class*, const String&, void* instance, const Item& value )
 {
    DataWriter* sc = static_cast<DataWriter*>(instance);
      
@@ -148,22 +77,14 @@ FALCON_DEFINE_PROPERTY_SET_P( ClassDataWriter, endianity )
 }
 
 
-FALCON_DEFINE_PROPERTY_GET_P( ClassDataWriter, endianity )
+static void get_endianity( const Class*, const String&, void* instance, Item& value )
 {
    DataWriter* sc = static_cast<DataWriter*>(instance);
    value = (int64)sc->endianity();
 }
 
 
-FALCON_DEFINE_PROPERTY_SET( ClassDataWriter, sysEndianity )( void*, const Item& )
-{
-   throw new AccessError( ErrorParam( e_prop_ro, __LINE__, SRC )
-      .origin( ErrorParam::e_orig_runtime )
-      .extra( "sysEndianity" ));
-}
-
-
-FALCON_DEFINE_PROPERTY_GET_P( ClassDataWriter, sysEndianity )
+static void get_sysEndianity( const Class*, const String&, void* instance, Item& value )
 {
    DataWriter* sc = static_cast<DataWriter*>(instance);
    DataWriter::t_endianity edity = sc->endianity();
@@ -180,7 +101,7 @@ FALCON_DEFINE_PROPERTY_GET_P( ClassDataWriter, sysEndianity )
 // Methods
 //
 
-FALCON_DEFINE_METHOD_P1( ClassDataWriter, write )
+void Function_write::invoke(VMContext* ctx, int32 )
 {
    DataWriter* dw = static_cast<DataWriter*>(ctx->self().asInst());
    
@@ -260,7 +181,7 @@ FALCON_DEFINE_METHOD_P1( ClassDataWriter, write )
 }
 
 
-FALCON_DEFINE_METHOD_P1( ClassDataWriter, writeBool )
+void Function_writeBool::invoke(VMContext* ctx, int32 )
 {
    Item* i_data = ctx->param(0);
    if( i_data == 0 )
@@ -276,7 +197,7 @@ FALCON_DEFINE_METHOD_P1( ClassDataWriter, writeBool )
 }
 
 
-FALCON_DEFINE_METHOD_P1( ClassDataWriter, writeChar )
+void Function_writeChar::invoke(VMContext* ctx, int32 )
 {
    Item* i_data = ctx->param(0);
    if( i_data == 0 )
@@ -305,7 +226,7 @@ FALCON_DEFINE_METHOD_P1( ClassDataWriter, writeChar )
    ctx->returnFrame();
 }
 
-FALCON_DEFINE_METHOD_P1( ClassDataWriter, writeByte )
+void Function_writeByte::invoke(VMContext* ctx, int32 )
 {
    Item* i_data = ctx->param(0);
    if( i_data == 0 || ! i_data->isOrdinal() )
@@ -320,7 +241,7 @@ FALCON_DEFINE_METHOD_P1( ClassDataWriter, writeByte )
    ctx->returnFrame();
 }
 
-FALCON_DEFINE_METHOD_P1( ClassDataWriter, writeI16 )
+void Function_writeI16::invoke(VMContext* ctx, int32 )
 {
    Item* i_data = ctx->param(0);
    if( i_data == 0 || ! i_data->isOrdinal() )
@@ -336,7 +257,8 @@ FALCON_DEFINE_METHOD_P1( ClassDataWriter, writeI16 )
 }
 
 
-FALCON_DEFINE_METHOD_P1( ClassDataWriter, writeU16 )
+
+void Function_writeU16::invoke(VMContext* ctx, int32 )
 {
    Item* i_data = ctx->param(0);
    if( i_data == 0 || ! i_data->isOrdinal() )
@@ -352,7 +274,7 @@ FALCON_DEFINE_METHOD_P1( ClassDataWriter, writeU16 )
 }
 
 
-FALCON_DEFINE_METHOD_P1( ClassDataWriter, writeI32 )
+void Function_writeI32::invoke(VMContext* ctx, int32 )
 {
    Item* i_data = ctx->param(0);
    if( i_data == 0 || ! i_data->isOrdinal() )
@@ -368,7 +290,7 @@ FALCON_DEFINE_METHOD_P1( ClassDataWriter, writeI32 )
 }
 
 
-FALCON_DEFINE_METHOD_P1( ClassDataWriter, writeU32 )
+void Function_writeU32::invoke(VMContext* ctx, int32 )
 {
    Item* i_data = ctx->param(0);
    if( i_data == 0 || ! i_data->isOrdinal() )
@@ -384,7 +306,7 @@ FALCON_DEFINE_METHOD_P1( ClassDataWriter, writeU32 )
 }
 
 
-FALCON_DEFINE_METHOD_P1( ClassDataWriter, writeI64 )
+void Function_writeI64::invoke(VMContext* ctx, int32 )
 {
    Item* i_data = ctx->param(0);
    if( i_data == 0 || ! i_data->isOrdinal() )
@@ -400,7 +322,7 @@ FALCON_DEFINE_METHOD_P1( ClassDataWriter, writeI64 )
 }
 
 
-FALCON_DEFINE_METHOD_P1( ClassDataWriter, writeU64 )
+void Function_writeU64::invoke(VMContext* ctx, int32 )
 {
    Item* i_data = ctx->param(0);
    if( i_data == 0 || ! i_data->isOrdinal() )
@@ -416,7 +338,7 @@ FALCON_DEFINE_METHOD_P1( ClassDataWriter, writeU64 )
 }
 
 
-FALCON_DEFINE_METHOD_P1( ClassDataWriter, writeF32 )
+void Function_writeF32::invoke(VMContext* ctx, int32 )
 {
    Item* i_data = ctx->param(0);
    if( i_data == 0 || ! i_data->isOrdinal() )
@@ -432,7 +354,7 @@ FALCON_DEFINE_METHOD_P1( ClassDataWriter, writeF32 )
 }
 
 
-FALCON_DEFINE_METHOD_P1( ClassDataWriter, writeF64 )
+void Function_writeF64::invoke(VMContext* ctx, int32 )
 {
    Item* i_data = ctx->param(0);
    if( i_data == 0 || ! i_data->isOrdinal() )
@@ -448,7 +370,7 @@ FALCON_DEFINE_METHOD_P1( ClassDataWriter, writeF64 )
 }
 
 
-FALCON_DEFINE_METHOD_P1( ClassDataWriter, writeString )
+void Function_writeString::invoke(VMContext* ctx, int32 )
 {
    Item* i_data = ctx->param(0);
    if( i_data == 0 || ! i_data->isString() )
@@ -463,7 +385,7 @@ FALCON_DEFINE_METHOD_P1( ClassDataWriter, writeString )
 }
 
 
-FALCON_DEFINE_METHOD_P1( ClassDataWriter, writeItem )
+void Function_writeItem::invoke(VMContext* ctx, int32 )
 {
    Item* i_data = ctx->param(0);
    if( i_data == 0 )
@@ -488,12 +410,106 @@ FALCON_DEFINE_METHOD_P1( ClassDataWriter, writeItem )
 }
 
 
-FALCON_DEFINE_METHOD_P1( ClassDataWriter, flush )
+void Function_flush::invoke(VMContext* ctx, int32 )
 {
   DataWriter* dw = static_cast<DataWriter*>(ctx->self().asInst());
   dw->flush();
   ctx->returnFrame();
 }
+
+
+//=======================================================================
+
+
+ClassDataWriter::ClassDataWriter( Class* clsStream ):
+   Class("DataWriter"),
+   m_clsStream( clsStream )
+{
+   addProperty( "endianity", &get_endianity, &set_endianity );
+   addProperty( "sysEndianity", &get_sysEndianity);
+   
+   addMethod( new Function_write );
+   addMethod( new Function_writeBool );
+   addMethod( new Function_writeChar );
+   addMethod( new Function_writeByte );
+   addMethod( new Function_writeI16 );
+   addMethod( new Function_writeU16 );
+   addMethod( new Function_writeI32 );
+   addMethod( new Function_writeU32 );
+   addMethod( new Function_writeI64 );
+   addMethod( new Function_writeU64 );
+   addMethod( new Function_writeF32 );
+   addMethod( new Function_writeF64 );
+   addMethod( new Function_writeString );
+   addMethod( new Function_writeItem );
+   
+   addMethod( new Function_flush );
+}
+
+
+ClassDataWriter::~ClassDataWriter()
+{
+}
+
+   
+void ClassDataWriter::dispose( void* instance ) const
+{
+   DataWriter* wr = static_cast<DataWriter*>(instance);
+   delete wr;
+}
+
+
+void* ClassDataWriter::clone( void* instance ) const
+{
+   // nothing to clone, it can be shared.
+   DataWriter* wr = static_cast<DataWriter*>(instance);
+   return new DataWriter(*wr);
+}
+
+
+void ClassDataWriter::gcMarkInstance( void* instance, uint32 mark ) const
+{
+   DataWriter* wr = static_cast<DataWriter*>(instance);
+   wr->gcMark( mark );
+}
+
+
+bool ClassDataWriter::gcCheckInstance( void* instance, uint32 mark ) const
+{
+   DataWriter* wr = static_cast<DataWriter*>(instance);
+   return wr->gcMark() >= mark;
+}
+
+
+void* ClassDataWriter::createInstance() const
+{
+   return new DataWriter;
+}
+
+bool ClassDataWriter::op_init( VMContext* ctx, void* instance, int pcount ) const
+{   
+   if( pcount >= 1 )
+   {
+      Class* cls=0;
+      void* data=0;
+      
+      Item* params = ctx->opcodeParams(pcount);
+      params[0].asClassInst( cls, data );
+      if( cls->isDerivedFrom(m_clsStream) )
+      {
+         DataWriter* wr = static_cast<DataWriter*>(instance);            
+         wr->changeStream( 
+                  static_cast<Stream*>(cls->getParentData(m_clsStream,data)),
+                  false );
+         return false;
+      }      
+   }
+   
+   throw new ParamError( ErrorParam( e_inv_params, __LINE__, SRC )
+         .origin(ErrorParam::e_orig_runtime)
+         .extra( "Stream" ) );      
+}
+
 
 }
 }

@@ -58,18 +58,31 @@ void SharedEvent::set()
    unlockSignals();
 }
 
+//=============================================================
+//
+
+/*#
+  @method set Event
+  @brief Sets the event
+
+ */
+FALCON_DECLARE_FUNCTION( set, "" );
+void Function_set::invoke(VMContext* ctx, int32 )
+{
+   SharedEvent* evt = static_cast<SharedEvent*>(ctx->self().asInst());
+   evt->set();
+   ctx->returnFrame();
+}
 
 //=============================================================
 //
 
 ClassEvent::ClassEvent():
-      ClassShared("Event"),
-      FALCON_INIT_METHOD(set),
-      FALCON_INIT_METHOD(tryWait),
-      FALCON_INIT_METHOD(wait)
+      ClassShared("Event")      
 {
    static Class* shared = Engine::handlers()->sharedClass();
-   addParent(shared);
+   setParent(shared);
+   addMethod( new Function_set );
 }
 
 ClassEvent::~ClassEvent()
@@ -96,25 +109,6 @@ bool ClassEvent::op_init( VMContext* ctx, void*, int pcount ) const
    SharedEvent* sb = new SharedEvent(&ctx->vm()->contextManager(), this, isSet);
    ctx->stackResult(pcount+1, FALCON_GC_STORE(this, sb));
    return true;
-}
-
-
-FALCON_DEFINE_METHOD_P1( ClassEvent, set )
-{
-   SharedEvent* evt = static_cast<SharedEvent*>(ctx->self().asInst());
-   evt->set();
-   ctx->returnFrame();
-}
-
-
-FALCON_DEFINE_METHOD_P( ClassEvent, tryWait )
-{
-   ClassShared::genericClassTryWait(methodOf(), ctx, pCount);
-}
-
-FALCON_DEFINE_METHOD_P( ClassEvent, wait )
-{
-   ClassShared::genericClassWait(methodOf(), ctx, pCount);
 }
 
 }

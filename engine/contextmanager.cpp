@@ -266,7 +266,7 @@ void* ContextManager::run()
       bool recvd;
       if( timeout > 0 ) {
          TRACE1( "ContextManager::Manager::run -- waiting messages for %d msecs", (int) timeout );
-         recvd = _p->m_messages.getTimed( msg, timeout, &term );
+         recvd = _p->m_messages.getTimed( msg, (int32) timeout, &term );
       }
       else {
          if( m_next_schedule != 0 ) {

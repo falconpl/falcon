@@ -27,8 +27,8 @@
 #include <falcon/setup.h>
 #include <falcon/error.h>
 #include <falcon/classes/classerror.h>
-#include <falcon/classes/classuser.h>
-#include <falcon/method.h>
+#include <falcon/class.h>
+#include <falcon/function.h>
 
 #ifndef FALCON_REGEX_ERROR_BASE
    #define FALCON_REGEX_ERROR_BASE        1160
@@ -41,7 +41,7 @@
 namespace Falcon {
 namespace Ext {
 
-class ClassRegex : public ClassUser
+class ClassRegex : public Class
 {
 public:
    ClassRegex();
@@ -50,22 +50,28 @@ public:
    virtual bool op_init( VMContext* ctx, void* instance, int32 pcount ) const;
    virtual void* createInstance() const; 
 
+   virtual void dispose( void* instance ) const;
+   virtual void* clone( void* instance ) const;
+   virtual void gcMarkInstance( void* instance, uint32 mark ) const;
+   virtual bool gcCheckInstance( void* instance, uint32 mark ) const;
+
+
 private:
 
-FALCON_DECLARE_METHOD(study, "");
-FALCON_DECLARE_METHOD(match, "");
-FALCON_DECLARE_METHOD(grab, "");
-FALCON_DECLARE_METHOD(split, "S, [N], [B]");
-FALCON_DECLARE_METHOD(find, "");
-FALCON_DECLARE_METHOD(findAll, "S, [I], [I]");
-FALCON_DECLARE_METHOD(findAllOverlapped, "S, [I], [I]");
-FALCON_DECLARE_METHOD(replace, "");
-FALCON_DECLARE_METHOD(replaceAll, "");
-FALCON_DECLARE_METHOD(subst, "");
-FALCON_DECLARE_METHOD(capturedCount, "");
-FALCON_DECLARE_METHOD(captured, "");
-FALCON_DECLARE_METHOD(compare, "");
-FALCON_DECLARE_METHOD(version, "");
+   FALCON_DECLARE_FUNCTION(study, "");
+   FALCON_DECLARE_FUNCTION(match, "");
+   FALCON_DECLARE_FUNCTION(grab, "");
+   FALCON_DECLARE_FUNCTION(split, "S, [N], [B]");
+   FALCON_DECLARE_FUNCTION(find, "");
+   FALCON_DECLARE_FUNCTION(findAll, "S, [I], [I]");
+   FALCON_DECLARE_FUNCTION(findAllOverlapped, "S, [I], [I]");
+   FALCON_DECLARE_FUNCTION(replace, "");
+   FALCON_DECLARE_FUNCTION(replaceAll, "");
+   FALCON_DECLARE_FUNCTION(subst, "");
+   FALCON_DECLARE_FUNCTION(capturedCount, "");
+   FALCON_DECLARE_FUNCTION(captured, "");
+   FALCON_DECLARE_FUNCTION(compare, "");
+   FALCON_DECLARE_FUNCTION(version, "");
 
 };
 

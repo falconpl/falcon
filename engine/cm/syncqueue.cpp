@@ -23,6 +23,7 @@
 #include <falcon/stdsteps.h>
 #include <falcon/vm.h>
 #include <falcon/stdhandlers.h>
+#include <falcon/function.h>
 
 #include <falcon/errors/accesserror.h>
 
@@ -225,59 +226,70 @@ int32 FairSyncQueue::lockedConsumeSignal( VMContext* ctx, int32 count )
 
 //=============================================================
 //
+//
 
-ClassSyncQueue::ClassSyncQueue():
-      ClassShared("SyncQueue"),
-      FALCON_INIT_PROPERTY(empty),
+/*#
+  @property empty SyncQueue
+  @brief Checks if queue is empty at the moment.
 
-      FALCON_INIT_METHOD(push),
-      FALCON_INIT_METHOD(pop),
-      FALCON_INIT_METHOD(wait)
-{
-   static Class* shared = Engine::handlers()->sharedClass();
-   addParent(shared);
-}
+  This information has a meaning only if it can be demonstrated
+  that there aren't other producers able to push data in the queue
+  in this moment.
 
-ClassSyncQueue::~ClassSyncQueue()
-{}
-
-void* ClassSyncQueue::createInstance() const
-{
-   return FALCON_CLASS_CREATE_AT_INIT;
-}
-
-
-bool ClassSyncQueue::op_init( VMContext* ctx, void*, int pCount ) const
-{
-   Shared* shared;
-   if( pCount == 0 || ! ctx->opcodeParams(pCount)->isTrue() )
-   {
-      shared = new SharedSyncQueue(&ctx->vm()->contextManager(), this);
-   }
-   else {
-      shared = new FairSyncQueue(&ctx->vm()->contextManager(), this);
-   }
-
-   ctx->stackResult(pCount+1, FALCON_GC_HANDLE(shared));
-   return true;
-}
-
-
-
-FALCON_DEFINE_PROPERTY_GET_P( ClassSyncQueue, empty )
+ */
+static void get_empty( const Class*, const String&, void *instance, Item& value )
 {
    SharedSyncQueue* sc = static_cast<SharedSyncQueue*>(instance);
    value.setBoolean( sc->empty() );
 }
 
 
-FALCON_DEFINE_PROPERTY_SET( ClassSyncQueue, empty )( void*, const Item& )
-{
-   throw readOnlyError();
-}
+/*#
+  @method push SyncQueue
+  @brief Pushes one or more items in the queue.
+  @param item The item pushed in the queue.
+  @optparam ... More items to be pushed atomically.
+
+  It is not necessary to acquire the queue to push an item.
+  Also, pushing an item does not automatically release the queue.
+ */
+FALCON_DECLARE_FUNCTION( syncqueue_push, "item:X,..." );
+
+/*#
+  @method pop SyncQueue
+  @brief Removes an item from the queue atomically, or waits for an item to be available.
+  @optparam onEmpty Returned if the queue is empty.
+  @raise AccessError if the queue is in fair mode and the pop method is invoked without
+        having acquired the resource with a successfull wait.
+
+   In non fair mode, even if the queue is signaled and the wait operation is successful,
+   there is no guarantee that the queue is still non-empty when this agent
+   tires to pop the queue. The pop method is granted to return an item from
+   the queue if and only if a wait operation was successful and there aren't other
+   agents trying to pop from this resource.
+
+   In fair mode, this method can be invoked only after having acquired the queue
+   through a successful wait operation. It is then granted that the method will return
+   an item, and the @b onEmpty parameter, if given, will be ignored.
+ */
+FALCON_DECLARE_FUNCTION( syncqueue_pop, "onEmpty:[X]" );
+
+/*#
+  @method wait SyncQueue
+  @brief Wait the queue to be non-empty.
+  @optparam timeout Milliseconds to wait for the barrier to be open.
+  @return true if the barrier is open during the wait, false if the given timeout expires.
+
+  If @b timeout is less than zero, the wait is endless; if @b timeout is zero,
+  the wait exits immediately.
+
+  If the queue is in fair mode, a successful wait makes the invoker to
+  enter a critical section; the pop method will then release the queue.
+ */
+FALCON_DECLARE_FUNCTION( syncqueue_wait, "timeout:[N]" );
 
 
-FALCON_DEFINE_METHOD_P( ClassSyncQueue, push )
+void Function_syncqueue_push::invoke( VMContext* ctx, int32 pCount )
 {
    if( pCount == 0 )
    {
@@ -294,7 +306,7 @@ FALCON_DEFINE_METHOD_P( ClassSyncQueue, push )
 }
 
 
-FALCON_DEFINE_METHOD_P1( ClassSyncQueue, pop )
+void Function_syncqueue_pop::invoke( VMContext* ctx, int32 )
 {
    SharedSyncQueue* queue = static_cast<SharedSyncQueue*>(ctx->self().asInst());
 
@@ -326,7 +338,8 @@ FALCON_DEFINE_METHOD_P1( ClassSyncQueue, pop )
    ctx->returnFrame(dflt);
 }
 
-FALCON_DEFINE_METHOD_P( ClassSyncQueue, wait )
+
+void Function_syncqueue_wait::invoke( VMContext* ctx, int32 pCount )
 {
    static const PStep& stepWaitSuccess = Engine::instance()->stdSteps()->m_waitSuccess;
    static const PStep& stepInvoke = Engine::instance()->stdSteps()->m_reinvoke;
@@ -364,6 +377,47 @@ FALCON_DEFINE_METHOD_P( ClassSyncQueue, wait )
       // we got to wait.
       ctx->pushCode( &stepWaitSuccess );
    }
+}
+
+//=============================================================
+//
+//
+
+ClassSyncQueue::ClassSyncQueue():
+      ClassShared("SyncQueue")
+{
+   static Class* shared = Engine::handlers()->sharedClass();
+   setParent(shared);
+
+   addProperty("empty", &get_empty);
+
+   addMethod( new Function_syncqueue_push);
+   addMethod( new Function_syncqueue_pop);
+   addMethod( new Function_syncqueue_wait);
+}
+
+ClassSyncQueue::~ClassSyncQueue()
+{}
+
+void* ClassSyncQueue::createInstance() const
+{
+   return FALCON_CLASS_CREATE_AT_INIT;
+}
+
+
+bool ClassSyncQueue::op_init( VMContext* ctx, void*, int pCount ) const
+{
+   Shared* shared;
+   if( pCount == 0 || ! ctx->opcodeParams(pCount)->isTrue() )
+   {
+      shared = new SharedSyncQueue(&ctx->vm()->contextManager(), this);
+   }
+   else {
+      shared = new FairSyncQueue(&ctx->vm()->contextManager(), this);
+   }
+
+   ctx->stackResult(pCount+1, FALCON_GC_HANDLE(shared));
+   return true;
 }
 
 }

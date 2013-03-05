@@ -89,10 +89,11 @@ void Collector::DataStatus::enumerateEntries( EntryEnumerator& r ) const
    while( iter != _p->m_entries.end() )
    {
       Collector::HistoryEntry* he = *iter;
-      if( ! r( *he, (++iter != _p->m_entries.end()) ) )
+      if( ! r( *he ) )
       {
          break;
       }
+      ++iter;
    }
 }
 

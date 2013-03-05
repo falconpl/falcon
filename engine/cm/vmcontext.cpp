@@ -19,6 +19,7 @@
 #include <falcon/cm/vmcontext.h>
 
 #include <falcon/vm.h>
+#include <falcon/function.h>
 #include <falcon/vmcontext.h>
 #include <falcon/path.h>
 #include <falcon/errors/paramerror.h>
@@ -30,20 +31,124 @@
 namespace Falcon {
 namespace Ext {
 
+//====================================================
+// Properties.
+//
+
+static void get_id( const Class*, const String&, void* instance, Item& value )
+{
+   VMContext* ctx = static_cast<VMContext*>(instance);
+   value.setInteger(ctx->id());
+}
+
+
+static void get_status( const Class*, const String&, void* instance, Item& value )
+{
+   VMContext* ctx = static_cast<VMContext*>(instance);
+   value.setInteger(ctx->getStatus());
+}
+
+
+static void get_processId( const Class*, const String&, void* instance, Item& value )
+{
+   VMContext* ctx = static_cast<VMContext*>(instance);
+   value.setInteger(ctx->process()->id());
+}
+
+
+static void get_callDepth( const Class*, const String&, void* instance, Item& value )
+{
+   VMContext* ctx = static_cast<VMContext*>(instance);
+   value.setInteger(ctx->callDepth());
+}
+
+
+static void get_dataDepth( const Class*, const String&, void* instance, Item& value )
+{
+   VMContext* ctx = static_cast<VMContext*>(instance);
+   value.setInteger(ctx->dataSize());
+}
+
+
+static void get_codeDepth( const Class*, const String&, void* instance, Item& value )
+{
+   VMContext* ctx = static_cast<VMContext*>(instance);
+   value.setInteger(ctx->codeDepth());
+}
+
+
+static void get_selfItem( const Class*, const String&, void* instance, Item& value )
+{
+   VMContext* ctx = static_cast<VMContext*>(instance);
+   value.assign(ctx->currentFrame().m_self);
+}
+
+//========================================================================
+// Methods
+//
+
+/*#
+ @method caller VMContext
+ @brief Returns the item (function or method) that is calling the current function.
+ @optparam depth If specified, return the nth parameter up to @a VMContext.codeDepth
+
+ If @b depth is not specified, it defaults to 1. Using 0 returns the same entity as
+ obtained by the @b fself keyword.
+ */
+FALCON_DECLARE_FUNCTION( caller, "depth:[N]" );
+void Function_caller::invoke(VMContext* ctx, int32 )
+{
+   Item* i_depth = ctx->param(0);
+   int32 depth = 1;
+   if( i_depth != 0 ) {
+      if( ! i_depth->isOrdinal() ) {
+         throw paramError(__LINE__, SRC);
+      }
+      depth = (int32) i_depth->forceInteger();
+   }
+
+   // we're not interested in this call
+   depth++;
+   // we can't use a foreign context, sorry.
+   VMContext* tgt = ctx;
+   if( depth >= tgt->callDepth() ) {
+      throw new ParamError(
+               ErrorParam( e_param_range, __LINE__, SRC )
+                  .extra("excessive depth")
+               );
+   }
+
+   //ugly but works
+   CallFrame* cf = &(&tgt->currentFrame())[-depth];
+   if( cf->m_bMethodic ) {
+      Item s = cf->m_self;
+      s.methodize(cf->m_function);
+      ctx->returnFrame(s);
+   }
+   else {
+      ctx->returnFrame(cf->m_function);
+   }
+}
+
+
+
+//====================================================
+
 
 ClassVMContext::ClassVMContext():
-   ClassUser("VMContext"),
+   Class("VMContext")
+{   
+   addProperty( "id", &get_id );
+   addProperty( "processId", &get_processId );
+   addProperty( "callDepth", &get_callDepth );
+   addProperty( "dataDepth", &get_dataDepth );
+   addProperty( "codeDepth", &get_codeDepth );
+   addProperty( "selfItem", &get_selfItem );
+   addProperty( "status", &get_status );
    
-   FALCON_INIT_PROPERTY( id ),
-   FALCON_INIT_PROPERTY( processId ),
-   FALCON_INIT_PROPERTY( callDepth ),
-   FALCON_INIT_PROPERTY( dataDepth ),
-   FALCON_INIT_PROPERTY( codeDepth ),
-   FALCON_INIT_PROPERTY( selfItem ),
-   FALCON_INIT_PROPERTY( status ),
-   FALCON_INIT_METHOD( caller )
-{
+   addMethod( new Function_caller );
 }
+
 
 ClassVMContext::~ClassVMContext()
 {}
@@ -99,127 +204,6 @@ void ClassVMContext::op_toString( VMContext* ctx, void* instance ) const
       res.append("VMContext {");
       res.N(ctx1->id()).A(":").N(ctx1->process()->id()).A("}");
       ctx->topData().setUser(FALCON_GC_HANDLE(&res));
-   }
-}
-
-//====================================================
-// Properties.
-//
-   
-FALCON_DEFINE_PROPERTY_SET( ClassVMContext, id )(void*, const Item& )
-{
-   throw new ParamError( ErrorParam( e_prop_ro, __LINE__, SRC ).extra("id") );
-}
-
-FALCON_DEFINE_PROPERTY_GET_P( ClassVMContext, id )
-{
-   VMContext* ctx = static_cast<VMContext*>(instance);
-   value.setInteger(ctx->id());
-}
-
-FALCON_DEFINE_PROPERTY_SET( ClassVMContext, status )(void*, const Item& )
-{
-   throw new ParamError( ErrorParam( e_prop_ro, __LINE__, SRC ).extra("status") );
-}
-
-FALCON_DEFINE_PROPERTY_GET_P( ClassVMContext, status )
-{
-   VMContext* ctx = static_cast<VMContext*>(instance);
-   value.setInteger(ctx->getStatus());
-}
-
-
-FALCON_DEFINE_PROPERTY_SET( ClassVMContext, processId )(void*, const Item& )
-{
-   throw new ParamError( ErrorParam( e_prop_ro, __LINE__, SRC ).extra("processId") );
-}
-
-FALCON_DEFINE_PROPERTY_GET_P( ClassVMContext, processId )
-{
-   VMContext* ctx = static_cast<VMContext*>(instance);
-   value.setInteger(ctx->process()->id());
-}
-
-FALCON_DEFINE_PROPERTY_SET( ClassVMContext, callDepth )(void*, const Item& )
-{
-   throw new ParamError( ErrorParam( e_prop_ro, __LINE__, SRC ).extra("callDepth") );
-}
-
-FALCON_DEFINE_PROPERTY_GET_P( ClassVMContext, callDepth )
-{
-   VMContext* ctx = static_cast<VMContext*>(instance);
-   value.setInteger(ctx->callDepth());
-}
-
-
-FALCON_DEFINE_PROPERTY_SET( ClassVMContext, dataDepth )(void*, const Item& )
-{
-   throw new ParamError( ErrorParam( e_prop_ro, __LINE__, SRC ).extra("dataDepth") );
-}
-
-FALCON_DEFINE_PROPERTY_GET_P( ClassVMContext, dataDepth )
-{
-   VMContext* ctx = static_cast<VMContext*>(instance);
-   value.setInteger(ctx->dataSize());
-}
-
-FALCON_DEFINE_PROPERTY_SET( ClassVMContext, codeDepth )(void*, const Item& )
-{
-   throw new ParamError( ErrorParam( e_prop_ro, __LINE__, SRC ).extra("codeDepth") );
-}
-
-FALCON_DEFINE_PROPERTY_GET_P( ClassVMContext, codeDepth )
-{
-   VMContext* ctx = static_cast<VMContext*>(instance);
-   value.setInteger(ctx->codeDepth());
-}
-
-FALCON_DEFINE_PROPERTY_SET( ClassVMContext, selfItem )(void*, const Item& )
-{
-   throw new ParamError( ErrorParam( e_prop_ro, __LINE__, SRC ).extra("selfItem") );
-}
-
-FALCON_DEFINE_PROPERTY_GET_P( ClassVMContext, selfItem )
-{
-   VMContext* ctx = static_cast<VMContext*>(instance);
-   value.assign(ctx->currentFrame().m_self);
-}
-
-//========================================================================
-// Methods
-//
-
-FALCON_DEFINE_METHOD( ClassVMContext, caller )(VMContext* ctx, int )
-{
-   Item* i_depth = ctx->param(0);
-   int32 depth = 1;
-   if( i_depth != 0 ) {
-      if( ! i_depth->isOrdinal() ) {
-         throw paramError(__LINE__, SRC);
-      }
-      depth = (int32) i_depth->forceInteger();
-   }
-
-   // we're not interested in this call
-   depth++;
-   // we can't use a foreign context, sorry.
-   VMContext* tgt = ctx;
-   if( depth >= tgt->callDepth() ) {
-      throw new ParamError(
-               ErrorParam( e_param_range, __LINE__, SRC )
-                  .extra("excessive depth")
-               );
-   }
-
-   //ugly but works
-   CallFrame* cf = &(&tgt->currentFrame())[-depth];
-   if( cf->m_bMethodic ) {
-      Item s = cf->m_self;
-      s.methodize(cf->m_function);
-      ctx->returnFrame(s);
-   }
-   else {
-      ctx->returnFrame(cf->m_function);
    }
 }
 

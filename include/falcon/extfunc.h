@@ -21,9 +21,6 @@
 namespace Falcon
 {
 
-/** External function type */
-typedef void (*ext_func_t)(VMachine*);
-
 /** Marker that can be used to declare a Falcon extension function. */
 #ifndef FALCON_FUNC
 #define FALCON_FUNC void

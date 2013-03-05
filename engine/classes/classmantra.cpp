@@ -92,11 +92,11 @@ void* ClassMantra::createInstance() const
 
 void ClassMantra::enumerateProperties( void*, Class::PropertyEnumerator& cb ) const
 {
-   cb("attributes", true);
-   cb("category", false );
-   cb("location", true);
-   cb("module", false);
-   cb("name", true );
+   cb("attributes");
+   cb("category" );
+   cb("location");
+   cb("module");
+   cb("name");
 }
 
 

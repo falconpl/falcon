@@ -95,8 +95,8 @@ bool ClassSymbol::op_init( VMContext* ctx, void*, int32 pcount ) const
 
 void ClassSymbol::enumerateProperties( void*, PropertyEnumerator& cb ) const
 {
-   cb("name", false);
-   cb("value", true);
+   cb("name");
+   cb("value");
 }
 
 void ClassSymbol::enumeratePV( void* instance, PVEnumerator& cb ) const

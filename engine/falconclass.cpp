@@ -593,15 +593,12 @@ void FalconClass::enumeratePropertiesOnly( PropertyEnumerator& cb ) const
    {
       if( iter->second->m_type == Property::t_prop)
       {
-         if( ! cb( iter->first, ++iter == members.end() ) )
+         if( ! cb( iter->first ) )
          {
             break;
          }
       }
-      else
-      {
-         ++iter;
-      }
+      ++iter;
    }
 }
 
@@ -811,10 +808,12 @@ void FalconClass::enumerateProperties( void* , PropertyEnumerator& cb ) const
    while( iter != members.end() )
    {
       const String& name = iter->first;
-      if( ! cb( name, ++iter == members.end() ) )
+      if( ! cb( name ) )
       {
          break;
       }
+
+      ++iter;
    }
 }
 
@@ -862,7 +861,7 @@ void FalconClass::describe( void* instance, String& target, int depth, int maxle
          m_maxlen( l )
       {}
 
-      virtual bool operator()( const String& name, bool )
+      virtual bool operator()( const String& name )
       {
          Item theItem;
          if( m_class->getProperty( name )->m_type == Property::t_prop )

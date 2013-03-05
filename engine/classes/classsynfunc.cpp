@@ -59,13 +59,13 @@ void ClassSynFunc::enumerateParents( ClassEnumerator& cb ) const
 {
    static Class* cls = Engine::handlers()->functionClass();
    
-   cb( cls, true );
+   cb( cls );
 }
 
 void ClassSynFunc::enumerateProperties( void* instance, Class::PropertyEnumerator& cb ) const
 {
    static Class* cls = Engine::handlers()->functionClass();
-   cb("code",false);
+   cb("code");
    cls->enumerateProperties(instance, cb);
 }
 

@@ -17,15 +17,14 @@
 #define FALCON_CORE_DATAREADER_H
 
 #include <falcon/types.h>
-#include <falcon/property.h>
-#include <falcon/method.h>
-#include <falcon/classes/classuser.h>
+#include <falcon/class.h>
 #include <falcon/pstep.h>
 
 namespace Falcon {
 namespace Ext {
+class Function_readItem;
 
-class ClassDataReader: public ClassUser
+class ClassDataReader: public Class
 {
 public:
    ClassDataReader( Class* clsStream );
@@ -49,31 +48,6 @@ private:
    
    Class* m_clsStream;
 
-   //====================================================
-   // Properties.
-   //
-   
-   FALCON_DECLARE_PROPERTY( endianity );
-   FALCON_DECLARE_PROPERTY( sysEndianity );
-   
-   FALCON_DECLARE_METHOD( read, "data:S|M, count:[N]" );
-   FALCON_DECLARE_METHOD( readBool, "" );
-   FALCON_DECLARE_METHOD( readChar, "" );
-   FALCON_DECLARE_METHOD( readByte, "" );
-   FALCON_DECLARE_METHOD( readI16, "" );
-   FALCON_DECLARE_METHOD( readU16, "" );
-   FALCON_DECLARE_METHOD( readI32, "" );
-   FALCON_DECLARE_METHOD( readU32, "" );
-   FALCON_DECLARE_METHOD( readI64, "" );
-   FALCON_DECLARE_METHOD( readU64, "" );
-   FALCON_DECLARE_METHOD( readF32, "" );
-   FALCON_DECLARE_METHOD( readF64, "" );
-   FALCON_DECLARE_METHOD( readString, "" );
-   FALCON_DECLARE_METHOD( readItem, "model:Class" );
-   
-   FALCON_DECLARE_METHOD( sync, "" );
-   FALCON_DECLARE_METHOD( eof, "" );
-
    
    class FALCON_DYN_CLASS ReadItemNext: public PStep
    {
@@ -86,6 +60,7 @@ private:
    };
 
    friend class ReadItemNext;
+   friend class Function_readItem;
    ReadItemNext m_readItemNext;
 };
 

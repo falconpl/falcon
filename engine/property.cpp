@@ -28,22 +28,34 @@
 namespace Falcon {
 
 
-Property::Property( ClassUser* uc, const String &name, bool bCarried, bool bHidden ):
-   m_owner(uc),
+Property::Property( const String &name, bool bCarried, bool bHidden ):
    m_name(name),
    m_bCarried(bCarried),
    m_bHidden(bHidden)
 {
-   if( uc != 0 )
-   {
-      uc->add(this);
-      // otherwise, the subclass wants to override this.
-   }
+   getFunc = &dfltGetFunc;   
+   setFunc = &dfltSetFunc;
 }
 
 
 Property::~Property()
 {
+}
+
+
+void Property::dfltSetFunc( const Property* prop, void *instance, const Item& value )
+{
+   Error* error = new AccessError( ErrorParam(e_prop_ro, __LINE__, SRC) );
+   error->extraDescription(name());
+   return error;
+}
+
+
+void Property::dfltGetFunc( const Property* prop, void *instance, Item& value )
+{
+   Error* error = new AccessError( ErrorParam(e_prop_wo) );
+   error->extraDescription(name());
+   return error;
 }
 
 
@@ -59,7 +71,7 @@ void Property::checkType( bool ok, const String& required )
 
 Error* Property::readOnlyError() const
 {
-   Error* error = new AccessError( ErrorParam(e_prop_ro) );
+   Error* error = new AccessError( ErrorParam(e_prop_ro, __LINE__, SRC ) );
    error->extraDescription(name());
    return error;
 }
@@ -69,22 +81,27 @@ Error* Property::readOnlyError() const
 // PropertyConstant
 //
 
-PropertyConstant::PropertyConstant( const Item& value, ClassUser* uc, const String &name ):
-         Property(0, name, false, true ),
+PropertyConstant::PropertyConstant( const Item& value, const String &name ):
+         Property(name, false, true ),
          m_lock(0)
 {
-   m_owner = uc;
-   uc->add(this);
-   uc->addStatic(this);
-
    static Collector* coll = Engine::instance()->collector();
+   value.copied();
    m_value = value;
    if( value.isUser() )
    {
       m_lock = coll->lock(m_value);
    }
 
+   getFunc = getFunc_;
 }
+
+void PropertyConstant::getFunc_( const Property* prop, void*, Item& target )
+{
+   // we have the copied bit
+   target = prop->m_value;
+}
+
 
 PropertyConstant::~PropertyConstant()
 {
@@ -94,21 +111,14 @@ PropertyConstant::~PropertyConstant()
    }
 }
 
-void PropertyConstant::set( void*, const Item& )
-{
-   throw readOnlyError();
-}
 
 //===================================================================
 // PropertyStatic
 //
 
-PropertyStatic::PropertyStatic( ClassUser* uc, const String &name ):
-         Property(0, name, false, true )
+PropertyStatic::PropertyStatic( const String &name ):
+         Property(name, false, true )
 {
-   // make us reachable, yet invisible, for the instances too.
-   uc->add(this);
-   uc->addStatic(this);
 }
 
 PropertyStatic::~PropertyStatic()
@@ -128,7 +138,7 @@ PropertyCarried::PropertyCarried( ClassUser* uc, const String &name ):
 // PropertyString
 //
 
-void PropertyString::get( void* instance, Item& target )
+void PropertyString::getFunc_( const Property*, void *instance, Item& value )
 {
    UserCarrier* uric = static_cast<UserCarrier*>(instance);
    Item* cache = carried( uric );
@@ -138,6 +148,7 @@ void PropertyString::get( void* instance, Item& target )
    {
       str = new String;
       *cache = FALCON_GC_HANDLE(str);
+      cache->copied();
    }
    else
    {
@@ -148,21 +159,22 @@ void PropertyString::get( void* instance, Item& target )
    str->bufferize(value);
    
    // str is in cache.
-   target.copy(*cache);   
+   target = *cache;
 }
 
 //===================================================================
 // PropertyData
 //
 
-void PropertyData::set( void* instance, const Item& value )
+void PropertyData::setFunc_( cosnt Property* prop, void* instance, const Item& value )
 {
+   const PropertyData* self = static_cast<const PropertyData*>( prop );
    UserCarrier* uric = static_cast<UserCarrier*>(instance);
    Item* cache = carried( uric );
       
    if( cache->isNil() )
    {
-      initCacheItem( *cache );
+      self->initCacheItem( *cache );
       fassert( cache->isUser() );
    }
    
@@ -178,22 +190,23 @@ void PropertyData::set( void* instance, const Item& value )
    }
    
    //we can proceed
-   update( vudata, *cache );
+   self->update( vudata, *cache );
 }
 
-void PropertyData::get( void* instance, Item& target )
+void PropertyData::getFunc_( cosnt Property* prop, void* instance, Item& target )
 {
+   const PropertyData* self = static_cast<const PropertyData*>( prop );
    UserCarrier* uric = static_cast<UserCarrier*>(instance);
    Item* cache = carried( uric );   
    
    if( cache->isNil() )
    {
-      initCacheItem( *cache );
+      self->initCacheItem( *cache );
       fassert( cache->isUser() );
    }
    
-   fetch( cache->asInst() );  
-   target.copy(*cache);   
+   self->fetch( cache->asInst() );  
+   self->target.copy(*cache);   
 }
 
 
@@ -202,30 +215,33 @@ void PropertyData::get( void* instance, Item& target )
 //
 
 
-PropertyReflect::PropertyReflect( ClassUser* uc, const String &name ):
-   PropertyCarried( uc, name ),
+PropertyReflect::PropertyReflect( const String &name ):
+   PropertyCarried( name ),
    m_displacement( not_displaced ),
    m_offset(0),
    m_max_size(0),
    m_type( e_rt_none )
 {
+   setFunc = setFunc_;
+   getFunc = getFunc_;
 }
 
 
-void PropertyReflect::get( void* instance, Item& value )
+void PropertyReflect::getFunc_( Property* prop, void* instance, Item& value )
 {
+   const PropertyData* self = static_cast<const PropertyData*>( prop );
    void *displaced = instance;
    
    // first, get the displacement.
-   if( m_displacement != not_displaced )
+   if( self->m_displacement != not_displaced )
    {
       char* disp = (char*) instance;
-      disp+= m_displacement;
+      disp+= self->m_displacement;
       displaced = *((void**)disp);
    }
    
    char* inst = (char*) displaced;
-   inst += m_offset;
+   inst += self->m_offset;
    
    switch( m_type )
    {
@@ -328,20 +344,20 @@ void PropertyReflect::get( void* instance, Item& value )
 }
 
 
-void PropertyReflect::set( void* instance, const Item& value )
+void PropertyReflect::setFunc_( const Property* prop, void* instance, const Item& value )
 {
    void *displaced = instance;
    
    // first, get the displacement.
-   if( m_displacement != not_displaced )
+   if( self->m_displacement != not_displaced )
    {
       char* disp = (char*) instance;
-      disp+= m_displacement;
+      disp+= self->m_displacement;
       displaced = *((void**)disp);
    }
    
    char* inst = (char*) displaced;
-   inst += m_offset;
+   inst += self->m_offset;
    
    const char* ptype = "";
    
@@ -657,40 +673,6 @@ void PropertyReflect::displace( void* base, void*& displacePtr )
    m_displacement = (uint32) (((uint64)base) - ((uint64)displacePtr));
 }
    
-
-//===================================================================
-// PropertyReflectRO
-//
-
-
-PropertyReflectRO::PropertyReflectRO( ClassUser* uc, const String &name ):
-   PropertyReflect( uc, name )
-{}
-
-void PropertyReflectRO::set( void*, const Item& )
-{
-   // signal a type error.
-   throw new ParamError( ErrorParam(e_prop_ro, __LINE__, SRC )
-      .extra(name())
-      );
-}
-
-
-//===================================================================
-// PropertyReflectWO
-//
-
-PropertyReflectWO::PropertyReflectWO( ClassUser* uc, const String &name ):
-   PropertyReflect( uc, name )
-{}
-
-void PropertyReflectWO::get( void*, Item& )
-{
-   // signal a type error.
-   throw new ParamError( ErrorParam(e_prop_wo, __LINE__, SRC )
-      .extra(name())
-      );
-}
 
 }
 

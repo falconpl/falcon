@@ -95,7 +95,7 @@ void ModCompiler::Context::onInputOver()
    public:
       Rator(Module *mod) : m_mod(mod) {};
       virtual ~Rator() {}
-      virtual bool operator()( const Mantra& data, bool )
+      virtual bool operator()( const Mantra& data )
       {
          if( data.category() == Mantra::e_c_falconclass )
          {

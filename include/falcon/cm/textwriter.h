@@ -17,11 +17,7 @@
 #ifndef FALCON_CORE_TEXTWRITER_H
 #define FALCON_CORE_TEXTWRITER_H
 
-
-#include <falcon/classes/classuser.h>
-#include <falcon/classes/classstream.h>
-#include <falcon/property.h>
-#include <falcon/method.h>
+#include <falcon/class.h>
 #include <falcon/types.h>
 #include <falcon/textwriter.h>
 
@@ -36,7 +32,7 @@ namespace Ext {
    @param stream A stream on which to operate.
  
  */
-class ClassTextWriter: public ClassUser
+class ClassTextWriter: public Class
 {
 public:
    /** Create the textstream class.
@@ -44,30 +40,18 @@ public:
     */
    ClassTextWriter( ClassStream* clsStream );
    virtual ~ClassTextWriter();
-
+   
+   virtual void dispose( void* instance ) const;
+   virtual void* clone( void* instance ) const;
+   virtual void gcMarkInstance( void* instance, uint32 mark ) const;
+   virtual bool gcCheckInstance( void* instance, uint32 mark ) const;
    //=============================================================
    //
    virtual void* createInstance() const;
    virtual bool op_init( VMContext* ctx, void* instance, int pcount ) const;
    
 private:   
-   ClassStream* m_clsStream;
-   
-   //====================================================
-   // Properties.
-   //
-   FALCON_DECLARE_PROPERTY( encoding );
-   FALCON_DECLARE_PROPERTY( crlf );
-   FALCON_DECLARE_PROPERTY( lineflush );
-   FALCON_DECLARE_PROPERTY( buffer );
-   
-   FALCON_DECLARE_METHOD( write, "text:S, count:[N], start:[N]" );
-   FALCON_DECLARE_METHOD( writeLine, "text:S, count:[N], start:[N]" );   
-   FALCON_DECLARE_METHOD( putChar, "char:S|N" );   
-   FALCON_DECLARE_METHOD( getStream, "" );      
-   FALCON_DECLARE_METHOD( flush, "" );
-   FALCON_DECLARE_METHOD( close, "" );
-
+   ClassStream* m_clsStream;   
 };
 
 }

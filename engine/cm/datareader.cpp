@@ -30,33 +30,318 @@
 namespace Falcon {
 namespace Ext {
 
-ClassDataReader::ClassDataReader( Class* clsStream ):
-   ClassUser("DataReader"),
-   m_clsStream( clsStream ),
-   FALCON_INIT_PROPERTY( endianity ),
-   FALCON_INIT_PROPERTY( sysEndianity ),
    
-   FALCON_INIT_METHOD( read ),
-   FALCON_INIT_METHOD( readBool ),
-   FALCON_INIT_METHOD( readChar ),
-   FALCON_INIT_METHOD( readByte ),
-   FALCON_INIT_METHOD( readI16 ),
-   FALCON_INIT_METHOD( readU16 ),
-   FALCON_INIT_METHOD( readI32 ),
-   FALCON_INIT_METHOD( readU32 ),
-   FALCON_INIT_METHOD( readI64 ),
-   FALCON_INIT_METHOD( readU64 ),
-   FALCON_INIT_METHOD( readF32 ),
-   FALCON_INIT_METHOD( readF64 ),
-   FALCON_INIT_METHOD( readString ),
-   FALCON_INIT_METHOD( readItem ),
-   
-   FALCON_INIT_METHOD( sync ),
-   FALCON_INIT_METHOD( eof ),
-   
-   m_readItemNext( this )
-   
+FALCON_DECLARE_FUNCTION( read, "data:S|M, count:[N]" );
+FALCON_DECLARE_FUNCTION( readBool, "" );
+FALCON_DECLARE_FUNCTION( readChar, "" );
+FALCON_DECLARE_FUNCTION( readByte, "" );
+FALCON_DECLARE_FUNCTION( readI16, "" );
+FALCON_DECLARE_FUNCTION( readU16, "" );
+FALCON_DECLARE_FUNCTION( readI32, "" );
+FALCON_DECLARE_FUNCTION( readU32, "" );
+FALCON_DECLARE_FUNCTION( readI64, "" );
+FALCON_DECLARE_FUNCTION( readU64, "" );
+FALCON_DECLARE_FUNCTION( readF32, "" );
+FALCON_DECLARE_FUNCTION( readF64, "" );
+FALCON_DECLARE_FUNCTION( readString, "" );
+FALCON_DECLARE_FUNCTION( readItem, "model:Class" );
+
+FALCON_DECLARE_FUNCTION( sync, "" );
+FALCON_DECLARE_FUNCTION( eof, "" );
+
+//=================================================================
+// Properties
+//
+
+static void set_endianity( const Class*, const String&, void* instance, const Item& value )
 {
+   DataReader* sc = static_cast<DataReader*>(instance);
+     
+   if( !value.isOrdinal() )
+   {
+      // unknown encoding
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__, SRC )
+         .origin( ErrorParam::e_orig_runtime )
+         .extra( "N" ));
+   }
+   
+   int64 edty = (int64) value.forceInteger();
+   if( edty == DataReader::e_BE || edty == DataReader::e_LE
+       || edty == DataReader::e_reverseEndian || edty == DataReader::e_sameEndian )
+   {
+      sc->setEndianity( (DataReader::t_endianity) edty );
+   }
+   else
+   {
+      throw new ParamError( ErrorParam( e_param_range, __LINE__, SRC )
+         .origin( ErrorParam::e_orig_runtime )
+         .extra( "Not a valid endianity setting" ));
+   }
+}
+
+
+static void get_endianity( const Class*, const String&, void* instance, Item& value )
+{
+   DataReader* sc = static_cast<DataReader*>(instance);
+   value = (int64)sc->endianity();
+}
+
+
+static void get_sysEndianity( const Class*, const String&, void* instance, Item& value )
+{
+   DataReader* sc = static_cast<DataReader*>(instance);
+   DataReader::t_endianity edity = sc->endianity();
+   if( sc->isSameEndianity() )
+   {
+      value = (int64)edity; 
+   }
+   else {
+      value = (int64) (edity == DataReader::e_LE ? DataReader::e_BE : DataReader::e_LE );
+   }
+}
+
+//=================================================================
+// Methods
+//
+
+void Function_read::invoke(VMContext* ctx, int32 )
+{
+   Item* i_data = ctx->param(0);
+   if( i_data == 0 || !(i_data->isString()||i_data->isMemBuf()) )
+   {
+      throw paramError();
+   }
+   
+   Item* i_count = ctx->param(1);
+   
+   if ( (i_count != 0 && !(i_count->isOrdinal() || i_count->isNil())) 
+      )
+   {
+      throw paramError();
+   }
+   
+   uint32 dataSize = i_data->asString()->size();
+   uint32 count = dataSize;  
+      
+   if( i_count != 0 && ! i_count->isNil() )
+   {      
+      count = (uint32) i_count->forceInteger();
+   }
+   
+   if( count == 0 )
+   {
+      // nothing to do
+      ctx->returnFrame( (int64) 0 );
+      return;
+   }
+   
+   if( count > dataSize )
+   {
+      i_data->asString()->reserve( count );
+   }
+   
+   byte* dataSource = i_data->asString()->getRawStorage();
+   DataReader* sc = static_cast<DataReader*>(ctx->self().asInst());
+   int64 retval = (int64) sc->read(dataSource, count);   
+   ctx->returnFrame( retval );   
+}
+
+
+void Function_readBool::invoke(VMContext* ctx, int32 )
+{   
+   bool bValue;
+   DataReader* dw = static_cast<DataReader*>(ctx->self().asInst());
+   dw->read(bValue);
+   Item retVal;
+   retVal.setBoolean(bValue);
+   ctx->returnFrame( retVal );
+}
+
+
+void Function_readChar::invoke(VMContext* ctx, int32 )
+{
+   char chr;   
+   DataReader* dw = static_cast<DataReader*>(ctx->self().asInst());
+   dw->read(chr);
+   ctx->returnFrame((int64) chr);
+}
+
+
+void Function_readByte::invoke(VMContext* ctx, int32 )
+{
+   byte value;   
+   DataReader* dw = static_cast<DataReader*>(ctx->self().asInst());
+   dw->read(value);
+   ctx->returnFrame((int64) value);
+}
+
+void Function_readI16::invoke(VMContext* ctx, int32 )
+{
+   int16 value;   
+   DataReader* dw = static_cast<DataReader*>(ctx->self().asInst());
+   dw->read(value);
+   ctx->returnFrame((int64) value);
+}
+
+
+void Function_readU16::invoke(VMContext* ctx, int32 )
+{
+   uint16 value;   
+   DataReader* dw = static_cast<DataReader*>(ctx->self().asInst());
+   dw->read(value);
+   ctx->returnFrame((int64) value);
+}
+
+
+void Function_readI32::invoke(VMContext* ctx, int32 )
+{
+   int32 value;   
+   DataReader* dw = static_cast<DataReader*>(ctx->self().asInst());
+   dw->read(value);
+   ctx->returnFrame((int64) value);
+}
+
+
+void Function_readU32::invoke(VMContext* ctx, int32 )
+{
+   uint16 value;   
+   DataReader* dw = static_cast<DataReader*>(ctx->self().asInst());
+   dw->read(value);
+   ctx->returnFrame((int64) value);
+}
+
+
+void Function_readI64::invoke(VMContext* ctx, int32 )
+{
+   int64 value;   
+   DataReader* dw = static_cast<DataReader*>(ctx->self().asInst());
+   dw->read(value);
+   ctx->returnFrame((int64) value);
+}
+
+
+void Function_readU64::invoke(VMContext* ctx, int32 )
+{
+   uint64 value;   
+   DataReader* dw = static_cast<DataReader*>(ctx->self().asInst());
+   dw->read(value);
+   ctx->returnFrame((int64) value);
+}
+
+
+void Function_readF32::invoke(VMContext* ctx, int32 )
+{
+   float value;   
+   DataReader* dw = static_cast<DataReader*>(ctx->self().asInst());
+   dw->read(value);
+   ctx->returnFrame((numeric) value);
+}
+
+
+void Function_readF64::invoke(VMContext* ctx, int32 )
+{
+   double value;   
+   DataReader* dw = static_cast<DataReader*>(ctx->self().asInst());
+   dw->read(value);
+   ctx->returnFrame((numeric) value);
+}
+
+
+void Function_readString::invoke(VMContext* ctx, int32 )
+{
+   static Class* stringClass = Engine::handlers()->stringClass();
+   String* str = new String;
+   DataReader* dw = static_cast<DataReader*>(ctx->self().asInst());
+   try
+   {
+      dw->read(*str);
+   }
+   catch( ... )
+   {
+      delete str;
+      throw;
+   }
+   
+   ctx->returnFrame( FALCON_GC_STORE( stringClass, str ) );
+}
+
+
+void Function_readItem::invoke(VMContext* ctx, int32 )
+{
+   static StdSteps* steps = Engine::instance()->stdSteps();
+
+   Item* i_data = ctx->param(0);
+   if( i_data == 0 || ! i_data->isClass() )
+   {
+      ctx->raiseError( paramError() );
+      return;
+   }
+   
+   DataReader* dw = static_cast<DataReader*>(ctx->self().asInst());
+   Class* cls = static_cast<Class*>(i_data->asInst());
+   
+   // store may go deep, so we use a conditional return construct
+   ctx->pushCode( &static_cast<ClassDataReader*>(m_methodOf)->m_readItemNext );
+   
+   long depth = ctx->codeDepth();
+   
+   // this will punch in later on...
+   ctx->pushCode( &steps->m_returnFrameWithTop );
+   cls->restore( ctx, dw );
+   
+   // ... if the restore process isn't done.
+   if( depth == ctx->codeDepth() )
+   {
+      ctx->returnFrame( ctx->topData() );
+   }
+}
+
+
+void Function_sync::invoke(VMContext* ctx, int32 )
+{
+  DataReader* dw = static_cast<DataReader*>(ctx->self().asInst());
+  dw->sync();  
+  ctx->returnFrame();
+}
+
+
+void Function_eof::invoke(VMContext* ctx, int32 )
+{
+  DataReader* dw = static_cast<DataReader*>(ctx->self().asInst());
+  Item ret;
+  ret.setBoolean(dw->eof());  
+  ctx->returnFrame( ret );
+}
+
+//==================================================================
+
+
+
+ClassDataReader::ClassDataReader( Class* clsStream ):
+   Class("DataReader"),
+   m_clsStream( clsStream ),
+   m_readItemNext( this )  
+{
+   addProperty( "endianity", &get_endianity, &set_endianity );
+   addProperty( "sysEndianity", &get_sysEndianity);
+   
+   addMethod( new Function_read );
+   addMethod( new Function_readBool );
+   addMethod( new Function_readChar );
+   addMethod( new Function_readByte );
+   addMethod( new Function_readI16 );
+   addMethod( new Function_readU16 );
+   addMethod( new Function_readI32 );
+   addMethod( new Function_readU32 );
+   addMethod( new Function_readI64 );
+   addMethod( new Function_readU64 );
+   addMethod( new Function_readF32 );
+   addMethod( new Function_readF64 );
+   addMethod( new Function_readString );
+   addMethod( new Function_readItem );
+   
+   addMethod( new Function_sync );
+   addMethod( new Function_eof );
 }
 
 ClassDataReader::~ClassDataReader()
@@ -124,277 +409,6 @@ bool ClassDataReader::op_init( VMContext* ctx, void* instance, int pcount ) cons
 }
 
 
-//=================================================================
-// Properties
-//
-
-FALCON_DEFINE_PROPERTY_SET_P( ClassDataReader, endianity )
-{
-   DataReader* sc = static_cast<DataReader*>(instance);
-     
-   if( !value.isOrdinal() )
-   {
-      // unknown encoding
-      throw new ParamError( ErrorParam( e_inv_params, __LINE__, SRC )
-         .origin( ErrorParam::e_orig_runtime )
-         .extra( "N" ));
-   }
-   
-   int64 edty = (int64) value.forceInteger();
-   if( edty == DataReader::e_BE || edty == DataReader::e_LE
-       || edty == DataReader::e_reverseEndian || edty == DataReader::e_sameEndian )
-   {
-      sc->setEndianity( (DataReader::t_endianity) edty );
-   }
-   else
-   {
-      throw new ParamError( ErrorParam( e_param_range, __LINE__, SRC )
-         .origin( ErrorParam::e_orig_runtime )
-         .extra( "Not a valid endianity setting" ));
-   }
-}
-
-
-FALCON_DEFINE_PROPERTY_GET_P( ClassDataReader, endianity )
-{
-   DataReader* sc = static_cast<DataReader*>(instance);
-   value = (int64)sc->endianity();
-}
-
-
-FALCON_DEFINE_PROPERTY_SET( ClassDataReader, sysEndianity )( void*, const Item& )
-{
-   throw new AccessError( ErrorParam( e_prop_ro, __LINE__, SRC )
-      .origin( ErrorParam::e_orig_runtime )
-      .extra( "sysEndianity" ));
-}
-
-
-FALCON_DEFINE_PROPERTY_GET_P( ClassDataReader, sysEndianity )
-{
-   DataReader* sc = static_cast<DataReader*>(instance);
-   DataReader::t_endianity edity = sc->endianity();
-   if( sc->isSameEndianity() )
-   {
-      value = (int64)edity; 
-   }
-   else {
-      value = (int64) (edity == DataReader::e_LE ? DataReader::e_BE : DataReader::e_LE );
-   }
-}
-
-//=================================================================
-// Methods
-//
-
-FALCON_DEFINE_METHOD_P1( ClassDataReader, read )
-{
-   Item* i_data = ctx->param(0);
-   if( i_data == 0 || !(i_data->isString()||i_data->isMemBuf()) )
-   {
-      throw paramError();
-   }
-   
-   Item* i_count = ctx->param(1);
-   
-   if ( (i_count != 0 && !(i_count->isOrdinal() || i_count->isNil())) 
-      )
-   {
-      throw paramError();
-   }
-   
-   uint32 dataSize = i_data->asString()->size();
-   uint32 count = dataSize;  
-      
-   if( i_count != 0 && ! i_count->isNil() )
-   {      
-      count = (uint32) i_count->forceInteger();
-   }
-   
-   if( count == 0 )
-   {
-      // nothing to do
-      ctx->returnFrame( (int64) 0 );
-      return;
-   }
-   
-   if( count > dataSize )
-   {
-      i_data->asString()->reserve( count );
-   }
-   
-   byte* dataSource = i_data->asString()->getRawStorage();
-   DataReader* sc = static_cast<DataReader*>(ctx->self().asInst());
-   int64 retval = (int64) sc->read(dataSource, count);   
-   ctx->returnFrame( retval );   
-}
-
-
-FALCON_DEFINE_METHOD_P1( ClassDataReader, readBool )
-{   
-   bool bValue;
-   DataReader* dw = static_cast<DataReader*>(ctx->self().asInst());
-   dw->read(bValue);
-   Item retVal;
-   retVal.setBoolean(bValue);
-   ctx->returnFrame( retVal );
-}
-
-
-FALCON_DEFINE_METHOD_P1( ClassDataReader, readChar )
-{
-   char chr;   
-   DataReader* dw = static_cast<DataReader*>(ctx->self().asInst());
-   dw->read(chr);
-   ctx->returnFrame((int64) chr);
-}
-
-FALCON_DEFINE_METHOD_P1( ClassDataReader, readByte )
-{
-   byte value;   
-   DataReader* dw = static_cast<DataReader*>(ctx->self().asInst());
-   dw->read(value);
-   ctx->returnFrame((int64) value);
-}
-
-FALCON_DEFINE_METHOD_P1( ClassDataReader, readI16 )
-{
-   int16 value;   
-   DataReader* dw = static_cast<DataReader*>(ctx->self().asInst());
-   dw->read(value);
-   ctx->returnFrame((int64) value);
-}
-
-
-FALCON_DEFINE_METHOD_P1( ClassDataReader, readU16 )
-{
-   uint16 value;   
-   DataReader* dw = static_cast<DataReader*>(ctx->self().asInst());
-   dw->read(value);
-   ctx->returnFrame((int64) value);
-}
-
-
-FALCON_DEFINE_METHOD_P1( ClassDataReader, readI32 )
-{
-   int32 value;   
-   DataReader* dw = static_cast<DataReader*>(ctx->self().asInst());
-   dw->read(value);
-   ctx->returnFrame((int64) value);
-}
-
-
-FALCON_DEFINE_METHOD_P1( ClassDataReader, readU32 )
-{
-   uint16 value;   
-   DataReader* dw = static_cast<DataReader*>(ctx->self().asInst());
-   dw->read(value);
-   ctx->returnFrame((int64) value);
-}
-
-
-FALCON_DEFINE_METHOD_P1( ClassDataReader, readI64 )
-{
-   int64 value;   
-   DataReader* dw = static_cast<DataReader*>(ctx->self().asInst());
-   dw->read(value);
-   ctx->returnFrame((int64) value);
-}
-
-
-FALCON_DEFINE_METHOD_P1( ClassDataReader, readU64 )
-{
-   uint64 value;   
-   DataReader* dw = static_cast<DataReader*>(ctx->self().asInst());
-   dw->read(value);
-   ctx->returnFrame((int64) value);
-}
-
-
-FALCON_DEFINE_METHOD_P1( ClassDataReader, readF32 )
-{
-   float value;   
-   DataReader* dw = static_cast<DataReader*>(ctx->self().asInst());
-   dw->read(value);
-   ctx->returnFrame((numeric) value);
-}
-
-
-FALCON_DEFINE_METHOD_P1( ClassDataReader, readF64 )
-{
-   double value;   
-   DataReader* dw = static_cast<DataReader*>(ctx->self().asInst());
-   dw->read(value);
-   ctx->returnFrame((numeric) value);
-}
-
-
-FALCON_DEFINE_METHOD_P1( ClassDataReader, readString )
-{
-   static Class* stringClass = Engine::handlers()->stringClass();
-   String* str = new String;
-   DataReader* dw = static_cast<DataReader*>(ctx->self().asInst());
-   try
-   {
-      dw->read(*str);
-   }
-   catch( ... )
-   {
-      delete str;
-      throw;
-   }
-   
-   ctx->returnFrame( FALCON_GC_STORE( stringClass, str ) );
-}
-
-
-FALCON_DEFINE_METHOD_P1( ClassDataReader, readItem )
-{
-   static StdSteps* steps = Engine::instance()->stdSteps();
-
-   Item* i_data = ctx->param(0);
-   if( i_data == 0 || ! i_data->isClass() )
-   {
-      ctx->raiseError( paramError() );
-      return;
-   }
-   
-   DataReader* dw = static_cast<DataReader*>(ctx->self().asInst());
-   Class* cls = static_cast<Class*>(i_data->asInst());
-   
-   // store may go deep, so we use a conditional return construct
-   ctx->pushCode( &static_cast<ClassDataReader*>(m_methodOf)->m_readItemNext );
-   
-   long depth = ctx->codeDepth();
-   
-   // this will punch in later on...
-   ctx->pushCode( &steps->m_returnFrameWithTop );
-   cls->restore( ctx, dw );
-   
-   // ... if the restore process isn't done.
-   if( depth == ctx->codeDepth() )
-   {
-      ctx->returnFrame( ctx->topData() );
-   }
-}
-
-
-FALCON_DEFINE_METHOD_P1( ClassDataReader, sync )
-{
-  DataReader* dw = static_cast<DataReader*>(ctx->self().asInst());
-  dw->sync();  
-  ctx->returnFrame();
-}
-
-
-FALCON_DEFINE_METHOD_P1( ClassDataReader, eof )
-{
-  DataReader* dw = static_cast<DataReader*>(ctx->self().asInst());
-  Item ret;
-  ret.setBoolean(dw->eof());  
-  ctx->returnFrame( ret );
-}
-
 void ClassDataReader::ReadItemNext::apply_( const PStep*, VMContext* ctx )
 {
    // we just got to return our good item
@@ -406,4 +420,3 @@ void ClassDataReader::ReadItemNext::apply_( const PStep*, VMContext* ctx )
 }
 
 /* end of datareader.cpp */
-

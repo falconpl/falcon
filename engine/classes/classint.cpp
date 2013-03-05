@@ -103,7 +103,7 @@ bool ClassInt::isDerivedFrom( const Class* cls ) const
 void ClassInt::enumerateParents( ClassEnumerator& cb ) const
 {
    static Class* number = Engine::handlers()->numberClass();
-   cb(number,true);
+   cb(number);
 }
 
 void* ClassInt::getParentData( const Class* parent, void* data ) const

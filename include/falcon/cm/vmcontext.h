@@ -17,9 +17,7 @@
 #define FALCON_CORE_VMCONTEXT_H
 
 #include <falcon/fassert.h>
-#include <falcon/property.h>
-#include <falcon/method.h>
-#include <falcon/classes/classuser.h>
+#include <falcon/class.h>
 
 namespace Falcon {
 namespace Ext {
@@ -46,7 +44,7 @@ namespace Ext {
  @prop codeDepth Size of the code stack.
  @prop selfItem Equivalent to self.
  */
-class ClassVMContext: public ClassUser
+class ClassVMContext: public Class
 {
 public:
    
@@ -64,30 +62,7 @@ public:
 
    virtual bool op_init( VMContext* ctx, void*, int pcount ) const;
    virtual void op_toString( VMContext* ctx, void* instance ) const;
-   
-private:   
-   
-   //====================================================
-   // Properties.
-   //
-   
-   FALCON_DECLARE_PROPERTY( id )
-   FALCON_DECLARE_PROPERTY( processId )
-   FALCON_DECLARE_PROPERTY( callDepth )
-   FALCON_DECLARE_PROPERTY( dataDepth )
-   FALCON_DECLARE_PROPERTY( codeDepth )
-   FALCON_DECLARE_PROPERTY( selfItem )
-   FALCON_DECLARE_PROPERTY( status )
 
-   /*#
-    @method caller VMContext
-    @brief Returns the item (function or method) that is calling the current function.
-    @optparam depth If specified, return the nth parameter up to @a VMContext.codeDepth
-
-    If @b depth is not specified, it defaults to 1. Using 0 returns the same entity as
-    obtained by the @b fself keyword.
-    */
-   FALCON_DECLARE_METHOD( caller, "depth:[N]" );
 };
 
 }

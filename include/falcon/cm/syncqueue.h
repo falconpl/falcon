@@ -21,12 +21,9 @@
 #include <falcon/function.h>
 #include <falcon/string.h>
 #include <falcon/shared.h>
-#include <falcon/classes/classuser.h>
 #include <falcon/classes/classshared.h>
 
 #include <falcon/pstep.h>
-
-#include <falcon/method.h>
 
 namespace Falcon {
 namespace Ext {
@@ -131,64 +128,7 @@ public:
    //=============================================================
    //
    virtual void* createInstance() const;
-
    virtual bool op_init( VMContext* ctx, void*, int pcount ) const;
-
-private:
-   /*#
-     @property empty Barrier
-     @brief Checks if queue is empty at the moment.
-
-     This information has a meaning only if it can be demonstrated
-     that there aren't other producers able to push data in the queue
-     in this moment.
-
-    */
-   FALCON_DECLARE_PROPERTY( empty );
-
-   /*#
-     @method push SyncQueue
-     @brief Pushes one or more items in the queue.
-     @param item The item pushed in the queue.
-     @optparam ... More items to be pushed atomically.
-
-     It is not necessary to acquire the queue to push an item.
-     Also, pushing an item does not automatically release the queue.
-    */
-   FALCON_DECLARE_METHOD( push, "item:X,..." );
-
-   /*#
-     @method pop SyncQueue
-     @brief Removes an item from the queue atomically, or waits for an item to be available.
-     @optparam onEmpty Returned if the queue is empty.
-     @raise AccessError if the queue is in fair mode and the pop method is invoked without
-           having acquired the resource with a successfull wait.
-
-      In non fair mode, even if the queue is signaled and the wait operation is successful,
-      there is no guarantee that the queue is still non-empty when this agent
-      tires to pop the queue. The pop method is granted to return an item from
-      the queue if and only if a wait operation was successful and there aren't other
-      agents trying to pop from this resource.
-
-      In fair mode, this method can be invoked only after having acquired the queue
-      through a successful wait operation. It is then granted that the method will return
-      an item, and the @b onEmpty parameter, if given, will be ignored.
-    */
-   FALCON_DECLARE_METHOD( pop, "onEmpty:[X]" );
-
-   /*#
-     @method wait SyncQueue
-     @brief Wait the queue to be non-empty.
-     @optparam timeout Milliseconds to wait for the barrier to be open.
-     @return true if the barrier is open during the wait, false if the given timeout expires.
-
-     If @b timeout is less than zero, the wait is endless; if @b timeout is zero,
-     the wait exits immediately.
-
-     If the queue is in fair mode, a successful wait makes the invoker to
-     enter a critical section; the pop method will then release the queue.
-    */
-   FALCON_DECLARE_METHOD( wait, "timeout:[N]" );
 };
 
 }

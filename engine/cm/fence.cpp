@@ -124,18 +124,108 @@ int32 SharedFence::lockedConsumeSignal( VMContext* ctx, int32)
 
 //=============================================================
 //
+//
+
+/*#
+  @property level Fence
+  @brief Current signal level of the fence.
+
+  This is a read/only property.
+ */
+static void get_level( const Class*, const String&, void* instance, Item& value )
+{
+   SharedFence* shared = static_cast<SharedFence*>(instance);
+   value.setInteger(shared->level());
+}
+
+
+/*#
+  @property isEvent Fence
+  @brief True if the current fence has event semantic
+
+  This is a read/only property.
+ */
+static void get_isEvent( const Class*, const String&, void* instance, Item& value )
+{
+   SharedFence* shared = static_cast<SharedFence*>(instance);
+   value.setBoolean(shared->isEvent());
+}
+
+/*#
+  @property count Fence
+  @brief Count of signals that this fence waits on.
+
+  This is property can be changed at runtime, but the
+  count level doesn't affect the level. In other words,
+  the count change becomes effective after
+  the first waiter has waken up.
+
+  For example,
+  if a fence with count 5 received 2 signals, and it is
+  now at level 3, setting count to 2 won't cause the
+  waiters to wake up; the fence still need to receive
+  3 signals before waiters are waken up.
+ */
+static void get_count( const Class*, const String&, void* instance, Item& value )
+
+{
+   SharedFence* shared = static_cast<SharedFence*>(instance);
+   value.setInteger(shared->count());
+}
+
+
+static void set_count( const Class*, const String&, void* instance, const Item& value )
+
+{
+   if(!value.isOrdinal())
+   {
+      throw FALCON_SIGN_XERROR( AccessError, e_inv_prop_value, .extra("N > 0") );
+   }
+
+   int32 count = (int32) value.forceInteger();
+   if( count <= 0 )
+   {
+      throw FALCON_SIGN_XERROR( AccessError, e_inv_prop_value, .extra("N > 0") );
+   }
+
+   SharedFence* shared = static_cast<SharedFence*>(instance);
+   shared->count( count );
+}
+
+
+/*#
+  @method signal Fence
+  @brief Signals the fence
+  @optparam count Count of signals to be sent to the fence.
+
+   The parameter @b count must be greater or equal to 1.
+ */
+FALCON_DECLARE_FUNCTION( signal, "count:[N]" );
+void Function_signal::invoke( VMContext* ctx, int32 pCount )
+{
+   SharedFence* evt = static_cast<SharedFence*>(ctx->self().asInst());
+   int32 count = pCount > 0 ? ((int32)ctx->param(0)->forceInteger()) : 1;
+   if( count <= 0 )
+   {
+      throw FALCON_SIGN_XERROR(ParamError, e_param_range, .extra("[N]>0") );
+   }
+
+   evt->signal( count );
+   ctx->returnFrame();
+}
+
 
 ClassFence::ClassFence():
-      ClassShared("Fence"),
-      FALCON_INIT_PROPERTY( level ),
-      FALCON_INIT_PROPERTY( isEvent ),
-      FALCON_INIT_PROPERTY( count ),
-      FALCON_INIT_METHOD(signal),
-      FALCON_INIT_METHOD(tryWait),
-      FALCON_INIT_METHOD(wait)
+   ClassShared("Fence") 
 {
    static Class* shared = Engine::handlers()->sharedClass();
-   addParent(shared);
+   setParent(shared);
+
+   addProperty( "level", &get_level );
+   addProperty( "isEvent", &get_isEvent );
+   addProperty( "count", &get_count, &set_count );
+   
+   addMethod( new Function_signal );
 }
 
 
@@ -174,82 +264,6 @@ bool ClassFence::op_init( VMContext* ctx, void*, int pcount ) const
    SharedFence* sb = new SharedFence(&ctx->vm()->contextManager(), this, count, isEvent);
    ctx->stackResult(pcount+1, FALCON_GC_STORE(this, sb));
    return true;
-}
-
-
-
-FALCON_DEFINE_PROPERTY_GET_P( ClassFence, level )
-{
-   SharedFence* shared = static_cast<SharedFence*>(instance);
-   value.setInteger(shared->level());
-}
-
-
-FALCON_DEFINE_PROPERTY_SET( ClassFence, level )( void*, const Item& )
-{
-   throw readOnlyError();
-}
-
-
-FALCON_DEFINE_PROPERTY_GET_P( ClassFence, isEvent )
-{
-   SharedFence* shared = static_cast<SharedFence*>(instance);
-   value.setBoolean(shared->isEvent());
-}
-
-
-FALCON_DEFINE_PROPERTY_SET( ClassFence, isEvent )( void*, const Item& )
-{
-   throw readOnlyError();
-}
-
-FALCON_DEFINE_PROPERTY_GET_P( ClassFence, count )
-{
-   SharedFence* shared = static_cast<SharedFence*>(instance);
-   value.setInteger(shared->count());
-}
-
-
-FALCON_DEFINE_PROPERTY_SET( ClassFence, count )( void* instance, const Item& value )
-{
-   if(!value.isOrdinal())
-   {
-      throw FALCON_SIGN_XERROR( AccessError, e_inv_prop_value, .extra("N > 0") );
-   }
-
-   int32 count = (int32) value.forceInteger();
-   if( count <= 0 )
-   {
-      throw FALCON_SIGN_XERROR( AccessError, e_inv_prop_value, .extra("N > 0") );
-   }
-
-   SharedFence* shared = static_cast<SharedFence*>(instance);
-   shared->count( count );
-}
-
-
-FALCON_DEFINE_METHOD_P( ClassFence, signal )
-{
-   SharedFence* evt = static_cast<SharedFence*>(ctx->self().asInst());
-   int32 count = pCount > 0 ? ((int32)ctx->param(0)->forceInteger()) : 1;
-   if( count <= 0 )
-   {
-      throw FALCON_SIGN_XERROR(ParamError, e_param_range, .extra("[N]>0") );
-   }
-
-   evt->signal( count );
-   ctx->returnFrame();
-}
-
-
-FALCON_DEFINE_METHOD_P( ClassFence, tryWait )
-{
-   ClassShared::genericClassTryWait( methodOf(), ctx, pCount );
-}
-
-FALCON_DEFINE_METHOD_P( ClassFence, wait )
-{
-   ClassShared::genericClassWait( methodOf(), ctx, pCount );
 }
 
 }

@@ -28,18 +28,74 @@
 
 namespace Falcon {
 
-//=============================================================
-//
+/*#
+ @property pipeMode StringStream
+ @brief Gets or sets the pipe mode for this string stream.
+
+ In pipe mode, the string stream read and write pointers are different.
+
+ If the mode is set to false, they move together, and the write pointer
+ is reset to the position of the read pointer.
+
+ In pipe mode, seek() moves both the read and the write pointer,
+ and current position is relative to write pointer,
+ but tell() returns the read pointer.
+*/
+void get_pipeMode( const Class* cls, const String& name, void *instance, Item& value )
+{
+   StringStream* ss = static_cast<StringStream*>(instance);
+   value.setBoolean(ss->isPipeMode());
+}
+
+void set_pipeMode( const Class* cls, const String& name, void *instance, const Item& value )
+{
+   StringStream* ss = static_cast<StringStream*>(instance);
+   ss->setPipeMode(value.isTrue());
+}
+
+/*#
+ @property content StringStream
+
+ @brief The whole content of this string stream as a memory buffer string.
+*/
+void get_content( const Class* cls, const String& name, void *instance, Item& value )
+{
+   StringStream* ss = static_cast<StringStream*>(instance);
+   String* ret = new String;
+   ss->getString(*ret);
+   ret->manipulator(ret->manipulator()->membufManipulator());
+   value = FALCON_GC_HANDLE( ret );
+}
+
+
+/*#
+ @method closeToString StringStream
+
+ @brief Gets the data written to the stream in a memory-efficient way.
+
+ Closes the string and passes the string memory as-is to a memory buffer string.
+ After this call the stream is not usable anymore.
+*/
+FALCON_DECLARE_FUNCTION(closeToString, "");
+void Function_closeToString::invoke(Falcon::VMContext *ctx, Falcon::int32)
+{
+   StringStream* ss = static_cast<StringStream*>(ctx->self().asInst());
+
+   String* ret = ss->closeToString();
+   ret->manipulator(ret->manipulator()->membufManipulator());
+   ctx->returnFrame( FALCON_GC_HANDLE( ret ) );
+}
+
+
 
 ClassStringStream::ClassStringStream():
-      ClassStream("StringStream"),
-      FALCON_INIT_PROPERTY(pipeMode),
-      FALCON_INIT_PROPERTY(content),
-
-      FALCON_INIT_METHOD(closeToString)
+      ClassStream("StringStream")
 {
    static Class* ssc = Engine::handlers()->streamClass();
-   addParent(ssc);
+   setParent(ssc);
+   addProperty( "pipeMode", &get_pipeMode, &set_pipeMode );
+   addProperty( "content", &get_content );
+   addMethod( new Function_closeToString );
 }
 
 ClassStringStream::~ClassStringStream()
@@ -75,41 +131,6 @@ bool ClassStringStream::op_init( VMContext* ctx, void*, int pcount ) const
    StringStream* ss = new StringStream( (int32) count );
    ctx->stackResult(pcount+1, FALCON_GC_STORE(this, ss));
    return true;
-}
-
-FALCON_DEFINE_PROPERTY_GET_P(ClassStringStream, pipeMode)
-{
-   StringStream* ss = static_cast<StringStream*>(instance);
-   value.setBoolean(ss->isPipeMode());
-}
-
-FALCON_DEFINE_PROPERTY_SET_P(ClassStringStream, pipeMode)
-{
-   StringStream* ss = static_cast<StringStream*>(instance);
-   ss->setPipeMode(value.isTrue());
-}
-
-FALCON_DEFINE_PROPERTY_GET_P(ClassStringStream, content)
-{
-   StringStream* ss = static_cast<StringStream*>(instance);
-   String* ret = new String;
-   ss->getString(*ret);
-   ret->manipulator(ret->manipulator()->membufManipulator());
-   value = FALCON_GC_HANDLE( ret );
-}
-
-FALCON_DEFINE_PROPERTY_SET_P0(ClassStringStream, content)
-{
-   throw readOnlyError();
-}
-
-FALCON_DEFINE_METHOD_P1(ClassStringStream, closeToString )
-{
-   StringStream* ss = static_cast<StringStream*>(ctx->self().asInst());
-
-   String* ret = ss->closeToString();
-   ret->manipulator(ret->manipulator()->membufManipulator());
-   ctx->returnFrame( FALCON_GC_HANDLE( ret ) );
 }
 
 }

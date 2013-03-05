@@ -29,6 +29,47 @@
 namespace Falcon {
 namespace Ext {
 
+
+/*#
+  @method signal Semaphore
+  @brief Signals the semaphore
+  @optparam count Count of signals to be sent to the semaphore.
+
+   The parameter @b count must be greater or equal to 1.
+ */
+FALCON_DECLARE_FUNCTION( post, "count:[N]" );
+
+void Function_post::invoke(VMContext* ctx, int32 pCount)
+{
+   int64 count;
+
+   if( pCount == 0 )
+   {
+      count = 1;
+   }
+   else {
+      Item* i_count = ctx->param(0);
+      if( ! i_count->isOrdinal() )
+      {
+         throw FALCON_SIGN_XERROR( ParamError, e_inv_params, .extra("[N]") );
+      }
+      count = i_count->forceInteger();
+      if( count <= 0 )
+      {
+         throw FALCON_SIGN_XERROR( ParamError, e_param_range, .extra(">0") );
+      }
+   }
+
+   SharedSemaphore* sm = static_cast<SharedSemaphore*>(ctx->self().asInst());
+   // The semaphore can't be the acquired resource, as it's not acquireable.
+   sm->signal( count );
+   ctx->returnFrame();
+}
+
+
+//=============================================================
+//
+
 SharedSemaphore::SharedSemaphore( ContextManager* mgr, const Class* owner, int32 initCount ):
    Shared( mgr, owner, false, initCount )
 {
@@ -42,13 +83,12 @@ SharedSemaphore::~SharedSemaphore()
 //
 
 ClassSemaphore::ClassSemaphore():
-      ClassShared("Semaphore"),
-      FALCON_INIT_METHOD(post),
-      FALCON_INIT_METHOD(tryWait),
-      FALCON_INIT_METHOD(wait)
+      ClassShared("Semaphore")
 {
    static Class* shared = Engine::handlers()->sharedClass();
-   addParent(shared);
+   setParent(shared);
+
+   addMethod( new Function_post );
 }
 
 ClassSemaphore::~ClassSemaphore()
@@ -86,44 +126,6 @@ bool ClassSemaphore::op_init( VMContext* ctx, void*, int pcount ) const
    return true;
 }
 
-
-FALCON_DEFINE_METHOD_P( ClassSemaphore, post )
-{
-   int64 count;
-
-   if( pCount == 0 )
-   {
-      count = 1;
-   }
-   else {
-      Item* i_count = ctx->param(0);
-      if( ! i_count->isOrdinal() )
-      {
-         throw FALCON_SIGN_XERROR( ParamError, e_inv_params, .extra("[N]") );
-      }
-      count = i_count->forceInteger();
-      if( count <= 0 )
-      {
-         throw FALCON_SIGN_XERROR( ParamError, e_param_range, .extra(">0") );
-      }
-   }
-
-   SharedSemaphore* sm = static_cast<SharedSemaphore*>(ctx->self().asInst());
-   // The semaphore can't be the acquired resource, as it's not acquireable.
-   sm->signal( count );
-   ctx->returnFrame();
-}
-
-
-FALCON_DEFINE_METHOD_P( ClassSemaphore, tryWait )
-{
-   ClassShared::genericClassWait(methodOf(), ctx, pCount);
-}
-
-FALCON_DEFINE_METHOD_P( ClassSemaphore, wait )
-{
-   ClassShared::genericClassWait(methodOf(), ctx, pCount);
-}
 
 }
 }

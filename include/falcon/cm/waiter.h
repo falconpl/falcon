@@ -18,12 +18,12 @@
 
 #include <falcon/setup.h>
 #include <falcon/fassert.h>
-#include <falcon/classes/classuser.h>
-#include <falcon/property.h>
-#include <falcon/method.h>
+#include <falcon/class.h>
 #include <falcon/pstep.h>
 
 namespace Falcon {
+class Shared;
+
 namespace Ext {
 
 /*#
@@ -69,7 +69,7 @@ namespace Ext {
 
    @prop len Number of shared object currently held.
 */
-class ClassWaiter: public ClassUser
+class ClassWaiter: public Class
 {
 public:
    ClassWaiter();
@@ -99,49 +99,7 @@ private:
    void returnOrInvoke( VMContext* ctx, Shared* sh );
 
    FALCON_DECLARE_INTERNAL_PSTEP(AfterWait);
-   FALCON_DECLARE_INTERNAL_PSTEP(AfterCall);
-
-   FALCON_DECLARE_PROPERTY( len );
-
-   /*#
-       @method wait Waiter
-       @brief Waits on all the shared resources added up to date.
-       @optparam timeout Number of milliseconds to wait for an event.
-       @return The signaled resource or nil at timeout.
-
-       If @b timeout is -1, or not given, waits indefinitely. If it's zero,
-       it just checks for any signaled resource and then exits. If it's
-       greater than zero, waits for the required amount of time.
-
-       If the timeout expires before the resource is signaled, this method
-       returns nil.
-    */
-   FALCON_DECLARE_METHOD( wait, "timeout:[N]" );
-
-   /*#
-       @method tryWait Waiter
-       @brief Checks if any of the shared resources added up to date is currently signaled.
-       @return The signaled resource or nil if none is signaled.
-    */
-   FALCON_DECLARE_METHOD( tryWait, "" );
-
-   /*#
-       @method add Waiter
-       @brief Adds a resource to the wait set.
-       @param shared The resource to be added.
-       @return The @b self object to allow chaining more add methods.
-
-    */
-   FALCON_DECLARE_METHOD( add, "shared:Shared" );
-   /*#
-       @method remove Waiter
-       @brief Removes a resource from the wait set.
-       @param shared The resource to be removed.
-
-       If the resource is not present in the waiting set,
-       the method silently fails.
-    */
-   FALCON_DECLARE_METHOD( remove, "shared:Shared" );
+   FALCON_DECLARE_INTERNAL_PSTEP(AfterCall);   
 };
 
 }

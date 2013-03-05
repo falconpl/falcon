@@ -29,6 +29,286 @@
 
 namespace Falcon {
 
+//========================================================
+// Property accessors
+//
+
+static void get_code( const Class*, const String&, void *instance, Item& value )
+{
+   Error* error = static_cast<Error*>( instance );
+   value.setInteger( error->errorCode() );
+}
+
+
+static void set_code( const Class*, const String&, void *instance, const Item& value )
+{
+   Error* error = static_cast<Error*>( instance );
+   error->errorCode( (int) value.forceInteger() );
+}
+
+
+static void get_line( const Class*, const String&, void *instance, Item& value )
+{
+   Error* error = static_cast<Error*>( instance );
+   value.setInteger( error->line() );
+}
+
+
+static void set_line( const Class*, const String&, void *instance, const Item& value )
+{
+   Error* error = static_cast<Error*>( instance );
+   error->line( (uint32) value.forceInteger() );
+}
+
+
+static void get_chr( const Class*, const String&, void *instance, Item& value )
+{
+   Error* error = static_cast<Error*>( instance );
+   value.setInteger( (uint32) error->chr() );
+}
+
+
+static void set_chr( const Class*, const String&, void *instance, const Item& value )
+{
+   Error* error = static_cast<Error*>( instance );
+   error->chr( (uint32) value.forceInteger() );
+}
+
+
+static void get_description( const Class*, const String&, void *instance, Item& value )
+{
+   Error* error = static_cast<Error*>( instance );
+   String* str = new String( error->errorDescription() );
+   str->bufferize();
+   value = FALCON_GC_HANDLE( str );
+}
+
+
+static void set_description( const Class*, const String&, void *instance, const Item& value )
+{
+   Error* error = static_cast<Error*>( instance );
+   if( value.isString() )
+   {
+      error->errorDescription( *value.asString() );
+   }
+   else {
+      error->errorDescription( value.describe() );
+   }
+}
+
+
+static void get_extra( const Class*, const String&, void *instance, Item& value )
+{
+   Error* error = static_cast<Error*>( instance );
+   String* str = new String( error->extraDescription() );
+   str->bufferize();
+   value = FALCON_GC_HANDLE( str );
+}
+
+
+static void set_extra( const Class*, const String&, void *instance, const Item& value )
+{
+   Error* error = static_cast<Error*>( instance );
+   if( value.isString() )
+   {
+      error->extraDescription( *value.asString() );
+   }
+   else {
+      error->extraDescription( value.describe() );
+   }
+}
+
+
+static void get_mantra( const Class*, const String&, void *instance, Item& value )
+{
+   Error* error = static_cast<Error*>( instance );
+   String* str = new String( error->mantra() );
+   str->bufferize();
+   value = FALCON_GC_HANDLE( str );
+}
+
+
+static void set_mantra( const Class*, const String&, void *instance, const Item& value )
+{
+   Error* error = static_cast<Error*>( instance );
+   if( value.isString() )
+   {
+      error->mantra( *value.asString() );
+   }
+   else {
+      error->mantra( value.describe() );
+   }
+}
+
+
+static void get_module( const Class*, const String&, void *instance, Item& value )
+{
+   Error* error = static_cast<Error*>( instance );
+   String* str = new String( error->module() );
+   str->bufferize();
+   value = FALCON_GC_HANDLE( str );
+}
+
+
+static void set_module( const Class*, const String&, void *instance, const Item& value )
+{
+   Error* error = static_cast<Error*>( instance );
+   if( value.isString() )
+   {
+      error->module( *value.asString() );
+   }
+   else {
+      error->module( value.describe() );
+   }
+}
+
+
+static void get_path( const Class*, const String&, void *instance, Item& value )
+{
+   Error* error = static_cast<Error*>( instance );
+   String* str = new String( error->path() );
+   str->bufferize();
+   value = FALCON_GC_HANDLE( str );
+}
+
+
+static void set_path( const Class*, const String&, void *instance, const Item& value )
+{
+   Error* error = static_cast<Error*>( instance );
+   if( value.isString() )
+   {
+      error->path( *value.asString() );
+   }
+   else {
+      error->path( value.describe() );
+   }
+}
+
+
+static void get_signature( const Class*, const String&, void *instance, Item& value )
+{
+   Error* error = static_cast<Error*>( instance );
+   String* str = new String( error->signature() );
+   str->bufferize();
+   value = FALCON_GC_HANDLE( str );
+}
+
+static void set_signature( const Class*, const String&, void *instance, const Item& value )
+{
+   Error* error = static_cast<Error*>( instance );
+   if( value.isString() )
+   {
+      error->sign( *value.asString() );
+   }
+   else {
+      error->sign( value.describe() );
+   }
+}
+
+
+static void get_heading( const Class*, const String&, void *instance, Item& value )
+{
+   Error* error = static_cast<Error*>( instance );
+   String* str = new String;
+   error->heading(*str);
+   value = FALCON_GC_HANDLE( str );
+}
+
+
+static void get_trace( const Class*, const String&, void *instance, Item& value )
+{
+   Error* error = static_cast<Error*>( instance );
+
+   if( error->hasTraceback() )
+   {
+      ItemArray* ret = new ItemArray;
+      class TB: public Error::StepEnumerator {
+      public:
+         TB( ItemArray* ret ): m_ret(ret)  {}
+         virtual ~TB() {}
+         virtual bool operator()( const TraceStep& data  )
+         {
+            String* tgt = new String;
+            data.toString(*tgt);
+            m_ret->append( FALCON_GC_HANDLE( tgt ) );
+            return true;
+         }
+
+      private:
+         ItemArray* m_ret;
+      };
+
+      TB rator(ret);
+      error->enumerateSteps(rator);
+
+      value = FALCON_GC_HANDLE( ret );
+   }
+   else {
+      value.setNil();
+   }
+}
+
+
+static void get_errors( const Class*, const String&, void *instance, Item& value )
+{
+   Error* error = static_cast<Error*>( instance );
+
+   if( error->hasSubErrors() )
+   {
+      ItemArray* ret = new ItemArray;
+      class ERR: public Error::ErrorEnumerator {
+      public:
+         ERR( ItemArray* ret ): m_ret(ret)  {}
+         virtual ~ERR() {}
+         virtual bool operator()( const Error& error )
+         {
+            Error* data = const_cast<Error*>(&error);
+            data->incref();
+            m_ret->append( FALCON_GC_HANDLE( data ) );
+            return true;
+         }
+
+      private:
+         ItemArray* m_ret;
+      };
+
+      ERR rator(ret);
+      error->enumerateErrors(rator);
+
+      value = FALCON_GC_HANDLE( ret );
+   }
+   else {
+      value.setNil();
+   }
+}
+
+static void get_raised( const Class*, const String&, void *instance, Item& value )
+{
+   Error* error = static_cast<Error*>( instance );
+
+   if( error->hasRaised() )
+   {
+      value = error->raised();
+   }
+   else {
+      value.setNil();
+   }
+}
+
+
+/**
+ @method take Error
+ Takes the current trace and context and stores it in the error.
+ */
+FALCON_DECLARE_FUNCTION( take, "" );
+void Function_take::invoke( VMContext* ctx, int32 )
+{
+   Error* error = static_cast<Error*>( ctx->self().asInst() );
+   ctx->contextualize(error, true);
+   ctx->addTrace(error);
+}
+
+
 /** Base handler for script level error.
  
  Falcon extension code can throw C++ exceptions that might be intercepted by
@@ -49,26 +329,28 @@ namespace Falcon {
  
  */
 ClassError::ClassError( const String& name ):
-   ClassUser(name),
-   FALCON_INIT_PROPERTY( code ),
-   FALCON_INIT_PROPERTY( description ),
-   FALCON_INIT_PROPERTY( extra ),
-
-   FALCON_INIT_PROPERTY( mantra ),
-   FALCON_INIT_PROPERTY( module ),
-   FALCON_INIT_PROPERTY( path ),
-   FALCON_INIT_PROPERTY( signature ),
-   FALCON_INIT_PROPERTY( line ),
-   FALCON_INIT_PROPERTY( chr ),
-
-   FALCON_INIT_PROPERTY( heading ),
-   FALCON_INIT_PROPERTY( trace ),
-   FALCON_INIT_PROPERTY( errors ),
-   FALCON_INIT_PROPERTY( raised ),
-   FALCON_INIT_METHOD( take )
-
+   Class(name)
 {
    m_bIsErrorClass = true;
+
+   addProperty( "code", &get_code, &set_code );
+   addProperty( "description", &get_description, &set_description );
+   addProperty( "extra", &get_extra, &set_extra );
+
+   addProperty( "mantra", &get_mantra, &set_mantra );
+   addProperty( "module", &get_module, &set_module );
+   addProperty( "path", &get_path, &set_path );
+   addProperty( "signature", &get_signature, &set_signature );
+   addProperty( "line", &get_line, &set_line );
+   addProperty( "chr", &get_chr, &set_chr );
+
+   addProperty( "heading", &get_heading );
+   addProperty( "trace", &get_trace );
+
+   addProperty( "errors", &get_errors );
+   addProperty( "raised", &get_raised );
+
+   addMethod( new Function_take );
 }
 
 ClassError::~ClassError()
@@ -239,283 +521,6 @@ bool ClassError::invokeParams( VMContext* ctx, int pcount, ErrorParam& params, b
    params.line( line );
    
    return true;
-}
-
-//========================================================
-// Property accessors
-//
-
-FALCON_DEFINE_PROPERTY_GET(ClassError, code)( void* instance, Item& value )
-{
-   Error* error = static_cast<Error*>( instance );
-   value.setInteger( error->errorCode() );
-}
-
-FALCON_DEFINE_PROPERTY_SET(ClassError, code)( void* instance, const Item& value )
-{
-   Error* error = static_cast<Error*>( instance );
-   error->errorCode( (int) value.forceInteger() );
-}
-
-FALCON_DEFINE_PROPERTY_GET(ClassError, line)( void* instance, Item& value )
-{
-   Error* error = static_cast<Error*>( instance );
-   value.setInteger( error->line() );
-}
-
-FALCON_DEFINE_PROPERTY_SET(ClassError, line)( void* instance, const Item& value )
-{
-   Error* error = static_cast<Error*>( instance );
-   error->line( (uint32) value.forceInteger() );
-}
-
-FALCON_DEFINE_PROPERTY_GET(ClassError, chr)( void* instance, Item& value )
-{
-   Error* error = static_cast<Error*>( instance );
-   value.setInteger( (uint32) error->chr() );
-}
-
-FALCON_DEFINE_PROPERTY_SET(ClassError, chr)( void* instance, const Item& value )
-{
-   Error* error = static_cast<Error*>( instance );
-   error->chr( (uint32) value.forceInteger() );
-}
-
-
-FALCON_DEFINE_PROPERTY_GET(ClassError, description)( void* instance, Item& value )
-{
-   Error* error = static_cast<Error*>( instance );
-   String* str = new String( error->errorDescription() );
-   str->bufferize();
-   value = FALCON_GC_HANDLE( str );
-}
-
-FALCON_DEFINE_PROPERTY_SET(ClassError, description)( void* instance, const Item& value )
-{
-   Error* error = static_cast<Error*>( instance );
-   if( value.isString() )
-   {
-      error->errorDescription( *value.asString() );
-   }
-   else {
-      error->errorDescription( value.describe() );
-   }
-}
-
-FALCON_DEFINE_PROPERTY_GET(ClassError, extra)( void* instance, Item& value )
-{
-   Error* error = static_cast<Error*>( instance );
-   String* str = new String( error->extraDescription() );
-   str->bufferize();
-   value = FALCON_GC_HANDLE( str );
-}
-
-FALCON_DEFINE_PROPERTY_SET(ClassError, extra)( void* instance, const Item& value )
-{
-   Error* error = static_cast<Error*>( instance );
-   if( value.isString() )
-   {
-      error->extraDescription( *value.asString() );
-   }
-   else {
-      error->extraDescription( value.describe() );
-   }
-}
-
-FALCON_DEFINE_PROPERTY_GET(ClassError, mantra)( void* instance, Item& value )
-{
-   Error* error = static_cast<Error*>( instance );
-   String* str = new String( error->mantra() );
-   str->bufferize();
-   value = FALCON_GC_HANDLE( str );
-}
-
-FALCON_DEFINE_PROPERTY_SET(ClassError, mantra)( void* instance, const Item& value )
-{
-   Error* error = static_cast<Error*>( instance );
-   if( value.isString() )
-   {
-      error->mantra( *value.asString() );
-   }
-   else {
-      error->mantra( value.describe() );
-   }
-}
-
-FALCON_DEFINE_PROPERTY_GET(ClassError, module)( void* instance, Item& value )
-{
-   Error* error = static_cast<Error*>( instance );
-   String* str = new String( error->module() );
-   str->bufferize();
-   value = FALCON_GC_HANDLE( str );
-}
-
-FALCON_DEFINE_PROPERTY_SET(ClassError, module)( void* instance, const Item& value )
-{
-   Error* error = static_cast<Error*>( instance );
-   if( value.isString() )
-   {
-      error->module( *value.asString() );
-   }
-   else {
-      error->module( value.describe() );
-   }
-}
-
-FALCON_DEFINE_PROPERTY_GET(ClassError, path)( void* instance, Item& value )
-{
-   Error* error = static_cast<Error*>( instance );
-   String* str = new String( error->path() );
-   str->bufferize();
-   value = FALCON_GC_HANDLE( str );
-}
-
-FALCON_DEFINE_PROPERTY_SET(ClassError, path)( void* instance, const Item& value )
-{
-   Error* error = static_cast<Error*>( instance );
-   if( value.isString() )
-   {
-      error->path( *value.asString() );
-   }
-   else {
-      error->path( value.describe() );
-   }
-}
-
-FALCON_DEFINE_PROPERTY_GET(ClassError, signature)( void* instance, Item& value )
-{
-   Error* error = static_cast<Error*>( instance );
-   String* str = new String( error->signature() );
-   str->bufferize();
-   value = FALCON_GC_HANDLE( str );
-}
-
-FALCON_DEFINE_PROPERTY_SET(ClassError, signature)( void* instance, const Item& value )
-{
-   Error* error = static_cast<Error*>( instance );
-   if( value.isString() )
-   {
-      error->sign( *value.asString() );
-   }
-   else {
-      error->sign( value.describe() );
-   }
-}
-
-FALCON_DEFINE_PROPERTY_GET(ClassError, heading)( void* instance, Item& value )
-{
-   Error* error = static_cast<Error*>( instance );
-   String* str = new String;
-   error->heading(*str);
-   value = FALCON_GC_HANDLE( str );
-}
-
-FALCON_DEFINE_PROPERTY_SET(ClassError, heading)( void*, const Item& )
-{
-   throw readOnlyError();
-}
-
-
-FALCON_DEFINE_PROPERTY_GET(ClassError, trace)( void* instance, Item& value )
-{
-   Error* error = static_cast<Error*>( instance );
-
-   if( error->hasTraceback() )
-   {
-      ItemArray* ret = new ItemArray;
-      class TB: public Error::StepEnumerator {
-      public:
-         TB( ItemArray* ret ): m_ret(ret)  {}
-         virtual ~TB() {}
-         virtual bool operator()( const TraceStep& data, bool  )
-         {
-            String* tgt = new String;
-            data.toString(*tgt);
-            m_ret->append( FALCON_GC_HANDLE( tgt ) );
-            return true;
-         }
-
-      private:
-         ItemArray* m_ret;
-      };
-
-      TB rator(ret);
-      error->enumerateSteps(rator);
-
-      value = FALCON_GC_HANDLE( ret );
-   }
-   else {
-      value.setNil();
-   }
-}
-
-FALCON_DEFINE_PROPERTY_SET(ClassError, trace)( void* , const Item&  )
-{
-   throw readOnlyError();
-}
-
-FALCON_DEFINE_PROPERTY_GET(ClassError, errors)( void* instance, Item& value )
-{
-   Error* error = static_cast<Error*>( instance );
-
-   if( error->hasSubErrors() )
-   {
-      ItemArray* ret = new ItemArray;
-      class ERR: public Error::ErrorEnumerator {
-      public:
-         ERR( ItemArray* ret ): m_ret(ret)  {}
-         virtual ~ERR() {}
-         virtual bool operator()( const Error& error, bool  )
-         {
-            Error* data = const_cast<Error*>(&error);
-            data->incref();
-            m_ret->append( FALCON_GC_HANDLE( data ) );
-            return true;
-         }
-
-      private:
-         ItemArray* m_ret;
-      };
-
-      ERR rator(ret);
-      error->enumerateErrors(rator);
-
-      value = FALCON_GC_HANDLE( ret );
-   }
-   else {
-      value.setNil();
-   }
-}
-
-FALCON_DEFINE_PROPERTY_SET(ClassError, errors)( void* , const Item&  )
-{
-   throw readOnlyError();
-}
-
-FALCON_DEFINE_PROPERTY_GET(ClassError, raised)( void* instance, Item& value )
-{
-   Error* error = static_cast<Error*>( instance );
-
-   if( error->hasRaised() )
-   {
-      value = error->raised();
-   }
-   else {
-      value.setNil();
-   }
-}
-
-FALCON_DEFINE_PROPERTY_SET(ClassError, raised)( void* , const Item&  )
-{
-   throw readOnlyError();
-}
-
-
-FALCON_DEFINE_METHOD_P1( ClassError, take )
-{
-   Error* error = static_cast<Error*>( ctx->self().asInst() );
-   ctx->contextualize(error, true);
-   ctx->addTrace(error);
 }
 
 }

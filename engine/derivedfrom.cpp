@@ -54,7 +54,7 @@ void* DerivedFrom::getParentData( const Class* parent, void* data ) const
 
 void DerivedFrom::enumerateParents( Class::ClassEnumerator& cb ) const
 {
-   cb( m_parent, true );
+   cb( m_parent );
 }
 
 

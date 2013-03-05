@@ -18,50 +18,27 @@
 
 #include <falcon/pseudofunc.h>
 #include <falcon/fassert.h>
-#include <falcon/classes/classuser.h>
-#include <falcon/property.h>
-#include <falcon/method.h>
-
-#include <falcon/usercarrier.h>
+#include <falcon/class.h>
 #include <falcon/path.h>
 
 namespace Falcon {
+class DataWriter;
+class VMContext;
+
 namespace Ext {
 
-/** We keep th path, the auth data and the query. */
-class PathCarrier: public UserCarrier
-{
-public:
-   Path m_path;
-   
-   String m_fulloc;
-   String m_fullWinLoc;
-   String m_winLoc;
-   String m_winpath;
-   
-   PathCarrier( uint32 nprops ):
-      UserCarrier(nprops)
-   {}
-   
-   PathCarrier( const PathCarrier& other ):
-      UserCarrier( other.dataSize() ),
-      m_path( other.m_path )
-   {}
-   
-   virtual ~PathCarrier()
-   {
-   }
-   
-   virtual PathCarrier* clone() const { return new PathCarrier(*this); }
-};
 
-
-class ClassPath: public ClassUser
+class ClassPath: public Class
 {
 public:
    
    ClassPath();
    virtual ~ClassPath();
+    
+   virtual void dispose( void* instance ) const;
+   virtual void* clone( void* instance ) const;
+   virtual void gcMarkInstance( void* instance, uint32 mark ) const;
+   virtual bool gcCheckInstance( void* instance, uint32 mark ) const;
 
    virtual void store( VMContext* ctx, DataWriter* stream, void* instance ) const;
    virtual void restore( VMContext* ctx, DataReader* stream ) const;
@@ -72,27 +49,6 @@ public:
    virtual bool op_init( VMContext* ctx, void* instance, int pcount ) const;
    virtual void op_toString( VMContext* ctx, void* self ) const;
    
-private:   
-   
-   //====================================================
-   // Properties.
-   //
-   
-   FALCON_DECLARE_STRPROPERTY( resource )
-   FALCON_DECLARE_STRPROPERTY( location )
-   FALCON_DECLARE_STRPROPERTY( fulloc )
-   FALCON_DECLARE_STRPROPERTY( file )
-   FALCON_DECLARE_STRPROPERTY( ext )
-   FALCON_DECLARE_STRPROPERTY( filext )
-   FALCON_DECLARE_STRPROPERTY( encoded )
-   FALCON_DECLARE_STRPROPERTY( wlocation )
-   FALCON_DECLARE_STRPROPERTY( wfulloc )
-   FALCON_DECLARE_STRPROPERTY( wencoded )
-
-   FALCON_DECLARE_METHOD( absolutize, "parent:[S]" );
-   FALCON_DECLARE_METHOD( relativize, "parent:S" );
-   FALCON_DECLARE_METHOD( canonicize, "" );
-   FALCON_DECLARE_METHOD( cwd, "" );
 };
 
 }

@@ -75,8 +75,8 @@ void ClassMethod::describe( void* instance, String& target, int depth, int maxLe
 
 void ClassMethod::enumerateProperties( void*, PropertyEnumerator& cb ) const
 {
-   cb( "origin", false );
-   cb( "source", true );
+   cb( "origin" );
+   cb( "source" );
 }
 
 

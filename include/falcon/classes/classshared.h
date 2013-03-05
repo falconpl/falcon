@@ -17,14 +17,12 @@
 #define _FALCON_CLASSSHARED_H_
 
 #include <falcon/setup.h>
-#include <falcon/classes/classuser.h>
-
-#include <falcon/method.h>
+#include <falcon/class.h>
 
 namespace Falcon
 {
 
-class FALCON_DYN_CLASS ClassShared: public ClassUser
+class FALCON_DYN_CLASS ClassShared: public Class
 {
 public:
    ClassShared();
@@ -38,15 +36,12 @@ public:
    virtual void gcMarkInstance( void* self, uint32 mark ) const;
    virtual bool gcCheckInstance( void* self, uint32 mark ) const;
 
-protected:
-   ClassShared( const String& name );
-   ClassShared( const String& name, int64 type );
-
    static void genericClassWait( const Class* childClass, VMContext* ctx, int32 pCount );
    static void genericClassTryWait( const Class* childClass, VMContext* ctx, int32 pCount );
 
-   FALCON_DECLARE_METHOD( tryWait, "" );
-   FALCON_DECLARE_METHOD( wait, "timeout:[N]" );
+protected:
+   ClassShared( const String& name );
+   ClassShared( const String& name, int64 type );
 };
 
 }

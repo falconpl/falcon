@@ -25,8 +25,8 @@
 namespace Falcon
 {
 
-class EngineData;
 class VMachine;
+class VMContext;
 class Module;
 
 typedef char *   cstring;
@@ -67,8 +67,7 @@ typedef uint32 char_t;
 typedef int64 off_t;
 
 
-typedef void ( CDECL *ext_func_t) ( VMachine *);
-typedef bool ( CDECL *ext_func_frame_t) ( VMachine * );
+typedef void (CDECL *ext_func_t) ( VMContext *ctx, int32 pCount );
 
 extern "C" {
    typedef Module* (CDECL  *ext_mod_init)();

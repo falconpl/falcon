@@ -25,22 +25,70 @@
 #include <falcon/stdsteps.h>
 #include <falcon/engine.h>
 #include <falcon/processor.h>
+#include <falcon/function.h>
 
 #include <falcon/datareader.h>
 #include <falcon/datawriter.h>
 
+
 namespace Falcon {
+
+//====================================================
+// Properties.
+//
+static void get_original( const Class*, const String&, void* instance, Item& value )
+{
+   Format* self = static_cast<Format*>( instance );
+   value.setUser( FALCON_GC_HANDLE(new String( self->originalFormat() ) ));
+}
+
+//=====================================================================
+// Methods
+//
+FALCON_DECLARE_FUNCTION( parse, "S" );
+void Function_parse::invoke(VMContext* ctx, int32 pCount )
+{
+   Format* self = static_cast<Format*>(ctx->self().asInst());
+
+   Item* pFmt;
+   if( pCount < 1 || ! (pFmt = ctx->param(0))->isString() )
+   {
+      throw paramError();
+   }
+
+   String* str = pFmt->asString();
+   self->parse(*str);
+   ctx->returnFrame();
+}
+
+FALCON_DECLARE_FUNCTION( format, "X" );
+void Function_format::invoke(VMContext* ctx, int32 pCount )
+{
+   static StdSteps* steps = Engine::instance()->stdSteps();
+
+   Format* self = static_cast<Format*>(ctx->self().asInst());
+
+   if( pCount < 1 )
+   {
+      throw paramError();
+   }
+
+   Item* pFmt = ctx->param(0);
+
+   ctx->pushCode(&steps->m_returnFrameWithTop);
+   self->opFormat( ctx, *pFmt );
+}
 
 //
 // Class properties used for enumeration
 //
 
 ClassFormat::ClassFormat():
-   ClassUser( "Format" ),
-   FALCON_INIT_PROPERTY( original ),
-   FALCON_INIT_METHOD( format ),
-   FALCON_INIT_METHOD( parse )
+   Class( "Format" )
 {
+   addProperty( "original", &get_original );
+   addMethod( new Function_format );
+   addMethod( new Function_parse );
 }
 
 
@@ -175,53 +223,6 @@ void ClassFormat::op_compare( VMContext* ctx, void* self ) const
    {
       token.exit( typeID() - op2->type() );
    }
-}
-
-
-//=====================================================================
-// Methods
-//
-FALCON_DEFINE_METHOD_P( ClassFormat, parse )
-{
-   Format* self = static_cast<Format*>(ctx->self().asInst());
-
-   Item* pFmt;
-   if( pCount < 1 || ! (pFmt = ctx->param(0))->isString() )
-   {
-      throw paramError();
-   }
-
-   String* str = pFmt->asString();
-   self->parse(*str);
-   ctx->returnFrame();
-}
-
-FALCON_DEFINE_METHOD_P( ClassFormat, format )
-{
-   static StdSteps* steps = Engine::instance()->stdSteps();
-
-   Format* self = static_cast<Format*>(ctx->self().asInst());
-
-   if( pCount < 1 )
-   {
-      throw paramError();
-   }
-
-   Item* pFmt = ctx->param(0);
-
-   ctx->pushCode(&steps->m_returnFrameWithTop);
-   self->opFormat( ctx, *pFmt );
-}
-
-FALCON_DEFINE_PROPERTY_GET_P( ClassFormat, original )
-{
-   Format* self = static_cast<Format*>( instance );
-   value.setUser( FALCON_GC_HANDLE(new String( self->originalFormat() ) ));
-}
-
-FALCON_DEFINE_PROPERTY_SET( ClassFormat, original )(void*, const Item&)
-{
-   throw readOnlyError();
 }
 
 }

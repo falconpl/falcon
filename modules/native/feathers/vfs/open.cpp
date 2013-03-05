@@ -60,7 +60,7 @@ void Open::invoke( Falcon::VMContext* ctx, int )
    
    if( i_mode != 0 && ! i_mode->isNil() )
    {
-      op = VFSProvider::OParams(i_mode->forceInteger());
+      op = VFSProvider::OParams((int32)i_mode->forceInteger());
    }
    else
    {

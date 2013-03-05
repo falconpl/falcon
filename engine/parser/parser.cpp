@@ -462,8 +462,9 @@ void Parser::enumerateErrors( Parser::ErrorEnumerator& enumerator ) const
    {
       const ErrorDef& def = *iter;
 
-      if ( ! enumerator( def, ++iter == _p->m_lErrors.end() ) )
+      if ( ! enumerator( def ) )
          break;
+      ++iter;
    }
 }
 

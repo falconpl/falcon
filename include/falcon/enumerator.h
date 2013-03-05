@@ -40,7 +40,7 @@ template <class _T>
 class Enumerator {
 public:
    virtual ~Enumerator() {}   
-   virtual bool operator()( const _T& data, bool bLast ) = 0;
+   virtual bool operator()( const _T& data ) = 0;
 };
 
 }

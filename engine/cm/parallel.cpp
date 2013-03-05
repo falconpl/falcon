@@ -29,6 +29,7 @@
 #include <falcon/itemarray.h>
 #include <falcon/stdsteps.h>
 #include <falcon/stdhandlers.h>
+#include <falcon/function.h>
 
 #include <falcon/errors/paramerror.h>
 #include <falcon/errors/codeerror.h>
@@ -36,20 +37,22 @@
 namespace Falcon {
 namespace Ext {
 
-class FALCON_DYN_CLASS CGCarrier: public UserCarrier
+   
+class CGCarrier
 {
 public:
    ContextGroup* m_cg;
+   uint32 m_mark;
 
-   CGCarrier( uint32 nprops, ContextGroup* grp ):
-      UserCarrier(nprops)
+   CGCarrier(ContextGroup* grp ):
+      m_mark(0)
    {
       m_cg = grp;
    }
 
    CGCarrier( const CGCarrier& other ):
-      UserCarrier( other.dataSize() ),
-      m_cg( other.m_cg )
+      m_cg( other.m_cg ),
+      m_mark(0)
    {
       m_cg->incref();
    }
@@ -60,61 +63,23 @@ public:
    }
 
    virtual CGCarrier* clone() const { return new CGCarrier(*this); }
-
-   // no need for class specific marking, as contexts are known to the collector
 };
 
 
-ClassParallel::ClassParallel():
-   ClassUser("Parallel"),
+//====================================================================
+//
+//
 
-   FALCON_INIT_METHOD( wait ),
-   FALCON_INIT_METHOD( tryWait ),
-   FALCON_INIT_METHOD( timedWait ),
-
-   FALCON_INIT_METHOD( add ),
-   FALCON_INIT_METHOD( launch ),
-   FALCON_INIT_METHOD( launchWithResults )
-{
-}
-
-ClassParallel::~ClassParallel()
-{}
+FALCON_DECLARE_FUNCTION( wait, "..." );
+FALCON_DECLARE_FUNCTION( tryWait, "..." );
+FALCON_DECLARE_FUNCTION( timedWait, "timeout:N,..." );
+FALCON_DECLARE_FUNCTION( add, "C..." );
+FALCON_DECLARE_FUNCTION( launch, "..." );
+FALCON_DECLARE_FUNCTION( launchWithResults, "..." );
 
 
-void* ClassParallel::createInstance() const
-{
-   CGCarrier* ctg = new CGCarrier(carriedProps(), new ContextGroup );
-   return ctg;
-}
 
-
-bool ClassParallel::op_init( VMContext* ctx, void* instance, int pcount ) const
-{
-   CGCarrier* ctg = static_cast<CGCarrier*>(instance);
-   Item* params = ctx->opcodeParams(pcount);
-
-   for( int32 i = 0; i < pcount; ++ i ) {
-      Item* param = params + i;
-      if( ! param->isCallable() ) {
-         throw new ParamError( ErrorParam(e_inv_params, __LINE__, SRC )
-                        .origin( ErrorParam::e_orig_runtime)
-                        .extra("C,...") );
-      }
-
-      VMContext* nctx = new VMContext(ctx->process(), ctg->m_cg );
-      ctg->m_cg->addContext(nctx);
-
-      // copy the callable item in the context,
-      // as it will be actually called at launch.
-      nctx->pushData(*param);
-   }
-
-   return false;
-}
-
-
-static void internal_wait( VMContext* ctx, int pCount, int start, Method* caller, numeric to )
+static void internal_wait( VMContext* ctx, int pCount, int start, Function* caller, int64 to )
 {
    static Class* clsShared = Engine::handlers()->sharedClass();
    static PStep* step = &Engine::instance()->stdSteps()->m_waitComplete;
@@ -161,7 +126,7 @@ static void internal_wait( VMContext* ctx, int pCount, int start, Method* caller
 }
 
 
-FALCON_DEFINE_METHOD_P( ClassParallel, wait )
+void Function_wait::invoke(VMContext* ctx, int32 pCount )
 {
    if( pCount == 0 )
    {
@@ -171,7 +136,8 @@ FALCON_DEFINE_METHOD_P( ClassParallel, wait )
    internal_wait( ctx, ctx->paramCount(), 0, this, -1 );
 }
 
-FALCON_DEFINE_METHOD_P( ClassParallel, tryWait )
+
+void Function_tryWait::invoke(VMContext* ctx, int32 pCount )
 {
    if( pCount == 0 )
    {
@@ -183,7 +149,7 @@ FALCON_DEFINE_METHOD_P( ClassParallel, tryWait )
 
 
 
-FALCON_DEFINE_METHOD_P( ClassParallel, timedWait )
+void Function_timedWait::invoke(VMContext* ctx, int32 pCount )
 {
    if( pCount < 2 )
    {
@@ -195,8 +161,7 @@ FALCON_DEFINE_METHOD_P( ClassParallel, timedWait )
       throw paramError();
    }
 
-   numeric to = timeout->forceNumeric();
-
+   int64 to = timeout->forceInteger();
    internal_wait( ctx, ctx->paramCount(), 1, this, to );
 }
 
@@ -226,7 +191,7 @@ static void internal_launch( VMContext* ctx, int pCount )
 }
 
 
-FALCON_DEFINE_METHOD_P( ClassParallel, add )
+void Function_add::invoke(VMContext* ctx, int32 pCount )
 {
    if ( pCount == 0 )
    {
@@ -257,7 +222,7 @@ FALCON_DEFINE_METHOD_P( ClassParallel, add )
 }
 
 
-FALCON_DEFINE_METHOD_P( ClassParallel, launch )
+void Function_launch::invoke(VMContext* ctx, int32 pCount )
 {
    internal_launch( ctx, pCount );
 
@@ -274,7 +239,7 @@ FALCON_DEFINE_METHOD_P( ClassParallel, launch )
 }
 
 
-FALCON_DEFINE_METHOD_P( ClassParallel, launchWithResults )
+void Function_launchWithResults::invoke(VMContext* ctx, int32 pCount )
 {
    internal_launch( ctx, pCount );
 
@@ -295,6 +260,80 @@ FALCON_DEFINE_METHOD_P( ClassParallel, launchWithResults )
    }
 }
 
+//===============================================================================
+//
+
+
+ClassParallel::ClassParallel():
+   Class("Parallel")
+{
+   addMethod( new Function_wait, true );
+   addMethod( new Function_tryWait, true );
+   addMethod( new Function_timedWait, true );
+
+   addMethod( new Function_add );
+   addMethod( new Function_launch );
+   addMethod( new Function_launchWithResults );
+}
+
+ClassParallel::~ClassParallel()
+{}
+
+
+void* ClassParallel::createInstance() const
+{
+   CGCarrier* ctg = new CGCarrier(new ContextGroup );
+   return ctg;
+}
+
+void ClassParallel::dispose( void* instance ) const
+{
+   CGCarrier* ctg = static_cast<CGCarrier*>(instance);
+   delete ctg;
+}
+
+void* ClassParallel::clone( void* instance ) const
+{
+   CGCarrier* ctg = static_cast<CGCarrier*>(instance);
+   return ctg->clone();
+}
+
+void ClassParallel::gcMarkInstance( void* instance, uint32 mark ) const
+{
+   CGCarrier* ctg = static_cast<CGCarrier*>(instance);
+   ctg->m_mark = mark;
+}
+
+bool ClassParallel::gcCheckInstance( void* instance, uint32 mark ) const
+{
+   CGCarrier* ctg = static_cast<CGCarrier*>(instance);
+   return ctg->m_mark >= mark;
+}
+
+
+bool ClassParallel::op_init( VMContext* ctx, void* instance, int pcount ) const
+{
+   CGCarrier* ctg = static_cast<CGCarrier*>(instance);
+   Item* params = ctx->opcodeParams(pcount);
+
+   for( int32 i = 0; i < pcount; ++ i ) {
+      Item* param = params + i;
+      if( ! param->isCallable() ) {
+         throw new ParamError( ErrorParam(e_inv_params, __LINE__, SRC )
+                        .origin( ErrorParam::e_orig_runtime)
+                        .extra("C,...") );
+      }
+
+      VMContext* nctx = new VMContext(ctx->process(), ctg->m_cg );
+      ctg->m_cg->addContext(nctx);
+
+      // copy the callable item in the context,
+      // as it will be actually called at launch.
+      nctx->pushData(*param);
+   }
+
+   return false;
+}
 
 
 void ClassParallel::PStepGetResults::apply_( const PStep*, VMContext* ctx )

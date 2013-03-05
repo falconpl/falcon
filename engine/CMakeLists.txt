@@ -294,7 +294,6 @@ add_library(falcon_engine SHARED
   classes/classsynfunc.cpp
   classes/classtreestep.cpp
   classes/classrequirement.cpp
-  classes/classuser.cpp
   classes/metaclass.cpp
   classes/metafalconclass.cpp
   classes/metahyperclass.cpp
@@ -376,7 +375,6 @@ add_library(falcon_engine SHARED
   itemdict.cpp
   log.cpp
   mantra.cpp
-  method.cpp
   messagequeue.cpp
   modcompiler.cpp
   modloader.cpp
@@ -391,7 +389,6 @@ add_library(falcon_engine SHARED
   path.cpp
   pipe.cpp
   pool.cpp
-  property.cpp
   pseudofunc.cpp
   pstep.cpp
   reader.cpp
@@ -427,7 +424,6 @@ add_library(falcon_engine SHARED
   tracestep.cpp
   treestep.cpp
   uri.cpp
-  usercarrier.cpp
   vardatamap.cpp
   variable.cpp
   varmap.cpp

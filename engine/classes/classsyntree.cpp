@@ -111,7 +111,7 @@ void ClassSynTree::unflatten( VMContext* ctx, ItemArray& subItems, void* instanc
 
 void ClassSynTree::enumerateProperties( void* instance, Class::PropertyEnumerator& cb ) const
 {
-   cb("target", false);
+   cb("target" );
    m_parent->enumerateProperties(instance, cb);
 }
 

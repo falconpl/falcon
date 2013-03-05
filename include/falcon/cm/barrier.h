@@ -21,10 +21,8 @@
 #include <falcon/function.h>
 #include <falcon/string.h>
 #include <falcon/shared.h>
-#include <falcon/classes/classuser.h>
 #include <falcon/classes/classshared.h>
 
-#include <falcon/method.h>
 #include <falcon/atomic.h>
 
 namespace Falcon {
@@ -72,45 +70,7 @@ public:
    //=============================================================
    //
    virtual void* createInstance() const;
-
    virtual bool op_init( VMContext* ctx, void*, int pcount ) const;
-
-private:
-   /*#
-     @property isOpen Barrier
-     @brief Checks if the barrier is open in this moment.
-    */
-   FALCON_DECLARE_PROPERTY( isOpen );
-
-   /*#
-     @method open Barrier
-     @brief opens the barrier.
-
-     Opening an already open barrier has no effect; the first @a Barrier.close
-     call will close the barrier, no matter how many open are issued.
-    */
-   FALCON_DECLARE_METHOD( open, "" );
-
-   /*#
-     @method close Barrier
-     @brief Closes the barrier.
-
-     Closing the barrier will cause any agent waiting on the barrier
-     from that moment on to be blocked.
-    */
-   FALCON_DECLARE_METHOD( close, "" );
-
-   /*#
-     @method wait Barrier
-     @brief Wait for the barrier to be open.
-     @optparam timeout Milliseconds to wait for the barrier to be open.
-     @return true if the barrier is open during the wait, false if the given timeout expires.
-
-     If @b timeout is less than zero, the wait is endless; if @b timeout is zero,
-     the wait exits immediately.
-    */
-   FALCON_DECLARE_METHOD( wait, "timeout:[N]" );
-
 };
 
 }

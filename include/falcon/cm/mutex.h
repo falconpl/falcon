@@ -21,10 +21,8 @@
 #include <falcon/function.h>
 #include <falcon/string.h>
 #include <falcon/shared.h>
-#include <falcon/classes/classuser.h>
 #include <falcon/classes/classshared.h>
 
-#include <falcon/method.h>
 #include <falcon/atomic.h>
 
 #include <falcon/pstep.h>
@@ -68,40 +66,6 @@ public:
 
    virtual bool op_init( VMContext* ctx, void*, int pcount ) const;
 
-private:
-
-   /*#
-     @method lock Mutex
-     @brief Waits indefinitely until the mutex is acquired.
-    */
-   FALCON_DECLARE_METHOD( lock, "" );
-
-   /*#
-     @method locked Performs locked computation.
-     @brief Waits indefinitely until the mutex is acquired, and then executes the given code.
-     @param code A code to be run inside the lock.
-     @return the result of the evaluated code.
-
-     The locked is automatically released as the code is terminated
-     @note wait operations performed inside the code are bound to unlock the mutex.
-    */
-   FALCON_DECLARE_METHOD( locked, "code:C" );
-
-
-   /*#
-     @method tryLock Mutex
-     @brief Tries to lock the mutex.
-     @return true if the try was succesfull.
-
-    */
-   FALCON_DECLARE_METHOD( tryLock, "" );
-
-   /*#
-     @method unlock Mutex
-     @brief Unlocks the mutex.
-     @raise AccessError if the mutex is not currently held by the invoker.
-    */
-   FALCON_DECLARE_METHOD( unlock, "" );
 
    FALCON_DECLARE_INTERNAL_PSTEP( UnlockAndReturn );
 };

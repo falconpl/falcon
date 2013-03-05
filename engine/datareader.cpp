@@ -16,13 +16,14 @@
 #include <falcon/setup.h>
 #include <falcon/endianity.h>
 #include <falcon/stream.h>
+#include <falcon/function.h>
 #include <falcon/datareader.h>
 #include <falcon/errors/ioerror.h>
 
 #include <string.h>
 
 namespace Falcon {
-
+     
 DataReader::DataReader( Stream* stream, t_endianity endian ):
    Reader( stream ),
    m_gcMark( 0 )

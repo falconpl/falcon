@@ -75,44 +75,45 @@ int32 SharedMutex::lockedConsumeSignal(VMContext* ctx, int32)
    return 0;
 }
 
-
-
 //=============================================================
 //
 
-ClassMutex::ClassMutex():
-      ClassShared("Mutex"),
-      FALCON_INIT_METHOD(lock),
-      FALCON_INIT_METHOD(locked),
-      FALCON_INIT_METHOD(tryLock),
-      FALCON_INIT_METHOD(unlock)
-{
-   static Class* shared = Engine::handlers()->sharedClass();
-   addParent(shared);
-}
 
-ClassMutex::~ClassMutex()
-{}
+/*#
+  @method lock Mutex
+  @brief Waits indefinitely until the mutex is acquired.
+ */
+FALCON_DECLARE_FUNCTION( lock, "" );
 
-void* ClassMutex::createInstance() const
-{
-   return FALCON_CLASS_CREATE_AT_INIT;
-}
+/*#
+  @method locked Performs locked computation.
+  @brief Waits indefinitely until the mutex is acquired, and then executes the given code.
+  @param code A code to be run inside the lock.
+  @return the result of the evaluated code.
 
-
-bool ClassMutex::op_init( VMContext* ctx, void*, int pcount ) const
-{
-   SharedMutex* sb = new SharedMutex(&ctx->vm()->contextManager(), this );
-   ctx->stackResult(pcount+1, FALCON_GC_STORE(this, sb));
-   return false;
-}
+  The locked is automatically released as the code is terminated
+  @note wait operations performed inside the code are bound to unlock the mutex.
+ */
+FALCON_DECLARE_FUNCTION( locked, "code:C" );
 
 
-//=================================================================================
-//
+/*#
+  @method tryLock Mutex
+  @brief Tries to lock the mutex.
+  @return true if the try was succesfull.
+
+ */
+FALCON_DECLARE_FUNCTION( tryLock, "" );
+
+/*#
+  @method unlock Mutex
+  @brief Unlocks the mutex.
+  @raise AccessError if the mutex is not currently held by the invoker.
+ */
+FALCON_DECLARE_FUNCTION( unlock, "" );
 
 
-FALCON_DEFINE_METHOD_P1( ClassMutex, lock )
+void Function_lock::invoke(VMContext* ctx, int32 pCount )
 {
    static const PStep& stepWaitSuccess = Engine::instance()->stdSteps()->m_waitSuccess;
    static const PStep& stepInvoke = Engine::instance()->stdSteps()->m_reinvoke;
@@ -152,7 +153,7 @@ FALCON_DEFINE_METHOD_P1( ClassMutex, lock )
 }
 
 
-FALCON_DEFINE_METHOD_P1( ClassMutex, locked )
+void Function_locked::invoke(VMContext* ctx, int32 pCount )
 {
    static const PStep& stepInvoke = Engine::instance()->stdSteps()->m_reinvoke;
 
@@ -197,15 +198,7 @@ FALCON_DEFINE_METHOD_P1( ClassMutex, locked )
 }
 
 
-void ClassMutex::PStepUnlockAndReturn::apply_( const PStep*, VMContext* ctx )
-{
-   ctx->releaseAcquired();
-   ctx->returnFrame(ctx->topData());
-}
-
-
-
-FALCON_DEFINE_METHOD_P1( ClassMutex, tryLock )
+void Function_tryLock::invoke(VMContext* ctx, int32 pCount )
 {
    static const PStep& stepInvoke = Engine::instance()->stdSteps()->m_reinvoke;
 
@@ -236,7 +229,7 @@ FALCON_DEFINE_METHOD_P1( ClassMutex, tryLock )
 }
 
 
-FALCON_DEFINE_METHOD_P1( ClassMutex, unlock )
+void Function_unlock::invoke(VMContext* ctx, int32 pCount )
 {
    SharedMutex* mtx = static_cast<SharedMutex*>(ctx->self().asInst());
 
@@ -255,6 +248,48 @@ FALCON_DEFINE_METHOD_P1( ClassMutex, unlock )
       throw FALCON_SIGN_XERROR( AccessError, e_ctx_ownership,
                .extra("Mutex not owned by this context") );
    }
+}
+
+
+//=============================================================
+//
+
+ClassMutex::ClassMutex():
+      ClassShared("Mutex")
+{
+   static Class* shared = Engine::handlers()->sharedClass();
+   setParent(shared);
+
+   addMethod( new Function_lock);
+   addMethod( new Function_locked);
+   addMethod( new Function_tryLock);
+   addMethod( new Function_unlock);
+}
+
+ClassMutex::~ClassMutex()
+{}
+
+void* ClassMutex::createInstance() const
+{
+   return FALCON_CLASS_CREATE_AT_INIT;
+}
+
+
+bool ClassMutex::op_init( VMContext* ctx, void*, int pcount ) const
+{
+   SharedMutex* sb = new SharedMutex(&ctx->vm()->contextManager(), this );
+   ctx->stackResult(pcount+1, FALCON_GC_STORE(this, sb));
+   return false;
+}
+
+
+//=================================================================================
+//
+
+void ClassMutex::PStepUnlockAndReturn::apply_( const PStep*, VMContext* ctx )
+{
+   ctx->releaseAcquired();
+   ctx->returnFrame(ctx->topData());
 }
 
 }

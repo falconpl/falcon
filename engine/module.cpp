@@ -513,8 +513,9 @@ void Module::enumerateMantras( Module::MantraEnumerator& rator ) const
    while( iter != end )
    {
       const Mantra* m = iter->second;
-      if( ! rator( *m, ++iter == end) )
+      if( ! rator( *m ) )
          break;
+      ++iter;
    }
 }
 

@@ -267,10 +267,11 @@ void URI::Query::enumerateFields( URI::Query::FieldEnumerator& etor ) const
    while( iter != end )
    {
       KeyValue kv( iter->first, iter->second );
-      if( ! etor( kv, ++iter == end ) )
+      if( ! etor( kv ) )
       {
          break;
       }
+      ++iter;
    }
 }
      

@@ -171,7 +171,7 @@ void HyperClass::addParentProperties( Class* cls )
          m_owner(owner)
       {}
 
-      virtual bool operator()( const String& pname, bool )
+      virtual bool operator()( const String& pname )
       {
          // ignore properties representing parent classes.
          if( m_cls->getParent( pname ) == 0 )
@@ -327,8 +327,8 @@ void HyperClass::enumerateProperties( void*, PropertyEnumerator& cb ) const
    while( iter != props.end() )
    {
       const String& prop = iter->first;
+      cb( prop );
       ++ iter;
-      cb( prop, iter == props.end() );
    }
 }
 

@@ -109,11 +109,11 @@ bool ClassTreeStep::gcCheckInstance( void* instance, uint32 mark ) const
 
 void ClassTreeStep::enumerateProperties( void*, Class::PropertyEnumerator& cb ) const
 {
-   cb("arity", false);
-   cb("insert", false);
-   cb("parent", false );
-   cb("remove", true);
-   cb("append", true);
+   cb("arity");
+   cb("insert");
+   cb("parent" );
+   cb("remove");
+   cb("append");
 }
 
 

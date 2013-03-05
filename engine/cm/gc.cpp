@@ -23,43 +23,332 @@
 #include <falcon/path.h>
 #include <falcon/errors/paramerror.h>
 #include <falcon/errors/codeerror.h>
+#include <falcon/errors/accesserror.h>
 
 #include <falcon/datawriter.h>
 #include <falcon/datareader.h>
 #include <falcon/itemarray.h>
 #include <falcon/module.h>
+#include <falcon/function.h>
 
 namespace Falcon {
 namespace Ext {
 
 
+/*#
+  @property algorithm GC
+  @brief Show or select which automatic collection algorithm is used.
+
+  The algorithm
+ */
+
+/*#
+  @property limit GC
+  @brief Current limit for "green zone" in automatic algorithms.
+
+ */
+
+
+/*#
+  @property baseLimit GC
+  @brief Minimum value for the limit property.
+
+ */
+
+
+/*#
+ @method perform GC
+ @brief Suggests or forces a full garbage collecting.
+ @optparam force True to ask for a total garbage collection.
+ @optparam wait True to wait until the collection is complete.
+
+ If @b force is false, then the current context only is scheduled for
+ inspection as soon as possible. This can cause a delay in the
+ execution of subsequent instructions. However, the calling context
+ might not see the memory immediately freed, as reclaim happens
+ at a later stage.
+
+ If @b force is true, then all the existing contexts are marked
+ for inspection, and inspected as soon as possible. If @b wait
+ is also true, then the calling context stays blocked until all
+ the currently existing contexts are checked, and all the garbage
+ memory is actually reclaimed.
+
+ @note If @b force is false, @b wait is ignored. To see memory
+ effectively reclaimed in a single agent application after this
+ call, set both parameters to true nevertheless.
+ */
+FALCON_DECLARE_FUNCTION( perform, "force:[B], wait:[B]" );
+
+/*#
+ @method suggest GC
+ @brief Invites the GC to inspect the oldest or all the contexts
+ @optparam all True to ask for inspection on all the contexts.
+
+ The method returns immediately; the GC will try to collect
+ the available memory as soon as possible.
+ */
+FALCON_DECLARE_FUNCTION( suggest, "all:[B]" );
+
+/*#
+ @method reset GC
+ @brief Clears count of sweep and mark loops.
+
+ After this call, the @a GC.marks and @a GC.sweeps counters
+ will be reset to 0.
+ */
+FALCON_DECLARE_FUNCTION( reset, "all:[B]" );
+
+//====================================================
+// Properties.
+//
+
+static void get_contexts( const Class* owner, const String&, void*, Item& value )
+{
+   static Class* cls = owner->module()->getClass("VMContext");
+   static Collector* coll = Engine::instance()->collector();
+
+   ItemArray* res = new ItemArray;
+
+   class Rator: public Collector::ContextEnumerator
+   {
+   public:
+      Rator( ItemArray* array ):
+         m_array(array)
+      {}
+
+      virtual ~Rator(){}
+
+      virtual void operator()(VMContext* ctx)
+      {
+         m_array->append( Item( cls, ctx ) );
+      }
+
+   private:
+      ItemArray* m_array;
+   }
+   rator(res);
+
+   coll->enumerateContexts(rator);
+   value = FALCON_GC_HANDLE(res);
+}
+   
+
+static void get_memory( const Class*, const String&, void*, Item& value )
+{
+   static Collector* coll = Engine::instance()->collector();
+   value = coll->storedMemory();
+}
+
+
+static void get_items( const Class*, const String&, void*, Item& value )
+{
+   static Collector* coll = Engine::instance()->collector();
+   value = coll->storedItems();
+}
+
+
+static void set_enabled( const Class*, const String&, void*, const Item& value )
+{
+   static Collector* coll = Engine::instance()->collector();
+   coll->enable( value.isTrue() );
+}
+
+static void get_enabled( const Class*, const String&, void*, Item& value )
+{
+   static Collector* coll = Engine::instance()->collector();
+   value = coll->isEnabled();
+}
+
+
+static void set_status( const Class*, const String&, void*, const Item& value )
+{
+   static Collector* coll = Engine::instance()->collector();
+   int64 v = value.forceInteger();
+   if( v < 0 || v > static_cast<int64>(Collector::e_status_red) )
+   {
+      throw FALCON_SIGN_ERROR( ParamError, e_param_range );
+   }
+   coll->status( static_cast<Collector::t_status>(v) );
+}
+
+
+static void get_status( const Class*, const String&, void*, Item& value )
+{
+   static Collector* coll = Engine::instance()->collector();
+   value = static_cast<int64>(coll->status());
+}
+
+
+static void set_algorithm( const Class*, const String&, void*, const Item& value )
+{
+   static Collector* coll = Engine::instance()->collector();
+   int32 algo = 0;
+   if(!( value.isOrdinal()
+            && (algo = static_cast<int32>(value.forceInteger()))
+            && algo >= 0 && algo < FALCON_COLLECTOR_ALGORITHM_COUNT)
+    ) {
+
+       throw new ParamError( ErrorParam( e_inv_prop_value, __LINE__ , SRC )
+          .extra(String("0<=N<").N(FALCON_COLLECTOR_ALGORITHM_COUNT)) );
+   }
+   coll->setAlgorithm(algo);
+}
+
+
+static void get_algorithm( const Class*, const String&, void*, Item& value )
+{
+   static Collector* coll = Engine::instance()->collector();
+   value = static_cast<int64>(coll->currentAlgorithm());
+}
+
+
+static void set_limit( const Class*, const String&, void*, const Item& value )
+{
+   static Collector* coll = Engine::instance()->collector();
+      if( ! value.isOrdinal() )
+   {
+      throw new AccessError( ErrorParam( e_inv_prop_value, __LINE__, SRC )
+         .extra("N") );
+   }
+
+   coll->currentAlgorithmObject()->limit( value.asInteger() );
+}
+
+
+static void get_limit( const Class*, const String&, void*, Item& value )
+{
+   static Collector* coll = Engine::instance()->collector();
+   value = coll->currentAlgorithmObject()->limit();
+}
+
+
+static void set_baseLimit( const Class*, const String&, void*, const Item& value )
+{
+   static Collector* coll = Engine::instance()->collector();
+      if( ! value.isOrdinal() )
+   {
+      throw new AccessError( ErrorParam( e_inv_prop_value, __LINE__, SRC )
+         .extra("N") );
+   }
+
+   coll->currentAlgorithmObject()->base( value.forceInteger() );
+}
+
+
+static void get_baseLimit( const Class*, const String&, void*, Item& value )
+{
+   static Collector* coll = Engine::instance()->collector();
+   value = coll->currentAlgorithmObject()->base();
+}
+
+
+static void get_marks( const Class*, const String&, void*, Item& value )
+{
+   static Collector* coll = Engine::instance()->collector();
+   value = coll->markLoops(false);
+}
+
+
+static void get_sweeps( const Class*, const String&, void*, Item& value )
+{
+   static Collector* coll = Engine::instance()->collector();
+   value = coll->sweepLoops(false);
+}
+
+
+
+void Function_perform::invoke( VMContext* ctx, int32 )
+{
+   static Collector* coll = Engine::instance()->collector();
+
+   Item* i_full = ctx->param(0);
+   Item* i_wait = ctx->param(1);
+
+   bool full = i_full != 0 ? i_full->isTrue() : false;
+   bool wait = i_wait != 0 ? i_wait->isTrue() : false;
+
+   TRACE( "ClassGC::Method_perform %s, %s", (full? "Full" : "partial"), (wait?"wait": "no wait") );
+
+   if( full )
+   {
+      if( wait != 0 )
+      {
+         Shared* sh = new Shared(&ctx->vm()->contextManager());
+         coll->performGCOnShared( sh );
+         ctx->addWait(sh);
+         ctx->engageWait(-1);
+      }
+      else
+      {
+         coll->performGC(false);
+      }
+   }
+   else
+   {
+      ctx->setInspectEvent();
+   }
+
+   ctx->returnFrame();
+}
+
+
+
+void Function_suggest::invoke( VMContext* ctx, int32 )
+{
+   static Collector* coll = Engine::instance()->collector();
+
+   Item* i_all = ctx->param(0);
+
+   bool all = i_all != 0 ? i_all->isTrue() : false;
+
+   TRACE( "ClassGC::Method_suggest %s", (all? "Full" : "partial") );
+
+   coll->suggestGC(all);
+   ctx->returnFrame();
+}
+
+
+void Function_reset::invoke( VMContext* ctx, int32 )
+{
+   static Collector* coll = Engine::instance()->collector();
+   MESSAGE( "ClassGC::Method_reset");
+
+   coll->sweepLoops(true);
+   coll->markLoops(true);
+   ctx->returnFrame();
+}
+
+
+
 ClassGC::ClassGC():
-   ClassUser("%GC"),
-   FALCON_INIT_PROPERTY( contexts ),
-   FALCON_INIT_PROPERTY( memory ),
-   FALCON_INIT_PROPERTY( items ),
-   FALCON_INIT_PROPERTY( enabled ),
-   FALCON_INIT_PROPERTY( status ),
-
-   FALCON_INIT_PROPERTY( algorithm ),
-   FALCON_INIT_PROPERTY( limit ),
-   FALCON_INIT_PROPERTY( baseLimit ),
-   FALCON_INIT_PROPERTY( sweeps ),
-   FALCON_INIT_PROPERTY( marks ),
-
-   FALCON_INIT_PROPERTY( MANUAL ),
-   FALCON_INIT_PROPERTY( FIXED ),
-   FALCON_INIT_PROPERTY( STRICT ),
-   FALCON_INIT_PROPERTY( SMOOTH ),
-   FALCON_INIT_PROPERTY( LOOSE ),
-   FALCON_INIT_PROPERTY( DEFAULT ),
-
-   FALCON_INIT_METHOD( perform ),
-   FALCON_INIT_METHOD( suggest ),
-   FALCON_INIT_METHOD( reset )
+   Class("%GC")  
 {
    // we don't need an object
    m_bIsFlatInstance = true;
+
+   addProperty( "contexts", &get_contexts );
+   addProperty( "memory", &get_memory );
+   addProperty( "items", &get_items );
+   addProperty( "status", &get_status );
+
+   addProperty( "algorithm", &get_algorithm, &set_algorithm );
+   addProperty( "limit", &get_limit, &set_limit );
+   addProperty( "baseLimit", &get_baseLimit, &set_baseLimit );
+   
+   addProperty( "sweeps", &get_sweeps );
+   addProperty( "marks", &get_marks );
+   
+   addConstant( "MANUAL", FALCON_COLLECTOR_ALGORITHM_MANUAL );
+   addConstant( "FIXED", FALCON_COLLECTOR_ALGORITHM_FIXED );
+   addConstant( "STRICT", FALCON_COLLECTOR_ALGORITHM_STRICT );
+   addConstant( "SMOOTH", FALCON_COLLECTOR_ALGORITHM_SMOOTH );
+   addConstant( "LOOSE", FALCON_COLLECTOR_ALGORITHM_LOOSE );
+   addConstant( "DEFAULT", FALCON_COLLECTOR_ALGORITHM_LOOSE );
+
+   addMethod( new Function_perform );
+   addMethod( new Function_suggest );
+   addMethod( new Function_reset );
 }
 
 ClassGC::~ClassGC()
@@ -97,226 +386,6 @@ bool ClassGC::op_init( VMContext* , void*, int  ) const
 {
    // nothing to do
    return true;
-}
-
-//====================================================
-// Properties.
-//
-
-FALCON_DEFINE_PROPERTY_SET_P0( ClassGC, contexts )
-{
-   throw new CodeError( ErrorParam( e_prop_ro, __LINE__, SRC ).extra("contexts") );
-}
-
-FALCON_DEFINE_PROPERTY_GET( ClassGC, contexts )(void*, Item& value)
-{
-   static Class* cls = owner()->module()->getClass("VMContext");
-   static Collector* coll = Engine::instance()->collector();
-
-   ItemArray* res = new ItemArray;
-
-   class Rator: public Collector::ContextEnumerator
-   {
-   public:
-      Rator( ItemArray* array ):
-         m_array(array)
-      {}
-
-      virtual ~Rator(){}
-
-      virtual void operator()(VMContext* ctx)
-      {
-         m_array->append( Item( cls, ctx ) );
-      }
-
-   private:
-      ItemArray* m_array;
-   }
-   rator(res);
-
-   coll->enumerateContexts(rator);
-   value = FALCON_GC_HANDLE(res);
-}
-   
-FALCON_DEFINE_PROPERTY_SET_P0( ClassGC, memory )
-{
-   throw new CodeError( ErrorParam( e_prop_ro, __LINE__, SRC ).extra("memory") );
-}
-
-FALCON_DEFINE_PROPERTY_GET( ClassGC, memory )(void*, Item& value)
-{
-   static Collector* coll = Engine::instance()->collector();
-   value = coll->storedMemory();
-}
-
-FALCON_DEFINE_PROPERTY_SET_P0( ClassGC, items )
-{
-   throw new ParamError( ErrorParam( e_prop_ro, __LINE__, SRC ).extra("items") );
-}
-
-FALCON_DEFINE_PROPERTY_GET( ClassGC, items )(void*, Item& value)
-{
-   static Collector* coll = Engine::instance()->collector();
-   value = coll->storedItems();
-}
-
-FALCON_DEFINE_PROPERTY_SET( ClassGC, enabled )(void*, const Item& value)
-{
-   static Collector* coll = Engine::instance()->collector();
-   coll->enable( value.isTrue() );
-}
-
-FALCON_DEFINE_PROPERTY_GET( ClassGC, enabled )(void*, Item& value)
-{
-   static Collector* coll = Engine::instance()->collector();
-   value = coll->isEnabled();
-}
-
-FALCON_DEFINE_PROPERTY_SET( ClassGC, status )(void*, const Item& value)
-{
-   static Collector* coll = Engine::instance()->collector();
-   int64 v = value.forceInteger();
-   if( v < 0 || v > static_cast<int64>(Collector::e_status_red) )
-   {
-      throw FALCON_SIGN_ERROR( ParamError, e_param_range );
-   }
-   coll->status( static_cast<Collector::t_status>(v) );
-}
-
-FALCON_DEFINE_PROPERTY_GET( ClassGC, status )(void*, Item& value)
-{
-   static Collector* coll = Engine::instance()->collector();
-   value = static_cast<int64>(coll->status());
-}
-
-
-FALCON_DEFINE_PROPERTY_SET( ClassGC, algorithm )(void*, const Item& value)
-{
-   static Collector* coll = Engine::instance()->collector();
-   int32 algo = 0;
-   checkType( value.isOrdinal()
-            && (algo = static_cast<int32>(value.forceInteger()))
-            && algo >= 0 && algo < FALCON_COLLECTOR_ALGORITHM_COUNT,
-       String("0<=N<").N(FALCON_COLLECTOR_ALGORITHM_COUNT));
-
-   coll->setAlgorithm(algo);
-}
-
-FALCON_DEFINE_PROPERTY_GET( ClassGC, algorithm )(void*, Item& value)
-{
-   static Collector* coll = Engine::instance()->collector();
-   value = static_cast<int64>(coll->currentAlgorithm());
-}
-
-FALCON_DEFINE_PROPERTY_SET( ClassGC, limit )(void*, const Item& value )
-{
-   static Collector* coll = Engine::instance()->collector();
-   checkType( value.isOrdinal(), "N" );
-   coll->currentAlgorithmObject()->limit( value.asInteger() );
-}
-
-FALCON_DEFINE_PROPERTY_GET( ClassGC, limit )(void*, Item& value)
-{
-   static Collector* coll = Engine::instance()->collector();
-   value = coll->currentAlgorithmObject()->limit();
-}
-
-FALCON_DEFINE_PROPERTY_SET( ClassGC, baseLimit )(void*, const Item& value )
-{
-   static Collector* coll = Engine::instance()->collector();
-   checkType( value.isOrdinal(), "N" );
-   coll->currentAlgorithmObject()->base( value.forceInteger() );
-}
-
-FALCON_DEFINE_PROPERTY_GET( ClassGC, baseLimit )(void*, Item& value)
-{
-   static Collector* coll = Engine::instance()->collector();
-   value = coll->currentAlgorithmObject()->base();
-}
-
-
-
-FALCON_DEFINE_PROPERTY_SET( ClassGC, marks )(void*, const Item& )
-{
-   throw readOnlyError();
-}
-
-FALCON_DEFINE_PROPERTY_GET( ClassGC, marks )(void*, Item& value)
-{
-   static Collector* coll = Engine::instance()->collector();
-   value = coll->markLoops(false);
-}
-
-FALCON_DEFINE_PROPERTY_SET( ClassGC, sweeps )(void*, const Item& )
-{
-   throw readOnlyError();
-}
-
-FALCON_DEFINE_PROPERTY_GET( ClassGC, sweeps )(void*, Item& value)
-{
-   static Collector* coll = Engine::instance()->collector();
-   value = coll->sweepLoops(false);
-}
-
-
-FALCON_DEFINE_METHOD_P1( ClassGC, perform )
-{
-   static Collector* coll = Engine::instance()->collector();
-
-   Item* i_full = ctx->param(0);
-   Item* i_wait = ctx->param(1);
-
-   bool full = i_full != 0 ? i_full->isTrue() : false;
-   bool wait = i_wait != 0 ? i_wait->isTrue() : false;
-
-   TRACE( "ClassGC::Method_perform %s, %s", (full? "Full" : "partial"), (wait?"wait": "no wait") );
-
-   if( full )
-   {
-      if( wait != 0 )
-      {
-         Shared* sh = new Shared(&ctx->vm()->contextManager());
-         coll->performGCOnShared( sh );
-         ctx->addWait(sh);
-         ctx->engageWait(-1);
-      }
-      else
-      {
-         coll->performGC(false);
-      }
-   }
-   else
-   {
-      ctx->setInspectEvent();
-   }
-
-   ctx->returnFrame();
-}
-
-
-FALCON_DEFINE_METHOD_P1( ClassGC, suggest )
-{
-   static Collector* coll = Engine::instance()->collector();
-
-   Item* i_all = ctx->param(0);
-
-   bool all = i_all != 0 ? i_all->isTrue() : false;
-
-   TRACE( "ClassGC::Method_suggest %s", (all? "Full" : "partial") );
-
-   coll->suggestGC(all);
-   ctx->returnFrame();
-}
-
-
-FALCON_DEFINE_METHOD_P1( ClassGC, reset )
-{
-   static Collector* coll = Engine::instance()->collector();
-   MESSAGE( "ClassGC::Method_reset");
-
-   coll->sweepLoops(true);
-   coll->markLoops(true);
-   ctx->returnFrame();
 }
 
 }

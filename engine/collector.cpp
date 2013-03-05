@@ -1531,10 +1531,12 @@ void Collector::enumerateHistory( DataStatusEnumerator& r ) const
    while( iter != _p->m_hmap.end() )
    {
       DataStatus& status = *iter->second;
-      if( ! r( status, (++iter == _p->m_hmap.end() ) ) )
+      if( ! r( status ) )
       {
          break;
       }
+
+      ++iter;
    }
 }
 

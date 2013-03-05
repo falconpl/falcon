@@ -28,16 +28,44 @@
 
 namespace Falcon {
 
-   //
+   
+//=====================================================================
+// Properties
+//
+
+static void get_len( const Class*, const String&, void* instance, Item& value )
+{
+   value = (int64) static_cast<String*>( instance )->length();
+}
+
+static void get_isText( const Class*, const String&, void* instance, Item& value )
+{
+   value.setBoolean( static_cast<String*>( instance )->isText() );
+}
+
+static void set_isText( const Class*, const String&, void* instance, const Item& value )
+{
+   String* str = static_cast<String*>( instance );
+   if( value.isTrue() ) {
+      if( ! str->isText() ) {
+         str->manipulator( str->manipulator()->bufferedManipulator() );
+      }
+   }
+   else {
+      str->toMemBuf();
+   }
+}
+
+//
 // Class properties used for enumeration
 //
 
 ClassString::ClassString():
-   ClassUser( "String", FLC_CLASS_ID_STRING ),
-   FALCON_INIT_PROPERTY( isText ),
-   FALCON_INIT_PROPERTY( len ),
+   Class( "String", FLC_CLASS_ID_STRING ),
    m_nextOp(this)
 {
+   addProperty( "isText", &get_isText, &set_isText );
+   addProperty( "len", &get_len );
 }
 
 
@@ -696,38 +724,6 @@ void ClassString::op_isTrue( VMContext* ctx, void* str ) const
 {
    /* No lock -- we can accept sub-program level uncertainty */
    ctx->topData().setBoolean( static_cast<String*>( str )->size() != 0 );
-}
-
-//=====================================================================
-// Properties
-//
-FALCON_DEFINE_PROPERTY_SET(ClassString, len)( void* , const Item& )
-{
-}
-
-
-FALCON_DEFINE_PROPERTY_GET(ClassString, len)( void* instance, Item& value )
-{
-   value = (int64) static_cast<String*>( instance )->length();
-}
-
-FALCON_DEFINE_PROPERTY_SET(ClassString, isText)( void* instance, const Item& value )
-{
-   String* str = static_cast<String*>( instance );
-   if( value.isTrue() ) {
-      if( ! str->isText() ) {
-         str->manipulator( str->manipulator()->bufferedManipulator() );
-      }
-   }
-   else {
-      str->toMemBuf();
-   }
-}
-
-
-FALCON_DEFINE_PROPERTY_GET(ClassString, isText)( void* instance, Item& value )
-{
-   value.setBoolean( static_cast<String*>( instance )->isText() );
 }
 
 }

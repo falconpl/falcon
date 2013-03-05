@@ -116,22 +116,22 @@ namespace Ext {
 */
 
 ClassRegex::ClassRegex() :
-ClassUser("Regex"),
-FALCON_INIT_METHOD(study),
-FALCON_INIT_METHOD(match),
-FALCON_INIT_METHOD(grab),
-FALCON_INIT_METHOD(split),
-FALCON_INIT_METHOD(find),
-FALCON_INIT_METHOD(findAll),
-FALCON_INIT_METHOD(findAllOverlapped),
-FALCON_INIT_METHOD(replace),
-FALCON_INIT_METHOD(replaceAll),
-FALCON_INIT_METHOD(subst),
-FALCON_INIT_METHOD(capturedCount),
-FALCON_INIT_METHOD(captured),
-FALCON_INIT_METHOD(compare),
-FALCON_INIT_METHOD(version)
+   Class("Regex")
 {
+   addMethod( new Function_study);
+   addMethod( new Function_match);
+   addMethod( new Function_grab);
+   addMethod( new Function_split);
+   addMethod( new Function_find);
+   addMethod( new Function_findAll);
+   addMethod( new Function_findAllOverlapped);
+   addMethod( new Function_replace);
+   addMethod( new Function_replaceAll);
+   addMethod( new Function_subst);
+   addMethod( new Function_capturedCount);
+   addMethod( new Function_captured);
+   addMethod( new Function_compare);
+   addMethod( new Function_version);
 }
 
 ClassRegex::~ClassRegex()
@@ -222,6 +222,32 @@ void* ClassRegex::createInstance() const
    return new RegexCarrier;
 }
 
+
+void ClassRegex::dispose( void* instance ) const
+{
+   RegexCarrier* rec = static_cast<RegexCarrier*>(instance);
+   delete rec;
+}
+
+void* ClassRegex::clone( void* instance ) const
+{
+   RegexCarrier* rec = static_cast<RegexCarrier*>(instance);
+   return new RegexCarrier(*rec);
+}
+
+void ClassRegex::gcMarkInstance( void* instance, uint32 mark ) const
+{
+   RegexCarrier* rec = static_cast<RegexCarrier*>(instance);
+   rec->m_mark = mark;
+}
+
+bool ClassRegex::gcCheckInstance( void* instance, uint32 mark ) const
+{
+   RegexCarrier* rec = static_cast<RegexCarrier*>(instance);
+   return rec->m_mark >= mark;
+}
+
+
 /*#
    @method study Regex
    @brief Study the pattern after compilation.
@@ -229,7 +255,7 @@ void* ClassRegex::createInstance() const
    It perform an extra compilation step; PCRE 7.6 manual suggests that this is
    useful only with recursive pattern.
 */
-FALCON_DEFINE_METHOD_P1(ClassRegex, study)
+void ClassRegex::Function_study::invoke( VMContext* ctx, int32 )
 {
    Class *cls = 0;
    void *inst = 0;
@@ -375,7 +401,7 @@ static void internal_regex_match( RegexCarrier *data, String *source, int from )
    If the match is successful, the method returns true.
    The match point can then be retrieved using the captured(0) method.
 */
-FALCON_DEFINE_METHOD_P1(ClassRegex, match)
+void ClassRegex::Function_match::invoke( VMContext* ctx, int32 )
 {
    Class *cls = 0;
    void *inst = 0;
@@ -431,7 +457,7 @@ FALCON_DEFINE_METHOD_P1(ClassRegex, match)
 
    If the pattern doesn't matches, returns nil.
 */
-FALCON_DEFINE_METHOD_P1(ClassRegex, find)
+void ClassRegex::Function_find::invoke( VMContext* ctx, int32 )
 {
    Class *cls = 0;
    void *inst = 0;
@@ -500,7 +526,7 @@ FALCON_DEFINE_METHOD_P1(ClassRegex, find)
 
    If the pattern doesn't matches, this method returns nil.
 */
-FALCON_DEFINE_METHOD_P1(ClassRegex, split)
+void ClassRegex::Function_split::invoke( VMContext* ctx, int32 )
 {
    Class *cls = 0;
    void *inst = 0;
@@ -654,7 +680,7 @@ static void internal_findAll( Falcon::VMContext *ctx, bool overlapped )
    expressions.
 */
 
-FALCON_DEFINE_METHOD_P1(ClassRegex, findAll)
+void ClassRegex::Function_findAll::invoke( VMContext* ctx, int32 )
 {
    internal_findAll( ctx, false );
 }
@@ -674,7 +700,7 @@ FALCON_DEFINE_METHOD_P1(ClassRegex, findAll)
    This method only returns the whole match, ignoring parenthesized
    expressions.
 */
-FALCON_DEFINE_METHOD_P1(ClassRegex, findAllOverlapped)
+void ClassRegex::Function_findAllOverlapped::invoke( VMContext* ctx, int32 )
 {
    internal_findAll( ctx, true );
 }
@@ -695,7 +721,7 @@ FALCON_DEFINE_METHOD_P1(ClassRegex, findAllOverlapped)
    start parameter can be given to begin the search for the pattern in
    string from a given position.
 */
-FALCON_DEFINE_METHOD_P1(ClassRegex, replace)
+void ClassRegex::Function_replace::invoke( VMContext* ctx, int32 )
 {
    Class *cls = 0;
    void *inst = 0;
@@ -857,7 +883,7 @@ static void s_replaceall( VMContext* ctx, bool bExpand )
    replacer parameter. If a change can be performed, a modified instance
    of string is returned, else nil is returned.
 */
-FALCON_DEFINE_METHOD_P1(ClassRegex, replaceAll)
+void ClassRegex::Function_replaceAll::invoke( VMContext* ctx, int32 )
 {
    s_replaceall( ctx, false );
 }
@@ -883,7 +909,7 @@ FALCON_DEFINE_METHOD_P1(ClassRegex, replaceAll)
    
    @note Remember to use double backslash on double quoted strings.
 */
-FALCON_DEFINE_METHOD_P1(ClassRegex, subst)
+void ClassRegex::Function_subst::invoke( VMContext* ctx, int32 )
 {
    s_replaceall( ctx, true );
 }
@@ -901,7 +927,7 @@ FALCON_DEFINE_METHOD_P1(ClassRegex, subst)
    @see Regex.captured
 */
 
-FALCON_DEFINE_METHOD_P1(ClassRegex, capturedCount)
+void ClassRegex::Function_capturedCount::invoke( VMContext* ctx, int32 )
 {
    Class *cls = 0;
    void *inst = 0;
@@ -928,7 +954,7 @@ FALCON_DEFINE_METHOD_P1(ClassRegex, capturedCount)
    returned value is a closed range describing the area where the capture
    had effect in the target string.
 */
-FALCON_DEFINE_METHOD_P1(ClassRegex, captured)
+void ClassRegex::Function_captured::invoke( VMContext* ctx, int32 )
 {
    Class *cls=0;
    void *inst=0;
@@ -968,7 +994,7 @@ FALCON_DEFINE_METHOD_P1(ClassRegex, captured)
    Searches for the pattern and stores all the captured subexpressions in
    an array that is then returned. If the match is negative, returns nil.
 */
-FALCON_DEFINE_METHOD_P1(ClassRegex, grab)
+void ClassRegex::Function_grab::invoke( VMContext* ctx, int32 )
 {
    Class *cls = 0;
    void *inst = 0;
@@ -1025,7 +1051,7 @@ FALCON_DEFINE_METHOD_P1(ClassRegex, grab)
    used in direct comparations. Switch tests and equality tests will succeed if the pattern
    matches agains the given string.
 */
-FALCON_DEFINE_METHOD_P1(ClassRegex, compare)
+void ClassRegex::Function_compare::invoke( VMContext* ctx, int32 )
 {
    Class *cls = 0;
    void *inst = 0;
@@ -1077,7 +1103,7 @@ FALCON_DEFINE_METHOD_P1(ClassRegex, compare)
    This function can be used to retreive the PCRE version that is currently
    used by the REGEX module.
 */
-FALCON_DEFINE_METHOD_P1(ClassRegex, version)
+void ClassRegex::Function_version::invoke( VMContext* ctx, int32 )
 {
    const char *ver = pcre_version();
    ctx->returnFrame( FALCON_GC_HANDLE(new String( ver, -1 )) );

@@ -253,6 +253,8 @@ public:
 
    Stream* underlying() const { return m_stream; }
 
+   void gcMark( uint32 mark ) { m_mark = mark; }
+   uint32 currentMark() const { return m_mark; }
 protected:
    char_t m_pushedChr;
    Transcoder* m_decoder;
@@ -281,6 +283,9 @@ protected:
    void clearTokens();
 
    void makeDefaultSeps();
+
+private:
+   uint32 m_mark;
 };
 
 }

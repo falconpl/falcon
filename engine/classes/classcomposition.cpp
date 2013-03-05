@@ -158,13 +158,13 @@ bool ClassComposition::gcCheckInstance( void* instance, uint32 mark ) const
 void ClassComposition::enumerateProperties( void* instance, PropertyEnumerator& cb ) const
 {
    CompositionInstance* ci = static_cast<CompositionInstance*>(instance);
-   cb( "first", false );
+   cb( "first" );
    if( ci->times() > -1 )
    {
-      cb("times", true);
+      cb("times");
    }
    else {
-      cb("second", true);
+      cb("second");
    }
 }
 

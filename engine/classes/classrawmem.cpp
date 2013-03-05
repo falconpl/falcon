@@ -62,5 +62,5 @@ void* ClassRawMem::allocate( uint32 size ) const
 
 }
 
-/* end of classuser.cpp */
+/* end of classrawmem.cpp */
 

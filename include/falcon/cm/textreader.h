@@ -17,9 +17,7 @@
 #ifndef FALCON_CORE_TEXTREADER_H
 #define FALCON_CORE_TEXTREADER_H
 
-#include <falcon/classes/classuser.h>
-#include <falcon/property.h>
-#include <falcon/method.h>
+#include <falcon/class.h>
 #include <falcon/types.h>
 #include <falcon/textreader.h>
 
@@ -36,7 +34,7 @@ namespace Ext {
    @param stream A stream on which to operate.
  
  */
-class ClassTextReader: public ClassUser
+class ClassTextReader: public Class
 {
 public:
    /** Create the textstream class.
@@ -45,6 +43,11 @@ public:
    ClassTextReader( ClassStream* clsStream );
    virtual ~ClassTextReader();
 
+   virtual void dispose( void* instance ) const;
+   virtual void* clone( void* instance ) const;
+   virtual void gcMarkInstance( void* instance, uint32 mark ) const;
+   virtual bool gcCheckInstance( void* instance, uint32 mark ) const;
+
    //=============================================================
    //
    virtual void* createInstance() const;
@@ -52,31 +55,6 @@ public:
    
 private:   
    ClassStream* m_clsStream;
-   
-   //====================================================
-   // Properties.
-   //
-   FALCON_DECLARE_PROPERTY( encoding );
-   
-   FALCON_DECLARE_METHOD( read, "text:S, count:N" );
-   FALCON_DECLARE_METHOD( grab, "count:N" );
-   FALCON_DECLARE_METHOD( readLine, "text:S, count:[N]" );
-   FALCON_DECLARE_METHOD( grabLine, "count:[N]" );
-   FALCON_DECLARE_METHOD( readEof, "text:S" );
-   FALCON_DECLARE_METHOD( grabEof, "" );
-   FALCON_DECLARE_METHOD( readRecord, "text:S, marker:S, count:[N]" );
-   FALCON_DECLARE_METHOD( grabRecord, "marker:S, count:[N]" );
-   FALCON_DECLARE_METHOD( readToken, "text:S, tokens:A, count:[N]" );
-   FALCON_DECLARE_METHOD( grabToken, "tokens:A, count:[N]" );
-   
-   FALCON_DECLARE_METHOD( readChar, "text:S, append:[B]" );
-   FALCON_DECLARE_METHOD( getChar, "" );
-   FALCON_DECLARE_METHOD( ungetChar, "char:S|N" );   
-   
-   FALCON_DECLARE_METHOD( getStream, "" );      
-   FALCON_DECLARE_METHOD( sync, "" );
-   FALCON_DECLARE_METHOD( close, "" );
-
 };
 
 }

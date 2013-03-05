@@ -23,30 +23,49 @@
 #include <falcon/vmcontext.h>
 #include <falcon/engine.h>
 #include <falcon/stdsteps.h>
+#include <falcon/function.h>
 
 namespace Falcon
 {
+namespace CShared {
+FALCON_DECLARE_FUNCTION( tryWait, "" );
+void Function_tryWait::invoke( VMContext* ctx, int32 pCount )
+{
+   ClassShared::genericClassTryWait(methodOf(), ctx, pCount);
+}
+
+FALCON_DECLARE_FUNCTION( wait, "timeout:[N]" );
+void Function_wait::invoke( VMContext* ctx, int32 pCount )
+{
+   ClassShared::genericClassWait(methodOf(), ctx, pCount);
+}
+}
+
+
+static void reg( Class* shared )
+{
+   shared->addMethod( new CShared::Function_tryWait );
+   shared->addMethod( new CShared::Function_wait );
+}
+
 
 ClassShared::ClassShared( const String& name ):
-         ClassUser(name),
-         FALCON_INIT_METHOD(tryWait),
-         FALCON_INIT_METHOD(wait)
+         Class(name)
 {
+   reg( this );
 }
 
 ClassShared::ClassShared( const String& name, int64 type ):
-         ClassUser(name, (int32) type),
-         FALCON_INIT_METHOD(tryWait),
-         FALCON_INIT_METHOD(wait)
+         Class(name, (int32) type)
 {
+   reg( this );
 }
 
 
 ClassShared::ClassShared():
-         ClassUser("Shared"),
-         FALCON_INIT_METHOD(tryWait),
-         FALCON_INIT_METHOD(wait)
+         Class("Shared")
 {
+   reg( this );
 }
 
 
@@ -161,16 +180,6 @@ void ClassShared::genericClassWait( const Class* childClass, VMContext* ctx, int
          ctx->pushCode( &stepWaitSuccess );
       }
    }
-}
-
-FALCON_DEFINE_METHOD_P( ClassShared, tryWait )
-{
-   ClassShared::genericClassTryWait(methodOf(), ctx, pCount);
-}
-
-FALCON_DEFINE_METHOD_P( ClassShared, wait )
-{
-   ClassShared::genericClassWait(methodOf(), ctx, pCount);
 }
 
 

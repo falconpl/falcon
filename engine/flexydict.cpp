@@ -101,7 +101,8 @@ void FlexyDict::enumerateProps( Class::PropertyEnumerator& e ) const
       while( pos != _p->m_im.end() )
       {
          const String& key = pos->first;
-         e( key, ++pos == _p->m_im.end() );
+         e( key );
+         ++pos;
       }
    }
    else
@@ -114,7 +115,7 @@ void FlexyDict::enumerateProps( Class::PropertyEnumerator& e ) const
          const String& key = pos->first;
          if( temp.find( key ) == temp.end() )
          {
-            e( key, true );
+            e( key );
             temp.insert( key );
          }
 
@@ -131,11 +132,11 @@ void FlexyDict::enumerateProps( Class::PropertyEnumerator& e ) const
          {}
          virtual ~Rator(){}
 
-         virtual bool operator()( const String& property, bool )
+         virtual bool operator()( const String& property )
          {
             if( m_temp.find( property ) == m_temp.end() )
             {
-               bool cont = m_e( property, false );
+               bool cont = m_e( property );
                m_temp.insert( property );
                return cont;
             }

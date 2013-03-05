@@ -26,19 +26,109 @@
 #include <falcon/path.h>
 #include <falcon/errors/paramerror.h>
 #include <falcon/errors/codeerror.h>
-#include <falcon/usercarrier.h>
 #include <falcon/module.h>
 #include <falcon/stdsteps.h>
 #include <falcon/classes/classstream.h>
 
 namespace Falcon {
 
+FALCON_DECLARE_FUNCTION( store, "item:X" );
+FALCON_DECLARE_FUNCTION( addFlatMantra, "mantra:C" );
+FALCON_DECLARE_FUNCTION( commit, "stream:Stream" );
+
+void Function_store::invoke(VMContext* ctx, int32 )
+{
+   static StdSteps* stdSteps = Engine::instance()->stdSteps();
+   
+   Item* i_item = ctx->param(0);
+   if( i_item == 0 )
+   {
+      throw paramError();
+   }
+   
+   Storer* storer = static_cast<Storer*>(ctx->self().asInst());
+   Class* cls; void *data; 
+   i_item->forceClassInst( cls, data );
+   
+   // prepare an explicit call of the return frame
+   ctx->pushCode( &stdSteps->m_returnFrame );
+   
+   // we must return only if the store was completed in this loop
+   if( storer->store( ctx, cls, data ) )
+   {
+      ctx->returnFrame();
+   }
+}
+
+
+void Function_addFlatMantra::invoke(VMContext* ctx, int32 )
+{
+   static Class* clsMantra = Engine::handlers()->mantraClass();
+   
+   Item* i_item = ctx->param(0);
+   if( i_item == 0 )
+   {
+      throw paramError();
+   }
+   
+   Storer* storer = static_cast<Storer*>(ctx->self().asInst());
+   Class* cls; void *data; 
+   i_item->forceClassInst( cls, data );
+   
+   if( ! cls->isDerivedFrom( clsMantra ) )
+   {
+      throw paramError();
+   }
+   
+   storer->addFlatMantra( static_cast<Mantra*>(cls->getParentData( clsMantra, data )) );
+}
+
+
+void Function_commit::invoke(VMContext* ctx, int32 )
+{  
+   static StdSteps* stdSteps = Engine::instance()->stdSteps();
+   static Class* clsStream = Engine::handlers()->streamClass();
+   
+   Item* i_item = ctx->param(0);
+   if( i_item == 0 )
+   {
+      throw paramError();
+   }
+
+   Class* cls; void* data;
+   i_item->forceClassInst( cls, data ); 
+   
+   if( ! cls->isDerivedFrom( clsStream ) )
+   {
+      throw paramError();
+   }
+   
+   Storer* storer = static_cast<Storer*>(ctx->self().asInst());
+   Stream* streamc = static_cast<Stream*>(data);
+
+   // prepare an explicit call of the return frame
+   ctx->pushCode( &stdSteps->m_returnFrame );
+   
+   // skip internal buffering, even if provided, by taking the underlying
+   if( storer->commit( ctx, streamc ) )
+   {
+      // we must return only if the store was completed in this loop
+      ctx->returnFrame();
+   }
+}
+
+
+//===================================================================
+
+
 ClassStorer::ClassStorer():
-   ClassUser("Storer"),
-   FALCON_INIT_METHOD( store ),
-   FALCON_INIT_METHOD( addFlatMantra ),
-   FALCON_INIT_METHOD( commit )
-{}
+   Class("Storer")
+{
+   addMethod( new Function_store );
+   addMethod( new Function_addFlatMantra );
+   addMethod( new Function_commit );
+}
+
 
 ClassStorer::~ClassStorer()
 {}
@@ -74,93 +164,7 @@ bool ClassStorer::gcCheckInstance( void* instance, uint32 mark ) const
    return static_cast<Storer*>(instance)->writer().gcMark() >= mark ;
 }
 
-
-//====================================================
-// Properties.
-//
    
-
-FALCON_DEFINE_METHOD_P1( ClassStorer, store )
-{
-   static StdSteps* stdSteps = Engine::instance()->stdSteps();
-   
-   Item* i_item = ctx->param(0);
-   if( i_item == 0 )
-   {
-      throw paramError();
-   }
-   
-   Storer* storer = static_cast<Storer*>(ctx->self().asInst());
-   Class* cls; void *data; 
-   i_item->forceClassInst( cls, data );
-   
-   // prepare an explicit call of the return frame
-   ctx->pushCode( &stdSteps->m_returnFrame );
-   
-   // we must return only if the store was completed in this loop
-   if( storer->store( ctx, cls, data ) )
-   {
-      ctx->returnFrame();
-   }
-}
-
-
-FALCON_DEFINE_METHOD_P1( ClassStorer, addFlatMantra )
-{
-   static Class* clsMantra = Engine::handlers()->mantraClass();
-   
-   Item* i_item = ctx->param(0);
-   if( i_item == 0 )
-   {
-      throw paramError();
-   }
-   
-   Storer* storer = static_cast<Storer*>(ctx->self().asInst());
-   Class* cls; void *data; 
-   i_item->forceClassInst( cls, data );
-   
-   if( ! cls->isDerivedFrom( clsMantra ) )
-   {
-      throw paramError();
-   }
-   
-   storer->addFlatMantra( static_cast<Mantra*>(cls->getParentData( clsMantra, data )) );
-}
-
-
-FALCON_DEFINE_METHOD_P1( ClassStorer, commit )
-{  
-   static StdSteps* stdSteps = Engine::instance()->stdSteps();
-   static Class* clsStream = Engine::handlers()->streamClass();
-   
-   Item* i_item = ctx->param(0);
-   if( i_item == 0 )
-   {
-      throw paramError();
-   }
-
-   Class* cls; void* data;
-   i_item->forceClassInst( cls, data ); 
-   
-   if( ! cls->isDerivedFrom( clsStream ) )
-   {
-      throw paramError();
-   }
-   
-   Storer* storer = static_cast<Storer*>(ctx->self().asInst());
-   Stream* streamc = static_cast<Stream*>(data);
-
-   // prepare an explicit call of the return frame
-   ctx->pushCode( &stdSteps->m_returnFrame );
-   
-   // skip internal buffering, even if provided, by taking the underlying
-   if( storer->commit( ctx, streamc ) )
-   {
-      // we must return only if the store was completed in this loop
-      ctx->returnFrame();
-   }
-}
-
 }
 
 /* end of classstorer.cpp */

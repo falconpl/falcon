@@ -18,13 +18,9 @@
 
 #include <falcon/pseudofunc.h>
 #include <falcon/fassert.h>
-#include <falcon/classes/classuser.h>
-#include <falcon/property.h>
-#include <falcon/method.h>
+#include <falcon/class.h>
 #include <falcon/types.h>
 #include <falcon/refcounter.h>
-
-#include <falcon/usercarrier.h>
 #include <falcon/path.h>
 
 namespace Falcon {
@@ -36,7 +32,7 @@ class Transcoder;
 /*# @class Stream
    
  */
-class FALCON_DYN_CLASS ClassStream: public ClassUser
+class FALCON_DYN_CLASS ClassStream: public Class
 {
 public:
    
@@ -54,37 +50,6 @@ public:
    virtual void gcMarkInstance( void* instance, uint32 mark ) const;
    virtual bool gcCheckInstance( void* instance, uint32 mark ) const;
    
-   //=============================================================
-   //
-   
-private:   
-   
-   //====================================================
-   // Properties.
-   //
-   
-   FALCON_DECLARE_PROPERTY( error )
-   FALCON_DECLARE_PROPERTY( moved )
-   FALCON_DECLARE_PROPERTY( position )
-   FALCON_DECLARE_PROPERTY( status )
-   FALCON_DECLARE_PROPERTY( eof )
-   FALCON_DECLARE_PROPERTY( bad )
-   FALCON_DECLARE_PROPERTY( good )
-   FALCON_DECLARE_PROPERTY( isopen )
-   FALCON_DECLARE_PROPERTY( buffer )
-   FALCON_DECLARE_PROPERTY( userItem )
-   
-   FALCON_DECLARE_METHOD( write, "data:S|M, count:[N], start:[N]" );
-   FALCON_DECLARE_METHOD( read, "data:S|M, count:[N], start:[N]" );
-   FALCON_DECLARE_METHOD( grab, "count:N" );
-   FALCON_DECLARE_METHOD( close, "" );
-   FALCON_DECLARE_METHOD( seekBeg, "position:N" );
-   FALCON_DECLARE_METHOD( seekCur, "position:N" );
-   FALCON_DECLARE_METHOD( seekEnd, "position:N" );
-   FALCON_DECLARE_METHOD( seek, "position:N,whence:N" );
-   FALCON_DECLARE_METHOD( tell, "" );
-   FALCON_DECLARE_METHOD( flush, "" );
-   FALCON_DECLARE_METHOD( trunc, "position:[N]" );
 };
 
 }

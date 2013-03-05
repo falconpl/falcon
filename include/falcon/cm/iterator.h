@@ -18,19 +18,19 @@
 
 #include <falcon/pseudofunc.h>
 #include <falcon/fassert.h>
-#include <falcon/property.h>
-#include <falcon/method.h>
-#include <falcon/classes/classuser.h>
-
-#include <falcon/usercarrier.h>
-#include <falcon/uri.h>
-#include <falcon/path.h>
+#include <falcon/class.h>
+#include <falcon/item.h>
 
 namespace Falcon {
+
+class Function;
+
 namespace Ext {
 
+class Function_rewind;
+class Function_next;
 
-class FALCON_DYN_CLASS ClassIterator: public ClassUser
+class FALCON_DYN_CLASS ClassIterator: public Class
 {
 public:
    
@@ -57,20 +57,15 @@ public:
    virtual void* createInstance() const;   
    virtual bool op_init( VMContext* ctx, void* instance, int pcount ) const;
    
-
    void op_iter( VMContext* ctx, void* instance ) const;
    void op_next( VMContext* ctx, void* instance ) const;
 
-
-private:
    FALCON_DECLARE_INTERNAL_PSTEP( IterNext );
    FALCON_DECLARE_INTERNAL_PSTEP( NextNext );
    FALCON_DECLARE_INTERNAL_PSTEP( MethodNext_IterNext );
    FALCON_DECLARE_INTERNAL_PSTEP( MethodNext_NextNext );
 
-   FALCON_DECLARE_METHOD( next, "retOnFinish:[X]" )
-   FALCON_DECLARE_METHOD( rewind, "" )
-   FALCON_DECLARE_PROPERTY( source )
+   Function* m_Method_next;
 };
 
 
@@ -109,6 +104,8 @@ private:
    bool m_ready;
    uint32 m_mark;
 
+   friend class Function_rewind;
+   friend class Function_next;
    friend class ClassIterator;
 };
 

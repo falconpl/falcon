@@ -23,11 +23,59 @@
 #include <falcon/stdsteps.h>
 #include <falcon/stdhandlers.h>
 #include <falcon/vm.h>
+#include <falcon/function.h>
 
 #include <stdio.h>
 
 namespace Falcon {
 namespace Ext {
+
+/*#
+  @property isOpen Barrier
+  @brief Checks if the barrier is open in this moment.
+ */
+static void get_isOpen( const Class*, const String&, void* instance, Item& value )
+{
+   SharedBarrier* sc = static_cast<SharedBarrier*>(instance);
+   value.setBoolean( sc->consumeSignal(0) > 0 );
+}
+
+/*#
+  @method open Barrier
+  @brief opens the barrier.
+
+  Opening an already open barrier has no effect; the first @a Barrier.close
+  call will close the barrier, no matter how many open are issued.
+ */
+FALCON_DECLARE_FUNCTION( open, "" );
+
+/*#
+  @method close Barrier
+  @brief Closes the barrier.
+
+  Closing the barrier will cause any agent waiting on the barrier
+  from that moment on to be blocked.
+ */
+FALCON_DECLARE_FUNCTION( close, "" );
+void Function_open::invoke(VMContext* ctx, int32 )
+{
+   SharedBarrier* barrier = static_cast<SharedBarrier*>(ctx->self().asInst());
+   barrier->open();
+   ctx->returnFrame();
+}
+
+
+void Function_close::invoke(VMContext* ctx, int32 )
+{
+   SharedBarrier* barrier = static_cast<SharedBarrier*>(ctx->self().asInst());
+   barrier->close();
+   ctx->returnFrame();
+}
+
+
+//=======================================================================
+//
+
 
 SharedBarrier::SharedBarrier( ContextManager* mgr, const Class* owner, bool isOpen ):
    Shared( mgr, owner, false, isOpen ? 1 : 0 )
@@ -68,14 +116,14 @@ void SharedBarrier::close()
 //
 
 ClassBarrier::ClassBarrier():
-      ClassShared("Barrier"),
-      FALCON_INIT_PROPERTY(isOpen),
-      FALCON_INIT_METHOD(open),
-      FALCON_INIT_METHOD(close),
-      FALCON_INIT_METHOD(wait)
+      ClassShared("Barrier")
 {
    static Class* shared = Engine::handlers()->sharedClass();
-   addParent(shared);
+   setParent(shared);
+
+   addProperty("isOpen", &get_isOpen);
+   addMethod( new Function_open );
+   addMethod( new Function_close );
 }
 
 ClassBarrier::~ClassBarrier()
@@ -102,42 +150,6 @@ bool ClassBarrier::op_init( VMContext* ctx, void*, int pcount ) const
    SharedBarrier* sb = new SharedBarrier(&ctx->vm()->contextManager(), this, isOpen);
    ctx->stackResult(pcount+1, FALCON_GC_STORE(this, sb));
    return false;
-}
-
-
-
-FALCON_DEFINE_PROPERTY_GET_P( ClassBarrier, isOpen )
-{
-   SharedBarrier* sc = static_cast<SharedBarrier*>(instance);
-   value.setBoolean( sc->consumeSignal(0) > 0 );
-}
-
-
-FALCON_DEFINE_PROPERTY_SET( ClassBarrier, isOpen )( void*, const Item& )
-{
-   throw readOnlyError();
-}
-
-
-FALCON_DEFINE_METHOD_P1( ClassBarrier, open )
-{
-   SharedBarrier* barrier = static_cast<SharedBarrier*>(ctx->self().asInst());
-   barrier->open();
-   ctx->returnFrame();
-}
-
-
-FALCON_DEFINE_METHOD_P1( ClassBarrier, close )
-{
-   SharedBarrier* barrier = static_cast<SharedBarrier*>(ctx->self().asInst());
-   barrier->close();
-   ctx->returnFrame();
-}
-
-
-FALCON_DEFINE_METHOD_P( ClassBarrier, wait )
-{
-   ClassShared::genericClassWait(methodOf(), ctx, pCount);
 }
 
 }

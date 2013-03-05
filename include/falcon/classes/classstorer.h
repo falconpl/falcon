@@ -18,16 +18,12 @@
 
 #include <falcon/pseudofunc.h>
 #include <falcon/fassert.h>
-#include <falcon/classes/classuser.h>
-#include <falcon/property.h>
-#include <falcon/method.h>
-
-#include <falcon/usercarrier.h>
+#include <falcon/class.h>
 #include <falcon/path.h>
 
 namespace Falcon {
 
-class ClassStorer: public ClassUser
+class ClassStorer: public Class
 {
 public:
    
@@ -43,12 +39,7 @@ public:
    virtual void* clone( void* instance ) const;
    virtual void gcMarkInstance( void* instance, uint32 mark ) const;
    virtual bool gcCheckInstance( void* instance, uint32 mark ) const;
-
-private:   
    
-   FALCON_DECLARE_METHOD( store, "item:X" );
-   FALCON_DECLARE_METHOD( addFlatMantra, "mantra:C" );
-   FALCON_DECLARE_METHOD( commit, "stream:Stream" );
 };
 
 }
