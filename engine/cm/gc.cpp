@@ -331,6 +331,7 @@ ClassGC::ClassGC():
    addProperty( "memory", &get_memory );
    addProperty( "items", &get_items );
    addProperty( "status", &get_status );
+   addProperty( "enabled", &get_enabled, &set_enabled );
 
    addProperty( "algorithm", &get_algorithm, &set_algorithm );
    addProperty( "limit", &get_limit, &set_limit );

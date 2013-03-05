@@ -16,6 +16,7 @@ Testing r/ operator
 */
 
 > "Testing r/ operator"
+> r'a.c'
 > "'a.c' matches abc: ", r'a.c' / 'abc'
 > "'a.c' matches ac: ", r'a.c' / 'ac'
 > "'a.*c' matches aaaaccccc: ", r'a.*c' / 'aaaaccccc'

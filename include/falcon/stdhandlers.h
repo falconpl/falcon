@@ -87,7 +87,7 @@ public:
     in case the engine has not been initialized. In release, it will just
     return a null pointer.
     */
-   Class* arrayClass() const { return m_rangeClass; }
+   Class* arrayClass() const { return m_arrayClass; }
 
    /** Returns the global instance of the Dictionary class.
    \return the Engine instance of the Dictionary Class (handler).
