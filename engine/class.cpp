@@ -53,19 +53,20 @@ public:
    Class::setter setFunc;
    Class::getter getFunc;
 
+   Function* method;
    Item value;
    bool bHidden;
    bool bStatic;
    bool bConst;
    Property() {}
 
-   Property( Class::getter getf, Class::setter setf, bool s, bool h, bool c, Item& v )
+   Property( Class::getter getf, Class::setter setf, bool s, bool h, bool c, Function* meth, Item& v )
    {
-      set( getf, setf, s, h, c, v );
+      set( getf, setf, s, h, c, meth, v );
    }
    ~Property() {}
 
-   void set( Class::getter getf, Class::setter setf, bool s, bool h, bool c, const Item& v )
+   void set( Class::getter getf, Class::setter setf, bool s, bool h, bool c, Function* meth, const Item& v )
    {
       if ( getf == 0 )
       {
@@ -79,6 +80,7 @@ public:
       bStatic = s;
       bHidden = h;
       bConst = c;
+      method = meth;
       value = v;
    }
 };
@@ -89,13 +91,13 @@ class Class::Private
 public:
    typedef std::map<String, Property> PropertyMap;
    PropertyMap m_props;
-   
-   typedef std::map<String, Function*> MethodMap;
-   MethodMap m_methods;
 
    Function* m_constructor;
 
-   Private() {}
+   Private():
+      m_constructor(0)
+   {}
+
    ~Private() {
    }
 };
@@ -167,12 +169,13 @@ Class::~Class()
       m_module != 0 ? m_module->name().c_ize() : "<internal>",
       m_name.c_ize() );
 
-   Private::MethodMap::iterator iter = _p->m_methods.begin();
-   while( _p->m_methods.end() != iter )
+   Private::PropertyMap::iterator iter = _p->m_props.begin();
+   while( _p->m_props.end() != iter )
    {
-      if( iter->second->methodOf() == this )
+      Property& prop = iter->second;
+      if( prop.method != 0 && prop.method->methodOf() == this )
       {
-         delete iter->second;
+         delete prop.method;
       }
       ++iter;
    }
@@ -359,22 +362,19 @@ bool Class::hasProperty( void* inst, const String& prop ) const
 
 void Class::addProperty( const String& name, getter get, setter set, bool isStatic, bool isHidden )
 {
-   _p->m_props[name].set(get, set, isStatic, isHidden, false, Item() );
+   _p->m_props[name].set(get, set, isStatic, isHidden, false, 0, Item() );
 }
 
 
 void Class::addMethod( Function* func, bool isStatic )
 {
-   _p->m_props[func->name()].set( 0, 0, isStatic, true, true, func );
-   Private::MethodMap::iterator pos = _p->m_methods.find(func->name());
+   Private::PropertyMap::iterator pos = _p->m_props.find( func->name() ); 
    
-   if( pos != _p->m_methods.end() )
+   if( pos != _p->m_props.end() )
    {
-      delete pos->second;
-      pos->second = func;
-   }
-   else {   
-      _p->m_methods[func->name()] = func;
+      Property& prop = pos->second;
+      delete prop.method;
+      prop.set( 0, 0, isStatic, true, true, func, Item() );
    }
 
    if( func->methodOf() == 0 )
@@ -409,7 +409,7 @@ void Class::setConstuctor( const String& name, ext_func_t func, const String& pr
 
 void Class::addConstant( const String& name, const Item& value )
 {
-   _p->m_props[name].set(0, 0, true, true, true, value );
+   _p->m_props[name].set(0, 0, true, true, true, 0, value );
 }
 
 
@@ -670,18 +670,17 @@ void Class::op_getProperty( VMContext* ctx, void* data, const String& prop ) con
    if( iter != _p->m_props.end() )
    {
       Property& prop = iter->second;
-      if( prop.bConst ) {
-         if( prop.value.type() == FLC_CLASS_ID_FUNC )
-         {
-            Function* func = static_cast<Function*>(prop.value.asInst());
-            ctx->topData().setUser(this, data);
-            ctx->topData().methodize(func);
-         }
-         else {
-            ctx->topData() = prop.value;
-         }
+      if( prop.method != 0 ) 
+      {
+         ctx->topData().setUser(this, data);
+         ctx->topData().methodize(prop.method);
       }
-      else {
+      else if (prop.bConst )
+      {
+         ctx->topData() = prop.value;
+      }
+      else
+      {
          prop.getFunc( this, iter->first, data, ctx->topData() );
       }
 

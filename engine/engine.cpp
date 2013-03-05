@@ -239,9 +239,7 @@ Engine::Engine()
    
    //===========================================
    // Subsystems initialization
-   //   
-   Item::init( this );
-   
+   //      
    m_pools = new PoolList;
 
    //=====================================
@@ -266,6 +264,9 @@ Engine::Engine()
    //
    m_stdHandlers->subscribe( this );
    m_stdErrors->subscribe(this);
+   // We can now update the item init
+   Item::init(this);
+
 
    addMantra(new Ext::Compare);
    addMantra(new Ext::DerivedFrom);
