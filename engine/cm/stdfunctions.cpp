@@ -27,6 +27,7 @@
 #include <falcon/sys.h>
 
 #include <falcon/cm/iterator.h>
+#include <falcon/itemarray.h>
 
 #include <falcon/error.h>
 #include <falcon/errors/paramerror.h>
@@ -321,98 +322,86 @@ FALCON_DEFINE_FUNCTION_P(input)
 }
 
 /*#
-   @function stdIn
-   @brief Creates an object mapped to the standard input of the Virtual Machine.
-   @optparam stream A stream to replace the standard input with.
-   @return A new valid @a Stream instance on success.
+   @function passvp
+   @inset varparams_support
+   @brief Returns all the undeclared parameters, or passes them to a callable item
+   @optparam citem Callable item on which to pass the parameters.
+   @return An array containing unnamed parameters, or the return value \b citem.
 
-   The returned read-only stream is mapped to the standard input of the virtual
-   machine hosting the script. Read operations will return the characters from the
-   input stream as they are available. The readAvailable() method of the returned
-   stream will indicate if read operations may block. Calling the read() method
-   will block until some character can be read, or will fill the given buffer up
-   the amount of currently available characters.
+   This function returns all the parameters passed to this function but not declared
+   in its prototype (variable parameters) in an array.
 
-   The returned stream is a clone of the stream used by the Virtual Machine as
-   standard input stream. This means that every transcoding applied by the VM is
-   also available to the script, and that, when running in embedding applications,
-   the stream will be handled by the embedder.
+   If the host function doesn't receive any extra parameter, this function returns
+   an empty array. This is useful in case the array is immediately added to a direct
+   call. For example:
 
-   As a clone of this stream is held in the VM, closing it will have actually no
-   effect, except that of invalidating the instance returned by this function.
+   @code
+   function receiver( a, b )
+      > "A: ", a
+      > "B: ", b
+      > "Others: ", passvp().describe()
+   end
 
-   Read operations will fail raising an I/O error.
+   receiver( "one", "two", "three", "four" )
+   @endcode
+
+   If @b citem is specified, the function calls citem passing all the extra parameters
+   to it. For example:
+
+   @code
+   function promptPrint( prompt )
+      passvp( .[printl prompt] )
+   end
+
+   promptPrint( "The prompt: ", "arg1", " ", "arg2" )
+   @endcode
 */
+FALCON_DEFINE_FUNCTION_P(passvp)
+{
+
+   if ( pCount > 0 )
+   {
+      Item callee = *ctx->param(0);
+
+      ctx->returnFrame();
+      CallFrame& frame = ctx->currentFrame();
+      Function* func = frame.m_function;
+
+      ctx->pushData(callee);
+      for( int i = func->paramCount(); i < ctx->paramCount(); ++i )
+      {
+         ctx->pushData( *ctx->param(i) );
+      }
+      int callCount = ctx->paramCount() - func->paramCount();
+      if( callCount < 0 )
+      {
+         callCount = 0;
+      }
+
+      Class* calleeClass;
+      void* calleeData;
+      callee.forceClassInst(calleeClass, calleeData);
+      calleeClass->op_call( ctx, callCount, calleeData );
+
+   }
+   else
+   {
+      ctx->returnFrame();
+      CallFrame& frame = ctx->currentFrame();
+      Function* func = frame.m_function;
+      ItemArray* retval = new ItemArray;
+
+      for( int i = func->paramCount(); i < ctx->paramCount(); ++i )
+      {
+         retval->append( *ctx->param(i) );
+      }
+      ctx->topData() = FALCON_GC_HANDLE(retval);
+   }
+
+}
+
+
 #if 0
-
-FALCON_DEFINE_FUNCTION_P(stdIn)
-{
-   TRACE1( "stdIn -- called with %d params", pCount );
-   (void) pCount;
-
-   Stream* retStream = ctx->vm()->stdIn();
-   retStream->incref();
-   ctx->returnFrame(FALCON_GC_HANDLE(retStream));
-}
-
-
-/*#
-   @function stdOut
-   @brief Creates an object mapped to the standard output of the Virtual Machine.
-   @ingroup core_syssupport
-   @return A new valid @a Stream instance on success.
-
-   The returned stream maps output operations on the standard output stream of
-   the process hosting the script.
-
-   The returned stream is a clone of the stream used by the Virtual Machine as
-   standard output stream. This means that every transcoding applied by the VM is
-   also available to the script, and that, when running in embedding applications,
-   the stream will be handled by the embedder.
-
-   As a clone of this stream is held in the VM, closing it will have actually no
-   effect, except that of invalidating the instance returned by this function.
-
-   Read operations will fail raising an I/O error.
-*/
-FALCON_DEFINE_FUNCTION_P(stdOut)
-{
-   TRACE1( "stdIn -- called with %d params", pCount );
-   (void) pCount;
-
-   Stream* retStream = ctx->vm()->stdOut();
-   retStream->incref();
-   ctx->returnFrame(FALCON_GC_HANDLE(retStream));
-}
-
-/*#
-   @function stdErr
-   @brief Creates an object mapped to the standard error of the Virtual Machine.
-   @ingroup core_syssupport
-   @return A new valid @a Stream instance on success.
-
-   The returned stream maps output operations on the standard error stream of
-   the virtual machine hosting the script.
-
-   The returned stream is a clone of the stream used by the Virtual Machine as
-   standard error stream. This means that every transcoding applied by the VM is
-   also available to the script, and that, when running in embedding applications,
-   the stream will be handled by the embedder.
-
-   As a clone of this stream is held in the VM, closing it will have actually no
-   effect, except that of invalidating the instance returned by this function.
-
-   Read operations will fail raising an I/O error.
-*/
-FALCON_DEFINE_FUNCTION_P(stdErr)
-{
-   TRACE1( "stdIn -- called with %d params", pCount );
-   (void) pCount;
-
-   Stream* retStream = ctx->vm()->stdErr();
-   retStream->incref();
-   ctx->returnFrame(FALCON_GC_HANDLE(retStream));
-}
 
 /*#
    @function stdInRaw

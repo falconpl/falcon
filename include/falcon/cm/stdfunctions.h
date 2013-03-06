@@ -34,6 +34,7 @@ FALCON_DECLARE_FUNCTION(advance, "collection:X");
 FALCON_DECLARE_FUNCTION(int, "item:N|S");
 FALCON_DECLARE_FUNCTION(numeric, "item:N|S");
 FALCON_DECLARE_FUNCTION(input, "");
+FALCON_DECLARE_FUNCTION(passvp, "citem:[C]");
 
 }
 }

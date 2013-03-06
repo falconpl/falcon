@@ -45,6 +45,65 @@ namespace Ext {
 //
 
 
+   /*#
+      @property stdIn VMProcess
+      @brief Creates an object mapped to the standard input of the Virtual Machine.
+
+      The returned read-only stream is mapped to the standard input of the virtual
+      machine hosting the script. Read operations will return the characters from the
+      input stream as they are available. The readAvailable() method of the returned
+      stream will indicate if read operations may block. Calling the read() method
+      will block until some character can be read, or will fill the given buffer up
+      the amount of currently available characters.
+
+      The returned stream is a clone of the stream used by the Virtual Machine as
+      standard input stream. This means that every transcoding applied by the VM is
+      also available to the script, and that, when running in embedding applications,
+      the stream will be handled by the embedder.
+
+      As a clone of this stream is held in the VM, closing it will have actually no
+      effect, except that of invalidating the instance returned by this function.
+
+      Read operations will fail raising an I/O error.
+   */
+
+
+   /*#
+      @property stdOut VMProcess
+      @brief Creates an object mapped to the standard output of the Virtual Machine.
+
+      The returned stream maps output operations on the standard output stream of
+      the process hosting the script.
+
+      The returned stream is a clone of the stream used by the Virtual Machine as
+      standard output stream. This means that every transcoding applied by the VM is
+      also available to the script, and that, when running in embedding applications,
+      the stream will be handled by the embedder.
+
+      As a clone of this stream is held in the VM, closing it will have actually no
+      effect, except that of invalidating the instance returned by this function.
+
+      Read operations will fail raising an I/O error.
+   */
+
+
+   /*#
+      @property stdErr VMProcess
+      @brief Creates an object mapped to the standard error of the Virtual Machine.
+
+      The returned stream maps output operations on the standard error stream of
+      the virtual machine hosting the script.
+
+      The returned stream is a clone of the stream used by the Virtual Machine as
+      standard error stream. This means that every transcoding applied by the VM is
+      also available to the script, and that, when running in embedding applications,
+      the stream will be handled by the embedder.
+
+      As a clone of this stream is held in the VM, closing it will have actually no
+      effect, except that of invalidating the instance returned by this function.
+
+      Read operations will fail raising an I/O error.
+   */
 static void set_std_int(void* instance, const Item& value, int mode )
 {
    static Class* strc = Engine::instance()->stdHandlers()->streamClass();
