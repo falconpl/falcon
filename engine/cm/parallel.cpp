@@ -70,6 +70,8 @@ public:
 //
 //
 
+namespace CParallel  {
+
 FALCON_DECLARE_FUNCTION( wait, "..." );
 FALCON_DECLARE_FUNCTION( tryWait, "..." );
 FALCON_DECLARE_FUNCTION( timedWait, "timeout:N,..." );
@@ -260,6 +262,8 @@ void Function_launchWithResults::invoke(VMContext* ctx, int32 pCount )
    }
 }
 
+}
+
 //===============================================================================
 //
 
@@ -267,13 +271,13 @@ void Function_launchWithResults::invoke(VMContext* ctx, int32 pCount )
 ClassParallel::ClassParallel():
    Class("Parallel")
 {
-   addMethod( new Function_wait, true );
-   addMethod( new Function_tryWait, true );
-   addMethod( new Function_timedWait, true );
+   addMethod( new CParallel::Function_wait, true );
+   addMethod( new CParallel::Function_tryWait, true );
+   addMethod( new CParallel::Function_timedWait, true );
 
-   addMethod( new Function_add );
-   addMethod( new Function_launch );
-   addMethod( new Function_launchWithResults );
+   addMethod( new CParallel::Function_add );
+   addMethod( new CParallel::Function_launch );
+   addMethod( new CParallel::Function_launchWithResults );
 }
 
 ClassParallel::~ClassParallel()

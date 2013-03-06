@@ -734,7 +734,11 @@ void Class::op_getClassProperty( VMContext* ctx, const String& prop) const
    if( iter != _p->m_props.end() && iter->second.bStatic )
    {
       Property& prop = iter->second;
-      if( prop.bConst ) {
+      if( prop.method != 0 ) {
+         ctx->topData() = prop.method;
+      }
+      else if ( prop.bConst )
+      {
          ctx->topData() = prop.value;
       }
       else {
