@@ -495,7 +495,7 @@ void ModLoader::load_internal(
             throw makeError( e_nofile, __LINE__, uri.encode() );
          }
          ins->shouldThrow(true);
-         TextReader input( ins, m_tcoder );
+         LocalRef<TextReader> input(new TextReader( ins, m_tcoder ));
          // compiler gets the ownership of input.
          Module* output = m_compiler->compile( &input, uri.encode(), modName, type == e_mt_ftd );
 

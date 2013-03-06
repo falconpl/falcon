@@ -80,7 +80,7 @@ Context::Context(SourceParser* parser):
 
 Context::~Context()
 {
-   // nothing to do
+   m_input->decref();
 }
 
 void Context::display()

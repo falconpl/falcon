@@ -102,6 +102,7 @@ public:
    __T* operator->(){ return m_data; }
    __T& operator*() { return *m_data;}
    operator __T* () { return m_data;}
+   __T* operator&() { return m_data;}
 
 private:
    __T* m_data;

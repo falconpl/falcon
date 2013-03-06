@@ -21,7 +21,7 @@
 #include <falcon/types.h>
 #include <falcon/stream.h>
 #include <falcon/mt.h>
-
+#include <falcon/refcounter.h>
 
 namespace Falcon {
 
@@ -40,7 +40,6 @@ namespace Falcon {
 class FALCON_DYN_CLASS Writer
 {
 public:
-   virtual ~Writer();
 
    /** Delegates another Writer.
     \param target Another Writer that will be in charge of handling this stream.
@@ -127,9 +126,11 @@ protected:
 
 protected:
    Stream* m_stream;
+   virtual ~Writer();
 
 private:
    Mutex m_mtx;
+   FALCON_REFERENCECOUNT_DECLARE_INCDEC(Writer);
 };
 
 }

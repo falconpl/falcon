@@ -141,7 +141,6 @@ VMachine::VMachine( Stream* stdIn, Stream* stdOut, Stream* stdErr )
    // TODO Determine system transcoder
    m_stdCoder = Engine::instance()->getTranscoder("C");
    fassert( m_stdCoder != 0 );
-   m_bOwnCoder = false;
 
    m_textIn = new TextReader( m_stdIn, m_stdCoder );
    m_textOut = new TextWriter( m_stdOut, m_stdCoder );
@@ -174,18 +173,13 @@ VMachine::~VMachine()
    m_ctxMan.stop();
 
 
-   delete m_textIn;
-   delete m_textOut;
-   delete m_textErr;
+   m_textIn->decref();
+   m_textOut->decref();
+   m_textErr->decref();
 
    m_stdIn->decref();
    m_stdOut->decref();
    m_stdErr->decref();
-
-   if( m_bOwnCoder )
-   {
-      delete m_stdCoder;
-   }
 
    delete _p;
    
@@ -246,7 +240,6 @@ bool VMachine::setStdEncoding( const String& name )
       return false;
    }
    m_stdCoder = tc;
-   m_bOwnCoder = false;
 
    m_textIn->setEncoding( tc );
    m_textOut->setEncoding( tc );
@@ -255,11 +248,9 @@ bool VMachine::setStdEncoding( const String& name )
 }
 
 
-void VMachine::setStdEncoding( Transcoder* ts, bool bOwn )
+void VMachine::setStdEncoding( Transcoder* ts )
 {
    m_stdCoder = ts;
-   m_bOwnCoder = bOwn;
-
    m_textIn->setEncoding( ts );
    m_textOut->setEncoding( ts );
    m_textErr->setEncoding( ts );

@@ -124,7 +124,7 @@ public:
    // VM Streams
    //=========================================================
 
-   /** Changes the standard input stream. 
+   /** Changes the standard input stream.
     Previously owned standard input stream is closed and destroyed.
     */
    void stdIn( Stream* s );
@@ -188,7 +188,9 @@ public:
      \param bOwn If true, the transcoder will be disposed by the VM at destruction.
      \see bool setStdEncoding( const String& name )
      */
-   void setStdEncoding( Transcoder* ts, bool bOwn = false );
+   void setStdEncoding( Transcoder* ts );
+
+   Transcoder* getStdEncoding() const { return m_stdCoder; }
 
    /** Returns the TextReader accessing the standard input stream.
     \return A text reder.
@@ -313,10 +315,8 @@ protected:
    TextReader* m_textIn;
    TextWriter* m_textOut;
    TextWriter* m_textErr;
-
    Transcoder* m_stdCoder;
-   bool m_bOwnCoder;
-   
+
    ContextManager m_ctxMan;
 
    Scheduler m_scheduler;

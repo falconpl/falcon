@@ -45,12 +45,10 @@ public:
     * \param uri The URI identifying the source from which this data is read.
     * \param p The parser owning this lexer.
     * \param reader The new text reader.
-    * \param bOwn if true, the reader will be automatically destroyed with this
-    *        lexer, or at next setReader() invocation.
     *    The input text reader can be specified or changed at a later time.
     *
     */
-   Lexer( const String& uri, Parser* p, TextReader* reader = 0, bool bown = false );
+   Lexer( const String& uri, Parser* p, TextReader* reader = 0 );
    virtual ~Lexer();
 
    /** Return the next token.
@@ -83,7 +81,7 @@ public:
     * \param bOwn if true, the reader will be automatically destroyed with this
     *        lexer, or at next setReader() invocation.
     **/
-   void setReader( TextReader* r, bool bOwn = false );
+   void setReader( TextReader* r );
 
 protected:
    String m_uri;
@@ -92,7 +90,6 @@ protected:
 
    int32 m_line;
    int32 m_chr;
-   bool m_bOwn;
    bool m_bReturnOnUnavail;
  };
 

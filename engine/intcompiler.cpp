@@ -335,7 +335,7 @@ void IntCompiler::setCompilationContext( Function* function, Module* mod, VMCont
 
 IntCompiler::t_compile_status IntCompiler::compileNext( TextReader* input, SynTree*& code, Mantra*& definition )
 {
-   m_lexer->setReader(input, false);
+   m_lexer->setReader(input);
    t_compile_status status;
 
    // create a new syntree if it was emptied

@@ -41,8 +41,8 @@ public:
    StringSet m_nsSet;
 };
 
-SourceLexer::SourceLexer( const String& uri, Parsing::Parser* p, TextReader* reader, bool bOwn ):
-   Parsing::Lexer( uri, p, reader, bOwn ),
+SourceLexer::SourceLexer( const String& uri, Parsing::Parser* p, TextReader* reader ):
+   Parsing::Lexer( uri, p, reader ),
    _p( new Private ),
    m_sline( 0 ),
    m_schr( 0 ),

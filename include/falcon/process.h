@@ -28,6 +28,10 @@ class VMachine;
 class VMContext;
 class Function;
 class Closure;
+class Stream;
+class TextReader;
+class TextWriter;
+class Transcoder;
 class Item;
 class SynFunc;
 class Error;
@@ -69,6 +73,13 @@ public:
 
    VMachine* vm() const { return m_vm; }
    VMContext* mainContext() const { return m_context; }
+
+   /** Opens the standard streams.
+    *
+    * This is a shotcut to putting the StdInStream() & c in the
+    * standard streams known by this process.
+    */
+   void openStdStreams();
 
    /** Starts the process execution with the context configured as-is. */
    bool start();
@@ -187,6 +198,100 @@ public:
 
    bool isTerminated() const { return atomicFetch(m_terminated) > 0; }
 
+   //=========================================================
+   // VM Streams
+   //=========================================================
+
+   /** Changes the standard input stream.
+    Previously owned standard input stream is closed and destroyed.
+    */
+   void stdIn( Stream* s );
+
+   /** Changes the standard output stream.
+    Previously owned standard output stream is closed and destroyed.
+    */
+   void stdOut( Stream* s );
+
+   /** Changes the standard error stream.
+    Previously owned standard error stream is closed and destroyed.
+    */
+   void stdErr( Stream* s );
+
+   /** Returns current standard input stream.
+    \return A valid standard input stream, owned by the VM.
+    If needed elsewhere, the stream must be cloned().
+   */
+   inline Stream* stdIn() const { return m_stdIn; }
+
+   /** Returns current standard input stream.
+    \return A valid standard output stream, owned by the VM.
+    If needed elsewhere, the stream must be cloned().
+   */
+   inline Stream* stdOut() const { return m_stdOut; }
+
+   /** Returns current standard error stream.
+    \return A valid standard error stream, owned by the VM.
+    If needed elsewhere, the stream must be cloned().
+   */
+   inline Stream* stdErr() const { return m_stdErr; }
+
+   /** Sets the standard encoding of streams.
+    \param Encoding name as ISO encoding name.
+    \return false if the given encoding is currently not served by the engine.
+
+    The VM offers an utility TextReader to read from its standard input
+    and TextWriter wrappers to write to its standard output and error
+    streams.
+
+    Applications are not required to use this readers/writers, but
+    the standard library text based I/O functions use them.
+
+    The text readers/writers are initialized to the system encoding, if it is
+    possible to detect it and if the Transcoder is present in the Engine at the
+    moment of VM creation.
+
+    It is possible to change the transcoder used by the standard library text
+    I/O routines anytime through the setStdEncoding() method. It is also possible
+    to provide a custom transcoder, that can be disposed by the VM.
+
+    \note The text writers used by the VM set their CRLF automatic transcoding
+    option according to the host system, and with automatic flush at end-of-line;
+    to change this setup, act directly on the TextWriters.
+
+    */
+   bool setStdEncoding( const String& name );
+
+    /** Sets the standard encoding of streams using a custom transcoder.
+     \param ts A transcoder instance.
+     \param bOwn If true, the transcoder will be disposed by the VM at destruction.
+     \see bool setStdEncoding( const String& name )
+     */
+   void setStdEncoding( Transcoder* ts, bool bOwn = false );
+
+   /** Returns the TextReader accessing the standard input stream.
+    \return A text reder.
+    \see setStdEncoding
+    */
+   inline TextReader* textIn() const { return m_textIn; }
+
+   /** Returns the TextReader accessing the standard input stream.
+    \return A text reder.
+    \see setStdEncoding
+    \note The text writers used by the VM set their CRLF automatic transcoding
+    option according to the host system, and with automatic flush at end-of-line;
+    to change this setup, act directly on the TextWriters.
+    */
+   inline TextWriter* textOut() const { return m_textOut; }
+
+   /** Returns the TextReader accessing the standard input stream.
+    \return A text reder.
+    \see setStdEncoding
+    \note The text writers used by the VM set their CRLF automatic transcoding
+    option according to the host system, and with automatic flush at end-of-line;
+    to change this setup, act directly on the TextWriters.
+    */
+   inline TextWriter* textErr() const { return m_textOut; }
+
 protected:
    Process( VMachine* owner, bool added );
    virtual ~Process();
@@ -214,6 +319,18 @@ protected:
    GCLock* m_resultLock;
 
    ModSpace* m_modspace;
+
+   Stream *m_stdIn;
+   Stream *m_stdOut;
+   Stream *m_stdErr;
+
+   TextReader* m_textIn;
+   TextWriter* m_textOut;
+   TextWriter* m_textErr;
+
+   Transcoder* m_stdCoder;
+   bool m_bOwnCoder;
+
 
    FALCON_REFERENCECOUNT_DECLARE_INCDEC(Process)
 

@@ -37,8 +37,8 @@ TextStreamCarrier::TextStreamCarrier( Stream* stream ):
 
 TextStreamCarrier::~TextStreamCarrier()
 {
-   delete m_reader;
-   delete m_writer;
+   m_reader->decref();
+   m_writer->decref();
 }
    
 void TextStreamCarrier::onFlushingOperation()

@@ -15,10 +15,11 @@
 
 
 #ifndef _FALCON_READER_H
-#define	_FALCON_READER_H
+#define _FALCON_READER_H
 
 #include <falcon/setup.h>
 #include <falcon/types.h>
+#include <falcon/refcounter.h>
 
 
 namespace Falcon {
@@ -75,7 +76,6 @@ class Stream;
 class FALCON_DYN_CLASS Reader
 {
 public:
-   virtual ~Reader();
 
    /** Delegates another Reader.
     \param target Another Reader that will be in charge of handling this stream.
@@ -137,6 +137,9 @@ protected:
    /** Create for immediate delegation */
    Reader();
    
+   virtual ~Reader();
+
+
    /** Refills the read buffer with new data. */
    virtual bool refill();   
 
@@ -196,6 +199,8 @@ protected:
 
 protected:
    Stream* m_stream;
+
+   FALCON_REFERENCECOUNT_DECLARE_INCDEC(Reader);
 };
 
 }

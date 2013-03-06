@@ -235,12 +235,12 @@ TestMode::ScriptData* TestMode::parse(const String& scriptName )
 
       Stream* input = Engine::instance()->vfs().openRO( fname );
       input->shouldThrow(true);
-      TextReader tr(input);
+      LocalRef<TextReader> tr( new TextReader(input));
       String line;
 
-      while( ! tr.eof() )
+      while( ! tr->eof() )
       {
-         tr.readLine(line,256);
+         tr->readLine(line,256);
          String tline = line;
 
          if( gettingOut )
@@ -560,13 +560,13 @@ TestMode::Reader::Reader():
 void* TestMode::Reader::run()
 {
    fassert( m_readStream !=0 );
-   TextReader reader( m_readStream );
+   LocalRef<TextReader> reader( new TextReader( m_readStream ) );
    m_cks = 0;
 
    String* output = new String;
 
    String line;
-   while(reader.readLine(line, 4096) )
+   while(reader->readLine(line, 4096) )
    {
       if( m_checkPoint.empty() || line == m_checkPoint )
       {

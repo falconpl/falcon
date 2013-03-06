@@ -49,7 +49,7 @@ Pipe::Pipe()
 
 void Pipe::closeRead()
 {
-   if( m_readSide->fdFile != -1 )
+   if( m_readSide != 0 && m_readSide->fdFile != -1 )
    {
       int result = ::close( m_readSide->fdFile );
       m_readSide->fdFile = -1;
@@ -65,7 +65,7 @@ void Pipe::closeRead()
 
 void Pipe::closeWrite()
 {
-   if( m_writeSide->fdFile != -1 )
+   if( m_readSide != 0 && m_writeSide->fdFile != -1 )
    {
       int result = ::close( m_writeSide->fdFile );
       m_writeSide->fdFile = -1;

@@ -534,7 +534,7 @@ void* ClassTextReader::createInstance() const
 void ClassTextReader::dispose( void* instance ) const
 {
    TextReader* tr = static_cast<TextReader*>(instance);
-   delete tr;
+   tr->decref();
 }
 
 void* ClassTextReader::clone( void* ) const

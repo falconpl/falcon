@@ -455,7 +455,7 @@ ClassDataWriter::~ClassDataWriter()
 void ClassDataWriter::dispose( void* instance ) const
 {
    DataWriter* wr = static_cast<DataWriter*>(instance);
-   delete wr;
+   wr->decref();
 }
 
 

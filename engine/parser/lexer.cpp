@@ -23,20 +23,19 @@ namespace Falcon {
 namespace Parsing {
 
 
-Lexer::Lexer( const String& uri, Parser* p, TextReader* reader, bool bOwn ):
+Lexer::Lexer( const String& uri, Parser* p, TextReader* reader ):
    m_uri( uri ),
    m_parser(p),
    m_reader( reader ),
    m_line(0),
-   m_chr(0),
-   m_bOwn( bOwn )
-{}
+   m_chr(0)
+{
+   reader->incref();
+}
 
 Lexer::~Lexer()
 {
-   if (m_bOwn) {
-      delete m_reader;
-   }
+   m_reader->decref();
 }
 
 void Lexer::addError( int code, const String& extra )
@@ -50,13 +49,16 @@ void Lexer::addError( int code )
     m_parser->addError( code, m_uri, m_line, m_chr );
 }
 
-void Lexer::setReader( TextReader* reader, bool bOwn )
+void Lexer::setReader( TextReader* reader )
 {
-   if (m_bOwn) {
-      delete m_reader;
+   if( reader != 0 )
+   {
+      reader->incref();
+   }
+   if (m_reader != 0) {
+      m_reader->decref();
    }
    m_reader = reader;
-   m_bOwn = bOwn;
 }
 
 }

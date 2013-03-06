@@ -58,7 +58,6 @@ void Compile::invoke( VMContext* ctx , int32 params )
 
    TextReader* reader = 0;
    Stream* sinput;
-   bool ownReader;
 
    // the parameter can be a string, a stream or a text reader.
    if( params >= 1 ) {
@@ -69,24 +68,22 @@ void Compile::invoke( VMContext* ctx , int32 params )
       if( pitem->isString() ) {
          sinput = new StringStream( *pitem->asString() );
          reader = new TextReader(sinput );
-         ownReader = true;
       }
       else if( pitem->asClassInst(cls, data) )
       {
          if( cls->isDerivedFrom(streamClass) ) {
             Stream* sc = static_cast<Stream*>( cls->getParentData(streamClass, data) );
             reader = new TextReader( sc );
-            ownReader = true;
          }
          else if( cls->isDerivedFrom( readerClass ) ) {
             TextReader* tr = static_cast<TextReader*>( data );
             reader = tr;
-            ownReader = false;
+            tr->incref();
          }
          else if( cls->isDerivedFrom( tsClass ) ) {
             TextStreamCarrier* tsc = static_cast<TextStreamCarrier*>( data );
             reader = tsc->m_reader;
-            ownReader = false;
+            tsc->m_reader->incref();
          }
       }
    }
@@ -100,20 +97,12 @@ void Compile::invoke( VMContext* ctx , int32 params )
    try
    {
       SynTree* st = dynComp.compile( reader );
-
-      if( ownReader )
-      {
-         delete reader;
-      }
-
+      reader->decref();
       ctx->returnFrame( FALCON_GC_HANDLE(st) );
    }
    catch( ... )
    {
-      if( ownReader )
-      {
-         delete reader;
-      }
+      reader->decref();
       throw;
    }
 }

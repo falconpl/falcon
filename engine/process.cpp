@@ -23,6 +23,11 @@
 
 #include <falcon/item.h>
 #include <falcon/function.h>
+#include <falcon/stream.h>
+#include <falcon/stdstreams.h>
+#include <falcon/textreader.h>
+#include <falcon/textwriter.h>
+#include <falcon/transcoder.h>
 #include <falcon/closure.h>
 #include <falcon/modspace.h>
 #include <falcon/synfunc.h>
@@ -91,6 +96,23 @@ Process::Process( VMachine* owner, bool bAdded ):
    m_entry = 0;
 
    m_modspace = new ModSpace(this);
+
+   // inherit the streams
+   m_stdCoder = owner->getStdEncoding();
+
+   m_stdIn = owner->stdIn();
+   m_stdOut = owner->stdOut();
+   m_stdErr = owner->stdErr();
+   m_textIn = owner->textIn();
+   m_textOut = owner->textOut();
+   m_textErr = owner->textErr();
+
+   m_stdIn->incref();
+   m_stdOut->incref();
+   m_stdErr->incref();
+   m_textIn->incref();
+   m_textOut->incref();
+   m_textErr->incref();
 }
 
 
@@ -321,6 +343,63 @@ void Process::setResult( const Item& value )
 
    m_result = value;
 }
+
+
+
+void Process::stdIn( Stream* s )
+{
+   if( s != 0 ) s->incref();
+   if( m_stdIn != 0 ) m_stdIn->decref();
+   m_stdIn = s;
+   m_textIn->changeStream( s );
+}
+
+
+void Process::stdOut( Stream* s )
+{
+   if( s != 0 ) s->incref();
+   if( m_stdOut != 0 ) m_stdOut->decref();
+   m_stdOut = s;
+   m_textOut->changeStream( s );
+}
+
+
+void Process::stdErr( Stream* s )
+{
+   if( s != 0 ) s->incref();
+   if( m_stdErr != 0 ) m_stdErr->decref();
+   m_stdErr = s;
+   m_textErr->changeStream( s );
+}
+
+
+bool Process::setStdEncoding( const String& name )
+{
+   Transcoder* tc = Engine::instance()->getTranscoder(name);
+   if( tc == 0 )
+   {
+      return false;
+   }
+   m_stdCoder = tc;
+   m_bOwnCoder = false;
+
+   m_textIn->setEncoding( tc );
+   m_textOut->setEncoding( tc );
+   m_textErr->setEncoding( tc );
+   return true;
+}
+
+
+void Process::setStdEncoding( Transcoder* ts, bool bOwn )
+{
+   m_stdCoder = ts;
+   m_bOwnCoder = bOwn;
+
+   m_textIn->setEncoding( ts );
+   m_textOut->setEncoding( ts );
+   m_textErr->setEncoding( ts );
+}
+
 
 }
 

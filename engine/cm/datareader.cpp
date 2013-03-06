@@ -352,7 +352,7 @@ ClassDataReader::~ClassDataReader()
 void ClassDataReader::dispose( void* instance ) const
 {
    DataReader* wr = static_cast<DataReader*>(instance);
-   delete wr;
+   wr->decref();
 }
 
 

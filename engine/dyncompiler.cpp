@@ -161,11 +161,11 @@ SynTree* DynCompiler::compile( Stream* stream, Transcoder* tc, SynTree* target )
 {
    if( tc == 0 )
    {
-      TextReader tr(stream, tc );
+      LocalRef<TextReader>tr( new TextReader(stream, tc ));
       return compile(&tr, target );
    }
    else {
-      TextReader tr(stream );
+      LocalRef<TextReader>tr(new TextReader (stream ));
       return compile(&tr, target );
    }
 }
@@ -180,7 +180,7 @@ SynTree* DynCompiler::compile( TextReader* reader, SynTree* target)
    sp.setContext( &compctx );
 
    // start parsing.
-   SourceLexer* slex = new SourceLexer( "<internal>", &sp, reader, false );
+   SourceLexer* slex = new SourceLexer( "<internal>", &sp, reader );
    SynTree* st = target == 0 ? new SynTree : target;
    sp.pushLexer(slex);
 
