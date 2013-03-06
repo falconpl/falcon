@@ -100,6 +100,9 @@ CoreModule::CoreModule():
 
    this->addObject( new Ext::ClassGC );
    this->addObject( new Ext::ClassVMContext );
+
+   // Add the args global
+   this->addGlobal("args", Item(), true);
 }
 
 }

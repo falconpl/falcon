@@ -61,7 +61,7 @@ public:
    void guardAndGo( int argc, char* argv[] );
    void interactive();
    void testMode();
-   void launch( const String& script );
+   void launch( const String& script, int argc, char* argv[], int pos );
 
    void configureVM( VMachine& vm, Process* prc, Log* log = 0 );
 

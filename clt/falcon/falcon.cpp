@@ -18,6 +18,9 @@
 #include <falcon/modloader.h>
 #include <falcon/trace.h>
 
+#include <falcon/itemarray.h>    // for args
+#include <falcon/gclock.h>       // for args
+
 #include "int_mode.h"
 #include "testmode.h"
 
@@ -112,7 +115,7 @@ void FalconApp::guardAndGo( int argc, char* argv[] )
 
          String script = argv[scriptPos-1];
          log->log(Log::fac_app, Log::lvl_info, String("Starting execution of: ") + script );
-         launch( script );
+         launch( script, argc, argv, scriptPos );
       }
    }
    catch( Error* e )
@@ -139,7 +142,7 @@ void FalconApp::testMode()
    tm.perform();
 }
 
-void FalconApp::launch( const String& script )
+void FalconApp::launch( const String& script, int argc, char* argv[], int pos )
 {
    Log* log = Engine::instance()->log();
 
@@ -150,6 +153,27 @@ void FalconApp::launch( const String& script )
    configureVM( vm, process );
 
    ModSpace* ms = process->modSpace();
+
+   // by now we shoild have args around.
+   {
+      Item* args = ms->findExportedValue("args");
+      fassert( args != 0 );
+      ItemArray* arrArgs = new ItemArray(argc-pos);
+      GCLock* lock = Engine::collector()->lock(Item(arrArgs->handler(), arrArgs));
+      args->setUser(FALCON_GC_HANDLE(arrArgs));
+      for( int i = pos; i< argc; ++i )
+      {
+         String* str = new String;
+         // todo, use the correct transcoder
+         if( ! str->fromUTF8(argv[i]) ) {
+            str->bufferize(argv[i]);
+         }
+         arrArgs->append(FALCON_GC_HANDLE(str));
+      }
+
+      lock->dispose();
+   }
+
    // add the script path to the load path
    try
    {

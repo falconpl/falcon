@@ -25,6 +25,7 @@
 #include <falcon/processor.h>
 #include <falcon/errors/paramerror.h>
 #include <falcon/errors/codeerror.h>
+#include <falcon/itemarray.h>
 
 #include <falcon/datawriter.h>
 #include <falcon/datareader.h>
@@ -32,6 +33,29 @@
 namespace Falcon {
 namespace Ext {
 
+/*#
+ @property params VMContext
+ @brief All the parameters passed to the current function stored in an array.
+
+   The array is created each time this property is fetched; it's advisable to
+   store the property value somewhere and used the fetched data.
+ */
+static void get_params( const Class*, const String&, void*, Item& value )
+{
+   VMContext* ctx = Processor::currentProcessor()->currentContext();
+   int32 count = ctx->paramCount();
+   ItemArray* ia = new ItemArray(count);
+   // we can perform a direct copy
+   ia->resize(count);
+   for( int32 i = 0; i < count; ++ i )
+   {
+      Item* param = ctx->param(i);
+      param->copied();
+      ia->at(i) = *param;
+   }
+
+   value = FALCON_GC_HANDLE(ia);
+}
 //========================================================================
 // Methods
 //
@@ -87,6 +111,7 @@ void Function_caller::invoke(VMContext* ctx, int32 )
 ClassVMContext::ClassVMContext():
    ClassVMContextBase("%VMContext")
 {   
+   addProperty( "params", &get_params );
    addMethod( new Function_caller );
 }
 
