@@ -69,7 +69,7 @@ inline atomic_int atomicExchange( atomic_int& atomic, atomic_int value )
 
 inline bool atomicCAS( atomic_int& target, atomic_int compareTo, atomic_int newVal )
 {
-   return InterlockedCompareExchange( &target, newVal, compareTo ) == newVal;
+   return InterlockedCompareExchange( &target, newVal, compareTo ) == compareTo;
 }
 
 inline atomic_int atomicXor( atomic_int& target, atomic_int value )

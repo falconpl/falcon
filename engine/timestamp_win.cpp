@@ -14,7 +14,6 @@
 */
 
 #include <falcon/timestamp.h>
-#include <falcon/errors/interruptederror.h>
 #include <windows.h>
 
 namespace Falcon
