@@ -243,6 +243,7 @@ static void get_empty( const Class*, const String&, void *instance, Item& value 
    value.setBoolean( sc->empty() );
 }
 
+namespace CSyncQueue {
 
 /*#
   @method push SyncQueue
@@ -253,7 +254,7 @@ static void get_empty( const Class*, const String&, void *instance, Item& value 
   It is not necessary to acquire the queue to push an item.
   Also, pushing an item does not automatically release the queue.
  */
-FALCON_DECLARE_FUNCTION( syncqueue_push, "item:X,..." );
+FALCON_DECLARE_FUNCTION( push, "item:X,..." );
 
 /*#
   @method pop SyncQueue
@@ -272,7 +273,7 @@ FALCON_DECLARE_FUNCTION( syncqueue_push, "item:X,..." );
    through a successful wait operation. It is then granted that the method will return
    an item, and the @b onEmpty parameter, if given, will be ignored.
  */
-FALCON_DECLARE_FUNCTION( syncqueue_pop, "onEmpty:[X]" );
+FALCON_DECLARE_FUNCTION( pop, "onEmpty:[X]" );
 
 /*#
   @method wait SyncQueue
@@ -286,10 +287,10 @@ FALCON_DECLARE_FUNCTION( syncqueue_pop, "onEmpty:[X]" );
   If the queue is in fair mode, a successful wait makes the invoker to
   enter a critical section; the pop method will then release the queue.
  */
-FALCON_DECLARE_FUNCTION( syncqueue_wait, "timeout:[N]" );
+FALCON_DECLARE_FUNCTION( wait, "timeout:[N]" );
 
 
-void Function_syncqueue_push::invoke( VMContext* ctx, int32 pCount )
+void Function_push::invoke( VMContext* ctx, int32 pCount )
 {
    if( pCount == 0 )
    {
@@ -306,7 +307,7 @@ void Function_syncqueue_push::invoke( VMContext* ctx, int32 pCount )
 }
 
 
-void Function_syncqueue_pop::invoke( VMContext* ctx, int32 )
+void Function_pop::invoke( VMContext* ctx, int32 )
 {
    SharedSyncQueue* queue = static_cast<SharedSyncQueue*>(ctx->self().asInst());
 
@@ -339,7 +340,7 @@ void Function_syncqueue_pop::invoke( VMContext* ctx, int32 )
 }
 
 
-void Function_syncqueue_wait::invoke( VMContext* ctx, int32 pCount )
+void Function_wait::invoke( VMContext* ctx, int32 pCount )
 {
    static const PStep& stepWaitSuccess = Engine::instance()->stdSteps()->m_waitSuccess;
    static const PStep& stepInvoke = Engine::instance()->stdSteps()->m_reinvoke;
@@ -379,6 +380,8 @@ void Function_syncqueue_wait::invoke( VMContext* ctx, int32 pCount )
    }
 }
 
+}
+
 //=============================================================
 //
 //
@@ -391,9 +394,9 @@ ClassSyncQueue::ClassSyncQueue():
 
    addProperty("empty", &get_empty);
 
-   addMethod( new Function_syncqueue_push);
-   addMethod( new Function_syncqueue_pop);
-   addMethod( new Function_syncqueue_wait);
+   addMethod( new CSyncQueue::Function_push);
+   addMethod( new CSyncQueue::Function_pop);
+   addMethod( new CSyncQueue::Function_wait);
 }
 
 ClassSyncQueue::~ClassSyncQueue()
