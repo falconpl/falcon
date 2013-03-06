@@ -1,0 +1,115 @@
+/*
+@name Passvp returning variable parameters
+@category Functions
+
+This test checks the passvp standard 
+function to return the variable parameters
+passed to a function.
+
+Notice that passvp is declared in the core
+module, it's not a built-in.
+
+@output 
+Passvp returning variable parameters
+Invoke without parameters
+Variable parameters: 
+---------------------------------------------------
+Invoke with one variable parameter
+Variable parameters: [first]
+---------------------------------------------------
+Invoke with five variable parameter
+Variable parameters: [first, second, third, fourth, fifth]
+---------------------------------------------------
+Invoke without parameters -- and 2 fixed
+1-A: Nil
+1-B: Nil
+Variable parameters: 
+---------------------------------------------------
+Invoke with one fixed parameter
+1-A: first
+1-B: Nil
+Variable parameters: 
+---------------------------------------------------
+Invoke with five variable parameters (two fixed)
+1-A: first
+1-B: second
+Variable parameters: [third, fourth, fifth]
+---------------------------------------------------
+Invoke with four fixed parameters and four variable
+2-A: first
+3-B: second
+4-C: third
+5-D: fourth
+Variable parameters: [fifth, sixth, seventh, eight]
+Done
+@endoutput
+*/
+
+
+> "Passvp returning variable parameters"
+
+
+// PASS EVERYTHING
+function testZero()
+   vars = passvp()
+   dispVars(vars)
+end
+
+// Keep first and second parameters
+function testOne(zero,one)
+   > "1-A: ", zero
+   > "1-B: ", one
+   vars = passvp()
+   dispVars(vars)
+end
+
+// Keep first to fourth parameters
+function testTwo(zero,one, two, three)
+   > "2-A: ", zero
+   > "3-B: ", one
+   > "4-C: ", two
+   > "5-D: ", three
+   vars = passvp()
+   dispVars(vars)
+end
+
+function dispVars( vars )
+   >> "Variable parameters: "
+   for var in vars
+      forfirst: >> "["
+      >> var
+      formiddle: >>", "
+      forlast: >> "]"
+   end
+   >
+end
+
+
+> "Invoke without parameters"
+testZero()
+> "---------------------------------------------------"
+> "Invoke with one variable parameter"
+testZero("first")
+
+> "---------------------------------------------------"
+> "Invoke with five variable parameter"
+testZero("first", "second", "third", "fourth", "fifth")
+
+> "---------------------------------------------------"
+> "Invoke without parameters -- and 2 fixed"
+testOne()
+
+> "---------------------------------------------------"
+> "Invoke with one fixed parameter"
+testOne("first")
+
+> "---------------------------------------------------"
+> "Invoke with five variable parameters (two fixed)"
+testOne("first", "second", "third", "fourth", "fifth")
+
+
+> "---------------------------------------------------"
+> "Invoke with four fixed parameters and four variable"
+testTwo("first", "second", "third", "fourth", "fifth", "sixth", "seventh", "eight" )
+
+> "Done"
