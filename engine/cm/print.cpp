@@ -52,7 +52,7 @@ void FuncPrintBase::NextStep::apply_( const PStep* ps, VMContext* ctx )
 
    // this is the return of a to-string deep call.
    const NextStep* nstep = static_cast<const NextStep*>(ps);
-   TextWriter* out = ctx->vm()->textOut();
+   TextWriter* out = ctx->process()->textOut();
    // write the result of the call.
    if( ctx->topData().isString() )
    {
@@ -76,7 +76,7 @@ FuncPrintBase::NextStep::NextStep()
 void FuncPrintBase::NextStep::printNext( VMContext* ctx, int count ) const
 {
    String str;
-   TextWriter* out = ctx->vm()->textOut();
+   TextWriter* out = ctx->process()->textOut();
    int nParams = ctx->currentFrame().m_paramCount;
 
    // we inherit an extra topData() space from our caller (see [A])

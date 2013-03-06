@@ -331,6 +331,7 @@ protected:
    Transcoder* m_stdCoder;
    bool m_bOwnCoder;
 
+   void inheritStreams();
 
    FALCON_REFERENCECOUNT_DECLARE_INCDEC(Process)
 

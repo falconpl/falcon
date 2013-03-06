@@ -46,7 +46,7 @@ public:
       static void apply_( const PStep* ps, VMContext* ctx )
       {
          const NextStep* nstep = static_cast<const NextStep*>(ps);
-         ctx->vm()->textOut()->write( *ctx->regA().asString() );
+         ctx->process()->textOut()->write( *ctx->regA().asString() );
          nstep->printNext( ctx, ctx->currentCode().m_seqId );
       }
 
@@ -71,12 +71,12 @@ public:
                return;
             }
             
-            ctx->vm()->textOut()->write( *ctx->topData().asString() );
+            ctx->process()->textOut()->write( *ctx->topData().asString() );
             ctx->popData();
          }
          ctx->popCode();
 
-         ctx->vm()->textOut()->write( "\n" );
+         ctx->process()->textOut()->write( "\n" );
          // we're out of the function.
          ctx->returnFrame();
       }

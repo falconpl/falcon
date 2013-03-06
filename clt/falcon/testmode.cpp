@@ -424,7 +424,7 @@ String* TestMode::longTest( ScriptData* sd, Process* loadProc )
    // redirect the VM output to a pipe we can control.
    Sys::Pipe controlPipe;
    Stream* writeStream = controlPipe.getWriteStream();
-   loadProc->vm()->stdOut( writeStream );
+   loadProc->stdOut( writeStream );
 
    SysThread* thread = new SysThread( &m_reader );
    m_reader.setStream( controlPipe.getReadStream() );

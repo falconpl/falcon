@@ -182,7 +182,7 @@ void StmtFastPrint::apply_( const PStep* ps, VMContext* ctx )
             
       if( top.isString() )
       {
-         ctx->vm()->textOut()->write( *top.asString() );
+         ctx->process()->textOut()->write( *top.asString() );
       }
       else
       {
@@ -203,11 +203,11 @@ void StmtFastPrint::apply_( const PStep* ps, VMContext* ctx )
             // else we can proceed here.
             if( top.isString() )
             {
-               ctx->vm()->textOut()->write( *top.asString() );
+               ctx->process()->textOut()->write( *top.asString() );
             }
             else
             {
-               ctx->vm()->textOut()->write( "<?>" );
+               ctx->process()->textOut()->write( "<?>" );
             }
          }
          else
@@ -215,7 +215,7 @@ void StmtFastPrint::apply_( const PStep* ps, VMContext* ctx )
             // a simple item.
             String temp;
             top.describe( temp, 1, 0 );
-            ctx->vm()->textOut()->write( temp );
+            ctx->process()->textOut()->write( temp );
          }         
       }
       
@@ -228,7 +228,7 @@ void StmtFastPrint::apply_( const PStep* ps, VMContext* ctx )
    {
       if( self->m_bAddNL )
       {
-         ctx->vm()->textOut()->write("\n");
+         ctx->process()->textOut()->write("\n");
       }
       ctx->pushData(Item());
       ctx->popCode();

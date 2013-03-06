@@ -74,6 +74,8 @@ Process::Process( VMachine* owner, ModSpace* ms ):
       m_modspace = ms;
       ms->incref();
    }
+
+   inheritStreams();
 }
 
 
@@ -96,16 +98,20 @@ Process::Process( VMachine* owner, bool bAdded ):
    m_entry = 0;
 
    m_modspace = new ModSpace(this);
+   inheritStreams();
+}
 
+void Process::inheritStreams()
+{
    // inherit the streams
-   m_stdCoder = owner->getStdEncoding();
+   m_stdCoder = m_vm->getStdEncoding();
 
-   m_stdIn = owner->stdIn();
-   m_stdOut = owner->stdOut();
-   m_stdErr = owner->stdErr();
-   m_textIn = owner->textIn();
-   m_textOut = owner->textOut();
-   m_textErr = owner->textErr();
+   m_stdIn = m_vm->stdIn();
+   m_stdOut = m_vm->stdOut();
+   m_stdErr = m_vm->stdErr();
+   m_textIn = m_vm->textIn();
+   m_textOut = m_vm->textOut();
+   m_textErr = m_vm->textErr();
 
    m_stdIn->incref();
    m_stdOut->incref();
