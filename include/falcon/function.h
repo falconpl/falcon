@@ -95,7 +95,8 @@ public:
    
    //void getParams( int pCount,  ... );
 
-   void methodOf( Class* cls ) { m_methodOf = cls; }
+   //void methodOf( Class* cls ) { m_methodOf = cls; }
+   void methodOf( Class* cls );
    Class* methodOf() const { return m_methodOf; }
 
    virtual String fullName() const;

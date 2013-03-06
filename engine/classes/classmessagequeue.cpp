@@ -64,6 +64,7 @@ static void get_empty( const Class*, const String&, void* instance, Item& value 
    value.setBoolean( self->consumeSignal(Processor::currentProcessor()->currentContext(), 1) == 0 );
 }
 
+namespace CMsgQueue {
 /*#
   @method send MessageQueue
   @brief Sends a new message to all the subscribers
@@ -340,7 +341,7 @@ void Function_unsubscribe::invoke(VMContext* ctx, int32 pCount )
    ctx->returnFrame();
 }
 
-
+}
 
 ClassMessageQueue::ClassMessageQueue():
       ClassShared("MessageQueue")
@@ -350,15 +351,15 @@ ClassMessageQueue::ClassMessageQueue():
    addProperty("empty", get_empty );
    addProperty("subscribers", get_subscribers );
 
-   addMethod( new Function_send );
-   addMethod( new Function_sendEvent );
-   addMethod( new Function_marshal );
-   addMethod( new Function_get );
-   addMethod( new Function_subscribersFence );
-   addMethod( new Function_peek );
-   addMethod( new Function_wait );
-   addMethod( new Function_subscribe );
-   addMethod( new Function_unsubscribe );
+   addMethod( new CMsgQueue::Function_send );
+   addMethod( new CMsgQueue::Function_sendEvent );
+   addMethod( new CMsgQueue::Function_marshal );
+   addMethod( new CMsgQueue::Function_get );
+   addMethod( new CMsgQueue::Function_subscribersFence );
+   addMethod( new CMsgQueue::Function_peek );
+   addMethod( new CMsgQueue::Function_wait );
+   addMethod( new CMsgQueue::Function_subscribe );
+   addMethod( new CMsgQueue::Function_unsubscribe );
 
 }
 

@@ -46,6 +46,14 @@ Function::~Function()
 {
 }
 
+void Function::methodOf( Class* cls )
+{
+   if ( m_module == 0 && cls != 0 ) {
+      m_module = cls->module();
+   }
+   m_methodOf = cls;
+}
+
 
 String Function::fullName() const
 {

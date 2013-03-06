@@ -37,7 +37,7 @@ public:
    SyncQueue() {
       m_terminateWaiters = false;
       m_filled = CreateEvent(NULL, TRUE, FALSE, NULL);
-      InitializeCriticalSectionAndSpinCount(&m_mtx,500);
+      InitializeCriticalSectionAndSpinCount(&m_mtx,255);
       m_queue = new std::deque<__T>;
    }
    ~SyncQueue() {

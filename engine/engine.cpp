@@ -170,7 +170,8 @@ public:
 private:
    class StringPtrCheck {
    public:
-      inline bool operator ()( const String* s1, const String *s2 ) {
+      inline bool operator ()( const String *s1, const String *s2 ) const
+      {
          return *s1 < *s2;
       }
    };

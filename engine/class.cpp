@@ -373,7 +373,11 @@ void Class::addMethod( Function* func, bool isStatic )
    if( pos != _p->m_props.end() )
    {
       Property& prop = pos->second;
-      delete prop.method;
+      if( prop.method != 0 && prop.method->methodOf() == this )
+      {
+         delete prop.method;
+      }
+
       prop.set( 0, 0, isStatic, true, true, func, Item() );
    }
    else {

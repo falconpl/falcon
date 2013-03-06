@@ -86,11 +86,8 @@ void Function_reserve::invoke(VMContext* ctx, int32 )
 ClassArray::ClassArray():
    Class("Array", FLC_CLASS_ID_ARRAY )
 {
-
    addMethod( new Function_alloc, true );
-   addMethod( new Function_reserve, true );
-
-   
+   addMethod( new Function_reserve, false );
 }
 
 
