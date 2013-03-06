@@ -202,12 +202,7 @@ void ModSpace::add( Module* mod )
 
    store( mod );
 
-   Error* le = 0;
-   exportFromModule(mod, le );
-   if( le != 0 ) {
-      throw le;
-   }
-
+   //initialize simple singletons
    int32 icount = mod->getInitCount();
    if( icount != 0 )
    {
@@ -221,9 +216,14 @@ void ModSpace::add( Module* mod )
          {
             // Success!
             gval->assignFromLocal( Item( cls, cls->createInstance() ) );
-            return;
          }
       }
+   }
+
+   Error* le = 0;
+   exportFromModule(mod, le );
+   if( le != 0 ) {
+      throw le;
    }
 }
 

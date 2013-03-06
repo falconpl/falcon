@@ -32,58 +32,6 @@
 namespace Falcon {
 namespace Ext {
 
-//====================================================
-// Properties.
-//
-
-static void get_id( const Class*, const String&, void*, Item& value )
-{
-   VMContext* ctx = Processor::currentProcessor()->currentContext();
-   value.setInteger(ctx->id());
-}
-
-
-static void get_status( const Class*, const String&, void*, Item& value )
-{
-   VMContext* ctx = Processor::currentProcessor()->currentContext();
-   value.setInteger(ctx->getStatus());
-}
-
-
-static void get_processId( const Class*, const String&, void*, Item& value )
-{
-   VMContext* ctx = Processor::currentProcessor()->currentContext();
-   value.setInteger(ctx->process()->id());
-}
-
-
-static void get_callDepth( const Class*, const String&, void*, Item& value )
-{
-   VMContext* ctx = Processor::currentProcessor()->currentContext();
-   value.setInteger(ctx->callDepth());
-}
-
-
-static void get_dataDepth( const Class*, const String&, void*, Item& value )
-{
-   VMContext* ctx = Processor::currentProcessor()->currentContext();
-   value.setInteger(ctx->dataSize());
-}
-
-
-static void get_codeDepth( const Class*, const String&, void*, Item& value )
-{
-   VMContext* ctx = Processor::currentProcessor()->currentContext();
-   value.setInteger(ctx->codeDepth());
-}
-
-
-static void get_selfItem( const Class*, const String&, void*, Item& value )
-{
-   VMContext* ctx = Processor::currentProcessor()->currentContext();
-   value.assign(ctx->currentFrame().m_self);
-}
-
 //========================================================================
 // Methods
 //
@@ -137,17 +85,8 @@ void Function_caller::invoke(VMContext* ctx, int32 )
 
 
 ClassVMContext::ClassVMContext():
-   Class("%VMContext")
+   ClassVMContextBase("%VMContext")
 {   
-   m_bIsFlatInstance = true;
-   addProperty( "id", &get_id );
-   addProperty( "processId", &get_processId );
-   addProperty( "callDepth", &get_callDepth );
-   addProperty( "dataDepth", &get_dataDepth );
-   addProperty( "codeDepth", &get_codeDepth );
-   addProperty( "selfItem", &get_selfItem );
-   addProperty( "status", &get_status );
-   
    addMethod( new Function_caller );
 }
 
@@ -159,27 +98,6 @@ ClassVMContext::~ClassVMContext()
 void* ClassVMContext::createInstance() const
 {
    return 0;
-}
-
-void ClassVMContext::dispose( void* ) const
-{
-   // does nothing
-}
-
-void* ClassVMContext::clone( void* ) const
-{
-   return 0;
-}
-
-
-void ClassVMContext::op_toString( VMContext* ctx, void* ) const
-{
-   VMContext* ctx1 = Processor::currentProcessor()->currentContext();
-   String &res = *(new String);
-
-   res.append("VMContext {");
-   res.N(ctx1->id()).A(":").N(ctx1->process()->id()).A("}");
-   ctx->topData().setUser(FALCON_GC_HANDLE(&res));
 }
 
 }

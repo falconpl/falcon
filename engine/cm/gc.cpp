@@ -169,7 +169,9 @@ void Function_reset::invoke( VMContext* ctx, int32 )
 
 static void get_contexts( const Class* owner, const String&, void*, Item& value )
 {
-   static Class* cls = owner->module()->getClass("VMContext");
+   // get the simple representation of the contexts.
+   static Class* cls = owner->module()->getClass("#VMContext");
+   fassert( cls != 0 );
    static Collector* coll = Engine::instance()->collector();
 
    ItemArray* res = new ItemArray;
@@ -185,7 +187,8 @@ static void get_contexts( const Class* owner, const String&, void*, Item& value 
 
       virtual void operator()(VMContext* ctx)
       {
-         m_array->append( Item( cls, ctx ) );
+         ctx->incref();
+         m_array->append( FALCON_GC_STORE( cls, ctx ) );
       }
 
    private:
@@ -196,7 +199,7 @@ static void get_contexts( const Class* owner, const String&, void*, Item& value 
    coll->enumerateContexts(rator);
    value = FALCON_GC_HANDLE(res);
 }
-   
+
 
 static void get_memory( const Class*, const String&, void*, Item& value )
 {

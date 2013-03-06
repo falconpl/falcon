@@ -17,24 +17,23 @@
 #define FALCON_CORE_VMCONTEXT_H
 
 #include <falcon/fassert.h>
-#include <falcon/class.h>
+#include <falcon/cm/vmcontextbase.h>
 
 namespace Falcon {
 namespace Ext {
 
 /*#
- @class VMContext
- @brief Reflective inspector of the current execution context.
+ @object VMContext
+ @brief public interface to the VMContext class.
 
  An instance of this class gives access to the execution context
  where it is created.
 
  @code
-    ctx = VMContext()
-    > ctx.id()   // current context id
-    > ctx.callDepth()  // call count
-    > ctx.caller(0)    // current called object, equivalent to fself
-    > ctx.caller(1)    // caller object...
+    > VMContext.id         // current context id
+    > VMContext.callDepth  // call count
+    > VMContext.caller(0)  // current called object, equivalent to fself
+    > VMContext.caller(1)  // caller object...
  @endcode
 
  @prop id Unique ID of the context.
@@ -44,7 +43,7 @@ namespace Ext {
  @prop codeDepth Size of the code stack.
  @prop selfItem Equivalent to self.
  */
-class ClassVMContext: public Class
+class ClassVMContext: public ClassVMContextBase
 {
 public:
    
@@ -54,11 +53,6 @@ public:
    //=============================================================
    //
    virtual void* createInstance() const;
-   virtual void dispose( void* instance ) const;
-   virtual void* clone( void* instance ) const;
-
-   virtual void op_toString( VMContext* ctx, void* instance ) const;
-
 };
 
 }

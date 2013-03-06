@@ -93,6 +93,7 @@ CoreModule::CoreModule():
       << new Ext::ClassSelector
       << new Ext::ClassSemaphore
       << new Ext::ClassSyncQueue
+      << new Ext::ClassVMContextBase
       << new Ext::ClassVMProcess
       << new Ext::ClassWaiter
       ;

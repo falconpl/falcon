@@ -27,8 +27,6 @@ Done
 @endoutput
 */
 
-> VMContext
-> GC
 x = VMContext
 dd = x.dataDepth
 > "Testing basic for i = 1 to 5"

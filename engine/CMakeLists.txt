@@ -162,6 +162,7 @@ add_library(falcon_engine SHARED
   cm/textwriter.cpp
   cm/uri.cpp
   cm/vmcontext.cpp
+  cm/vmcontextbase.cpp
   cm/vmprocess.cpp
   cm/waiter.cpp
   cm/coremodule.cpp
