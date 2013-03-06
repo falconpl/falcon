@@ -349,7 +349,7 @@ void Class::enumeratePV( void* inst, Class::PVEnumerator& pve) const
 }
 
 
-bool Class::hasProperty( void* inst, const String& prop ) const
+bool Class::hasProperty( void*, const String& prop ) const
 {
    Private::PropertyMap::iterator iter = _p->m_props.find( prop );
    return iter != _p->m_props.end();

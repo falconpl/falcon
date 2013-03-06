@@ -157,36 +157,6 @@ TimeStamp::TimeZone TimeStamp::getLocalTimeZone()
 }
 
 
-bool TimeStamp::absoluteWait( const TimeStamp &ts, ref_ptr<Interrupt>& intr )
-{
-   TimeStamp now;
-   now.setCurrent();
-
-   if ( ts <= now )
-      return false;
-
-   TimeStamp diff = ts - now;
-
-   struct timeval tv;
-   fd_set set;
-
-   int* pipe_fds = (int*) intr->sysData();
-   FD_SET( pipe_fds[0], &set );
-
-   tv.tv_usec = diff.m_msec *1000;
-   tv.tv_sec = (time_t) diff.m_day * (24*3600) + diff.m_hour * 3600 +
-      diff.m_minute * 60 + diff.m_second;
-
-   if( select( pipe_fds[0] + 1, &set, 0, 0, &tv ) > 0 )
-   {
-      intr->reset();
-      throw new InterruptedError( ErrorParam( e_interrupted, __LINE__, __FILE__ ) );
-   }
-
-   return true;
-}
-
-
 bool TimeStamp::absoluteWait( const TimeStamp &ts )
 {
    TimeStamp now;
@@ -208,28 +178,6 @@ bool TimeStamp::absoluteWait( const TimeStamp &ts )
    return true;
 }
 
-
-bool TimeStamp::relativeWait( const TimeStamp &ts, ref_ptr<Interrupt>& intr )
-{
-   struct timeval tv;
-   fd_set set;
-   FD_ZERO(&set);
-
-   int* pipe_fds = (int*) intr->sysData();
-   FD_SET( pipe_fds[0], &set );
-
-   tv.tv_usec = ts.m_msec *1000;
-   tv.tv_sec = (time_t) ts.m_day * (24*3600) + ts.m_hour * 3600 +
-      ts.m_minute * 60 + ts.m_second;
-
-   if( select( pipe_fds[0] + 1, &set, 0, 0, &tv ) > 0 )
-   {
-      intr->reset();
-      throw new InterruptedError( ErrorParam( e_interrupted, __LINE__, __FILE__ ) );
-   }
-
-   return true;
-}
 
 
 bool TimeStamp::relativeWait( const TimeStamp &ts )

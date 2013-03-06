@@ -33,12 +33,6 @@ TimeStamp::TimeZone TimeStamp::getLocalTimeZone()
 }
 
 
-bool TimeStamp::absoluteWait( const TimeStamp &ts, ref_ptr<Interrupt>& intr )
-{
-   (void) ts; (void) intr;
-   return true;
-}
-
 
 bool TimeStamp::absoluteWait( const TimeStamp &ts )
 {
@@ -46,12 +40,6 @@ bool TimeStamp::absoluteWait( const TimeStamp &ts )
 	return true;
 }
 
-
-bool TimeStamp::relativeWait( const TimeStamp &ts, ref_ptr<Interrupt>& intr )
-{
-   (void) ts; (void) intr;
-   return true;
-}
 
 
 bool TimeStamp::relativeWait( const TimeStamp &ts )

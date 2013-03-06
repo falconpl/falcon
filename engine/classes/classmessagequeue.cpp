@@ -260,7 +260,7 @@ void Function_marshal::invoke(VMContext* ctx, int32 pCount )
 }
 
 
-void Function_get::invoke(VMContext* ctx, int32 pCount )
+void Function_get::invoke(VMContext* ctx, int32 )
 {
    MessageQueue* self = static_cast<MessageQueue*>(ctx->self().asClass()->getParentData(this->methodOf(), ctx->self().asInst()) );
 
@@ -274,7 +274,7 @@ void Function_get::invoke(VMContext* ctx, int32 pCount )
 }
 
 
-void Function_subscribersFence::invoke(VMContext* ctx, int32 pCount )
+void Function_subscribersFence::invoke(VMContext* ctx, int32 )
 {
    MessageQueue* self = static_cast<MessageQueue*>(ctx->self().asClass()->getParentData(this->methodOf(), ctx->self().asInst()) );
 
@@ -298,7 +298,7 @@ void Function_subscribersFence::invoke(VMContext* ctx, int32 pCount )
 }
 
 
-void Function_peek::invoke(VMContext* ctx, int32 pCount )
+void Function_peek::invoke(VMContext* ctx, int32 )
 {
    MessageQueue* self = static_cast<MessageQueue*>(ctx->self().asClass()->getParentData(this->methodOf(), ctx->self().asInst()) );
 
@@ -323,7 +323,7 @@ void Function_wait::invoke(VMContext* ctx, int32 pCount )
 }
 
 
-void Function_subscribe::invoke(VMContext* ctx, int32 pCount )
+void Function_subscribe::invoke(VMContext* ctx, int32 )
 {
    MessageQueue* self = static_cast<MessageQueue*>(ctx->self().asClass()->getParentData(this->methodOf(), ctx->self().asInst()) );
 
@@ -332,7 +332,7 @@ void Function_subscribe::invoke(VMContext* ctx, int32 pCount )
    ctx->returnFrame();
 }
 
-void Function_unsubscribe::invoke(VMContext* ctx, int32 pCount )
+void Function_unsubscribe::invoke(VMContext* ctx, int32 )
 {
    MessageQueue* self = static_cast<MessageQueue*>(ctx->self().asClass()->getParentData(this->methodOf(), ctx->self().asInst()) );
 

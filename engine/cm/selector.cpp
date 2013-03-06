@@ -253,7 +253,7 @@ void Function_selector_addErr::invoke(VMContext* ctx, int32 pCount )
 }
 
 
-void Function_selector_getRead::invoke(VMContext* ctx, int32 pCount )
+void Function_selector_getRead::invoke(VMContext* ctx, int32 )
 {
    Selector* sel = static_cast<Selector*>(ctx->self().asInst());
    Stream* stream = sel->getNextReadyRead();

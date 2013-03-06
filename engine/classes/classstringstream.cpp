@@ -41,13 +41,13 @@ namespace Falcon {
  and current position is relative to write pointer,
  but tell() returns the read pointer.
 */
-void get_pipeMode( const Class* cls, const String& name, void *instance, Item& value )
+void get_pipeMode( const Class*, const String&, void *instance, Item& value )
 {
    StringStream* ss = static_cast<StringStream*>(instance);
    value.setBoolean(ss->isPipeMode());
 }
 
-void set_pipeMode( const Class* cls, const String& name, void *instance, const Item& value )
+void set_pipeMode( const Class*, const String&, void *instance, const Item& value )
 {
    StringStream* ss = static_cast<StringStream*>(instance);
    ss->setPipeMode(value.isTrue());
@@ -58,7 +58,7 @@ void set_pipeMode( const Class* cls, const String& name, void *instance, const I
 
  @brief The whole content of this string stream as a memory buffer string.
 */
-void get_content( const Class* cls, const String& name, void *instance, Item& value )
+void get_content( const Class*, const String&, void *instance, Item& value )
 {
    StringStream* ss = static_cast<StringStream*>(instance);
    String* ret = new String;

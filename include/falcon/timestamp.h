@@ -25,8 +25,6 @@
 #include <falcon/string.h>
 #include <falcon/refpointer.h>
 
-#include <falcon/interrupt.h>
-
 namespace Falcon {
 
 class String;
@@ -130,17 +128,6 @@ public:
 
    /** Wait until the given timestamp expires.
     \param ts The timestamp to wait for.
-    \param intr The wait might be interrupted signaling the interrupter.
-    \return true if the wait was performed, false if the timestamp is in the past.
-    \throw InterruptedError if the wait was interrupted.
-
-    If the timestamp is in the past, no wait is actually performed.
-
-    */
-   static bool absoluteWait( const TimeStamp &ts, ref_ptr<Interrupt>& intr );
-
-   /** Wait until the given timestamp expires.
-    \param ts The timestamp to wait for.
     \return true if the wait was performed, false if the timestamp is in the past.
     \throw InterruptedError if the wait was interrupted.
 
@@ -148,17 +135,6 @@ public:
 
     */
    static bool absoluteWait( const TimeStamp &ts );
-
-
-   /** Wait the required amount of years, months, days etc...
-    \param ts Number of years, months etc. to wait for.
-    \param intr If given the wait might be interrupted signaling the interrupter.
-    \return true if the wait was performed, false if the timestamp is in the past.
-    \throw InterruptedError if the wait was interrupted.
-
-    If the timestamp is negative , no wait is actually performed.
-   */
-   static bool relativeWait( const TimeStamp &ts, ref_ptr<Interrupt>& intr );
 
    /** Wait the required amount of years, months, days etc...
     \param ts Number of years, months etc. to wait for.

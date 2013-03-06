@@ -22,7 +22,6 @@
 #include <sys/poll.h>
 
 #include <falcon/fstream.h>
-#include <falcon/interrupt.h>
 #include <falcon/errors/ioerror.h>
 #include <falcon/errors/interruptederror.h>
 #include <falcon/errors/unsupportederror.h>
@@ -82,19 +81,6 @@ bool FStream::close()
    m_lastError = 0;
    m_status = m_status & (~ Stream::t_open);
    return true;
-}
-
-
-bool FStream::setNonblocking( bool mode )
-{
-   static_cast<Sys::FileData*>(m_fsData)->m_nonBloking = mode;
-   return true;
-}
-
-
-bool FStream::isNonbloking() const
-{
-   return static_cast<Sys::FileData*>(m_fsData)->m_nonBloking;
 }
 
 

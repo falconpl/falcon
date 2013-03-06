@@ -19,8 +19,6 @@
 
 namespace Falcon{
 
-class Interrupt;
-
 //============================================================
 // Base fstream
 //

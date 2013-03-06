@@ -48,7 +48,7 @@ static void get_error( const Class*, const String&, void *instance, Item& value 
 }
 
 
-static void get_moved( const Class*, const String&, void *instance, Item& value )
+static void get_moved( const Class*, const String&, void *, Item& value )
 {
    value = (int64) 0; // not implemented
 }
@@ -423,6 +423,7 @@ static void register_on(ClassStream* cls )
    cls->addProperty( "status", &get_status );
    cls->addProperty( "eof", &get_eof );
    cls->addProperty( "bad", &get_bad );
+   cls->addProperty( "good", &get_good );
    cls->addProperty( "isopen", &get_isopen );
    cls->addProperty( "buffer", &get_buffer, &set_buffer );
    cls->addProperty( "userItem", &get_userItem, &set_userItem );

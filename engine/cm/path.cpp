@@ -286,7 +286,7 @@ static void get_wencoded( const Class*, const String&, void* instance, Item& val
 }
 
 
-void Function_absolutize::invoke( VMContext* ctx, int32 pCount )
+void Function_absolutize::invoke( VMContext* ctx, int32 )
 {
    Item* i_path = ctx->param(0);
    if( i_path != 0 && !(i_path->isString()||i_path->isNil()) )
@@ -308,7 +308,7 @@ void Function_absolutize::invoke( VMContext* ctx, int32 pCount )
 }
 
 
-void Function_relativize::invoke( VMContext* ctx, int32 pCount )
+void Function_relativize::invoke( VMContext* ctx, int32 )
 {
    Item* i_path = ctx->param(0);
    if( i_path == 0 || ! i_path->isString() )
@@ -323,7 +323,7 @@ void Function_relativize::invoke( VMContext* ctx, int32 pCount )
 }
 
 
-void Function_canonize::invoke( VMContext* ctx, int32 pCount )
+void Function_canonize::invoke( VMContext* ctx, int32 )
 {
    PathCarrier* pc = static_cast<PathCarrier*>(ctx->self().asInst());
    pc->m_path.canonicize();
@@ -332,7 +332,7 @@ void Function_canonize::invoke( VMContext* ctx, int32 pCount )
 
 
 
-void Function_cwd::invoke( VMContext* ctx, int32 pCount )
+void Function_cwd::invoke( VMContext* ctx, int32 )
 {   
    String temp;
    Path::currentWorkDirectory( temp );

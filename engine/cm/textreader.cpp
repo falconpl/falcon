@@ -537,7 +537,7 @@ void ClassTextReader::dispose( void* instance ) const
    delete tr;
 }
 
-void* ClassTextReader::clone( void* instance ) const
+void* ClassTextReader::clone( void* ) const
 {
    return 0;
 }

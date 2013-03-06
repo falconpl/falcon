@@ -250,7 +250,7 @@ ClassTextWriter::ClassTextWriter( ClassStream* clsStream ):
    addProperty( "crlf", &get_crlf, &set_crlf );
    addProperty( "lineflush", &get_lineflush, &set_lineflush );
    addProperty( "buffer", &get_buffer, &set_buffer );
-   addProperty( "underlying", &get_buffer );
+   addProperty( "underlying", &get_underlying );
    
    addMethod( new CTextWriter::Function_write );
    addMethod( new CTextWriter::Function_writeLine );   
@@ -275,7 +275,7 @@ void ClassTextWriter::dispose( void* instance ) const
    delete tw;
 }
 
-void* ClassTextWriter::clone( void* instance ) const
+void* ClassTextWriter::clone( void* ) const
 {
    return 0;
 }

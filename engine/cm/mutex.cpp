@@ -113,7 +113,7 @@ FALCON_DECLARE_FUNCTION( tryLock, "" );
 FALCON_DECLARE_FUNCTION( unlock, "" );
 
 
-void Function_lock::invoke(VMContext* ctx, int32 pCount )
+void Function_lock::invoke(VMContext* ctx, int32 )
 {
    static const PStep& stepWaitSuccess = Engine::instance()->stdSteps()->m_waitSuccess;
    static const PStep& stepInvoke = Engine::instance()->stdSteps()->m_reinvoke;
@@ -153,7 +153,7 @@ void Function_lock::invoke(VMContext* ctx, int32 pCount )
 }
 
 
-void Function_locked::invoke(VMContext* ctx, int32 pCount )
+void Function_locked::invoke(VMContext* ctx, int32 )
 {
    static const PStep& stepInvoke = Engine::instance()->stdSteps()->m_reinvoke;
 
@@ -198,7 +198,7 @@ void Function_locked::invoke(VMContext* ctx, int32 pCount )
 }
 
 
-void Function_tryLock::invoke(VMContext* ctx, int32 pCount )
+void Function_tryLock::invoke(VMContext* ctx, int32 )
 {
    static const PStep& stepInvoke = Engine::instance()->stdSteps()->m_reinvoke;
 
@@ -229,7 +229,7 @@ void Function_tryLock::invoke(VMContext* ctx, int32 pCount )
 }
 
 
-void Function_unlock::invoke(VMContext* ctx, int32 pCount )
+void Function_unlock::invoke(VMContext* ctx, int32 )
 {
    SharedMutex* mtx = static_cast<SharedMutex*>(ctx->self().asInst());
 
