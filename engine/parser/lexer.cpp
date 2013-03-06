@@ -30,7 +30,10 @@ Lexer::Lexer( const String& uri, Parser* p, TextReader* reader ):
    m_line(0),
    m_chr(0)
 {
-   reader->incref();
+   if( reader != 0 )
+   {
+      reader->incref();
+   }
 }
 
 Lexer::~Lexer()
