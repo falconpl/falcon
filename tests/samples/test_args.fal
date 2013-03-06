@@ -1,0 +1,9 @@
+
+> "Module name: ", VMProcess.name
+> "Module path: ", VMProcess.uri
+
+mod = VMProcess.current
+> "Current Module name: ", mod.name
+> "Current Module path: ", mod.uri
+
+> "Args passed to this script: ", args.describe()

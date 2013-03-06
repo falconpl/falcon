@@ -263,6 +263,8 @@ public:
     */
    static Class* handler();
 
+   Module* mainModule() const { return m_mainMod; }
+
 private:      
    class Private;
    ModSpace::Private* _p;
@@ -272,6 +274,7 @@ private:
    ModSpace* m_parent;
    uint32 m_lastGCMark;
    Function* m_loaderFunc;
+   Module* m_mainMod;
    
    ModLoader* m_loader;
    

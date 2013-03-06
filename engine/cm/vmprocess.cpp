@@ -27,6 +27,7 @@
 #include <falcon/errors/accesstypeerror.h>
 #include <falcon/stdhandlers.h>
 #include <falcon/processor.h>
+#include <falcon/modspace.h>
 
 #include <falcon/datawriter.h>
 #include <falcon/datareader.h>
@@ -141,6 +142,63 @@ static void get_current(const Class* cls, const String&, void*, Item& value )
    value = FALCON_GC_STORE(cls, prc);
 }
 
+/*#
+ @property name VMProcess
+ @brief Returns the name of the (main module of the) process
+
+ This property assumes the value of the logical name of the module that
+ leads the execution of the given process.
+
+ The property can be invoked statically on the VMProcess class to
+ obtain the name of the current process.
+ */
+static void get_name(const Class*, const String&, void* instance, Item& value )
+{
+   Process* prc = static_cast<Process*>(instance);
+   if( prc == 0 )
+   {
+      // called statically
+      prc = Processor::currentProcessor()->currentContext()->process();
+   }
+
+   Module* mod = prc->modSpace()->mainModule();
+   if( mod != 0 )
+   {
+      value = FALCON_GC_HANDLE(new String(mod->name()));
+   }
+   else {
+      value.setNil();
+   }
+}
+/*#
+ @property uri VMProcess
+ @brief Returns the path of the (main module of the) process
+
+ This property assumes the value of the logical name of the module that
+ leads the execution of the given process.
+
+ The property can be invoked statically on the VMProcess class to
+ obtain the name of the current process.
+ */
+static void get_uri(const Class*, const String&, void* instance, Item& value )
+{
+   Process* prc = static_cast<Process*>(instance);
+   if( prc == 0 )
+   {
+      // called statically
+      prc = Processor::currentProcessor()->currentContext()->process();
+   }
+
+   Module* mod = prc->modSpace()->mainModule();
+   if( mod != 0 )
+   {
+      value = FALCON_GC_HANDLE(new String(mod->uri()));
+   }
+   else {
+      value.setNil();
+   }
+}
+
 /*
  @method quit VM
  @brief Terminates all the processes currently active in the host Virtual Machine.
@@ -161,6 +219,8 @@ ClassVMProcess::ClassVMProcess():
    addProperty( "stdOut", &get_stdOut, &set_stdOut );
    addProperty( "stdErr", &get_stdErr, &set_stdErr );
    addProperty( "id", &get_id );
+   addProperty( "name", &get_name, 0, true );
+   addProperty( "uri", &get_uri, 0, true );
 
 }
 

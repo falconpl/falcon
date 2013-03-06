@@ -105,6 +105,7 @@ ModSpace::ModSpace( Process* owner, ModSpace* parent ):
    _p( new Private ),   
    m_parent(parent),
    m_lastGCMark(0),
+   m_mainMod(0),
    m_stepLoader(this),
    m_stepResolver(this),
    m_stepDynModule(this),
@@ -860,6 +861,7 @@ void ModSpace::PStepLoader::apply_( const PStep* self, VMContext* ctx )
    {
       // we need to return an extra reference to the process caller.
       mod->incref();
+      ms->m_mainMod = mod;
    }
    else
    {
