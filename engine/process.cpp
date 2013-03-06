@@ -57,7 +57,8 @@ Process::Process( VMachine* owner, ModSpace* ms ):
    m_ctxId(0),
    m_error(0),
    m_added(false),
-   m_resultLock(0)
+   m_resultLock(0),
+   m_mark(0)
 {
    _p = new Private;
 
@@ -88,7 +89,8 @@ Process::Process( VMachine* owner, bool bAdded ):
    m_ctxId(0),
    m_error(0),
    m_added(bAdded),
-   m_resultLock(0)
+   m_resultLock(0),
+   m_mark(0)
 {
    _p = new Private;
 
@@ -100,6 +102,7 @@ Process::Process( VMachine* owner, bool bAdded ):
    m_modspace = new ModSpace(this);
    inheritStreams();
 }
+
 
 void Process::inheritStreams()
 {
@@ -120,7 +123,6 @@ void Process::inheritStreams()
    m_textOut->incref();
    m_textErr->incref();
 }
-
 
 
 Process::~Process() {
@@ -387,7 +389,6 @@ bool Process::setStdEncoding( const String& name )
       return false;
    }
    m_stdCoder = tc;
-   m_bOwnCoder = false;
 
    m_textIn->setEncoding( tc );
    m_textOut->setEncoding( tc );
@@ -396,10 +397,9 @@ bool Process::setStdEncoding( const String& name )
 }
 
 
-void Process::setStdEncoding( Transcoder* ts, bool bOwn )
+void Process::setStdEncoding( Transcoder* ts )
 {
    m_stdCoder = ts;
-   m_bOwnCoder = bOwn;
 
    m_textIn->setEncoding( ts );
    m_textOut->setEncoding( ts );

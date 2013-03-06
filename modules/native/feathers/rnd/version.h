@@ -1,11 +1,12 @@
 /*
    FALCON - The Falcon Programming Language.
-   FILE: threading_st.cpp
+   FILE: verion.h
 
-   Threading module - string table.
+   Compiler module version informations
    -------------------------------------------------------------------
    Author: Giancarlo Niccolai
-   Begin: Sun, 08 Jun 2008 20:57:37 +0200
+   Begin: Sat, 06 Sep 2008 10:06:03 +0200
+
 
    -------------------------------------------------------------------
    (C) Copyright 2008: the FALCON developers (see list in AUTHORS file)
@@ -13,11 +14,13 @@
    See LICENSE file for licensing details.
 */
 
-/** \file
-   Threading module main file - string table.
-*/
+#ifndef VERSION_H
+#define VERSION_H
 
-#define FALCON_REALIZE_STRTAB
-#include "threading_st.h"
+#define VERSION_MAJOR        0
+#define VERSION_MINOR        9
+#define VERSION_REVISION     4
 
-/* end of threading_st.cpp */
+#endif
+
+/* end of version.h */

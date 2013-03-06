@@ -22,6 +22,7 @@
 #include <falcon/function.h>
 #include <falcon/vmcontext.h>
 #include <falcon/path.h>
+#include <falcon/processor.h>
 #include <falcon/errors/paramerror.h>
 #include <falcon/errors/codeerror.h>
 
@@ -35,51 +36,51 @@ namespace Ext {
 // Properties.
 //
 
-static void get_id( const Class*, const String&, void* instance, Item& value )
+static void get_id( const Class*, const String&, void*, Item& value )
 {
-   VMContext* ctx = static_cast<VMContext*>(instance);
+   VMContext* ctx = Processor::currentProcessor()->currentContext();
    value.setInteger(ctx->id());
 }
 
 
-static void get_status( const Class*, const String&, void* instance, Item& value )
+static void get_status( const Class*, const String&, void*, Item& value )
 {
-   VMContext* ctx = static_cast<VMContext*>(instance);
+   VMContext* ctx = Processor::currentProcessor()->currentContext();
    value.setInteger(ctx->getStatus());
 }
 
 
-static void get_processId( const Class*, const String&, void* instance, Item& value )
+static void get_processId( const Class*, const String&, void*, Item& value )
 {
-   VMContext* ctx = static_cast<VMContext*>(instance);
+   VMContext* ctx = Processor::currentProcessor()->currentContext();
    value.setInteger(ctx->process()->id());
 }
 
 
-static void get_callDepth( const Class*, const String&, void* instance, Item& value )
+static void get_callDepth( const Class*, const String&, void*, Item& value )
 {
-   VMContext* ctx = static_cast<VMContext*>(instance);
+   VMContext* ctx = Processor::currentProcessor()->currentContext();
    value.setInteger(ctx->callDepth());
 }
 
 
-static void get_dataDepth( const Class*, const String&, void* instance, Item& value )
+static void get_dataDepth( const Class*, const String&, void*, Item& value )
 {
-   VMContext* ctx = static_cast<VMContext*>(instance);
+   VMContext* ctx = Processor::currentProcessor()->currentContext();
    value.setInteger(ctx->dataSize());
 }
 
 
-static void get_codeDepth( const Class*, const String&, void* instance, Item& value )
+static void get_codeDepth( const Class*, const String&, void*, Item& value )
 {
-   VMContext* ctx = static_cast<VMContext*>(instance);
+   VMContext* ctx = Processor::currentProcessor()->currentContext();
    value.setInteger(ctx->codeDepth());
 }
 
 
-static void get_selfItem( const Class*, const String&, void* instance, Item& value )
+static void get_selfItem( const Class*, const String&, void*, Item& value )
 {
-   VMContext* ctx = static_cast<VMContext*>(instance);
+   VMContext* ctx = Processor::currentProcessor()->currentContext();
    value.assign(ctx->currentFrame().m_self);
 }
 
@@ -136,8 +137,9 @@ void Function_caller::invoke(VMContext* ctx, int32 )
 
 
 ClassVMContext::ClassVMContext():
-   Class("VMContext")
+   Class("%VMContext")
 {   
+   m_bIsFlatInstance = true;
    addProperty( "id", &get_id );
    addProperty( "processId", &get_processId );
    addProperty( "callDepth", &get_callDepth );
@@ -156,55 +158,28 @@ ClassVMContext::~ClassVMContext()
 
 void* ClassVMContext::createInstance() const
 {
-   return FALCON_CLASS_CREATE_AT_INIT;
+   return 0;
 }
 
-void ClassVMContext::dispose( void* instance ) const
+void ClassVMContext::dispose( void* ) const
 {
-   VMContext* ctx = static_cast<VMContext*>(instance);
-   ctx->decref();
+   // does nothing
 }
 
-void* ClassVMContext::clone( void* instance ) const
+void* ClassVMContext::clone( void* ) const
 {
-   VMContext* ctx = static_cast<VMContext*>(instance);
-   ctx->incref();
-   return ctx;
+   return 0;
 }
 
 
-void ClassVMContext::gcMarkInstance( void* instance, uint32 mark ) const
+void ClassVMContext::op_toString( VMContext* ctx, void* ) const
 {
-   VMContext* ctx = static_cast<VMContext*>(instance);
-   // not a really good idea, but...
-   ctx->gcStartMark(mark);
-   ctx->gcPerformMark();
-}
+   VMContext* ctx1 = Processor::currentProcessor()->currentContext();
+   String &res = *(new String);
 
-bool ClassVMContext::gcCheckInstance( void* instance, uint32 mark ) const
-{
-   VMContext* ctx = static_cast<VMContext*>(instance);
-   return ctx->currentMark() >= mark;
-}
-
-bool ClassVMContext::op_init( VMContext* ctx, void*, int pcount ) const
-{
-   ctx->stackResult(pcount, FALCON_GC_STORE(this, ctx));
-   return true;
-}
-
-void ClassVMContext::op_toString( VMContext* ctx, void* instance ) const
-{
-   VMContext* ctx1 = static_cast<VMContext*>(instance);
-   String& res = * new String();
-   if( ctx1 != ctx ) {
-      res+="Foreign context";
-   }
-   else {
-      res.append("VMContext {");
-      res.N(ctx1->id()).A(":").N(ctx1->process()->id()).A("}");
-      ctx->topData().setUser(FALCON_GC_HANDLE(&res));
-   }
+   res.append("VMContext {");
+   res.N(ctx1->id()).A(":").N(ctx1->process()->id()).A("}");
+   ctx->topData().setUser(FALCON_GC_HANDLE(&res));
 }
 
 }

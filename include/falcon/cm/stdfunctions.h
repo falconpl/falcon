@@ -33,8 +33,7 @@ FALCON_DECLARE_FUNCTION(quit, "value:X");
 FALCON_DECLARE_FUNCTION(advance, "collection:X");
 FALCON_DECLARE_FUNCTION(int, "item:N|S");
 FALCON_DECLARE_FUNCTION(numeric, "item:N|S");
-
-FALCON_DECLARE_FUNCTION(stdIn, "stream:[Stream]" );
+FALCON_DECLARE_FUNCTION(input, "");
 
 }
 }

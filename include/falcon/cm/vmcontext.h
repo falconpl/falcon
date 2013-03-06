@@ -57,10 +57,6 @@ public:
    virtual void dispose( void* instance ) const;
    virtual void* clone( void* instance ) const;
 
-   virtual void gcMarkInstance( void* instance, uint32 mark ) const;
-   virtual bool gcCheckInstance( void* instance, uint32 mark ) const;
-
-   virtual bool op_init( VMContext* ctx, void*, int pcount ) const;
    virtual void op_toString( VMContext* ctx, void* instance ) const;
 
 };

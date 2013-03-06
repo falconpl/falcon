@@ -263,10 +263,9 @@ public:
 
     /** Sets the standard encoding of streams using a custom transcoder.
      \param ts A transcoder instance.
-     \param bOwn If true, the transcoder will be disposed by the VM at destruction.
      \see bool setStdEncoding( const String& name )
      */
-   void setStdEncoding( Transcoder* ts, bool bOwn = false );
+   void setStdEncoding( Transcoder* ts );
 
    /** Returns the TextReader accessing the standard input stream.
     \return A text reder.
@@ -291,6 +290,15 @@ public:
     to change this setup, act directly on the TextWriters.
     */
    inline TextWriter* textErr() const { return m_textOut; }
+
+   /**
+    * Used internally
+    */
+   void gcMark( uint32 mark ) { m_mark = mark; }
+   /**
+    * Used internally
+    */
+   uint32 currentMark() const { return m_mark; }
 
 protected:
    Process( VMachine* owner, bool added );
@@ -329,7 +337,8 @@ protected:
    TextWriter* m_textErr;
 
    Transcoder* m_stdCoder;
-   bool m_bOwnCoder;
+   bool m_mark;
+
 
    void inheritStreams();
 

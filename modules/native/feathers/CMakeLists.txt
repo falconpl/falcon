@@ -37,7 +37,7 @@ add_subdirectory(math)
 add_subdirectory(regex)
 add_subdirectory(rnd)
 #add_subdirectory(socket)
-#add_subdirectory(threading)
+add_subdirectory(vm)
 #add_subdirectory(zlib)
 
 # Virtual file system module.

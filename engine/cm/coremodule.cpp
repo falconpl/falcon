@@ -43,6 +43,7 @@
 #include <falcon/cm/syncqueue.h>
 #include <falcon/cm/vmcontext.h>
 #include <falcon/cm/waiter.h>
+#include <falcon/cm/vmprocess.h>
 #include <falcon/stdhandlers.h>
 
 // the standard error classes
@@ -74,7 +75,6 @@ CoreModule::CoreModule():
       << new Ext::Function_advance
       << new Ext::Function_int
       << new Ext::Function_numeric
-      << new Ext::Function_stdIn
       
       // Standard classes
       << new Ext::ClassBarrier
@@ -93,11 +93,12 @@ CoreModule::CoreModule():
       << new Ext::ClassSelector
       << new Ext::ClassSemaphore
       << new Ext::ClassSyncQueue
-      << new Ext::ClassVMContext
+      << new Ext::ClassVMProcess
       << new Ext::ClassWaiter
       ;
 
    this->addObject( new Ext::ClassGC );
+   this->addObject( new Ext::ClassVMContext );
 }
 
 }

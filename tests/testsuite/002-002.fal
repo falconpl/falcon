@@ -11,7 +11,7 @@ Done
 @endoutput
 */
 
-x = VMContext()
+x = VMContext
 dd = x.dataDepth
 > "Testing basic for/in"
 for elem in ["first", "first", "third"]

@@ -31,6 +31,7 @@
 #include <falcon/error.h>
 #include <falcon/errors/paramerror.h>
 #include <falcon/errors/matherror.h>
+#include <falcon/process.h>
 
 namespace Falcon {
 namespace Ext {
@@ -284,6 +285,42 @@ FALCON_DEFINE_FUNCTION_P(numeric)
 }
 
 /*#
+   @function input
+   @inset core_basic_io
+   @brief Get some text from the user (standard input stream).
+
+   Reads a line from the standard input stream and returns a string
+   containing the read data. This is mainly meant as a test/debugging
+   function to provide the scripts with minimal console based user input
+   support. When in need of reading lines from the standard input, prefer the
+   readLine() method of the input stream object.
+
+   This function may also be overloaded by embedders to provide the scripts
+   with a common general purpose input function, that returns a string that
+   the user is queried for.
+*/
+
+FALCON_DEFINE_FUNCTION_P(input)
+{
+   TRACE1( "input -- called with %d params", pCount );
+   (void) pCount;
+
+   Process* proc = ctx->process();
+   String* str = new String;
+   try
+   {
+      proc->textIn()->readLine(*str, 4096);
+      ctx->returnFrame(FALCON_GC_HANDLE(str));
+   }
+   catch( ... )
+   {
+      delete str;
+      throw;
+   }
+
+}
+
+/*#
    @function stdIn
    @brief Creates an object mapped to the standard input of the Virtual Machine.
    @optparam stream A stream to replace the standard input with.
@@ -306,6 +343,8 @@ FALCON_DEFINE_FUNCTION_P(numeric)
 
    Read operations will fail raising an I/O error.
 */
+#if 0
+
 FALCON_DEFINE_FUNCTION_P(stdIn)
 {
    TRACE1( "stdIn -- called with %d params", pCount );
@@ -316,7 +355,6 @@ FALCON_DEFINE_FUNCTION_P(stdIn)
    ctx->returnFrame(FALCON_GC_HANDLE(retStream));
 }
 
-#if 0
 
 /*#
    @function stdOut
