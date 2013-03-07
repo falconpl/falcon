@@ -403,12 +403,13 @@ void Class::setConstuctor( Function* func )
    delete _p->m_constructor;
    _p->m_constructor = func;
    func->methodOf( this );   
+   func->name("init");
 }
 
  
-void Class::setConstuctor( const String& name, ext_func_t func, const String& prototype )
+void Class::setConstuctor( ext_func_t func, const String& prototype )
 {
-   Function* f = new ExtFunc(name, func, 0, 0);
+   Function* f = new ExtFunc("init", func, 0, 0);
    f->parseDescription( prototype );
    setConstuctor( f );
 }

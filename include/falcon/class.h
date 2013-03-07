@@ -1055,7 +1055,7 @@ public:
       \param prototype The constructor function prototype.
       
    */
-   void setConstuctor( const String& name, ext_func_t func, const String& prototype );
+   void setConstuctor( ext_func_t func, const String& prototype );
 
    /** Adds a class-wide constant. 
       \param name the name of the constant.

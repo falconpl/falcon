@@ -57,6 +57,10 @@ BOM::BOM():
    hm["compare"] = BOMH::compare;
    hm["derivedFrom"] = BOMH::derivedFrom;
 
+   hm["get"] = BOMH::get;
+   hm["set"] = BOMH::set;
+   hm["has"] = BOMH::has;
+   hm["properties"] = BOMH::properties;
 }
 
 BOM::~BOM()
@@ -192,6 +196,42 @@ void compare(VMContext* ctx, const Class*, void*)
 void derivedFrom(VMContext* ctx, const Class*, void*)
 {
   static Function* func = static_cast<Function*>(Engine::instance()->getMantra("derivedFrom"));
+  fassert( func != 0 );
+
+  Item &value = ctx->topData();
+  value.methodize(func);
+}
+
+void get(VMContext* ctx, const Class*, void*)
+{
+  static Function* func = static_cast<Function*>(Engine::instance()->getMantra("get"));
+  fassert( func != 0 );
+
+  Item &value = ctx->topData();
+  value.methodize(func);
+}
+
+void set(VMContext* ctx, const Class*, void*)
+{
+  static Function* func = static_cast<Function*>(Engine::instance()->getMantra("set"));
+  fassert( func != 0 );
+
+  Item &value = ctx->topData();
+  value.methodize(func);
+}
+
+void has(VMContext* ctx, const Class*, void*)
+{
+  static Function* func = static_cast<Function*>(Engine::instance()->getMantra("has"));
+  fassert( func != 0 );
+
+  Item &value = ctx->topData();
+  value.methodize(func);
+}
+
+void properties(VMContext* ctx, const Class*, void*)
+{
+  static Function* func = static_cast<Function*>(Engine::instance()->getMantra("properties"));
   fassert( func != 0 );
 
   Item &value = ctx->topData();

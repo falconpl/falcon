@@ -80,6 +80,12 @@ void typeId(VMContext* ctx, const Class* cls, void* data);
 // Theese are proper functions
 void compare(VMContext* ctx, const Class* cls, void* data);
 void derivedFrom(VMContext* ctx, const Class* cls, void* data);
+
+void get(VMContext* ctx, const Class* cls, void* data);
+void set(VMContext* ctx, const Class* cls, void* data);
+void has(VMContext* ctx, const Class* cls, void* data);
+void properties(VMContext* ctx, const Class* cls, void* data);
+
 }
 
 }

@@ -60,6 +60,7 @@
 #include <falcon/builtin/baseclass.h>
 #include <falcon/builtin/describe.h>
 #include <falcon/builtin/tostring.h>
+#include <falcon/builtin/dynprop.h>
 
 #include <falcon/bom.h>
 #include <falcon/stdsteps.h>
@@ -280,6 +281,10 @@ Engine::Engine()
    addMantra(new Ext::BaseClass);
    addMantra(new Ext::Describe);
    addMantra(new Ext::ToString);
+   addMantra(new Ext::Get);
+   addMantra(new Ext::Set);
+   addMantra(new Ext::Has);
+   addMantra(new Ext::Properties);
 
    //============================================
    // Creating singletons

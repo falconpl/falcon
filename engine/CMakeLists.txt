@@ -136,6 +136,7 @@ add_library(falcon_engine SHARED
   builtin/typeid.cpp
   builtin/len.cpp
   builtin/minmax.cpp
+  builtin/dynprop.cpp
  
  
   cm/barrier.cpp
