@@ -21,7 +21,7 @@ namespace Falcon
 
 void ExtFunc::invoke( VMContext* ctx, int32 pCount )
 {
-   ctx->regA().setNil();
+   ctx->pushData(Item()); // our regA
    m_func(ctx, pCount );
    ctx->returnFrame(ctx->regA());
 }
