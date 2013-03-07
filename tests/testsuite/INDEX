@@ -1,8 +1,8 @@
 000 Smoke tests and very basic tests
 001 Variables and expressions
 002 Statements
-003 Basic object model
-004 Advanced grammar constructs (r"", i"", @"" etc.)
+003 Advanced grammar constructs (r"", i"", @"" etc.)
+004 Basic object model
 005 Data types
 006 Builtin
 007 Functions

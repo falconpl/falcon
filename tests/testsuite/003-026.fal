@@ -1,0 +1,35 @@
+/*
+@name I-Strings basic
+@category i18n
+
+@output
+I-Strings basic
+Untranslated:
+Hello
+How are you?
+Italian:
+Ciao!
+Come stai?
+Done.
+@endoutput
+*/
+
+function hail()
+   > i"Hello"
+   > i"How are you?"
+end
+
+> "I-Strings basic"
+> "Untranslated:"
+hail()
+
+cp = VMProcess.current
+cp.setTT( .[
+   "Hello" => "Ciao!"
+   "How are you?" => "Come stai?"
+   ])
+
+> "Italian:"
+hail()
+
+> "Done."

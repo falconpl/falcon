@@ -1,0 +1,28 @@
+/*
+@name I-Strings dictionary
+@category i18n
+
+@output
+I-Strings dictionary
+Hello
+How are you?
+Done.
+@endoutput
+*/
+
+function hail()
+   > i"Hello"
+   > i"How are you?"
+end
+
+cp = VMProcess.current
+// here we see the strings in the whole process:
+i_strings = cp.getIs()
+
+// you can easily manage the extracted data:
+> "I-Strings dictionary"
+for string in i_strings
+   > string
+end
+
+> "Done."
