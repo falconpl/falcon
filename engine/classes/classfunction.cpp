@@ -27,16 +27,270 @@
 #include <falcon/pseudofunc.h>
 #include <falcon/collector.h>
 #include <falcon/stdhandlers.h>
+#include <falcon/processor.h>
+#include <falcon/classes/classmodule.h>
 
 #include <falcon/itemarray.h>
+#include <falcon/itemdict.h>
 
-#include <falcon/errors/ioerror.h>
+#include <falcon/errors/paramerror.h>
 
 namespace Falcon {
 
-ClassFunction::ClassFunction():
+/*#
+@class Function
+@brief Reflects a function, possibly the current one.
+@prop current  (static) Returns the current function (equivalent to fself)
+@prop pcount (static) Count of parameters through which the current function has been called.
+@prop params (static) Array of actual parameter values sent to the current function
+@prop pdict (static) Dictionary of actual parameter values sent to the current function.
+
+@prop name Name of the given function
+@prop fullname Name of the given function, including method prefixes.
+@prop module Module where this function is declared (can be nil)
+@prop location Standardized description of source code location where this function is declared.
+@prop methodOf Parent class of this function, if it's a statically defined class method.
+@prop paramlist parameters explicitly declared by this function.
+@prop signature Explicitly declared prototype for this function.
+
+@see passvp
+*/
+
+
+static void get_current( const Class*, const String&, void*, Item& value )
+{
+   VMContext* ctx = Processor::currentProcessor()->currentContext();
+   Function* func = ctx->currentFrame().m_function;
+   value.setUser(func->handler(), func);
+}
+
+
+static void get_pcount( const Class*, const String&, void*, Item& value )
+{
+   VMContext* ctx = Processor::currentProcessor()->currentContext();
+   value = (int64)ctx->currentFrame().m_paramCount;
+}
+
+
+static void get_params( const Class*, const String&, void*, Item& value )
+{
+   VMContext* ctx = Processor::currentProcessor()->currentContext();
+   CallFrame& frame = ctx->currentFrame();
+   ItemArray* array = new ItemArray(frame.m_paramCount);
+   for( uint32 i = 0; i < frame.m_paramCount; ++i )
+   {
+      array->append(*ctx->param(i));
+   }
+
+   value = FALCON_GC_HANDLE(array);
+}
+
+
+static void get_pdict( const Class*, const String&, void*, Item& value )
+{
+   VMContext* ctx = Processor::currentProcessor()->currentContext();
+   CallFrame& frame = ctx->currentFrame();
+   Function* func = ctx->currentFrame().m_function;
+   ItemDict* dict = new ItemDict;
+   int size = frame.m_paramCount < func->paramCount() ? frame.m_paramCount : func->paramCount();
+
+   for( int i = 0; i < size; ++i )
+   {
+      String* name = new String( func->variables().getParamName(i) );
+      Item* param = ctx->param(i);
+      dict->insert( FALCON_GC_HANDLE(name), *param );
+   }
+
+   value = FALCON_GC_HANDLE(dict);
+}
+
+
+static void get_name( const Class*, const String&, void* instance, Item& value )
+{
+   Function* func = static_cast<Function*>(instance);
+   value = FALCON_GC_HANDLE( new String( func->name() ) );
+}
+
+static void get_fullname( const Class*, const String&, void* instance, Item& value )
+{
+   Function* func = static_cast<Function*>(instance);
+   value = FALCON_GC_HANDLE( new String( func->fullName() ) );
+}
+
+static void get_location( const Class*, const String&, void* instance, Item& value )
+{
+   Function* func = static_cast<Function*>(instance);
+   value = FALCON_GC_HANDLE( new String( func->locate() ) );
+}
+
+static void get_module( const Class*, const String&, void* instance, Item& value )
+{
+   static class ClassModule* clsModule = Engine::instance()->stdHandlers()->moduleClass();
+
+   Function* func = static_cast<Function*>(instance);
+   Module* owner = func->module();
+   if( owner == 0 )
+   {
+      value.setNil();
+   }
+   else {
+      value.setUser( clsModule, owner );
+   }
+}
+
+static void get_methodOf( const Class*, const String&, void* instance, Item& value )
+{
+   static class Class* clsMeta = Engine::instance()->stdHandlers()->metaClass();
+
+   Function* func = static_cast<Function*>(instance);
+   Class* owner = func->methodOf();
+   if( owner == 0 )
+   {
+      value.setNil();
+   }
+   else {
+      value.setUser( clsMeta, owner );
+   }
+}
+
+
+static void get_signature( const Class*, const String&, void* instance, Item& value )
+{
+   Function* func = static_cast<Function*>(instance);
+   value = FALCON_GC_HANDLE( new String( func->signature() ) );
+}
+
+
+static void get_paramlist( const Class*, const String&, void* instance, Item& value )
+{
+   Function* func = static_cast<Function*>(instance);
+
+   ItemArray* params = new ItemArray;
+   const VarMap& vars = func->variables();
+   for( uint32 i = 0; i < vars.paramCount(); ++i ) {
+      params->append( FALCON_GC_HANDLE(new String(vars.getParamName(i) ) ) );
+   }
+
+   value = FALCON_GC_HANDLE(params);
+}
+
+namespace CFunction {
+/*#
+ @method parameter Function
+ @brief (static) Gets the nth parameter from the current function call.
+ @param nth The nth position (zero based), or the name of the parameter.
+ @return The value stored for the given parameter.
+ @raise AccessError if the value is out of range.
+ */
+FALCON_DECLARE_FUNCTION(parameter, "N|S")
+void Function_parameter::invoke( VMContext* ctx, int32 pCount )
+{
+   if( pCount <= 0 )
+   {
+      throw paramError(__LINE__, SRC );
+   }
+
+   Item iParam = *ctx->param(0);
+   // return to the previous function
+   ctx->returnFrame();
+   fassert( ctx->callDepth() >= 0 );
+   CallFrame& frame = ctx->currentFrame();
+
+   if( iParam.isOrdinal() )
+   {
+      uint32 id = (uint32) iParam.forceInteger();
+      if ( id >= frame.m_paramCount )
+      {
+         throw FALCON_SIGN_XERROR( ParamError, e_param_range, .extra("Parameter number out of range"));
+      }
+
+      ctx->topData() = *ctx->param(id);
+   }
+   else if( iParam.isString() )
+   {
+      const String& name = *iParam.asString();
+      VarMap& vars = frame.m_function->variables();
+      Variable* var = vars.find(name);
+      if( var == 0 || var->type() != Variable::e_nt_param )
+      {
+         throw FALCON_SIGN_XERROR( ParamError, e_param_range, .extra(String("Unknown parameter ") + name ));
+      }
+
+      if( var->id() < frame.m_paramCount )
+      {
+         ctx->topData() = *ctx->param(var->id());
+      }
+      // else, the nil created at previous return frame is ok
+   }
+   else {
+      // we have not a number nor a string.
+      throw paramError(__LINE__, SRC );
+   }
+}
+
+
+// I want to try the Ext function constructor...
+static void mth_ctor( VMContext* ctx, int32 )
+{
+   String name;
+   Item* i_name = ctx->param(0);
+   Item* i_proto = ctx->param(1);
+
+   if( i_name != 0 && ! i_name->isNil() )
+   {
+      if( i_name->isString() )
+      {
+         name = *i_name->asString();
+      }
+      else {
+         throw FALCON_SIGN_XERROR( ParamError, e_inv_params, .extra("[S],[S]"));
+      }
+   }
+
+   Function* func = new SynFunc(name);
+   if( i_proto != 0 && ! i_proto->isNil() )
+   {
+      if( i_proto->isString() )
+      {
+         const String& sign = *i_proto->asString();
+         if( ! func->parseDescription(sign) )
+         {
+            delete func;
+            throw FALCON_SIGN_XERROR( ParamError, e_param_range, .extra("Invalid signature"));
+         }
+      }
+      else {
+         delete func;
+         throw FALCON_SIGN_XERROR( ParamError, e_inv_params, .extra("[S],[S]"));
+      }
+   }
+
+   ctx->pushData(FALCON_GC_HANDLE(func));
+}
+
+}
+
+
+ClassFunction::ClassFunction(ClassMantra* parent):
    ClassMantra("Function", FLC_CLASS_ID_FUNC )
 {
+   addProperty("current", &get_current, 0, true );
+   addProperty("pcount", &get_pcount, 0, true );
+   addProperty("params", &get_params, 0, true );
+   addProperty("pdict", &get_pdict, 0, true );
+
+   addProperty("name", &get_name );
+   addProperty("fullname", &get_fullname );
+   addProperty("location", &get_location );
+   addProperty("module", &get_module );
+   addProperty("methodOf", &get_methodOf );
+   addProperty("signature", &get_signature );
+   addProperty("paramlist", &get_paramlist );
+
+   addMethod(new CFunction::Function_parameter, true);
+   setConstuctor( &CFunction::mth_ctor, "name:[S]");
+
+   setParent(parent);
 }
 
 
@@ -45,89 +299,15 @@ ClassFunction::~ClassFunction()
 }
 
 
-Class* ClassFunction::getParent( const String& name ) const
+void* ClassFunction::createInstance() const
 {
-   static Class* cls = Engine::handlers()->mantraClass();
-   
-   if( name == cls->name() ) return cls;
-   return 0;
+   return FALCON_CLASS_CREATE_AT_INIT;
 }
-
-bool ClassFunction::isDerivedFrom( const Class* parent ) const
-{
-   static Class* cls = Engine::handlers()->mantraClass();
-   
-   return parent == cls || parent == this;
-}
-
-void ClassFunction::enumerateParents( ClassEnumerator& cb ) const
-{
-   static Class* cls = Engine::handlers()->mantraClass();
-   
-   cb( cls );
-}
-
-void* ClassFunction::getParentData( const Class* parent, void* data ) const
-{
-   static Class* cls = Engine::handlers()->mantraClass();
-   
-   if( parent == cls || parent == this ) return data;
-   return 0;
-}
-
-
-void ClassFunction::enumerateProperties( void* instance, Class::PropertyEnumerator& cb ) const
-{
-   static Class* cls = Engine::handlers()->mantraClass();
-
-   cb("params");
-   cls->enumerateProperties(instance, cb);
-}
-
-
-void ClassFunction::enumeratePV( void* instance, Class::PVEnumerator& cb ) const
-{
-   static Class* cls = Engine::handlers()->mantraClass();
-   cls->enumeratePV(instance, cb);
-}
-
-
-bool ClassFunction::hasProperty( void* instance, const String& prop ) const
-{
-   static Class* cls = Engine::handlers()->mantraClass();
-
-   return
-         prop == "params"
-         || cls->hasProperty( instance, prop );
-}
-
 
 void ClassFunction::describe( void* instance, String& target, int, int ) const
 {
    Function* func = static_cast<Function*>(instance);
    target = func->name() + " /* Function " + func->locate() + " */";
-}
-
-
-void ClassFunction::op_getProperty( VMContext* ctx, void* instance, const String& prop) const
-{
-   static Class* cls = Engine::handlers()->mantraClass();
-   Function* func = static_cast<Function*>(instance);
-
-   if( prop == "params" )
-   {
-      // todo: cache them?
-      ItemArray* params = new ItemArray;
-      const VarMap& vars = func->variables();
-      for( uint32 i = 0; i < vars.paramCount(); ++i ) {
-         params->append( FALCON_GC_HANDLE(new String(vars.getParamName(i) ) ) );
-      }
-
-      ctx->stackResult(1, FALCON_GC_HANDLE(params) );
-   }
-   else {
-      cls->op_getProperty( ctx, instance, prop );
-   }
 }
 
 

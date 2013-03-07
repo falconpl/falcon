@@ -68,7 +68,9 @@ StdHandlers::StdHandlers()
 
 void StdHandlers::subscribe(Engine* engine)
 {
-   m_functionClass = new ClassFunction;
+   ClassMantra* mantra = new ClassMantra;
+   m_mantraClass = mantra;
+   m_functionClass = new ClassFunction(mantra);
    m_stringClass = new ClassString;
    m_rangeClass = new ClassRange;
    m_arrayClass = new ClassArray;
@@ -77,7 +79,6 @@ void StdHandlers::subscribe(Engine* engine)
    m_metaClass = new MetaClass;
    m_metaFalconClass = new MetaFalconClass;
    m_metaHyperClass = new MetaHyperClass;
-   m_mantraClass = new ClassMantra;
    m_synFuncClass = new ClassSynFunc;
    m_genericClass = new ClassGeneric;
    m_formatClass = new ClassFormat;

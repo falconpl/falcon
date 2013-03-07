@@ -34,20 +34,11 @@ class FALCON_DYN_CLASS ClassFunction: public ClassMantra
 {
 public:
 
-   ClassFunction();
+   ClassFunction(ClassMantra* parent);
    virtual ~ClassFunction();
    
-   virtual Class* getParent( const String& name ) const;
-   virtual bool isDerivedFrom( const Class* cls ) const;
-   virtual void enumerateParents( ClassEnumerator& cb ) const;
-   virtual void* getParentData( const Class* parent, void* data ) const;
-   
-
-   virtual void enumerateProperties( void* instance, Class::PropertyEnumerator& cb ) const;
-   virtual void enumeratePV( void* instance, Class::PVEnumerator& cb ) const;
-   virtual bool hasProperty( void* instance, const String& prop ) const;
-
    virtual void describe( void* instance, String& target, int maxDepth = 3, int maxLength = 60 ) const;
+   virtual void* createInstance() const;
 
    //=====================================================
    // Operators.
@@ -55,8 +46,6 @@ public:
    // Can a function instance be created?
    virtual void op_call( VMContext* ctx, int32 paramCount, void* self ) const;
    virtual void op_toString( VMContext* ctx, void* self ) const;
-
-   virtual void op_getProperty( VMContext* ctx, void* instance, const String& prop) const;
 
 protected:
    ClassFunction( const String& name, int64 type ):
