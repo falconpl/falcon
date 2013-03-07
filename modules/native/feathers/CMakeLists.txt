@@ -37,6 +37,7 @@ add_subdirectory(math)
 add_subdirectory(regex)
 add_subdirectory(rnd)
 #add_subdirectory(socket)
+add_subdirectory(sys)
 add_subdirectory(vm)
 #add_subdirectory(zlib)
 
