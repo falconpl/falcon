@@ -251,9 +251,22 @@ void ClassModule::store( VMContext*, DataWriter* stream, void* instance ) const
    }
    MESSAGE1( "Module store attributes." );
 
-   // restore the attributes
+   // store the attributes
    mod->attributes().store(stream);
    
+   MESSAGE1( "Module store international strings." );
+   {
+      Module::Private::StringSet& sset = mod->_p->m_istrings;
+      uint32 size = sset.size();
+      stream->write( size );
+      Module::Private::StringSet::iterator iter = sset.begin();
+      while( sset.end() != iter )
+      {
+         stream->write( *iter );
+         ++iter;
+      }
+   }
+
    MESSAGE1( "Module store complete." );
 }
 
@@ -514,6 +527,19 @@ void ClassModule::restoreModule( Module* mod, DataReader* stream ) const
 
    // restore the attributes
    mod->attributes().restore(stream);
+
+   MESSAGE1( "Module restore -- international strings." );
+   {
+      Module::Private::StringSet& sset = mod->_p->m_istrings;
+      uint32 size = 0;
+      stream->read( size );
+      for( uint32 i = 0; i < size; ++i )
+      {
+         String temp;
+         stream->read( temp );
+         sset.insert(temp);
+      }
+   }
 
    MESSAGE1( "Module restore complete." );
 }

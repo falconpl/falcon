@@ -545,8 +545,27 @@ public:
       m_globals.exportNS(this, sourceNS, target, targetNS );
    }
 
+   /** Returns the attributes for this entity. */
    const AttributeMap& attributes() const { return m_attributes; }
+   /** Returns the attributes for this entity. */
    AttributeMap& attributes() { return m_attributes; }
+
+   /**
+    * Adds an international string to the current module.
+    *
+    * This strings can then be separately enumerated and saved.
+    */
+   void addIString( const String& iString );
+
+   typedef Enumerator<String> IStringEnumerator;
+
+   void enumerateIStrings( IStringEnumerator& cb ) const;
+
+   /** Returns the number of international strings that can be enumerated in this module.
+    *
+    * This is useful in case of serialization, to know the number of international strings in advance.
+    */
+   uint32 countIStrings() const;
 
 protected:
    /** Invoked when refcount hits 0.

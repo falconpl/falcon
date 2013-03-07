@@ -703,6 +703,21 @@ void ModSpace::findDynamicMantra(
    retreiveDynamicModule( ctx, moduleUri, moduleName );
 }
 
+   void ModSpace::enumerateIStrings( IStringEnumerator& cb ) const
+   {
+      Private::ModMap::const_iterator miter = _p->m_modmap.begin();
+      while( miter != _p->m_modmap.end() )
+      {
+         miter->second->enumerateIStrings(cb);
+         ++miter;
+      }
+
+      if( m_parent != 0 )
+      {
+         m_parent->enumerateIStrings(cb);
+      }
+   }
+
 //================================================================================
 // Psteps
 //================================================================================

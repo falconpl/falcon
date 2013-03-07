@@ -255,6 +255,13 @@ public:
     */
    virtual void onRequirement( Requirement* rec ) = 0;
 
+   /** Called back when an international string is found in the code.
+    *
+    * This offers the implementation the occasion to save the i-string in a table.
+    */
+   virtual void onIString( const String& string ) = 0;
+
+
    /** Opens the main context frame.
     This context frame (main or base context frame) refers to the topmost
     context frame in the source, which doesn't refer to a specific function.

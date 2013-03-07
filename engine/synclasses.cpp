@@ -47,6 +47,7 @@
 #include <falcon/psteps/exprindex.h>
 #include <falcon/psteps/exprinherit.h>
 #include <falcon/psteps/exprinvoke.h>
+#include <falcon/psteps/expristring.h>
 #include <falcon/psteps/exprlit.h>
 #include <falcon/psteps/exprlogic.h>
 #include <falcon/psteps/exprmath.h>
@@ -819,6 +820,49 @@ void SynClasses::ClassValue::restore( VMContext* ctx, DataReader*dr ) const
    try {
       ctx->pushData( Item( this, expr ) );
       m_parent->restore( ctx, dr );
+   }
+   catch(...) {
+      ctx->popData();
+      delete expr;
+      throw;
+   }
+}
+
+//==========================================
+// Expr istring
+void* SynClasses::ClassIString::createInstance() const
+{
+   return new ExprIString;
+}
+bool SynClasses::ClassIString::op_init( VMContext* ctx, void* instance, int pcount ) const
+{
+   if( pcount < 1 || ! ctx->topData().isString() )
+   {
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__, SRC )
+            .origin( ErrorParam::e_orig_runtime)
+            .extra( String("S") ) );
+   }
+
+   ExprIString* expr = static_cast<ExprIString*>(instance);
+   expr->original( *ctx->topData().asString() );
+   return false;
+}
+void SynClasses::ClassIString::store( VMContext* ctx, DataWriter* dw, void* instance ) const
+{
+   ExprIString* expr = static_cast<ExprIString*>(instance);
+   dw->write(expr->original());
+   m_parent->store(ctx, dw, instance);
+}
+void SynClasses::ClassIString::restore( VMContext* ctx, DataReader*dr ) const
+{
+   String orig;
+   dr->read(orig);
+
+   ExprIString* expr = new ExprIString(orig);
+   try {
+      ctx->pushData( Item( this, expr ) );
+      m_parent->restore( ctx, dr );
+
    }
    catch(...) {
       ctx->popData();

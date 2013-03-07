@@ -269,6 +269,75 @@ static void get_uri(const Class*, const String&, void* instance, Item& value )
 }
 */
 
+namespace CVMProcess {
+
+/*#
+  @method getIs Process
+  @brief Returns an array containing all the translable strings in the system.
+ */
+FALCON_DECLARE_FUNCTION( getIs, "" )
+void Function_getIs::invoke( VMContext* ctx, int32 )
+{
+   Process* proc = static_cast<Process*>(ctx->self().asInst());
+   ModSpace* ms = proc->modSpace();
+   class Rator: public ModSpace::IStringEnumerator
+   {
+   public:
+      Rator(ItemArray* arr): m_arr(arr) {}
+      virtual ~Rator() {}
+      virtual bool operator()(const String& string )
+      {
+         m_arr->append( FALCON_GC_HANDLE( new String(string) ) );
+         return true;
+      }
+   public:
+      ItemArray* m_arr;
+   };
+
+   ItemArray* arr = new ItemArray;
+   Rator rator(arr);
+   ms->enumerateIStrings(rator);
+
+   ctx->returnFrame(FALCON_GC_HANDLE(arr));
+}
+
+/*#
+  @method setTT Process
+  @brief Sets the translation table for this process.
+  @param table A string => string dictionary of translations.
+  @optparam add if true, the translations in the table will be added to the existing one.
+
+  After the table is loaded, the i"" strings will be translated accordingly with
+  the given table throughout all the process.
+ */
+FALCON_DECLARE_FUNCTION( setTT, "table:D, add:[B]" )
+void Function_setTT::invoke( VMContext* ctx, int32 )
+{
+   Item* i_table = ctx->param(0);
+   Item* i_add = ctx->param(1);
+   if( i_table == 0 || ! i_table->isDict() )
+   {
+      throw paramError(__LINE__, SRC);
+   }
+
+   bool add = i_add == 0 ? false : i_add->isTrue();
+   Process* proc = static_cast<Process*>(ctx->self().asInst());
+   bool result = proc->setTranslationsTable( i_table->asDict(), add );
+   if( ! result )
+   {
+      throw FALCON_SIGN_XERROR( ParamError, e_param_range, .extra( "not S=>S") );
+   }
+
+   ctx->returnFrame();
+}
+
+
+}
+
+//==========================================================================
+// Main class
+//==========================================================================
+
 ClassVMProcess::ClassVMProcess():
          Class("VMProcess")
 {
@@ -280,6 +349,9 @@ ClassVMProcess::ClassVMProcess():
    addProperty( "id", &get_id );
    addProperty( "name", &get_name, 0, true );
    addProperty( "uri", &get_uri, 0, true );
+
+   addMethod( new CVMProcess::Function_getIs );
+   addMethod( new CVMProcess::Function_setTT );
 
 }
 

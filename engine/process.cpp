@@ -34,8 +34,12 @@
 #include <falcon/error.h>
 #include <falcon/gclock.h>
 #include <falcon/modspace.h>
+#include <falcon/itemdict.h>
 
 #include <set>
+#include <map>
+
+#define MAX_TLGEN 2100000000
 
 namespace Falcon {
 
@@ -44,9 +48,22 @@ class Process::Private
 public:
    typedef std::set<VMContext*> ContextSet;
    ContextSet m_liveContexts;
+
+   typedef std::map <String, String> TransTable;
+   TransTable *m_transTable;
+   TransTable *m_tempTable;
+   Mutex m_mtx_tt;
+
+   Private() {
+      m_transTable = 0;
+      m_tempTable = 0;
+   }
+
+   ~Private() {
+      delete m_transTable;
+      delete m_tempTable;
+   }
 };
-
-
 
 Process::Process( VMachine* owner, ModSpace* ms ):
    m_vm(owner),
@@ -58,7 +75,8 @@ Process::Process( VMachine* owner, ModSpace* ms ):
    m_error(0),
    m_added(false),
    m_resultLock(0),
-   m_mark(0)
+   m_mark(0),
+   m_tlgen(1)
 {
    _p = new Private;
 
@@ -90,7 +108,8 @@ Process::Process( VMachine* owner, bool bAdded ):
    m_error(0),
    m_added(bAdded),
    m_resultLock(0),
-   m_mark(0)
+   m_mark(0),
+   m_tlgen(1)
 {
    _p = new Private;
 
@@ -406,6 +425,216 @@ void Process::setStdEncoding( Transcoder* ts )
    m_textErr->setEncoding( ts );
 }
 
+
+bool Process::setTranslationsTable( ItemDict* dict, bool bAdditive )
+{
+   Private::TransTable* tt = new Private::TransTable;
+
+   try
+   {
+      class Rator: public ItemDict::Enumerator
+      {
+      public:
+         Rator( Private::TransTable* tt ): m_tt(tt){}
+         virtual ~Rator(){}
+         virtual void operator()( const Item& key, Item& value )
+         {
+            if( ! key.isString() || ! value.isString() )
+            {
+               throw "ops...";
+            }
+            (*m_tt)[*key.asString()] = *value.asString();
+         }
+      private:
+         Private::TransTable* m_tt;
+      };
+
+      Rator rator(tt);
+      dict->enumerate(rator);
+   }
+   catch( ... )
+   {
+      delete tt;
+      return false;
+   }
+
+   // if we're here, the stuff is done.
+   _p->m_mtx_tt.lock();
+   if( bAdditive )
+   {
+      Private::TransTable::iterator iter = tt->begin();
+      while( iter != tt->end() )
+      {
+         _p->m_transTable->insert( std::make_pair(iter->first, iter->second));
+         ++iter;
+      }
+   }
+   else {
+      Private::TransTable* tt_old = _p->m_transTable;
+      _p->m_transTable = tt;
+      tt = tt_old;
+   }
+
+   m_tlgen++;
+   if( m_tlgen > MAX_TLGEN )
+   {
+      m_tlgen = 1; // 0 is for newcomers in getTranslation
+   }
+   _p->m_mtx_tt.unlock();
+
+   // we do this outside the lock.
+   delete tt;
+
+   return true;
+}
+
+void Process::addTranslation( const String& original, const String& tld )
+{
+   _p->m_mtx_tt.lock();
+   if( _p->m_tempTable == 0 )
+   {
+      _p->m_tempTable = new Private::TransTable;
+   }
+   (*_p->m_tempTable)[original] = tld;
+   _p->m_mtx_tt.unlock();
+
+}
+
+void Process::commitTranslations( bool bAdditive )
+{
+   _p->m_mtx_tt.lock();
+   Private::TransTable* tt = _p->m_tempTable;
+   if( tt == 0 )
+   {
+      _p->m_mtx_tt.unlock();
+      return;
+   }
+
+   if( bAdditive )
+   {
+      Private::TransTable::iterator iter = tt->begin();
+      while( iter != tt->end() )
+      {
+         _p->m_transTable->insert( std::make_pair(iter->first, iter->second));
+         ++iter;
+      }
+   }
+   else {
+      Private::TransTable* tt_old = _p->m_transTable;
+      _p->m_transTable = tt;
+      tt = tt_old;
+   }
+
+   m_tlgen++;
+   if( m_tlgen > MAX_TLGEN )
+   {
+      m_tlgen = 1; // 0 is for newcomers in getTranslation
+   }
+   _p->m_tempTable = 0;
+   _p->m_mtx_tt.unlock();
+
+   // we do this outside the lock.
+   delete tt;
+}
+
+
+void Process::enumerateTranslations( TranslationEnumerator &te )
+{
+   _p->m_mtx_tt.lock();
+   Private::TransTable* tt = _p->m_transTable;
+   if( tt == 0 )
+   {
+      _p->m_mtx_tt.unlock();
+      te.count( 0 );
+      return;
+   }
+
+   if ( ! te.count( tt->size() ) )
+   {
+      _p->m_mtx_tt.unlock();
+      return;
+   }
+
+   Private::TransTable* t1 = new Private::TransTable;
+   *t1 = *tt;
+   _p->m_mtx_tt.unlock();
+
+   try {
+      Private::TransTable::iterator iter = t1->begin();
+      while( iter != t1->end() )
+      {
+         te(iter->first, iter->second);
+         ++iter;
+      }
+      delete t1;
+   }
+   catch( ... )
+   {
+      delete t1;
+      throw;
+   }
+}
+
+
+bool Process::getTranslation( const String& original, String& tld ) const
+{
+   _p->m_mtx_tt.lock();
+   Private::TransTable* tt = _p->m_transTable;
+   Private::TransTable::iterator pos = tt->find( original );
+   if( pos == tt->end() )
+   {
+      _p->m_mtx_tt.unlock();
+      return false;
+   }
+   tld = pos->second;
+   _p->m_mtx_tt.unlock();
+
+   return true;
+}
+
+
+bool Process::getTranslation( const String& original, String& tld, uint32 &gen) const
+{
+   _p->m_mtx_tt.lock();
+   if( gen == m_tlgen )
+   {
+      _p->m_mtx_tt.unlock();
+      return false;
+   }
+
+   gen = m_tlgen;
+
+   Private::TransTable* tt = _p->m_transTable;
+   if( tt == 0 )
+   {
+      _p->m_mtx_tt.unlock();
+      tld = original;
+      return true;
+   }
+
+   Private::TransTable::iterator pos = tt->find( original );
+   if( pos != tt->end() )
+   {
+      tld = pos->second;
+      _p->m_mtx_tt.unlock();
+   }
+   else
+   {
+      _p->m_mtx_tt.unlock();
+      tld = original;
+   }
+
+   return true;
+}
+
+uint32 Process::getTranslationGeneration() const
+{
+   _p->m_mtx_tt.lock();
+   uint32 gen = m_tlgen;
+   _p->m_mtx_tt.unlock();
+
+   return gen;
+}
 
 }
 

@@ -1,0 +1,65 @@
+/*
+   Native internationalization support (i18n).
+   
+   The i-strings are automatically and efficeintly
+   translated in the target application language by
+   searching them in a process-wide table that can be
+   dynamically changed by the scripts.
+   
+   The strings are actually searched just once, after
+   the table is changed. Further fetches of the i-strings
+   immediately return the alredy known translated value.
+   
+   Also, the i-strings are automatically traced by the
+   system to be easily extracted on a per-process basis;
+   it is then possible to merge them in a Falcon dictionary
+   and write them on a .fal file that can be then edited
+   and read via load, import or include().
+*/
+function hail()
+   > i"Hello"
+   > i"How are you?"
+end
+
+> "Untranslated:"
+hail()
+>
+
+cp = VMProcess.current
+cp.setTT( .[
+   "Hello" => "Ciao!"
+   "How are you?" => "Come stai?"
+   ])
+
+> "Italian:"
+hail()
+>
+
+cp.setTT( .[
+   "Hello" => "こんにちは"
+   "How are you?" => "お元気ですか？"
+   ])
+
+> i"Japanese:"
+hail()
+>
+
+cp.setTT( .[
+   "Hello" => "你好"
+   "How are you?" => "你好吗？"
+   ])
+
+> i"Chinese:"
+hail()
+>
+
+// here we see the strings in the whole process:
+i_strings = cp.getIs()
+
+// you can easily manage the extracted data:
+> "Creating a table for translators:"
+for string in i_strings
+   forfirst: >"VMProcess.current.setTT( .[ "
+   > "      \"", string, "\" => \"", string , "\" /* please translate */" 
+   forlast: >"])"
+end

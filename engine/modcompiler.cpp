@@ -374,6 +374,12 @@ void ModCompiler::Context::onRequirement( Requirement* rec )
    m_owner->m_module->addRequirement( rec );
 }
 
+
+void ModCompiler::Context::onIString(const String& string )
+{
+   m_owner->m_module->addIString( string );
+}
+
 //=================================================================
 //
 //

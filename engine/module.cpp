@@ -925,6 +925,28 @@ void Module::setMainFunction( Function* mf )
    addMantra( mf, false );
 }
 
+
+void Module::addIString( const String& iString )
+{
+   _p->m_istrings.insert( iString );
+}
+
+
+void Module::enumerateIStrings( IStringEnumerator& cb ) const
+{
+   Private::StringSet::iterator iter = _p->m_istrings.begin();
+   while( iter != _p->m_istrings.end() )
+   {
+      cb(*iter);
+      ++iter;
+   }
+}
+
+uint32 Module::countIStrings() const
+{
+   return _p->m_istrings.size();
+}
+
 //=====================================================================
 // Classes
 //=====================================================================

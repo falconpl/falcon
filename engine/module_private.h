@@ -271,6 +271,9 @@ public:
    typedef std::deque<Class*> InitList;
    InitList m_initList;
 
+   typedef std::set<String> StringSet;
+   StringSet m_istrings;
+
    Private()
    {}
 

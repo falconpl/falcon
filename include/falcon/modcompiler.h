@@ -108,6 +108,7 @@ protected:
       virtual Variable* onGlobalAccessed( const String& name );
       virtual Item* getVariableValue( const String& name, Variable* var );
       virtual void onRequirement( Requirement* rec );
+      virtual void onIString(const String& string );
 
    protected:
       ModCompiler* m_owner;

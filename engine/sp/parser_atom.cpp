@@ -28,6 +28,7 @@
 #include <falcon/psteps/exprfself.h>
 #include <falcon/psteps/exprsym.h>
 #include <falcon/psteps/exprvalue.h>
+#include <falcon/psteps/expristring.h>
 #include <falcon/psteps/exprinit.h>
 #include <falcon/stdhandlers.h>
 
@@ -216,10 +217,23 @@ void apply_Atom_RString ( const Rule&, Parser& p )
    ti->setValue( res, treestep_deletor );
 }
 
-void apply_Atom_IString ( const Rule& r, Parser& p )
+void apply_Atom_IString ( const Rule&, Parser& p )
 {
-   // todo
-   apply_Atom_String( r, p );
+   // << (r_Atom_String << "Atom_String" << apply_Atom_String << T_String )
+   SourceParser& sp = static_cast<SourceParser&>(p);
+   //ParserContext* ctx = static_cast<ParserContext*>(p.context());
+   TokenInstance* ti = p.getNextToken();
+
+   // get the string and it's class, to generate a static UserValue
+   String* s = ti->detachString();
+   // The exprvalue is made so that it will gc lock the string.
+   Expression* res = new ExprIString(*s, ti->line(), ti->chr() );
+   ParserContext* ctx = static_cast<ParserContext*>(sp.context());
+   ctx->onIString(*s);
+
+   delete s;
+   ti->token( sp.Atom );
+   ti->setValue( res, treestep_deletor );
 }
 
 void apply_Atom_False ( const Rule&, Parser& p )

@@ -22,6 +22,7 @@
 #include <falcon/pstep.h>
 
 #include <falcon/refcounter.h>
+#include <falcon/enumerator.h>
 
 namespace Falcon {
 
@@ -264,6 +265,16 @@ public:
    static Class* handler();
 
    Module* mainModule() const { return m_mainMod; }
+
+   typedef Enumerator<String> IStringEnumerator;
+
+   /** Enumerates all the international strings recorded by modules in this modulespace.
+    *
+    * Strings are not consolidated prior enumeration; this means the strings
+    * will be out of order, and there might be some duplicates.
+    *
+    */
+   void enumerateIStrings( IStringEnumerator& is ) const;
 
 private:      
    class Private;

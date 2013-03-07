@@ -135,6 +135,10 @@ public:
       m_sp.addError( e_directive_not_allowed, m_sp.currentSource(), m_sp.currentLine()-1, 0, 0 );
    }
 
+   virtual void onIString( const String& )
+   {
+      // do nothing;
+   }
 
 private:
    VMContext* m_ctx;

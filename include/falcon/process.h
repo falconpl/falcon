@@ -300,6 +300,91 @@ public:
     */
    uint32 currentMark() const { return m_mark; }
 
+
+   /** Changes the string table for i-string translation.
+    * \param dict A string->string dictionary of translations.
+    * \return true if the dictionary has all strings, false if some item is not a string.
+    *
+    * This method receives an item dictionary that should contain
+    * strings only. If not, the method returns false.
+    */
+   bool setTranslationsTable( ItemDict* dict, bool bAdditive = false );
+
+   /**
+    * Adds a new translation string.
+    *
+    * Translations are not immediately visible; it's necessary to invoke
+    * commitTranslation() to make the added translations to be seen
+    * in the global translation table.
+    */
+   void addTranslation( const String& original, const String& tld );
+
+   void commitTranslations( bool additive = false );
+
+   class TranslationEnumerator
+   {
+   public:
+      TranslationEnumerator() {}
+      virtual ~TranslationEnumerator() {}
+      virtual bool count( size_t size ) = 0;
+      virtual void operator()( const String& orig, const String& tl ) = 0;
+   };
+
+   /** Enumerates all the translations in the current table.
+    * The enumeration loop is performed outside the translation lock,
+    * after having done a copy of the translation table.
+    *
+    * This method will first invoke the count() method of the translation enumerator
+    * to notify the size of the table. If that method returns false, the
+    * enumeration is not performed.
+    *
+    */
+   void enumerateTranslations( TranslationEnumerator &te );
+
+   /** Gets the translation of a given string.
+    * \param code The untraslated original string.
+    * \param tld A string where to place the translation.
+    * \param bool True if the translation is found, false otherwise.
+    *
+    * If the translation is not found, tld is unmodified.
+    */
+   bool getTranslation( const String& original, String& tld ) const;
+
+   /** Gets the translation of a given string for syntactic rendering.
+    * \param code The untraslated original string.
+    * \param tld A string where to place the translation.
+    * \param gen The generation known by the invoker (0 for unknown).
+    * \param bool True if the generation is changed, false otherwise.
+    *
+    * This version of the function checks if the translation of a given original
+    * string has changed since last time the invoker has asked it.
+    *
+    * When the invoker hasn't any previous result for this function, it invokes
+    * the function with gen=0.
+    *
+    * When the generation is different from the one currently known
+    * by the engine, this method always fills tld.
+    * If a translation for the original string is not
+    * found, tld receives a copy of the string passed as original. In any case,
+    * when \b gen is different from the current generation, the method returns
+    * true, indicating that the caller should update its cache. Also, \b gen
+    * is changed to the currently known generation.
+    *
+    * When the \b gen is the same as the generation known by this process,
+    * the string in tld is unchanged and the method returns false.
+    *
+    * \note The initial status of the process sets the current generation to 1;
+    * this means that the first time the method is invoked, all the i-strings of
+    * a process will be updated (with copies of their original). The first change
+    * of the string table for the process is marked with generation 2.
+    *
+    */
+   bool getTranslation( const String& original, String& tld, uint32 &gen) const;
+
+   /** Gets the current translation generation.
+    */
+   uint32 getTranslationGeneration() const;
+
 protected:
    Process( VMachine* owner, bool added );
    virtual ~Process();
@@ -338,6 +423,8 @@ protected:
 
    Transcoder* m_stdCoder;
    bool m_mark;
+
+   uint32 m_tlgen;
 
 
    void inheritStreams();
