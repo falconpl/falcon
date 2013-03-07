@@ -1,5 +1,5 @@
 /* FALCON - The Falcon Programming Language.
- * FILE: math_extra.cpp
+ * FILE: vm.cpp
  * 
  * Interface to the virtual machine
  * Main module file, providing the module object to the Falcon engine.
@@ -47,5 +47,5 @@ FALCON_MODULE_DECL
    return mod;
 }
 
-/* end of math_extra.cpp */
+/* end of vm.cpp */
 

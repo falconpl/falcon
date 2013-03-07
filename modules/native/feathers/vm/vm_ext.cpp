@@ -172,5 +172,5 @@ namespace Falcon {
     }
 } // namespace Falcon::Ext
 
-/* end of rnd_ext.cpp */
+/* end of vm_ext.cpp */
 
