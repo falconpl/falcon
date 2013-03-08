@@ -71,7 +71,7 @@ public:
    FileDataMPX* m_master;
 
    static DWORD WINAPI ThreadProc( 
-      _In_  LPVOID lpParameter
+        LPVOID lpParameter
    );
 
    Private( FileDataMPX* master )
@@ -123,25 +123,25 @@ public:
    void removeStreams();
 
    static VOID CALLBACK onReadComplete(
-        _In_     DWORD dwErrorCode,
-        _In_     DWORD dwNumberOfBytesTransfered,
-        _Inout_  LPOVERLAPPED lpOverlapped
+      DWORD dwErrorCode,
+      DWORD dwNumberOfBytesTransfered,
+      LPOVERLAPPED lpOverlapped
    );
 
    static VOID CALLBACK onWriteComplete(
-        _In_     DWORD dwErrorCode,
-        _In_     DWORD dwNumberOfBytesTransfered,
-        _Inout_  LPOVERLAPPED lpOverlapped
+      DWORD dwErrorCode,
+      DWORD dwNumberOfBytesTransfered,
+      LPOVERLAPPED lpOverlapped
    );
 
    static VOID CALLBACK onWaitReadComplete(
-     _In_  PVOID lpParameter,
-     _In_  BOOLEAN TimerOrWaitFired
+      PVOID lpParameter,
+      BOOLEAN TimerOrWaitFired
    );
 
    static VOID CALLBACK onWaitWriteComplete(
-     _In_  PVOID lpParameter,
-     _In_  BOOLEAN TimerOrWaitFired
+      PVOID lpParameter,
+      BOOLEAN TimerOrWaitFired
    );
 };
 
@@ -355,7 +355,8 @@ void FileDataMPX::Private::removeFromMultiplex( Stream* stream )
          fdx->bBusy = false;
          LeaveCriticalSection( &m_busyLock );
          
-         CancelIoEx(fdx->hFile, &fdx->ovl.overlapped);
+         //CancelIoEx(fdx->hFile, &fdx->ovl.overlapped);
+         CancelIo(fdx->hFile);
       }
       else 
       {
@@ -378,7 +379,8 @@ void FileDataMPX::Private::removeStreams()
       FileDataEx* fdx = static_cast<FileDataEx*>(fs->fileData());
       if( fdx->bBusy )
       {
-         CancelIoEx(fdx->hFile, &fdx->ovl.overlapped);
+         //CancelIoEx(fdx->hFile, &fdx->ovl.overlapped);
+         CancelIo(fdx->hFile);
       }
       fs->decref();
       ++iter;
@@ -387,9 +389,9 @@ void FileDataMPX::Private::removeStreams()
 
 
 VOID CALLBACK FileDataMPX::Private::onReadComplete(
-     _In_     DWORD dwErrorCode,
-     _In_     DWORD dwNumberOfBytesTransfered,
-     _Inout_  LPOVERLAPPED lpOverlapped
+      DWORD dwErrorCode,
+      DWORD dwNumberOfBytesTransfered,
+      LPOVERLAPPED lpOverlapped
 )
 {
    FileDataEx::OVERLAPPED_EX* ovl = reinterpret_cast<FileDataEx::OVERLAPPED_EX*>(lpOverlapped);
@@ -399,9 +401,9 @@ VOID CALLBACK FileDataMPX::Private::onReadComplete(
 
 
 VOID CALLBACK FileDataMPX::Private::onWriteComplete(
-     _In_     DWORD dwErrorCode,
-     _In_     DWORD dwNumberOfBytesTransfered,
-     _Inout_  LPOVERLAPPED lpOverlapped
+      DWORD dwErrorCode,
+      DWORD dwNumberOfBytesTransfered,
+      LPOVERLAPPED lpOverlapped
 )
 {
    FileDataEx::OVERLAPPED_EX* ovl = reinterpret_cast<FileDataEx::OVERLAPPED_EX*>(lpOverlapped);
@@ -411,8 +413,8 @@ VOID CALLBACK FileDataMPX::Private::onWriteComplete(
 
 
 VOID CALLBACK FileDataMPX::Private::onWaitReadComplete(
-  _In_  PVOID lpParameter,
-  _In_  BOOLEAN /* TimerOrWaitFired */
+      PVOID lpParameter,
+      BOOLEAN /* TimerOrWaitFired */
 )
 {
    FileDataEx* fdx = reinterpret_cast<FileDataEx*>(lpParameter);
@@ -462,8 +464,8 @@ VOID CALLBACK FileDataMPX::Private::onWaitReadComplete(
 }
 
 VOID CALLBACK FileDataMPX::Private::onWaitWriteComplete(
-  _In_  PVOID lpParameter,
-  _In_  BOOLEAN /* TimerOrWaitFired */
+      PVOID lpParameter,
+      BOOLEAN /* TimerOrWaitFired */
 )
 {
    FileDataEx* fdx = reinterpret_cast<FileDataEx*>(lpParameter);
