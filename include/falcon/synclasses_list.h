@@ -1,12 +1,11 @@
 
-
 #ifdef FALCON_SYNCLASS_DECLARATOR_DECLARE
 #undef FALCON_SYNCLASS_DECLARATOR_EX
 #undef FALCON_SYNCLASS_DECLARATOR
 #define FALCON_SYNCLASS_DECLARATOR_EX( variable, name, type, extra ) \
-   class Class##name: public DerivedFrom\
+   class Class##name: public Class##type\
    {public:\
-      Class##name( Class* derfrom ): DerivedFrom( derfrom, #name ) {}   \
+      Class##name( Class* derfrom ): Class##type( #name ) {setParent(derfrom);}   \
       virtual ~Class##name() {};\
       virtual void* createInstance() const;\
       virtual bool op_init( VMContext* ctx, void* instance, int32 pcount ) const;\
@@ -45,7 +44,7 @@
 
 #else
 #define FALCON_SYNCLASS_DECLARATOR_EX( variable, name, type, extra ) 
-#define FALCON_SYNCLASS_DECLARATOR( variable, name, type ) 
+#define FALCON_SYNCLASS_DECLARATOR( variable, name, type )
 #endif
 #endif
 #endif
@@ -54,37 +53,37 @@
 //======================================================================
 // Expression classes
 //
-FALCON_SYNCLASS_DECLARATOR(m_expr_genarray, GenArray, expr)
-FALCON_SYNCLASS_DECLARATOR(m_expr_assign, Assign, expr)
-FALCON_SYNCLASS_DECLARATOR(m_expr_bnot, BNot, expr)
-FALCON_SYNCLASS_DECLARATOR(m_expr_call, Call, expr)
-FALCON_SYNCLASS_DECLARATOR(m_expr_ep, EP, expr)
-FALCON_SYNCLASS_DECLARATOR(m_expr_invoke, Invoke, expr)
-FALCON_SYNCLASS_DECLARATOR(m_expr_stripol, StrIPol, expr)
-FALCON_SYNCLASS_DECLARATOR_EX(m_expr_closure, GenClosure, expr, \
+FALCON_SYNCLASS_DECLARATOR(m_expr_genarray, GenArray, Expression)
+FALCON_SYNCLASS_DECLARATOR(m_expr_assign, Assign, Expression)
+FALCON_SYNCLASS_DECLARATOR(m_expr_bnot, BNot, Expression)
+FALCON_SYNCLASS_DECLARATOR(m_expr_call, Call, Expression)
+FALCON_SYNCLASS_DECLARATOR(m_expr_ep, EP, Expression)
+FALCON_SYNCLASS_DECLARATOR(m_expr_invoke, Invoke, Expression)
+FALCON_SYNCLASS_DECLARATOR(m_expr_stripol, StrIPol, Expression)
+FALCON_SYNCLASS_DECLARATOR_EX(m_expr_closure, GenClosure, Expression, \
       virtual void flatten( VMContext* ctx, ItemArray& subItems, void* instance ) const;\
       virtual void unflatten( VMContext* ctx, ItemArray& subItems, void* instance ) const; )
 
 
 // compare
-FALCON_SYNCLASS_DECLARATOR(m_expr_lt, LT, expr)
-FALCON_SYNCLASS_DECLARATOR(m_expr_le, LE, expr)
-FALCON_SYNCLASS_DECLARATOR(m_expr_gt, GT, expr)
-FALCON_SYNCLASS_DECLARATOR(m_expr_ge, GE, expr)
-FALCON_SYNCLASS_DECLARATOR(m_expr_eq, EQ, expr)
-FALCON_SYNCLASS_DECLARATOR(m_expr_ne, NE, expr)
+FALCON_SYNCLASS_DECLARATOR(m_expr_lt, LT, Expression)
+FALCON_SYNCLASS_DECLARATOR(m_expr_le, LE, Expression)
+FALCON_SYNCLASS_DECLARATOR(m_expr_gt, GT, Expression)
+FALCON_SYNCLASS_DECLARATOR(m_expr_ge, GE, Expression)
+FALCON_SYNCLASS_DECLARATOR(m_expr_eq, EQ, Expression)
+FALCON_SYNCLASS_DECLARATOR(m_expr_ne, NE, Expression)
 //
-FALCON_SYNCLASS_DECLARATOR(m_expr_gendict, GenDict, expr)
-FALCON_SYNCLASS_DECLARATOR_EX(m_expr_dot, DotAccess, expr, \
+FALCON_SYNCLASS_DECLARATOR(m_expr_gendict, GenDict, Expression)
+FALCON_SYNCLASS_DECLARATOR_EX(m_expr_dot, DotAccess, Expression, \
       virtual void store( VMContext*, DataWriter* dw, void* instance ) const; \
       )
 
-FALCON_SYNCLASS_DECLARATOR(m_expr_iif, IIF, expr)
-FALCON_SYNCLASS_DECLARATOR(m_expr_eeq, EEQ, expr)
-FALCON_SYNCLASS_DECLARATOR(m_expr_in, In, expr)
-FALCON_SYNCLASS_DECLARATOR(m_expr_notin, Notin, expr)
+FALCON_SYNCLASS_DECLARATOR(m_expr_iif, IIF, Expression)
+FALCON_SYNCLASS_DECLARATOR(m_expr_eeq, EEQ, Expression)
+FALCON_SYNCLASS_DECLARATOR(m_expr_in, In, Expression)
+FALCON_SYNCLASS_DECLARATOR(m_expr_notin, Notin, Expression)
 
-FALCON_SYNCLASS_DECLARATOR_EX(m_expr_provides, Provides, expr, \
+FALCON_SYNCLASS_DECLARATOR_EX(m_expr_provides, Provides, Expression, \
          virtual void store( VMContext*, DataWriter* dw, void* instance ) const; \
          virtual void op_getProperty( VMContext* ctx, void* instance, const String& prop) const;\
          virtual void op_setProperty( VMContext* ctx, void* instance, const String& prop ) const;\
@@ -92,102 +91,102 @@ FALCON_SYNCLASS_DECLARATOR_EX(m_expr_provides, Provides, expr, \
          )
 
 
-FALCON_SYNCLASS_DECLARATOR_EX(m_expr_lit, Lit, expr, \
+FALCON_SYNCLASS_DECLARATOR_EX(m_expr_lit, Lit, Expression, \
          virtual void flatten( VMContext* ctx, ItemArray& subItems, void* instance ) const;\
          virtual void unflatten( VMContext* ctx, ItemArray& subItems, void* instance ) const; )
 
-FALCON_SYNCLASS_DECLARATOR_EX(m_expr_tree, Tree, expr, \
+FALCON_SYNCLASS_DECLARATOR_EX(m_expr_tree, Tree, Expression, \
             void op_call(VMContext* ctx, int pcount, void* instance) const; \
             virtual void store( VMContext*, DataWriter* dw, void* instance ) const; \
             virtual void flatten( VMContext* ctx, ItemArray& subItems, void* instance ) const;\
             virtual void unflatten( VMContext* ctx, ItemArray& subItems, void* instance ) const; )
 
 // inc-dec
-FALCON_SYNCLASS_DECLARATOR(m_expr_preinc, PreInc, expr)
-FALCON_SYNCLASS_DECLARATOR(m_expr_predec, PreDec, expr)
-FALCON_SYNCLASS_DECLARATOR(m_expr_postinc, PostInc, expr)
-FALCON_SYNCLASS_DECLARATOR(m_expr_postdec, PostDec, expr)
+FALCON_SYNCLASS_DECLARATOR(m_expr_preinc, PreInc, Expression)
+FALCON_SYNCLASS_DECLARATOR(m_expr_predec, PreDec, Expression)
+FALCON_SYNCLASS_DECLARATOR(m_expr_postinc, PostInc, Expression)
+FALCON_SYNCLASS_DECLARATOR(m_expr_postdec, PostDec, Expression)
 //
-FALCON_SYNCLASS_DECLARATOR(m_expr_index, IndexAccess, expr)
+FALCON_SYNCLASS_DECLARATOR(m_expr_index, IndexAccess, Expression)
 
-FALCON_SYNCLASS_DECLARATOR_EX(m_expr_inherit, Inherit, expr, \
+FALCON_SYNCLASS_DECLARATOR_EX(m_expr_inherit, Inherit, Expression, \
       virtual void store( VMContext*, DataWriter* dw, void* instance ) const; \
       virtual void flatten( VMContext* ctx, ItemArray& subItems, void* instance ) const;\
       virtual void unflatten( VMContext* ctx, ItemArray& subItems, void* instance ) const; )
 
-FALCON_SYNCLASS_DECLARATOR(m_expr_parentship, Parentship, expr )
+FALCON_SYNCLASS_DECLARATOR(m_expr_parentship, Parentship, Expression )
 
 // Logic
-FALCON_SYNCLASS_DECLARATOR(m_expr_not, Not, expr)
-FALCON_SYNCLASS_DECLARATOR(m_expr_and, And, expr)
-FALCON_SYNCLASS_DECLARATOR(m_expr_or, Or, expr)
+FALCON_SYNCLASS_DECLARATOR(m_expr_not, Not, Expression)
+FALCON_SYNCLASS_DECLARATOR(m_expr_and, And, Expression)
+FALCON_SYNCLASS_DECLARATOR(m_expr_or, Or, Expression)
 // Math
-FALCON_SYNCLASS_DECLARATOR(m_expr_plus, Plus, expr)
-FALCON_SYNCLASS_DECLARATOR(m_expr_minus, Minus, expr)
-FALCON_SYNCLASS_DECLARATOR(m_expr_times, Times, expr)
-FALCON_SYNCLASS_DECLARATOR(m_expr_div, Div, expr)
-FALCON_SYNCLASS_DECLARATOR(m_expr_mod, Mod, expr)
-FALCON_SYNCLASS_DECLARATOR(m_expr_pow, Pow, expr)
-FALCON_SYNCLASS_DECLARATOR(m_expr_rshift, RShift, expr)
-FALCON_SYNCLASS_DECLARATOR(m_expr_lshift, LShift, expr)
-FALCON_SYNCLASS_DECLARATOR(m_expr_band, BAnd, expr)
-FALCON_SYNCLASS_DECLARATOR(m_expr_bor, BOr, expr)
-FALCON_SYNCLASS_DECLARATOR(m_expr_bxor, BXor, expr)
+FALCON_SYNCLASS_DECLARATOR(m_expr_plus, Plus, Expression)
+FALCON_SYNCLASS_DECLARATOR(m_expr_minus, Minus, Expression)
+FALCON_SYNCLASS_DECLARATOR(m_expr_times, Times, Expression)
+FALCON_SYNCLASS_DECLARATOR(m_expr_div, Div, Expression)
+FALCON_SYNCLASS_DECLARATOR(m_expr_mod, Mod, Expression)
+FALCON_SYNCLASS_DECLARATOR(m_expr_pow, Pow, Expression)
+FALCON_SYNCLASS_DECLARATOR(m_expr_rshift, RShift, Expression)
+FALCON_SYNCLASS_DECLARATOR(m_expr_lshift, LShift, Expression)
+FALCON_SYNCLASS_DECLARATOR(m_expr_band, BAnd, Expression)
+FALCON_SYNCLASS_DECLARATOR(m_expr_bor, BOr, Expression)
+FALCON_SYNCLASS_DECLARATOR(m_expr_bxor, BXor, Expression)
 // Auto-math
-FALCON_SYNCLASS_DECLARATOR(m_expr_aplus, AutoPlus, expr)
-FALCON_SYNCLASS_DECLARATOR(m_expr_aminus, AutoMinus, expr)
-FALCON_SYNCLASS_DECLARATOR(m_expr_atimes, AutoTimes, expr)
-FALCON_SYNCLASS_DECLARATOR(m_expr_adiv, AutoDiv, expr)
-FALCON_SYNCLASS_DECLARATOR(m_expr_amod, AutoMod, expr)
-FALCON_SYNCLASS_DECLARATOR(m_expr_apow, AutoPow, expr)
-FALCON_SYNCLASS_DECLARATOR(m_expr_alshift, AutoLShift, expr)
-FALCON_SYNCLASS_DECLARATOR(m_expr_arshift, AutoRShift, expr)
+FALCON_SYNCLASS_DECLARATOR(m_expr_aplus, AutoPlus, Expression)
+FALCON_SYNCLASS_DECLARATOR(m_expr_aminus, AutoMinus, Expression)
+FALCON_SYNCLASS_DECLARATOR(m_expr_atimes, AutoTimes, Expression)
+FALCON_SYNCLASS_DECLARATOR(m_expr_adiv, AutoDiv, Expression)
+FALCON_SYNCLASS_DECLARATOR(m_expr_amod, AutoMod, Expression)
+FALCON_SYNCLASS_DECLARATOR(m_expr_apow, AutoPow, Expression)
+FALCON_SYNCLASS_DECLARATOR(m_expr_alshift, AutoLShift, Expression)
+FALCON_SYNCLASS_DECLARATOR(m_expr_arshift, AutoRShift, Expression)
 
 // Functional
-FALCON_SYNCLASS_DECLARATOR(m_expr_compose, Compose, expr )
+FALCON_SYNCLASS_DECLARATOR(m_expr_compose, Compose, Expression)
 
 // 
-FALCON_SYNCLASS_DECLARATOR_EX(m_expr_munpack, MUnpack, expr, \
+FALCON_SYNCLASS_DECLARATOR_EX(m_expr_munpack, MUnpack, Expression, \
          virtual void store( VMContext*, DataWriter* dw, void* instance ) const; \
          virtual void flatten( VMContext* ctx, ItemArray& subItems, void* instance ) const;\
          virtual void unflatten( VMContext* ctx, ItemArray& subItems, void* instance ) const; )
 
-FALCON_SYNCLASS_DECLARATOR(m_expr_neg, Neg, expr)
+FALCON_SYNCLASS_DECLARATOR(m_expr_neg, Neg, Expression)
 // OOB
-FALCON_SYNCLASS_DECLARATOR(m_expr_oob, Oob, expr)
-FALCON_SYNCLASS_DECLARATOR(m_expr_deoob, DeOob, expr)
-FALCON_SYNCLASS_DECLARATOR(m_expr_isoob, IsOob, expr)
-FALCON_SYNCLASS_DECLARATOR(m_expr_xoroob, XorOob, expr)
+FALCON_SYNCLASS_DECLARATOR(m_expr_oob, Oob, Expression)
+FALCON_SYNCLASS_DECLARATOR(m_expr_deoob, DeOob, Expression)
+FALCON_SYNCLASS_DECLARATOR(m_expr_isoob, IsOob, Expression)
+FALCON_SYNCLASS_DECLARATOR(m_expr_xoroob, XorOob, Expression)
 // 
-FALCON_SYNCLASS_DECLARATOR(m_expr_pseudocall, PseudoCall, expr)
-FALCON_SYNCLASS_DECLARATOR_EX(m_expr_genproto, GenProto, expr, \
+FALCON_SYNCLASS_DECLARATOR(m_expr_pseudocall, PseudoCall, Expression)
+FALCON_SYNCLASS_DECLARATOR_EX(m_expr_genproto, GenProto, Expression, \
          virtual void flatten( VMContext* ctx, ItemArray& subItems, void* instance ) const;\
          virtual void unflatten( VMContext* ctx, ItemArray& subItems, void* instance ) const; )
 
-FALCON_SYNCLASS_DECLARATOR(m_expr_genrange, GenRange, expr)
-FALCON_SYNCLASS_DECLARATOR(m_expr_self, Self, expr)
-FALCON_SYNCLASS_DECLARATOR(m_expr_fself, FSelf, expr)
-FALCON_SYNCLASS_DECLARATOR(m_expr_init, Init, expr)
-FALCON_SYNCLASS_DECLARATOR(m_expr_starindex, StarIndexAccess, expr)
-FALCON_SYNCLASS_DECLARATOR_EX(m_expr_unpack, Unpack, expr, \
+FALCON_SYNCLASS_DECLARATOR(m_expr_genrange, GenRange, Expression)
+FALCON_SYNCLASS_DECLARATOR(m_expr_self, Self, Expression)
+FALCON_SYNCLASS_DECLARATOR(m_expr_fself, FSelf, Expression)
+FALCON_SYNCLASS_DECLARATOR(m_expr_init, Init, Expression)
+FALCON_SYNCLASS_DECLARATOR(m_expr_starindex, StarIndexAccess, Expression)
+FALCON_SYNCLASS_DECLARATOR_EX(m_expr_unpack, Unpack, Expression, \
       virtual void store( VMContext*, DataWriter* dw, void* instance ) const; \
       )
 
 
-FALCON_SYNCLASS_DECLARATOR(m_expr_unquote, Unquote, expr)
-FALCON_SYNCLASS_DECLARATOR(m_expr_evalret, EvalRet, expr)
-FALCON_SYNCLASS_DECLARATOR(m_expr_evalretexec, EvalRetExec, expr)
+FALCON_SYNCLASS_DECLARATOR(m_expr_unquote, Unquote, Expression)
+FALCON_SYNCLASS_DECLARATOR(m_expr_evalret, EvalRet, Expression)
+FALCON_SYNCLASS_DECLARATOR(m_expr_evalretexec, EvalRetExec, Expression)
 
 
-FALCON_SYNCLASS_DECLARATOR_EX(m_expr_sym, GenSym, expr, \
+FALCON_SYNCLASS_DECLARATOR_EX(m_expr_sym, GenSym, Expression, \
       virtual void store( VMContext*, DataWriter* dw, void* instance ) const; \
       )
 
-FALCON_SYNCLASS_DECLARATOR_EX(m_expr_value, Value, expr, \
+FALCON_SYNCLASS_DECLARATOR_EX(m_expr_value, Value, Expression, \
       virtual void flatten( VMContext* ctx, ItemArray& subItems, void* instance ) const;\
       virtual void unflatten( VMContext* ctx, ItemArray& subItems, void* instance ) const; )
 
-FALCON_SYNCLASS_DECLARATOR_EX(m_expr_istring, IString, expr, \
+FALCON_SYNCLASS_DECLARATOR_EX(m_expr_istring, IString, Expression, \
          virtual void store( VMContext*, DataWriter* dw, void* instance ) const;\
              )
    
@@ -199,44 +198,44 @@ FALCON_SYNCLASS_DECLARATOR_EX(m_expr_istring, IString, expr, \
 //======================================================================
 // Statement classes
 //
-FALCON_SYNCLASS_DECLARATOR(m_stmt_break, Break, stmt)
-FALCON_SYNCLASS_DECLARATOR(m_stmt_breakpoint, Breakpoint, stmt)
-FALCON_SYNCLASS_DECLARATOR(m_stmt_continue, Continue, stmt)
-FALCON_SYNCLASS_DECLARATOR(m_stmt_cut, Cut, stmt)
-FALCON_SYNCLASS_DECLARATOR(m_stmt_doubt, Doubt, stmt)
-FALCON_SYNCLASS_DECLARATOR_EX(m_stmt_fastprint, FastPrint, stmt, \
+FALCON_SYNCLASS_DECLARATOR(m_stmt_break, Break, Statement)
+FALCON_SYNCLASS_DECLARATOR(m_stmt_breakpoint, Breakpoint, Statement)
+FALCON_SYNCLASS_DECLARATOR(m_stmt_continue, Continue, Statement)
+FALCON_SYNCLASS_DECLARATOR(m_stmt_cut, Cut, Statement)
+FALCON_SYNCLASS_DECLARATOR(m_stmt_doubt, Doubt, Statement)
+FALCON_SYNCLASS_DECLARATOR_EX(m_stmt_fastprint, FastPrint, Statement, \
          virtual void store( VMContext*, DataWriter* dw, void* instance ) const; \
        )
 
-FALCON_SYNCLASS_DECLARATOR_EX(m_stmt_forin, ForIn, stmt, \
+FALCON_SYNCLASS_DECLARATOR_EX(m_stmt_forin, ForIn, Statement, \
          virtual void store( VMContext*, DataWriter* dw, void* instance ) const; \
        )
 
-FALCON_SYNCLASS_DECLARATOR_EX(m_stmt_forto, ForTo, stmt, \
+FALCON_SYNCLASS_DECLARATOR_EX(m_stmt_forto, ForTo, Statement, \
       virtual void flatten( VMContext* ctx, ItemArray& subItems, void* instance ) const;\
       virtual void unflatten( VMContext* ctx, ItemArray& subItems, void* instance ) const; )
 
-FALCON_SYNCLASS_DECLARATOR(m_stmt_if, If, stmt)
-FALCON_SYNCLASS_DECLARATOR(m_stmt_loop, Loop, stmt)
-FALCON_SYNCLASS_DECLARATOR(m_stmt_raise, Raise, stmt)
-FALCON_SYNCLASS_DECLARATOR_EX(m_stmt_global, Global, stmt, \
+FALCON_SYNCLASS_DECLARATOR(m_stmt_if, If, Statement)
+FALCON_SYNCLASS_DECLARATOR(m_stmt_loop, Loop, Statement)
+FALCON_SYNCLASS_DECLARATOR(m_stmt_raise, Raise, Statement)
+FALCON_SYNCLASS_DECLARATOR_EX(m_stmt_global, Global, Statement, \
          virtual void store( VMContext*, DataWriter* dw, void* instance ) const; \
        )
 
-FALCON_SYNCLASS_DECLARATOR_EX(m_stmt_return, Return, stmt,
+FALCON_SYNCLASS_DECLARATOR_EX(m_stmt_return, Return, Statement,
          virtual void store( VMContext*, DataWriter* dw, void* instance ) const; \
          )
 
-FALCON_SYNCLASS_DECLARATOR(m_stmt_rule, Rule, expr)
-FALCON_SYNCLASS_DECLARATOR_EX(m_stmt_select, Select, stmt, \
+FALCON_SYNCLASS_DECLARATOR(m_stmt_rule, Rule, Expression)
+FALCON_SYNCLASS_DECLARATOR_EX(m_stmt_select, Select, Statement, \
          virtual void flatten( VMContext* ctx, ItemArray& subItems, void* instance ) const;\
          virtual void unflatten( VMContext* ctx, ItemArray& subItems, void* instance ) const; )
 
-FALCON_SYNCLASS_DECLARATOR(m_stmt_switch, Switch, stmt)
-FALCON_SYNCLASS_DECLARATOR(m_stmt_try, Try, stmt)
-FALCON_SYNCLASS_DECLARATOR(m_stmt_while, While, stmt)
+FALCON_SYNCLASS_DECLARATOR(m_stmt_switch, Switch, Statement)
+FALCON_SYNCLASS_DECLARATOR(m_stmt_try, Try, Statement)
+FALCON_SYNCLASS_DECLARATOR(m_stmt_while, While, Statement)
 
 //======================================================================
 // Syntree classes
 //
-FALCON_SYNCLASS_DECLARATOR(m_st_rulest, RuleSynTree, treestep)
+FALCON_SYNCLASS_DECLARATOR(m_st_rulest, RuleSynTree, TreeStep)

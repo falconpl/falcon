@@ -56,7 +56,7 @@ SynTree::SynTree( int line, int chr ):
    m_head(0),
    m_selector(0)
 {
-   static Class* syntoken = Engine::instance()->synclasses()->m_cls_st;
+   static Class* syntoken = Engine::instance()->synclasses()->m_cls_SynTree;
    m_handler = syntoken;
    
    /** Mark this as a composed class */

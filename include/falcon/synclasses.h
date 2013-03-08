@@ -18,7 +18,9 @@
 #define FALCON_SYNCLASSES_H
 
 #include <falcon/setup.h>
-#include <falcon/derivedfrom.h>
+#include <falcon/classes/classexpression.h>
+#include <falcon/classes/classsyntree.h>
+#include <falcon/classes/classstatement.h>
 
 namespace Falcon {
 
@@ -78,10 +80,10 @@ public:
    //======================================================================
    // Base classes
    //
-   Class* m_cls_st;
-   Class* m_cls_stmt;
-   Class* m_cls_expr;
-   Class* m_cls_treestep;
+   Class* m_cls_SynTree;
+   Class* m_cls_Statement;
+   Class* m_cls_Expression;
+   Class* m_cls_TreeStep;
    
    #define FALCON_SYNCLASS_DECLARATOR_DECLARE
    #include <falcon/synclasses_list.h>      

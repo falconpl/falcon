@@ -13,7 +13,7 @@ Done
 
 */
 
-x = VMContext()
+x = VMContext
 dd = x.dataDepth
 cd = x.codeDepth
 

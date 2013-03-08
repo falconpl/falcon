@@ -27,6 +27,10 @@
 #include <falcon/classes/classtreestep.h>
 #include <falcon/classes/classsymbol.h>
 
+#include <falcon/engine.h>
+#include <falcon/stdhandlers.h>
+
+
 #include <falcon/errors/paramerror.h>
 
 #include "falcon/stdsteps.h"
@@ -34,9 +38,22 @@
 namespace Falcon {
 
 ClassSynTree::ClassSynTree( ClassTreeStep* parent, ClassSymbol* sym ):
-   DerivedFrom( parent, "SynTree" ),
+   ClassTreeStep( "SynTree" ),
    m_classSymbol( sym )
-{}
+{
+   setParent( parent );
+}
+
+ClassSynTree::ClassSynTree( const String& name, ClassSymbol* sym ):
+   ClassTreeStep( name ),
+   m_classSymbol( sym )
+{
+   if( m_classSymbol == 0)
+   {
+      m_classSymbol = static_cast<const ClassSymbol*>(Engine::instance()->stdHandlers()->symbolClass());
+   }
+}
+
    
 ClassSynTree::~ClassSynTree(){}
 
@@ -73,7 +90,7 @@ void ClassSynTree::store( VMContext* ctx, DataWriter* stream, void* instance ) c
       stream->write( false );
    }
 
-   m_parent->store( ctx, stream, instance );
+   ClassTreeStep::store( ctx, stream, instance );
 }
 
 
@@ -94,7 +111,7 @@ void ClassSynTree::restore( VMContext* ctx, DataReader* stream ) const
       }
 
       // the parent wants us on top of stack.
-      m_parent->restore( ctx, stream );
+      ClassTreeStep::restore( ctx, stream );
    }
    catch( ... ) {
       ctx->popData();
@@ -105,7 +122,7 @@ void ClassSynTree::restore( VMContext* ctx, DataReader* stream ) const
 
 void ClassSynTree::unflatten( VMContext* ctx, ItemArray& subItems, void* instance ) const
 {
-   m_parent->unflatten( ctx, subItems, instance );
+   ClassTreeStep::unflatten( ctx, subItems, instance );
 }
 
 

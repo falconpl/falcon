@@ -17,7 +17,7 @@
 #define _FALCON_CLASSSYNTREE_H_
 
 #include <falcon/setup.h>
-#include <falcon/derivedfrom.h>
+#include <falcon/classes/classtreestep.h>
 
 namespace Falcon {
 
@@ -30,7 +30,7 @@ class ClassSymbol;
  and has also support to handle the vast majority of serialization processes.
  
  */
-class ClassSynTree: public DerivedFrom // TreeStep
+class ClassSynTree: public ClassTreeStep
 {
 public:
    ClassSynTree( ClassTreeStep* parent, ClassSymbol* sym );
@@ -51,9 +51,11 @@ public:
    virtual void op_setProperty( VMContext* ctx, void* instance, const String& prop) const;
 
    virtual void op_call( VMContext* ctx, int pcount, void* instance) const;
+protected:
+   ClassSynTree( const String& parent, ClassSymbol* sym=0 );
 
 private:
-   ClassSymbol* m_classSymbol;
+   const ClassSymbol* m_classSymbol;
 };
 
 }

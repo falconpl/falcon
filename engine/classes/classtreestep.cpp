@@ -31,6 +31,10 @@
 #include <falcon/errors/accesserror.h>
 #include <falcon/errors/codeerror.h>
 
+#ifdef NDEBUG
+#include <falcon/stdhandlers.h>
+#endif
+
 namespace Falcon {
 
 ClassTreeStep::ClassTreeStep():
@@ -40,6 +44,15 @@ ClassTreeStep::ClassTreeStep():
    m_removeMethod.methodOf(this);
    m_appendMethod.methodOf(this);
 }
+
+ClassTreeStep::ClassTreeStep( const String& name ):
+   Class(name, FLC_CLASS_ID_TREESTEP)
+{
+   m_insertMethod.methodOf(this);
+   m_removeMethod.methodOf(this);
+   m_appendMethod.methodOf(this);
+}
+
 
 ClassTreeStep::~ClassTreeStep()
 {}
@@ -321,7 +334,10 @@ void ClassTreeStep::unflatten( VMContext*, ItemArray& subItems, void* instance )
    if( subItems[0].isUser() )
    {
       // we have a selector.
-      fassert( subItems[0].asClass()->isDerivedFrom(this) );
+#ifdef NDEBUG
+      static Class* clsTreeStep = Engine::instance()->stdHandlers()->treeStepClass();
+      fassert( subItems[0].asClass()->isDerivedFrom(clsTreeStep) );
+#endif
       ts->selector( static_cast<Expression*>(subItems[0].asInst()) );
    }
 

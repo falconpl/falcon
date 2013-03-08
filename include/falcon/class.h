@@ -1073,14 +1073,14 @@ public:
       getParentData() and isDerivedFrom() methods.
 
       The parent class method should be able to handle the same type of entity
-      handled by this child class. In othre words, the structure or class handled by
+      handled by this child class. In other words, the structure or class handled by
       the methods in the parent class must be a super-structure or super-class of the
       data handled by this class. Again, more sophisticated approaches require the 
       class system that needs to be implemented to reimplement getParentData() and isDerivedFrom()
       methods.
 
       When an instance of this class is invoked, the parents constructors are \b not called.
-      This class constructor must handle the initialization of the created object entierly. 
+      This class constructor must handle the initialization of the created object entirely.
       A different initialization scheme requires the classes involved to reimplement
       directly the op_init() method of this class.
    */
@@ -1102,8 +1102,9 @@ protected:
 
    int32 m_clearPriority;
 
-private:
    Class* m_parent;
+
+private:
 
    class Private;
    Private* _p;

@@ -17,7 +17,7 @@
 #define _FALCON_CLASSSTATEMENT_H_
 
 #include <falcon/setup.h>
-#include <falcon/derivedfrom.h>
+#include <falcon/classes/classtreestep.h>
 
 namespace Falcon {
 
@@ -29,11 +29,14 @@ class ClassTreeStep;
  and has also support to handle the vast majority of serialization processes.
  
  */
-class ClassStatement: public DerivedFrom // TreeStep
+class ClassStatement: public ClassTreeStep
 {
 public:
    ClassStatement( ClassTreeStep* parent );
    virtual ~ClassStatement();
+
+protected:
+   ClassStatement( const String& name );
 };
 
 }

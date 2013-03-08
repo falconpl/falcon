@@ -13,7 +13,7 @@ Done
 @endoutput
 */
 
-x = VMContext()
+x = VMContext
 dd = x.dataDepth
 
 > "Test basic while"

@@ -27,8 +27,15 @@
 namespace Falcon {
 
 ClassExpression::ClassExpression( ClassTreeStep* parent ):
-   DerivedFrom( parent, "Expression" )
-{}
+   ClassTreeStep( "Expression" )
+{
+   setParent(parent);
+}
+
+ClassExpression::ClassExpression( const String& name ):
+   ClassTreeStep( name )
+{
+}
    
 ClassExpression::~ClassExpression(){}
 

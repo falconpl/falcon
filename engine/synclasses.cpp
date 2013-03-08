@@ -21,7 +21,6 @@
 #include <falcon/engine.h>
 #include <falcon/treestep.h>
 #include <falcon/stdsteps.h>
-#include <falcon/derivedfrom.h>
 #include <falcon/stdhandlers.h>
 
 #include <falcon/synclasses_id.h>
@@ -90,8 +89,6 @@
 #include <falcon/datawriter.h>
 #include <falcon/datareader.h>
 #include <falcon/symbol.h>
-
-#include <falcon/classes/classexpression.h>
 #include <falcon/storer.h>
 
 namespace Falcon {
@@ -99,12 +96,12 @@ namespace Falcon {
 #define FALCON_SYNCLASS_DECLARATOR_APPLY
 
 SynClasses::SynClasses( Class* classSynTree, Class* classStatement, Class* classExpr ):
-   m_cls_st( classSynTree ),
-   m_cls_stmt( classStatement ),
-   m_cls_expr( classExpr ),
+   m_cls_SynTree( classSynTree ),
+   m_cls_Statement( classStatement ),
+   m_cls_Expression( classExpr ),
    m_dummy_end(0)
 {
-   m_cls_treestep = Engine::handlers()->treeStepClass();
+   m_cls_TreeStep = Engine::handlers()->treeStepClass();
 
    #include <falcon/synclasses_list.h>
 

@@ -346,7 +346,6 @@ add_library(falcon_engine SHARED
   contextmanager.cpp
   datareader.cpp
   datawriter.cpp
-  derivedfrom.cpp
   directory.cpp
   diskfiletraits.cpp
   dyncompiler.cpp

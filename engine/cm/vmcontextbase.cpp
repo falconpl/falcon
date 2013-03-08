@@ -220,9 +220,14 @@ bool ClassVMContextBase::gcCheckInstance( void* instance, uint32 mark ) const
 }
 
 
-void ClassVMContextBase::op_toString( VMContext* ctx, void* ) const
+void ClassVMContextBase::op_toString( VMContext* ctx, void* instance ) const
 {
-   VMContext* ctx1 = Processor::currentProcessor()->currentContext();
+   VMContext* ctx1 = static_cast<VMContext*>(instance);
+   if( ctx1 == 0 )
+   {
+      ctx1 = Processor::currentProcessor()->currentContext();
+   }
+
    String &res = *(new String);
 
    res.append("VMContext {");

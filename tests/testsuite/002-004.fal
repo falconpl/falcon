@@ -28,7 +28,7 @@ Done
 
 */
 
-x = VMContext()
+x = VMContext
 dd = x.dataDepth
 > "Testing basic for i = 5 to 1"
 for i = 5 to 1

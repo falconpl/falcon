@@ -75,6 +75,9 @@ public:
    // This class is always alive as it resides in core/engine
    virtual bool gcCheckMyself( uint32 mark );
 
+protected:
+   ClassTreeStep( const String& name );
+
 private:
    
    class InsertMethod: public Function {

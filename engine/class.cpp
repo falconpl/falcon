@@ -191,7 +191,7 @@ Class* Class::handler() const
 
 Class* Class::getParent( const String& name ) const
 {
-   if( m_parent == 0 || m_parent->name() != name ) { 
+   if( m_parent == 0 || m_parent->name() != name ) {
       return 0;
    }
    return m_parent;
@@ -200,7 +200,10 @@ Class* Class::getParent( const String& name ) const
 
 bool Class::isDerivedFrom( const Class* cls ) const
 {
-   return this == cls || (m_parent != 0 && cls->isDerivedFrom(m_parent));
+   return this == cls ||
+            (
+                     m_parent != 0
+                     && m_parent->isDerivedFrom(cls));
 }
 
 
@@ -225,7 +228,7 @@ void Class::store( VMContext*, DataWriter*, void* ) const
 {
       throw new UnserializableError(ErrorParam( e_unserializable, __LINE__, __FILE__ )
       .origin( ErrorParam::e_orig_vm )
-      .extra(name() + " unsupported store"));
+      .extra(name() + " doesn't support store"));
 }
 
 
@@ -233,7 +236,7 @@ void Class::restore( VMContext*, DataReader*) const
 {
    throw new UnserializableError(ErrorParam( e_unserializable, __LINE__, __FILE__ )
       .origin( ErrorParam::e_orig_vm )
-      .extra(name() + " unsupported restore"));
+      .extra(name() + "  doesn't support restore"));
 }
 
 
@@ -430,9 +433,16 @@ void Class::setParent( Class* parent )
    while( iter != props.end() )
    {
       Property& prop = iter->second;
-      _p->m_props[iter->first] = prop; // use default copy
+      // do not copy sub-classes
+      if( parent->m_parent == 0 || prop.value.asInst() != parent->m_parent )
+      {
+         _p->m_props[iter->first] = prop; // use default copy
+      }
       ++iter;
    }
+
+   // save also the base class as property.
+   _p->m_props[parent->name()].set(0,0,true,true,true,0, Item(parent->handler(), parent));
 }
 
 void Class::gcMark( uint32 mark )

@@ -34,7 +34,7 @@ sum = 0
 count = 0
 test = 0
 
-x = VMContext()
+x = VMContext
 dd = x.dataDepth
 
 for elem in array

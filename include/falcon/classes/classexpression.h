@@ -17,7 +17,7 @@
 #define _FALCON_CLASSEXPRESSION_H_
 
 #include <falcon/setup.h>
-#include <falcon/derivedfrom.h>
+#include <falcon/classes/classtreestep.h>
 
 namespace Falcon {
 
@@ -25,12 +25,15 @@ class ClassTreeStep;
 
 /** Handler class for Expression class.
  */
-class ClassExpression: public DerivedFrom // TreeStep
+class ClassExpression: public ClassTreeStep
 {
 public:
    ClassExpression( ClassTreeStep* parent );
    virtual ~ClassExpression();
    void op_call( VMContext* ctx, int pcount, void* self ) const;
+
+protected:
+   ClassExpression( const String& name );
 };
 
 }

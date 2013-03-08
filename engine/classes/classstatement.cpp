@@ -23,8 +23,15 @@
 namespace Falcon {
 
 ClassStatement::ClassStatement( ClassTreeStep* parent ):
-   DerivedFrom( parent, "Statement" )
-{}
+   ClassTreeStep( "Statement" )
+{
+   setParent(parent);
+}
+
+ClassStatement::ClassStatement( const String& name ):
+   ClassTreeStep( name )
+{
+}
    
 ClassStatement::~ClassStatement(){}
 

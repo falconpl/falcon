@@ -114,14 +114,14 @@ bool SynClasses::ClassProvides::hasProperty( void* instance, const String& prop 
    {
       return true;
    }
-   return DerivedFrom::hasProperty(instance, prop);
+   return Class::hasProperty(instance, prop);
 }
 
 void SynClasses::ClassProvides::store( VMContext* ctx, DataWriter* dw, void* instance ) const
 {
    ExprProvides* prov = static_cast<ExprProvides *>(instance);
    dw->write( prov->property() );
-   DerivedFrom::store(ctx, dw, instance);
+   m_parent->store(ctx, dw, instance);
 }
 
 void SynClasses::ClassProvides::restore( VMContext* ctx, DataReader* dw ) const
@@ -131,7 +131,7 @@ void SynClasses::ClassProvides::restore( VMContext* ctx, DataReader* dw ) const
    ExprProvides* prov = new ExprProvides;
    prov->property(property);
    ctx->pushData( Item(this, prov) );
-   DerivedFrom::restore(ctx, dw);
+   m_parent->restore(ctx, dw);
 }
 
 
@@ -170,7 +170,7 @@ void SynClasses::ClassProvides::op_getProperty( VMContext* ctx, void* instance, 
       return;
    }
 
-   DerivedFrom::op_getProperty(ctx, instance, prop);
+   Class::op_getProperty(ctx, instance, prop);
 }
 
 void SynClasses::ClassProvides::op_setProperty( VMContext* ctx, void* instance, const String& prop ) const
@@ -190,7 +190,7 @@ void SynClasses::ClassProvides::op_setProperty( VMContext* ctx, void* instance, 
       return;
    }
 
-   DerivedFrom::op_setProperty(ctx, instance, prop);
+   Class::op_setProperty(ctx, instance, prop);
 }
 
 }
