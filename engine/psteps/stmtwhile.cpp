@@ -186,15 +186,15 @@ TreeStep* StmtWhile::nth( int n ) const
 
 bool StmtWhile::setNth( int n, TreeStep* st )
 {
-   if( n == arity() + 1 )
+   if( n == arity() )
    {
       return append(st);
    }
 
    if( m_child == 0 )
    {
-      // if we're here, n > 1, or n == 0 but without a child.
-      return 0;
+      // if we're here, n > 1, as arity without a child is 0
+      return false;
    }
 
 
