@@ -38,9 +38,8 @@
 namespace Falcon {
 
 ClassSymbol::ClassSymbol():
-   Class("Symbol")
+   Class("Symbol", FLC_CLASS_ID_SYMBOL )
 {
-   userFlags(FALCON_SYNCLASS_ID_SYMBOL);
 }
 
 ClassSymbol::~ClassSymbol()

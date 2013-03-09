@@ -31,6 +31,7 @@
 #include <falcon/sp/parser_fastprint.h>
 
 #include <falcon/psteps/stmtfastprint.h>
+#include <falcon/psteps/stmtfastprintnl.h>
 
 #include "private_types.h"
 
@@ -49,7 +50,14 @@ static void apply_fastprint_internal( const Rule&, Parser& p, bool hasNl )
    List* list = static_cast<List*>(tlist->asData());
    
    // create our fast-print statement
-   StmtFastPrint* sfp = new StmtFastPrint(hasNl, tlist->line(), tlist->chr());
+   StmtFastPrint* sfp;
+   if( hasNl )
+   {
+      sfp = new StmtFastPrintNL( tlist->line(), tlist->chr());
+   }
+   else {
+      sfp =  new StmtFastPrint( tlist->line(), tlist->chr());
+   }
    
    // move the expressions in the statement.
    List::iterator iter = list->begin();
@@ -87,7 +95,7 @@ void apply_fastprint_alone( const Rule&, Parser& p )
    // << T_RShift << T_EOL
    ParserContext* ctx = static_cast<ParserContext*>(p.context());
    TokenInstance* tlist = p.getNextToken();
-   StmtFastPrint* sfp = new StmtFastPrint(false, tlist->line(), tlist->chr());
+   StmtFastPrint* sfp = new StmtFastPrint( tlist->line(), tlist->chr());
    // we can add the statement directly
    ctx->addStatement( sfp );
 
@@ -101,7 +109,7 @@ void apply_fastprint_nl_alone( const Rule&, Parser& p )
    // << T_Greater << T_EOL
    ParserContext* ctx = static_cast<ParserContext*>(p.context());
    TokenInstance* tlist = p.getNextToken();
-   StmtFastPrint* sfp = new StmtFastPrint(true, tlist->line(), tlist->chr());
+   StmtFastPrint* sfp = new StmtFastPrintNL( tlist->line(), tlist->chr());
    // we can add the statement directly
    ctx->addStatement( sfp );
 

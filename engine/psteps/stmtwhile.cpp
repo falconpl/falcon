@@ -152,11 +152,33 @@ void StmtWhile::describeTo( String& tgt, int depth ) const
 
 int StmtWhile::arity() const
 {
+   if ( m_child == 0 )
+   {
+      return 0;
+   }
+
+   if( m_child->category() == TreeStep::e_cat_syntree )
+   {
+      return m_child->arity();
+   }
+
+   // a single non-syntree child
    return 1;
 }
 
 TreeStep* StmtWhile::nth( int n ) const
 {
+   if( m_child ==  0)
+   {
+      return 0;
+   }
+
+   if( m_child->category() == TreeStep::e_cat_syntree )
+   {
+      return m_child->nth(n);
+   }
+
+   // a single child
    if( n == 0 || n == -1 ) return m_child;
    return 0;
 }
@@ -164,12 +186,103 @@ TreeStep* StmtWhile::nth( int n ) const
 
 bool StmtWhile::setNth( int n, TreeStep* st )
 {
+   if( n == arity() + 1 )
+   {
+      return append(st);
+   }
+
+   if( m_child == 0 )
+   {
+      // if we're here, n > 1, or n == 0 but without a child.
+      return 0;
+   }
+
+
+   if( m_child->category() == TreeStep::e_cat_syntree )
+   {
+      return m_child->setNth(n, st);
+   }
+
+   // single child
    if( st == 0 || (n != 0 && n != -1) || ! st->setParent(this)  ) return false;
 
    delete m_child;
    m_child = st;
 
    return true;
+}
+
+
+bool StmtWhile::insert( int32 pos, TreeStep* element )
+{
+   // IMPORTANT: we can't set the parent prior being certain the insertion position is valid.
+   if( m_child == 0 )
+   {
+      if( pos == 0 && element->setParent(this) )
+      {
+         m_child = element;
+         return true;
+      }
+      return false;
+   }
+
+   if( m_child->category() == TreeStep::e_cat_syntree )
+   {
+      return m_child->insert(pos, element);
+   }
+
+   // a single child.
+   if( (pos == 0 || pos == -1) && element->parent() == 0 )
+   {
+      // disengage the current child.
+      singleToMultipleChild( element, false );
+   }
+
+   return false;
+}
+
+
+bool StmtWhile::append( TreeStep* element )
+{
+   if( element->parent() != 0 )
+   {
+      return false;
+   }
+
+   if( m_child == 0 )
+   {
+      m_child = element;
+      element->setParent(this);
+   }
+   else if( m_child->category() == SynTree::e_cat_syntree )
+   {
+      m_child->append( element );
+   }
+   else {
+      // disengage the current child.
+      singleToMultipleChild( element, true );
+   }
+
+   return true;
+}
+
+
+void StmtWhile::singleToMultipleChild( TreeStep* element, bool last )
+{
+   TreeStep* child = m_child;
+   child->setParent(0);
+   m_child = new SynTree;
+   m_child->setParent(this);
+
+   if( last )
+   {
+      m_child->append( child );
+      m_child->append( element );
+   }
+   else {
+      m_child->append( element );
+      m_child->append( child );
+   }
 }
 
 void StmtWhile::mainBlock(TreeStep* st) {
@@ -238,6 +351,7 @@ void StmtWhile::apply_( const PStep* s1, VMContext* ctx )
          ctx->stepIn( tree );
       }
       else {
+         ctx->pushData(Item());
          return;
       }
       // no matter if stmts went deep, we're bound to be called again to recheck

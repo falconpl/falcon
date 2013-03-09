@@ -201,6 +201,9 @@ void StmtLoop::apply_withexpr_( const PStep* s1, VMContext* ctx )
       {
          ctx->pushCode( tree );
       }
+      else {
+         ctx->pushData(Item());
+      }
    }
    else {
       TRACE1( "Apply 'loop' at line %d -- leave ", self->line() );

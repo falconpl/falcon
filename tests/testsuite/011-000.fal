@@ -1,0 +1,19 @@
+/*
+@name Homoiconic smoke test
+@category Homoiconic
+
+@output
+Homoiconic smoke test
+LT(0,1): success
+GT(0,1): success
+Done.
+@endoutput
+*/
+
+
+> "Homoiconic smoke test"
+
+> "LT(0,1): ", LT(0,1)() ? "success" : "failure"
+> "GT(0,1): ", GT(0,1)() ? "failure" : "success"
+
+> "Done."

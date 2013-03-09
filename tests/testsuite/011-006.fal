@@ -1,0 +1,25 @@
+/*
+@name Homoiconic loop multiple children
+@category Homoiconic
+
+@output
+Homoiconic Loop with multiple children
+Composing a = 0; loop ; > "A: ", a; ++a; end a == 5
+A: 0
+A: 1
+A: 2
+A: 3
+A: 4
+Done.
+@endoutput
+*/
+
+
+> "Homoiconic Loop with multiple children"
+> "Composing a = 0; loop ; > \"A: \", a; ++a; end a == 5"
+
+a = 0
+expr = Loop( EQ(&a,5), FastPrintNL( "A: ", &a ), PreInc(&a))
+expr()
+
+> "Done."

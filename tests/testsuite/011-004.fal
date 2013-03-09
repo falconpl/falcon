@@ -1,0 +1,17 @@
+/*
+@name Homoiconic loop without children
+@category Homoiconic
+
+@result a=5
+*/
+
+
+> "Homoiconic Loop (without children) Test"
+a = 0
+expr = Loop( EQ(PreInc(&a),5) )
+> "Executing: ", expr
+expr()
+
+> "Done with a=", a
+
+return "a="+a

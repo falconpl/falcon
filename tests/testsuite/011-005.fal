@@ -1,0 +1,25 @@
+/*
+@name Homoiconic while with single child
+@category Homoiconic
+
+@output
+Homoiconic Loop with single child
+Composing a = 0; loop; > "A: ", ++a; end a == 5
+A: 1
+A: 2
+A: 3
+A: 4
+A: 5
+Done.
+@endoutput
+*/
+
+
+> "Homoiconic Loop with single child"
+> "Composing a = 0; loop; > \"A: \", ++a; end a == 5"
+
+a = 0
+expr = Loop( EQ(&a,5), FastPrintNL( "A: ", PreInc(&a) ) )
+expr()
+
+> "Done."

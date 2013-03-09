@@ -73,6 +73,7 @@
 #include <falcon/psteps/stmtbreak.h>
 #include <falcon/psteps/stmtcontinue.h>
 #include <falcon/psteps/stmtfastprint.h>
+#include <falcon/psteps/stmtfastprintnl.h>
 #include <falcon/psteps/stmtfor.h>
 #include <falcon/psteps/stmtglobal.h>
 #include <falcon/psteps/stmtif.h>
@@ -156,9 +157,9 @@ void SynClasses::varExprInsert( VMContext* ctx, int pcount, TreeStep* step )
          if ( bCreate ) delete ts;
          
          // params count 1 to N so we're ok to use count that has been ++
-         throw new ParamError( ErrorParam( e_param_type, __LINE__, SRC )
+         throw new ParamError( ErrorParam( e_expr_assign, __LINE__, SRC )
             .origin( ErrorParam::e_orig_runtime)
-            .extra( String("Already parented entity at ").N(count) ) );
+            .extra( String("at ").N(count) ) );
       }
    }
 }
@@ -212,12 +213,12 @@ GCToken* SynClasses::collect( const Class* cls, TreeStep* earr, int line )
 // The classes
 //
 
-#define FALCON_STANDARD_SYNCLASS_OP_CREATE( cls, exprcls, operation ) \
-   void* SynClasses::Class## cls ::createInstance() const { return new exprcls; } \
+#define FALCON_STANDARD_SYNCLASS_OP_CREATE_INIT( cls, exprcls, operation, init ) \
+   void* SynClasses::Class## cls ::createInstance() const { init } \
    bool SynClasses::Class## cls ::op_init( VMContext* ctx, void* instance, int pcount ) const\
    {\
       exprcls* expr = static_cast<exprcls*>(instance); \
-      SynClasses::operation ( ctx, pcount, expr ); \
+      operation ( ctx, pcount, expr ); \
       return false; \
    }\
    void SynClasses::Class##cls ::restore( VMContext* ctx, DataReader*dr) const \
@@ -233,7 +234,11 @@ GCToken* SynClasses::collect( const Class* cls, TreeStep* earr, int line )
       }\
    }
 
-#define FALCON_STANDARD_SYNCLASS_OP_CREATE_EX( cls, exprcls, operation ) \
+#define FALCON_STANDARD_SYNCLASS_OP_CREATE( cls, exprcls, operation ) \
+         FALCON_STANDARD_SYNCLASS_OP_CREATE_INIT(cls, exprcls, operation, return new exprcls;)
+
+
+#define FALCON_STANDARD_SYNCLASS_OP_CREATE_SIMPLE( cls, exprcls, operation ) \
    void* SynClasses::Class## cls ::createInstance() const { return new exprcls; } \
    bool SynClasses::Class## cls ::op_init( VMContext* ctx, void* instance, int pcount ) const\
    {\
@@ -1082,7 +1087,7 @@ bool SynClasses::ClassGlobal::op_init( VMContext* ctx, void* instance, int pCoun
          Class* cls = 0;
          void* data = 0;
          current->asClassInst(cls, data);
-         if( cls->userFlags() == FALCON_SYNCLASS_ID_SYMBOL )
+         if( cls->typeID() == FLC_CLASS_ID_SYMBOL )
          {
             Symbol* sym = static_cast<Symbol*>(data);
             // do not use the symbol directly.
@@ -1124,8 +1129,6 @@ void SynClasses::ClassGlobal::restore( VMContext* ctx, DataReader* dr ) const
       throw;
    }
 }
-
-
 
 //=========================================
 // Class LIT
@@ -1281,51 +1284,92 @@ void SynClasses::ClassTree::unflatten( VMContext*, ItemArray& subItems, void* in
 //=================================================================
 // Statements
 //
+static void init_while_loop( VMContext* ctx, int pcount, StmtWhile* step, bool bAcceptNil )
+{
+   if( pcount < 1 )
+   {
+      throw FALCON_SIGN_XERROR( ParamError, e_inv_params, .extra("Symbol|Expression,..."));
+   }
+
+   Item* params = ctx->opcodeParams(pcount);
+   if( params->type() == FLC_CLASS_ID_SYMBOL )
+   {
+      if ( ! step->selector(new ExprSymbol(static_cast<Symbol*>(params->asInst()))) )
+      {
+         throw new ParamError( ErrorParam( e_expr_assign, __LINE__, SRC )
+               .origin( ErrorParam::e_orig_runtime)
+               .extra( String("at 0") ) );
+      }
+   }
+   else if( params->type() == FLC_CLASS_ID_TREESTEP && static_cast<TreeStep*>(params->asInst())->category() == TreeStep::e_cat_expression)
+   {
+      if ( ! step->selector(static_cast<Expression*>(params->asInst())) )
+      {
+         throw new ParamError( ErrorParam( e_expr_assign, __LINE__, SRC )
+               .origin( ErrorParam::e_orig_runtime)
+               .extra( String("at 0") ) );
+      }
+   }
+   else if( params->isNil() && bAcceptNil )
+   {
+      // this is ok, let it be nil.
+   }
+   else
+   {
+      throw FALCON_SIGN_XERROR( ParamError, e_inv_params, .extra("Symbol|Expression,..."));
+   }
+
+   for( int count = 1; count < pcount; ++count )
+   {
+      Item* expr = params + count;
+      if( expr->type() != FLC_CLASS_ID_TREESTEP )
+      {
+         throw FALCON_SIGN_XERROR( ParamError, e_inv_params, .extra("Not a TreeStep in body"));
+      }
+
+      TreeStep* child = static_cast<TreeStep*>(expr->asInst());
+      if( ! step->append( child ) )
+      {
+         throw new ParamError( ErrorParam( e_expr_assign, __LINE__, SRC )
+                        .origin( ErrorParam::e_orig_runtime)
+                        .extra( String("at ").N(count)) );
+      }
+   }
+}
+
+static void init_while( VMContext* ctx, int pcount, StmtWhile* step )
+{
+   init_while_loop( ctx, pcount, step, false );
+}
+
+static void init_loop( VMContext* ctx, int pcount, StmtWhile* step )
+{
+   init_while_loop( ctx, pcount, step, true );
+}
 
 FALCON_STANDARD_SYNCLASS_OP_CREATE( Break, StmtBreak, zeroaryExprSet )
 FALCON_STANDARD_SYNCLASS_OP_CREATE( Breakpoint, Breakpoint, zeroaryExprSet )
 FALCON_STANDARD_SYNCLASS_OP_CREATE( Continue, StmtContinue, zeroaryExprSet )
 FALCON_STANDARD_SYNCLASS_OP_CREATE( Cut, StmtCut, zeroaryExprSet )
 FALCON_STANDARD_SYNCLASS_OP_CREATE( Doubt, StmtDoubt, unaryExprSet )
-FALCON_STANDARD_SYNCLASS_OP_CREATE_EX( FastPrint, StmtFastPrint, varExprInsert )
-FALCON_STANDARD_SYNCLASS_OP_CREATE_EX( ForIn, StmtForIn, zeroaryExprSet ) //
+FALCON_STANDARD_SYNCLASS_OP_CREATE( FastPrint, StmtFastPrint, varExprInsert )
+FALCON_STANDARD_SYNCLASS_OP_CREATE( FastPrintNL, StmtFastPrintNL, varExprInsert)
+FALCON_STANDARD_SYNCLASS_OP_CREATE_SIMPLE( ForIn, StmtForIn, zeroaryExprSet ) //
 FALCON_STANDARD_SYNCLASS_OP_CREATE( ForTo, StmtForTo, zeroaryExprSet ) //
-FALCON_STANDARD_SYNCLASS_OP_CREATE( If, StmtIf, zeroaryExprSet )   //
-FALCON_STANDARD_SYNCLASS_OP_CREATE( Loop, StmtLoop, zeroaryExprSet ) //
+FALCON_STANDARD_SYNCLASS_OP_CREATE( If, StmtIf, varExprInsert )   //
+FALCON_STANDARD_SYNCLASS_OP_CREATE( Loop, StmtLoop, init_loop )
 FALCON_STANDARD_SYNCLASS_OP_CREATE( Raise, StmtRaise, unaryExprSet )
-FALCON_STANDARD_SYNCLASS_OP_CREATE_EX( Return, StmtReturn, unaryExprSet )
+FALCON_STANDARD_SYNCLASS_OP_CREATE_SIMPLE( Return, StmtReturn, unaryExprSet )
 FALCON_STANDARD_SYNCLASS_OP_CREATE( Rule, ExprRule, zeroaryExprSet ) //
 FALCON_STANDARD_SYNCLASS_OP_CREATE( Select, StmtSelect, zeroaryExprSet ) //
 FALCON_STANDARD_SYNCLASS_OP_CREATE( Switch, StmtSwitch, zeroaryExprSet ) //
 FALCON_STANDARD_SYNCLASS_OP_CREATE( Try, StmtTry, zeroaryExprSet ) //
-FALCON_STANDARD_SYNCLASS_OP_CREATE( While, StmtWhile, zeroaryExprSet ) //
+FALCON_STANDARD_SYNCLASS_OP_CREATE( While, StmtWhile, init_while )
 
 //=================================================================
 // Statements
 //
-void SynClasses::ClassFastPrint::store( VMContext* ctx, DataWriter*wr, void* instance ) const
-{
-   StmtFastPrint* fp = static_cast<StmtFastPrint*>( instance );
-   wr->write(fp->isAddNL());
-   m_parent->store( ctx, wr, fp );
-}
 
-void SynClasses::ClassFastPrint::restore( VMContext* ctx, DataReader*dr ) const
-{
-   bool bHasNL;
-   dr->read( bHasNL );
-   StmtFastPrint* expr = new StmtFastPrint(bHasNL);
-
-   try {
-      ctx->pushData( Item( this, expr ) );
-      m_parent->restore( ctx, dr );
-   }
-   catch(...) {
-      ctx->popData();
-      delete expr;
-      throw;
-   }
-}
 
 void SynClasses::ClassReturn::store( VMContext* ctx, DataWriter*wr, void* instance ) const
 {

@@ -251,6 +251,7 @@ add_library(falcon_engine SHARED
   psteps/stmtbreak.cpp
   psteps/stmtcontinue.cpp
   psteps/stmtfastprint.cpp
+  psteps/stmtfastprintnl.cpp
   psteps/stmtfor.cpp
   psteps/stmtglobal.cpp
   psteps/stmtif.cpp

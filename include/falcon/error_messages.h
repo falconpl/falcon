@@ -294,6 +294,7 @@ FAL_ERRORDECL( e_param_fmt_code, 906, "Parse error in format specifier" );
 FAL_ERRORDECL( e_inv_prop_value, 907, "Invalid value assigned to a property" );
 FAL_ERRORDECL( e_param_arity, 908, "Unexpected number of parameters in evaluation" );
 FAL_ERRORDECL( e_meta_not_proto, 909, "_meta is not a prototype" );
+FAL_ERRORDECL( e_expr_assign, 910, "Given tree step cannot be assigned to the host step" );
 
 FAL_ERRORDECL( e_paranoid, 999, "Paranoid check failed" );
 

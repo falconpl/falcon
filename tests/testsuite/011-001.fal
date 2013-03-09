@@ -1,0 +1,17 @@
+/*
+@name Homoiconic while without children
+@category Homoiconic
+
+@result a=5
+*/
+
+
+> "Homoiconic While (without children) Test"
+a = 0
+expr = While( LT(PreInc(&a),5) )
+> "Executing: ", expr
+expr()
+
+> "Done with a=", a
+
+return "a="+a

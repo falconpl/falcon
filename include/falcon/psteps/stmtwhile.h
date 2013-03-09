@@ -53,6 +53,8 @@ public:
    virtual int32 arity() const;
    virtual TreeStep* nth( int32 n ) const;
    virtual bool setNth( int32 n, TreeStep* ts );
+   virtual bool insert( int32 pos, TreeStep* element );
+   virtual bool append( TreeStep* element );
    
    virtual Expression* selector() const;   
    virtual bool selector( Expression* e ); 
@@ -63,6 +65,9 @@ public:
 protected:
    TreeStep* m_child;
    Expression* m_expr;
+
+   // changes our single child into a syntree with two children.
+   void singleToMultipleChild( TreeStep* element, bool last );
 };
 
 }
