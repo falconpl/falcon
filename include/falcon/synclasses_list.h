@@ -203,9 +203,8 @@ FALCON_SYNCLASS_DECLARATOR(m_stmt_breakpoint, Breakpoint, Statement)
 FALCON_SYNCLASS_DECLARATOR(m_stmt_continue, Continue, Statement)
 FALCON_SYNCLASS_DECLARATOR(m_stmt_cut, Cut, Statement)
 FALCON_SYNCLASS_DECLARATOR(m_stmt_doubt, Doubt, Statement)
-FALCON_SYNCLASS_DECLARATOR_EX(m_stmt_fastprint, FastPrint, Statement, \
-         virtual void store( VMContext*, DataWriter* dw, void* instance ) const; \
-       )
+FALCON_SYNCLASS_DECLARATOR(m_stmt_fastprint, FastPrint, Statement )
+FALCON_SYNCLASS_DECLARATOR(m_stmt_fastprintnl, FastPrintNL, Statement )
 
 FALCON_SYNCLASS_DECLARATOR_EX(m_stmt_forin, ForIn, Statement, \
          virtual void store( VMContext*, DataWriter* dw, void* instance ) const; \

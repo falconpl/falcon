@@ -65,10 +65,6 @@
 */
 #define FALCON_SYNCLASS_ID_TREE     11
 
-/** ID for the symbol class
-*/
-#define FALCON_SYNCLASS_ID_SYMBOL   12
-
 /** ID for the rule syntrees class
 */
 #define FALCON_SYNCLASS_ID_RULE_SYNTREE   13

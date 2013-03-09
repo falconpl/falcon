@@ -30,7 +30,6 @@ class FALCON_DYN_CLASS StmtFastPrint: public Statement
 {
 public:
    StmtFastPrint( int line = 0, int chr = 0 );
-   StmtFastPrint( bool bAddNL, int line = 0, int chr = 0 );
    StmtFastPrint( const StmtFastPrint& other );
    virtual ~StmtFastPrint();
    
@@ -47,11 +46,16 @@ public:
    virtual void describeTo( String& str, int depth=0 ) const;
    virtual void oneLinerTo( String& str ) const;
    virtual StmtFastPrint* clone() const { return new StmtFastPrint(*this); }
-   
-   void setAddNL( bool b ) { m_bAddNL = b ; }
    bool isAddNL() const { return m_bAddNL; }
 
 protected:
+   /** Costructor for subclasses.
+    *
+    * The selector parameter is ignored, used to allow subclasses
+    * to get this constructor that doesn't set a default add NL, nor
+    * the handler class.
+    */
+   StmtFastPrint( int line, int chr, bool selector );
    class Private;
    Private* _p;
    

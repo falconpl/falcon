@@ -53,12 +53,11 @@ StmtFastPrint::StmtFastPrint( int line, int chr ):
 }
 
 
-StmtFastPrint::StmtFastPrint( bool bAddNL, int line, int chr ):
+StmtFastPrint::StmtFastPrint( int line, int chr, bool ):
    Statement( line, chr ),
-   _p( new Private ),   
-   m_bAddNL( bAddNL )
+   _p( new Private )
 {
-   FALCON_DECLARE_SYN_CLASS(stmt_fastprint)
+   // do not declare the synclass, this constructor is for child classes
    apply = apply_;
 }
 
