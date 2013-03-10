@@ -1,0 +1,40 @@
+/*
+@name Homoiconic Rule
+@category Homoiconic
+
+@output
+Homoiconic Rule
+A is 0
+A is not 0
+Done.
+@endoutput
+*/
+
+
+> "Homoiconic Rule"
+
+expr = Rule( 
+   RuleSynTree(
+      EQ(&a,0), 
+      FastPrintNL("A is 0")
+      )
+   )
+a = 0
+expr()
+
+expr = Rule( 
+   // first alternative
+   RuleSynTree(
+      EQ(&a,0), 
+      FastPrintNL("A is 0")
+      ),
+   // Second alternative
+   RuleSynTree(
+      FastPrintNL( "A is not 0" )
+      )
+   )
+
+a = 1
+expr()
+
+> "Done."

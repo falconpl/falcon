@@ -1368,7 +1368,7 @@ static void init_loop( VMContext* ctx, int pcount, StmtWhile* step )
    init_while_loop( ctx, pcount, step, true );
 }
 
-static void init_if( VMContext* ctx, int pcount, StmtIf* step )
+static void init_generic_multistmt( VMContext* ctx, int pcount, TreeStep* step )
 {
    Item* params = ctx->opcodeParams(pcount);
    for( int count = 0; count < pcount; ++count )
@@ -1400,11 +1400,11 @@ FALCON_STANDARD_SYNCLASS_OP_CREATE( FastPrint, StmtFastPrint, varExprInsert )
 FALCON_STANDARD_SYNCLASS_OP_CREATE( FastPrintNL, StmtFastPrintNL, varExprInsert)
 FALCON_STANDARD_SYNCLASS_OP_CREATE_SIMPLE( ForIn, StmtForIn, zeroaryExprSet ) //
 FALCON_STANDARD_SYNCLASS_OP_CREATE( ForTo, StmtForTo, zeroaryExprSet ) //
-FALCON_STANDARD_SYNCLASS_OP_CREATE( If, StmtIf, init_if )
+FALCON_STANDARD_SYNCLASS_OP_CREATE( If, StmtIf, init_generic_multistmt )
 FALCON_STANDARD_SYNCLASS_OP_CREATE( Loop, StmtLoop, init_loop )
 FALCON_STANDARD_SYNCLASS_OP_CREATE( Raise, StmtRaise, unaryExprSet )
 FALCON_STANDARD_SYNCLASS_OP_CREATE_SIMPLE( Return, StmtReturn, unaryExprSet )
-FALCON_STANDARD_SYNCLASS_OP_CREATE( Rule, ExprRule, zeroaryExprSet ) //
+FALCON_STANDARD_SYNCLASS_OP_CREATE( Rule, ExprRule, init_generic_multistmt )
 FALCON_STANDARD_SYNCLASS_OP_CREATE( Select, StmtSelect, zeroaryExprSet ) //
 FALCON_STANDARD_SYNCLASS_OP_CREATE( Switch, StmtSwitch, zeroaryExprSet ) //
 FALCON_STANDARD_SYNCLASS_OP_CREATE( Try, StmtTry, zeroaryExprSet ) //
@@ -1536,7 +1536,7 @@ void SynClasses::ClassForTo::unflatten( VMContext*, ItemArray& subItems, void* i
 //=================================================================
 // Trees
 //
-FALCON_STANDARD_SYNCLASS_OP_CREATE( RuleSynTree, RuleSynTree, zeroaryExprSet )
+FALCON_STANDARD_SYNCLASS_OP_CREATE( RuleSynTree, RuleSynTree, init_generic_multistmt )
    
 }
 
