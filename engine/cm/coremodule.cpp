@@ -73,6 +73,7 @@ CoreModule::CoreModule():
       << new Ext::Function_sleep
       << new Ext::Function_quit
       << new Ext::Function_advance
+      << new Ext::Function_input
       << new Ext::Function_int
       << new Ext::Function_numeric
       << new Ext::Function_passvp
