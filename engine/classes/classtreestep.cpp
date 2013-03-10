@@ -81,6 +81,7 @@ void* ClassTreeStep::clone( void* instance ) const
 {
    TRACE( "ClassTreeStep::clone %p ", instance );
    TreeStep* ts = static_cast<TreeStep*>(instance);
+   ts->setInGC();
    return ts->clone();
 }
 
@@ -109,9 +110,10 @@ bool ClassTreeStep::gcCheckInstance( void* instance, uint32 mark ) const
 
    // the check is performed on the topmost parent.
    TreeStep* ts = static_cast<TreeStep*>(instance);
-   while( ts->parent() != 0 )
+   if( ts->parent() != 0 )
    {
-      ts = ts->parent();
+      TRACE1( "ClassTreeStep::gcCheck %p has a parent, ignored", ts );
+      return true;
    }
    TRACE1( "ClassTreeStep::gcCheck %p, %d -- %s", instance, mark, ts->gcMark() >= mark ? "PASS" : "FAIL" );
    return ts->gcMark() >= mark;

@@ -204,7 +204,7 @@ Storer::~Storer()
 }
 
    
-bool Storer::store( VMContext* ctx, Class* handler, void* data )
+bool Storer::store( VMContext* ctx, Class* handler, void* data, bool bInGarbage )
 {
    if( _p == 0 )
    {
@@ -214,7 +214,7 @@ bool Storer::store( VMContext* ctx, Class* handler, void* data )
    m_topData = data;
    m_topHandler = handler;
    // First, create the Private that we use to unroll cycles.
-   return traverse( ctx, handler, data, false, true );
+   return traverse( ctx, handler, data, bInGarbage, true );
 }
 
    

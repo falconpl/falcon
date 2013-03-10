@@ -25,9 +25,11 @@ items = GC.items
 
 > "Creating a bit of garbage..."
 str = "Garbage:"
+
 for a = 0 to 1000
    str = str + a
 end
+
 
 memory1 = GC.memory
 items1 = GC.items

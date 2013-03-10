@@ -97,6 +97,22 @@ public:
          mqi->second->decref();
          ++mqi;
       }
+
+      ProcessMap::iterator iproc = m_procmap.begin();
+      while( iproc != m_procmap.end() )
+      {
+         Process* prc = iproc->second;
+         prc->decref();
+         ++iproc;
+      }
+
+      ProcessorVector::iterator ipv = m_processors.begin();
+      while( ipv != m_processors.end() )
+      {
+         Processor* prc = *ipv;
+         delete prc;
+         ++ipv;
+      }
    }
 
 };
@@ -171,7 +187,6 @@ VMachine::~VMachine()
 
    // stop the context manager
    m_ctxMan.stop();
-
 
    m_textIn->decref();
    m_textOut->decref();

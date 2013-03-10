@@ -100,7 +100,7 @@ public:
       BlockSet::iterator iter = m_blocks.begin();
       while( iter != m_blocks.end() )
       {
-         delete *iter;
+         dispose( *iter );
          ++iter;
       }      
    }
@@ -158,7 +158,7 @@ StmtSelect::StmtSelect( const StmtSelect& other ):
 
 StmtSelect::~StmtSelect()
 {
-   delete m_expr;
+   dispose( m_expr );
    delete _p;
 }
 
@@ -185,14 +185,14 @@ bool StmtSelect::selector( Expression* expr )
 {
    if( expr == 0 )
    {
-      delete m_expr;
+      dispose( m_expr );
       m_expr = 0;
       // we're used just as a dictionary.
       apply = 0;
    }
    else {
       if( ! expr->setParent(this) ) return false;
-      delete m_expr;
+      dispose( m_expr );
       m_expr = expr;
       apply = apply_;
    }
@@ -404,7 +404,7 @@ bool StmtSelect::setNth( int32 n, TreeStep* ts )
       return false;
    }
 
-   delete _p->m_blocks[n];
+   dispose( _p->m_blocks[n] );
    _p->m_blocks[n] = static_cast<SynTree*>(ts);
    return true;
 }

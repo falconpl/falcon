@@ -66,7 +66,7 @@ ExprCall::ExprCall( const ExprCall& other ):
 
 ExprCall::~ExprCall()
 {
-   delete m_callExpr;
+   dispose( m_callExpr );
 }
 
 
@@ -213,7 +213,7 @@ bool ExprCall::selector( Expression* e )
 {
    if( e->setParent(this))
    {
-      delete m_callExpr;
+      dispose( m_callExpr );
       m_callExpr = e;
       return true;
    }

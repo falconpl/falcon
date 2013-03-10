@@ -62,25 +62,28 @@ ExprRange::ExprRange( const ExprRange& other ):
    if ( other.m_estart == 0 )
    {
       m_estart = other.m_estart->clone();
+      m_estart->setParent(this);
    }
 
    if ( other.m_eend == 0 )
    {
       m_eend = other.m_eend->clone();
+      m_eend->setParent(this);
    }
 
    if ( other.m_estep == 0 )
    {
       m_estep = other.m_estep->clone();
+      m_estep->setParent(this);
    }
 }
    
 
 ExprRange::~ExprRange()
 {
-   delete m_estart;
-   delete m_eend;
-   delete m_estep;
+   dispose( m_estart );
+   dispose( m_eend );
+   dispose( m_estep );
 }
 
 
@@ -116,7 +119,7 @@ void ExprRange::start( Expression* expr )
          return;
       }
    }
-   delete m_estart;
+   dispose( m_estart );
    m_estart = expr;
 }
 
@@ -129,7 +132,7 @@ void ExprRange::end( Expression* expr )
          return;
       }
    }
-   delete m_eend;
+   dispose( m_eend );
    m_eend = expr;
 }
 
@@ -142,7 +145,7 @@ void ExprRange::step( Expression* expr )
          return;
       }
    }
-   delete m_estep;
+   dispose( m_estep );
    m_estep = expr;
 }
 
@@ -182,9 +185,9 @@ bool ExprRange::setNth( int32 n, TreeStep* ts )
 
    switch(n)
    {
-   case 0: delete m_estart; m_estart = expr; break;
-   case 1: case -2: delete m_eend; m_eend = expr; break;
-   case 2: case -1: delete m_estep; m_estep = expr; break;
+   case 0: dispose( m_estart ); m_estart = expr; break;
+   case 1: case -2: dispose( m_eend ); m_eend = expr; break;
+   case 2: case -1: dispose( m_estep ); m_estep = expr; break;
    }
 
    return true;

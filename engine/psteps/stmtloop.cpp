@@ -103,7 +103,7 @@ bool StmtLoop::selector( Expression* e )
    if( e == 0 )
    {
       apply = apply_pure_;
-      delete m_expr;
+      dispose( m_expr );
       m_expr = 0;
       return true;
    }
@@ -111,7 +111,7 @@ bool StmtLoop::selector( Expression* e )
       if( e->setParent(this) )
       {
          apply = apply_withexpr_;
-         delete m_expr;
+         dispose( m_expr );
          m_expr = e;
          return true;
       }

@@ -173,7 +173,7 @@ public:
    
       
    void gcMark( uint32 mark );
-   
+
    uint32 currentMark() const { return m_lastGCMark; }
     
       
@@ -275,6 +275,16 @@ public:
     *
     */
    void enumerateIStrings( IStringEnumerator& is ) const;
+
+   /** Adds this child modspace to the given parent.
+    When a child is added, the parent gets a new reference count.
+    When a child is destroyed, the parent gets dereferenced.
+
+      This means a modspace cannot be destroyed while it has children
+      still alive, but the children can be removed one by one without
+      the parent being notified (except for the decref).
+   */
+   void setParent( ModSpace* parent );
 
 private:      
    class Private;

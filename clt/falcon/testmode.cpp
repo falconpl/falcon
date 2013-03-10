@@ -184,14 +184,21 @@ void TestMode::testAll()
    while( iter != end )
    {
       ScriptData* sd = iter->second;
-      test( sd );
+      if( ! sd->m_enabled )
+      {
+         log->log( Log::fac_app, Log::lvl_info, String( "Skipping " ) + sd->m_id + " because is disabled.");
+      }
+      else
+      {
+         test( sd );
 
-      // perform a full GC
-      log->log( Log::fac_app, Log::lvl_detail, String( "Starting full GC." ) );
-      Engine::instance()->collector()->performGC(true);
-      log->log( Log::fac_app, Log::lvl_info, String( "Full GC complete." ) );
+         // perform a full GC
+         log->log( Log::fac_app, Log::lvl_detail, String( "Starting full GC." ) );
+         Engine::instance()->collector()->performGC(true);
+         log->log( Log::fac_app, Log::lvl_info, String( "Full GC complete." ) );
 
-      reportTest(sd);
+         reportTest(sd);
+      }
       ++iter;
    }
 }
@@ -315,12 +322,6 @@ TestMode::ScriptData* TestMode::parse(const String& scriptName )
 
 void TestMode::test( ScriptData* sd )
 {
-   if( ! sd->m_enabled )
-   {
-      log->log( Log::fac_app, Log::lvl_info, String( "Skipping " ) + sd->m_id + " because is disabled.");
-      return;
-   }
-
    log->log( Log::fac_app, Log::lvl_info, String( "Now testing " ) + sd->m_id );
 
    VMachine vm;

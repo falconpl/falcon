@@ -95,7 +95,7 @@ public:
       BlockVector::iterator iter = m_blocks.begin();
       while( iter != m_blocks.end() )
       {
-         delete *iter;
+         dispose( *iter );
          ++iter;
       }
    }
@@ -182,10 +182,10 @@ StmtSwitch::StmtSwitch( const StmtSwitch& other ):
 
 StmtSwitch::~StmtSwitch()
 {
-   delete m_expr;
-   delete m_trueBlock;
-   delete m_falseBlock;
-   delete m_nilBlock;
+   dispose( m_expr );
+   dispose( m_trueBlock );
+   dispose( m_falseBlock );
+   dispose( m_nilBlock );
    
    delete _p;
 }
@@ -214,12 +214,12 @@ bool StmtSwitch::selector( Expression* expr )
 {
    if( expr == 0 )
    {
-      delete m_expr;
+      dispose( m_expr );
       m_expr = 0;      
    }
    else {
       if( ! expr->setParent(this) ) return false;
-      delete m_expr;
+      dispose( m_expr );
       m_expr = expr;     
    }
    return true;

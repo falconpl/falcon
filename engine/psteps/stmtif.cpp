@@ -104,17 +104,24 @@ TreeStep* StmtIf::nth( int32 n ) const
 
 bool StmtIf::setNth( int32 n, TreeStep* ts )
 {
-    return _p->nth( n, ts, this );
+   // exprvector -> nth has already nth(arity) == append semantic.
+   return _p->nth( n, ts, this );
 }
 
 bool StmtIf::insert( int32 n, TreeStep* ts )
 {
+   // exprvector -> nth has already insert(arity) == append semantic.
    return _p->insert( n, ts, this);
 }
 
 bool StmtIf::remove( int32 n )
 {
    return _p->remove( n );
+}
+
+bool StmtIf::append( TreeStep* ts )
+{
+   return _p->nth( _p->arity(), ts, this );
 }
 
 
@@ -151,7 +158,7 @@ void StmtIf::oneLinerTo( String& tgt ) const
 
 void StmtIf::describeTo( String& tgt, int depth ) const
 {
-   if( _p->m_exprs.empty() || _p->m_exprs[0]->selector() == 0 )
+   if( _p->m_exprs.empty() )
    {
       tgt = "<Blank StmtIF>";
       return;
@@ -197,8 +204,6 @@ void StmtIf::apply_( const PStep* s1, VMContext* ctx )
    Private::ExprVector& elifs = self->_p->m_exprs;
    int& sid = ifFrame.m_seqId;
    int len = (int) elifs.size();
-   
-   fassert( len > 0 );
    
    TRACE1( "Apply 'if %d/%d' at line %d ", sid, len, self->line() );
    

@@ -92,7 +92,7 @@ SynTree::SynTree( const SynTree& other ):
 SynTree::~SynTree()
 {
    delete _p;
-   delete m_selector;
+   dispose( m_selector );
    if( m_head != 0 ) {
       m_head->decref();
    }
@@ -117,7 +117,7 @@ bool SynTree::selector( Expression* expr )
       return false;
    }
    
-   delete m_selector;
+   dispose( m_selector );
    m_selector = expr;
    return true;
 }

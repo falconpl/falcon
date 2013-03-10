@@ -259,7 +259,7 @@ void Module::gcMark( uint32 mark )
       m_lastGCMark = mark;
       if ( m_modSpace != 0 )
       {
-         //m_modSpace->gcMark( mark );
+         m_modSpace->gcMark( mark );
       }
 
       m_attributes.gcMark(mark);

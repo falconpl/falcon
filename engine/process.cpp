@@ -146,6 +146,7 @@ void Process::inheritStreams()
 
 Process::~Process() {
    m_context->decref();
+   m_modspace->decref();
    if( m_error != 0 ) {
       m_error->decref();
    }

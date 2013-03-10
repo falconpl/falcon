@@ -46,7 +46,6 @@
 
 namespace Falcon {
    
-
 Class* ModSpace::handler()
 {
    static Class* ms = Engine::handlers()->modSpaceClass();
@@ -91,7 +90,10 @@ public:
       ModMap::iterator iter = m_modmap.begin();
       while( iter != m_modmap.end() )
       {
-         iter->second->decref();
+         Module* mod = iter->second;
+         // Remove the weak reference with us.
+         mod->modSpace(0);
+         mod->decref();
          ++iter;
       }
    }  
@@ -138,6 +140,17 @@ ModSpace::~ModSpace()
    delete m_loader;
    delete m_loaderFunc;
    TRACE( "ModSpace::~ModSpace complete deletion of %p", this );
+}
+
+
+void ModSpace::setParent( ModSpace* parent )
+{
+   parent->incref();
+   if( m_parent != 0 )
+   {
+      m_parent->decref();
+   }
+   m_parent = parent;
 }
 
 

@@ -786,6 +786,7 @@ void Collector::performGC( bool wait )
    MarkToken* markToken = new MarkToken( (wait ? &markEvt:0), true);
    uint32 mark = 0;
 
+
    // push a request for all the contexts to be marked.
    int32 count = 0;
    _p->m_mtx_contexts.lock();
@@ -852,7 +853,8 @@ void Collector::performGC( bool wait )
       // The sweeper MIGHT have already done our sweep,
       // but it will notify us never the less even if it doesn't sweep again.
       m_mtxRequest.lock();
-      _p->m_sweepTokens.push_back(new SweepToken(&evt) );
+      SweepToken* swtk = new SweepToken(&evt);
+      _p->m_sweepTokens.push_back( swtk );
       m_mtxRequest.unlock();
 
       // ask the sweeper to work a bit,

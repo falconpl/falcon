@@ -218,6 +218,7 @@ GCToken* SynClasses::collect( const Class* cls, TreeStep* earr, int line )
    bool SynClasses::Class## cls ::op_init( VMContext* ctx, void* instance, int pcount ) const\
    {\
       exprcls* expr = static_cast<exprcls*>(instance); \
+      expr->setInGC(); \
       operation ( ctx, pcount, expr ); \
       return false; \
    }\
@@ -243,6 +244,7 @@ GCToken* SynClasses::collect( const Class* cls, TreeStep* earr, int line )
    bool SynClasses::Class## cls ::op_init( VMContext* ctx, void* instance, int pcount ) const\
    {\
       exprcls* expr = static_cast<exprcls*>(instance); \
+      expr->setInGC(); \
       SynClasses::operation ( ctx, pcount, expr ); \
       return false; \
    }\
@@ -349,7 +351,8 @@ void*  SynClasses::ClassGenClosure::createInstance() const
 bool SynClasses::ClassGenClosure::op_init( VMContext* ctx, void* instance, int pcount ) const
 {
    ExprClosure* expr = static_cast<ExprClosure*>(instance);
-   
+   expr->setInGC();
+
    if( pcount < 1 || ! ctx->topData().isFunction() )
    {
       throw new ParamError( ErrorParam( e_inv_params, __LINE__, SRC )
@@ -399,6 +402,7 @@ void* SynClasses::ClassGenDict::createInstance() const
 bool SynClasses::ClassGenDict::op_init( VMContext* ctx, void* instance, int pcount ) const
 {
    ExprDict* expr = static_cast<ExprDict*>(instance);
+   expr->setInGC();
    
    if( pcount % 2 != 0 )
    {
@@ -439,6 +443,7 @@ bool SynClasses::ClassDotAccess::op_init( VMContext* ctx, void* instance, int pc
    }
    
    ExprDot* expr = static_cast<ExprDot*>(instance);
+   expr->setInGC();
    SynClasses::unaryExprSet( ctx, pcount, expr );
    expr->property( *ctx->opcodeParams(pcount)[1].asString() );
    return false;
@@ -594,7 +599,7 @@ void* SynClasses::ClassPseudoCall::createInstance() const
 }
 bool SynClasses::ClassPseudoCall::op_init( VMContext* ctx, void* instance, int pcount ) const
 {       
-   // TODO -- parse a single pseudofunction and a list of parameters.
+   // Pseudocall is abstract
    return Class::op_init( ctx, instance, pcount );
 }
 void SynClasses::ClassPseudoCall::restore( VMContext* ctx, DataReader*dr ) const
@@ -666,6 +671,7 @@ bool SynClasses::ClassGenRange::op_init( VMContext* ctx, void* instance, int pco
    }
       
    ExprRange* rng = static_cast<ExprRange*>(instance);
+   rng->setInGC();
    Item* ops = ctx->opcodeParams(pcount);
    
    bool bOk = true;
@@ -728,10 +734,11 @@ void* SynClasses::ClassGenSym::createInstance() const
 bool SynClasses::ClassGenSym::op_init( VMContext* ctx, void* instance, int pcount ) const
 {
    static Class* symClass = Engine::handlers()->symbolClass();
-   
+
    ExprSymbol* expr = static_cast<ExprSymbol*>( instance );
    Item* params = ctx->opcodeParams(pcount);
-   
+   expr->setInGC();
+
    if( pcount >= 1 )
    {
       Class* cls;
@@ -798,6 +805,7 @@ bool SynClasses::ClassValue::op_init( VMContext* ctx, void* instance, int pcount
    }
    
    ExprValue* expr = static_cast<ExprValue*>(instance);
+   expr->setInGC();
    expr->item( ctx->topData() );
    return false;
 }
@@ -847,6 +855,8 @@ bool SynClasses::ClassIString::op_init( VMContext* ctx, void* instance, int pcou
 
    ExprIString* expr = static_cast<ExprIString*>(instance);
    expr->original( *ctx->topData().asString() );
+   expr->setInGC();
+
    return false;
 }
 void SynClasses::ClassIString::store( VMContext* ctx, DataWriter* dw, void* instance ) const
@@ -903,6 +913,8 @@ bool SynClasses::ClassInherit::op_init( VMContext* ctx, void* instance, int pcou
    
    Class* theClass = static_cast<Class*>(clsItem->asInst());
    ExprInherit* inh = static_cast<ExprInherit*>(instance);
+   inh->setInGC();
+
    inh->base( theClass );
    
    // and now, the init expressions
@@ -1023,6 +1035,8 @@ bool SynClasses::ClassParentship::op_init( VMContext* ctx, void* instance, int p
    
    Item* operands = ctx->opcodeParams( pcount );
    ExprParentship* pship = static_cast<ExprParentship*>( instance );
+   pship->setInGC();
+
    // and now, the init expressions
    for( int i = 0; i < pcount; ++i ) 
    {
@@ -1072,6 +1086,8 @@ bool SynClasses::ClassGlobal::op_init( VMContext* ctx, void* instance, int pCoun
    }
 
    StmtGlobal* stmt = static_cast<StmtGlobal *>(instance);
+   stmt->setInGC();
+
    Item* params = ctx->opcodeParams(pCount);
    for( int i = 0; i < pCount; ++i )
    {
@@ -1139,10 +1155,12 @@ void* SynClasses::ClassLit::createInstance() const
    // lit cannot be invoked by constructor.
    return 0;
 }
-bool SynClasses::ClassLit::op_init( VMContext* , void* , int ) const
+bool SynClasses::ClassLit::op_init( VMContext* , void* instance, int ) const
 {
-   // Let the caller to remove the params
-   return false;
+   ExprLit* expr = static_cast<ExprLit*>(instance);
+   expr->setInGC();
+   // TODO
+   return true;
 }
 void SynClasses::ClassLit::restore( VMContext* ctx, DataReader* dr ) const
 {
@@ -1171,11 +1189,13 @@ void SynClasses::ClassLit::unflatten( VMContext*, ItemArray& subItems, void* ins
 {
    ExprLit* lit = static_cast<ExprLit*>(instance);
    if( subItems.length() >= 1 ) {
-      lit->setChild( static_cast<Expression*>(subItems.at(0).asInst()) );
+      fassert(subItems.at(0).type() == FLC_CLASS_ID_TREESTEP );
+      lit->setChild( static_cast<TreeStep*>(subItems.at(0).asInst()) );
    }
 
    for( uint32 i = 1; i < subItems.length(); ++ i ) {
       Item& item = subItems[i];
+      fassert(subItems.at(i).type() == FLC_CLASS_ID_TREESTEP );
       lit->registerUnquote( static_cast<Expression*>(item.asInst()) );
    }
 }
@@ -1215,6 +1235,7 @@ bool SynClasses::ClassTree::op_init( VMContext* ctx, void* instance, int pcount 
 
    // put in the treestep
    ExprTree* self = static_cast<ExprTree*>(instance);
+   self->setInGC();
    TreeStep* ts = static_cast<TreeStep*>(i_tree->asInst());
    self->setChild(ts);
 
@@ -1347,6 +1368,29 @@ static void init_loop( VMContext* ctx, int pcount, StmtWhile* step )
    init_while_loop( ctx, pcount, step, true );
 }
 
+static void init_if( VMContext* ctx, int pcount, StmtIf* step )
+{
+   Item* params = ctx->opcodeParams(pcount);
+   for( int count = 0; count < pcount; ++count )
+   {
+      Item* expr = params + count;
+      // Warning, we're converting prior to know the type,
+      // but we'll check type() that is valid for all PSteps.
+      TreeStep* child = static_cast<TreeStep*>(expr->asInst());
+      if( expr->type() != FLC_CLASS_ID_TREESTEP )
+      {
+         throw FALCON_SIGN_XERROR( ParamError, e_inv_params, .extra(String("Parameter ").N(count).A( " not accepted")));
+      }
+
+      if( ! step->append( child ) )
+      {
+         throw new ParamError( ErrorParam( e_expr_assign, __LINE__, SRC )
+                        .origin( ErrorParam::e_orig_runtime)
+                        .extra( String("at ").N(count)) );
+      }
+   }
+}
+
 FALCON_STANDARD_SYNCLASS_OP_CREATE( Break, StmtBreak, zeroaryExprSet )
 FALCON_STANDARD_SYNCLASS_OP_CREATE( Breakpoint, Breakpoint, zeroaryExprSet )
 FALCON_STANDARD_SYNCLASS_OP_CREATE( Continue, StmtContinue, zeroaryExprSet )
@@ -1356,7 +1400,7 @@ FALCON_STANDARD_SYNCLASS_OP_CREATE( FastPrint, StmtFastPrint, varExprInsert )
 FALCON_STANDARD_SYNCLASS_OP_CREATE( FastPrintNL, StmtFastPrintNL, varExprInsert)
 FALCON_STANDARD_SYNCLASS_OP_CREATE_SIMPLE( ForIn, StmtForIn, zeroaryExprSet ) //
 FALCON_STANDARD_SYNCLASS_OP_CREATE( ForTo, StmtForTo, zeroaryExprSet ) //
-FALCON_STANDARD_SYNCLASS_OP_CREATE( If, StmtIf, varExprInsert )   //
+FALCON_STANDARD_SYNCLASS_OP_CREATE( If, StmtIf, init_if )
 FALCON_STANDARD_SYNCLASS_OP_CREATE( Loop, StmtLoop, init_loop )
 FALCON_STANDARD_SYNCLASS_OP_CREATE( Raise, StmtRaise, unaryExprSet )
 FALCON_STANDARD_SYNCLASS_OP_CREATE_SIMPLE( Return, StmtReturn, unaryExprSet )

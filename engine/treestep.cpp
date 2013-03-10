@@ -33,7 +33,8 @@ TreeStep::TreeStep( const TreeStep& other ):
    PStep( other ),
    m_handler( other.m_handler ),
    m_parent(0),
-   m_cat( other.m_cat )
+   m_cat( other.m_cat ),
+   m_bInGC(false)
 {
 }
 
@@ -59,7 +60,6 @@ bool TreeStep::setParent( TreeStep* ts )
 
    return false;
 }
-
 
 
 int32 TreeStep::arity() const
@@ -206,6 +206,22 @@ void TreeStep::resolveUnquote( VMContext* ctx )
 
    for (int i = rty-1; i >=0; --i ) {
       nth(i)->resolveUnquote(ctx);
+   }
+}
+
+
+void TreeStep::dispose( TreeStep* child )
+{
+   if( child != 0 )
+   {
+      if( child->isInGC() )
+      {
+         child->setParent(0);
+      }
+      else
+      {
+         delete child;
+      }
    }
 }
 

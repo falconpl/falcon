@@ -98,9 +98,9 @@ StmtTry::StmtTry( const StmtTry& other ):
 
 StmtTry::~StmtTry()
 {
-   delete m_body;
-   delete m_fbody;
-   delete m_select;
+   dispose( m_body );
+   dispose( m_fbody );
+   dispose( m_select );
 }
 
 
@@ -108,7 +108,7 @@ bool StmtTry::body( SynTree* body )
 { 
    if( body->setParent(this) )
    {
-      delete m_body;
+      dispose( m_body );
       m_body = body;
       return true;
    }
@@ -120,7 +120,7 @@ bool StmtTry::fbody( SynTree* body )
 { 
    if( body->setParent(this) )
    {
-      delete m_fbody;
+      dispose( m_fbody );
       m_fbody = body;
       return true;
    }
@@ -136,9 +136,9 @@ int32 StmtTry::arity() const
 TreeStep* StmtTry::nth( int32 n ) const
 {
    switch( n ) {
-   case 0: return m_body;
-   case 1: return m_select;
-   case 2: return m_fbody;
+   case 0: case -3: return m_body;
+   case 1: case -2: return m_select;
+   case 2: case -1: return m_fbody;
    }
 
    return 0;
@@ -150,26 +150,26 @@ bool StmtTry::setNth( int32 n, TreeStep* ts )
    static Class* slc = Engine::instance()->synclasses()->m_stmt_select;
 
    switch( n ) {
-   case 0:
+   case 0: case -3:
       if ( ts->category() == TreeStep::e_cat_syntree ) {
          SynTree* st = static_cast<SynTree*>( ts );
          return body(st);
       }
       break;
 
-   case 1:
+   case 1: case -2:
          if ( ts->handler() == slc ) {
             StmtSelect* st = static_cast<StmtSelect*>( ts );
             if( st->setParent(this) )
             {
-               delete m_select;
+               dispose( m_select );
                m_select = st;
                return true;
             }
          }
          break;
 
-   case 2:
+   case 2: case -1:
       if ( ts->category() == TreeStep::e_cat_syntree ) {
          SynTree* st = static_cast<SynTree*>( ts );
          return fbody(st);

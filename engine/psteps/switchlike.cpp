@@ -38,8 +38,8 @@ SwitchlikeStatement::SwitchlikeStatement( const SwitchlikeStatement& other ):
 
 SwitchlikeStatement::~SwitchlikeStatement()
 {
-   delete m_defaultBlock;
-   delete m_dummyTree;
+   dispose( m_defaultBlock );
+   dispose( m_dummyTree );
 }
 
 
@@ -50,7 +50,7 @@ bool SwitchlikeStatement::setDefault( SynTree* block )
       return false;
    }
 
-   delete m_defaultBlock;
+   dispose( m_defaultBlock );
    m_defaultBlock = block;
    return true;
 }

@@ -138,7 +138,7 @@ public:
    void first( Expression *f ) { 
       if ( f->setParent(this) )
       {
-         delete m_first; 
+         dispose( m_first );
          m_first= f; 
       }
    }
@@ -180,7 +180,7 @@ public:
    void first( Expression *f ) { 
       if ( f->setParent(this) )
       {
-         delete m_first; 
+         dispose( m_first );
          m_first= f; 
       }
    }
@@ -188,7 +188,7 @@ public:
    void second( Expression *f ) { 
       if ( f->setParent(this) )
       {
-         delete m_second; 
+         dispose( m_second );
          m_second= f; 
       }
    }
@@ -239,7 +239,7 @@ public:
    void first( Expression *f ) { 
       if ( f->setParent(this) )
       {
-         delete m_first; 
+         dispose( m_first );
          m_first= f; 
       }
    }
@@ -247,7 +247,7 @@ public:
    void second( Expression *f ) { 
       if ( f->setParent(this) )
       {
-         delete m_second; 
+         dispose( m_second );
          m_second= f; 
       }
    }
@@ -255,7 +255,7 @@ public:
    void third( Expression *f ) { 
       if ( f->setParent(this) )
       {
-         delete m_third; 
+         dispose( m_third );
          m_third= f; 
       }
    }

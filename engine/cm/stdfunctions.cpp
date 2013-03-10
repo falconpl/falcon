@@ -358,7 +358,6 @@ FALCON_DEFINE_FUNCTION_P(input)
 */
 FALCON_DEFINE_FUNCTION_P(passvp)
 {
-
    if ( pCount > 0 )
    {
       Item callee = *ctx->param(0);
@@ -397,128 +396,7 @@ FALCON_DEFINE_FUNCTION_P(passvp)
       }
       ctx->topData() = FALCON_GC_HANDLE(retval);
    }
-
 }
-
-
-#if 0
-
-/*#
-   @function stdInRaw
-   @brief Creates a stream that interfaces the standard input stream of the host process.
-   @ingroup core_syssupport
-   @return A new valid @a Stream instance on success.
-
-   The returned stream maps input operations on the standard input of the
-   process hosting the script. The returned stream is bound directly with the
-   process input stream, without any automatic transcoding applied.
-   @a Stream.readText will read the text as stream of binary data coming from the
-   stream, unless @a Stream.setEncoding is explicitly called on the returned
-   instance.
-
-   Closing this stream has the effect to close the standard input stream of the
-   process running the script (if the operation is allowed by the embedding
-   application).  Applications trying to write data to the script process will be
-   notified that the script has closed the stream and is not willing to receive
-   data anymore.
-
-   The stream is read only. Write operations will cause an I/O to be raised.
-*/
-FALCON_DEFINE_FUNCTION_P(stdInRaw)
-{
-   TRACE1( "stdInRaw -- called with %d params", pCount );
-   (void) pCount;
-
-   Stream* retStream = new StdInStream(false);
-   ctx->returnFrame(FALCON_GC_HANDLE(retStream));
-}
-
-/*#
-   @function stdOutRaw
-   @brief Creates a stream that interfaces the standard output stream of the host process.
-   @ingroup core_syssupport
-   @return A new valid @a Stream instance on success.
-
-   The returned stream maps output operations on the standard output stream of the
-   process hosting the script. The returned stream is bound directly with the
-   process output, without any automatic transcoding applied. @a Stream.writeText
-   will write the text as stream of bytes to the stream, unless
-   @a Stream.setEncoding is explicitly called on the returned instance.
-
-   Closing this stream has the effect to close the standard output of the process
-   running the script (if the operation is allowed by the embedding application).
-   Print functions, fast print operations, default error reporting and so on will
-   be unavailable from this point on.
-
-   Applications reading from the output stream of the process running the scripts,
-   in example, piped applications, will recognize that the script has completed
-   its output, and will disconnect immediately, while the script may continue to run.
-
-   The stream is write only. Read operations will cause an IoError to be raised.
-*/
-
-FALCON_FUNC  stdOutRaw ( ::Falcon::VMachine *vm )
-{
-   Stream* retStream = new StdOutStream(false);
-   ctx->returnFrame(FALCON_GC_HANDLE(retStream));
-}
-
-/*#
-   @function stdErrRaw
-   @brief Creates a stream that interfaces the standard error stream of the host process.
-   @ingroup core_syssupport
-   @return A new valid @a Stream instance on success.
-
-   The returned stream maps output operations on the standard error stream of the
-   process hosting the script. The returned stream is bound directly with the
-   process error stream, without any automatic transcoding applied.
-   @a Stream.writeText will write the text as stream of bytes to the stream,
-   unless @a Stream.setEncoding is explicitly called on the returned
-   instance.
-
-   Closing this stream has the effect to close the standard error stream of the
-   process running the script (if the operation is allowed by the embedding
-   application).  Applications reading from the error stream of the script will be
-   notified that the stream has been closed, and won't be left pending in reading
-   this stream.
-
-   The stream is write only. Read operations will cause an I/O to be raised.
-*/
-FALCON_FUNC  stdErrRaw ( ::Falcon::VMachine *vm )
-{
-   Stream* retStream = new StdInStream(false);
-   ctx->returnFrame(FALCON_GC_HANDLE(retStream));
-}
-
-/*# @endset */
-
-/*#
-   @function systemErrorDescription
-   @ingroup general_purpose
-   @brief Returns a system dependent message explaining an integer error code.
-   @param errorCode A (possibly) numeric error code that some system function has returned.
-   @return A system-specific error description.
-
-   This function is meant to provide the users (and the developers) with a
-   minimal support to get an hint on why some system function failed, without
-   having to consult the system manual pages. The fsError field of the Error class
-   can be fed directly inside this function.
-*/
-
-FALCON_FUNC  systemErrorDescription ( ::Falcon::VMachine *vm )
-{
-   Item *number = vm->param(0);
-   if ( ! number->isOrdinal() )
-   {
-      throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ) );
-   }
-
-   CoreString *str = new CoreString;
-   ::Falcon::Sys::_describeError( number->forceInteger(), *str );
-   vm->retval( str );
-}
-
-#endif
 
 }
 }

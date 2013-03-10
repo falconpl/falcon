@@ -42,7 +42,7 @@ UnaryExpression::UnaryExpression( const UnaryExpression &other ):
 
 UnaryExpression::~UnaryExpression()
 {
-   delete m_first;
+   dispose( m_first );
 }
 
 
@@ -73,7 +73,7 @@ bool UnaryExpression::setNth( int32 n, TreeStep* ts )
    if( n == 0 || n == -1 )
    {
       if( ts == 0 || ts->category() != TreeStep::e_cat_expression || ! ts->setParent(this) ) return false;
-      delete m_first;
+      dispose( m_first );
       m_first = static_cast<Expression*>(ts);
       return true;
    }
@@ -94,8 +94,8 @@ BinaryExpression::BinaryExpression( const BinaryExpression &other ):
 
 BinaryExpression::~BinaryExpression()
 {
-   delete m_first;
-   delete m_second;
+   dispose( m_first );
+   dispose( m_second );
 }
 
 
@@ -128,12 +128,12 @@ bool BinaryExpression::setNth( int32 n, TreeStep* ts )
    {
    case 0: case -2:      
       if( ts == 0 || ts->category() != TreeStep::e_cat_expression || ! ts->setParent(this) ) return false;
-      delete m_first;
+      dispose( m_first );
       m_first = static_cast<Expression*>(ts);
       return true;
    case 1: case -1:
       if( ts == 0 || ts->category() != TreeStep::e_cat_expression || ! ts->setParent(this) ) return false;
-      delete m_second;
+      dispose( m_second );
       m_second = static_cast<Expression*>(ts);
       return true;
    }
@@ -156,9 +156,9 @@ TernaryExpression::TernaryExpression( const TernaryExpression &other ):
 
 TernaryExpression::~TernaryExpression()
 {
-   delete m_first;
-   delete m_second;
-   delete m_third;
+   dispose( m_first );
+   dispose( m_second );
+   dispose( m_third );
 }
 
 bool TernaryExpression::isStatic() const
@@ -191,17 +191,17 @@ bool TernaryExpression::setNth( int32 n, TreeStep* ts )
    {
    case 0: case -3:      
       if( ts == 0 || ts->category() != TreeStep::e_cat_expression || ! ts->setParent(this) ) return false;
-      delete m_first;
+      dispose( m_first );
       m_first = static_cast<Expression*>(ts);
       return true;
    case 1: case -2:
       if( ts == 0 || ts->category() != TreeStep::e_cat_expression || ! ts->setParent(this) ) return false;
-      delete m_second;
+      dispose( m_second );
       m_second = static_cast<Expression*>(ts);
       return true;
    case 2: case -1:
       if( ts == 0 || ts->category() != TreeStep::e_cat_expression || ! ts->setParent(this) ) return false;
-      delete m_third;
+      dispose( m_third );
       m_third = static_cast<Expression*>(ts);
       return true;
    }

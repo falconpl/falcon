@@ -64,6 +64,7 @@ ExprUnpack::ExprUnpack( const ExprUnpack& other ):
    _p = new Private;
    m_trait = Expression::e_trait_composite;
    m_expander = other.m_expander->clone();
+   m_expander->setParent(this);
 
    _p->m_params.reserve(other._p->m_params.size());
    std::vector<Symbol*>::const_iterator iter = other._p->m_params.begin();
@@ -77,7 +78,7 @@ ExprUnpack::ExprUnpack( const ExprUnpack& other ):
 
 ExprUnpack::~ExprUnpack()
 {
-   delete m_expander;
+   dispose( m_expander );
    std::vector<Symbol*>::const_iterator iter = _p->m_params.begin();
    while( iter != _p->m_params.end() )
    {
@@ -90,7 +91,7 @@ ExprUnpack::~ExprUnpack()
 bool ExprUnpack::selector( Expression* sel )
 {
    if( sel->setParent(this) ) {
-      delete m_expander;
+      dispose(m_expander);
       m_expander = sel;
       return true;
    }

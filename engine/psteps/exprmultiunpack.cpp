@@ -79,7 +79,9 @@ ExprMultiUnpack::ExprMultiUnpack( const ExprMultiUnpack& other ):
    std::vector<Expression*>::const_iterator itere = other._p->m_assignee.begin();
    while( itere != other._p->m_assignee.end() )
    {
-      _p->m_assignee.push_back( (*itere)->clone() );
+      Expression* expr = (*itere)->clone();
+      expr->setParent(this);
+      _p->m_assignee.push_back( expr );
       ++itere;
    }
 }
@@ -97,7 +99,7 @@ ExprMultiUnpack::~ExprMultiUnpack()
    std::vector<Expression*>::const_iterator iter = _p->m_assignee.begin();
    while( iter != _p->m_assignee.end() )
    {
-      delete *iter;
+      dispose( *iter );
       ++iter;
    }
 }

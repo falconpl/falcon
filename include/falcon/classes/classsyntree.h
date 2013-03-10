@@ -50,6 +50,7 @@ public:
    virtual void op_getProperty( VMContext* ctx, void* instance, const String& prop) const;
    virtual void op_setProperty( VMContext* ctx, void* instance, const String& prop) const;
 
+   virtual bool op_init( VMContext* ctx, void* instance, int32 pcount ) const;
    virtual void op_call( VMContext* ctx, int pcount, void* instance) const;
 protected:
    ClassSynTree( const String& parent, ClassSymbol* sym=0 );

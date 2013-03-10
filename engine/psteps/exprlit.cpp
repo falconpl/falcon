@@ -139,7 +139,7 @@ void ExprLit::setChild( TreeStep* st )
       }
    }
 
-   delete m_child;
+   dispose( m_child );
    m_child = st;
 }
 
@@ -150,7 +150,7 @@ int32 ExprLit::arity() const
 
 TreeStep* ExprLit::nth( int32 n ) const
 {
-   if (n==0) {
+   if (n==0 || n == -1) {
       return m_child;
    }
    return 0;
@@ -158,8 +158,8 @@ TreeStep* ExprLit::nth( int32 n ) const
 
 bool ExprLit::setNth( int32 n, TreeStep* ts )
 {
-   if (n==0 && ts != 0 && ts->setParent(this) ) {
-      delete m_child;
+   if ( (n==0 || n == -1) && ts != 0 && ts->setParent(this) ) {
+      dispose( m_child );
       m_child = ts;
       return true;
    }
@@ -204,7 +204,7 @@ void ExprLit::apply_( const PStep* ps, VMContext* ctx )
    if( evsize ) {
       nchild->resolveUnquote( ctx );
    }
-
+   nchild->setInGC();
    ctx->pushData( FALCON_GC_HANDLE( nchild )  );
 }
 

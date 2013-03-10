@@ -350,17 +350,26 @@ public:
 
    virtual void resolveUnquote( VMContext* ctx );
 
+   bool isInGC() const { return m_bInGC; }
+   void setInGC() { m_bInGC = true; }
+
+   // invoked in place of delete to get rid of non-gc children.
+   static void dispose( TreeStep* child );
+
 protected:
+
    uint32 m_gcMark; 
    Class* m_handler;
    TreeStep* m_parent;
    t_category m_cat;
+   bool m_bInGC;
    
    TreeStep( Class* cls, t_category t, int line = 0, int chr = 0 ):
       PStep(line, chr ),
       m_handler( cls ),
       m_parent(0),
-      m_cat(t)
+      m_cat(t),
+      m_bInGC(false)
    {}
    
    // Unclassesd step, or class provided later on
@@ -368,7 +377,8 @@ protected:
       PStep(line, chr ),
       m_handler( 0 ),
       m_parent(0),
-      m_cat(t)
+      m_cat(t),
+      m_bInGC(false)
    {}
 
 };

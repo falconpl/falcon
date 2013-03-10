@@ -21,9 +21,9 @@ Done.
 expr = SynTree()
 expr()
 > "Check ok"
-
 expr = SynTree( nil, FastPrintNL( "Single statement OK" ) )
 expr()
+
 
 expr = SynTree( nil, 
    FastPrintNL( "First multiple statement OK" ),

@@ -41,10 +41,10 @@ namespace Falcon
 
 StmtForBase::~StmtForBase()
 {
-   delete m_body;
-   delete m_forFirst;
-   delete m_forMiddle;
-   delete m_forLast;
+   dispose( m_body );
+   dispose( m_forFirst );
+   dispose( m_forMiddle );
+   dispose( m_forLast );
 }
 
 void StmtForBase::minimize()
@@ -58,7 +58,7 @@ void StmtForBase::minimize()
 void StmtForBase::body( TreeStep* st ) {
    if( st->setParent(this) )
    {
-      delete m_body;
+      dispose( m_body );
       m_body = st;
    }
 }
@@ -67,7 +67,7 @@ void StmtForBase::forFirst( TreeStep* st )
 {
    if( st->setParent(this) )
    {
-      delete m_forFirst;
+      dispose( m_forFirst );
       m_forFirst = st;
    }
 }
@@ -75,7 +75,7 @@ void StmtForBase::forFirst( TreeStep* st )
 void StmtForBase::forMiddle( TreeStep* st ) {
    if( st->setParent(this) )
    {
-      delete m_forMiddle;
+      dispose( m_forMiddle );
       m_forMiddle = st;
    }
 }
@@ -83,7 +83,7 @@ void StmtForBase::forMiddle( TreeStep* st ) {
 void StmtForBase::forLast( TreeStep* st ) {
    if( st->setParent(this) )
    {
-      delete m_forLast;
+      dispose( m_forLast );
       m_forLast = st;
    }
 }
@@ -122,10 +122,10 @@ bool StmtForBase::setNth( int32 n, TreeStep* ts )
      
    switch( n )
    {
-      case 0: case -4: delete m_body; m_body = static_cast<SynTree*>(ts); break;
-      case 1: case -3: delete m_forFirst; m_forFirst = static_cast<SynTree*>(ts); break;
-      case 2: case -2: delete m_forMiddle; m_forMiddle = static_cast<SynTree*>(ts); break;
-      case 3: case -1: delete m_forLast; m_forLast = static_cast<SynTree*>(ts); break; 
+      case 0: case -4: dispose( m_body ); m_body = static_cast<SynTree*>(ts); break;
+      case 1: case -3: dispose( m_forFirst ); m_forFirst = static_cast<SynTree*>(ts); break;
+      case 2: case -2: dispose( m_forMiddle ); m_forMiddle = static_cast<SynTree*>(ts); break;
+      case 3: case -1: dispose( m_forLast ); m_forLast = static_cast<SynTree*>(ts); break;
       default: return false;
    }
    
@@ -351,7 +351,7 @@ bool StmtForIn::selector( Expression* e )
 {
    if( e != 0 && e->setParent( this ) )
    {
-      delete m_expr;
+      dispose( m_expr );
       m_expr = e;
       return true;
    }
@@ -627,9 +627,9 @@ StmtForTo::StmtForTo( const StmtForTo& other ):
 
 StmtForTo::~StmtForTo() 
 {
-   delete m_start;
-   delete m_end;
-   delete m_step;  
+   dispose( m_start );
+   dispose( m_end );
+   dispose( m_step );
 }
 
 bool StmtForTo::isValid() const 
@@ -639,21 +639,30 @@ bool StmtForTo::isValid() const
 
 void StmtForTo::startExpr( Expression* s )
 {
-   delete m_start;
-   m_start = s;
+   if( s->setParent(this) )
+   {
+      dispose( m_start );
+      m_start = s;
+   }
 }
 
 
 void StmtForTo::endExpr( Expression* s )
 {
-   delete m_end;
-   m_end = s;
+   if( s->setParent(this) )
+   {
+      dispose( m_end );
+      m_end = s;
+   }
 }
    
 void StmtForTo::stepExpr( Expression* s )
 {
-   delete m_step;
-   m_step = s;
+   if( s->setParent(this) )
+   {
+      dispose( m_step );
+      m_step = s;
+   }
 }
 
    

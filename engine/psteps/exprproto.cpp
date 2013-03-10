@@ -47,7 +47,7 @@ public:
       DefVector::iterator iter = m_defs.begin();
       while( m_defs.end() != iter )
       {
-         delete iter->second;
+         dispose( iter->second );
          ++iter;
       }
    }
@@ -95,7 +95,7 @@ bool ExprProto::setNth( int32 n, TreeStep* ts )
    if( n < 0 ) n = (int)_p->m_defs.size() + n;
    if( n < 0 || n > (int)_p->m_defs.size() ) return false;
    if( ! ts->setParent(this) ) return false;
-   delete _p->m_defs[n].second;
+   dispose( _p->m_defs[n].second );
    _p->m_defs[n].second = static_cast<Expression*>(ts);
    return true;
 }
@@ -105,7 +105,7 @@ bool ExprProto::remove( int n )
 {
    if( n < 0 ) n = (int)_p->m_defs.size() + n;
    if( n < 0 || n >= (int)_p->m_defs.size() ) return false;
-   delete _p->m_defs[n].second;
+   dispose( _p->m_defs[n].second );
    _p->m_defs.erase( _p->m_defs.begin() + n );
    return true;
 }

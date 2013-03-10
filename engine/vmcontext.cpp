@@ -1334,7 +1334,7 @@ void VMContext::pushBreak()
 void VMContext::callInternal( Function* function, int nparams, const Item& self )
 {
    TRACE( "Calling method %s.%s -- call frame code:%p, data:%p, call:%p",
-         self.describe(3).c_ize(), function->locate().c_ize(),
+         self.asClass()->name().c_ize(), function->locate().c_ize(),
          m_codeStack.m_top, m_dataStack.m_top, m_callStack.m_top  );
 
    makeCallFrame( function, nparams, self );
@@ -2245,7 +2245,7 @@ void VMContext::gcPerformMark()
       m_initWrite.gcMark(mark);
       m_initRead.gcMark(mark);
       //TODO: let the collector do this property
-      process()->modSpace()->gcMark(mark);
+      //process()->modSpace()->gcMark(mark);
    }
 }
 

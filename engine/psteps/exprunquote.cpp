@@ -77,7 +77,7 @@ void ExprUnquote::resolveUnquote( VMContext* ctx )
 {
    static Class* expr = Engine::handlers()->expressionClass();
 
-   delete m_first;
+   dispose( m_first );
 
    Item& value = ctx->topData();
    void* inst;

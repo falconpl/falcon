@@ -22,7 +22,8 @@
 namespace Falcon {
 /**  An alias to the atomic integer type.
  */
-typedef int32 atomic_int;
+typedef volatile int32 atomic_int;
+typedef int32 atomic_int_base;
 
 /** Performs an atomic thread safe increment. */
 inline int32 atomicInc( atomic_int& atomic )
@@ -54,7 +55,7 @@ inline void atomicSet( atomic_int& atomic, atomic_int value ) {
 }
 
 /** Sets the given value in atomic, and returns the previous value. */
-inline atomic_int atomicExchange( atomic_int& atomic, atomic_int value )
+inline atomic_int_base atomicExchange( atomic_int& atomic, atomic_int value )
 {
    return (int32) __sync_lock_test_and_set( &atomic, value );
 }
@@ -64,17 +65,17 @@ inline bool atomicCAS( atomic_int& target, atomic_int compareTo, atomic_int newV
    return __sync_bool_compare_and_swap( &target, compareTo, newVal );
 }
 
-inline atomic_int atomicXor( atomic_int& target, atomic_int value )
+inline atomic_int_base atomicXor( atomic_int& target, atomic_int value )
 {
    return __sync_fetch_and_xor(&target, value);
 }
 
-inline atomic_int atomicAnd( atomic_int& target, atomic_int value )
+inline atomic_int_base atomicAnd( atomic_int& target, atomic_int value )
 {
    return __sync_fetch_and_and(&target, value);
 }
 
-inline atomic_int atomicOr( atomic_int& target, atomic_int value )
+inline atomic_int_base atomicOr( atomic_int& target, atomic_int value )
 {
    return __sync_fetch_and_or(&target, value);
 }

@@ -127,7 +127,7 @@ bool ExprRule::setNth( int32 n, TreeStep* ts )
    if( ts->handler()->userFlags() == FALCON_SYNCLASS_ID_RULE_SYNTREE && ts->setParent(this))
    {
       RuleSynTree* st = static_cast<RuleSynTree*>(ts);
-      delete _p->m_exprs[n];
+      dispose( _p->m_exprs[n] );
       _p->m_exprs[n] = st;
       return true;
    }
@@ -176,7 +176,7 @@ bool ExprRule::remove( int32 n )
       return false;
    }
 
-   delete _p->m_exprs[n];
+   dispose( _p->m_exprs[n] );
    _p->m_exprs.erase( _p->m_exprs.begin() + n );
    return true;
 }
@@ -333,7 +333,7 @@ StmtCut::StmtCut( const StmtCut& other ):
 
 StmtCut::~StmtCut()
 {
-   delete m_expr;
+   dispose( m_expr );
 }
 
 void StmtCut::describeTo( String& tgt, int depth ) const
@@ -369,7 +369,7 @@ bool StmtCut::selector( Expression* expr )
    if( expr == 0 )
    {
       apply = apply_;
-      delete m_expr;
+      dispose( m_expr );
       m_expr = 0;
       return true;
    }
@@ -377,7 +377,7 @@ bool StmtCut::selector( Expression* expr )
    {
       if ( expr->setParent(this) ) {
          apply = apply_cut_expr_;
-         delete m_expr;
+         dispose( m_expr );
          m_expr = expr;
          return true;
       }
@@ -450,7 +450,7 @@ StmtDoubt::StmtDoubt( const StmtDoubt& other ):
 
 StmtDoubt::~StmtDoubt()
 {
-   delete m_expr;
+   dispose( m_expr );
 }
 
 void StmtDoubt::describeTo( String& tgt, int depth ) const
@@ -486,7 +486,7 @@ bool StmtDoubt::selector( Expression* expr )
 {
    if( expr != 0  && expr->setParent(this) )
    {
-      delete m_expr;
+      dispose( m_expr );
       m_expr = expr;
       return true;
    }

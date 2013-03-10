@@ -74,6 +74,7 @@ ExprTree::ExprTree( const ExprTree& other ):
 ExprTree::~ExprTree()
 {
    delete m_varmap;
+   dispose( m_child );
 }
 
 
@@ -164,9 +165,11 @@ void ExprTree::describeTo( String& str, int depth ) const
 
 void ExprTree::setChild( TreeStep* st )
 {
-   delete m_child;
-   m_child = st;
-   st->setParent(this);
+   if( st->setParent(this) )
+   {
+      dispose( m_child );
+      m_child = st;
+   }
 }
 
 
@@ -177,7 +180,7 @@ int32 ExprTree::arity() const {
 
 TreeStep* ExprTree::nth( int32 n ) const
 {
-   if( n == 0 ) {
+   if( n == 0 || n == -1 ) {
       return m_child;
    }
    return 0;
@@ -185,15 +188,15 @@ TreeStep* ExprTree::nth( int32 n ) const
 
 bool ExprTree::setNth( int32 n, TreeStep* ts )
 {
-   if( n == 0 )
+   if( n == 0 || n == -1 )
    {
-      delete m_child;
       if( ts == 0 ) {
+         dispose( m_child );
          m_child = 0;
          return true;
       }
-      else if( ! ts->parent() ) {
-         ts->setParent(this);
+      else if( ts->setParent(this) ) {
+         dispose( m_child );
          m_child = ts;
          return true;
       }

@@ -60,7 +60,7 @@ StmtRaise::StmtRaise( const StmtRaise& other ):
 
 StmtRaise::~StmtRaise()
 {
-   delete m_expr;
+   dispose( m_expr );
 }
 
 
@@ -86,7 +86,7 @@ bool StmtRaise::selector( Expression* e )
 {
    if( e!= 0 && e->setParent(this) )
    {
-      delete m_expr;
+      dispose( m_expr );
       m_expr = e;
    }
    return true;

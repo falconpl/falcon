@@ -153,6 +153,7 @@ bool SynClasses::ClassProvides::op_init(VMContext* ctx, void* instance, int pcou
    }
 
    ExprProvides* prov = static_cast<ExprProvides*>( instance );
+   prov->setInGC();
    String* prop = iprop.asString();
 
    prov->first( first );

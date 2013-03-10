@@ -18,6 +18,7 @@
 #include <falcon/setup.h>
 #include <falcon/string.h>
 #include <falcon/syntree.h>
+#include <falcon/expression.h>
 #include <falcon/vmcontext.h>
 #include <falcon/datareader.h>
 #include <falcon/datawriter.h>
@@ -193,6 +194,67 @@ void ClassSynTree::op_setProperty( VMContext* ctx, void* instance, const String&
    }
 }
 
+
+bool ClassSynTree::op_init( VMContext* ctx, void* instance, int32 pcount ) const
+{
+   SynTree* tree = static_cast<SynTree*>(instance);
+   // Selector, [target], TreeStep...
+   tree->setInGC();
+
+   if( pcount == 0 )
+   {
+      // let the MetaClass remove our parameters
+      return false;
+   }
+
+   Item* params = ctx->opcodeParams(pcount);
+   // we convert it now, but won't use the item till certain of what it is.
+   TreeStep* first = static_cast<TreeStep*>(params->asInst());
+   // the first item is the selector, and can be nil.
+   if( params->isNil() )
+   {
+      // it's ok, we have nothing to do.
+   }
+   else if( params->type() != FLC_CLASS_ID_TREESTEP || first->category() != TreeStep::e_cat_expression )
+   {
+      throw FALCON_SIGN_XERROR(ParamError, e_inv_params, .extra("Expression,..."));
+   }
+   else
+   {
+      if ( ! tree->selector(static_cast<Expression*>(first)) )
+      {
+         throw FALCON_SIGN_XERROR(ParamError, e_param_range, .extra("Parented expression at 0"));
+      }
+   }
+
+   for( int i = 1; i < pcount; ++i )
+   {
+      Item* param = params + i;
+
+      // idem, we convert before checking the type, but use only when sure
+      TreeStep* child = static_cast<TreeStep*>(param->asInst());
+      if( param->type() == FLC_CLASS_ID_SYMBOL )
+      {
+         if( tree->target() != 0 )
+         {
+            throw FALCON_SIGN_XERROR(ParamError, e_param_range, .extra(String("Target symbol already given at ").N(i)));
+         }
+         tree->target(static_cast<Symbol*>(param->asInst()));
+      }
+      else if( param->type() != FLC_CLASS_ID_TREESTEP )
+      {
+         throw FALCON_SIGN_XERROR(ParamError, e_inv_params, .extra(String("Not a TreeStep at ").N(i)));
+      }
+
+      else if( ! tree->append(child) )
+      {
+         throw FALCON_SIGN_XERROR(ParamError, e_param_range, .extra(String("Parented expression at ").N(i)));
+      }
+   }
+
+   // let the MetaClass remove our parameters
+   return false;
+}
 
 void ClassSynTree::op_call(VMContext* ctx, int pcount, void* instance) const
 {

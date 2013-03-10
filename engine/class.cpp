@@ -680,11 +680,11 @@ void Class::op_setIndex(VMContext* ctx, void* ) const
 }
 
 
-void Class::op_getProperty( VMContext* ctx, void* data, const String& prop ) const
+void Class::op_getProperty( VMContext* ctx, void* data, const String& propName ) const
 {
    static BOM* bom = Engine::instance()->getBom();
 
-   Private::PropertyMap::iterator iter = _p->m_props.find( prop );
+   Private::PropertyMap::iterator iter = _p->m_props.find( propName );
    if( iter != _p->m_props.end() )
    {
       Property& prop = iter->second;
@@ -706,7 +706,7 @@ void Class::op_getProperty( VMContext* ctx, void* data, const String& prop ) con
    }
 
    // try to find a valid BOM propery.
-   BOM::handler handler = bom->get( prop );
+   BOM::handler handler = bom->get( propName );
    if ( handler != 0  )
    {
       handler( ctx, this, data );
@@ -714,7 +714,7 @@ void Class::op_getProperty( VMContext* ctx, void* data, const String& prop ) con
    else
    {
       FALCON_RESIGN_XERROR( AccessError, e_prop_acc, ctx,
-                   .extra(prop) );
+                   .extra(propName) );
    }
 }
 

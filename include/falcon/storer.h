@@ -186,7 +186,7 @@ public:
     VM processing.
     
     */
-   virtual bool store( VMContext* ctx, Class* handler, void* data );
+   virtual bool store( VMContext* ctx, Class* handler, void* data, bool bIsGarbage = false );
 
    void setStream( Stream* dataStream );
    

@@ -73,7 +73,7 @@ StmtReturn::StmtReturn( const StmtReturn& other ):
 
 StmtReturn::~StmtReturn()
 {
-   delete m_expr;
+   dispose( m_expr );
 }
 
 Expression* StmtReturn::selector() const
@@ -88,14 +88,14 @@ bool StmtReturn::selector( Expression* e )
    {
       if( e->setParent(this) )
       {
-         delete m_expr;
+         dispose( m_expr );
          m_expr = e;
          return true;
       }
       return false;
    }
       
-   delete m_expr;
+   dispose( m_expr );
    m_expr = 0;
    return true;
 }

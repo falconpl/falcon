@@ -94,8 +94,8 @@ StmtWhile::StmtWhile( const StmtWhile& other ):
 
 StmtWhile::~StmtWhile()
 {
-   delete m_child;
-   delete m_expr;
+   dispose( m_child );
+   dispose( m_expr );
 }
 
 
@@ -114,7 +114,7 @@ bool StmtWhile::selector( Expression* e )
 {
    if( e!= 0 && e->setParent(this))
    {
-      delete m_expr;
+      dispose( m_expr );
       m_expr = e;
       return true;
    }
@@ -206,7 +206,7 @@ bool StmtWhile::setNth( int n, TreeStep* st )
    // single child
    if( st == 0 || (n != 0 && n != -1) || ! st->setParent(this)  ) return false;
 
-   delete m_child;
+   dispose( m_child );
    m_child = st;
 
    return true;
@@ -286,7 +286,7 @@ void StmtWhile::singleToMultipleChild( TreeStep* element, bool last )
 }
 
 void StmtWhile::mainBlock(TreeStep* st) {
-   delete m_child;
+   dispose( m_child );
    st->setParent(this);
    m_child = st;
 }
