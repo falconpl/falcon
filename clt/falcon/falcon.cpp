@@ -147,7 +147,7 @@ void FalconApp::launch( const String& script, int argc, char* argv[], int pos )
    Log* log = Engine::instance()->log();
 
    // Create the virtual machine -- that is used also for textual output.
-   VMachine vm;
+   VMachine& vm = *(new VMachine);
    Process* process = vm.createProcess();
 
    configureVM( vm, process );
@@ -222,11 +222,19 @@ void FalconApp::launch( const String& script, int argc, char* argv[], int pos )
       else {
          log->log(Log::fac_app, Log::lvl_info, String("Main module hasn't a main function, terminating") );
       }
+
+      log->log(Log::fac_app, Log::lvl_info, "Performing cleanup sequence" );
       mod->decref();
+      process->decref();
+      delete& vm;
+      Engine::instance()->collector()->performGC(true);
+      log->log(Log::fac_app, Log::lvl_info, "Performing cleanup sequence complete" );
    }
    catch( ... )
    {
       mod->decref();
+      process->decref();
+      delete& vm;
       throw;
    }
 }

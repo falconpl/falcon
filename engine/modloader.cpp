@@ -596,7 +596,8 @@ void ModLoader::saveModule_internal( VMContext* ctx, Module* mod, const URI& src
 
    ctx->pushData( FALCON_GC_HANDLE(output) );
    ctx->pushData( FALCON_GC_STORE(clsStorer, new Storer) );
-   ctx->pushData( Item(clsModule, mod) );
+   Item modItem(clsModule, mod);
+   ctx->pushData( modItem );
    ctx->pushCode( &m_stepSave );
 
 }
@@ -618,7 +619,8 @@ void ModLoader::PStepSave::apply_( const PStep*, VMContext* ctx )
    {
    case 0:
       seqId++;
-      if( ! storer->store( ctx, ctx->opcodeParam(0).asClass(), mod ) )
+      // we know the module is in garbage, so we set the garbage flag as true.
+      if( ! storer->store( ctx, ctx->opcodeParam(0).asClass(), mod, true ) )
       {
          return;
       }

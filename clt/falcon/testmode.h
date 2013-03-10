@@ -52,6 +52,8 @@ public:
       int32 m_length;
       int32 m_interval;
       String m_checkpoint;
+
+      bool m_enabled;
    };
 
    void setup();

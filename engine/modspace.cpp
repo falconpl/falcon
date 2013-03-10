@@ -128,6 +128,7 @@ ModSpace::ModSpace( Process* owner, ModSpace* parent ):
 
 ModSpace::~ModSpace()
 {
+   TRACE( "ModSpace::~ModSpace deleting %p", this );
    if( m_parent != 0 )
    {
       m_parent->decref();
@@ -136,11 +137,14 @@ ModSpace::~ModSpace()
    delete _p;
    delete m_loader;
    delete m_loaderFunc;
+   TRACE( "ModSpace::~ModSpace complete deletion of %p", this );
 }
 
 
 Process* ModSpace::loadModule( const String& name, bool isUri,  bool asLoad, bool isMain )
 {
+   TRACE( "ModSpace::loadModule(%s, %s, %s, %s )",
+            name.c_ize(), (isUri? "uri" : "name"), (asLoad?"load": "import"), (isMain?"main":"normal"));
    Process* process = m_process->vm()->createProcess();
    loadModuleInProcess( process, name, isUri, asLoad, isMain );
    return process;

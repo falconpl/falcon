@@ -47,7 +47,8 @@ static void stripReturns( String* result )
 TestMode::ScriptData::ScriptData( const String& id ):
          m_id(id),
          m_length(0),
-         m_interval(0)
+         m_interval(0),
+         m_enabled( true )
 {
 }
 
@@ -285,6 +286,10 @@ TestMode::ScriptData* TestMode::parse(const String& scriptName )
             {
                sd->m_checkpoint = tline.subString(12);
             }
+            else if( tline == "@disable" )
+            {
+               sd->m_enabled = false;
+            }
             else if( tline == ("@output") )
             {
                sd->m_exp_output = "";
@@ -310,6 +315,12 @@ TestMode::ScriptData* TestMode::parse(const String& scriptName )
 
 void TestMode::test( ScriptData* sd )
 {
+   if( ! sd->m_enabled )
+   {
+      log->log( Log::fac_app, Log::lvl_info, String( "Skipping " ) + sd->m_id + " because is disabled.");
+      return;
+   }
+
    log->log( Log::fac_app, Log::lvl_info, String( "Now testing " ) + sd->m_id );
 
    VMachine vm;
@@ -540,7 +551,11 @@ void TestMode::reportTest( ScriptData* sd )
    output.setSysCRLF();
 
    output.write( sd->m_id + ": ");
-   if( sd->m_bSuccess )
+   if( ! sd->m_enabled )
+   {
+      output.writeLine( "Disabled" );
+   }
+   else if( sd->m_bSuccess )
    {
       output.writeLine( "Success" );
       m_passed ++;
