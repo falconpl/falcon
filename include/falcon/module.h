@@ -20,7 +20,6 @@
 #include <falcon/setup.h>
 #include <falcon/string.h>
 #include <falcon/enumerator.h>
-#include <falcon/refcounter.h>
 #include <falcon/modmap.h>
 #include <falcon/loadmode.h>
 #include <falcon/mantra.h>
@@ -29,6 +28,7 @@
 #include <falcon/module.h>
 #include <falcon/vardatamap.h>
 #include <falcon/attribute.h>
+#include <falcon/atomic.h>
 
 #define DEFALUT_FALCON_MODULE_INIT falcon_module_init
 #define DEFALUT_FALCON_MODULE_INIT_NAME "falcon_module_init"
@@ -567,6 +567,9 @@ public:
     */
    uint32 countIStrings() const;
 
+   void incref() const { atomicInc(m_refcount); }
+   void decref();
+
 protected:
    /** Invoked when refcount hits 0.
     *  This will invoke the unload() method if not previously invoked.
@@ -583,6 +586,7 @@ protected:
 
     */
    virtual void unload();
+
 
 private:
    class Private;
@@ -602,6 +606,7 @@ private:
    Function* m_mainFunc;
    bool m_bNative;
    bool m_bLoad;
+   mutable atomic_int m_refcount;
 
    AttributeMap m_attributes;
 
@@ -624,7 +629,6 @@ private:
 
    class FuncRequirement;      
 
-   FALCON_REFERENCECOUNT_DECLARE_INCDEC( Module );
 };
 
 }

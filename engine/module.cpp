@@ -134,7 +134,8 @@ Module::Private::~Private()
    ReqList::iterator rl_i = m_mrlist.begin();
    while( rl_i != m_mrlist.end() )
    {
-      delete *rl_i;
+      ModRequest* mr = *rl_i;
+      delete mr;
       ++rl_i;
    }
 
@@ -170,7 +171,7 @@ Module::Module():
    m_anonMantras(0),
    m_mainFunc(0),
    m_bNative( false ),
-   m_refcounter_Module(1)
+   m_refcount(1)
 {
    TRACE("Creating internal module '%s'", m_name.c_ize() );
    m_uri = "";
@@ -188,7 +189,7 @@ Module::Module( const String& name, bool bNative ):
    m_anonMantras(0),
    m_mainFunc(0),
    m_bNative( bNative ),
-   m_refcounter_Module(1)
+   m_refcount(1)
 {
    TRACE("Creating internal module '%s'", name.c_ize() );
    m_uri = "";
@@ -207,7 +208,7 @@ Module::Module( const String& name, const String& uri, bool bNative ):
    m_anonMantras(0),
    m_mainFunc(0),
    m_bNative( bNative ),
-   m_refcounter_Module(1)
+   m_refcount(1)
 {
    TRACE("Creating module '%s' from %s",
       name.c_ize(), uri.c_ize() );
@@ -219,12 +220,24 @@ Module::Module( const String& name, const String& uri, bool bNative ):
 Module::~Module()
 {
    TRACE("Deleting module %s", m_name.c_ize() );
-   unload();
    // this is doing to do a bit of stuff; see ~Private()
    delete _p;
    TRACE("Module '%s' deletion complete", m_name.c_ize() );
 }
 
+void Module::decref()
+{
+   if( atomicDec(m_refcount) == 0 )
+   {
+      DynUnloader* unl = m_unloader;
+      m_unloader = 0;
+      delete this;
+
+      if( unl != 0 ) {
+         unl->unload();
+      }
+   }
+}
 
 uint32 Module::depsCount() const
 {
@@ -246,7 +259,7 @@ void Module::gcMark( uint32 mark )
       m_lastGCMark = mark;
       if ( m_modSpace != 0 )
       {
-         m_modSpace->gcMark( mark );
+         //m_modSpace->gcMark( mark );
       }
 
       m_attributes.gcMark(mark);
@@ -349,7 +362,8 @@ Variable* Module::importValue( const String& name, Module* source, Item* value, 
          // was a dependency waiting for this?
          Private::DepMap::const_iterator diter = _p->m_depsByName.find( name );
          if( diter != _p->m_depsByName.end() ) {
-            Error* err = diter->second->onResolved( source, this, value );
+            Private::Dependency* dep = diter->second;
+            Error* err = dep->onResolved( source, this, value );
             if( err != 0 ) throw err;
          }
       }
