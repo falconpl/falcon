@@ -1,0 +1,28 @@
+/*
+@name Homoiconic If empty
+@category Homoiconic
+
+@output
+Homoiconic If complex
+A is 0
+A is 1 or 2
+A is something else
+Done.
+@endoutput
+*/
+
+
+> "Homoiconic If complex"
+
+expr = If( 
+   SynTree( EQ(&a,0), FastPrintNL("A is 0")), 
+   SynTree( Or(EQ(&a,1), EQ(2,&a)), FastPrintNL("A is 1 or 2")),
+   SynTree( nil, FastPrintNL("A is something else"))  
+   )
+a = 0
+expr()
+a = 2
+expr()
+a = 3
+expr()
+> "Done."

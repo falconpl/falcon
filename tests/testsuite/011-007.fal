@@ -1,0 +1,46 @@
+/*
+@name Homoiconic SynTree
+@category Homoiconic
+
+@output
+Homoiconic SynTree
+Check for empty syntree:
+Check ok
+Single statement OK
+First multiple statement OK
+Second multiple statement OK
+First multiple statement with selector and symbol OK
+Second multiple statement with selector and symbol OK
+Done.
+@endoutput
+*/
+
+
+> "Homoiconic SynTree"
+> "Check for empty syntree:"
+expr = SynTree()
+expr()
+> "Check ok"
+
+expr = SynTree( nil, FastPrintNL( "Single statement OK" ) )
+expr()
+
+expr = SynTree( nil, 
+   FastPrintNL( "First multiple statement OK" ),
+   FastPrintNL( "Second multiple statement OK" )
+   )
+expr()
+
+expr = SynTree( LT(0,1), 
+   FastPrintNL( "First multiple statement with selector OK" ),
+   FastPrintNL( "Second multiple statement with selector OK" )
+   )
+   
+expr = SynTree( LT(0,1), 
+   &a,
+   FastPrintNL( "First multiple statement with selector and symbol OK" ),
+   FastPrintNL( "Second multiple statement with selector and symbol OK" )
+   )
+expr()
+
+> "Done."

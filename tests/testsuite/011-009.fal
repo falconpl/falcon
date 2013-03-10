@@ -1,0 +1,20 @@
+/*
+@name Homoiconic If empty
+@category Homoiconic
+
+@output
+Homoiconic If simple
+A is 0
+Done.
+@endoutput
+*/
+
+
+> "Homoiconic If simple"
+
+expr = If( SynTree( EQ(&a,0), FastPrintNL("A is 0")) )
+a = 0
+expr()
+a = 1
+expr()
+> "Done."
