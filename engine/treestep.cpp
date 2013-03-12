@@ -106,9 +106,6 @@ bool TreeStep::selector( Expression* )
 
 Expression* TreeStep::checkExpr( const Item& item, bool& bCreate )
 {
-   static Class* clsTreeStep = Engine::handlers()->treeStepClass();
-   static Class* clsSymbol = Engine::handlers()->symbolClass();
-
    Class* cls;
    void* data;
    if( ! item.asClassInst(cls, data) )
@@ -121,8 +118,7 @@ Expression* TreeStep::checkExpr( const Item& item, bool& bCreate )
       return 0;
    }
 
-   //TODO:TreeStepInherit
-   if( cls->isDerivedFrom(clsTreeStep) )
+   if( item.type() == FLC_CLASS_ID_TREESTEP )
    {
       TreeStep* theStep = static_cast<TreeStep*>( data );
       if( theStep->category() == TreeStep::e_cat_expression )
@@ -132,7 +128,7 @@ Expression* TreeStep::checkExpr( const Item& item, bool& bCreate )
       }
       return 0;
    }
-   else if( cls->isDerivedFrom(clsSymbol) )
+   else if( item.type() == FLC_CLASS_ID_SYMBOL )
    {
       if( bCreate ) {
          return new ExprSymbol( static_cast<Symbol*>(data) );

@@ -1,0 +1,26 @@
+/*
+@name Homoiconic for/in complex
+@category Homoiconic
+
+@output
+Homoiconic For/in complex
+Values: 1,a,2,b,3,c.
+Done.
+@endoutput
+*/
+
+> "Homoiconic For/in complex"
+
+
+expr = ForIn( 
+   &var,
+   .[1 "a" 2 "b" 3 "c"],
+   FastPrint(&var),
+   FastPrint("Values: "),
+   FastPrint(","),
+   FastPrintNL(".")
+   )
+   
+expr()
+
+> "Done."

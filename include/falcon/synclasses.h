@@ -58,7 +58,12 @@ public:
    
    static GCToken* collect( const Class*, TreeStep*, int line );
    
-   static void varExprInsert( VMContext* ctx, int pcount, TreeStep* step );
+   static void varExprInsert( VMContext* ctx, int pcount, TreeStep* step, bool hasSel = false );
+   static void varExprInsert_sel( VMContext* ctx, int pcount, TreeStep* step )
+   {
+      varExprInsert(ctx, pcount, step, true);
+   }
+
    static void naryExprSet( VMContext* ctx, int pcount, TreeStep* step, int32 size );
 
    static inline void unaryExprSet( VMContext* ctx, int pcount, TreeStep* step ) {

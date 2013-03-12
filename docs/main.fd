@@ -12,74 +12,106 @@ to the Falcon language in general.
 
 
 /*#
-@page interrupt_protocol Falcon Virtual Machine Preemptibility
-
-Falcon Virtual Machine supports bidirectional communication
-with the embedding applications and with extension modules that
-allows external code to ask for the VM to suspend or terminate
-its execution, and allows the VM to request for the embedding
-application to perform idle operations.
-
-Namely, this communication is currently supported through
-three mechanisms:
-   - Wait Interruption Protocol
-   - Suspension on sleep request
-   - Synchronous periodic callback
-
-@section wait_interrupt Wait Interruption Protocol
-
-Blocking operations performed by the Virtual Machine can be
-asynchronously interrupted from another thread of the application
-where the virtual machine runs. Whenever an interruption request
-is issued, if the VM is already engaged in or is approaches a compliant
-blocking operation, it will raise an @a InterruptedError. Scripts may
-intercept this error to for provide some cleanup, or just let it unfiltered.
-
-@note Unfiltered errors doesn't reach the script layer and cause immediate
-termination of the signaled VM. Also, a full Falcon error instance is not
-created for them, and embedding application can access the exception that
-terminated the execution through a standard Falcon::Error C++ interface.
-
-Not all the blocking waits are instrumented to respect interrupt requets and raise this error, as some
-waiting operations may be caused by external module that are not required
-to adopt the vm interruption protocol.
-
-Compliant waiting functions are mainly @a sleep, @a Stream.readAvailable,
-@a Stream.writeAvailable and a few others. Compliancy to interruption protocol
-is specified in the item descriptions.
-
-@section suspend_on_sleep Suspension on sleep request.
-
-Embedding applications may also require the VM to suspend its execution on sleep
-requests coming from the scripts or from extension modules. It is usefull to have
-the VM instruct the embedding application on how much sleep time has been required,
-and let the embedding application manage this idle time.
-
-The Embedding application may also decide to ignore the request, to reset the VM
-and start a new execution or to destroy it. After a return in sleep request state,
-the VM is clear for inspection, modification, concurrent execution and termination.
-
-@section periodic_callback Synchronous periodic callback.
-
-The VM provides a callback hook that will be periodically called. This hook can
-be used by embedding applications to check for program status change, and it may
-inject in the VM quit or suspension requests.
-
-In example, a Falcon VM may run in a thread of an embedding application; an
-asynchronous request to stop the VM may be posted to the runner thread, and the
-VM may peek this request through the periodic callback. This hook may also be
-used to dequeue incoming interthread requests that may then be safely injected
-in the VM and possibly dispatched to coroutines that may handle them without
-alter the state of the running VM.
-
-Frequency of the periodic callback is expressed in count of virtual instructions
-executed, and can be regulated and changed live.
-
-*/
-
-
-/*#
    @group general_purpose General purpose
    @inmodule core
    @brief Generic language and type oriented functions.
 */
+
+/*#
+@group synclasses Homoiconic classes
+@brief Classes reflecting syntactic constructs.
+
+*/
+
+/*#
+@class TreeStep
+@brief Base for Homoiconic reflection.
+
+A tree step is a PStep (Falcon VM opcode) representing a syntactic tree
+element. TreeSteps are divided into three categories:
+- Expressions
+- Statements
+- Syntactic Trees (or SynTrees).
+
+The distinction between this categories is not meaningful at VM level,
+and is drawn just to make it simpler for the final user to understand
+some relationships between the language elements.
+  
+*/
+
+/*#
+@class While 
+@from TreeStep
+@brief Homoiconic reflection of the \b while statement.
+@param selector The selector expression used to determine the loop.
+@optparam ... A sequence of TreeSteps that will go in the While body.
+
+*/
+
+/*#
+@class ForIn 
+@from TreeStep
+@brief Homoiconic reflection of the \b for/in statement.
+@param target A single symbol, or an array of symbols, that will receive the generated values.
+@param selector The selector expression used to generate data to be stored in the target.
+@optparam body A TreeStep that will be used as main body of the for loop.
+@optparam ff A TreeStep that will be used as the forfirst block.
+@optparam fm A TreeStep that will be used as the formiddle block.
+@optparam fl A TreeStep that will be used as the forlast block.
+
+The body, ff, fm or fl block can be nil if not used.
+*/
+
+/*#
+@class Rule 
+@from TreeStep
+@brief Homoiconic reflection of the \b rule statement.
+@optparam ... A sequence of @a RuleSynTree instances representing rule branches.
+
+Each element in the parameters is considered as a separate rule alternative (as if
+declared after an \b or clause).
+*/
+
+/*#
+@class SynTree 
+@from TreeStep
+@brief Homoiconic reflection of a statement sequence.
+@optparam ... Any sequence of TreeSteps.
+
+The SynTree is a set of statements or expressions that are evaluated in turn,
+one after another. 
+
+A SynTree may also include another syntree; the effect will be that of evaluating
+all the child syntree elements as if they were part of this syntree.
+*/
+
+/*#
+@class RuleSynTree 
+@from SynTree
+@brief Homoiconic reflection of a statement sequence in a rule context.
+@optparam ... Any sequence of TreeSteps.
+
+The RuleSynTree is a set of statements or expressions that are evaluated in turn,
+one after another; if any of the element evaluation yields an explicit "false"
+value, the rest of the evaluation is abandoned.
+
+The RuleSynTree is used by the @a Rule class as a single branch of its alternatives.
+*/
+
+
+/*#
+@class ForTo 
+@from TreeStep
+@brief Homoiconic reflection of a statement sequence in a rule context.
+@param target A target symbol (or @a Symbol) accepting the loop index
+@param start A value or expression generating the start value
+@param stop A value or expression generating the end value
+@optparam step A value or expression generating the step 
+@optparam body A TreeStep that will be used as main body of the for loop.
+@optparam ff A TreeStep that will be used as the forfirst block.
+@optparam fm A TreeStep that will be used as the formiddle block.
+@optparam fl A TreeStep that will be used as the forlast block.
+
+
+*/
+

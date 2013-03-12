@@ -1,0 +1,28 @@
+/*
+@name Homoiconic for/in simple
+@category Homoiconic
+
+@output
+Homoiconic For/in simple
+1
+a
+2
+b
+3
+c
+Done.
+@endoutput
+*/
+
+> "Homoiconic For/in simple"
+
+
+expr = ForIn( 
+   &var,
+   .[1 "a" 2 "b" 3 "c"],
+   FastPrintNL(&var)
+   )
+   
+expr()
+
+> "Done."

@@ -29,6 +29,8 @@
 #include <falcon/errors/typeerror.h>
 
 #include <falcon/psteps/stmtfor.h>
+#include <falcon/psteps/exprsym.h>
+#include <falcon/psteps/exprvalue.h>
 
 #include <falcon/engine.h>
 #include <falcon/synclasses.h>
@@ -224,6 +226,84 @@ void StmtForBase::describeTo( String& tgt, int depth ) const
 }
 
 
+
+bool StmtForBase::setBodyFromParam(Item* param)
+{
+   if( param == 0 || param->isNil() ) {
+      dispose(m_body);
+      m_body = 0;
+      return true;
+   }
+   else if( param->type() == FLC_CLASS_ID_TREESTEP ){
+      TreeStep* ts = static_cast<TreeStep*>(param->asInst() );
+      if( ts->setParent( this ) ) {
+         dispose(m_body);
+         m_body = ts;
+         return true;
+      }
+   }
+
+   return false;
+}
+
+bool StmtForBase::setForFirstFromParam(Item* param)
+{
+   if( param == 0 || param->isNil() ) {
+      dispose(m_forFirst);
+      m_forFirst = 0;
+      return true;
+   }
+   else if( param->type() == FLC_CLASS_ID_TREESTEP ){
+      TreeStep* ts = static_cast<TreeStep*>(param->asInst() );
+      if( ts->setParent( this ) ) {
+         dispose(m_forFirst);
+         m_forFirst = ts;
+         return true;
+      }
+   }
+
+   return false;
+}
+
+bool StmtForBase::setForMiddleFromParam(Item* param)
+{
+   if( param == 0 || param->isNil() ) {
+      dispose(m_forMiddle);
+      m_forMiddle = 0;
+      return true;
+   }
+   else if( param->type() == FLC_CLASS_ID_TREESTEP ){
+      TreeStep* ts = static_cast<TreeStep*>(param->asInst() );
+      if( ts->setParent( this ) ) {
+         dispose(m_forMiddle);
+         m_forMiddle = ts;
+         return true;
+      }
+   }
+
+   return false;
+}
+
+bool StmtForBase::setForLastFromParam(Item* param)
+{
+   if( param == 0 || param->isNil() ) {
+      dispose(m_forLast);
+      m_forLast = 0;
+      return true;
+   }
+   else if( param->type() == FLC_CLASS_ID_TREESTEP ){
+      TreeStep* ts = static_cast<TreeStep*>(param->asInst() );
+      if( ts->setParent( this ) ) {
+         dispose(m_forLast);
+         m_forLast = ts;
+         return true;
+      }
+   }
+
+   return false;
+}
+
+
 //=================================================================
 // For - in
 //
@@ -240,7 +320,20 @@ public:
       m_params( other.m_params )
    {}
    
-   ~Private() {}
+   ~Private() {
+      clearParams();
+   }
+
+   void clearParams()
+   {
+      SymVector::iterator iter = m_params.begin();
+      while( iter != m_params.end() )
+      {
+         Symbol* sym = *iter;
+         sym->decref();
+         ++iter;
+      }
+   }
 };
 
 StmtForIn::StmtForIn( int32 line, int32 chr):
@@ -367,6 +460,60 @@ length_t StmtForIn::paramCount() const
 Symbol* StmtForIn::param( length_t p ) const
 {
    return _p->m_params[p];
+}
+
+
+bool StmtForIn::setTargetFromParam(Item* param)
+{
+   if( param->type() == FLC_CLASS_ID_SYMBOL )
+   {
+      Symbol* sym = static_cast<Symbol*>(param->asInst());
+      _p->clearParams();
+      _p->m_params.push_back(sym);
+      sym->incref();
+      return true;
+   }
+   else if( param->isArray() )
+   {
+      ItemArray* array = param->asArray();
+      _p->clearParams();
+      for( length_t i = 0; i < array->length(); ++i )
+      {
+         Item& value = array->at(i);
+         if( value.type() == FLC_CLASS_ID_SYMBOL )
+         {
+            Symbol* sym = static_cast<Symbol*>(value.asInst());
+            sym->incref();
+            _p->m_params.push_back(sym);
+         }
+         else {
+            return false;
+         }
+      }
+
+      return true;
+   }
+
+   return false;
+}
+
+
+bool StmtForIn::setSelectorFromParam(Item* param)
+{
+   if( param == 0 )
+   {
+      return false;
+   }
+
+   bool bCreated = true;
+   Expression* result = checkExpr(*param, bCreated );
+   if( result != 0 )
+   {
+      selector(result);
+      return true;
+   }
+
+   return false;
 }
 
 
@@ -604,6 +751,7 @@ StmtForTo::StmtForTo( const StmtForTo& other ):
    m_stepNext(this)
 {
    apply = apply_;
+   m_target->incref();
    
    // act as a loop-base in case for/to expression wants to break.
    m_bIsLoopBase = true;
@@ -627,6 +775,10 @@ StmtForTo::StmtForTo( const StmtForTo& other ):
 
 StmtForTo::~StmtForTo() 
 {
+   if( m_target != 0 )
+   {
+      m_target->decref();
+   }
    dispose( m_start );
    dispose( m_end );
    dispose( m_step );
@@ -644,6 +796,136 @@ void StmtForTo::startExpr( Expression* s )
       dispose( m_start );
       m_start = s;
    }
+}
+
+
+
+bool StmtForTo::setTargetFromParam(Item* param)
+{
+   if ( param == 0 )
+   {
+      return false;
+   }
+
+   if( param->type() == FLC_CLASS_ID_SYMBOL )
+   {
+      Symbol* sym = static_cast<Symbol*>(param->asInst());
+
+      sym->incref();
+      if( m_target != 0 )
+      {
+         m_target->decref();
+      }
+      m_target = sym;
+      return true;
+   }
+
+   return false;
+}
+
+
+bool StmtForTo::setSelectorFromParam(Item* )
+{
+   return false;
+}
+
+
+bool StmtForTo::setStartExprFromParam(Item* param)
+{
+   if ( param == 0 )
+   {
+      return false;
+   }
+
+   if( param->type() == FLC_CLASS_ID_SYMBOL )
+   {
+      Symbol* sym = static_cast<Symbol*>(param->asInst());
+      startExpr(new ExprSymbol(sym ));
+      return true;
+   }
+   else if( param->isOrdinal() )
+   {
+      startExpr(new ExprValue(*param));
+      return true;
+   }
+   else if( param->type() == FLC_CLASS_ID_TREESTEP )
+   {
+      Expression* expr = static_cast<Expression*>( param->asInst() );
+      if( expr->category() == TreeStep::e_cat_expression && expr->parent() == 0 )
+      {
+         startExpr( expr );
+         return true;
+      }
+   }
+
+   return false;
+}
+
+
+bool StmtForTo::setEndExprFromParam(Item* param)
+{
+   if ( param == 0 )
+   {
+      return false;
+   }
+
+   if( param->type() == FLC_CLASS_ID_SYMBOL )
+   {
+      Symbol* sym = static_cast<Symbol*>(param->asInst());
+      endExpr(new ExprSymbol(sym ));
+      return true;
+   }
+   else if( param->isOrdinal() )
+   {
+      endExpr(new ExprValue(*param));
+      return true;
+   }
+   else if( param->type() == FLC_CLASS_ID_TREESTEP )
+   {
+      Expression* expr = static_cast<Expression*>( param->asInst() );
+      if( expr->category() == TreeStep::e_cat_expression && expr->parent() == 0 )
+      {
+         endExpr( expr );
+         return true;
+      }
+   }
+
+   return false;
+}
+
+
+bool StmtForTo::setStepExprFromParam(Item* param)
+{
+   if ( param == 0 || param->isNil() )
+   {
+      // step is optional
+      dispose( m_step );
+      m_step = 0;
+      return true;
+   }
+
+   if( param->type() == FLC_CLASS_ID_SYMBOL )
+   {
+      Symbol* sym = static_cast<Symbol*>(param->asInst());
+      stepExpr(new ExprSymbol(sym ));
+      return true;
+   }
+   else if( param->isOrdinal() )
+   {
+      stepExpr(new ExprValue(*param));
+      return true;
+   }
+   else if( param->type() == FLC_CLASS_ID_TREESTEP )
+   {
+      Expression* expr = static_cast<Expression*>( param->asInst() );
+      if( expr->category() == TreeStep::e_cat_expression && expr->parent() == 0 )
+      {
+         stepExpr( expr );
+         return true;
+      }
+   }
+
+   return false;
 }
 
 

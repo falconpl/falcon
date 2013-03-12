@@ -67,6 +67,13 @@ public:
 
    void minimize();
 
+   virtual bool setTargetFromParam(Item* param) = 0;
+   virtual bool setSelectorFromParam(Item* param) = 0;
+   bool setBodyFromParam(Item* param);
+   bool setForFirstFromParam(Item* param);
+   bool setForMiddleFromParam(Item* param);
+   bool setForLastFromParam(Item* param);
+
 protected:
 
    TreeStep* m_body;
@@ -140,6 +147,10 @@ public:
    virtual StmtForIn* clone() const { return new StmtForIn(*this); }
 
    virtual bool isValid() const;
+
+   virtual bool setTargetFromParam(Item* param);
+   virtual bool setSelectorFromParam(Item* param);
+
 private:
    class Private;
    Private* _p;
@@ -240,6 +251,13 @@ public:
    virtual StmtForTo* clone() const { return new StmtForTo(*this); }
 
    virtual bool isValid() const;
+
+   virtual bool setTargetFromParam(Item* param);
+   virtual bool setSelectorFromParam(Item* param);
+   virtual bool setStartExprFromParam(Item* param);
+   virtual bool setEndExprFromParam(Item* param);
+   virtual bool setStepExprFromParam(Item* param);
+
 private:
    // apply is the same as PCODE, but it also checks ND requests.
    static void apply_( const PStep* self, VMContext* ctx );

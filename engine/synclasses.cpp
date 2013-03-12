@@ -133,17 +133,44 @@ void SynClasses::subscribe( Engine* engine )
 }
    
 
-void SynClasses::varExprInsert( VMContext* ctx, int pcount, TreeStep* step )
+void SynClasses::varExprInsert( VMContext* ctx, int pcount, TreeStep* step, bool hasSel )
 {
    Item* operands = ctx->opcodeParams(pcount);
    int count = 0;
+
+   if( hasSel )
+   {
+      // the fisrt parameter is a selector.
+      if( pcount == 0 )
+      {
+         // ... and is mandatory
+         throw new ParamError( ErrorParam( e_inv_params, __LINE__, SRC )
+                     .origin( ErrorParam::e_orig_runtime)
+                     .extra( "Expression,..." ) );
+      }
+
+      bool bCreate = true;
+      Expression* sel = TreeStep::checkExpr(operands[count++], bCreate);
+      if( sel == 0 || ! step->selector(sel) )
+      {
+         if( bCreate )
+         {
+            delete sel;
+         }
+
+         throw new ParamError( ErrorParam( e_param_type, __LINE__, SRC )
+                     .origin( ErrorParam::e_orig_runtime)
+                     .extra( String("Incompatible entity at ").N(count) ) );
+      }
+   }
+
+
    while( count < pcount )
    {
       bool bCreate = true;
       TreeStep* ts = TreeStep::checkExpr(operands[count++], bCreate);
       if( ts == 0 )
       {
-         delete step;
          throw new ParamError( ErrorParam( e_param_type, __LINE__, SRC )
             .origin( ErrorParam::e_orig_runtime)
             .extra( String("Incompatible entity at ").N(count) ) );
@@ -152,7 +179,6 @@ void SynClasses::varExprInsert( VMContext* ctx, int pcount, TreeStep* step )
       // larger than size, as we ++count before, but it's ok.
       if( ! step->insert(count, ts) )
       {
-         delete step;
          // theoretically parented entities are not created, but...
          if ( bCreate ) delete ts;
          
@@ -245,7 +271,7 @@ GCToken* SynClasses::collect( const Class* cls, TreeStep* earr, int line )
    {\
       exprcls* expr = static_cast<exprcls*>(instance); \
       expr->setInGC(); \
-      SynClasses::operation ( ctx, pcount, expr ); \
+      operation ( ctx, pcount, expr ); \
       return false; \
    }\
 
@@ -254,7 +280,7 @@ GCToken* SynClasses::collect( const Class* cls, TreeStep* earr, int line )
 FALCON_STANDARD_SYNCLASS_OP_CREATE( GenArray, ExprArray, varExprInsert )
 FALCON_STANDARD_SYNCLASS_OP_CREATE( Assign, ExprAssign, binaryExprSet )
 FALCON_STANDARD_SYNCLASS_OP_CREATE( BNot, ExprBNOT, unaryExprSet )
-FALCON_STANDARD_SYNCLASS_OP_CREATE( Call, ExprCall, varExprInsert )
+FALCON_STANDARD_SYNCLASS_OP_CREATE( Call, ExprCall, varExprInsert_sel )
 FALCON_STANDARD_SYNCLASS_OP_CREATE( EP, ExprEP, varExprInsert )
 FALCON_STANDARD_SYNCLASS_OP_CREATE( Invoke, ExprInvoke, binaryExprSet )
 FALCON_STANDARD_SYNCLASS_OP_CREATE( StrIPol, ExprStrIPol, unaryExprSet )
@@ -1391,6 +1417,46 @@ static void init_generic_multistmt( VMContext* ctx, int pcount, TreeStep* step )
    }
 }
 
+static void init_for_in( VMContext* ctx, int pCount, TreeStep* step )
+{
+   Item* params = ctx->opcodeParams(pCount);
+   StmtForIn* in = static_cast<StmtForIn*>(step);
+   if(
+          ! in->setTargetFromParam(    pCount > 0 ? params + 0 : 0 )
+       || ! in->setSelectorFromParam(  pCount > 1 ? params + 1 : 0 )
+       || ! in->setBodyFromParam(      pCount > 2 ? params + 2 : 0 )
+       || ! in->setForFirstFromParam(  pCount > 3 ? params + 3 : 0 )
+       || ! in->setForMiddleFromParam( pCount > 4 ? params + 4 : 0 )
+       || ! in->setForLastFromParam(   pCount > 5 ? params + 5 : 0 )
+   )
+   {
+      throw FALCON_SIGN_XERROR( ParamError, e_inv_params,
+               .extra(String("Symbol|A,Expression,...")));
+   }
+}
+
+static void init_for_to( VMContext* ctx, int pCount, TreeStep* step )
+{
+   Item* params = ctx->opcodeParams(pCount);
+
+   StmtForTo* in = static_cast<StmtForTo*>(step);
+   if(
+          ! in->setTargetFromParam(    pCount > 0 ? params + 0 : 0 )
+       || ! in->setStartExprFromParam( pCount > 1 ? params + 1 : 0 )
+       || ! in->setEndExprFromParam(   pCount > 2 ? params + 2 : 0 )
+       || ! in->setStepExprFromParam(  pCount > 3 ? params + 3 : 0 )
+       || ! in->setBodyFromParam(      pCount > 4 ? params + 4 : 0 )
+       || ! in->setForFirstFromParam(  pCount > 5 ? params + 5 : 0 )
+       || ! in->setForMiddleFromParam( pCount > 6 ? params + 6 : 0 )
+       || ! in->setForLastFromParam(   pCount > 7 ? params + 7 : 0 )
+   )
+   {
+      throw FALCON_SIGN_XERROR( ParamError, e_inv_params,
+               .extra(String("Symbol,Expression,Expression,...")));
+   }
+}
+
+
 FALCON_STANDARD_SYNCLASS_OP_CREATE( Break, StmtBreak, zeroaryExprSet )
 FALCON_STANDARD_SYNCLASS_OP_CREATE( Breakpoint, Breakpoint, zeroaryExprSet )
 FALCON_STANDARD_SYNCLASS_OP_CREATE( Continue, StmtContinue, zeroaryExprSet )
@@ -1398,8 +1464,8 @@ FALCON_STANDARD_SYNCLASS_OP_CREATE( Cut, StmtCut, zeroaryExprSet )
 FALCON_STANDARD_SYNCLASS_OP_CREATE( Doubt, StmtDoubt, unaryExprSet )
 FALCON_STANDARD_SYNCLASS_OP_CREATE( FastPrint, StmtFastPrint, varExprInsert )
 FALCON_STANDARD_SYNCLASS_OP_CREATE( FastPrintNL, StmtFastPrintNL, varExprInsert)
-FALCON_STANDARD_SYNCLASS_OP_CREATE_SIMPLE( ForIn, StmtForIn, zeroaryExprSet ) //
-FALCON_STANDARD_SYNCLASS_OP_CREATE( ForTo, StmtForTo, zeroaryExprSet ) //
+FALCON_STANDARD_SYNCLASS_OP_CREATE_SIMPLE( ForIn, StmtForIn, init_for_in )
+FALCON_STANDARD_SYNCLASS_OP_CREATE( ForTo, StmtForTo, init_for_to )
 FALCON_STANDARD_SYNCLASS_OP_CREATE( If, StmtIf, init_generic_multistmt )
 FALCON_STANDARD_SYNCLASS_OP_CREATE( Loop, StmtLoop, init_loop )
 FALCON_STANDARD_SYNCLASS_OP_CREATE( Raise, StmtRaise, unaryExprSet )

@@ -1,0 +1,29 @@
+/*
+@name Homoiconic for/to complex
+@category Homoiconic
+
+@output
+Homoiconic For/to complex
+Values: 10,12,14,16,18,20.
+Done.
+@endoutput
+*/
+
+function gen(v)
+   return v*2
+end
+
+> "Homoiconic For/to complex"
+
+expr = ForTo( 
+   &var,
+   10, Call(gen,10), Call(gen, 1),
+   FastPrint(&var),
+   FastPrint("Values: "),
+   FastPrint(","),
+   FastPrintNL(".")
+   )
+   
+expr()
+
+> "Done."

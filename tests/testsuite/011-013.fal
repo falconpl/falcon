@@ -1,0 +1,30 @@
+/*
+@name Homoiconic for/to simple
+@category Homoiconic
+
+@output
+Homoiconic For/to simple
+10
+11
+12
+13
+14
+Done.
+@endoutput
+*/
+
+function gen(v)
+   return v*2
+end
+
+> "Homoiconic For/to simple"
+
+expr = ForTo( 
+   &var,
+   10, Call(gen,7), nil,
+   FastPrintNL(&var)
+   )
+   
+expr()
+
+> "Done."
