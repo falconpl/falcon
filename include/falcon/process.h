@@ -422,7 +422,7 @@ protected:
    TextWriter* m_textErr;
 
    Transcoder* m_stdCoder;
-   bool m_mark;
+   uint32 m_mark;
 
    uint32 m_tlgen;
 
