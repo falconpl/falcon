@@ -70,16 +70,16 @@ public:
 
    FileDataMPX* m_master;
 
-   static DWORD WINAPI ThreadProc( 
+   static DWORD WINAPI ThreadProc(
         LPVOID lpParameter
    );
 
    Private( FileDataMPX* master )
-   {      
+   {
       m_master = master;
       InitializeCriticalSectionAndSpinCount(&m_csLock, 250);
       InitializeCriticalSectionAndSpinCount(&m_busyLock, 250);
-      m_hEventWakeup = CreateEvent(NULL, FALSE, FALSE, NULL);      
+      m_hEventWakeup = CreateEvent(NULL, FALSE, FALSE, NULL);
    }
 
    ~Private()
@@ -107,15 +107,15 @@ public:
    {
       EnterCriticalSection( &m_csLock );
       m_messages.push_back( msg );
-      LeaveCriticalSection( &m_csLock );      
+      LeaveCriticalSection( &m_csLock );
       SetEvent( m_hEventWakeup );
    }
 
    void quit()
    {
-      sendMessage(Msg(0));      
+      sendMessage(Msg(0));
       // wait for our thread to finish.
-      WaitForSingleObject( m_hThread, INFINITE );      
+      WaitForSingleObject( m_hThread, INFINITE );
    }
 
    void addToMultiplex( Stream* strem, int mode );
@@ -149,7 +149,7 @@ public:
 FileDataMPX::FileDataMPX( const StreamTraits* generator, Selector* master ):
          Multiplex( generator, master )
 {
-   _p = new Private( this );   
+   _p = new Private( this );
    _p->start();
 }
 
@@ -199,7 +199,7 @@ DWORD FileDataMPX::Private::ThreadProc( LPVOID data )
       {
          // spurious wakeup?
          LeaveCriticalSection( &self->m_csLock );
-         continue; 
+         continue;
       }
 
       message = self->m_messages.front();
@@ -245,7 +245,7 @@ void FileDataMPX::Private::addToMultiplex( Stream* stream, int mode )
       // don't need to keep the reference we received in the message
       stream->decref();
    }
-   
+
    FStream* fs = static_cast<FStream*>(stream);
    FileDataEx* fdx = static_cast<FileDataEx*>(fs->fileData());
 
@@ -256,7 +256,7 @@ void FileDataMPX::Private::addToMultiplex( Stream* stream, int mode )
       fdx->ovl.extra = this;
       if( fdx->bConsole )
       {
-         // first time?         
+         // first time?
          if( fdx->hEmulWrite == INVALID_HANDLE_VALUE )
          {
             // initialize the console work
@@ -267,7 +267,7 @@ void FileDataMPX::Private::addToMultiplex( Stream* stream, int mode )
          // anonymous pipe or similar
          HANDLE newWaitObject = 0;
          //DWORD  test = WaitForSingleObject(fdx->hFile, INFINITE);
-         BOOL res = RegisterWaitForSingleObject(  
+         BOOL res = RegisterWaitForSingleObject(
             &newWaitObject,
             fdx->hRealConsole,
             &onWaitReadComplete,
@@ -276,7 +276,7 @@ void FileDataMPX::Private::addToMultiplex( Stream* stream, int mode )
             WT_EXECUTEINWAITTHREAD | WT_EXECUTEONLYONCE
          );
 
-         if( ! res ) 
+         if( ! res )
          {
             // we got an error.
             // this will actually assert...
@@ -285,10 +285,10 @@ void FileDataMPX::Private::addToMultiplex( Stream* stream, int mode )
                .sysError( GetLastError() ) );
          }
       }
-      else 
+      else
       {
          BOOL res = ReadFileEx( fdx->hFile, NULL, 0, &fdx->ovl.overlapped, &onReadComplete );
-         if( ! res ) 
+         if( ! res )
          {
             DWORD err = GetLastError();
             if( err != ERROR_IO_PENDING )
@@ -309,7 +309,7 @@ void FileDataMPX::Private::addToMultiplex( Stream* stream, int mode )
          // anonymous pipe or similar
          HANDLE newWaitObject = 0;
          //DWORD  test = WaitForSingleObject(fdx->hFile, INFINITE);
-         BOOL res = RegisterWaitForSingleObject(  
+         BOOL res = RegisterWaitForSingleObject(
             &newWaitObject,
             fdx->hFile,
             &onWaitWriteComplete,
@@ -318,7 +318,7 @@ void FileDataMPX::Private::addToMultiplex( Stream* stream, int mode )
             WT_EXECUTEINWAITTHREAD | WT_EXECUTEONLYONCE
          );
 
-         if( ! res ) 
+         if( ! res )
          {
             // we got an error.
             // this will actually assert...
@@ -329,7 +329,7 @@ void FileDataMPX::Private::addToMultiplex( Stream* stream, int mode )
       }
       else {
          BOOL res = WriteFileEx( fdx->hFile, 0, 0, &fdx->ovl.overlapped, &onReadComplete );
-         if( ! res ) 
+         if( ! res )
          {
             DWORD err = GetLastError();
             if( err != ERROR_IO_PENDING )
@@ -354,16 +354,16 @@ void FileDataMPX::Private::removeFromMultiplex( Stream* stream )
       {
          fdx->bBusy = false;
          LeaveCriticalSection( &m_busyLock );
-         
+
          //CancelIoEx(fdx->hFile, &fdx->ovl.overlapped);
          CancelIo(fdx->hFile);
       }
-      else 
+      else
       {
          LeaveCriticalSection( &m_busyLock );
       }
 
-      
+
       // remove the reference we had in the map
       stream->decref();
    }
@@ -389,8 +389,8 @@ void FileDataMPX::Private::removeStreams()
 
 
 VOID CALLBACK FileDataMPX::Private::onReadComplete(
-      DWORD dwErrorCode,
-      DWORD dwNumberOfBytesTransfered,
+      DWORD /*dwErrorCode*/,
+      DWORD /*dwNumberOfBytesTransfered*/,
       LPOVERLAPPED lpOverlapped
 )
 {
@@ -401,8 +401,8 @@ VOID CALLBACK FileDataMPX::Private::onReadComplete(
 
 
 VOID CALLBACK FileDataMPX::Private::onWriteComplete(
-      DWORD dwErrorCode,
-      DWORD dwNumberOfBytesTransfered,
+      DWORD /*dwErrorCode*/,
+      DWORD /*dwNumberOfBytesTransfered*/,
       LPOVERLAPPED lpOverlapped
 )
 {
@@ -450,7 +450,7 @@ VOID CALLBACK FileDataMPX::Private::onWaitReadComplete(
                WriteFile(fdx->hEmulWrite, &chr, 1, &count, NULL );
             }
          }
-      } 
+      }
    }
 
    if( readElems > 0 )
@@ -470,8 +470,8 @@ VOID CALLBACK FileDataMPX::Private::onWaitWriteComplete(
 {
    FileDataEx* fdx = reinterpret_cast<FileDataEx*>(lpParameter);
    FileDataMPX::Private* self = static_cast<FileDataMPX::Private*>(fdx->ovl.extra);
-   self->m_master->onReadyWrite(fdx->ovl.owner);   
-}  
+   self->m_master->onReadyWrite(fdx->ovl.owner);
+}
 
 }
 }
