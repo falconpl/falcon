@@ -1,0 +1,59 @@
+/*
+@name Advanced switch
+@category Switchlike
+
+@output   
+Advanced switch
+testing value 'Nil': NIL or true
+testing value 'true': NIL or true
+testing value '0': 0 to 10
+testing value '5': 0 to 10
+testing value '10': 0 to 10
+testing value '11': Default
+testing value '25': 20 to 30, "Hello", 40
+testing value 'Hello': 20 to 30, "Hello", 40
+testing value '40': 20 to 30, "Hello", 40
+testing value 'azuza': a to z
+testing value 'zorro': Default
+Test with short versions
+0 to 10
+@endoutput
+*/
+
+> "Advanced switch"
+
+function test( value )
+   >> "testing value '", value, "': "
+   switch value
+      case nil, true
+         > "NIL or true"
+
+      case 0 to 10
+         > "0 to 10"
+      
+      case 20 to 30, "Hello", 40
+         > "20 to 30, \"Hello\", 40"
+
+      case "a" to "z"
+         > "a to z"
+         
+      default
+         > "Default"
+   end
+end
+
+values = .[ nil true 0 5 10 11 25 "Hello" 40 "azuza" "zorro" ]
+for v in values
+   test(v)
+end
+
+> "Test with short versions"
+
+switch 5
+   case nil, true: > "NIL or true"
+   case 0 to 10: > "0 to 10"   
+   case 20 to 30, "Hello", 40: 
+      > "20 to 30, \"Hello\", 40"
+   case "a" to "z": > "a to z"      
+   default: > "Default: ", v
+end

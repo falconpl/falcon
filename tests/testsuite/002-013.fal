@@ -1,0 +1,126 @@
+/*
+@name Basic switch
+@category Switchlike
+
+@output   
+Basic switch
+0
+NIL
+FALSE
+Hello
+Test with short versions
+1
+@endoutput
+*/
+
+
+> "Basic switch"
+
+a = 0
+switch a
+   case nil
+      > "NIL"
+
+   case true
+      > "TRUE"
+
+   case false
+      > "FALSE"
+
+   case 0
+      > "0"
+   
+   case 1
+      > "1"
+
+   case "Hello"
+      > "Hello"
+
+   default
+      > "DEFAULT"
+end
+
+
+switch nil
+   case nil
+      > "NIL"
+
+   case true
+      > "TRUE"
+
+   case false
+      > "FALSE"
+
+   case 0
+      > "0"
+   
+   case 1
+      > "1"
+
+   case "Hello"
+      > "Hello"
+
+   default
+      > "DEFAULT"
+end
+
+switch false
+   case nil
+      > "NIL"
+
+   case true
+      > "TRUE"
+
+   case false
+      > "FALSE"
+
+   case 0
+      > "0"
+   
+   case 1
+      > "1"
+
+   case "Hello"
+      > "Hello"
+
+   default
+      > "DEFAULT"
+end
+
+
+switch "Hello"
+   case nil
+      > "NIL"
+
+   case true
+      > "TRUE"
+
+   case false
+      > "FALSE"
+
+   case 0
+      > "0"
+   
+   case 1
+      > "1"
+
+   case "Hello"
+      > "Hello"
+
+   default
+      > "DEFAULT"
+end
+
+
+> "Test with short versions"
+
+switch 1
+   case nil: > "NIL"
+   case true: > "TRUE"
+   case false: > "FALSE"
+   case 0
+      > "0"
+   case 1: > "1"
+   case "Hello": > "Hello"
+   default: > "DEFAULT"
+end

@@ -1,0 +1,37 @@
+/*
+@name Basic select
+@category Switchlike
+
+@output
+Basic select
+testing value 'Nil': It's nil
+testing value 'Hello': It's a String
+testing value '[Array of 2 elements]': It's something else
+@endoutput
+*/
+
+
+> "Basic select"
+
+function test( value )
+   >> "testing value '", value, "': "
+      
+   select value
+      case 0
+         > "It's nil"
+
+      case StringType
+         > "It's a String"
+
+      default
+         > "It's something else"
+   end
+   
+end
+
+values = .[ nil "Hello" .[1 2] ]
+for v in values
+   test(v)
+end
+
+

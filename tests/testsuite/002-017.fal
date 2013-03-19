@@ -1,0 +1,37 @@
+/*
+@name Advanced select
+@category Switchlike
+
+@output
+Advanced select
+testing value 'Nil': It's nil
+testing value 'Hello': It's a String
+testing value '[Array of 2 elements]': It's something else
+@endoutput
+*/
+
+
+> "Advanced select"
+
+function test( value )
+   >> "testing value '", value, "': "
+      
+   select value
+      case Nil
+         > "It's nil"
+
+      case String
+         > "It's a String"
+
+      default
+         > "It's something else"
+   end
+   
+end
+
+values = .[ nil "Hello" .[1 2] ]
+for v in values
+   test(v)
+end
+
+

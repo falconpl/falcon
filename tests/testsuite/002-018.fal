@@ -1,0 +1,46 @@
+/*
+@name Custom select
+@category Switchlike
+
+@output
+Custom select
+testing value 'Instance of Advanced': It's Advanced
+testing value 'Instance of Base': It's a Base
+testing value 'Hello': It's a String
+testing value '[Array of 2 elements]': It's something else
+@endoutput
+*/
+
+class Base
+end
+
+class Advanced from Base
+end
+
+> "Custom select"
+
+function test( value )
+   >> "testing value '", value, "': "
+      
+   select value
+      case Advanced
+         > "It's Advanced"
+
+      case Base
+         > "It's a Base"
+      
+      case String
+         > "It's a String"
+
+      default
+         > "It's something else"
+   end
+   
+end
+
+values = .[ Advanced() Base() "Hello" .[1 2] ]
+for v in values
+   test(v)
+end
+
+

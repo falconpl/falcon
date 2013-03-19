@@ -1,0 +1,72 @@
+/*
+@name Complex switch
+@category Switchlike
+
+@output   
+Complex switch
+testing value 'Nil': NIL or true
+testing value 'true': NIL or true
+testing value '11': Default
+testing value '25': 20 to 30, "Hello", r"a.b"
+testing value 'Hello': 20 to 30, "Hello", r"a.b"
+testing value 'abb': 20 to 30, "Hello", r"a.b"
+testing value 'azuza': a to z, r"^A.B$"
+testing value 'zorro': Default
+testing value 'AXB': a to z, r"^A.B$"
+testing value 'AXBX': Default
+testing value 'axbx': 20 to 30, "Hello", r"a.b"
+testing value 'testvar': var, "K"
+Now testing using the variable to block further results
+testing value 'Nil': NIL or true
+testing value 'true': NIL or true
+testing value '11': var, "K"
+testing value '25': 20 to 30, "Hello", r"a.b"
+testing value 'Hello': 20 to 30, "Hello", r"a.b"
+testing value 'abb': 20 to 30, "Hello", r"a.b"
+testing value 'azuza': var, "K"
+testing value 'zorro': var, "K"
+testing value 'AXB': var, "K"
+testing value 'AXBX': var, "K"
+testing value 'axbx': 20 to 30, "Hello", r"a.b"
+testing value 'testvar': var, "K"
+@endoutput
+*/
+
+
+> "Complex switch"
+
+function test( value, var )
+   >> "testing value '", value, "': "
+   switch value
+      case nil, true
+         >> "NIL"
+         > " or true"
+
+      case 20 to 30, "Hello", r"a.b"
+         >> "20 to 30, "
+         > "\"Hello\", r\"a.b\""
+
+      case var, "K"
+         > "var, \"K\""
+         
+      case "a" to "z", r"^A.B$"
+         > "a to z, r\"^A.B$\""
+         
+      default
+         >> "Defa"
+         > "ult"
+   end
+end
+
+values = .[ nil true 11 25 "Hello" "abb" "azuza" "zorro" "AXB" "AXBX" "axbx" 'testvar' ]
+for v in values
+   test(v, 'testvar' )
+end
+
+> "Now testing using the variable to block further results"
+
+values = .[ nil true 11 25 "Hello" "abb" "azuza" "zorro" "AXB" "AXBX" "axbx" 'testvar' ]
+for v in values
+   test(v, v)
+end
+
