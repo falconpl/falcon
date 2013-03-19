@@ -48,17 +48,18 @@ void DerivedFrom::invoke( VMContext* ctx, int32 nParams )
          throw paramError();
       }
       elem = &ctx->self();
-      cls = static_cast<Class*>(ctx->params()->asInst());
+      cls = static_cast<Class*>(clsItem->asInst());
    }
    else
    {
-      if( nParams < 2 )
+      elem = ctx->param(0);
+      Item* clsItem;
+      if( nParams < 2 || ! (clsItem = ctx->param(1))->isClass() )
       {
          throw paramError();
       }
 
-      elem = ctx->params();
-      cls = static_cast<Class*>(elem[1].asInst());
+      cls = static_cast<Class*>(clsItem->asInst());
    }
 
    Class* cls2;
@@ -66,7 +67,7 @@ void DerivedFrom::invoke( VMContext* ctx, int32 nParams )
    elem->forceClassInst( cls2, inst );
 
    Item top;
-   top.setBoolean(cls->isDerivedFrom(cls2));
+   top.setBoolean(cls2->isDerivedFrom(cls));
    ctx->returnFrame( top );
 }
 
