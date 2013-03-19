@@ -35,7 +35,7 @@
 /** ID for classes hosting Case.
    ID used as Class::userFlag() safe in the TreeStep::cls() domain.
  */
-#define FALCON_SYNCLASS_ID_CASEHOST   4
+#define FALCON_SYNCLASS_ID_SELECT  4
 
 /** ID for classes hosting Autoexpression.
    ID used as Class::userFlag() safe in the TreeStep::cls() domain. 

@@ -115,3 +115,11 @@ The RuleSynTree is used by the @a Rule class as a single branch of its alternati
 
 */
 
+/*#
+ @class Call
+ @from TreeStep
+ @brief Homoiconic reflection of the Call expression
+ @param callee The expression to be called
+ @optparam ... Parameters for the call.
+
+*/

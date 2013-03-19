@@ -174,7 +174,7 @@ public:
     Subclasses can set this to something returning 0 if this
     requirement is only used in native modules.
     */
-   virtual Class* cls() const = 0;
+   virtual Class* handler() const = 0;
    
 protected:
    bool m_bIsStatic;

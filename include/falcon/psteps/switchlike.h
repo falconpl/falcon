@@ -23,8 +23,12 @@ class FALCON_DYN_CLASS SwitchlikeStatement: public Statement
 {
 public:
    SwitchlikeStatement( int32 line = 0, int32 chr = 0 );
+   SwitchlikeStatement( Expression* expr, int32 line = 0, int32 chr = 0 );
    SwitchlikeStatement( const SwitchlikeStatement& other );
    virtual ~SwitchlikeStatement();
+
+   Expression* selector() const;
+   bool selector(Expression* );
 
    /** A dummy tree that is used during compilation to avoid unbound statements.    
     \return A temporary syntree.    
@@ -32,25 +36,29 @@ public:
    
    SynTree* dummyTree();
    
-   
-   /** Gets the block that should handle default cases.
-    \return The default block or 0 if none.
-    */
-   SynTree* getDefault() const { return m_defaultBlock; }
+   virtual int32 arity() const;
+   virtual TreeStep* nth( int32 n ) const;
+   virtual bool setNth( int32 n, TreeStep* ts );
+   virtual bool insert( int32 pos, TreeStep* element );
+   virtual bool append( TreeStep* element );
+   virtual bool remove( int32 pos );
 
+   //virtual void gcMark( uint32 mark );
+   SynTree* findBlockForItem( const Item& value ) const;
+   SynTree* findBlockForItem( const Item& value, VMContext* ctx ) const;
+   SynTree* findBlockForType( const Item& value ) const;
+   SynTree* getDefault() const;
 
-   /** Sets the else branch for this if statement.
-    \param block The block that should be used to handle default choices.
-    \return true if a default block was not set, false otherwise.
-
-    If the function returns false, this means that another default block was
-    already set, and the given \b block parameter was not used.  
-    */
-   bool setDefault( SynTree* block );
-   
 protected:
-   SynTree* m_defaultBlock;   
-   SynTree* m_dummyTree;   
+   class Private;
+   Private* _p;
+
+   Expression* m_expr;
+   SynTree* m_dummyTree;
+
+private:
+   template<class __T>
+   SynTree* findBlock( const Item& value, const __T& verifier ) const;
 };
 
 }

@@ -598,7 +598,7 @@ void ClassModule::flatten( VMContext* ctx, ItemArray& subItems, void* instance )
       Module::Private::RequirementList::iterator reqi = reqs.begin();
       while( reqi != reqs.end() ) {
          Requirement* req = *reqi;
-         subItems.append( Item(req->cls(), req) );
+         subItems.append( Item(req->handler(), req) );
          ++reqi;
       }
    }

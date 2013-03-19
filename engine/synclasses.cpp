@@ -32,6 +32,7 @@
 #include <falcon/psteps/exprassign.h>
 #include <falcon/psteps/exprbitwise.h>
 #include <falcon/psteps/exprcall.h>
+#include <falcon/psteps/exprcase.h>
 #include <falcon/psteps/exprep.h>
 #include <falcon/psteps/exprclosure.h>
 #include <falcon/psteps/exprcompare.h>
@@ -112,7 +113,7 @@ SynClasses::SynClasses( Class* classSynTree, Class* classStatement, Class* class
    m_stmt_forin->userFlags(FALCON_SYNCLASS_ID_FORCLASSES);
    m_stmt_rule->userFlags(FALCON_SYNCLASS_ID_RULE);
    m_stmt_if->userFlags(FALCON_SYNCLASS_ID_ELSEHOST);
-   m_stmt_select->userFlags(FALCON_SYNCLASS_ID_CASEHOST );
+   m_stmt_select->userFlags(FALCON_SYNCLASS_ID_SELECT );
    m_stmt_switch->userFlags(FALCON_SYNCLASS_ID_SWITCH );
    m_stmt_try->userFlags(FALCON_SYNCLASS_ID_CATCHHOST);
    m_expr_call->userFlags(FALCON_SYNCLASS_ID_CALLFUNC);
@@ -231,7 +232,7 @@ void SynClasses::naryExprSet( VMContext* ctx, int pcount, TreeStep* step, int32 
 
 GCToken* SynClasses::collect( const Class* cls, TreeStep* earr, int line )
 {
-   line = line;
+   (void) line;
    return FALCON_GC_STORE_SRCLINE( cls, earr, SRC, line );
 }
 
@@ -281,10 +282,11 @@ FALCON_STANDARD_SYNCLASS_OP_CREATE( GenArray, ExprArray, varExprInsert )
 FALCON_STANDARD_SYNCLASS_OP_CREATE( Assign, ExprAssign, binaryExprSet )
 FALCON_STANDARD_SYNCLASS_OP_CREATE( BNot, ExprBNOT, unaryExprSet )
 FALCON_STANDARD_SYNCLASS_OP_CREATE( Call, ExprCall, varExprInsert_sel )
+// Case -- specifically managed
 FALCON_STANDARD_SYNCLASS_OP_CREATE( EP, ExprEP, varExprInsert )
 FALCON_STANDARD_SYNCLASS_OP_CREATE( Invoke, ExprInvoke, binaryExprSet )
 FALCON_STANDARD_SYNCLASS_OP_CREATE( StrIPol, ExprStrIPol, unaryExprSet )
-// GenClosure --specificly managed
+// GenClosure --specifically managed
 
 FALCON_STANDARD_SYNCLASS_OP_CREATE( LT, ExprLT, binaryExprSet )
 FALCON_STANDARD_SYNCLASS_OP_CREATE( LE, ExprLE, binaryExprSet )
@@ -293,8 +295,8 @@ FALCON_STANDARD_SYNCLASS_OP_CREATE( GE, ExprGE, binaryExprSet )
 FALCON_STANDARD_SYNCLASS_OP_CREATE( EQ, ExprEQ, binaryExprSet )
 FALCON_STANDARD_SYNCLASS_OP_CREATE( NE, ExprNE, binaryExprSet )
    
-// GenDict --specificly managed
-// DotAccess -- specificly managed
+// GenDict --specifically managed
+// DotAccess -- specifically managed
 FALCON_STANDARD_SYNCLASS_OP_CREATE( EEQ, ExprEEQ, binaryExprSet )
 FALCON_STANDARD_SYNCLASS_OP_CREATE( In, ExprIn, binaryExprSet )
 FALCON_STANDARD_SYNCLASS_OP_CREATE( Notin, ExprNotin, binaryExprSet )
@@ -1327,11 +1329,77 @@ void SynClasses::ClassTree::unflatten( VMContext*, ItemArray& subItems, void* in
       tree->setChild( static_cast<TreeStep*>(subItems.at(0).asInst()) );
    }
 }
-   
+
+
+void*  SynClasses::ClassCase::createInstance() const
+{
+   return new ExprCase;
+}
+bool SynClasses::ClassCase::op_init( VMContext* ctx, void* instance, int pCount ) const
+{
+   ExprCase* expr = static_cast<ExprCase*>(instance);
+   expr->setInGC();
+
+   Item* ptr = ctx->opcodeParams(pCount);
+   for( int n = 0; n < pCount; ++ n )
+   {
+      if( ! expr->addEntry(ptr[n]) )
+      {
+         throw FALCON_SIGN_XERROR( ParamError, e_inv_params, .extra("Not a valid case entry") );
+      }
+   }
+
+   return true;
+}
+void SynClasses::ClassCase::op_call(VMContext* ctx, int pcount, void* instance) const
+{
+   if ( pcount == 0 )
+   {
+      throw FALCON_SIGN_XERROR( ParamError, e_inv_params, .extra( "X" ) );
+   }
+
+   ExprCase* expr = static_cast<ExprCase*>(instance);
+   bool tof = expr->verify(ctx->opcodeParam(pcount));
+   ctx->stackResult(pcount+1,Item().setBoolean(tof));
+}
+void SynClasses::ClassCase::store( VMContext* ctx, DataWriter* dw, void* instance ) const
+{
+   ExprCase* cls = static_cast<ExprCase*>(instance);
+   m_parent->store( ctx, dw, instance );
+   cls->store(dw);
+}
+void SynClasses::ClassCase::restore( VMContext* ctx, DataReader* dr ) const
+{
+   ExprCase* expr = new ExprCase;
+   try {
+      ctx->pushData( Item( this, expr ) );
+      m_parent->restore( ctx, dr );
+      expr->restore(dr);
+   }
+   catch(...) {
+      ctx->popData();
+      delete expr;
+      throw;
+   }
+}
+void SynClasses::ClassCase::flatten( VMContext*, ItemArray& arr, void* instance ) const
+{
+   ExprCase* expr = static_cast<ExprCase*>(instance);
+   expr->flatten(arr);
+}
+
+void SynClasses::ClassCase::unflatten( VMContext*, ItemArray& arr, void* instance) const
+{
+   ExprCase* expr = static_cast<ExprCase*>(instance);
+   expr->unflatten(arr);
+}
+
+
+
 //=================================================================
 // Statements
 //
-static void init_while_loop( VMContext* ctx, int pcount, StmtWhile* step, bool bAcceptNil )
+static void init_selector_and_rest( VMContext* ctx, int pcount, StmtWhile* step, bool bAcceptNil )
 {
    if( pcount < 1 )
    {
@@ -1386,13 +1454,14 @@ static void init_while_loop( VMContext* ctx, int pcount, StmtWhile* step, bool b
 
 static void init_while( VMContext* ctx, int pcount, StmtWhile* step )
 {
-   init_while_loop( ctx, pcount, step, false );
+   init_selector_and_rest( ctx, pcount, step, false );
 }
 
 static void init_loop( VMContext* ctx, int pcount, StmtWhile* step )
 {
-   init_while_loop( ctx, pcount, step, true );
+   init_selector_and_rest( ctx, pcount, step, true );
 }
+
 
 static void init_generic_multistmt( VMContext* ctx, int pcount, TreeStep* step )
 {
@@ -1550,19 +1619,6 @@ void SynClasses::ClassForIn::restore( VMContext* ctx, DataReader*dr ) const
       delete expr;
       throw;
    }
-}
-
-void SynClasses::ClassSelect::flatten( VMContext* ctx, ItemArray& subItems, void* instance ) const
-{
-   StmtSelect* stmt = static_cast<StmtSelect*>(instance);
-   TRACE1( "SynClasses::ClassSelect::flatten %s", stmt->oneLiner().c_ize() );
-   stmt->flatten(ctx, subItems);
-}
-void SynClasses::ClassSelect::unflatten( VMContext* ctx, ItemArray& subItems, void* instance ) const
-{
-   StmtSelect* stmt = static_cast<StmtSelect*>(instance);
-   stmt->unflatten( ctx, subItems );
-   TRACE1( "SynClasses::ClassForTo::unflatten %s", stmt->oneLiner().c_ize() );
 }
 
 void SynClasses::ClassForTo::flatten( VMContext*, ItemArray& subItems, void* instance ) const

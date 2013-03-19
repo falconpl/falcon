@@ -521,6 +521,7 @@ public:
    Parsing::Rule r_CaseListToken_false;
    Parsing::Rule r_CaseListToken_int;
    Parsing::Rule r_CaseListToken_string;
+   Parsing::Rule r_CaseListToken_rstring;
    Parsing::Rule r_CaseListToken_sym;
    
    

@@ -243,11 +243,48 @@ int Item::compare( const Item& other ) const
          }
 
       default:
-         return (int64) (i1 - i2);
+         return (int64) (static_cast<byte*>(i1->asInst()) - static_cast<byte*>(i2->asInst()));
       }
    }
 
    return typeDiff;
+}
+
+
+
+bool Item::exactlyEqual( const Item& other ) const
+{
+   register const Item* i1 = this;
+   register const Item* i2 = &other;
+
+   if( i1->type() != i2->type() )
+   {
+      if( i1->type() == FLC_ITEM_INT && i2->type() == FLC_ITEM_NUM )
+      {
+         return ((numeric) i1->asInteger()) == i2->asNumeric();
+      }
+      else if( i1->type() == FLC_ITEM_NUM && i2->type() == FLC_ITEM_INT )
+      {
+         return  i1->asNumeric() == ((numeric)i2->asInteger());
+      }
+      return false;
+   }
+
+   switch( i1->type() ) {
+   case FLC_ITEM_NIL: return true;
+   case FLC_ITEM_INT: return i1->asInteger() == i2->asInteger();
+   case FLC_ITEM_NUM: return i1->asNumeric() == i2->asNumeric();
+   case FLC_ITEM_BOOL:
+      return i1->asBoolean() == i2->asBoolean();
+
+   case FLC_CLASS_ID_STRING:
+      return *i1->asString() == *i2->asString();
+
+   default:
+      return i1->asInst() == i2->asInst();
+   }
+
+   return false;
 }
 
 

@@ -16,45 +16,233 @@
 #undef SRC
 #define SRC "engine/psteps/switchlike.cpp"
 
-#include <falcon/psteps/switchlike.h>
 #include <falcon/syntree.h>
+#include <falcon/expression.h>
+
+#include <falcon/psteps/switchlike.h>
+#include <falcon/psteps/exprcase.h>
+
+#include <vector>
 
 namespace Falcon {
+
+class SwitchlikeStatement::Private
+{
+public:
+   typedef std::vector< SynTree* > Blocks;
+   Blocks m_blocks;
+
+   Private() {}
+
+   Private( SwitchlikeStatement* owner, const Private& other )
+   {
+      m_blocks.reserve(other.m_blocks.size());
+
+      Blocks::const_iterator cbi = other.m_blocks.begin();
+      while( cbi != other.m_blocks.end() )
+      {
+         SynTree* ob = *cbi;
+         SynTree* st = ob->clone();
+         st->setParent(owner);
+         m_blocks.push_back( st );
+         ++cbi;
+      }
+   }
+
+   ~Private()
+   {
+      Blocks::iterator iter = m_blocks.begin();
+      while( iter != m_blocks.end() )
+      {
+         dispose( *iter );
+         ++iter;
+      }
+   }
+};
 
 
 SwitchlikeStatement::SwitchlikeStatement( int32 line, int32 chr ):
    Statement( line, chr ),
-   m_defaultBlock(0),
+   m_expr( 0 ),
    m_dummyTree(0)
 {
+   _p = new Private;
+}
+
+SwitchlikeStatement::SwitchlikeStatement( Expression* expr, int32 line, int32 chr ):
+   Statement( line, chr ),
+   m_expr( expr ),
+   m_dummyTree(0)
+{
+   expr->setParent(this);
+   _p = new Private;
 }
 
 SwitchlikeStatement::SwitchlikeStatement( const SwitchlikeStatement& other ):
    Statement( other ),
-   m_defaultBlock(0),
+   m_expr(0),
    m_dummyTree(0)
 {
+   if( other.m_expr != 0 )
+   {
+      m_expr = other.m_expr->clone();
+      m_expr->setParent(this);
+   }
+
+   _p = new Private(this, *other._p);
 }
+
 
 SwitchlikeStatement::~SwitchlikeStatement()
 {
-   dispose( m_defaultBlock );
+   delete _p;
    dispose( m_dummyTree );
+   dispose( m_expr );
 }
 
 
-bool SwitchlikeStatement::setDefault( SynTree* block )
+
+int32 SwitchlikeStatement::arity() const
 {
-   if( ! block->setParent(this) )
+   return (int) _p->m_blocks.size();
+}
+
+
+TreeStep* SwitchlikeStatement::nth( int32 n ) const
+{
+   int32 size = (int32) _p->m_blocks.size();
+   if( n < 0 ) n = size + n;
+   if( n < 0 || n >= size ) return 0;
+
+   return _p->m_blocks[n];
+}
+
+
+bool SwitchlikeStatement::setNth( int32 n, TreeStep* ts )
+{
+   int32 size = (int32) _p->m_blocks.size();
+
+   if( n == size )
+   {
+      return append( ts );
+   }
+
+   if( n < 0 ) n = size + n;
+   if( n < 0 || n > size
+            || ts->category() != TreeStep::e_cat_syntree
+            || (ts->selector() == 0 || ts->selector()->trait() != Expression::e_trait_case )
+            || ! ts->setParent(this) )
    {
       return false;
    }
 
-   dispose( m_defaultBlock );
-   m_defaultBlock = block;
+   dispose( _p->m_blocks[n] );
+   _p->m_blocks[n] = static_cast<SynTree*>(ts);
    return true;
 }
 
+
+bool SwitchlikeStatement::insert( int32 pos, TreeStep* ts )
+{
+   int32 size = (int32) _p->m_blocks.size();
+
+   if( pos == size )
+   {
+      return append( ts );
+   }
+
+   if( pos < 0 ) pos = size + pos;
+   if( pos < 0 || pos > size
+            || ts->category() != TreeStep::e_cat_syntree
+            || (ts->selector() == 0 || ts->selector()->trait() != Expression::e_trait_case )
+            || ! ts->setParent(this) )
+   {
+      return false;
+   }
+
+   _p->m_blocks.insert( _p->m_blocks.begin() + pos, static_cast<SynTree*>(ts) );
+   return true;
+}
+
+
+bool SwitchlikeStatement::append( TreeStep* element )
+{
+   int32 size = (int32) _p->m_blocks.size();
+   if( element->category() != TreeStep::e_cat_syntree )
+   {
+      return false;
+   }
+
+   SynTree* st = static_cast<SynTree*>(element);
+
+   if( element->selector() == 0 )
+   {
+      if( ! element->setParent( this ) )
+      {
+         return false;
+      }
+
+      // no previous default? -- this is the new one.
+      _p->m_blocks.insert( _p->m_blocks.end(), st );
+   }
+   else
+   {
+      if( element->selector()->trait() != Expression::e_trait_case || ! element->setParent( this ) )
+      {
+         return false;
+      }
+
+      // shift default down?
+      if( size > 0 && _p->m_blocks[size-1]->selector() == 0 )
+      {
+         _p->m_blocks.insert( _p->m_blocks.begin() + (size-1), st );
+      }
+      else {
+         // no default? -- insert at end.
+         _p->m_blocks.insert( _p->m_blocks.end(), st );
+      }
+   }
+
+   return true;
+}
+
+
+bool SwitchlikeStatement::remove( int32 pos )
+{
+   int32 size = (int32) _p->m_blocks.size();
+
+   if( pos < 0 ) pos = size + pos;
+   if( pos < 0 || pos >= size )
+   {
+      return false;
+   }
+
+   dispose( _p->m_blocks[pos] );
+   _p->m_blocks.erase( _p->m_blocks.begin() + pos );
+   return true;
+}
+
+/*
+void SwitchlikeStatement::gcMark( uint32 mark )
+{
+   if( m_gcMark != mark )
+   {
+      m_gcMark = mark;
+      Private::Blocks::iterator iter = _p->m_blocks.begin();
+      while( iter != _p->m_blocks.end() )
+      {
+         SynTree* st = *iter;
+         st->gcMark(mark);
+         ++iter;
+      }
+
+      if( m_dummyTree != 0 )
+      {
+         m_dummyTree->gcMark(mark);
+      }
+   }
+}
+*/
 
 SynTree* SwitchlikeStatement::dummyTree()
 {
@@ -65,6 +253,132 @@ SynTree* SwitchlikeStatement::dummyTree()
    
    return m_dummyTree;
 }
+
+
+template<class __T>
+SynTree* SwitchlikeStatement::findBlock( const Item& value, const __T& verifier ) const
+{
+   Private::Blocks::iterator iter = _p->m_blocks.begin();
+   while( iter != _p->m_blocks.end() )
+   {
+      SynTree* st = *iter;
+      Expression* sel = st->selector();
+      if( sel == 0 )
+      {
+         // the default block
+         return st;
+      }
+
+      if(sel->trait() == Expression::e_trait_case )
+      {
+         ExprCase* cs = static_cast<ExprCase*>(sel);
+         if( verifier.check(cs, value) ) {
+            return st;
+         }
+      }
+      ++iter;
+   }
+
+   return 0;
+}
+
+
+class ValueVerifier
+{
+public:
+   bool check( ExprCase* cs, const Item& value ) const
+   {
+      return cs->verify(value);
+   }
+};
+
+
+class TypeVerifier
+{
+public:
+   bool check( ExprCase* cs, const Item& value ) const
+   {
+      return cs->verifyType(value);
+   }
+};
+
+
+class LiveValueVerifier
+{
+public:
+   LiveValueVerifier( VMContext* ctx ):
+      m_ctx(ctx)
+   {}
+
+   bool check( ExprCase* cs, const Item& value ) const
+   {
+      return cs->verifyItem(value, m_ctx);
+   }
+
+private:
+   VMContext* m_ctx;
+};
+
+
+
+SynTree* SwitchlikeStatement::findBlockForItem( const Item& value ) const
+{
+   ValueVerifier vv;
+   return findBlock(value, vv);
+}
+
+
+SynTree* SwitchlikeStatement::findBlockForItem( const Item& value, VMContext* ctx ) const
+{
+   LiveValueVerifier vv(ctx);
+   return findBlock(value, vv);
+}
+
+SynTree* SwitchlikeStatement::findBlockForType( const Item& value ) const
+{
+   TypeVerifier vv;
+   return findBlock(value, vv );
+}
+
+SynTree* SwitchlikeStatement::getDefault() const
+{
+   if( _p->m_blocks.size() == 0 )
+   {
+      return 0;
+   }
+   if( _p->m_blocks.back()->selector() == 0 )
+   {
+      return _p->m_blocks.back();
+   }
+
+   return 0;
+}
+
+/** Returns the selector for this expression.*/
+Expression* SwitchlikeStatement::selector() const
+{
+   return m_expr;
+}
+
+
+bool SwitchlikeStatement::selector( Expression* expr )
+{
+   if( expr == 0 )
+   {
+      return false;
+   }
+
+   if( ! expr->setParent(this) )
+   {
+      return false;
+   }
+
+   dispose(m_expr);
+   m_expr = expr;
+
+   return true;
+}
+
 
 }
 

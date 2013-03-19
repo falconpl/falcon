@@ -557,6 +557,7 @@ public:
    bool isOrdinal() const { return type() == FLC_ITEM_INT || type() == FLC_ITEM_NUM; }
    bool isCallable() const;
    bool isOpaque() const { return type() == FLC_ITEM_OPAQUE; }
+   bool isSymbol() const { return type() == FLC_CLASS_ID_SYMBOL; }
    
    bool isUser() const { return type() >= FLC_ITEM_USER; }
    bool isClass() const { return type() == FLC_CLASS_ID_CLASS; }
@@ -714,6 +715,12 @@ public:
       return static_cast<String*>(asInst());
    }
    
+   Symbol* asSymbol() const
+   {
+      return static_cast<Symbol*>(asInst());
+   }
+
+
    ItemDict* asDict() const
    {
       return static_cast<ItemDict*>(asInst());

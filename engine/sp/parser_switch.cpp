@@ -29,9 +29,11 @@
 #include <falcon/sp/sourcelexer.h>
 #include <falcon/sp/parser_switch.h>
 
+#include <falcon/psteps/exprcase.h>
 #include <falcon/psteps/stmtselect.h>
 #include <falcon/psteps/stmtswitch.h>
 #include <falcon/symbol.h>
+#include <falcon/stdhandlers.h>
 
 #include "private_caselist.h"
 
@@ -61,7 +63,7 @@ static void on_switch_closed(void* parser_void)
    ParserContext* ctx = static_cast<ParserContext*>(p->context());
    TreeStep* stmt = ctx->currentStmt();
    fassert( stmt != 0 );
-   fassert( (stmt->handler()->userFlags() == FALCON_SYNCLASS_ID_CASEHOST)
+   fassert( (stmt->handler()->userFlags() == FALCON_SYNCLASS_ID_SELECT)
             || (stmt->handler()->userFlags() == FALCON_SYNCLASS_ID_SWITCH) );
    SwitchlikeStatement* swc = static_cast<SwitchlikeStatement*>( stmt );
    
@@ -119,6 +121,9 @@ void apply_select( const Rule&, Parser& p )
 
 static bool make_case_branch(  Parser& p, ParserContext* ctx, SynTree* st, bool bOpenBranch )
 {
+   static Class* symClass = Engine::instance()->handlers()->symbolClass();
+   static Class* clsRegex = Engine::instance()->handlers()->reClass();
+
    // << T_case << CaseList << T_COLON
    // << T_case << CaseList << T_EOL
    p.getNextToken();
@@ -133,30 +138,71 @@ static bool make_case_branch(  Parser& p, ParserContext* ctx, SynTree* st, bool 
       
    CaseList* cli = static_cast<CaseList*>(tlist->asData());
    Class* handler = stmt->handler();
+   ExprCase* ecase = new ExprCase(tlist->line(), tlist->chr());
+   st->selector(ecase);
    
+
    // is this a switch or a select?
    if ( handler->userFlags() == FALCON_SYNCLASS_ID_SWITCH )
    {
       StmtSwitch* swc = static_cast<StmtSwitch*>(stmt);
+      swc->append(st);
 
       CaseList::iterator iter = cli->begin();
-      while( iter != cli->end() ) {
+
+      while( iter != cli->end() )
+      {
          CaseItem* itm = *iter;
-         bool noClash;
+         bool noClash = true;
 
          switch( itm->m_type ) {
-            case CaseItem::e_nil: noClash = swc->addNilBlock( st ); break;
-            case CaseItem::e_true: noClash = swc->addBoolBlock( true, st ); break;
-            case CaseItem::e_false: noClash = swc->addBoolBlock( false, st ); break;
-            case CaseItem::e_int: noClash = swc->addIntBlock( itm->m_iLow, st ); break;
-            case CaseItem::e_string: noClash = swc->addStringBlock( *itm->m_sLow, st ); break;
-            case CaseItem::e_sym:
-               noClash = swc->addSymbolBlock( itm->m_sym, st );
+            case CaseItem::e_nil:
+               noClash = swc->findBlockForItem(Item()) == 0;
+               ecase->addNilEntry();
                break;
-            case CaseItem::e_rngInt: noClash = swc->addRangeBlock( 
-                                       itm->m_iLow, itm->m_iHigh, st ); break;
-            case CaseItem::e_rngString: noClash = swc->addStringRangeBlock( 
-                                 *itm->m_sLow, *itm->m_sHigh, st ); break;
+
+            case CaseItem::e_true:
+               noClash = swc->findBlockForItem(Item().setBoolean(true)) == 0;
+               ecase->addBoolEntry( true );
+               break;
+
+            case CaseItem::e_false:
+               noClash = swc->findBlockForItem(Item().setBoolean(false)) == 0;
+               ecase->addBoolEntry( false );
+               break;
+
+            case CaseItem::e_int:
+               noClash = swc->findBlockForItem(itm->m_iLow) == 0;
+               ecase->addEntry( itm->m_iLow );
+               break;
+
+            case CaseItem::e_string:
+               noClash = swc->findBlockForItem(Item(itm->m_sLow->handler(),itm->m_sLow)) == 0;
+               ecase->addEntry(*itm->m_sLow);
+               break;
+
+            case CaseItem::e_sym:
+               noClash = swc->findBlockForItem(Item(symClass,itm->m_sym)) == 0;
+               ecase->addEntry(itm->m_sym);
+               break;
+
+            case CaseItem::e_rngInt:
+               noClash = swc->findBlockForItem(itm->m_iLow) == 0
+                         && swc->findBlockForItem(itm->m_iHigh) == 0;
+               ecase->addEntry(itm->m_iLow, itm->m_iHigh );
+               break;
+
+            case CaseItem::e_rngString:
+               noClash = swc->findBlockForItem(Item(itm->m_sLow->handler(), itm->m_sLow)) == 0
+                        && swc->findBlockForItem(Item(itm->m_sHigh->handler(), itm->m_sHigh)) == 0;
+               ecase->addEntry(*itm->m_sLow, *itm->m_sHigh );
+               break;
+
+            case CaseItem::e_regex:
+               noClash = swc->findBlockForItem(Item(clsRegex, itm->m_re)) == 0;
+               ecase->addEntry(itm->m_re);
+               itm->m_re = 0;
+               break;
          }
 
          if ( ! noClash ) {
@@ -168,17 +214,22 @@ static bool make_case_branch(  Parser& p, ParserContext* ctx, SynTree* st, bool 
       
       if (bOpenBranch) ctx->openTempBlock( swc->dummyTree(), st );
    }
-   else if( handler->userFlags() == FALCON_SYNCLASS_ID_CASEHOST )
+   else if( handler->userFlags() == FALCON_SYNCLASS_ID_SELECT )
    {
       StmtSelect* swc = static_cast<StmtSelect*>(stmt);
+      swc->append(st);
 
       CaseList::iterator iter = cli->begin();
       while( iter != cli->end() ) {
          CaseItem* itm = *iter;
-         bool noClash;
+         bool noClash = true;
 
          switch( itm->m_type ) {
-            case CaseItem::e_int: noClash = swc->addSelectType( itm->m_iLow, st ); break;
+            case CaseItem::e_int:
+               noClash = swc->findBlockForItem(itm->m_iLow) == 0;
+               ecase->addEntry( itm->m_iLow );
+            break;
+
             case CaseItem::e_sym:
                // Search the symbol
                {
@@ -193,7 +244,7 @@ static bool make_case_branch(  Parser& p, ParserContext* ctx, SynTree* st, bool 
                         return false;
                      }
 
-                     Requirement* req = swc->addSelectName( itm->m_sym->name(), st );
+                     Requirement* req = ecase->addForwardClass( itm->m_sym->name() );
                      if( req == 0 )
                      {
                         noClash = false;
@@ -215,7 +266,9 @@ static bool make_case_branch(  Parser& p, ParserContext* ctx, SynTree* st, bool 
                      }
                      else {
                         // cool, we can add the resolved symbol
-                        noClash = swc->addSelectClass( static_cast<Class*>(value->asInst()), st );
+                        Class* tgtCls = static_cast<Class*>(value->asInst());
+                        noClash = swc->findBlockForItem(Item(tgtCls->handler(), tgtCls)) == 0;
+                        ecase->addEntry( tgtCls );
                      }
                   }
                }
@@ -226,7 +279,8 @@ static bool make_case_branch(  Parser& p, ParserContext* ctx, SynTree* st, bool 
             case CaseItem::e_true:
             case CaseItem::e_false:
             case CaseItem::e_rngInt:
-            case CaseItem::e_rngString: 
+            case CaseItem::e_rngString:
+            case CaseItem::e_regex:
                p.addError(e_select_decl, p.currentSource(), tlist->line(), tlist->chr() );
                break;
          }
@@ -261,22 +315,15 @@ static bool make_default_branch( Parser& p, ParserContext* ctx, SynTree* st, boo
        p.addError(e_case_outside, p.currentSource(), ti->line(), ti->chr() );
        return false;
    }
-   
-   
+
    Class* handler = stmt->handler();
    
    // is this a switch or a select?
-   bool bClash;
-   if ( handler->userFlags() == FALCON_SYNCLASS_ID_SWITCH )
+   bool bClash = false;
+   if ( handler->userFlags() == FALCON_SYNCLASS_ID_SWITCH || handler->userFlags() == FALCON_SYNCLASS_ID_SELECT )
    {
-      StmtSwitch* swc = static_cast<StmtSwitch*>(stmt);
-      bClash = swc->setDefault( st );
-      if (bOpenBranch) ctx->openTempBlock( swc->dummyTree(), st );  
-   }
-   else if( handler->userFlags() == FALCON_SYNCLASS_ID_CASEHOST )
-   {
-      StmtSelect* swc = static_cast<StmtSelect*>(stmt);
-      bClash = swc->setDefault( st );
+      SwitchlikeStatement* swc = static_cast<SwitchlikeStatement*>(stmt);
+      bClash = ! swc->append(st);
       if (bOpenBranch) ctx->openTempBlock( swc->dummyTree(), st );  
    }
    else {
@@ -285,7 +332,7 @@ static bool make_default_branch( Parser& p, ParserContext* ctx, SynTree* st, boo
       return false;
    }
    
-   if ( ! bClash ) {
+   if ( bClash ) {
       p.addError(e_switch_default, p.currentSource(), ti->line(), ti->chr() );
       return false;
    }
@@ -419,6 +466,24 @@ void apply_CaseListToken_string( const Rule&, Parser& p )
    ti->setValue( new CaseItem( ti->detachString() ), CaseItem::deletor );
 }
 
+
+void apply_CaseListToken_rstring( const Rule&, Parser& p )
+{
+   //<< T_rstring
+   TokenInstance* ti = p.getNextToken();
+   ti->token( static_cast<SourceParser*>(&p)->CaseListToken );
+   re2::RE2* re = new re2::RE2(*ti->detachString());
+   if( re->error_code() == 0 )
+   {
+      ti->setValue( new CaseItem( re ), CaseItem::deletor );
+   }
+   else {
+      p.addError( e_regex_def, p.currentSource(), ti->line(), ti->chr(), 0, re->error().c_str() );
+      delete re;
+   }
+}
+
+
 void apply_CaseListToken_sym( const Rule&, Parser& p )
 {
    TokenInstance* ti = p.getNextToken();
@@ -426,10 +491,18 @@ void apply_CaseListToken_sym( const Rule&, Parser& p )
    ParserContext* ctx = static_cast<ParserContext*>(p.context());
 
    String& name = *ti->asString();
-   ctx->accessSymbol(name);
-   // SYM is not 0
+   const Item* builtin = Engine::instance()->getBuiltin( name );
    ti->token( sp->CaseListToken );
-   ti->setValue( new CaseItem( Engine::getSymbol(name) ), &CaseItem::deletor );
+
+   if( builtin != 0 && builtin->isInteger() )
+   {
+      ti->setValue( new CaseItem( builtin->asInteger() ), &CaseItem::deletor );
+   }
+   else {
+      ctx->accessSymbol(name);
+      ti->setValue( new CaseItem( Engine::getSymbol(name) ), &CaseItem::deletor );
+   }
+
 }
 
 

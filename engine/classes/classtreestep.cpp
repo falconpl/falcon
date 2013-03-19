@@ -27,6 +27,7 @@
 #include <falcon/itemarray.h>
 #include <falcon/datawriter.h>
 #include <falcon/datareader.h>
+#include <falcon/stdhandlers.h>
 
 #include <falcon/errors/accesserror.h>
 #include <falcon/errors/codeerror.h>
@@ -336,7 +337,7 @@ void ClassTreeStep::unflatten( VMContext*, ItemArray& subItems, void* instance )
    if( subItems[0].isUser() )
    {
       // we have a selector.
-#ifdef NDEBUG
+#ifndef NDEBUG
       static Class* clsTreeStep = Engine::instance()->stdHandlers()->treeStepClass();
       fassert( subItems[0].asClass()->isDerivedFrom(clsTreeStep) );
 #endif

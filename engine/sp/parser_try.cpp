@@ -31,6 +31,7 @@
 #include <falcon/sp/parser_try.h>
 
 #include <falcon/psteps/stmttry.h>
+#include <falcon/psteps/exprcase.h>
 #include <falcon/psteps/stmtraise.h>
 #include <falcon/psteps/exprvalue.h>
 
@@ -209,29 +210,44 @@ static void internal_apply_catch( int toks, Parser& p, int line, int chr,
    else
    {      
       StmtTry* stmttry = static_cast<StmtTry*>(stmt);      
-      SynTree* newBranch = bNew ?
-               ctx->changeBranch()
-               : ctx->currentTree();
+      SynTree* newBranch;
+      if( bNew )
+      {
+         newBranch = ctx->changeBranch();
+         newBranch->decl(line,chr);
+         if(genTrace)
+         {
+            newBranch->setTracedCatch();
+         }
 
-      newBranch->decl(line,chr);
-      if(genTrace)
-      {
-         newBranch->setTracedCatch();
+         // prepare the head symbol if needed
+         if( tgt != 0 )
+         {
+            ctx->defineSymbol( *tgt );
+            newBranch->target( Engine::getSymbol(*tgt ) );
+         }
+
+      }
+      else {
+         ctx->currentTree();
       }
       
-      // prepare the head symbol if needed
-      if( tgt != 0 )
-      {
-         ctx->defineSymbol( *tgt );
-         newBranch->target( Engine::getSymbol(*tgt ) );
-      }
-      
+      // catch by name.
+      StmtSelect* select = &stmttry->catchSelect();
+      ExprCase* ecase = static_cast<ExprCase*>(newBranch->selector());
+
       if( errName != 0 )
       {
-         // catch by name.         
-         Requirement* req = stmttry->catchSelect()
-                           .addSelectName( *errName, newBranch );  
-         if( req == 0 )
+         if( ecase == 0 )
+         {
+            ecase = new ExprCase(newBranch->line(), newBranch->chr());
+            newBranch->selector(ecase);
+         }
+
+         bool bClash = select->findBlockForItem(Item( errName->handler(), const_cast<String*>(errName) )) != 0;
+         Requirement* req;
+
+         if( bClash || (req = ecase->addForwardClass(*errName)) == 0 )
          {
             // name clash.
             p.addError( e_catch_adef, p.currentSource(), line, chr );
@@ -240,24 +256,30 @@ static void internal_apply_catch( int toks, Parser& p, int line, int chr,
             ctx->onRequirement( req );
          }
       }
-      else
-      { 
-         if( tid == -1 )
+      else if( tid >= 0 )
+      {
+         if( ecase == 0 )
          {
-            // the default catch
-            if ( ! stmttry->catchSelect().setDefault( newBranch ) )
-            {
-               p.addError( e_catch_adef, p.currentSource(), line, chr );
-               delete newBranch;
-            }
+            ecase = new ExprCase(newBranch->line(), newBranch->chr());
+            newBranch->selector(ecase);
          }
-         // an integer catch
-         else if( ! stmttry->catchSelect().addSelectType( tid, newBranch ) )
+
+         bool bClash = select->findBlockForItem(tid) != 0;
+         if( bClash )
          {
             // tid duplicated.
             p.addError( e_catch_clash, p.currentSource(), line, chr );
-            delete newBranch;
          }
+         // anyhow append it.
+         ecase->addEntry(tid);
+      }
+
+      // anyhow, add it -- might be default...
+      if ( bNew && ! select->append( newBranch ) )
+      {
+         // added more than once...
+         p.addError( e_catch_adef, p.currentSource(), line, chr );
+         delete newBranch;
       }
    }
    
@@ -297,6 +319,7 @@ static void internal_apply_catch_case( int toks, Parser& p, int line, int chr,
          case CaseItem::e_false:
          case CaseItem::e_rngInt:
          case CaseItem::e_rngString:
+         case CaseItem::e_regex:
             p.addError(e_syn_catch, p.currentSource(), line, chr );
             break;
       }
@@ -330,7 +353,7 @@ void apply_catch_all( const Rule&, Parser& p )
       }
       else
       {
-         stmttry->catchSelect().setDefault( ctx->changeBranch() );
+         stmttry->catchSelect().append( ctx->changeBranch() );
       }
    }
    

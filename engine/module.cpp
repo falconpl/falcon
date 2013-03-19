@@ -65,7 +65,7 @@ public:
    }
 
    // This applies only to native modules, which doesn't store requirementes.
-   virtual Class* cls() const { return 0; }
+   virtual Class* handler() const { return 0; }
 
 private:
    t_func_import_req m_cbFunc;

@@ -57,6 +57,12 @@ FALCON_SYNCLASS_DECLARATOR(m_expr_genarray, GenArray, Expression)
 FALCON_SYNCLASS_DECLARATOR(m_expr_assign, Assign, Expression)
 FALCON_SYNCLASS_DECLARATOR(m_expr_bnot, BNot, Expression)
 FALCON_SYNCLASS_DECLARATOR(m_expr_call, Call, Expression)
+FALCON_SYNCLASS_DECLARATOR_EX(m_expr_case, Case, Expression, \
+         virtual void op_call(VMContext* ctx, int pcount, void* instance) const; \
+         virtual void store( VMContext*, DataWriter* dw, void* instance ) const; \
+         virtual void flatten( VMContext* ctx, ItemArray& subItems, void* instance ) const;\
+         virtual void unflatten( VMContext* ctx, ItemArray& subItems, void* instance ) const; )
+
 FALCON_SYNCLASS_DECLARATOR(m_expr_ep, EP, Expression)
 FALCON_SYNCLASS_DECLARATOR(m_expr_invoke, Invoke, Expression)
 FALCON_SYNCLASS_DECLARATOR(m_expr_stripol, StrIPol, Expression)
@@ -226,10 +232,7 @@ FALCON_SYNCLASS_DECLARATOR_EX(m_stmt_return, Return, Statement,
          )
 
 FALCON_SYNCLASS_DECLARATOR(m_stmt_rule, Rule, Expression)
-FALCON_SYNCLASS_DECLARATOR_EX(m_stmt_select, Select, Statement, \
-         virtual void flatten( VMContext* ctx, ItemArray& subItems, void* instance ) const;\
-         virtual void unflatten( VMContext* ctx, ItemArray& subItems, void* instance ) const; )
-
+FALCON_SYNCLASS_DECLARATOR(m_stmt_select, Select, Statement )
 FALCON_SYNCLASS_DECLARATOR(m_stmt_switch, Switch, Statement)
 FALCON_SYNCLASS_DECLARATOR(m_stmt_try, Try, Statement)
 FALCON_SYNCLASS_DECLARATOR(m_stmt_while, While, Statement)

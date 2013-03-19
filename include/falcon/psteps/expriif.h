@@ -1,6 +1,6 @@
 /*
    FALCON - The Falcon Programming Language.
-   FILE: expriif.cpp
+   FILE: expriif.h
 
    Syntactic tree item definitions -- Ternary fast-if expression
    -------------------------------------------------------------------
@@ -57,4 +57,4 @@ private:
 
 #endif	/* EXPRIIF_H */
 
-/* end of expriif.cpp */
+/* end of expriif.h */

@@ -583,6 +583,7 @@ SourceParser::SourceParser():
    CaseListToken << (r_CaseListToken_false << "CaseListToken false" << apply_CaseListToken_false << T_false );
    CaseListToken << (r_CaseListToken_int << "CaseListToken int" << apply_CaseListToken_int << T_Int );
    CaseListToken << (r_CaseListToken_string << "CaseListToken string" << apply_CaseListToken_string << T_String );
+   CaseListToken << (r_CaseListToken_rstring << "CaseListToken r-string" << apply_CaseListToken_rstring << T_RString );
    CaseListToken << (r_CaseListToken_sym << "CaseListToken sym" << apply_CaseListToken_sym << T_Name );
    
    CaseList << "CaseList";

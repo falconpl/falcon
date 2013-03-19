@@ -206,6 +206,7 @@ add_library(falcon_engine SHARED
   psteps/exprassign.cpp
   psteps/exprbitwise.cpp
   psteps/exprcall.cpp
+  psteps/exprcase.cpp
   psteps/exprclosure.cpp
   psteps/exprcompare.cpp
   psteps/exprcompose.cpp

@@ -72,7 +72,7 @@
 #include <falcon/synclasses.h>
 
 #include <falcon/psteps/exprinherit.h>
-#include <falcon/psteps/stmtselect.h>
+#include <falcon/psteps/exprcase.h>
 
 #include <falcon/prototypeclass.h>
 
@@ -316,7 +316,7 @@ Engine::Engine()
    //
    
    ExprInherit::IRequirement::registerMantra( this );
-   SelectRequirement::registerMantra( this );
+   CaseRequirement::registerMantra( this );
    
    m_synClasses = new SynClasses(m_stdHandlers->syntreeClass(), m_stdHandlers->statementClass(), m_stdHandlers->expressionClass() );
    m_synClasses->subscribe( this );

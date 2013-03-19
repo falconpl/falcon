@@ -97,7 +97,7 @@ Class* ClassInt::getParent( const String& name ) const
 bool ClassInt::isDerivedFrom( const Class* cls ) const
 {
    static Class* number = Engine::handlers()->numberClass();
-   return cls == number;
+   return cls == number || cls == this;
 }
 
 void ClassInt::enumerateParents( ClassEnumerator& cb ) const

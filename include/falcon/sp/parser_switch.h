@@ -45,6 +45,7 @@ void apply_CaseListToken_true( const Rule&, Parser& p );
 void apply_CaseListToken_false( const Rule&, Parser& p );
 void apply_CaseListToken_int( const Rule&, Parser& p );
 void apply_CaseListToken_string( const Rule&, Parser& p );
+void apply_CaseListToken_rstring( const Rule&, Parser& p );
 void apply_CaseListToken_sym( const Rule&, Parser& p );
 
 void apply_CaseList_next( const Rule&, Parser& p );

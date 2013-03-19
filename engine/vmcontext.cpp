@@ -988,11 +988,7 @@ public:
             return true;
          }
 
-         SynTree* st = stry->catchSelect().findBlockForItem( m_item );
-         if( st == 0 )
-         {
-            st = stry->catchSelect().getDefault();
-         }
+         SynTree* st = stry->catchSelect().findBlockForType( m_item );
          ctx->setCatchBlock( st );
          return st != 0;
       }
@@ -1041,12 +1037,7 @@ public:
             return true;
          }
 
-         SynTree* st = stry->catchSelect().findBlockForClass( m_errClass );
-
-         // has the try a default?
-         if ( st == 0 ) {
-            st = stry->catchSelect().getDefault();
-         }
+         SynTree* st = stry->catchSelect().findBlockForType( Item( m_errClass, m_error) );
 
          if( st != 0 )
          {

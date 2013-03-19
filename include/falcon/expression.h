@@ -48,7 +48,8 @@ public:
       e_trait_inheritance,
       e_trait_composite,
       e_trait_unquote,
-      e_trait_vectorial
+      e_trait_vectorial,
+      e_trait_case
    }
    t_trait;
    

@@ -269,7 +269,7 @@ public:
 };
 
 
-Class* ExprInherit::IRequirement::cls() const
+Class* ExprInherit::IRequirement::handler() const
 {
    return m_mantraClass;
 }

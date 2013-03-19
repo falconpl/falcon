@@ -63,7 +63,7 @@ PStepCompile::PStepCompile(int32 line, int32 chr):
    // This is not a syntactic pstep, we don't need to have a syntax for this.
    apply = apply_;
    m_compiler = new IntCompiler;
-   catchSelect().setDefault( new CatchSyntree(this) );
+   catchSelect().append( new CatchSyntree(this) );
 }
 
 PStepCompile::PStepCompile( const PStepCompile& other ):
@@ -73,7 +73,7 @@ PStepCompile::PStepCompile( const PStepCompile& other ):
 {
    apply = apply_;
    m_compiler = new IntCompiler;
-   catchSelect().setDefault( new CatchSyntree(this) );
+   catchSelect().append( new CatchSyntree(this) );
 }
 
 PStepCompile::~PStepCompile()
