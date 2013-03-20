@@ -1468,6 +1468,33 @@ static void init_loop( VMContext* ctx, int pcount, StmtWhile* step )
 }
 
 
+static void init_try( VMContext* ctx, int pcount, Statement* step )
+{
+   if( pcount < 1 )
+   {
+      throw FALCON_SIGN_XERROR( ParamError, e_inv_params, .extra("SynTree,..."));
+   }
+
+   Item* params = ctx->opcodeParams(pcount);
+   for( int i = 0; i < pcount; ++i )
+   {
+      const Item& par = params[i];
+      if( par.type() == FLC_CLASS_ID_TREESTEP )
+      {
+         TreeStep* ts = static_cast<TreeStep*>(par.asInst());
+         if( step->setNth(i,ts ) )
+         {
+            // ok, skip the throw...
+            continue;
+         }
+      }
+      throw new ParamError( ErrorParam( e_expr_assign, __LINE__, SRC )
+            .origin( ErrorParam::e_orig_runtime)
+            .extra( String("at 0") ) );
+   }
+}
+
+
 static void init_generic_multistmt( VMContext* ctx, int pcount, TreeStep* step )
 {
    Item* params = ctx->opcodeParams(pcount);
@@ -1547,7 +1574,7 @@ FALCON_STANDARD_SYNCLASS_OP_CREATE_SIMPLE( Return, StmtReturn, unaryExprSet )
 FALCON_STANDARD_SYNCLASS_OP_CREATE( Rule, ExprRule, init_generic_multistmt )
 FALCON_STANDARD_SYNCLASS_OP_CREATE( Select, StmtSelect, init_switch )
 FALCON_STANDARD_SYNCLASS_OP_CREATE( Switch, StmtSwitch, init_switch )
-FALCON_STANDARD_SYNCLASS_OP_CREATE( Try, StmtTry, zeroaryExprSet ) //
+FALCON_STANDARD_SYNCLASS_OP_CREATE( Try, StmtTry, init_try )
 FALCON_STANDARD_SYNCLASS_OP_CREATE( While, StmtWhile, init_while )
 
 //=================================================================
