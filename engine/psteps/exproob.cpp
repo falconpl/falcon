@@ -50,18 +50,12 @@ void ExprOob::apply_( const PStep* ps, VMContext* ctx )
    ctx->popCode();
 }
 
-void ExprOob::describeTo( String& str, int depth ) const
-{
-   if( m_first == 0 )
-   {
-      str = "<Blank ExprOob>";
-      return;
-   }
-   
-   str = "^+";
-   str += m_first->describe(depth+1);
-}
 
+const String& ExprOob::exprName() const
+{
+   static String name("^+");
+   return name;
+}
 
 
 bool ExprDeoob::simplify( Item& value ) const
@@ -94,19 +88,11 @@ void ExprDeoob::apply_( const PStep* ps, VMContext* ctx )
    ctx->popCode();
 }
 
-void ExprDeoob::describeTo( String& str, int depth ) const
+const String& ExprDeoob::exprName() const
 {
-   if( m_first == 0 )
-   {
-      str = "<Blank ExprDeoob>";
-      return;
-   }
-   
-   str = "^-";
-   str += m_first->describe(depth+1);
+   static String name("^-");
+   return name;
 }
-
-
 
 bool ExprXorOob::simplify( Item& value ) const
 {
@@ -138,18 +124,11 @@ void ExprXorOob::apply_( const PStep* ps, VMContext* ctx )
    ctx->topData().xorOob();
 }
 
-void ExprXorOob::describeTo( String& str, int depth ) const
+const String& ExprXorOob::exprName() const
 {
-   if( m_first == 0 )
-   {
-      str = "<Blank ExprXorOob>";
-      return;
-   }
-   
-   str = "^%";
-   str += m_first->describe(depth+1);
+   static String name("^%");
+   return name;
 }
-
 
 
 bool ExprIsOob::simplify( Item& value ) const
@@ -182,16 +161,11 @@ void ExprIsOob::apply_( const PStep* ps, VMContext* ctx )
    item.setBoolean(item.isOob());
 }
 
-void ExprIsOob::describeTo( String& str, int depth ) const
-{
-   if( m_first == 0 )
-   {
-      str = "<Blank IsOob>";
-      return;
-   }
 
-   str = "^?";
-   str += m_first->describe(depth+1);
+const String& ExprIsOob::exprName() const
+{
+   static String name("^?");
+   return name;
 }
 
 }

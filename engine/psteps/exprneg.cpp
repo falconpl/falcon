@@ -91,16 +91,10 @@ void ExprNeg::apply_( const PStep* ps, VMContext* ctx )
 }
 
 
-void ExprNeg::describeTo( String& str, int depth ) const
+const String& ExprNeg::exprName() const
 {
-   if( m_first == 0 )
-   {
-      str = "<Blank ExprNeg>";
-      return;
-   }
-   
-   str = "(-";
-   str += m_first->describe(depth+1)+")";
+   static String name("-");
+   return name;
 }
 
 }

@@ -34,8 +34,7 @@ public:
    virtual ~Breakpoint();
    Breakpoint* clone() const;
 
-   void describeTo( String& tgt, int depth=0 ) const;
-
+   virtual void render( TextWriter* tw, int32 depth ) const;
    static void apply_( const PStep*, VMContext* ctx );
 };
 

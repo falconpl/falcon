@@ -19,6 +19,7 @@
 #include <falcon/psteps/breakpoint.h>
 #include <falcon/synclasses.h>
 #include <falcon/engine.h>
+#include <falcon/textwriter.h>
 
 namespace Falcon
 {
@@ -44,10 +45,13 @@ Breakpoint* Breakpoint::clone() const
    return new Breakpoint(*this);
 }
 
-void Breakpoint::describeTo( String& tgt, int ) const
+
+void Breakpoint::render( TextWriter* tw, int32 depth ) const
 {
-   tgt = "(*)";
+   tw->write( renderPrefix(depth) );
+   tw->write( "/* breakpoint */\n" );
 }
+
 
 void Breakpoint::apply_( const PStep*, VMContext* ctx )
 {

@@ -176,7 +176,7 @@ public:
       }
    }
 
-   void describeTo( String& tgt, int ) const { tgt = "Temporary ArrayDecl"; }
+   void render( TextWriter*, int ) const { }
 
    virtual StmtTempArrayDecl* clone() const { return 0; }
 };

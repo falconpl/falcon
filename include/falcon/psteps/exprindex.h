@@ -32,6 +32,7 @@ public:
             m_pslv.m_owner = this; \
             m_trait = e_trait_assignable; );
    
+   virtual void render( TextWriter* tw, int depth ) const;
 private:
    
    /** Step used to SET a value in the array.*/

@@ -24,6 +24,7 @@
 #include <falcon/expression.h>
 #include <falcon/syntree.h>
 #include <falcon/symbol.h>
+#include <falcon/textwriter.h>
 
 #include <falcon/engine.h>
 #include <falcon/synclasses.h>
@@ -123,35 +124,12 @@ bool SynTree::selector( Expression* expr )
 }
 
 
-void SynTree::describeTo( String& tgt, int depth ) const
+void SynTree::render( TextWriter* tw, int32 depth ) const
 {
-   tgt = "";
-   bool addFrame = parent() == 0 ||
-            (parent()->category() != TreeStep::e_cat_statement
-             && !( parent()->handler()->userFlags() == FALCON_SYNCLASS_ID_TREE  ) );
-   if ( addFrame )
-   {
-      tgt += String(" ").replicate(depth*PStep::depthIndent) + "{[]\n";
-      depth = depth + 1;
-   }
-
-   for( size_t i = 0; i < _p->m_steps.m_exprs.size(); ++i )
-   {
-      if ( i > 0 ) tgt += "\n";
-      tgt += _p->m_steps.m_exprs[i]->describe( depth );
-   }
-
-   if ( addFrame )
-   {
-      tgt += "\n" + String(" ").replicate((depth-1)*PStep::depthIndent) + "}";
-   }
-}
-
-
-void SynTree::oneLinerTo( String& tgt ) const
-{
-   // todo: represent the first one?
-   tgt = "...";
+  for( size_t i = 0; i < _p->m_steps.m_exprs.size(); ++i )
+  {
+     _p->m_steps.m_exprs[i]->render( tw, depth );
+  }
 }
 
 void SynTree::apply_( const PStep* ps, VMContext* ctx )
@@ -186,7 +164,7 @@ void SynTree::apply_( const PStep* ps, VMContext* ctx )
       {
          TRACE2( "Syntree::apply -- going deep at step %d \"%s\"", 
                      ctx->currentCode().m_seqId-1, 
-                     step->oneLiner().c_ize() );
+                     step->describe().c_ize() );
          return;
       }
 

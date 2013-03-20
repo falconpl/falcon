@@ -26,6 +26,7 @@ namespace Falcon
  This expression is equivalent to Prototype() call follwed by
  all the assignments that it declares.
 
+   /TODO: Homoiconicity requires a review.
  */
 class FALCON_DYN_CLASS ExprProto: public Expression
 {
@@ -39,9 +40,8 @@ public:
    virtual int32 arity() const;
    virtual TreeStep* nth( int32 n ) const;   
    virtual bool setNth( int32 n, TreeStep* ts );
-   
-   /** Overridden to remove nth expression and name.. */
    virtual bool remove( int n );
+   //virtual bool append( TreeStep* ts );
    
    /** Get the nth expression in the declaration.
     \param n The number of the expression that must be accessed.
@@ -60,14 +60,13 @@ public:
     */
    ExprProto& add( const String& name, Expression* e );
 
-   virtual void describeTo( String&, int depth=0 ) const;
-
    static void apply_( const PStep*, VMContext* ctx );
 
    inline virtual ExprProto* clone() const { return new ExprProto( *this ); }
 
    virtual bool isStatic() const { return false; }
    virtual bool simplify( Item& result ) const;
+   virtual void render( TextWriter* tw, int32 depth ) const;
    
 private:
    class Private;

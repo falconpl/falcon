@@ -32,7 +32,7 @@ public:
    virtual bool isStatic() const;
    virtual ExprInit* clone() const { return new ExprInit(*this); }
    virtual bool simplify( Item& ) const { return false; }
-   virtual void describeTo( String & str, int depth = 0 ) const;
+   virtual void render( TextWriter* tw, int depth ) const;
 
 private:
    static void apply_( const PStep* s1, VMContext* ctx );
@@ -42,7 +42,7 @@ private:
    public:
       PStepLValue(){ apply = apply_; }
       virtual ~PStepLValue(){}
-      virtual void describeTo( String&, int depth=0 ) const;
+      virtual void describeTo( String& ) const;
       static void apply_( const PStep* ps, VMContext* ctx );
    };
 

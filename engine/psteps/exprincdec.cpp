@@ -20,6 +20,7 @@
 #include <falcon/vmcontext.h>
 #include <falcon/class.h>
 #include <falcon/stdsteps.h>
+#include <falcon/textwriter.h>
 
 #include <falcon/synclasses.h>
 #include <falcon/engine.h>
@@ -194,16 +195,10 @@ void ExprPreInc::apply_( const PStep* ps, VMContext* ctx )
 }
 
 
-void ExprPreInc::describeTo( String& str, int depth ) const
+const String& ExprPreInc::exprName() const
 {
-   if( m_first == 0 )
-   {
-      str = "<Blank ExprPreInc>";
-      return;
-   }
-   
-   str = "++";
-   str += m_first->describe(depth+1);
+   static String name("++");
+   return name;
 }
 
 //=========================================================
@@ -222,16 +217,31 @@ void ExprPostInc::apply_( const PStep* ps, VMContext* ctx )
 }
 
 
-void ExprPostInc::describeTo( String& str, int depth ) const
+void ExprPostInc::render( TextWriter* tw, int depth ) const
 {
+   tw->write(renderPrefix(depth));
+
    if( m_first == 0 )
    {
-      str = "<Blank ExprPostInc>";
-      return;
+      tw->write( "/* Blank ExprPostInc */" );
+   }
+   else
+   {
+      tw->write( "( " );
+      m_first->render( tw, relativeDepth(depth) );
+      tw->write( "++ )");
    }
 
-   str = m_first->describe(depth+1);
-   str += "++";
+   if( depth >= 0 )
+   {
+      tw->write("\n");
+   }
+}
+
+const String& ExprPostInc::exprName() const
+{
+   static String name("++");
+   return name;
 }
 
 //=========================================================
@@ -250,16 +260,10 @@ void ExprPreDec::apply_( const PStep* ps, VMContext* ctx )
 }
 
 
-void ExprPreDec::describeTo( String& str, int depth ) const
+const String& ExprPreDec::exprName() const
 {
-   if( m_first == 0 )
-   {
-      str = "<Blank ExprPreDec>";
-      return;
-   }
-   
-   str = "--";
-   str += m_first->describe(depth+1);
+   static String name("--");
+   return name;
 }
 
 //=========================================================
@@ -278,16 +282,31 @@ void ExprPostDec::apply_( const PStep* ps, VMContext* ctx )
 }
 
 
-void ExprPostDec::describeTo( String& str, int depth ) const
+void ExprPostDec::render( TextWriter* tw, int depth ) const
 {
+   tw->write(renderPrefix(depth));
+
    if( m_first == 0 )
    {
-      str = "<Blank ExprPostDec>";
-      return;
+      tw->write( "/* Blank ExprPostDec */" );
+   }
+   else
+   {
+      tw->write( "( " );
+      m_first->render( tw, relativeDepth(depth) );
+      tw->write( " --)");
    }
 
-   str = m_first->describe(depth+1);
-   str += "--";
+   if( depth >= 0 )
+   {
+      tw->write("\n");
+   }
+}
+
+const String& ExprPostDec::exprName() const
+{
+   static String name("--");
+   return name;
 }
 
 }

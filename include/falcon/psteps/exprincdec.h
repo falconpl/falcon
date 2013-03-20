@@ -40,6 +40,7 @@ class FALCON_DYN_CLASS ExprPostInc: public UnaryExpression
 public:
    FALCON_UNARY_EXPRESSION_CLASS_DECLARATOR( ExprPostInc, expr_postinc );
    inline virtual bool isStandAlone() const { return true; }
+   virtual void render( TextWriter* tw, int depth ) const;
 
 private:
    class ops;
@@ -62,6 +63,7 @@ class FALCON_DYN_CLASS ExprPostDec: public UnaryExpression
 public:
    FALCON_UNARY_EXPRESSION_CLASS_DECLARATOR( ExprPostDec, expr_postdec );
    inline virtual bool isStandAlone() const { return true; }
+   virtual void render( TextWriter* tw, int depth ) const;
 
 private:
    class ops;

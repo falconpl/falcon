@@ -20,6 +20,7 @@
 #include <falcon/expression.h>
 #include <falcon/vmcontext.h>
 #include <falcon/syntree.h>
+#include <falcon/textwriter.h>
 
 #include <falcon/engine.h>
 #include <falcon/synclasses.h>
@@ -120,35 +121,33 @@ bool StmtWhile::selector( Expression* e )
    }
    return false;
 }
-   
-void StmtWhile::oneLinerTo( String& tgt ) const
-{
-   if( m_expr == 0 )
-   {
-      tgt = "<Blank StmtWhile>";
-      return;
-   }
-   
-   tgt = "while " + m_expr->oneLiner();
-}
 
 
-void StmtWhile::describeTo( String& tgt, int depth ) const
+void StmtWhile::render( TextWriter* tw, int32 depth ) const
 {
+   tw->write( renderPrefix(depth) );
+
    if( m_expr == 0 )
    {
-      tgt = "<Blank StmtWhile>";
-      return;
+      tw->write( "/* Blank StmtWhile */" );
    }
-   
-   String prefix = String(" ").replicate( depth * depthIndent );
-   tgt += prefix + "while " + m_expr->describe(depth+1) + "\n";
-   if( m_child !=0 )
+   else
    {
-      tgt += m_child->describe(depth+1) + "\n";
+      tw->write( "while " );
+      m_expr->render( tw, relativeDepth(depth) );
+      if( m_child != 0 )
+      {
+         m_child->render(tw, depth < 0 ? -depth : depth + 1 );
+      }
    }
-   tgt += prefix + "end";
+   tw->write( renderPrefix(depth) );
+   tw->write( "end" );
+   if( depth >=  0 )
+   {
+      tw->write( "\n" );
+   }
 }
+
 
 int StmtWhile::arity() const
 {
@@ -303,7 +302,7 @@ TreeStep* StmtWhile::detachMainBlock()
 void StmtWhile::apply_( const PStep* s1, VMContext* ctx )
 {
    const StmtWhile* self = static_cast<const StmtWhile*>(s1);
-   TRACE( "StmtWhile::apply_ entering %s", self->oneLiner().c_ize() );
+   TRACE( "StmtWhile::apply_ entering %s", self->describe().c_ize() );
    fassert( self->m_expr != 0 );
    
    CodeFrame& cf = ctx->currentCode();

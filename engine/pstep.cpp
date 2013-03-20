@@ -20,15 +20,23 @@
 
 namespace Falcon {
 
-void PStep::describeTo( String& s, int ) const
+void PStep::describeTo( String& s ) const
 {
-   s="Unnamed pstep";
+   s = "Unnamed pstep";
 }
 
-void PStep::oneLinerTo( String& s ) const
+String PStep::renderPrefix(int32 size)
 {
-   describeTo(s);
+   if( size > 0 )
+   {
+      String s(" ");
+      return s.replicate(size * depthIndent);
+   }
+   else {
+      return "";
+   }
 }
 
 }
+
 /* end of pstep.cpp */

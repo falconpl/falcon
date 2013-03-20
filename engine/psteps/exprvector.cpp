@@ -67,6 +67,12 @@ bool ExprVector::insert( int32 n, TreeStep* ts )
    return _p->insert(n, static_cast<Expression*>(ts), this );
 }
 
+bool ExprVector::append( TreeStep* ts )
+{
+   if( ts->category() != TreeStep::e_cat_expression ) return false;
+   return _p->append( static_cast<Expression*>(ts), this );
+}
+
 bool ExprVector::remove( int32 n )
 {   
    return _p->remove(n);

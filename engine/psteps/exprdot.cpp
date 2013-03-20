@@ -19,6 +19,7 @@
 #include <falcon/trace.h>
 #include <falcon/vmcontext.h>
 #include <falcon/stdsteps.h>
+#include <falcon/textwriter.h>
 
 #include <falcon/synclasses.h>
 #include <falcon/engine.h>
@@ -129,15 +130,33 @@ void ExprDot::PstepLValue::apply_( const PStep* ps, VMContext* ctx )
    // it's not our duty to remove the tompost value from the stack.
 }
 
-void ExprDot::describeTo( String& ret, int depth ) const
+
+void ExprDot::render( TextWriter* tw, int depth ) const
 {
+   tw->write(renderPrefix(depth));
+
    if( m_first == 0 )
    {
-      ret = "<Blank ExprDOT>";
-      return;
+      tw->write( "/* Blank ExprDOT */" );
    }
-   
-   ret = "(" + m_first->describe(depth+1) + "." + m_prop + ")";
+   else {
+      if( depth < 0 ) tw->write( "(" );
+      m_first->render( tw, relativeDepth(depth) );
+      tw->write(".");
+      tw->write( m_prop );
+      if( depth < 0 ) tw->write( ")" );
+   }
+
+   if( depth >= 0 )
+   {
+      tw->write("\n");
+   }
+}
+
+const String& ExprDot::exprName() const
+{
+   static String name(".");
+   return name;
 }
 
 }

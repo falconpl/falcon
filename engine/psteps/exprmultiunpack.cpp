@@ -21,6 +21,7 @@
 #include <falcon/errors/codeerror.h>
 #include <falcon/itemarray.h>
 #include <falcon/symbol.h>
+#include <falcon/textwriter.h>
 
 #include <falcon/synclasses.h>
 #include <falcon/engine.h>
@@ -110,30 +111,45 @@ bool ExprMultiUnpack::simplify( Item& ) const
    return false;
 }
 
-void ExprMultiUnpack::describeTo( String& ret, int depth ) const
+void ExprMultiUnpack::render( TextWriter* tw, int32 depth ) const
 {
-   String params;
-   
+   tw->write( renderPrefix(depth) );
+
+   if( depth < 0 )
+   {
+      tw->write("(" );
+   }
+
    for( unsigned int i = 0; i < _p->m_params.size(); ++i )
    {
       if ( i >= 1 )
       {
-         params += ", ";
+         tw->write(", ");
       }
-      params += _p->m_params[i]->name();
+      tw->write(_p->m_params[i]->name());
    }
 
-   ret = params + " = ";
+   tw->write( " = " );
 
    for( unsigned int i = 0; i < _p->m_assignee.size(); ++i )
    {
       if ( i >= 1 )
       {
-         params += ", ";
+         tw->write(", ");
       }
 
-      params += _p->m_assignee[i]->describe(depth+1);
+      _p->m_assignee[i]->render(tw, relativeDepth(depth));
    }
+
+   if( depth < 0 )
+   {
+      tw->write(")" );
+   }
+   else
+   {
+      tw->write("\n" );
+   }
+
 }
 
 

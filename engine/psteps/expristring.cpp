@@ -20,6 +20,7 @@
 #include <falcon/item.h>
 #include <falcon/gclock.h>
 #include <falcon/vm.h>
+#include <falcon/textwriter.h>
 
 #include <falcon/synclasses.h>
 #include <falcon/engine.h>
@@ -101,14 +102,24 @@ bool ExprIString::isStatic() const
    return true;
 }
 
-void ExprIString::describeTo( String & str, int ) const
+
+void ExprIString::render( TextWriter* tw, int depth ) const
 {
+   tw->write(renderPrefix(depth));
+
    String tgt;
-   m_original.escapeFull(tgt);
-   str = "i\"";
-   str += tgt;
-   str += "\"";
+   m_original.escape(tgt);
+
+   tw->write("i\"");
+   tw->write( tgt );
+   tw->write("\"");
+
+   if( depth >= 0 )
+   {
+      tw->write("\n");
+   }
 }
+
 
 bool ExprIString::isStandAlone() const
 {

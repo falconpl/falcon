@@ -26,12 +26,8 @@ class FALCON_DYN_CLASS ExprCompare: public BinaryExpression
 public:   
    virtual ~ExprCompare();
 
-   virtual void describeTo( String&, int depth=0 ) const;
-
    inline virtual bool isStandAlone() const { return false; }
    virtual bool isStatic() const { return false; }
-
-   const String& name() const { return m_name; }
 
    virtual bool checkCompare( int64 compresult ) const = 0;
 
@@ -50,10 +46,8 @@ public:
    PStepPostCompare m_stepPostComparer;
 
 protected:
-   String m_name;
-
-   ExprCompare( const String& name, int line = 0, int chr = 0 );
-   ExprCompare( Expression* op1, Expression* op2, const String& name, int line = 0, int chr = 0 );
+   ExprCompare( int line = 0, int chr = 0 );
+   ExprCompare( Expression* op1, Expression* op2, int line = 0, int chr = 0 );
    ExprCompare( const ExprCompare& other );
 };
 
@@ -71,6 +65,7 @@ public:
    virtual bool simplify( Item& value ) const;
 
    virtual bool checkCompare( int64 value ) const { return value < 0; }
+   virtual const String& exprName() const;
 
    class FALCON_DYN_CLASS comparer
    {
@@ -97,6 +92,7 @@ public:
 
    virtual bool simplify( Item& value ) const;
    virtual bool checkCompare( int64 value ) const { return value <= 0; }
+   virtual const String& exprName() const;
 
    class FALCON_DYN_CLASS comparer
    {
@@ -122,6 +118,7 @@ public:
    virtual bool simplify( Item& value ) const;
 
    virtual bool checkCompare( int64 value ) const { return value > 0; }
+   virtual const String& exprName() const;
 
    class FALCON_DYN_CLASS comparer
    {
@@ -144,10 +141,9 @@ public:
 
    virtual ~ExprGE();
    inline virtual ExprGE* clone() const { return new ExprGE( *this ); }
-
    virtual bool simplify( Item& value ) const;
-
    virtual bool checkCompare( int64 value ) const { return value >= 0; }
+   virtual const String& exprName() const;
 
    class FALCON_DYN_CLASS comparer
    {
@@ -170,10 +166,9 @@ public:
 
    virtual ~ExprEQ();
    inline virtual ExprEQ* clone() const { return new ExprEQ( *this ); }
-
    virtual bool simplify( Item& value ) const;
-
    virtual bool checkCompare( int64 value ) const { return value == 0; }
+   virtual const String& exprName() const;
 
    class FALCON_DYN_CLASS comparer
    {
@@ -196,10 +191,9 @@ public:
 
    virtual ~ExprNE();
    inline virtual ExprNE* clone() const { return new ExprNE( *this ); }
-
    virtual bool simplify( Item& value ) const;
-
    virtual bool checkCompare( int64 value ) const { return value != 0; }
+   virtual const String& exprName() const;
 
 
    class FALCON_DYN_CLASS comparer

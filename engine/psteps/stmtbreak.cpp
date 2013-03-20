@@ -19,6 +19,7 @@
 #include <falcon/vmcontext.h>
 #include <falcon/synclasses.h>
 #include <falcon/engine.h>
+#include <falcon/textwriter.h>
 
 namespace Falcon
 {
@@ -36,17 +37,18 @@ StmtBreak::StmtBreak( const StmtBreak& other ):
    apply = apply_;
 }
 
-void StmtBreak::describeTo( String& tgt, int depth ) const
+
+void StmtBreak::render( TextWriter* tw, int32 depth ) const
 {
-   tgt = String(" ").replicate( depth * depthIndent ) + "break";
+   tw->write( renderPrefix(depth) );
+
+   tw->write( "break" );
+
+   if( depth >= 0 )
+   {
+      tw->write( "\n" );
+   }
 }
-
-
-void StmtBreak::oneLinerTo( String& tgt ) const
-{
-   tgt = "break";
-}
-
 
 void StmtBreak::apply_( const PStep*, VMContext* ctx )
 {

@@ -50,8 +50,7 @@ public:
    StmtInit( Inheritance* inh, int32 line=0, int32 chr=0 );
    virtual ~StmtInit();
 
-   virtual void describeTo( String& tgt, int depth=0 ) const;
-   virtual void oneLinerTo( String& tgt ) const;
+   virtual void render( TextWriter* tw, int32 depth ) const;
    virtual StmtInit* clone() const { return new StmtInit( m_inheritance, line(), chr() ); }
    
    static void apply_( const PStep*, VMContext* ctx );

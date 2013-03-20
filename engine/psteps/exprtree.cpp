@@ -26,6 +26,7 @@
 #include <falcon/varmap.h>
 #include <falcon/stdsteps.h>
 #include <falcon/syntree.h>
+#include <falcon/textwriter.h>
 
 #include <set>
 #include <vector>
@@ -40,6 +41,7 @@ ExprTree::ExprTree( int line, int chr ):
 {
    FALCON_DECLARE_SYN_CLASS( expr_tree );
    apply = apply_;
+   m_trait = e_trait_tree;
 }
 
 
@@ -50,6 +52,7 @@ ExprTree::ExprTree( TreeStep* st, int line, int chr ):
 {
    FALCON_DECLARE_SYN_CLASS( expr_tree );
    apply = apply_;
+   m_trait = e_trait_tree;
    st->setParent(this);
 }
 
@@ -59,7 +62,7 @@ ExprTree::ExprTree( const ExprTree& other ):
    m_varmap(0)
 {
    apply = apply_;
-   m_trait = e_trait_composite;
+   m_trait = e_trait_tree;
 
    if( other.m_child != 0 ) {
       m_child = other.m_child->clone();
@@ -116,50 +119,56 @@ const String& ExprTree::param( int n )
 }
 
 
-void ExprTree::describeTo( String& str, int depth ) const
+void ExprTree::render( TextWriter* tw, int32 depth ) const
 {
+   tw->write(renderPrefix(depth));
+
    if( m_child == 0) {
-      str = "<Blank ExprLit>";
-      return;
+      tw->write( "/* Blank ExprLit */");
    }
-
-   bool isEta = varmap() != 0 && varmap()->isEta();
-
-   const char* etaOpen = isEta ? "[" : "(";
-   const char* etaClose = isEta ? "]" : ")";
-   str = "{";
-   str += etaOpen;
-
-   if( varmap() != 0 && varmap()->paramCount() > 0 )
+   else
    {
-      for( uint32 i = 0; i < varmap()->paramCount(); ++i ) {
-         const String& paramName = varmap()->getParamName(i);
-         if( i > 0 ) {
-            str += ", ";
+      bool isEta = varmap() != 0 && varmap()->isEta();
+
+      const char* etaOpen = isEta ? "[" : "(";
+      const char* etaClose = isEta ? "]" : ")";
+      tw->write("{");
+      tw->write( etaOpen );
+
+      if( varmap() != 0 && varmap()->paramCount() > 0 )
+      {
+         for( uint32 i = 0; i < varmap()->paramCount(); ++i ) {
+            const String& paramName = varmap()->getParamName(i);
+            if( i > 0 ) {
+               tw->write( ", " );
+            }
+            tw->write(paramName);
          }
-         str += paramName;
       }
-   }
-   str += etaClose;
+      tw->write( etaClose );
 
-   if ( m_child->category() != TreeStep::e_cat_expression )
+      if ( m_child->category() != TreeStep::e_cat_expression )
+      {
+         tw->write("\n");
+      }
+      else {
+         tw->write(" ");
+      }
+
+      m_child->render( tw, relativeDepth(depth) );
+      if ( m_child->category() != TreeStep::e_cat_expression )
+      {
+         tw->write("\n");
+         tw->write(renderPrefix(depth));
+      }
+
+      tw->write("}");
+   }
+
+   if( depth >= 0 )
    {
-      str += "\n";
+      tw->write( "\n" );
    }
-   else {
-      str += " ";
-   }
-
-   str += m_child->describe(depth+1);
-   if ( m_child->category() != TreeStep::e_cat_expression )
-   {
-      str += "\n";
-      str += String( " " ).replicate( depth * depthIndent ) + "}";
-   }
-   else {
-      str += "}";
-   }
-
 }
 
 

@@ -201,7 +201,7 @@ protected:
    SourceRef m_sr;
    AttributeMap m_attributes;
    
-   uint32 m_mark; 
+   uint32 m_mark;
 };
 
 }

@@ -32,7 +32,7 @@ public:
    inline virtual ExprIIF* clone() const { return new ExprIIF( *this ); }
    virtual bool simplify( Item& value ) const;
    static void apply_( const PStep*, VMContext* ctx );
-   virtual void describeTo( String&, int depth = 0 ) const;
+   virtual void render( TextWriter* tw, int depth ) const;
 
    /** Check if the and expression can stand alone.
       An "?" expression can stand alone if the second AND third operand are standalone.

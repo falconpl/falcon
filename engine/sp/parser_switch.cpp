@@ -88,8 +88,9 @@ void apply_switch( const Rule&, Parser& p )
 
    Expression* swexpr = static_cast<Expression*>(texpr->detachValue());
    st->accessSymbols(swexpr);
-   StmtSwitch* stmt_switch = new StmtSwitch( swexpr, tswch->line(), tswch->chr() );
-   
+   StmtSwitch* stmt_switch = new StmtSwitch( tswch->line(), tswch->chr() );
+   stmt_switch->selector(swexpr);
+
    // clear the stack
    p.simplify(3);
 
@@ -108,7 +109,8 @@ void apply_select( const Rule&, Parser& p )
 
    Expression* swexpr = static_cast<Expression*>(texpr->detachValue());
    st->accessSymbols(swexpr);
-   StmtSelect* stmt_sel = new StmtSelect( swexpr, tswch->line(), tswch->chr() );
+   StmtSelect* stmt_sel = new StmtSelect( tswch->line(), tswch->chr() );
+   stmt_sel->selector(swexpr);
 
    // clear the stack
    p.simplify(3);

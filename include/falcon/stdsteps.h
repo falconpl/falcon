@@ -48,7 +48,7 @@ public:
       PStepDupliTop() { apply = apply_; }
       virtual ~PStepDupliTop() {}
       static void apply_( const PStep*, VMContext* ctx );
-      virtual void describeTo( String&, int =0 ) const;
+      virtual void describeTo( String& ) const;
    };
    PStepDupliTop m_dupliTop;
 
@@ -59,7 +59,7 @@ public:
       PStepDupliTop2() { apply = apply_; }
       virtual ~PStepDupliTop2() {}
       static void apply_( const PStep*, VMContext* ctx );
-      virtual void describeTo( String&, int =0 ) const;
+      virtual void describeTo( String& ) const;
    };
    PStepDupliTop2 m_dupliTop2;
 
@@ -70,7 +70,7 @@ public:
       PStepDupliTop3() { apply = apply_; }
       virtual ~PStepDupliTop3() {}
       static void apply_( const PStep*, VMContext* ctx );
-      virtual void describeTo( String&, int =0 ) const;
+      virtual void describeTo( String& ) const;
    };
    PStepDupliTop3 m_dupliTop3;
 
@@ -82,7 +82,7 @@ public:
       PStepSwapTop() { apply = apply_; }
       virtual ~PStepSwapTop() {}
       static void apply_( const PStep*, VMContext* ctx );
-      virtual void describeTo( String&, int =0 ) const;
+      virtual void describeTo( String& ) const;
    };
 
    PStepSwapTop m_swapTop;
@@ -99,7 +99,7 @@ public:
       PStepSwapTopWith2() { apply = apply_; }
       virtual ~PStepSwapTopWith2() {}
       static void apply_( const PStep*, VMContext* ctx );
-      virtual void describeTo( String&, int =0 ) const;
+      virtual void describeTo( String& ) const;
    };
 
    PStepSwapTopWith2 m_swapTopWith2;
@@ -117,7 +117,7 @@ public:
       PStepCopyDown2() { apply = apply_; }
       virtual ~PStepCopyDown2() {}
       static void apply_( const PStep*, VMContext* ctx );
-      virtual void describeTo( String&, int =0 ) const;
+      virtual void describeTo( String& ) const;
    };
    PStepCopyDown2 m_copyDown2;
 
@@ -127,7 +127,7 @@ public:
       PStepCopyDown3() { apply = apply_; }
       virtual ~PStepCopyDown3() {}
       static void apply_( const PStep*, VMContext* ctx );
-      virtual void describeTo( String&, int =0 ) const;
+      virtual void describeTo( String& ) const;
    };
    PStepCopyDown3 m_copyDown3;
 
@@ -137,7 +137,7 @@ public:
       PStepCopyDown4() { apply = apply_; }
       virtual ~PStepCopyDown4() {}
       static void apply_( const PStep*, VMContext* ctx );
-      virtual void describeTo( String&, int =0 ) const;
+      virtual void describeTo( String& ) const;
    };
    PStepCopyDown4 m_copyDown4;
 
@@ -147,7 +147,7 @@ public:
       PStepCopyDown5() { apply = apply_; }
       virtual ~PStepCopyDown5() {}
       static void apply_( const PStep*, VMContext* ctx );
-      virtual void describeTo( String&, int =0 ) const;
+      virtual void describeTo( String& ) const;
    };
    PStepCopyDown5 m_copyDown5;
 
@@ -158,7 +158,7 @@ public:
       PStepPop() { apply = apply_; }
       virtual ~PStepPop() {}
       static void apply_( const PStep*, VMContext* ctx );
-      virtual void describeTo( String&, int =0 ) const;
+      virtual void describeTo( String& ) const;
    };
    PStepPop m_pop;
 
@@ -169,7 +169,7 @@ public:
       PStepPop2() { apply = apply_; }
       virtual ~PStepPop2() {}
       static void apply_( const PStep*, VMContext* ctx );
-      virtual void describeTo( String&, int =0 ) const;
+      virtual void describeTo( String& ) const;
    };
    PStepPop2 m_pop2;
 
@@ -180,7 +180,7 @@ public:
       PStepPop3() { apply = apply_; }
       virtual ~PStepPop3() {}
       static void apply_( const PStep*, VMContext* ctx );
-      virtual void describeTo( String&, int =0 ) const;
+      virtual void describeTo( String& ) const;
    };
    PStepPop3 m_pop3;
 
@@ -191,7 +191,7 @@ public:
       PStepDragDown() { apply = apply_; }
       virtual ~PStepDragDown() {}
       static void apply_( const PStep*, VMContext* ctx );
-      virtual void describeTo( String&, int =0 ) const;
+      virtual void describeTo( String& ) const;
    };
    PStepDragDown m_dragDown;
 
@@ -204,7 +204,7 @@ public:
       PStepAddSpace() {apply = apply_; }
       virtual ~PStepAddSpace() {}
       static void apply_( const PStep*, VMContext* ctx );
-      virtual void describeTo( String&, int =0 ) const;
+      virtual void describeTo( String& ) const;
    };
    PStepAddSpace m_addSpace;
 
@@ -217,7 +217,7 @@ public:
       PStepPushNil() {apply = apply_; }
       virtual ~PStepPushNil() {}
       static void apply_( const PStep*, VMContext* ctx );
-      virtual void describeTo( String&, int =0 ) const;
+      virtual void describeTo( String& ) const;
    };
    PStepPushNil m_pushNil;
 
@@ -239,7 +239,7 @@ public:
       PStepReturnFrame() {apply = apply_; }
       virtual ~PStepReturnFrame() {}
       static void apply_( const PStep*, VMContext* ctx );
-      virtual void describeTo( String&, int =0 ) const;
+      virtual void describeTo( String& ) const;
    };
    PStepReturnFrame m_returnFrame;
 
@@ -250,7 +250,7 @@ public:
       PStepReturnFrameWithTop() {apply = apply_; }
       virtual ~PStepReturnFrameWithTop() {}
       static void apply_( const PStep*, VMContext* ctx );
-      virtual void describeTo( String&, int =0 ) const;
+      virtual void describeTo( String& ) const;
    };
    PStepReturnFrameWithTop m_returnFrameWithTop;
 
@@ -261,7 +261,7 @@ public:
       PStepReturnFrameWithTopDoubt() {apply = apply_; }
       virtual ~PStepReturnFrameWithTopDoubt() {}
       static void apply_( const PStep*, VMContext* ctx );
-      virtual void describeTo( String&, int =0 ) const;
+      virtual void describeTo( String& ) const;
    };
    PStepReturnFrameWithTopDoubt m_returnFrameWithTopDoubt;
    
@@ -271,7 +271,7 @@ public:
       PStepReturnFrameWithTopEval() {apply = apply_; }
       virtual ~PStepReturnFrameWithTopEval() {}
       static void apply_( const PStep*, VMContext* ctx );
-      virtual void describeTo( String&, int =0 ) const;
+      virtual void describeTo( String& ) const;
    };
    PStepReturnFrameWithTopEval m_returnFrameWithTopEval;
 
@@ -282,7 +282,7 @@ public:
       PStepReturnFrameWithTopDoubtEval() {apply = apply_; }
       virtual ~PStepReturnFrameWithTopDoubtEval() {}
       static void apply_( const PStep*, VMContext* ctx );
-      virtual void describeTo( String&, int =0 ) const;
+      virtual void describeTo( String& ) const;
    };
    PStepReturnFrameWithTopDoubtEval PStepReturnFrameWithTopDoubtEval;
    
@@ -294,7 +294,7 @@ public:
       PStepLocalFrame() {apply = apply_;}
       virtual ~PStepLocalFrame() {}
       static void apply_( const PStep*, VMContext* ctx );
-      virtual void describeTo( String&, int =0 ) const;
+      virtual void describeTo( String& ) const;
    };
    PStepLocalFrame m_localFrame;
 
@@ -306,7 +306,7 @@ public:
       PStepLocalFrameExec() {apply = apply_;}
       virtual ~PStepLocalFrameExec() {}
       static void apply_( const PStep*, VMContext* ctx );
-      virtual void describeTo( String&, int =0 ) const;
+      virtual void describeTo( String& ) const;
    };
    PStepLocalFrameExec m_localFrameExec;
 
@@ -318,7 +318,7 @@ public:
       PStepUnrollToLoop() {apply = apply_;}
       virtual ~PStepUnrollToLoop() {}
       static void apply_( const PStep*, VMContext* ctx );
-      virtual void describeTo( String&, int =0 ) const;
+      virtual void describeTo( String& ) const;
    };
    PStepUnrollToLoop m_unrollToLoop;
 
@@ -330,7 +330,7 @@ public:
       PStepUnrollToNext() {apply = apply_;}
       virtual ~PStepUnrollToNext() {}
       static void apply_( const PStep*, VMContext* ctx );
-      virtual void describeTo( String&, int =0 ) const;
+      virtual void describeTo( String& ) const;
    };
    PStepUnrollToNext m_unrollToNext;
 
@@ -342,7 +342,7 @@ public:
       PStepRaiseTop() {apply = apply_;}
       virtual ~PStepRaiseTop() {}
       static void apply_( const PStep*, VMContext* ctx );
-      virtual void describeTo( String&, int =0 ) const;
+      virtual void describeTo( String& ) const;
    };
    PStepRaiseTop m_raiseTop;
 
@@ -362,7 +362,7 @@ public:
       PStepFillInstance() {apply = apply_;}
       virtual ~PStepFillInstance() {}
       static void apply_( const PStep*, VMContext* ctx );
-      virtual void describeTo( String&, int =0 ) const;
+      virtual void describeTo( String& ) const;
    };
    PStepFillInstance m_fillInstance;
 
@@ -374,7 +374,7 @@ public:
       PStepFillAttribute() {apply = apply_;}
       virtual ~PStepFillAttribute() {}
       static void apply_( const PStep*, VMContext* ctx );
-      virtual void describeTo( String&, int =0 ) const;
+      virtual void describeTo( String& ) const;
    };
    PStepFillAttribute m_fillAttribute;
 
@@ -392,7 +392,7 @@ public:
       PStepEndOfContext() {apply = apply_;}
       virtual ~PStepEndOfContext() {}
       static void apply_( const PStep*, VMContext* ctx );
-      virtual void describeTo( String&, int =0 ) const;
+      virtual void describeTo( String& ) const;
    };
    PStepEndOfContext m_endOfContext;
 
@@ -408,7 +408,7 @@ public:
    public:
       PStepWaitComplete() { apply = apply_; }
       virtual ~PStepWaitComplete() { }
-      virtual void describeTo( String& target, int ) const;
+      virtual void describeTo( String& target ) const;
       static void apply_(const PStep*, VMContext* ctx);
    };
    PStepWaitComplete m_waitComplete;
@@ -425,7 +425,7 @@ public:
    public:
       PStepWaitSuccess() { apply = apply_; }
       virtual ~PStepWaitSuccess() {}
-      virtual void describeTo( String& target, int ) const;
+      virtual void describeTo( String& target ) const;
       static void apply_(const PStep*, VMContext* ctx);
    };
    PStepWaitSuccess m_waitSuccess;
@@ -444,7 +444,7 @@ public:
    public:
       PStepReinvoke() { apply = apply_; }
       virtual ~PStepReinvoke() {}
-      virtual void describeTo( String& target, int ) const;
+      virtual void describeTo( String& target ) const;
       static void apply_(const PStep*, VMContext* ctx);
    };
    PStepReinvoke m_reinvoke;

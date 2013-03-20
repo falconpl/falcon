@@ -47,14 +47,14 @@ void ExprIn::apply_( const PStep* ps, VMContext* ctx )
       {
          return;
       }
-      // fallthrough
+      /* no break */
    case 1:
       cf.m_seqId = 2;
       if( ctx->stepInYield( self->second(), cf ) )
       {
          return;
       }
-      // fallthrough
+      break;
    }
    
    // we won't be back anymore
@@ -71,17 +71,12 @@ void ExprIn::apply_( const PStep* ps, VMContext* ctx )
    cls->op_in( ctx, data );
 }
 
-
-void ExprIn::describeTo( String& ret, int depth ) const
+const String& ExprIn::exprName() const
 {
-   if( m_first == 0 || m_second == 0 )
-   {
-      ret = "<Blank ExprIn>";
-      return;
-   }
-   
-   ret = "(" + m_first->describe(depth+1) + " in " + m_second->describe(depth+1) + ")";
+   static String name("in");
+   return name;
 }
+
 
 bool ExprIn::simplify( Item& ) const
 {

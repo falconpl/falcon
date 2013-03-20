@@ -26,6 +26,7 @@
 
 #include <falcon/datareader.h>
 #include <falcon/datawriter.h>
+#include <falcon/textwriter.h>
 
 namespace Falcon {
 
@@ -62,15 +63,32 @@ bool ExprProvides::simplify( Item& ) const
    return false;
 }
 
-void ExprProvides::describeTo( String& target, int depth ) const
+void ExprProvides::render( TextWriter* tw, int32 depth ) const
 {
+   tw->write( renderPrefix(depth) );
    if( first() == 0 )
    {
-      target = "<Blank provides>";
-      return;
+     tw->write( "/* Blank 'provides' */" );
+   }
+   else {
+      tw->write("(");
+      first()->render(tw, relativeDepth(depth));
+      tw->write(" provides " );
+      tw->write( m_property );
+      tw->write( ")" );
    }
 
-   target = "(" +first()->describe(depth+1) + " provides " + m_property + ")";
+   if( depth >= 0 )
+   {
+      tw->write( "\n" );
+   }
+}
+
+
+const String& ExprProvides::exprName() const
+{
+   static String name("provides");
+   return name;
 }
 
 

@@ -49,6 +49,9 @@ public:
    SynTree* findBlockForType( const Item& value ) const;
    SynTree* getDefault() const;
 
+   virtual void render( TextWriter* tw, int32 depth ) const;
+   virtual void renderHeader( TextWriter* tw, int32 depth ) const = 0;
+
 protected:
    class Private;
    Private* _p;

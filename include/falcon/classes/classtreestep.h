@@ -101,9 +101,17 @@ private:
       void invoke( VMContext* ctx, int32 pCount = 0 );
    };
 
+   class RenderMethod: public Function {
+   public:
+      RenderMethod();
+      virtual ~RenderMethod();
+      void invoke( VMContext* ctx, int32 pCount = 0 );
+   };
+
    mutable InsertMethod m_insertMethod;
    mutable RemoveMethod m_removeMethod;
    mutable AppendMethod m_appendMethod;
+   mutable RenderMethod m_renderMethod;
 };
 
 }

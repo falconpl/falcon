@@ -50,7 +50,6 @@ public:
 
    inline virtual ExprCall* clone() const { return new ExprCall( *this ); }
    virtual bool simplify( Item& value ) const;
-   virtual void describeTo( String&, int depth=0 ) const;   
 
    inline virtual bool isStandAlone() const { return true; }
 
@@ -59,6 +58,8 @@ public:
    virtual Expression* selector() const;
    virtual bool selector( Expression* e ); 
    
+   void render( TextWriter* tw, int32 depth ) const;
+
 protected:
    Expression* m_callExpr;
 

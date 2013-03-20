@@ -31,8 +31,7 @@ public:
    ExprClosure( const ExprClosure& other );
    ~ExprClosure();
    
-   virtual void describeTo( String&, int depth=0 ) const;
-   
+   virtual void render( TextWriter* tgt, int32 depth ) const;
    inline virtual ExprClosure* clone() const { return new ExprClosure( *this ); }
 
    virtual bool isStatic() const { return false; }

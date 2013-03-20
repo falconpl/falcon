@@ -65,6 +65,8 @@ public:
    
    Class* handler() const;
    
+   void renderFunctionBody( TextWriter* tgt, int32 depth ) const;
+
 protected:
    
    SynFunc() {}

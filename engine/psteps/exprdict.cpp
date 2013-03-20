@@ -20,6 +20,7 @@
 #include <falcon/vm.h>
 #include <falcon/engine.h>
 #include <falcon/itemdict.h>
+#include <falcon/textwriter.h>
 
 #include <falcon/psteps/exprdict.h>
 
@@ -100,71 +101,48 @@ ExprDict& ExprDict::add( Expression* k, Expression* v )
 
 //=====================================================
 
-void ExprDict::describeTo( String& str, int depth ) const
+void ExprDict::render( TextWriter* tw, int depth ) const
 {
+   tw->write( renderPrefix(depth) );
+
    ExprVector_Private::ExprVector& mye = _p->m_exprs;
-   ExprVector_Private::ExprVector::const_iterator iter = mye.begin();
 
    if( mye.empty() )
    {
-      str = "[=>]";
-      return;
+     tw->write("[=>]");
    }
-
-   String prefix = String(" ").replicate((depth+1) * depthIndent);
-   str = "[ ";
-   while( iter != mye.end() )
+   else
    {
-      if( str.size() > 2 )
+      tw->write("[ ");
+      ExprVector_Private::ExprVector::const_iterator iter = mye.begin();
+      while( iter != mye.end() )
       {
-         str += ",\n";
-      }
+        if( iter != mye.begin() )
+        {
+           tw->write(", ");
+        }
 
-      str += prefix + (*iter)->describe( depth+1 );
-      ++iter;
-      str += " => ";
-      str += (*iter)->describe( depth+1 );
-      ++iter;
+        Expression* expr = *iter;
+        expr->render( tw, relativeDepth(depth) );
+        ++iter;
+        tw->write( " => " );
+        expr = *iter;
+        expr->render( tw, relativeDepth(depth) );
+        ++iter;
+      }
    }
 
-   
-   str += String(" ").replicate(depth*depthIndent) + "\n]";
+   if( depth < 0 )
+   {
+      tw->write( "\n" );
+   }
 }
 
-void ExprDict::oneLinerTo( String& str ) const
-{
-   ExprVector_Private::ExprVector& mye = _p->m_exprs;
-   ExprVector_Private::ExprVector::const_iterator iter = mye.begin();
-
-   if( mye.empty() )
-   {
-      str = "[=>]";
-      return;
-   }
-
-   str = "[ ";
-   while( iter != mye.end() )
-   {
-      if( str.size() > 2 )
-      {
-         str += ", ";
-      }
-
-      str += (*iter)->oneLiner();
-      ++iter;
-      str += " => ";
-      str += (*iter)->oneLiner();
-      ++iter;
-   }
-
-   str += " ]";
-}
 
 bool ExprDict::simplify( Item& ) const
 {
    return false;
 }
-
 
 //=====================================================
 

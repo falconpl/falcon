@@ -21,6 +21,7 @@
 #include <falcon/vmcontext.h>
 #include <falcon/pstep.h>
 #include <falcon/errors/operanderror.h>
+#include <falcon/textwriter.h>
 
 #include <falcon/psteps/exprstarindex.h>
 
@@ -76,15 +77,33 @@ void ExprStarIndex::apply_( const PStep* ps, VMContext* ctx )
 }
 
 
-void ExprStarIndex::describeTo( String& ret, int depth ) const
+void ExprStarIndex::render( TextWriter* tw, int32 depth ) const
 {
+   tw->write( renderPrefix(depth) );
+
    if( m_first == 0 || m_second == 0 )
    {
-      ret = "<Blank ExprStarIndex>";
-      return;
+      tw->write("/* Blank ExprStarIndex */" );
    }
-   
-   ret = "(" + m_first->describe(depth+1) + "[*" + m_second->describe(depth+1) + "])";
+   else
+   {
+      m_first->render(tw, relativeDepth(depth));
+      tw->write("[* ");
+      m_second->render( tw, relativeDepth(depth) );
+      tw->write( "]" );
+   }
+
+   if( depth >= 0 )
+   {
+      tw->write( "\n" );
+   }
+}
+
+
+const String& ExprStarIndex::exprName() const
+{
+   static String name("[*]");
+   return name;
 }
 
 

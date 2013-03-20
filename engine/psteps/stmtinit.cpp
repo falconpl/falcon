@@ -16,6 +16,7 @@
 #include <falcon/trace.h>
 #include <falcon/vmcontext.h>
 #include <falcon/falconclass.h>
+#include <falcon/textwriter.h>
 
 #include <falcon/psteps/stmtinit.h>
 
@@ -45,18 +46,11 @@ StmtInit::~StmtInit()
 }
 
 
-void StmtInit::describeTo( String& tgt, int depth ) const
+void StmtInit::render( TextWriter* tw, int32 depth ) const
 {
-   tgt += String(" ").replicate( depth * depthIndent ) +
-         "Initialize " + m_inheritance->describe();
+   // init is never rendered.
+   tw->write( "init" );
 }
-
-
-void StmtInit::oneLinerTo( String& tgt ) const
-{
-   tgt +=  "Initialize " + m_inheritance->describe();
-}
-
 
 void StmtInit::apply_( const PStep* ps, VMContext* ctx )
 {

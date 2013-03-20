@@ -21,7 +21,8 @@
 namespace Falcon {
 
 /** Class handling a parallel array of expressions and symbols where to assign them. 
- \TODO: Derive this from ExprVector and mask insert/remove away.
+ * \TODO: Derive this from ExprVector and mask insert/remove away.
+ * \TODO: Need to fix homoiconicity
  */
 class FALCON_DYN_CLASS ExprMultiUnpack: public Expression
 {
@@ -33,7 +34,7 @@ public:
 
    inline virtual ExprMultiUnpack* clone() const { return new ExprMultiUnpack( *this ); }
    virtual bool simplify( Item& value ) const;
-   virtual void describeTo( String&, int depth = 0 ) const;
+   virtual void render( TextWriter* tw, int32 depth ) const;
    inline virtual bool isStandAlone() const { return true; }
 
    int targetCount() const;

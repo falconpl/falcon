@@ -45,7 +45,7 @@ public:
       return false;
    }
 
-   virtual void describeTo( String&, int depth = 0 ) const;
+   virtual void render( TextWriter* tw, int depth ) const;
    static void apply_( const PStep*, VMContext* ctx );
 
    void addNilEntry();

@@ -32,8 +32,7 @@ public:
    StmtContinue( const StmtContinue& other );
    virtual ~StmtContinue() {};
 
-   virtual void describeTo( String& tgt, int depth=0 ) const;
-   virtual void oneLinerTo( String& tgt ) const;
+   virtual void render( TextWriter* tw, int32 depth ) const;
    
    virtual StmtContinue* clone() const { return new StmtContinue(*this); }
 protected:

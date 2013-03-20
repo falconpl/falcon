@@ -40,12 +40,14 @@ public:
    ExprParentship( const ExprParentship& other );   
    virtual ~ExprParentship();
 
-   virtual void describeTo( String& target, int depth = 0 ) const;
+   virtual void render( TextWriter* tw, int32 depth ) const;
    
    /** Overridden to filter out non-inheritance expressions. */
    virtual bool setNth( int32 n, TreeStep* ts );
    /** Overridden to filter out non-inheritance expressions. */
    virtual bool insert( int32 pos, TreeStep* element );  
+   /** Overridden to filter out non-inheritance expressions. */
+   virtual bool append( TreeStep* element );
 
    virtual bool isStatic() const { return false; }
    virtual bool simplify( Item& ) const { return false; }  

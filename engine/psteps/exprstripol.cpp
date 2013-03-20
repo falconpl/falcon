@@ -169,16 +169,10 @@ void ExprStrIPol::handleStaticInterpolated( const String &str, VMContext *ctx ) 
 }
 
 
-void ExprStrIPol::describeTo( String& str, int depth ) const
+const String& ExprStrIPol::exprName() const
 {
-   if( m_first == 0 )
-   {
-      str = "<Blank ExprStrIPol>";
-      return;
-   }
-   
-   str = "@";
-   str += m_first->describe(depth+1);
+   static String name("@");
+   return name;
 }
 
 

@@ -54,6 +54,7 @@ public:
    }
    
    virtual StmtTempProto* clone() const { return 0; }
+   virtual void render( TextWriter*, int32 ) const {};
 };
 
 /*

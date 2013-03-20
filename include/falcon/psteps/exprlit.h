@@ -49,7 +49,7 @@ public:
    
    virtual ~ExprLit();   
     
-   virtual void describeTo( String&, int depth = 0 ) const;
+   virtual void render( TextWriter* tw, int depth ) const;
     
    virtual Expression* clone() const { return new ExprLit(*this); }
    inline virtual bool isStandAlone() const { return true; }

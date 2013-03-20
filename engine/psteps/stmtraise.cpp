@@ -22,6 +22,7 @@
 #include <falcon/psteps/stmtraise.h>
 #include <falcon/engine.h>
 #include <falcon/synclasses.h>
+#include <falcon/textwriter.h>
 
 namespace Falcon {
 
@@ -64,19 +65,6 @@ StmtRaise::~StmtRaise()
 }
 
 
-void StmtRaise::describeTo( String& tgt, int depth ) const
-{
-   if( m_expr == 0 )
-   {
-      tgt = "<Blank StmtRaise>";
-      return;
-   }
-   
-   tgt = String(" ").replicate( depth * depthIndent ) +
-         "raise " + m_expr->describe( depth + 1 );
-}
-
-
 Expression* StmtRaise::selector() const
 {
    return m_expr;
@@ -92,17 +80,27 @@ bool StmtRaise::selector( Expression* e )
    return true;
 }
 
-void StmtRaise::oneLinerTo( String& tgt ) const
+
+void StmtRaise::render( TextWriter* tw, int32 depth ) const
 {
+   tw->write( renderPrefix(depth) );
+
    if( m_expr == 0 )
    {
-      tgt = "<Blank StmtRaise>";
-      return;
+      tw->write("/* Blank StmtRaise */" );
    }
-      
-   tgt = "raise " + m_expr->oneLiner();
-   
+   else
+   {
+      tw->write("raise ");
+      m_expr->render(tw, relativeDepth(depth));
+   }
+
+   if( depth >= 0 )
+   {
+      tw->write( "\n" );
+   }
 }
+
 
 void StmtRaise::apply_( const PStep* ps, VMContext* ctx )
 {

@@ -35,8 +35,6 @@ class VMContext;
  * members; they can be performed on the spot, acting immediately on the virtual machine,
  * or push themselves in the code stack and return the control to the calling VM.
  *
-
- *
  * Expressions can be also processed by statements that can call their eval() member directly.
  */
 class FALCON_DYN_CLASS PStep
@@ -57,25 +55,15 @@ public:
 
    /** Convert into a string.
     \param target A target string where to write the pstep representation.
-    \param depth A syntactic depth (toplevel is 0) used for indentation.
     
     The default base class function does nothing. This is useful for
     pstep that are not part of the syntactic tree, but just of the
     VM code.
     */
-   virtual void describeTo( String& target, int depth = 0 ) const;
+   virtual void describeTo( String& target ) const;
 
-   /** Convert into a string -- short version.
-    To be used by diag functions.
-    */
-   virtual void oneLinerTo( String& target ) const;
-
-   inline String describe( int depth = 0 ) const {
-      String temp; describeTo(temp, depth ); return temp;
-   }
-   
-   inline String oneLiner() const {
-      String temp; oneLinerTo(temp); return temp;
+   inline String describe() const {
+      String temp; describeTo(temp); return temp;
    }
 
    /** Sparsely used function marking steps with special significance.
@@ -182,14 +170,14 @@ public:
    inline void setTracedCatch() { m_catchMode = 2; }
 
    /**
-    * Returns the unroll marker associated with this step.
-    *
-    * If the step is an unroll base (try, next/loop base, local frame base
-    * and so on), it leaves a marker on the dyns stack; the dyns
-    * entry has then a pointer to the data stack that allows to unroll the
-    * data stack.
+    * Returns a pre-rendered prefix for rendering on output.
     */
-   //virtual Symbol* unrollMarker() const;
+   static String renderPrefix(int32 size);
+
+   static int32 relativeDepth(int32 depth)
+   {
+      return depth < 0 ? depth : -depth-1;
+   }
 
 protected:
    bool m_bIsLoopBase;

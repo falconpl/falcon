@@ -77,7 +77,7 @@ public:
    ExprSymbol( const ExprSymbol& other );
    virtual ~ExprSymbol();
 
-   virtual void describeTo(String &str, int depth=0) const;
+   virtual void render( TextWriter* tw, int32 depth ) const;
 
    inline virtual ExprSymbol* clone() const { return new ExprSymbol(*this); }
 
@@ -117,7 +117,7 @@ protected:
       
       PStepLValue( ExprSymbol* owner ): m_owner(owner) { apply = apply_; }
       virtual ~PStepLValue(){}
-      virtual void describeTo( String&, int depth=0 ) const;
+      virtual void describeTo( String& ) const;
       static void apply_( const PStep* ps, VMContext* ctx );
    };   
    

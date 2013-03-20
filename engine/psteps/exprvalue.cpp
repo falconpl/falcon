@@ -20,6 +20,7 @@
 #include <falcon/item.h>
 #include <falcon/gclock.h>
 #include <falcon/vm.h>
+#include <falcon/textwriter.h>
 
 #include <falcon/synclasses.h>
 #include <falcon/engine.h>
@@ -135,12 +136,23 @@ bool ExprValue::isStatic() const
    return true;
 }
 
-void ExprValue::describeTo( String & str, int depth ) const
+
+void ExprValue::render( TextWriter* tw, int32 depth ) const
 {
+   tw->write( renderPrefix(depth) );
+
+   String str;
    Class* cls;
    void* inst;
    m_item.forceClassInst(cls, inst);
-   cls->describe(inst, str, depth );
+   cls->describe(inst, str, 1, -1 );
+
+   tw->write( str );
+
+   if( depth >= 0 )
+   {
+      tw->write( "\n" );
+   }
 }
 
 bool ExprValue::isStandAlone() const

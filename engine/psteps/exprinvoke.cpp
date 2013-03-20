@@ -155,16 +155,13 @@ void ExprInvoke::apply_( const PStep* ps, VMContext* ctx )
    cls->op_call(ctx, seqId-1, inst);
 }
 
-void ExprInvoke::describeTo( String& str, int depth ) const
-{
-   if( m_first == 0 || m_second == 0)
-   {
-      str = "<Blank ExprNot>";
-      return;
-   }
 
-   str += "("+m_first->describe(depth+1) + " # " + m_second->describe(depth+1)+")";
+const String& ExprInvoke::exprName() const
+{
+   static String name("#");
+   return name;
 }
+
 }
 
 /* end of exprinvoke.h */

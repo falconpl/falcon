@@ -50,24 +50,10 @@ public:
     */
    StmtSelect( int32 line = 0, int32 chr = 0 );
 
-   /** Create the select statement.
-    \param expr The expression that will generate the item to be selected, or 0.
-    \param line The line where this statement is declared in the source.
-    \param chr The character at which this statement is declared in the source.
-
-    The expression may be left to 0 if this instance is not meant to be added
-    to a syntactic tree directly, but it's used just as a dictionary of
-    type selectors.
-
-    This is the case of try/catch, but it might be used by third party code
-    for similar reasons.
-    */
-   StmtSelect( Expression* expr, int32 line = 0, int32 chr = 0 );
    StmtSelect( const StmtSelect& other );
    virtual ~StmtSelect();
 
-   virtual void describeTo( String& tgt, int depth=0 ) const;
-   virtual void oneLinerTo( String& tgt ) const;
+   virtual void renderHeader( TextWriter* tw, int32 depth ) const;
    virtual StmtSelect* clone() const { return new StmtSelect(*this); }
 
 private:

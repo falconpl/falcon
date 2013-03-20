@@ -36,6 +36,7 @@ public:
    virtual bool setNth( int32 n, TreeStep* ts );
    virtual bool insert( int32 pos, TreeStep* element );   
    virtual bool remove( int32 pos );
+   virtual bool append( TreeStep* element );
    
    /** Get the nth expression in the array.
     \param n The number of the expression that must be accessed.

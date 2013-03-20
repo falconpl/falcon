@@ -32,7 +32,7 @@ public:
    virtual bool isStatic() const;
    virtual ExprSelf* clone() const;
    virtual bool simplify( Item& result ) const;
-   virtual void describeTo( String & str, int depth = 0 ) const;
+   virtual void render( TextWriter* tw, int32 depth ) const;
 
 private:
    static void apply_( const PStep* s1, VMContext* ctx );

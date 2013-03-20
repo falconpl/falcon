@@ -21,6 +21,7 @@
 #include <falcon/errors/codeerror.h>
 #include <falcon/itemarray.h>
 #include <falcon/symbol.h>
+#include <falcon/textwriter.h>
 
 #include <falcon/synclasses.h>
 #include <falcon/engine.h>
@@ -105,27 +106,38 @@ bool ExprUnpack::simplify( Item& ) const
    return false;
 }
 
-void ExprUnpack::describeTo( String& ret, int depth ) const
+
+void ExprUnpack::render( TextWriter* tw, int32 depth ) const
 {
+   tw->write( renderPrefix(depth) );
+
    if( m_expander == 0 )
    {
-      ret = "<Blanc ExprUnpack>";
-      return;
+      tw->write("/* Blank ExprUnpack */" );
    }
-
-   String params;
-   // and generate all the expressions, in inverse order.
-   for( unsigned int i = 0; i < _p->m_params.size(); ++i )
+   else
    {
-      if ( i > 0 )
+
+      // and generate all the expressions, in inverse order.
+      for( unsigned int i = 0; i < _p->m_params.size(); ++i )
       {
-         params += ", ";
+         if ( i > 0 )
+         {
+            tw->write(", ");
+         }
+         tw->write(_p->m_params[i]->name());
       }
-      params += _p->m_params[i]->name();
+
+      tw->write( " = " );
+      m_expander->render( tw, relativeDepth(depth) );
    }
 
-   ret = params + " = " + m_expander->describe(depth+1);
+   if( depth >= 0 )
+   {
+      tw->write( "\n" );
+   }
 }
+
 
 
 int ExprUnpack::targetCount() const

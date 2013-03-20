@@ -101,6 +101,12 @@ void SynFunc::invoke( VMContext* ctx, int32 nparams )
    ctx->pushCode( &this->syntree() );
 }
 
+
+void SynFunc::renderFunctionBody( TextWriter* tgt, int32 depth ) const
+{
+   syntree().render( tgt, depth );
+}
+
 }
 
 /* end of synfunc.cpp */

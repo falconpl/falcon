@@ -58,16 +58,10 @@ void ExprNot::apply_( const PStep* ps, VMContext* ctx )
    ctx->popCode();
 }
 
-void ExprNot::describeTo( String& str, int depth ) const
+const String& ExprNot::exprName() const
 {
-   if( m_first == 0 )
-   {
-      str = "<Blank ExprNot>";
-      return;
-   }
-   
-   str = "not ";
-   str += m_first->describe(depth+1);
+   static String name("not");
+   return name;
 }
 
 //=========================================================
@@ -106,7 +100,7 @@ void ExprAnd::apply_( const PStep* ps, VMContext* ctx )
       {
          return;
       }
-
+      /* no break */
       // check if the first expression was false and then go away
    case 1:
       if( ! ctx->topData().isTrue() )
@@ -121,7 +115,8 @@ void ExprAnd::apply_( const PStep* ps, VMContext* ctx )
       if( ctx->stepInYield( self->m_second, cf ) )
       {
          return;
-      }         
+      }
+      break;
    }
    
    // reuse the operand left by the other expression
@@ -131,16 +126,12 @@ void ExprAnd::apply_( const PStep* ps, VMContext* ctx )
 }
 
 
-void ExprAnd::describeTo( String& str, int depth ) const
+const String& ExprAnd::exprName() const
 {
-   if( m_first == 0 || m_second == 0 )
-   {
-      str = "<Blank ExprAnd>";
-      return;
-   }
-   
-   str = "(" + m_first->describe(depth+1) + " and " + m_second->describe(depth+1) + ")";
+   static String name("and");
+   return name;
 }
+
 
 //=========================================================
 //Logic Or
@@ -176,6 +167,7 @@ void ExprOr::apply_( const PStep* ps, VMContext* ctx )
       {
          return;
       }
+      /* no break */
 
       // check if the first expression was true and then go away
    case 1:
@@ -191,7 +183,8 @@ void ExprOr::apply_( const PStep* ps, VMContext* ctx )
       if( ctx->stepInYield( self->m_second, cf ) )
       {
          return;
-      }         
+      }
+      break;
    }
    
    // reuse the operand left by the other expression
@@ -201,15 +194,10 @@ void ExprOr::apply_( const PStep* ps, VMContext* ctx )
 }
 
 
-void ExprOr::describeTo( String& str, int depth ) const
+const String& ExprOr::exprName() const
 {
-   if( m_first == 0 || m_second == 0 )
-   {
-      str = "<Blank ExprOr>";
-      return;
-   }
-
-   str = "(" + m_first->describe(depth+1) + " or " + m_second->describe(depth+1) + ")";
+   static String name("or");
+   return name;
 }
 
 }

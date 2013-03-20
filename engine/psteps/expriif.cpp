@@ -19,6 +19,7 @@
 #include <falcon/trace.h>
 #include <falcon/vmcontext.h>
 #include <falcon/pstep.h>
+#include <falcon/textwriter.h>
 
 #include <falcon/synclasses.h>
 #include <falcon/engine.h>
@@ -94,17 +95,29 @@ void ExprIIF::apply_( const PStep* ps, VMContext* ctx )
    ctx->stepIn( cond ? self->second() : self->third() );
 }
 
-void ExprIIF::describeTo( String& str, int depth ) const
+void ExprIIF::render( TextWriter* tw, int depth ) const
 {
+   tw->write(renderPrefix(depth));
+
    if( m_first == 0 || m_second == 0 || m_third == 0 )
    {
-      str = "<Blank ExprIIF>";
-      return;
+      tw->write( "/* Blank ExprIIF */" );
+   }
+   else
+   {
+      tw->write( "( (" );
+      m_first->render( tw, relativeDepth(depth) );
+      tw->write( ") ? ");
+      m_second->render( tw, relativeDepth(depth) );
+      tw->write( " : ");
+      m_third->render( tw, relativeDepth(depth) );
+      tw->write( " )" );
    }
 
-   str = "( " + m_first->describe(depth+1) + " ? " 
-            + m_second->describe(depth+1) + " : " 
-            + m_third->describe(depth+1) + " )";
+   if( depth >= 0 )
+   {
+      tw->write("\n");
+   }
 }
 
 ExprIIF::Gate::Gate( ExprIIF* owner ):

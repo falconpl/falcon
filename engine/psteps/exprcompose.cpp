@@ -49,13 +49,14 @@ void ExprCompose::apply_( const PStep* ps, VMContext* ctx )
          {
             return;
          }
-         // fallthrough
+         /* no break */
       case 1:
          cf.m_seqId ++;
          if( ctx->stepInYield( self->first() ) )
          {
             return;
          }
+         break;
    }
       
    // This evaluate to self.
@@ -66,20 +67,15 @@ void ExprCompose::apply_( const PStep* ps, VMContext* ctx )
 }
 
 
-void ExprCompose::describeTo( String& ret, int depth ) const
-{
-   if( m_first == 0 || m_second == 0 )
-   {
-      ret = "<Blank ExprCompose>";
-      return;
-   }
-   
-   ret = "(" + m_first->describe(depth+1) + " ^. " + m_second->describe(depth+1) + ")";
-}
-
 bool ExprCompose::simplify( Item& ) const
 {
    return false;
+}
+
+const String& ExprCompose::exprName() const
+{
+   static String name("^.");
+   return name;
 }
 
 }

@@ -38,14 +38,13 @@ public:
    }
 
    virtual StmtTempFor* clone() const { return 0; }
+   virtual void render( TextWriter* , int32  ) const {};
 };
 
 
 class FALCON_DYN_CLASS StmtForBase: public Statement
 {
 public:
-   virtual void describeTo( String& tgt, int depth=0 ) const;
-
    TreeStep* body() const { return m_body; }
    void body( TreeStep* st );
 
@@ -74,6 +73,8 @@ public:
    bool setForMiddleFromParam(Item* param);
    bool setForLastFromParam(Item* param);
 
+   virtual void render( TextWriter* tw, int32 depth ) const;
+   virtual void renderHeading( TextWriter* tw, int32 depth ) const = 0;
 protected:
 
    TreeStep* m_body;
@@ -103,7 +104,7 @@ protected:
          m_bIsNextBase = true;
       }
       virtual ~PStepCleanup() {};
-      virtual void describeTo( String& str, int ) const { str = "PStepCleanup"; }
+      virtual void describeTo( String& str ) const { str = "PStepCleanup"; }
 
    private:
       static void apply_( const PStep* self, VMContext* ctx );
@@ -125,8 +126,6 @@ public:
    StmtForIn( Expression* gen, int32 line=0, int32 chr = 0 );
 
    virtual ~StmtForIn();
-
-   void oneLinerTo( String& tgt ) const;
 
    /** Returns the generator associated with this for/in statement. */
    Expression* generator() const { return m_expr; }
@@ -150,6 +149,7 @@ public:
 
    virtual bool setTargetFromParam(Item* param);
    virtual bool setSelectorFromParam(Item* param);
+   virtual void renderHeading( TextWriter* tw, int32 depth ) const;
 
 private:
    class Private;
@@ -162,7 +162,7 @@ private:
    public:
       PStepBegin( StmtForIn* owner ): m_owner(owner) { m_bIsLoopBase = true; apply = apply_; }
       virtual ~PStepBegin() {};
-      virtual void describeTo( String& str, int=0 ) const { str = "PStepBegin of " + m_owner->oneLiner(); }
+      virtual void describeTo( String& str ) const { str = "PStepBegin"; }
 
    private:
       static void apply_( const PStep* self, VMContext* ctx );
@@ -173,7 +173,7 @@ private:
    public:
       PStepFirst( StmtForIn* owner ): m_owner(owner) { apply = apply_; }
       virtual ~PStepFirst() {};
-      virtual void describeTo( String& str, int = 0 ) const { str = "PStepFirst of " + m_owner->oneLiner(); }
+      virtual void describeTo( String& str ) const { str = "PStepFirst"; }
 
    private:
       static void apply_( const PStep* self, VMContext* ctx );
@@ -184,7 +184,7 @@ private:
    public:
       PStepGetFirst( StmtForIn* owner ): m_owner(owner) { apply = apply_; }
       virtual ~PStepGetFirst() {};
-      virtual void describeTo( String& str, int = 0 ) const { str = "PStepGetFirst of " + m_owner->oneLiner(); }
+      virtual void describeTo( String& str ) const { str = "PStepGetFirst"; }
 
    private:
       static void apply_( const PStep* self, VMContext* ctx );
@@ -195,7 +195,7 @@ private:
    public:
       PStepNext( StmtForIn* owner ): m_owner(owner) { apply = apply_; }
       virtual ~PStepNext() {};
-      virtual void describeTo( String& str, int=0 ) const { str = "PStepNext of " + m_owner->oneLiner(); }
+      virtual void describeTo( String& str ) const { str = "PStepNext"; }
 
    private:
       static void apply_( const PStep* self, VMContext* ctx );
@@ -206,7 +206,7 @@ private:
    public:
       PStepGetNext( StmtForIn* owner ): m_owner(owner) { m_bIsNextBase = true; apply = apply_; }
       virtual ~PStepGetNext() {};
-      virtual void describeTo( String& str, int =0 ) const { str = "PStepGetNext of " + m_owner->oneLiner(); }
+      virtual void describeTo( String& str ) const { str = "PStepGetNext"; }
 
    private:
       static void apply_( const PStep* self, VMContext* ctx );
@@ -247,7 +247,6 @@ public:
    Expression* stepExpr() const { return m_step; }
    void stepExpr( Expression* s );
 
-   virtual void oneLinerTo( String& tgt ) const;
    virtual StmtForTo* clone() const { return new StmtForTo(*this); }
 
    virtual bool isValid() const;
@@ -257,6 +256,8 @@ public:
    virtual bool setStartExprFromParam(Item* param);
    virtual bool setEndExprFromParam(Item* param);
    virtual bool setStepExprFromParam(Item* param);
+
+   virtual void renderHeading( TextWriter* tw, int32 depth ) const;
 
 private:
    // apply is the same as PCODE, but it also checks ND requests.
@@ -275,7 +276,7 @@ private:
          apply = apply_;
       }
       virtual ~PStepNext() {};
-      virtual void describeTo( String& str, int = 0 ) const { str = "PStepNext of " + m_owner->oneLiner(); }
+      virtual void describeTo( String& str ) const { str = "PStepNext"; }
 
    private:
       static void apply_( const PStep* self, VMContext* ctx );

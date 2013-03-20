@@ -92,22 +92,6 @@ void* ClassSynFunc::getParentData( const Class* parent, void* data ) const
    return 0;
 }
 
-void ClassSynFunc::describe( void* instance, String& target, int depth, int ) const
-{
-   SynFunc* func = static_cast<SynFunc*>(instance);
-   target = "{";
-   for(uint32 i = 0; i < func->variables().paramCount(); ++i ) {
-      if( i > 0) {
-         target += ", ";
-      }
-      target += func->variables().getParamName(i);
-   }
-
-   target += " =>\n";
-   target += func->syntree().describe(depth+1) + "\n";
-   target += String(" ").replicate(depth*PStep::depthIndent) + "}";
-
-}
 
 void ClassSynFunc::store( VMContext*, DataWriter* stream, void* instance ) const
 {

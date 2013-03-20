@@ -33,6 +33,7 @@
 #include <falcon/range.h>
 #include <falcon/stdhandlers.h>
 #include <falcon/classes/classrequirement.h>
+#include <falcon/textwriter.h>
 
 #include <falcon/errors/ioerror.h>
 #include <falcon/errors/linkerror.h>
@@ -98,55 +99,55 @@ public:
         m_type(other.m_type),
         m_class(other.m_class),
         m_lock(0)
+   {
+     switch( m_type )
      {
-        switch( m_type )
+     case e_t_none:
+     case e_t_nil:
+        /* do nothing */
+        break;
+
+     case e_t_bool:
+        m_data.tof = other.m_data.tof;
+        break;
+
+     case e_t_int:
+        m_data.ints.int1 = other.m_data.ints.int1;
+        break;
+
+     case e_t_int_range:
+        m_data.ints.int1 = other.m_data.ints.int1;
+        m_data.ints.int2 = other.m_data.ints.int2;
+        break;
+
+     case e_t_string:
+        m_data.strings.string1 = new String(*other.m_data.strings.string1);
+        break;
+
+     case e_t_string_range:
+        m_data.strings.string1 = new String(*other.m_data.strings.string1);
+        m_data.strings.string2 = new String(*other.m_data.strings.string2);
+        break;
+
+     case e_t_regex:
+        m_data.regex = new re2::RE2(other.m_data.regex->pattern());
+        break;
+
+     case e_t_symbol:
+        m_data.symbol = other.m_data.symbol;
+        m_data.symbol->incref();
+        break;
+
+     case e_t_class:
+        m_data.strings.string1 = new String( m_class->name() );
+        if( m_class != 0 )
         {
-        case e_t_none:
-              case e_t_nil:
-                 /* do nothing */
-                 break;
-
-              case e_t_bool:
-                 m_data.tof = other.m_data.tof;
-                 break;
-
-              case e_t_int:
-                 m_data.ints.int1 = other.m_data.ints.int1;
-                 break;
-
-              case e_t_int_range:
-                 m_data.ints.int1 = other.m_data.ints.int1;
-                 m_data.ints.int2 = other.m_data.ints.int2;
-                 break;
-
-              case e_t_string:
-                 m_data.strings.string1 = new String(*other.m_data.strings.string1);
-                 break;
-
-              case e_t_string_range:
-                 m_data.strings.string1 = new String(*other.m_data.strings.string1);
-                 m_data.strings.string2 = new String(*other.m_data.strings.string2);
-                 break;
-
-              case e_t_regex:
-                 m_data.regex = new re2::RE2(other.m_data.regex->pattern());
-                 break;
-
-              case e_t_symbol:
-                 m_data.symbol = other.m_data.symbol;
-                 m_data.symbol->incref();
-                 break;
-
-              case e_t_class:
-                 m_data.strings.string1 = new String( m_class->name() );
-                 if( m_class != 0 )
-                 {
-                    m_lock = Engine::GC_lock(Item(m_class->handler(), const_cast<Class*>(m_class)));
-                 }
-                 break;
+           m_lock = Engine::GC_lock(Item(m_class->handler(), const_cast<Class*>(m_class)));
         }
-
+        break;
      }
+   }
+
 
    CaseEntry( t_type t, bool mode = false ):
       m_type(t),
@@ -611,9 +612,6 @@ public:
          ++iter;
       }
    }
-
-
-
 };
 
 
@@ -638,6 +636,72 @@ ExprCase::ExprCase( const ExprCase& other ):
 ExprCase::~ExprCase()
 {
    delete _p;
+}
+
+
+void ExprCase::render( TextWriter* tw, int32 depth ) const
+{
+   String temp1, temp2;
+   tw->write( renderPrefix(depth) );
+   //tw->write( "case ");  -- this is written by our hosts
+
+   Private::EntryList::iterator iter = _p->m_entries.begin();
+
+   while( iter != _p->m_entries.end() )
+   {
+      if( iter != _p->m_entries.begin() )
+      {
+         tw->write(", ");
+      }
+
+      CaseEntry *ce = *iter;
+      switch( ce->m_type )
+      {
+      case CaseEntry::e_t_none: tw->write("/* Blank CaseEntry */"); break;
+      case CaseEntry::e_t_nil: tw->write("nil"); break;
+      case CaseEntry::e_t_bool: tw->write( ce->m_data.tof ? "true" : "false" ); break;
+      case CaseEntry::e_t_int: tw->write( String("").N(ce->m_data.ints.int1) ); break;
+      case CaseEntry::e_t_int_range: tw->write( String("").N(ce->m_data.ints.int1) + " to " + String("").N(ce->m_data.ints.int2) ); break;
+      case CaseEntry::e_t_string:
+         ce->m_data.strings.string1->escapeFull(temp1);
+         tw->write( "\"" );
+         tw->write(temp1);
+         tw->write( "\"" );
+         break;
+
+      case CaseEntry::e_t_string_range:
+         ce->m_data.strings.string1->escapeFull(temp1);
+         ce->m_data.strings.string2->escapeFull(temp2);
+         tw->write( "\"" );
+         tw->write(temp1);
+         tw->write( "\" to \"" );
+         tw->write(temp2);
+         tw->write( "\"" );
+         break;
+
+      case CaseEntry::e_t_regex:
+         temp1.fromUTF8( ce->m_data.regex->pattern().c_str() );
+         tw->write("r\"");
+         tw->write(temp1);
+         tw->write("\"");
+         break;
+
+      case CaseEntry::e_t_symbol:
+         tw->write(ce->m_data.symbol->name());
+         break;
+
+      case CaseEntry::e_t_class:
+         tw->write(*ce->m_data.strings.string1);
+         break;
+      }
+
+      ++iter;
+   }
+
+   if( depth >= 0 )
+   {
+      tw->write("\n");
+   }
 }
 
 
@@ -709,12 +773,6 @@ static bool internal_setValue( CaseEntry* entry, const Item& value )
    return true;
 }
 
-
-
-void ExprCase::describeTo( String& str, int ) const
-{
-   str = "case ... todo";
-}
 
 void ExprCase::addNilEntry()
 {

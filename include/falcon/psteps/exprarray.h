@@ -39,9 +39,7 @@ public:
 
    virtual ~ExprArray() {}
 
-   virtual void describeTo( String& s, int depth=0 ) const;
-   virtual void oneLinerTo( String& s ) const;
-
+   void render( TextWriter* tw, int32 depth ) const;
    static void apply_( const PStep*, VMContext* ctx );
 
    inline virtual ExprArray* clone() const { return new ExprArray( *this ); }

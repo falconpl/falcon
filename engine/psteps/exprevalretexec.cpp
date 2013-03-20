@@ -21,7 +21,6 @@
 
 namespace Falcon {
 
-
 bool ExprEvalRetExec::simplify( Item& ) const
 {
    return false;
@@ -54,17 +53,10 @@ void ExprEvalRetExec::apply_( const PStep* ps, VMContext* ctx )
    }
 }
 
-
-void ExprEvalRetExec::describeTo( String& str, int depth ) const
+const String& ExprEvalRetExec::exprName() const
 {
-   if( m_first == 0 )
-   {
-      str = "<Blank ExprEvalRetExec>";
-      return;
-   }
-   
-   str = "(^* ";
-   str += m_first->describe(depth+1)+")";
+   static String name("^*");
+   return name;
 }
 
 }

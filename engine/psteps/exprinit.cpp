@@ -18,6 +18,7 @@
 #include <falcon/trace.h>
 #include <falcon/vmcontext.h>
 #include <falcon/pstep.h>
+#include <falcon/textwriter.h>
 
 #include <falcon/synclasses.h>
 #include <falcon/engine.h>
@@ -49,10 +50,12 @@ bool ExprInit::isStatic() const
    return false;
 }
 
-void ExprInit::describeTo( String & str, int ) const
+
+void ExprInit::render( TextWriter* tw, int ) const
 {
-   str = "init";
+   tw->write("init");
 }
+
 
 void ExprInit::apply_( const PStep*, VMContext* ctx )
 {
@@ -60,7 +63,8 @@ void ExprInit::apply_( const PStep*, VMContext* ctx )
    ctx->pushData( ctx->readInit() );
 }
 
-void ExprInit::PStepLValue::describeTo( String& str, int ) const
+
+void ExprInit::PStepLValue::describeTo( String& str ) const
 {
    str = "init";
 }

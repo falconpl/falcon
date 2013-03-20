@@ -43,7 +43,7 @@ public:
    StmtGlobal( const StmtGlobal& other );
    virtual ~StmtGlobal();
 
-   virtual void describeTo( String& tgt, int depth=0 ) const;
+   virtual void render( TextWriter* tw, int32 depth ) const;
    virtual StmtGlobal* clone() const { return new StmtGlobal(*this); }
 
    /**

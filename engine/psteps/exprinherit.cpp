@@ -24,6 +24,7 @@
 #include <falcon/itemarray.h>
 #include <falcon/classes/classrequirement.h>
 #include <falcon/stdhandlers.h>
+#include <falcon/textwriter.h>
 
 
 #include <falcon/symbol.h>
@@ -93,32 +94,38 @@ void ExprInherit::base( Class* cls )
 }
 
 
-void ExprInherit::describeTo( String& target, int depth ) const
-{   
-   String prefix = String(" ").replicate( depth * depthIndent );
-   
+void ExprInherit::render( TextWriter* tw, int depth ) const
+{
+   tw->write(renderPrefix(depth));
+
    if( _p->m_exprs.empty() )
    {
-      target = prefix + m_name;
+      tw->write( m_name );
    }
    else
    {
-      target = prefix + m_name + "(";     
-      String temp;
+      tw->write( m_name );
+      tw->write( "(" );
+
       ExprVector_Private::ExprVector::const_iterator iter = _p->m_exprs.begin();
       while( _p->m_exprs.end() != iter )
       {
          Expression* param = *iter;
-         if( temp.size() >  0 )
+         if( _p->m_exprs.begin() != iter )
          {
-            temp += ", ";
+            tw->write(", ");
          }
          // keep same depth
-         temp += param->describe( depth );
+         param->render( tw, relativeDepth(depth) );
          ++iter;
       }
 
-      target += temp + ")";
+      tw->write( ")" );
+   }
+
+   if( depth >= 0 )
+   {
+      tw->write("\n");
    }
 }
 

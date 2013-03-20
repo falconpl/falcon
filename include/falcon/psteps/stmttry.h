@@ -36,8 +36,7 @@ public:
    StmtTry( const StmtTry& other );   
    virtual ~StmtTry();
 
-   virtual void describeTo( String& tgt, int depth=0 ) const;
-   virtual void oneLinerTo( String& tgt ) const;
+   virtual void render( TextWriter* tw, int32 depth ) const;
    virtual StmtTry* clone() const { return new StmtTry(*this); }
 
    /** Gets the body of this try. */
@@ -90,7 +89,7 @@ private:
    public:
       PStepFinally( StmtTry* t ): m_owner(t) { apply = apply_;}
       virtual ~PStepFinally() {}
-      virtual void describeTo( String& tgt, int =0 ) const { tgt = "Try finally"; }
+      virtual void describeTo( String& tgt ) const { tgt = "Try finally"; }
 
    private:
       StmtTry* m_owner;

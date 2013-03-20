@@ -155,15 +155,18 @@ void ClassString::describe( void* instance, String& target, int, int maxlen ) co
 
    if( self->isText() )
    {
+      String escaped;
+      self->escape(escaped);
+
       target.append( '"' );
       if ( (int) self->length() > maxlen && maxlen > 0 )
       {
-         target.append( self->subString( 0, maxlen ) );
+         target.append( escaped.subString( 0, maxlen ) );
          target.append( "..." );
       }
       else
       {
-         target.append( *self );
+         target.append( escaped );
       }
       target.append( '"' );
    }
@@ -172,7 +175,7 @@ void ClassString::describe( void* instance, String& target, int, int maxlen ) co
 
       length_t pos = 0;
       byte* data = self->getRawStorage();
-      while( pos < self->size() && (maxlen <0 || pos*3 < (unsigned int) maxlen) ) {
+      while( pos < self->size() && (maxlen <=0 || pos*3 < (unsigned int) maxlen) ) {
          if( pos > 0 ) target.append(' ');
          if( data[pos] < 16 )
          {

@@ -68,6 +68,7 @@ public:
    }
    
    virtual StmtTempLit* clone() const { return 0; }
+   virtual void render( TextWriter* , int32 ) const {};
 };
 
 using namespace Parsing;

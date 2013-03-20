@@ -138,7 +138,7 @@ void clone(VMContext *ctx, const Class*, void*)
 void describe(VMContext* ctx, const Class* cls, void* data)
 {
    String* target = new String;
-   cls->describe( data, *target );
+   cls->describe( data, *target, 3, -1 );
 
    Item& topData = ctx->topData();
    topData.setUser( FALCON_GC_HANDLE(target) );

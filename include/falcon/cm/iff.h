@@ -51,7 +51,7 @@ public:
    public:
       PStepChoice() { apply = apply_; }
       virtual ~PStepChoice() {};
-      virtual void describeTo( String& str, int ) const { str = "PStepChoice"; }
+      virtual void describeTo( String& str ) const { str = "PStepChoice"; }
 
    private:
       static void apply_( const PStep* self, VMContext* ctx );

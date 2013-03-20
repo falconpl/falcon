@@ -17,6 +17,7 @@
 #include <falcon/trace.h>
 #include <falcon/vmcontext.h>
 #include <falcon/pstep.h>
+#include <falcon/textwriter.h>
 
 #include <falcon/synclasses.h>
 #include <falcon/engine.h>
@@ -56,9 +57,15 @@ bool ExprFSelf::simplify( Item& ) const
    return false;
 }
 
-void ExprFSelf::describeTo( String & str, int ) const
+
+void ExprFSelf::render( TextWriter* tw, int depth ) const
 {
-   str = "fself";
+   tw->write(renderPrefix(depth));
+   tw->write("fself");
+   if( depth >= 0 )
+   {
+      tw->write("\n");
+   }
 }
 
 void ExprFSelf::apply_( const PStep*, VMContext* ctx )

@@ -34,7 +34,8 @@ public:
    inline virtual ExprDot* clone() const { return new ExprDot( *this ); } 
    virtual bool simplify( Item& value ) const; 
    static void apply_( const PStep*, VMContext* ctx );
-   virtual void describeTo( String&, int depth=0 ) const;
+   void render( TextWriter* tw, int depth ) const;
+   virtual const String& exprName() const;
    
    const String& property() const { return m_prop; }
    void property( const String& p ) { m_prop = p; }

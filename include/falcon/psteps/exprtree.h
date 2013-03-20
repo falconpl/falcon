@@ -39,7 +39,7 @@ public:
    ExprTree( const ExprTree& other );
 
    virtual ~ExprTree();
-   virtual void describeTo( String&, int depth = 0 ) const;
+   virtual void render( TextWriter* tw, int32 depth ) const;
 
    virtual Expression* clone() const { return new ExprTree(*this); }
    inline virtual bool isStandAlone() const { return true; }

@@ -37,8 +37,7 @@ public:
    ExprRule& addStatement( TreeStep* stmt );
    ExprRule& addAlternative();
 
-   virtual void describeTo( String& tgt, int depth=0 ) const;
-   virtual void oneLinerTo( String& tgt ) const;
+   virtual void render( TextWriter* tw, int32 depth ) const;
    virtual ExprRule* clone() const { return new ExprRule(*this); }
    
    virtual bool isStatic() const {return false;}
@@ -74,8 +73,7 @@ public:
    StmtCut( const StmtCut& expr );   
    virtual ~StmtCut();
 
-   virtual void describeTo( String& tgt, int depth=0 ) const;
-   virtual void oneLinerTo( String& tgt ) const;
+   virtual void render( TextWriter* tw, int32 depth ) const;
    
    virtual StmtCut* clone() const { return new StmtCut(*this); }
    
@@ -101,8 +99,7 @@ public:
    StmtDoubt( const StmtDoubt& other );
    virtual ~StmtDoubt();
 
-   virtual void describeTo( String& tgt, int depth=0) const;
-   virtual void oneLinerTo( String& tgt ) const;
+   virtual void render( TextWriter* tw, int32 depth ) const;
    virtual StmtDoubt* clone() const { return new StmtDoubt(*this); }
    
    virtual Expression* selector() const;

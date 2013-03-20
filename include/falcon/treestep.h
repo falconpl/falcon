@@ -26,6 +26,7 @@ class Statement;
 class SynTree;
 class Item;
 class VarMap;
+class TextWriter;
 
 /** PStep extension that can be insereted in an exposable syntactic tree.
  
@@ -156,7 +157,7 @@ class VarMap;
  
  Mainly, TreeStep subclasses should inherit from Statement, Expression or
  SynTree, which also define one of the main categories of tree step.
- */
+*/
 class FALCON_DYN_CLASS TreeStep: public PStep
 {
 public:
@@ -169,7 +170,9 @@ public:
       e_cat_syntree,
       e_cat_expression
    }
-   t_category; 
+   t_category;
+
+   virtual void render( TextWriter* tw, int32 depth ) const = 0;
    
    t_category category() const { return m_cat; }
    
@@ -355,6 +358,8 @@ public:
 
    // invoked in place of delete to get rid of non-gc children.
    static void dispose( TreeStep* child );
+
+   void describeTo( String& str ) const;
 
 protected:
 

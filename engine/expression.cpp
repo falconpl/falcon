@@ -19,6 +19,7 @@
 #include <falcon/item.h>
 #include <falcon/vm.h>
 #include <falcon/trace.h>
+#include <falcon/textwriter.h>
 
 namespace Falcon {
 
@@ -81,6 +82,32 @@ bool UnaryExpression::setNth( int32 n, TreeStep* ts )
    return false;
 }
 
+
+void UnaryExpression::render( TextWriter* tw, int depth ) const
+{
+   tw->write(renderPrefix(depth));
+
+   if( m_first == 0 )
+   {
+      tw->write( "/* Blank '" );
+      tw->write(exprName());
+      tw->write( "' */" );
+   }
+   else
+   {
+      tw->write("( ");
+      tw->write(exprName());
+      tw->write(" ");
+      m_first->render( tw, relativeDepth(depth) );
+      tw->write(" )");
+   }
+
+   if( depth >= 0 )
+   {
+      tw->write("\n");
+   }
+}
+
 //=============================================================
 
 BinaryExpression::BinaryExpression( const BinaryExpression &other ):
@@ -141,7 +168,32 @@ bool BinaryExpression::setNth( int32 n, TreeStep* ts )
    return false;
 }
 
+void BinaryExpression::render( TextWriter* tw, int depth ) const
+{
+   tw->write(renderPrefix(depth));
 
+   if( m_first == 0 || m_second == 0 )
+   {
+      tw->write( "/* Blank '" );
+      tw->write(exprName());
+      tw->write( "' */" );
+   }
+   else
+   {
+      tw->write("( ");
+      m_first->render( tw, relativeDepth(depth) );
+      tw->write(" ");
+      tw->write(exprName());
+      tw->write(" ");
+      m_second->render( tw, relativeDepth(depth) );
+      tw->write(" )");
+   }
+
+   if( depth >= 0 )
+   {
+      tw->write("\n");
+   }
+}
 //=============================================================
 TernaryExpression::TernaryExpression( const TernaryExpression &other ):
    Expression( other ),

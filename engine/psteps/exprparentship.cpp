@@ -17,6 +17,7 @@
 #include <falcon/psteps/exprparentship.h>
 #include <falcon/synclasses.h>
 #include <falcon/vmcontext.h>
+#include <falcon/textwriter.h>
 
 #include "exprvector_private.h"
 #include "falcon/psteps/exprinherit.h"
@@ -44,29 +45,24 @@ ExprParentship::~ExprParentship()
 }
 
 
-void ExprParentship::describeTo( String& target, int depth ) const
+
+void ExprParentship::render( TextWriter* tw, int32 depth ) const
 {
-   if( _p->m_exprs.empty() )
+   //tw->write( renderPrefix(depth) );
+
+   if( !_p->m_exprs.empty() )
    {
-      target = "";
-   }
-   else
-   {
-      String prefix = String(" ").replicate( (depth+1) * depthIndent );
-      target +=" from \\\n";
-      
-      bool bFirst = true;
+      tw->write( "from \\\n");
+
       ExprVector_Private::ExprVector::const_iterator iter = _p->m_exprs.begin();
       while( _p->m_exprs.end() != iter )
       {
          Expression* param = *iter;
-         if( ! bFirst )
-         {
-            target += " \\\n";
-         }
-         bFirst = true;
+
          // keep same depth
-         target += prefix + param->describe( depth+1 );
+         tw->write( renderPrefix(depth) );
+         param->render( tw, relativeDepth(depth) );
+         tw->write( " \\\n" );
          ++iter;
       }
    }
@@ -128,6 +124,13 @@ bool ExprParentship::insert( int32 pos, TreeStep* ts )
    return _p->insert(pos, expr, this );
 }
 
+bool ExprParentship::append( TreeStep* ts )
+{
+   if( ts == 0 || ts->category() != TreeStep::e_cat_expression ) return false;
+   Expression* expr = static_cast<Expression*>(ts);
+   if( expr->trait() != Expression::e_trait_inheritance ) return false;
+   return _p->append( expr, this );
+}
 
 }
 

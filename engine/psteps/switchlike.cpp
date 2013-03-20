@@ -18,6 +18,7 @@
 
 #include <falcon/syntree.h>
 #include <falcon/expression.h>
+#include <falcon/textwriter.h>
 
 #include <falcon/psteps/switchlike.h>
 #include <falcon/psteps/exprcase.h>
@@ -377,6 +378,54 @@ bool SwitchlikeStatement::selector( Expression* expr )
    m_expr = expr;
 
    return true;
+}
+
+
+void SwitchlikeStatement::render( TextWriter* tw, int32 depth ) const
+{
+   if( selector() == 0 )
+   {
+      tw->write( renderPrefix(depth) );
+      tw->write( "/* Blank switch/select */" );
+   }
+   else
+   {
+      int32 dp = depth < 0 ? -depth : depth+1;
+
+      renderHeader(tw, depth);
+      Private::Blocks::iterator iter = _p->m_blocks.begin();
+      while( iter != _p->m_blocks.end() )
+      {
+         SynTree* st = *iter;
+         Expression* sel = st->selector();
+         if( sel == 0 || sel->trait() != Expression::e_trait_case )
+         {
+            tw->write( renderPrefix(dp) );
+            tw->write( "default\n" );
+         }
+         else {
+            tw->write( renderPrefix(dp) );
+            tw->write("case ");
+            sel->render(tw, relativeDepth(dp));
+         }
+
+         st->render( tw, dp + 1 );
+         ++iter;
+         if( sel == 0 || sel->trait() != Expression::e_trait_case )
+         {
+            // force the default block to be the last
+            break;
+         }
+      }
+
+      tw->write( renderPrefix(depth) );
+      tw->write("end");
+   }
+
+   if( depth >= 0 )
+   {
+      tw->write("\n");
+   }
 }
 
 

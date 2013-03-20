@@ -23,6 +23,7 @@
 #include <falcon/symbol.h>
 #include <falcon/gclock.h>
 #include <falcon/closure.h>
+#include <falcon/textwriter.h>
 
 #include <set>
 #include <falcon/syntree.h>
@@ -167,16 +168,40 @@ bool ExprLit::setNth( int32 n, TreeStep* ts )
    return false;
 }
 
-void ExprLit::describeTo( String& str, int depth ) const
+
+void ExprLit::render( TextWriter* tw, int depth ) const
 {
-   if( m_child == 0) {
-      str = "<Blank ExprLit>";
-      return;
+   if( m_child )
+   {
+      tw->write(renderPrefix(depth));
+      tw->write( "/* Blank ExprLit */" );
+      if( depth >= 0 )
+      {
+         tw->write("\n");
+      }
    }
-   
-   // we're transparent
-   m_child->describeTo(str, depth);
+   else
+   {
+      if( m_child->category() != TreeStep::e_cat_expression
+               || static_cast<Expression*>(m_child)->trait() != Expression::e_trait_tree )
+      {
+         // non-tree literals are "real literals"...
+         tw->write(renderPrefix(depth));
+         tw->write("{[] ");
+         m_child->render( tw, relativeDepth(depth) );
+         tw->write("}");
+         if( depth >= 0 )
+         {
+            tw->write("\n");
+         }
+      }
+      else {
+         // otherwise, the rendering is fully delegated to the tree child.
+         m_child->render( tw, depth );
+      }
+   }
 }
+
 
 void ExprLit::apply_( const PStep* ps, VMContext* ctx )
 {

@@ -23,6 +23,7 @@
 #include <falcon/syntree.h>
 #include <falcon/symbol.h>
 #include <falcon/itemarray.h>
+#include <falcon/textwriter.h>
 
 #include <falcon/errors/accesserror.h>
 #include <falcon/errors/codeerror.h>
@@ -182,50 +183,60 @@ StmtForBase::StmtForBase( const StmtForBase& other ):
    }   
 }
 
-void StmtForBase::describeTo( String& tgt, int depth ) const
-{   
-   if ( ! isValid() )
+void StmtForBase::render( TextWriter* tw, int32 depth ) const
+{
+   if( ! isValid() )
    {
-      tgt = "<Blank StmtForIn/to>";
-      return;
+      tw->write( renderPrefix(depth) );
+      tw->write( "/* Blank StmtForIn/to */" );
    }
-   
-   String prefix = String(" ").replicate( depth * depthIndent );   
-   tgt = prefix + oneLiner();
-   tgt += "\n";
-   
-   if( m_body != 0 )
+   else
    {
-      String temp;
-      m_body->describeTo( temp, depth + 1);
-      tgt += temp + "\n";
+      tw->write( renderPrefix(depth) );
+      renderHeading( tw, depth );
+
+      int dp = depth < 0 ? -dp : depth;
+      if( m_body != 0 )
+      {
+         m_body->render( tw, dp+1);
+      }
+
+      if( m_forFirst != 0 )
+      {
+         tw->write( renderPrefix(dp) );
+         tw->write("forfirst\n");
+         m_forFirst->render( tw, dp + 1 );
+         tw->write( renderPrefix(dp) );
+         tw->write("end\n");
+      }
+
+      if( m_forMiddle != 0 )
+      {
+         tw->write( renderPrefix(dp) );
+         tw->write("formiddle\n");
+         m_forMiddle->render( tw, dp + 1 );
+         tw->write( renderPrefix(dp) );
+         tw->write("end\n");
+      }
+
+      if( m_forLast != 0 )
+      {
+         tw->write( renderPrefix(dp) );
+         tw->write("forlast\n");
+         m_forLast->render( tw, dp + 1 );
+         tw->write( renderPrefix(dp) );
+         tw->write("end\n");
+      }
+
+      tw->write( renderPrefix(depth) );
+      tw->write("end");
    }
-   
-   if( m_forFirst != 0 )
+
+   if( depth >= 0 )
    {
-      String temp;
-      m_forFirst->describeTo( temp, depth + 1 );
-      tgt += prefix + "forfirst\n" + temp + "\n" + prefix + "end\n";
+      tw->write( "\n" );
    }
-   
-   if( m_forMiddle != 0 )
-   {
-      String temp;
-      m_forMiddle->describeTo( temp, depth + 1 );
-      tgt+= prefix + "formiddle\n" +  temp + "\n" + prefix + "end\n";
-   }
-   
-   if( m_forLast != 0 )
-   {
-      String temp;
-      m_forLast->describeTo( temp, depth + 1 );
-      tgt += prefix + "forlast\n" +  temp + "\n" + prefix + "end\n";
-   }
-   
-   tgt += prefix + "end";
 }
-
-
 
 bool StmtForBase::setBodyFromParam(Item* param)
 {
@@ -400,33 +411,24 @@ bool StmtForIn::isValid() const
    return m_expr != 0 && _p->m_params.size() != 0 ;
 }
 
-
-void StmtForIn::oneLinerTo( String& tgt ) const
+void StmtForIn::renderHeading( TextWriter* tw, int32 depth ) const
 {
-   if( ! isValid() )
-   {
-      tgt = "<Blank StmtForIn>";
-      return;
-   }
-   
-   tgt += "for ";
-      
+   tw->write("for ");
    String syms;
    Private::SymVector::const_iterator iter = _p->m_params.begin();
    while( iter != _p->m_params.end() )
    {
-      if( syms.size() != 0 )
+      if( iter != _p->m_params.begin() )
       {
          syms += ", ";
       }
-      syms += (*iter)->name();
+      tw->write((*iter)->name());
       ++iter;
    }
-   
-   tgt += syms;
-   tgt += " in ";
+
+   tw->write(" in ");
    fassert( m_expr != 0 );
-   if( m_expr != 0 ) tgt += m_expr->describe();
+   m_expr->render(tw, relativeDepth(depth));
 }
 
 
@@ -947,26 +949,23 @@ void StmtForTo::stepExpr( Expression* s )
    }
 }
 
-   
-void StmtForTo::oneLinerTo( String& tgt ) const
-{  
-   if( ! isValid() )
-   {
-      tgt = "<Blank StmtForTo>";
-      return;
-   }
-   
-   tgt += "for " + m_target->name() + " = " ;
 
-   tgt += m_start->describe();   
-   tgt += " to ";
-   tgt += m_end->describe();
+void StmtForTo::renderHeading( TextWriter* tw, int32 depth ) const
+{
+   tw->write("for ");
+   tw->write( m_target->name() );
+   tw->write( " = " );
+   
+   m_start->render(tw, relativeDepth(depth));
+   tw->write( " to ");
+   m_end->render(tw, relativeDepth(depth));
    if( m_step != 0 )
    {
-      tgt += ", " + m_step->describe();
+      tw->write(", ");
+      m_step->render(tw, relativeDepth(depth));
    }
 }
-   
+
 
 void StmtForTo::apply_( const PStep* ps, VMContext* ctx )
 {

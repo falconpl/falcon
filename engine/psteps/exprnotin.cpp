@@ -78,15 +78,10 @@ void ExprNotin::apply_( const PStep* ps, VMContext* ctx )
 }
 
 
-void ExprNotin::describeTo( String& ret, int depth ) const
+const String& ExprNotin::exprName() const
 {
-   if( m_first == 0 || m_second == 0 )
-   {
-      ret = "<Blank ExprNotin>";
-      return;
-   }
-   
-   ret = "(" + m_first->describe(depth+1) + " notin " + m_second->describe(depth+1) + ")";
+   static String name("notin");
+   return name;
 }
 
 bool ExprNotin::simplify( Item& ) const

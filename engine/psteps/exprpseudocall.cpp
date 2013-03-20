@@ -18,6 +18,7 @@
 #include <falcon/vmcontext.h>
 
 #include <falcon/psteps/exprpseudocall.h>
+#include <falcon/textwriter.h>
 
 #include <falcon/synclasses.h>
 #include <falcon/engine.h>
@@ -176,27 +177,32 @@ void ExprPseudoCall::apply_eta_( const PStep* v, VMContext* ctx )
 }
 
 
-void ExprPseudoCall::describeTo( String& ret, int depth ) const
+void ExprPseudoCall::render( TextWriter* tw, int32 depth ) const
 {
+   tw->write( renderPrefix(depth) );
    if( m_func == 0 )
    {
-      ret = "<Blank ExprPseudoCall>";
-      return;
+     tw->write( "/* Blank 'ExprPseudoCall' */" );
    }
-   
-   String params;
-   // and generate all the expressions, in inverse order.
-   for( unsigned int i = 0; i < _p->m_exprs.size(); ++i )
+   else
    {
-      if ( params.size() )
+      tw->write(m_func->name());
+      tw->write( "(" );
+      for( unsigned int i = 0; i < _p->m_exprs.size(); ++i )
       {
-         params += ", ";
+         if ( i > 0 )
+         {
+            tw->write(", ");
+         }
+         _p->m_exprs[i]->render( tw, relativeDepth(depth) );
       }
-      params += _p->m_exprs[i]->describe(depth+1);
+      tw->write( ")" );
    }
 
-   
-   ret = m_func->name() + "(" + params +  ")";
+   if( depth >= 0 )
+   {
+      tw->write( "\n" );
+   }
 }
 
 }

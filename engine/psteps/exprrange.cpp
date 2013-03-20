@@ -19,6 +19,7 @@
 #include <falcon/range.h>
 #include <falcon/vmcontext.h>
 #include <falcon/stdsteps.h>
+#include <falcon/textwriter.h>
 
 #include <falcon/engine.h>
 #include <falcon/synclasses.h>
@@ -87,27 +88,32 @@ ExprRange::~ExprRange()
 }
 
 
-void ExprRange::describeTo( String& target, int depth ) const
+void ExprRange::render( TextWriter* tw, int32 depth ) const
 {
-   target = "[";
+   tw->write( renderPrefix(depth) );
+   tw->write( "[" );
    if( m_estart != 0 )
    {
-      target += m_estart->describe(depth+1);
+      m_estart->render(tw, relativeDepth(depth));
    }
-   target += ":";
+   tw->write(" : ");
    
    if( m_eend != 0 )
    {
-      target += m_eend->describe(depth+1);
+      m_eend->render(tw, relativeDepth(depth));
    }
    
    if( m_estep != 0 )
    {
-      target += ":";
-      target += m_estep->describe(depth+1);
+      tw->write(" : ");;
+      m_estep->render(tw, relativeDepth(depth));
    }
    
-   target += "]";
+   tw->write("]");
+   if( depth >= 0 )
+   {
+      tw->write("\n");
+   }
 }
 
 

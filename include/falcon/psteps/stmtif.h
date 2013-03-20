@@ -34,8 +34,7 @@ public:
    StmtIf( const StmtIf& other );
    virtual ~StmtIf();
 
-   virtual void describeTo( String& tgt, int depth=0 ) const;
-   virtual void oneLinerTo( String& tgt ) const;
+   virtual void render( TextWriter* tw, int32 depth ) const;
    virtual StmtIf* clone() const { return new StmtIf(*this); }
    
    static void apply_( const PStep*, VMContext* ctx );

@@ -23,6 +23,8 @@
 #include <falcon/closure.h>
 #include <falcon/callframe.h>
 #include <falcon/stdhandlers.h>
+#include <falcon/textwriter.h>
+#include <falcon/pstep.h>
 
 #include <falcon/engine.h>
 #include <falcon/errors/paramerror.h>
@@ -73,6 +75,7 @@ Class* Function::handler() const
    static Class* cls = Engine::handlers()->functionClass();   
    return cls;
 }
+
 
 bool Function::parseDescription( const String& params )
 {
@@ -131,6 +134,63 @@ Error* Function::paramError(int line, const char* place ) const
            ErrorParam(e_inv_params, line == 0 ? m_sr.line(): line, placeName)
            .extra(m_signature) );
    
+}
+
+
+void Function::render( TextWriter* tgt, int32 depth ) const
+{
+   if( depth > 0 ) {
+      tgt->write( String(" ").replicate(depth*PStep::depthIndent) );
+   }
+
+   if( name() == "" || name().startsWith("_anon#") ) {
+      tgt->write( "{ " );
+   }
+   else {
+      tgt->write( "function " );
+      tgt->write( name() );
+      tgt->write( "( " );
+   }
+
+   // write the parameters
+   int32 pcount = paramCount();
+   for( int32 i = 0; i < pcount; ++i ) {
+      const String& param = variables().getParamName(i);
+      tgt->write(param);
+   }
+
+   if( name() == "" || name().startsWith("_anon#") ) {
+      tgt->write( " => \n" );
+   }
+   else {
+      tgt->write( ")\n" );
+   }
+
+   renderFunctionBody( tgt, (depth < 0 ? -depth : depth+1) );
+
+   if( depth > 0 ) {
+      tgt->write( String(" ").replicate(depth*PStep::depthIndent) );
+   }
+
+   if( depth < 0 ) {
+      tgt->write( "}" );
+   }
+   else {
+      tgt->write( "end\n" );
+   }
+}
+
+void Function::renderFunctionBody( TextWriter* tgt, int32 depth ) const
+{
+   if( depth > 0 ) {
+      tgt->write( String(" ").replicate(depth*PStep::depthIndent) );
+   }
+
+   tgt->write( "/* Native function */" );
+
+   if( depth > 0 ) {
+      tgt->write( "\n" );
+   }
 }
 
 }

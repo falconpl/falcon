@@ -20,6 +20,7 @@
 #include <falcon/expression.h>
 #include <falcon/vmcontext.h>
 #include <falcon/syntree.h>
+#include <falcon/textwriter.h>
 
 #include <falcon/engine.h>
 #include <falcon/synclasses.h>
@@ -73,28 +74,23 @@ StmtLoop::~StmtLoop()
 }
 
 
-void StmtLoop::oneLinerTo( String& tgt ) const
+void StmtLoop::render( TextWriter* tw, int32 depth ) const
 {
-   tgt = "loop ...";
-}
+   tw->write( renderPrefix(depth) );
 
-
-void StmtLoop::describeTo( String& tgt, int depth ) const
-{
-   String prefix = String(" ").replicate( depth * depthIndent );
-   tgt += prefix + "loop\n";
+   tw->write("loop\n");
    if( m_child !=0 )
    {
-      tgt += m_child->describe(depth+1) + "\n";
+      m_child->render(tw, depth+1);
    }
    
-   if( m_expr == 0 )
+   tw->write( renderPrefix(depth) );
+   tw->write( "end" );
+   if( m_expr != 0 )
    {
-      tgt += prefix + "end";
+      m_expr->render(tw, relativeDepth(depth));
    }
-   else {
-      tgt += prefix + "end " + m_expr->describe(depth+1);
-   }
+   tw->write( "\n" );
 }
 
 
@@ -124,7 +120,7 @@ bool StmtLoop::selector( Expression* e )
 void StmtLoop::apply_pure_( const PStep* s1, VMContext* ctx )
 {
    const StmtLoop* self = static_cast<const StmtLoop*>(s1);
-   TRACE( "StmtLoop::apply_pure_ entering %s", self->oneLiner().c_ize() );
+   TRACE( "StmtLoop::apply_pure_ entering %s", self->describe().c_ize() );
 
    TreeStep* tree = self->m_child;
    if( tree )
@@ -153,7 +149,7 @@ void StmtLoop::apply_pure_( const PStep* s1, VMContext* ctx )
 void StmtLoop::apply_withexpr_( const PStep* s1, VMContext* ctx )
 {
    const StmtLoop* self = static_cast<const StmtLoop*>(s1);
-   TRACE( "StmtWhile::apply_withexpr_ entering %s", self->oneLiner().c_ize() );
+   TRACE( "StmtWhile::apply_withexpr_ entering %s", self->describe().c_ize() );
    fassert( self->m_expr != 0 );
 
    CodeFrame& cf = ctx->currentCode();

@@ -41,8 +41,7 @@ public:
    
    virtual ~StmtRaise();
 
-   virtual void describeTo( String& tgt, int depth=0 ) const;
-   virtual void oneLinerTo( String& tgt ) const;
+   virtual void render( TextWriter* tw, int32 depth ) const;
    virtual StmtRaise* clone() const { return new StmtRaise(*this); }
 
    /** Gets the expression generating the item to be raised. 

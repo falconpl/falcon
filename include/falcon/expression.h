@@ -49,7 +49,8 @@ public:
       e_trait_composite,
       e_trait_unquote,
       e_trait_vectorial,
-      e_trait_case
+      e_trait_case,
+      e_trait_tree
    }
    t_trait;
    
@@ -148,6 +149,8 @@ public:
    virtual TreeStep* nth( int32 n ) const;
    virtual bool setNth( int32 n, TreeStep* ts );
    
+   virtual const String& exprName() const = 0;
+   void render( TextWriter* tw, int depth ) const;
    
 protected:
    Expression* m_first;
@@ -200,6 +203,8 @@ public:
    virtual TreeStep* nth( int32 n ) const;
    virtual bool setNth( int32 n, TreeStep* ts );
    
+   virtual const String& exprName() const = 0;
+   void render( TextWriter* tw, int depth ) const;
 protected:
    
    Expression* m_first;
@@ -289,7 +294,7 @@ protected:
    inline virtual class_name* clone() const { return new class_name( *this ); } \
    virtual bool simplify( Item& value ) const; \
    static void apply_( const PStep*, VMContext* ctx ); \
-   virtual void describeTo( String&, int depth = 0 ) const;
+   virtual const String& exprName() const;
 
 
 #define FALCON_BINARY_EXPRESSION_CLASS_DECLARATOR( class_name, handler ) \
@@ -306,7 +311,7 @@ protected:
    inline virtual class_name* clone() const { return new class_name( *this ); } \
    virtual bool simplify( Item& value ) const; \
    static void apply_( const PStep*, VMContext* ctx ); \
-   virtual void describeTo( String&, int depth=0 ) const;\
+   virtual const String& exprName() const; \
    public:
 
 #define FALCON_TERNARY_EXPRESSION_CLASS_DECLARATOR( class_name, handler ) \
@@ -320,59 +325,9 @@ protected:
    inline virtual class_name* clone() const { return new class_name( *this ); } \
    virtual bool simplify( Item& value ) const; \
    static void apply_( const PStep*, VMContext* ctx ); \
-   virtual void describeTo( String&, int depth = 0 ) const;\
+   virtual void render( TextWriter* tw, int depth ) const;\
    public:
 
-//==============================================================
-
-
-#if 0
-
-/** "In" collection operator. */
-class FALCON_DYN_CLASS ExprIn: public BinaryExpression
-{
-public:
-   FALCON_BINARY_EXPRESSION_CLASS_DECLARATOR( ExprIn, t_in );
-};
-
-/** "notIn" collection operator. */
-class FALCON_DYN_CLASS ExprNotIn: public BinaryExpression
-{
-public:
-   FALCON_BINARY_EXPRESSION_CLASS_DECLARATOR( ExprNotIn, t_notin );
-};
-
-/** "provides" oop operator. */
-class FALCON_DYN_CLASS ExprProvides: public BinaryExpression
-{
-public:
-   FALCON_BINARY_EXPRESSION_CLASS_DECLARATOR( ExprProvides, t_provides );
-};
-
-
-/** String expansion expression */
-class FALCON_DYN_CLASS ExprStrExpand: public UnaryExpression
-{
-public:
-   FALCON_UNARY_EXPRESSION_CLASS_DECLARATOR( ExprStrExpand, t_strexpand );
-};
-
-/** Indirect expression -- probably to be removed */
-class FALCON_DYN_CLASS ExprIndirect: public UnaryExpression
-{
-public:
-   FALCON_UNARY_EXPRESSION_CLASS_DECLARATOR( ExprIndirect, t_indirect );
-};
-
-/** Future bind operation -- to be reshaped or removed */
-class FALCON_DYN_CLASS ExprFbind: public BinaryExpression
-{
-public:
-   FALCON_BINARY_EXPRESSION_CLASS_DECLARATOR( ExprFbind, t_fbind );
-};
-
-
-#endif
 
 }
 

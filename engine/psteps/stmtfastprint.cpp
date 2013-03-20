@@ -131,38 +131,25 @@ length_t StmtFastPrint::size() const
    return _p->m_exprs.size();
 }
 
-
-void StmtFastPrint::describeTo( String& str, int depth ) const
+void StmtFastPrint::render( TextWriter* tw, int32 depth ) const
 {
-   str = String( " " ).replicate( depth * depthIndent ) + 
-      (m_bAddNL ? "> " : ">> ");
-   
+   tw->write( renderPrefix(depth) );
+
+   tw->write( m_bAddNL ? "> " : ">> " );
    Private::ExprVector::iterator iter = _p->m_exprs.begin();
    while( iter != _p->m_exprs.end() )
    {
-      str += (*iter)->describe( depth + 1 );
+      (*iter)->render( tw, relativeDepth(depth) );
       ++iter;
       if( iter != _p->m_exprs.end() )
       {
-         str += ", ";
+         tw->write( ", " );
       }
    }
-}
 
-
-void StmtFastPrint::oneLinerTo( String& str ) const
-{
-   str = (m_bAddNL ? "> " : ">> ");
-   
-   Private::ExprVector::iterator iter = _p->m_exprs.begin();
-   while( iter != _p->m_exprs.end() )
+   if( depth >= 0 )
    {
-      str += (*iter)->oneLiner();
-      ++iter;
-      if( iter != _p->m_exprs.end() )
-      {
-         str += ", ";
-      }
+      tw->write( "\n" );
    }
 }
 

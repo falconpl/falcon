@@ -23,6 +23,7 @@
 namespace Falcon {
 
 /** The "provides" operator
+ * \TODO: Need to fix homoiconicity
  */
 class FALCON_DYN_CLASS ExprProvides: public UnaryExpression
 {
@@ -35,7 +36,8 @@ public:
    inline virtual ExprProvides* clone() const { return new ExprProvides( *this ); }
    virtual bool simplify( Item& value ) const;
    static void apply_( const PStep*, VMContext* ctx );
-   virtual void describeTo( String&, int depth = 0 ) const;
+   virtual void render( TextWriter* tw, int32 depth ) const;
+   virtual const String& exprName() const;
    const String& property() const { return m_property; }
    void property( const String& prop ) { m_property = prop; }
 

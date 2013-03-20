@@ -23,6 +23,7 @@
 #include <falcon/symbol.h>
 #include <falcon/module.h>
 #include <falcon/stdhandlers.h>
+#include <falcon/textwriter.h>
 
 #include <falcon/errors/linkerror.h>
 
@@ -52,13 +53,6 @@ StmtSelect::StmtSelect( int32 line, int32 chr ):
    apply = apply_;
 }
 
-StmtSelect::StmtSelect( Expression* expr, int32 line, int32 chr ):
-   SwitchlikeStatement( expr, line, chr )
-{
-   FALCON_DECLARE_SYN_CLASS( stmt_select );
-   apply = apply_;
-}
-
 StmtSelect::StmtSelect( const StmtSelect& other ):
    SwitchlikeStatement( other )
 {
@@ -69,24 +63,12 @@ StmtSelect::~StmtSelect()
 }
 
 
-void StmtSelect::describeTo( String& tgt, int depth ) const
+void StmtSelect::renderHeader( TextWriter* tw, int32 depth ) const
 {
-   if( m_expr != 0 )
-   {
-      String prefix = String(" ").replicate( depth * depthIndent );
-      tgt = prefix + "select " + m_expr->describe() +"\n";
-   }
-
-   //TODO...
-}
-
-
-void StmtSelect::oneLinerTo( String& tgt ) const
-{
-   if( m_expr != 0 )
-   {
-      tgt = "select " + m_expr->oneLiner();
-   }
+   tw->write( renderPrefix(depth) );
+   tw->write( "select " );
+   selector()->render( tw, relativeDepth(depth) );
+   tw->write("\n");
 }
 
 

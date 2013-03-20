@@ -19,6 +19,7 @@
 #include <falcon/closure.h>
 #include <falcon/function.h>
 #include <falcon/synclasses.h>
+#include <falcon/textwriter.h>
 
 #include "falcon/vmcontext.h"
 
@@ -55,13 +56,16 @@ ExprClosure::ExprClosure( const ExprClosure& other ):
 ExprClosure::~ExprClosure() {}
    
 
-void ExprClosure::describeTo( String& tgt, int ) const
+void ExprClosure::render( TextWriter* tw, int depth ) const
 {
    if( m_function == 0 ) {
-      tgt = "<Blank ExprClosure>";
-      return;
+      tw->write( "/* Blank ExprClosure */" );
    }
-   tgt = "/* close */ " + m_function->name();
+   else
+   {
+      tw->write("/* close */ ");
+      m_function->render( tw, depth );
+   }
 }
    
    

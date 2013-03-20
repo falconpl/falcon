@@ -17,6 +17,7 @@
 #include <falcon/trace.h>
 #include <falcon/vm.h>
 #include <falcon/vmcontext.h>
+#include <falcon/textwriter.h>
 
 #include <falcon/psteps/exprcall.h>
 #include <falcon/psteps/exprtree.h>
@@ -221,26 +222,35 @@ bool ExprCall::selector( Expression* e )
 }
 
 
-void ExprCall::describeTo( String& ret, int depth ) const
+void ExprCall::render( TextWriter* tw, int32 depth ) const
 {
+   tw->write( renderPrefix(depth) );
+
    if( m_callExpr == 0 )
    {
-      ret = "<Blank ExprCall>";
-      return;
+      tw->write("/* Blank ExprCall */");
    }
-   
-   ret = m_callExpr->describe(depth+1) + "(";
-   // and generate all the expressions, in inverse order.
-   for( unsigned int i = 0; i < _p->m_exprs.size(); ++i )
+   else
    {
-      if ( i > 0 )
+      m_callExpr->render( tw, relativeDepth(depth) );
+      tw->write("( ");
+      // and generate all the expressions, in inverse order.
+      for( unsigned int i = 0; i < _p->m_exprs.size(); ++i )
       {
-         ret += ", ";
+         if ( i > 0 )
+         {
+            tw->write(", ");
+         }
+         _p->m_exprs[i]->render(tw, relativeDepth(depth) );
       }
-      ret += _p->m_exprs[i]->describe(depth+1);
+
+      tw->write(" )");
    }
-   
-   ret +=")";
+
+   if( depth >= 0 )
+   {
+      tw->write("\n");
+   }
 }
 
 }

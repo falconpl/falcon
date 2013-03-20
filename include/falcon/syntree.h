@@ -62,8 +62,7 @@ public:
    TreeStep* first() const;
    TreeStep* last() const;
    
-   virtual void describeTo( String& tgt, int depth = 0) const;
-   virtual void oneLinerTo( String& tgt ) const;
+   virtual void render( TextWriter* tw, int32 depth ) const;
    virtual SynTree* clone() const { return new SynTree(*this); }
 
 

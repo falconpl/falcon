@@ -56,16 +56,11 @@ ExprUnquote::~ExprUnquote()
 }
 
 
-void ExprUnquote::describeTo( String& str, int depth) const
+const String& ExprUnquote::exprName() const
 {
-   if( m_first == 0 ) {
-      str = "<Blank ExprUnquote>";
-      return;
-   }
-   
-   str += m_first->describe(depth);
+   static String name("^~");
+   return name;
 }
-
 
 bool ExprUnquote::simplify(Falcon::Item& ) const
 {
@@ -89,7 +84,7 @@ void ExprUnquote::resolveUnquote( VMContext* ctx )
    else {
       m_first = new ExprValue( value );
    }
-   TRACE1( "ExprUnquote::resolveUnquote \"%s\"", m_first->describe(0).c_ize() );
+   TRACE1( "ExprUnquote::resolveUnquote \"%s\"", m_first->describe().c_ize() );
 
    ctx->popData();
 }

@@ -18,6 +18,9 @@
 
 #include <falcon/syntree.h>
 #include <falcon/vmcontext.h>
+#include <falcon/textwriter.h>
+#include <falcon/symbol.h>
+#include <falcon/expression.h>
 
 #include <falcon/psteps/stmttry.h>
 
@@ -181,25 +184,75 @@ bool StmtTry::setNth( int32 n, TreeStep* ts )
 }
 
 
-void StmtTry::describeTo( String& tgt, int depth ) const
+void StmtTry::render( TextWriter* tw, int32 depth ) const
 {
-   // TODO: describe catches, finally & check various options.
-   if( m_body == 0 )
+
+   int32 dp = depth < 0 ? -depth : depth+1;
+   tw->write( renderPrefix(depth) );
+   tw->write( "try\n" );
+
+   if( m_body != 0 )
    {
-      tgt = "<Blank StmtTry>";
-      return;
+      m_body->render(tw, dp);
    }
    
-   String prefix = String(" ").replicate( depth * depthIndent );
-   tgt = prefix + "try\n" + m_body->describe( depth + 1 ) + "\n" + prefix + "end";   
+   if( m_select != 0 )
+   {
+      int32 count = m_select->arity();
+      for( int32 i = 0; i < count; ++i )
+      {
+         SynTree* handler = static_cast<SynTree*>(m_select->nth(i));
+         if( handler->category() != SynTree::e_cat_syntree )
+         {
+            continue;
+         }
+
+         tw->write( renderPrefix(depth) );
+         tw->write( "catch " );
+
+         if( handler->selector() != 0 )
+         {
+            handler->selector()->render(tw, relativeDepth(dp) );
+         }
+
+         if( handler->target() != 0 )
+         {
+            if( handler->isTracedCatch() )
+            {
+               tw->write( " as " );
+            }
+            else {
+               tw->write( " in ");
+            }
+            tw->write( handler->target()->name() );
+         }
+         tw->write( "\n" );
+
+         handler->render( tw, dp );
+
+         if( handler->selector() == 0 )
+         {
+            // force catch-all to be the last
+            break;
+         }
+      }
+   }
+
+   if( m_fbody != 0 )
+   {
+      tw->write( renderPrefix(depth) );
+      tw->write( "finally\n" );
+      m_fbody->render(tw, dp );
+   }
+
+   tw->write( renderPrefix(depth) );
+   tw->write("end");
+
+   if( depth >= 0 )
+   {
+      tw->write("\n");
+   }
 }
-
-
-void StmtTry::oneLinerTo( String& tgt ) const
-{
-   tgt = "try ...";
-}
-
    
 void StmtTry::apply_( const PStep* ps, VMContext* ctx )
 { 
@@ -207,7 +260,7 @@ void StmtTry::apply_( const PStep* ps, VMContext* ctx )
 
    // first time around?
    CodeFrame& cf = ctx->currentCode();
-   TRACE( "StmtTry::apply_ %d/1 %s ", cf.m_seqId, self->oneLiner().c_ize() );
+   TRACE( "StmtTry::apply_ %d/1 %s ", cf.m_seqId, self->describe().c_ize() );
    if( cf.m_seqId == 0 )
    {
       // preliminary checks.

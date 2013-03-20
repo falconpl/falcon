@@ -1349,7 +1349,7 @@ bool SynClasses::ClassCase::op_init( VMContext* ctx, void* instance, int pCount 
       }
    }
 
-   return true;
+   return false;
 }
 void SynClasses::ClassCase::op_call(VMContext* ctx, int pcount, void* instance) const
 {
@@ -1399,7 +1399,7 @@ void SynClasses::ClassCase::unflatten( VMContext*, ItemArray& arr, void* instanc
 //=================================================================
 // Statements
 //
-static void init_selector_and_rest( VMContext* ctx, int pcount, StmtWhile* step, bool bAcceptNil )
+static void init_selector_and_rest( VMContext* ctx, int pcount, Statement* step, bool bAcceptNil )
 {
    if( pcount < 1 )
    {
@@ -1453,6 +1453,11 @@ static void init_selector_and_rest( VMContext* ctx, int pcount, StmtWhile* step,
 }
 
 static void init_while( VMContext* ctx, int pcount, StmtWhile* step )
+{
+   init_selector_and_rest( ctx, pcount, step, false );
+}
+
+static void init_switch( VMContext* ctx, int pcount, SwitchlikeStatement* step )
 {
    init_selector_and_rest( ctx, pcount, step, false );
 }
@@ -1540,8 +1545,8 @@ FALCON_STANDARD_SYNCLASS_OP_CREATE( Loop, StmtLoop, init_loop )
 FALCON_STANDARD_SYNCLASS_OP_CREATE( Raise, StmtRaise, unaryExprSet )
 FALCON_STANDARD_SYNCLASS_OP_CREATE_SIMPLE( Return, StmtReturn, unaryExprSet )
 FALCON_STANDARD_SYNCLASS_OP_CREATE( Rule, ExprRule, init_generic_multistmt )
-FALCON_STANDARD_SYNCLASS_OP_CREATE( Select, StmtSelect, zeroaryExprSet ) //
-FALCON_STANDARD_SYNCLASS_OP_CREATE( Switch, StmtSwitch, zeroaryExprSet ) //
+FALCON_STANDARD_SYNCLASS_OP_CREATE( Select, StmtSelect, init_switch )
+FALCON_STANDARD_SYNCLASS_OP_CREATE( Switch, StmtSwitch, init_switch )
 FALCON_STANDARD_SYNCLASS_OP_CREATE( Try, StmtTry, zeroaryExprSet ) //
 FALCON_STANDARD_SYNCLASS_OP_CREATE( While, StmtWhile, init_while )
 
@@ -1626,7 +1631,7 @@ void SynClasses::ClassForTo::flatten( VMContext*, ItemArray& subItems, void* ins
    static Class* clsSym = Engine::handlers()->symbolClass();
 
    StmtForTo* stmt = static_cast<StmtForTo*>(instance);
-   TRACE1( "SynClasses::ClassForTo::flatten %s", stmt->oneLiner().c_ize() );
+   TRACE1( "SynClasses::ClassForTo::flatten %s", stmt->describe().c_ize() );
    subItems.resize(8);
    if ( stmt->target() != 0 ) { subItems[0] = Item( clsSym, stmt->target() ); }
    if ( stmt->startExpr() != 0 ) { subItems[1] = Item( stmt->startExpr()->handler(), stmt->startExpr() ); }
@@ -1652,7 +1657,7 @@ void SynClasses::ClassForTo::unflatten( VMContext*, ItemArray& subItems, void* i
       if( ! subItems[6].isNil() ) stmt->forLast( static_cast<SynTree*>(subItems[6].asInst()) );
       if( ! subItems[7].isNil() ) stmt->forMiddle( static_cast<SynTree*>(subItems[7].asInst()) );
    }
-   TRACE1( "SynClasses::ClassForTo::unflatten %s", stmt->oneLiner().c_ize() );
+   TRACE1( "SynClasses::ClassForTo::unflatten %s", stmt->describe().c_ize() );
 }
 
 //=================================================================

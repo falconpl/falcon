@@ -19,6 +19,7 @@
 #include <falcon/vmcontext.h>
 #include <falcon/prototypeclass.h>
 #include <falcon/flexydict.h>
+#include <falcon/textwriter.h>
 
 #include <falcon/synclasses.h>
 #include <falcon/engine.h>
@@ -93,7 +94,7 @@ bool ExprProto::setNth( int32 n, TreeStep* ts )
 {
    if( ts->category() != TreeStep::e_cat_expression ) return false;
    if( n < 0 ) n = (int)_p->m_defs.size() + n;
-   if( n < 0 || n > (int)_p->m_defs.size() ) return false;
+   if( n < 0 || n >= (int)_p->m_defs.size() ) return false;
    if( ! ts->setParent(this) ) return false;
    dispose( _p->m_defs[n].second );
    _p->m_defs[n].second = static_cast<Expression*>(ts);
@@ -136,22 +137,33 @@ ExprProto& ExprProto::add( const String& name, Expression* e )
 }
 
 
-void ExprProto::describeTo( String& tgt, int depth ) const
+void ExprProto::render( TextWriter* tw, int32 depth ) const
 {
-   tgt.size(0);
-   tgt += "p{";
-   Private::DefVector::const_iterator iter = _p->m_defs.begin();
-   String temp;
-   while( _p->m_defs.end() != iter )
+   tw->write( renderPrefix(depth) );
+   tw->write( "p{" );
+   if( !_p->m_defs.empty() )
    {
-      if ( tgt.size()>2 ) {
-         tgt += ";";
+      Private::DefVector::const_iterator iter = _p->m_defs.begin();
+      tw->write( "\n" );
+      while( _p->m_defs.end() != iter )
+      {
+
+         tw->write( renderPrefix(depth+1) );
+         tw->write(iter->first);
+         tw->write( " = " );
+         iter->second->render( tw, relativeDepth(depth) );
+         tw->write( "\n" );
+         ++iter;
       }
 
-      temp.size(0);
-      iter->second->describeTo(temp, depth+1);
-      tgt += iter->first + "=" + temp;
-      ++iter;
+      tw->write( renderPrefix(depth) );
+   }
+
+   tw->write( "}" );
+
+   if( depth >= 0 )
+   {
+      tw->write( "\n" );
    }
 }
 
@@ -222,7 +234,6 @@ void ExprProto::apply_( const PStep* ps, VMContext* ctx )
       {
          value->insert(viter->first, *result );
       }
-
 
       ++result;
       ++viter;

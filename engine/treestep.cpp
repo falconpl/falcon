@@ -38,13 +38,22 @@ TreeStep::TreeStep( const TreeStep& other ):
 {
 }
 
+
 TreeStep::~TreeStep()
 {
 }
 
+
 void TreeStep::gcMark( uint32 mark )
 {
    m_gcMark = mark;
+}
+
+
+void TreeStep::describeTo( String& str ) const
+{
+   str = m_handler->name();
+   str += String().A(" at ").N(sr().line());
 }
 
 

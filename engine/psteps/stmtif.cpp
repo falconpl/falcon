@@ -19,6 +19,7 @@
 #include <falcon/expression.h>
 #include <falcon/vmcontext.h>
 #include <falcon/syntree.h>
+#include <falcon/textwriter.h>
 
 #include <falcon/psteps/stmtif.h>
 #include <falcon/engine.h>
@@ -144,55 +145,54 @@ StmtIf& StmtIf::addElif( TreeStep* ifTrue  )
    return *this;
 }
 
-void StmtIf::oneLinerTo( String& tgt ) const
+
+void StmtIf::render( TextWriter* tw, int32 depth ) const
 {
+   tw->write( renderPrefix(depth) );
+
    if( _p->m_exprs.empty() || _p->m_exprs[0]->selector() == 0 )
    {
-      tgt = "<Blank StmtIF>";
+      tw->write( "/* Blank StmtIF */" );
    }
-   else {
-      tgt = "if "+ _p->m_exprs[0]->selector()->describe();
-   }
-}
-
-
-void StmtIf::describeTo( String& tgt, int depth ) const
-{
-   if( _p->m_exprs.empty() )
+   else
    {
-      tgt = "<Blank StmtIF>";
-      return;
-   }
-   
-   String prefix = String(" ").replicate( depth * depthIndent );   
-   //String prefix1 = String(" ").replicate( (depth+1) * depthIndent );
-   
-   if( _p->m_exprs.empty() || _p->m_exprs[0]->selector() == 0 )
-   {
-      tgt = "if...";
-      return;
-   }
-   
-   tgt += prefix + "if "+ _p->m_exprs[0]->selector()->describe(depth+1) + "\n" +
-              _p->m_exprs[0]->describe(depth+1) +"\n";
+      int32 dp = depth < 0 ? -depth : depth+1;
 
-   for ( size_t i = 1; i < _p->m_exprs.size(); ++i )
-   {      
-      TreeStep* tree = _p->m_exprs[i];
-      if( tree->selector() != 0 )
+      tw->write( "if " );
+      _p->m_exprs[0]->selector()->render( tw, relativeDepth(depth) );
+      tw->write("\n");
+      _p->m_exprs[0]->render( tw, dp );
+
+
+      for ( size_t i = 1; i < _p->m_exprs.size(); ++i )
       {
-         tgt += prefix + "elif " + tree->selector()->describe(depth+1) + "\n" +
-                     tree->describe(depth+1) + "\n";
+         TreeStep* tree = _p->m_exprs[i];
+         if( tree->selector() != 0 )
+         {
+            tw->write( renderPrefix(depth) );
+            tw->write( "elif " );
+            tree->selector()->render( tw, relativeDepth(depth) );
+            tw->write("\n");
+            tree->render(tw, dp );
+         }
+         else  {
+            tw->write( renderPrefix(depth) );
+            tw->write("else\n");
+            tree->render( tw, dp );
+            tw->write("\n");
+            // force else to be the last
+            break;
+         }
       }
-      else if( i + 1 == _p->m_exprs.size() ) {
-         tgt += prefix + "else\n" + tree->describe(depth+1) +"\n";
-      }
-      else {
-         tgt += "elif...\n";
-      }
+
+      tw->write( renderPrefix(depth) );
+      tw->write("end");
    }
 
-   tgt += prefix + "end";
+   if( depth >= 0 )
+   {
+      tw->write("\n");
+   }
 }
 
 

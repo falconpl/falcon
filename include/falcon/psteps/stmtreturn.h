@@ -35,8 +35,7 @@ public:
    StmtReturn( const StmtReturn& other );
    virtual ~StmtReturn();
 
-   virtual void describeTo( String& tgt, int depth=0 ) const;
-   virtual void oneLinerTo( String& tgt ) const;
+   virtual void render( TextWriter* tw, int32 depth ) const;
    virtual StmtReturn* clone() const { return new StmtReturn(*this); }
    
    bool hasDoubt() const { return m_bHasDoubt; }

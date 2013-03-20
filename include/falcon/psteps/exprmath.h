@@ -25,18 +25,13 @@ class FALCON_DYN_CLASS ExprMath: public BinaryExpression
 public:
    inline virtual ~ExprMath() {}
 
-   virtual void describeTo( String&, int depth=0 ) const;
-
    inline virtual bool isStandAlone() const { return false; }
    virtual bool isStatic() const { return false; }
 
-   const String& name() const { return m_name; }
-
 protected:
-   String m_name;
    
-   ExprMath( Expression* op1, Expression* op2, const String& name, int line = 0, int chr = 0 );
-   ExprMath( const String& name, int line = 0, int chr = 0 );
+   ExprMath( Expression* op1, Expression* op2, int line = 0, int chr = 0 );
+   ExprMath( int line = 0, int chr = 0 );
    ExprMath( const ExprMath& other );
 };
 
@@ -50,6 +45,7 @@ protected:
          inline virtual ~ClassName() {}; \
          inline virtual ClassName* clone() const { return new ClassName( *this ); }\
          virtual bool simplify( Item& value ) const; \
+         const String& exprName() const; \
       private:\
          class ops;\
       };\
@@ -91,8 +87,8 @@ public:
    virtual bool isStandAlone() const { return true; }
    
 protected:
-   ExprAuto( Expression* op1, Expression* op2, const String& name, int line = 0, int chr = 0 );
-   ExprAuto( const String& name, int line = 0, int chr = 0 );
+   ExprAuto( Expression* op1, Expression* op2, int line = 0, int chr = 0 );
+   ExprAuto( int line = 0, int chr = 0 );
    ExprAuto( const ExprAuto& other );
 };
 
@@ -105,6 +101,7 @@ protected:
          ClassName( const ClassName &other );\
          inline virtual ~ClassName() {}; \
          inline virtual ClassName* clone() const { return new ClassName( *this ); }\
+         const String& exprName() const; \
       private:\
          class ops;\
       };\

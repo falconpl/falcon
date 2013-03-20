@@ -47,14 +47,14 @@ void ExprEEQ::apply_( const PStep* ps, VMContext* ctx )
       {
          return;
       }
-      // fallthrough
+      /* no break */
    case 1:
       cf.m_seqId = 2;
       if( ctx->stepInYield( self->second(), cf ) )
       {
          return;
       }
-      // fallthrough
+      break;
    }
    
    Item *op1, *op2;
@@ -87,23 +87,13 @@ void ExprEEQ::apply_( const PStep* ps, VMContext* ctx )
       
    default:
       op1->setBoolean(op1->asInst() == op2->asInst());
+      break;
    }
    
    ctx->popData();
    ctx->popCode();
 }
 
-
-void ExprEEQ::describeTo( String& ret, int depth ) const
-{
-   if( m_first == 0 || m_second == 0 )
-   {
-      ret = "<Blank ExprEEQ>";
-      return;
-   }
-   
-   ret = "(" + m_first->describe(depth+1) + " === " + m_second->describe(depth+1) + ")";
-}
 
 bool ExprEEQ::simplify( Item& value ) const
 {
@@ -115,6 +105,12 @@ bool ExprEEQ::simplify( Item& value ) const
    }
    
    return false;
+}
+
+const String& ExprEEQ::exprName() const
+{
+   static String name("===");
+   return name;
 }
 
 }

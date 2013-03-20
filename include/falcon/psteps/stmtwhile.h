@@ -41,8 +41,7 @@ public:
    
    virtual ~StmtWhile();
 
-   virtual void describeTo( String& tgt, int depth=0 ) const;
-   virtual void oneLinerTo( String& tgt ) const;
+   virtual void render( TextWriter* tw, int32 depth ) const;
    virtual StmtWhile* clone() const { return new StmtWhile(*this); }
    static void apply_( const PStep*, VMContext* ctx );
 

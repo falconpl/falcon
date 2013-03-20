@@ -19,6 +19,7 @@
 #include <falcon/vmcontext.h>
 #include <falcon/trace.h>
 #include <falcon/stdsteps.h>
+#include <falcon/textwriter.h>
 
 #include <falcon/synclasses.h>
 #include <falcon/engine.h>
@@ -85,7 +86,7 @@ inline void generic_apply( const ExprIndex* self, VMContext* ctx )
          else {
             if( ctx->stepInYield( current, cf ) ) return;
          }
-         // fallthrough
+         /* no break */
 
       case 1:
          cf.m_seqId = 2;
@@ -100,7 +101,7 @@ inline void generic_apply( const ExprIndex* self, VMContext* ctx )
          else {
             if( ctx->stepInYield( current, cf ) ) return;
          }
-         // fallthrough
+         break;
    }
 
    // we're done here.
@@ -130,17 +131,33 @@ void ExprIndex::PstepLValue::apply_( const PStep* ps, VMContext* ctx )
 }
 
 
-void ExprIndex::describeTo( String& ret, int depth ) const
+void ExprIndex::render( TextWriter* tw, int depth ) const
 {
+   tw->write(renderPrefix(depth));
+
    if( m_first == 0 || m_second == 0 )
    {
-      ret = "<Blank ExprIndex>";
-      return;
+      tw->write( "/* Blank ExprIndex */" );
+   }
+   else
+   {
+      m_first->render( tw, relativeDepth(depth) );
+      tw->write("[");
+      m_second->render( tw, relativeDepth(depth) );
+      tw->write("]");
    }
 
-   ret = "(" + m_first->describe(depth+1) + "[" + m_second->describe(depth+1) + "])";
+   if( depth >= 0 )
+   {
+      tw->write("\n");
+   }
 }
 
+const String& ExprIndex::exprName() const
+{
+   static String name("[]");
+   return name;
+}
 
 }
 

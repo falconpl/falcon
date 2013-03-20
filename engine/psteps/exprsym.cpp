@@ -20,6 +20,7 @@
 
 #include <falcon/symbol.h>
 #include <falcon/vmcontext.h>
+#include <falcon/textwriter.h>
 
 #include <falcon/synclasses.h>
 #include <falcon/engine.h>
@@ -137,21 +138,27 @@ void ExprSymbol::name( const String& n )
 
 
 
-void ExprSymbol::describeTo( String& val, int ) const
+void ExprSymbol::render( TextWriter* tw, int32 depth ) const
 {
+   tw->write( renderPrefix(depth) );
+
    if( m_symbol == 0 )
    {
-      val = "<Blank ExprSymbol>";
+      tw->write( "/* Blank ExprSymbol */" );
    }
-   else {   
-      val = m_symbol->name();
+   else {
+      tw->write( m_symbol->name() );
+   }
+   if( depth >= 0 )
+   {
+      tw->write("\n");
    }
 }
 
 
-void ExprSymbol::PStepLValue::describeTo( String& s, int depth ) const
+void ExprSymbol::PStepLValue::describeTo( String& s ) const
 {
-   m_owner->describeTo( s, depth );
+   s = "ExprSymbol::PStepLValue";
 }
 
 void ExprSymbol::apply_( const PStep* ps, VMContext* ctx )

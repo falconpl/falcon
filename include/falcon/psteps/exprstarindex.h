@@ -27,6 +27,7 @@ class FALCON_DYN_CLASS ExprStarIndex: public BinaryExpression
 {
 public:
    FALCON_BINARY_EXPRESSION_CLASS_DECLARATOR( ExprStarIndex, expr_starindex );
+   virtual void render( TextWriter* tw, int32 depth ) const;
 };
 
 

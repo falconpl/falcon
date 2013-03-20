@@ -21,6 +21,7 @@
 #include <falcon/vmcontext.h>
 #include <falcon/syntree.h>
 #include <falcon/psteps/stmtswitch.h>
+#include <falcon/textwriter.h>
 
 #include <falcon/engine.h>
 #include <falcon/synclasses.h>
@@ -41,13 +42,6 @@ StmtSwitch::StmtSwitch( int32 line, int32 chr ):
 }
 
 
-StmtSwitch::StmtSwitch( Expression* expr, int32 line, int32 chr ):
-   SwitchlikeStatement( expr, line, chr )
-{
-   FALCON_DECLARE_SYN_CLASS( stmt_switch );
-   apply = apply_;
-}
-
 StmtSwitch::StmtSwitch( const StmtSwitch& other ):
    SwitchlikeStatement( other )
 {
@@ -60,18 +54,13 @@ StmtSwitch::~StmtSwitch()
 }
 
 
-void StmtSwitch::describeTo( String& tgt, int depth ) const
+void StmtSwitch::renderHeader( TextWriter* tw, int32 depth ) const
 {
-   if( m_expr == 0 )
-   {
-      tgt = "<Blank switch>";
-      return;
-   }
-   
-   String prefix = String(" ").replicate( depth * depthIndent );
-   tgt = prefix + "switch " + m_expr->describe() +"\n";
+   tw->write( renderPrefix(depth) );
+   tw->write( "switch " );
+   selector()->render( tw, relativeDepth(depth) );
+   tw->write("\n");
 }
-
 
 
 void StmtSwitch::apply_( const PStep* ps, VMContext* ctx )

@@ -19,6 +19,7 @@
 #include <falcon/vmcontext.h>
 #include <falcon/synclasses.h>
 #include <falcon/engine.h>
+#include <falcon/textwriter.h>
 
 namespace Falcon
 {
@@ -37,15 +38,16 @@ StmtContinue::StmtContinue( const StmtContinue& other ):
    apply = apply_;
 }
    
-void StmtContinue::describeTo( String& tgt, int depth ) const
+void StmtContinue::render( TextWriter* tw, int32 depth ) const
 {
-   tgt = String(" ").replicate( depth * depthIndent ) + "continue";
-}
+   tw->write( renderPrefix(depth) );
 
+   tw->write( "continue" );
 
-void StmtContinue::oneLinerTo( String& tgt ) const
-{
-   tgt = "continue";
+   if( depth >= 0 )
+   {
+      tw->write( "\n" );
+   }
 }
 
 

@@ -31,6 +31,7 @@ class Class;
 class Item;
 class ClassFunction;
 class Closure;
+class TextWriter;
 
 /**
  Falcon function.
@@ -60,7 +61,6 @@ class FALCON_DYN_CLASS Function: public Mantra
 public:
    Function( const String& name, Module* owner = 0, int32 line = 0 );
    virtual ~Function();
-   
 
    /** Parses the description of the function.
     \param dsec Descriptive list of parameters and signature.
@@ -209,6 +209,13 @@ public:
 
    inline uint32 paramCount() const { return m_vars.paramCount(); }
    bool hasClosure() const { return m_vars.closedCount() != 0; }
+
+   /**
+    * Writes the function to an output stream.
+    */
+   virtual void render( TextWriter* tgt, int32 depth ) const;
+
+   virtual void renderFunctionBody( TextWriter* tgt, int32 depth ) const;
 
 protected:
    VarMap m_vars;

@@ -57,16 +57,10 @@ void ExprEvalRet::apply_( const PStep* ps, VMContext* ctx )
 }
 
 
-void ExprEvalRet::describeTo( String& str, int depth ) const
+const String& ExprEvalRet::exprName() const
 {
-   if( m_first == 0 )
-   {
-      str = "<Blank ExprEvalRet>";
-      return;
-   }
-   
-   str = "(^= ";
-   str += m_first->describe(depth+1)+")";
+   static String name("^=");
+   return name;
 }
 
 }

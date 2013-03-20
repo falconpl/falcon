@@ -57,7 +57,7 @@ public:
 
    virtual ExprValue* clone() const;
    virtual bool isStatic() const;
-   virtual void describeTo( String&, int depth=0 ) const;
+   virtual void render( TextWriter* tw, int32 depth ) const;
    virtual bool isStandAlone() const;
 
 private:

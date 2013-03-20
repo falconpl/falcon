@@ -45,8 +45,7 @@ public:
    
    virtual ~StmtLoop();
 
-   virtual void describeTo( String& tgt, int depth=0 ) const;
-   virtual void oneLinerTo( String& tgt ) const;
+   virtual void render( TextWriter* tw, int32 depth ) const;
    virtual StmtLoop* clone() const { return new StmtLoop(*this); }
 
    virtual bool selector( Expression* e );

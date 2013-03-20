@@ -69,7 +69,7 @@ public:
     */
    void base( Class* cls );
 
-   virtual void describeTo( String& target, int depth = 0 ) const;
+   virtual void render( TextWriter* tw, int depth ) const;
 
    virtual bool isStatic() const { return false; }
    virtual bool simplify( Item& ) const { return false; }  

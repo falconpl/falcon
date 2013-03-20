@@ -18,6 +18,7 @@
 #include <falcon/vmcontext.h>
 #include <falcon/pstep.h>
 #include <falcon/errors/operanderror.h>
+#include <falcon/textwriter.h>
 
 namespace Falcon {
 
@@ -65,16 +66,11 @@ void ExprBNOT::apply_( const PStep* ps, VMContext* ctx )
    }
 }
 
-void ExprBNOT::describeTo( String& str, int depth ) const
+
+const String& ExprBNOT::exprName() const
 {
-   if( m_first == 0 )
-   {
-      str = "<Blank ExprBNOT>";
-      return;
-   }
-   
-   str = "^! ";
-   str += m_first->describe( depth + 1 );
+   static String name("^!");
+   return name;
 }
 
 }

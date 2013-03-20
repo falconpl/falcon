@@ -18,6 +18,7 @@
 #include <falcon/classes/classarray.h>
 #include <falcon/vm.h>
 #include <falcon/engine.h>
+#include <falcon/textwriter.h>
 
 #include <falcon/psteps/exprarray.h>
 #include <falcon/stdhandlers.h>
@@ -50,53 +51,45 @@ ExprArray::ExprArray( const ExprArray& other ):
 
 //=====================================================
 
-void ExprArray::describeTo( String& str, int depth ) const
+void ExprArray::render( TextWriter* tw, int32 depth ) const
 {
+   tw->write( renderPrefix(depth) );
+
    ExprVector_Private::ExprVector& mye = _p->m_exprs;
-   ExprVector_Private::ExprVector::const_iterator iter = mye.begin();
-   
    if( mye.empty() )
    {
-      str = "[]";
+      tw->write( "[]\n" );
       return;
    }
-   
-   String prefix = String(" ").replicate( (depth+1) * depthIndent );
-   str = "[ ";
-   while( iter != mye.end() )
-   {
-      if( str.size() > 2 )
-      {
-         str += ",\n";
-      }
 
-      str += prefix + (*iter)->describe( depth +1 );
-      ++iter;
-   }
-
-   str += String(" ").replicate( depth * depthIndent ) + "\n] ";
-}
-
-void ExprArray::oneLinerTo( String& str ) const
-{
-   ExprVector_Private::ExprVector& mye = _p->m_exprs;
+   tw->write( "[ " );
+   bool bFirst = true;
    ExprVector_Private::ExprVector::const_iterator iter = mye.begin();
-   str = "[ ";
    while( iter != mye.end() )
    {
-      if( str.size() > 2 )
+      TreeStep* ts = *iter;
+      if( bFirst )
       {
-         str += ", ";
+         bFirst = false;
       }
+      else
+      {
+         tw->write(", ");
+      }
+      ts->render( tw, relativeDepth(depth) );
 
-      str += (*iter)->oneLiner();
       ++iter;
    }
 
-   str += " ]";
+   tw->write( renderPrefix(depth) );
+   tw->write( " ]" );
+
+   if( depth >= 0 )
+   {
+      tw->write("\n");
+   }
 }
 
-//=====================================================
 
 bool ExprArray::simplify( Item& ) const
 {

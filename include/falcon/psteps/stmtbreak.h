@@ -32,8 +32,7 @@ public:
    StmtBreak( const StmtBreak& other );   
    virtual ~StmtBreak() {};
 
-   virtual void describeTo( String& tgt, int depth=0 ) const;
-   virtual void oneLinerTo( String& tgt ) const;
+   virtual void render( TextWriter* tw, int32 depth ) const;
    
    virtual StmtBreak* clone() const{ return new StmtBreak(*this); }
 protected:

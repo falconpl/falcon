@@ -45,7 +45,7 @@ public:
    virtual bool isStatic() const { return false; }
    virtual bool simplify( Item& result ) const;
    
-   virtual void describeTo( String& target, int depth=0 ) const;
+   virtual void render( TextWriter* tw, int32 depth ) const;
       
    virtual int32 arity() const;
    virtual TreeStep* nth( int32 n ) const;

@@ -33,7 +33,7 @@ public:
 
    inline virtual ExprUnpack* clone() const { return new ExprUnpack( *this ); }
    virtual bool simplify( Item& value ) const;
-   virtual void describeTo( String&, int depth = 0 ) const;
+   virtual void render( TextWriter* tw, int32 depth ) const;
    inline virtual bool isStandAlone() const { return true; }
 
    int targetCount() const;

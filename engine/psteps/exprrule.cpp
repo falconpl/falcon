@@ -20,6 +20,7 @@
 #include <falcon/vm.h>
 #include <falcon/trace.h>
 #include <falcon/synclasses_id.h>
+#include <falcon/textwriter.h>
 
 #include <falcon/psteps/exprrule.h>
 
@@ -195,42 +196,32 @@ ExprRule& ExprRule::addAlternative()
 }
 
 
-void ExprRule::describeTo( String& tgt, int depth ) const
+void ExprRule::render( TextWriter* tw, int32 depth ) const
 {
-   if( _p->arity() == 0 )
-   {
-      tgt = "<Blank StmtRule>";
-      return;
-   }
-   
-   String prefix = String( " " ).replicate( depth * depthIndent );
-      
-   tgt += prefix + "rule\n";
-   bool bFirst = true;
+   tw->write( renderPrefix(depth) );
+
+   tw->write( "rule\n" );
    Private::ExprVector::const_iterator iter = _p->m_exprs.begin();
+   int32 dp =  depth < 0 ? -depth : depth+1;
+
    while( iter != _p->m_exprs.end() )
    {
-      if( ! bFirst )
+      if( iter != _p->m_exprs.begin() )
       {
-         tgt += prefix + "or\n";
+         tw->write( renderPrefix(dp) );
+         tw->write( "or\n" );
       }
-      bFirst = false;
-      (*iter)->describe( depth + 1 );
+
+      (*iter)->render( tw, dp  );
       ++iter;
    }
-   tgt += prefix + "end";
-}
+   tw->write( renderPrefix(depth) );
+   tw->write( "end" );
 
-
-void ExprRule::oneLinerTo( String& tgt ) const
-{
-   if( _p->arity() == 0 )
+   if( depth >= 0 )
    {
-      tgt = "<Blank StmtRule>";
-      return;
+      tw->write( "\n" );
    }
-   
-   tgt += "rule ...";
 }
 
 
@@ -336,24 +327,20 @@ StmtCut::~StmtCut()
    dispose( m_expr );
 }
 
-void StmtCut::describeTo( String& tgt, int depth ) const
+void StmtCut::render( TextWriter* tw, int32 depth ) const
 {
-   String prefix = String(" ").replicate(depth * depthIndent);
-   tgt = prefix + "!";
-   if( m_expr != 0 )
-   {
-      tgt += " ";
-      tgt += m_expr->describe(depth+1);
-   }
-}
+   tw->write( renderPrefix(depth) );
 
-void StmtCut::oneLinerTo( String& tgt ) const
-{
-   tgt = "!";
+   tw->write("!");
    if( m_expr != 0 )
    {
-      tgt += " ";
-      tgt += m_expr->oneLiner();
+      tw->write(" ");
+      m_expr->render( tw, depth < 0 ? -depth : depth + 1 );
+   }
+
+   if( depth >= 0 )
+   {
+      tw->write("\n");
    }
 }
 
@@ -453,28 +440,24 @@ StmtDoubt::~StmtDoubt()
    dispose( m_expr );
 }
 
-void StmtDoubt::describeTo( String& tgt, int depth ) const
+void StmtDoubt::render( TextWriter* tw, int32 depth ) const
 {
-   if( m_expr == 0 ) {
-      tgt = "<Blank StmtDoubt>";
-      return;
+   tw->write( renderPrefix(depth) );
+   if( m_expr == 0 )
+   {
+      tw->write( "/* Blank StmtDoubt */" );
    }
-   
-   tgt += String(" ").replicate( depth * depthIndent) + "? ";
-   tgt += m_expr->describe( depth + 1 );
+   else {
+      tw->write("? ");
+      m_expr->render( tw, depth < 0 ? -depth : depth + 1 );
+   }
+
+   if( depth >= 0 )
+   {
+      tw->write("\n");
+   }
 }
 
-
-void StmtDoubt::oneLinerTo( String& tgt ) const
-{
-   if( m_expr == 0 ) {
-      tgt = "<Blank StmtDoubt>";
-      return;
-   }
-     
-   tgt += "? ";
-   tgt += m_expr->oneLiner();
-}
 
 Expression* StmtDoubt::selector()  const
 {

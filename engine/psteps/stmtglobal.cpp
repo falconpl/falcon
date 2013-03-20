@@ -24,6 +24,7 @@
 #include <falcon/stdsteps.h>
 #include <falcon/datareader.h>
 #include <falcon/datawriter.h>
+#include <falcon/textwriter.h>
 
 #include <falcon/symbol.h>
 #include <falcon/function.h>
@@ -87,30 +88,36 @@ StmtGlobal::~StmtGlobal()
    delete _p;
 }
 
-void StmtGlobal::describeTo( String& tgt, int depth ) const
+void StmtGlobal::render( TextWriter* tw, int32 depth ) const
 {
+   tw->write( renderPrefix(depth) );
    if( _p->m_symbols.empty() )
    {
-      tgt = "<blank StmtGlobal>";
-      return;
+      tw->write( "/* Blank StmtGlobal */" );
+   }
+   else
+   {
+      tw->write("global ");
+      Private::SymbolVector::iterator viter = _p->m_symbols.begin();
+      Private::SymbolVector::iterator vend = _p->m_symbols.end();
+      bool bDone = false;
+      while( viter != vend )
+      {
+         Symbol* sym = *viter;
+         if( ! bDone ) {
+            bDone = true;
+         }
+         else {
+            tw->write(", ");
+         }
+         tw->write(sym->name());
+         ++viter;
+      }
    }
 
-   tgt = String(" ").replicate(depth*PStep::depthIndent) + "global ";
-
-   Private::SymbolVector::iterator viter = _p->m_symbols.begin();
-   Private::SymbolVector::iterator vend = _p->m_symbols.end();
-   bool bDone = false;
-   while( viter != vend )
+   if( depth >= 0 )
    {
-      Symbol* sym = *viter;
-      if( ! bDone ) {
-         bDone = true;
-      }
-      else {
-         tgt +=", ";
-      }
-      tgt += sym->name();
-      ++viter;
+      tw->write("\n");
    }
 }
 
@@ -191,7 +198,7 @@ void StmtGlobal::restore( DataReader* stream )
 void StmtGlobal::apply_( const PStep* ps, VMContext* ctx )
 {
    const StmtGlobal* self = static_cast<const StmtGlobal*>(ps);
-   TRACE( "StmtGlobal::apply -- %s", self->describe(0).c_ize() );
+   TRACE( "StmtGlobal::apply -- %s", self->describe().c_ize() );
    Private::SymbolVector& symbols = self->_p->m_symbols;
    fassert( ! symbols.empty() );
 

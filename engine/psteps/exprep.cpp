@@ -20,6 +20,7 @@
 #include <falcon/synclasses.h>
 #include <falcon/engine.h>
 #include <falcon/vmcontext.h>
+#include <falcon/textwriter.h>
 
 namespace Falcon
 {
@@ -50,24 +51,31 @@ bool ExprEP::simplify( Item& ) const
    return false;
 }
 
-void ExprEP::describeTo( String& tgt, int depth ) const
+void ExprEP::render( TextWriter* tw, int depth ) const
 {
-   //tgt = String(" ").replicate( depthIndent*depth );
+   tw->write(renderPrefix(depth));
+
    if( arity() == 0 ) {
-      tgt = "^()";
-      return;
+      tw->write( "^()" );
    }
-
-   tgt = "^( ";
-
-   for( int32 count = 0; count < arity(); ++count ) {
-      if ( count > 0 ) {
-         tgt += ", ";
+   else {
+      tw->write( "^( " );
+      for( int32 count = 0; count < arity(); ++count ) {
+         if ( count > 0 ) {
+            tw->write(", ");
+         }
+         nth( count )->render(tw, relativeDepth(depth));
       }
-      tgt+= nth( count )->describe(depth+1);
+
+      tw->write( " )" );
    }
-   tgt += " )";
+
+   if( depth >= 0 )
+   {
+      tw->write("\n");
+   }
 }
+
 
 void ExprEP::apply_( const PStep* ps, VMContext* ctx )
 {

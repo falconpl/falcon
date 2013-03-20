@@ -51,6 +51,7 @@ bool generic_simplify( Item& value, Expression* m_first, Expression* m_second )
          break;
       default:
          value.setBoolean( _cpr::pass( d1.type(), d2.type() ) );
+         break;
       }
 
       return true;
@@ -80,14 +81,14 @@ void generic_apply_( const PStep* ps, VMContext* ctx )
       {
          return;
       }
-      // fallthrough
+      /* no break */
    case 1:
       cf.m_seqId = 2;
       if( ctx->stepInYield( self->second(), cf ) )
       {
          return;
       }
-      // fallthrough  
+      break;
    }
 
    // copy the second
@@ -139,6 +140,7 @@ void generic_apply_( const PStep* ps, VMContext* ctx )
          op1.setBoolean( _cpr::cmpCheck( op1.compare(op2) ) );
          ctx->popData();
       }
+      break;
    }
    
    ctx->popCode();
@@ -165,22 +167,19 @@ void generic_apply_<ExprNE::comparer>( const PStep* ps, VMContext* ctx );
 
 //==========================================================
 
-ExprCompare::ExprCompare( const String& name, int line, int chr ):
+ExprCompare::ExprCompare( int line, int chr ):
    BinaryExpression( line, chr ),
-   m_stepPostComparer(this),
-   m_name(name)
+   m_stepPostComparer(this)
 {}
 
-ExprCompare::ExprCompare( Expression* op1, Expression* op2, const String& name, int line, int chr ):
+ExprCompare::ExprCompare( Expression* op1, Expression* op2, int line, int chr ):
    BinaryExpression( op1, op2, line, chr ),
-   m_stepPostComparer(this),
-   m_name(name)
+   m_stepPostComparer(this)
 {}
 
 ExprCompare::ExprCompare( const ExprCompare& other ):
    BinaryExpression( other ),
-   m_stepPostComparer(this),
-   m_name( other.m_name )
+   m_stepPostComparer(this)
 {}
 
 ExprCompare::~ExprCompare()
@@ -194,32 +193,19 @@ void ExprCompare::PStepPostCompare::apply_( const PStep* ps, VMContext* ctx )
 }
 
 
-void ExprCompare::describeTo( String& ret, int depth ) const
-{
-   if( m_first == 0 || m_second == 0 )
-   {
-      ret = "<Blank '" + m_name + "'>";
-   }
-   else
-   {
-      ret = "(" + m_first->describe( depth + 1 ) + m_name + m_second->describe(depth+1) + ")";
-   }
-}
-
-
 //========================================================
 // EXPR LT
 //
 
 ExprLT::ExprLT( int line, int chr ):
-   ExprCompare( "<", line, chr )
+   ExprCompare( line, chr )
 {
    FALCON_DECLARE_SYN_CLASS( expr_lt )
    apply = &generic_apply_<ExprLT::comparer>;
 }
 
 ExprLT::ExprLT( Expression* op1, Expression* op2, int line, int chr ):
-   ExprCompare( op1, op2, "<", line, chr )
+   ExprCompare( op1, op2, line, chr )
 {
    FALCON_DECLARE_SYN_CLASS( expr_lt )
    apply = &generic_apply_<ExprLT::comparer>;
@@ -240,19 +226,24 @@ bool ExprLT::simplify( Item& value ) const
    return generic_simplify<comparer>( value, m_first, m_second );
 }
 
+const String& ExprLT::exprName() const
+{
+   static String name("<");
+   return name;
+}
 
 //========================================================
 // EXPR LE
 //
 ExprLE::ExprLE( int line, int chr ):
-   ExprCompare( "<=", line, chr )
+   ExprCompare( line, chr )
 {
    FALCON_DECLARE_SYN_CLASS( expr_le )
    apply = &generic_apply_<ExprLE::comparer>;
 }
 
 ExprLE::ExprLE( Expression* op1, Expression* op2, int line, int chr ):
-   ExprCompare( op1, op2, "<=", line, chr )
+   ExprCompare( op1, op2, line, chr )
 {
    FALCON_DECLARE_SYN_CLASS( expr_le )
    apply = &generic_apply_<ExprLE::comparer>;
@@ -272,18 +263,24 @@ bool ExprLE::simplify( Item& value ) const
    return generic_simplify<comparer>( value, m_first, m_second );
 }
 
+const String& ExprLE::exprName() const
+{
+   static String name("<=");
+   return name;
+}
+
 //========================================================
 // EXPR GT
 //
 ExprGT::ExprGT( int line, int chr ):
-   ExprCompare( ">", line, chr )
+   ExprCompare( line, chr )
 {
    FALCON_DECLARE_SYN_CLASS( expr_gt )
    apply = &generic_apply_<ExprGT::comparer>;
 }
 
 ExprGT::ExprGT( Expression* op1, Expression* op2, int line, int chr ):
-   ExprCompare( op1, op2, ">", line, chr )
+   ExprCompare( op1, op2, line, chr )
 {
    FALCON_DECLARE_SYN_CLASS( expr_gt )
    apply = &generic_apply_<ExprGT::comparer>;
@@ -303,18 +300,24 @@ bool ExprGT::simplify( Item& value ) const
    return generic_simplify<comparer>( value, m_first, m_second );
 }
 
+const String& ExprGT::exprName() const
+{
+   static String name(">");
+   return name;
+}
+
 //========================================================
 // EXPR GE
 //
 ExprGE::ExprGE( int line, int chr ):
-   ExprCompare( ">=", line, chr )
+   ExprCompare( line, chr )
 {
    FALCON_DECLARE_SYN_CLASS( expr_ge )
    apply = &generic_apply_<ExprGE::comparer>;
 }
 
 ExprGE::ExprGE( Expression* op1, Expression* op2, int line, int chr ):
-   ExprCompare( op1, op2, ">=", line, chr )
+   ExprCompare( op1, op2, line, chr )
 {
    FALCON_DECLARE_SYN_CLASS( expr_ge )
    apply = &generic_apply_<ExprGE::comparer>;
@@ -334,18 +337,25 @@ bool ExprGE::simplify( Item& value ) const
    return generic_simplify<comparer>( value, m_first, m_second );
 }
 
+
+const String& ExprGE::exprName() const
+{
+   static String name(">=");
+   return name;
+}
+
 //========================================================
 // EXPR EQ
 //
 ExprEQ::ExprEQ( int line, int chr ):
-   ExprCompare( "==", line, chr )
+   ExprCompare( line, chr )
 {
    FALCON_DECLARE_SYN_CLASS( expr_eq )
    apply = &generic_apply_<ExprEQ::comparer>;
 }
 
 ExprEQ::ExprEQ( Expression* op1, Expression* op2, int line, int chr ):
-   ExprCompare( op1, op2, "==", line, chr )
+   ExprCompare( op1, op2, line, chr )
 {
    FALCON_DECLARE_SYN_CLASS( expr_eq )
    apply = &generic_apply_<ExprEQ::comparer>;
@@ -365,19 +375,25 @@ bool ExprEQ::simplify( Item& value ) const
    return generic_simplify<comparer>( value, m_first, m_second );
 }
 
+const String& ExprEQ::exprName() const
+{
+   static String name("==");
+   return name;
+}
+
 
 //========================================================
 // EXPR NEQ
 //
 ExprNE::ExprNE( int line, int chr ):
-   ExprCompare( "!=", line, chr )
+   ExprCompare( line, chr )
 {
    FALCON_DECLARE_SYN_CLASS( expr_ne )
    apply = &generic_apply_<ExprNE::comparer>;
 }
 
 ExprNE::ExprNE( Expression* op1, Expression* op2, int line, int chr ):
-   ExprCompare( op1, op2, "!=", line, chr )
+   ExprCompare( op1, op2, line, chr )
 {
    FALCON_DECLARE_SYN_CLASS( expr_ne )
    apply = &generic_apply_<ExprNE::comparer>;
@@ -398,6 +414,11 @@ bool ExprNE::simplify( Item& value ) const
    return generic_simplify<comparer>( value, m_first, m_second );
 }
 
+const String& ExprNE::exprName() const
+{
+   static String name("!=");
+   return name;
+}
 
 }
 

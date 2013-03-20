@@ -37,17 +37,11 @@ public:
 
     */
    StmtSwitch( int32 line = 0, int32 chr = 0 );
-   /** Create the switch statement.
-    \param expr The expression that will generate the item to be selected, or 0.
-    \param line The line where this statement is declared in the source.
-    \param chr The character at which this statement is declared in the source.
 
-    */
-   StmtSwitch( Expression* expr, int32 line = 0, int32 chr = 0 );
    StmtSwitch( const StmtSwitch& other );
    virtual ~StmtSwitch();
 
-   virtual void describeTo( String& tgt, int depth=0 ) const;
+   virtual void renderHeader( TextWriter* tw, int32 depth ) const;
    virtual StmtSwitch* clone() const { return new StmtSwitch(*this); }
    
 private:

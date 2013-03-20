@@ -76,7 +76,7 @@ public:
    virtual ~ExprUnquote();
    
    inline virtual bool isStandAlone() const { return false; }      
-   virtual void describeTo( String& str, int depth ) const;   
+   const String& exprName() const;
    virtual bool simplify(Falcon::Item&) const;
    virtual bool isStatic() const { return false; }
    virtual ExprUnquote* clone() const { return new ExprUnquote(*this); }

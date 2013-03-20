@@ -20,6 +20,7 @@
 #include <falcon/expression.h>
 #include <falcon/vmcontext.h>
 #include <falcon/stdsteps.h>
+#include <falcon/textwriter.h>
 
 #include <falcon/psteps/stmtreturn.h>
 
@@ -113,54 +114,39 @@ void StmtReturn::hasEval( bool b )
 }
  
 
-void StmtReturn::describeTo( String& tgt, int depth ) const
+void StmtReturn::render( TextWriter* tw, int32 depth ) const
 {
-   tgt = String(" ").replicate(depth * depthIndent ) + "return";
-   
+   tw->write( renderPrefix(depth) );
+   tw->write( "return" );
+
    if( m_bHasEval )
    {
-      tgt += "*";
+      tw->write( "*" );
    }
 
    if( m_bHasDoubt )
    {
-      tgt += "?";
+      tw->write("?" );
    }
-   
+
    if( m_expr != 0 )
    {
-      tgt += " ";
-      tgt += m_expr->describe( depth + 1 );
-   }   
-}
-
-
-void StmtReturn::oneLinerTo( String& tgt ) const
-{
-   tgt = "return";
-   
-   if( m_bHasEval )
-   {
-      tgt += "*";
+      tw->write( " " );
+      m_expr->render( tw, relativeDepth(depth) );
    }
 
-   if( m_bHasDoubt )
+   if( depth >= 0 )
    {
-      tgt += "?";
+      tw->write( "\n" );
    }
-   
-   if( m_expr != 0 )
-   {
-      tgt += " ";
-      tgt += m_expr->oneLiner();
-   }   
 }
+
 
 
 void StmtReturn::apply_( const PStep* ps, VMContext* ctx )
 {
    const StmtReturn* self = static_cast<const StmtReturn*>( ps );
-   TRACE( "StmtReturn::apply_ %s", self->oneLiner().c_ize() );
+   TRACE( "StmtReturn::apply_ %s", self->describe().c_ize() );
 
    CodeFrame& cf = ctx->currentCode();
    int& seqId = cf.m_seqId;
