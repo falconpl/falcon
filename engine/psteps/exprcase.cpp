@@ -122,11 +122,14 @@ public:
 
      case e_t_string:
         m_data.strings.string1 = new String(*other.m_data.strings.string1);
+        m_data.strings.string1->bufferize();
         break;
 
      case e_t_string_range:
         m_data.strings.string1 = new String(*other.m_data.strings.string1);
         m_data.strings.string2 = new String(*other.m_data.strings.string2);
+        m_data.strings.string1->bufferize();
+        m_data.strings.string2->bufferize();
         break;
 
      case e_t_regex:
@@ -180,7 +183,8 @@ public:
       m_class(0),
       m_lock(0)
    {
-      m_data.strings.string1 = str1;
+      m_data.strings.string1 = new String(*str1);
+      m_data.strings.string1->bufferize();
    }
 
    CaseEntry( String* str1, String* str2 ):
@@ -188,8 +192,10 @@ public:
       m_class(0),
       m_lock(0)
    {
-      m_data.strings.string1 = str1;
-      m_data.strings.string2 = str2;
+      m_data.strings.string1 = new String(*str1);
+      m_data.strings.string2 = new String(*str2);
+      m_data.strings.string1->bufferize();
+      m_data.strings.string2->bufferize();
    }
 
    CaseEntry( re2::RE2* regex ):
@@ -197,7 +203,7 @@ public:
       m_class(0),
       m_lock(0)
    {
-      m_data.regex = regex;
+      m_data.regex = new re2::RE2(regex->pattern());
    }
 
    /** Warning: the symbol is not increffed here. */
@@ -256,21 +262,25 @@ public:
    {
       clear();
       m_type = e_t_string;
-      m_data.strings.string1 = str1;
+      m_data.strings.string1 = new String(*str1);
+      m_data.strings.string1->bufferize();
    }
 
    void setStringRange( String* str1, String* str2 )
    {
       clear();
       m_type = e_t_string_range;
-      m_data.strings.string1 = str1;
-      m_data.strings.string2 = str2;
+      m_data.strings.string1 = new String(*str1);
+      m_data.strings.string2 = new String(*str2);
+      m_data.strings.string1->bufferize();
+      m_data.strings.string2->bufferize();
    }
 
    void setRegex( re2::RE2* regex )
    {
       clear();
-      m_data.regex = regex;
+      m_type = e_t_regex;
+      m_data.regex = new re2::RE2(regex->pattern());
    }
 
    /** Warning: the symbol is not increffed here. */
@@ -826,6 +836,9 @@ bool ExprCase::addEntry( const Item& value )
    if( ! res )
    {
       delete entry;
+   }
+   else {
+      _p->m_entries.push_back(entry);
    }
    return res;
 }

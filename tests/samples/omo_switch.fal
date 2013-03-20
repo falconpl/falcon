@@ -1,0 +1,52 @@
+/*
+ Test showing a simple reflective structure
+*/
+
+sw = Switch( &var,
+   SynTree( Case( r'test', "fisrt", [1:10], 20 ), FastPrintNL("First case")),
+   SynTree( Case( "second" ), FastPrintNL("Second case")),
+   SynTree( nil, FastPrintNL("Default case"))
+   )
+
+> "============================================"
+> "What we generated is..."
+> sw.render()
+>
+
+> "============================================"
+> "Test for first branch:"
+var = 20
+sw()
+>
+> "============================================"
+> "Test for first branch (again):"
+var = "first"
+sw()
+>
+> "============================================"
+> "Test for second branch:"
+var = "second"
+sw()
+>
+> "============================================"
+> "Test for default branch:"
+var = 0
+sw()
+>
+> "============================================"
+> "Dynamic code -- testing the switch after a change."
+
+// and now we change our switch 
+// -- third block is our default
+sw[2].append({() >"And, adding also this statement"})
+
+> "Now the code is:"
+> sw.render()
+> 
+> "And the result is:"
+sw()
+
+>
+> "============================================"
+> "Done."
+

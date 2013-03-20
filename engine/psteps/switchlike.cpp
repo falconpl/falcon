@@ -223,27 +223,6 @@ bool SwitchlikeStatement::remove( int32 pos )
    return true;
 }
 
-/*
-void SwitchlikeStatement::gcMark( uint32 mark )
-{
-   if( m_gcMark != mark )
-   {
-      m_gcMark = mark;
-      Private::Blocks::iterator iter = _p->m_blocks.begin();
-      while( iter != _p->m_blocks.end() )
-      {
-         SynTree* st = *iter;
-         st->gcMark(mark);
-         ++iter;
-      }
-
-      if( m_dummyTree != 0 )
-      {
-         m_dummyTree->gcMark(mark);
-      }
-   }
-}
-*/
 
 SynTree* SwitchlikeStatement::dummyTree()
 {
@@ -407,6 +386,7 @@ void SwitchlikeStatement::render( TextWriter* tw, int32 depth ) const
             tw->write( renderPrefix(dp) );
             tw->write("case ");
             sel->render(tw, relativeDepth(dp));
+            tw->write( "\n" );
          }
 
          st->render( tw, dp + 1 );
