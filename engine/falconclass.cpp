@@ -34,6 +34,7 @@
 #include <falcon/stdsteps.h>
 #include <falcon/attribute.h>
 #include <falcon/stdhandlers.h>
+#include <falcon/textwriter.h>
 
 #include <falcon/psteps/stmtreturn.h>
 #include <falcon/psteps/exprself.h>
@@ -1255,6 +1256,100 @@ void FalconClass::op_setProperty( VMContext* ctx, void* self, const String& prop
    }
 }
 
+
+void FalconClass::render( TextWriter* tw, int32 depth )  const
+{
+   tw->write( PStep::renderPrefix(depth) );
+
+   // render heading
+   tw->write( "class " );
+   if( name() != "" && ! name().startsWith("_anon#") )
+   {
+      tw->write( name() );
+   }
+
+   // render the parameters
+   Function* ctor = constructor();
+   if( ctor != 0 )
+   {
+      tw->write( "(" );
+
+      const VarMap& params = ctor->variables();
+      for( uint32 pc = 0; pc < params.paramCount(); ++pc )
+      {
+         const String& name = params.getParamName(pc);
+         if( pc > 0 )
+         {
+            tw->write( "," );
+         }
+
+         tw->write( name );
+      }
+
+      tw->write( ")" );
+   }
+
+   // render the parentship (from etc)
+   if( m_parentship != 0 )
+   {
+      m_parentship->render( tw, PStep::relativeDepth(depth) );
+   }
+   tw->write( "\n" );
+
+   // render the attributes.
+   int32 dp = depth < 0 ? -depth : depth+1;
+
+   attributes().render( tw, dp );
+
+   // render the properties
+   Private::InitPropList::const_iterator pl_iter = _p->m_initExpr.begin();
+   while( pl_iter != _p->m_initExpr.end() )
+   {
+      Property* prop = *pl_iter;
+      tw->write( PStep::renderPrefix(dp) );
+      tw->write( prop->m_name );
+      tw->write( " = " );
+      prop->expression()->render( tw, PStep::relativeDepth(dp) );
+      tw->write( "\n" );
+
+      ++pl_iter;
+   }
+
+   tw->write( "\n" );
+
+   // and now, the init.
+   if( ctor != 0 )
+   {
+      tw->write( PStep::renderPrefix(dp) );
+      tw->write( "init\n");
+      ctor->renderFunctionBody(tw, dp + 1 );
+      tw->write( PStep::renderPrefix(dp) );
+      tw->write( "end\n\n" );
+   }
+
+   // then, each method.
+   Private::MemberMap::iterator mi_iter = _p->m_members->begin();
+   while( mi_iter != _p->m_members->end() )
+   {
+      const Property* prop = mi_iter->second;
+      if( prop->m_type == Property::t_func )
+      {
+         prop->m_value.func->render(tw, dp );
+         // add an extra \n for elegance.
+         tw->write( "\n" );
+      }
+      ++mi_iter;
+   }
+
+   tw->write( PStep::renderPrefix(depth) );
+   tw->write( "end" );
+
+   if( depth >= 0 )
+   {
+      tw->write( "\n" );
+   }
+
+}
 
 //==============================================================
 

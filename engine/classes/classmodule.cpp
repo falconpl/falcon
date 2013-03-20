@@ -44,7 +44,7 @@ namespace Falcon
 {
 
 ClassModule::ClassModule():
-   Class("Module")
+   Class("Module", FLC_CLASS_ID_MODULE)
 {
    m_getAttributeMethod.methodOf(this);
    m_setAttributeMethod.methodOf(this);

@@ -42,25 +42,27 @@ BOM::BOM():
 {
    Private::HandlerMap& hm = _p->m_handlers;
 
-   hm["len"] = BOMH::len;
+   hm["len"] = &BOMH::len;
 
    hm["baseClass"] = &BOMH::baseClass;
-   hm["bound"] = BOMH::bound;
-   hm["className"] = BOMH::className;
-   hm["clone"] = BOMH::clone;
-   hm["describe"] = BOMH::describe;
-   hm["isCallable"] = BOMH::isCallable;
-   hm["ptr"] = BOMH::ptr;
-   hm["toString"] = BOMH::toString;
-   hm["typeId"] = BOMH::typeId;
+   hm["bound"] = &BOMH::bound;
+   hm["className"] = &BOMH::className;
+   hm["clone"] = &BOMH::clone;
+   hm["describe"] = &BOMH::describe;
+   hm["isCallable"] = &BOMH::isCallable;
+   hm["ptr"] = &BOMH::ptr;
+   hm["toString"] = &BOMH::toString;
+   hm["typeId"] = &BOMH::typeId;
    
-   hm["compare"] = BOMH::compare;
-   hm["derivedFrom"] = BOMH::derivedFrom;
+   hm["compare"] = &BOMH::compare;
+   hm["derivedFrom"] = &BOMH::derivedFrom;
 
-   hm["get"] = BOMH::get;
-   hm["set"] = BOMH::set;
-   hm["has"] = BOMH::has;
-   hm["properties"] = BOMH::properties;
+   hm["get"] = &BOMH::get;
+   hm["set"] = &BOMH::set;
+   hm["has"] = &BOMH::has;
+   hm["properties"] = &BOMH::properties;
+
+   hm["render"] = &BOMH::render;
 }
 
 BOM::~BOM()
@@ -232,6 +234,15 @@ void has(VMContext* ctx, const Class*, void*)
 void properties(VMContext* ctx, const Class*, void*)
 {
   static Function* func = static_cast<Function*>(Engine::instance()->getMantra("properties"));
+  fassert( func != 0 );
+
+  Item &value = ctx->topData();
+  value.methodize(func);
+}
+
+void render(VMContext* ctx, const Class*, void*)
+{
+  static Function* func = static_cast<Function*>(Engine::instance()->getMantra("render"));
   fassert( func != 0 );
 
   Item &value = ctx->topData();

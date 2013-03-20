@@ -23,6 +23,8 @@
 #include <falcon/pstep.h>
 #include <falcon/stdsteps.h>
 #include <falcon/stdhandlers.h>
+#include <falcon/textwriter.h>
+#include <falcon/attribute.h>
 
 namespace Falcon
 {
@@ -104,6 +106,7 @@ void SynFunc::invoke( VMContext* ctx, int32 nparams )
 
 void SynFunc::renderFunctionBody( TextWriter* tgt, int32 depth ) const
 {
+   attributes().render(tgt, depth);
    syntree().render( tgt, depth );
 }
 

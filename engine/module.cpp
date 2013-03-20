@@ -31,6 +31,7 @@
 #include <falcon/falconclass.h>
 #include <falcon/hyperclass.h>
 #include <falcon/dynunloader.h>
+#include <falcon/textwriter.h>
 
 #include <falcon/errors/codeerror.h>
 #include <falcon/errors/genericerror.h>
@@ -987,6 +988,37 @@ void Module::completeClass(FalconClass* fcls)
    }
 }
 
+//=====================================================================
+// render
+//=====================================================================
+
+void Module::render( TextWriter* tw, int32 depth )
+{
+   Private::MantraMap::iterator iter = _p->m_mantras.begin();
+   attributes().render(tw, depth);
+
+   while( iter != _p->m_mantras.end() )
+   {
+      Mantra* m = iter->second;
+      if( m->name() != "__main__"
+         && m->name() != ""
+         && ! m->name().startsWith("_anon#")
+         )
+      {
+         //keep it for later.
+         m->render( tw, depth );
+         tw->write("\n");
+      }
+
+      ++iter;
+   }
+
+   Function* func = getMainFunction();
+   if( func != 0 )
+   {
+      func->renderFunctionBody(tw, 0);
+   }
+}
 
 }
 

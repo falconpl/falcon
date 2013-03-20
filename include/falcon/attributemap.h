@@ -28,6 +28,7 @@ class DataReader;
 class DataWriter;
 class ItemArray;
 class Attribute;
+class TextWriter;
 
 /** Map holding attributes.
  *
@@ -53,6 +54,9 @@ public:
    void unflatten( const ItemArray& subItems, uint32& start );
 
    void gcMark( uint32 mark );
+
+   void render(TextWriter* tw, int32 depth ) const;
+
 private:
    class Private;
    Private* _p;

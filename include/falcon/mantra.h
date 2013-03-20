@@ -194,6 +194,7 @@ public:
 
    bool addAttribute( const String& name, TreeStep* generator );
 
+   virtual void render( TextWriter* tw, int32 depth ) const = 0;
 protected:
    t_category m_category;
    String m_name;

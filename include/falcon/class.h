@@ -37,6 +37,7 @@ class ExprInherit;
 class ItemArray;
 class Error;
 class Function;
+class TextWriter;
 
 #define FALCON_CLASS_CREATE_AT_INIT ((void*)1)
 
@@ -171,6 +172,11 @@ public:
     This flag is true for FalconClass instances and (eventually) derived classes.
     */
    bool isFalconClass() const { return m_bIsfalconClass; }
+
+   /**
+    * Render the class back as source code.
+    */
+   virtual void render( TextWriter* tw, int32 depth ) const;
 
 
    /** Returns true if this class has flat instances.

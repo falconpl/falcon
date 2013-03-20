@@ -23,6 +23,9 @@
 #include <falcon/itemarray.h>
 #include <falcon/treestep.h>
 
+#include <falcon/pstep.h>
+#include <falcon/textwriter.h>
+
 #include <map>
 #include <vector>
 
@@ -216,6 +219,34 @@ void AttributeMap::unflatten( const ItemArray& subItems, uint32& start )
    {
       Attribute* attrib = _p->m_list[i];
       attrib->unflatten(subItems, start);
+   }
+}
+
+
+void AttributeMap::render(TextWriter* tw, int32 depth) const
+{
+   for( uint32 i = 0; i < size(); ++i )
+   {
+      Attribute* attr = get(i);
+      tw->write( PStep::renderPrefix(depth) );
+      tw->write(":");
+      tw->write(attr->name());
+      tw->write( " => ");
+      TreeStep* gen = attr->generator();
+      if( gen != 0 )
+      {
+         gen->render( tw, PStep::relativeDepth(depth) );
+      }
+      else  {
+         Class* cls = 0;
+         void* data = 0;
+         attr->value().forceClassInst(cls, data);
+         String temp;
+         cls->describe(data, temp, 1, -1);
+         tw->write(temp);
+      }
+
+      tw->write( "\n" );
    }
 }
 

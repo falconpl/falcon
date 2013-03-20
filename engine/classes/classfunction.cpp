@@ -29,6 +29,10 @@
 #include <falcon/stdhandlers.h>
 #include <falcon/processor.h>
 #include <falcon/classes/classmodule.h>
+#include <falcon/module.h>
+#include <falcon/modspace.h>
+#include <falcon/textwriter.h>
+#include <falcon/stringstream.h>
 
 #include <falcon/itemarray.h>
 #include <falcon/itemdict.h>
@@ -182,7 +186,7 @@ namespace CFunction {
  @return The value stored for the given parameter.
  @raise AccessError if the value is out of range.
  */
-FALCON_DECLARE_FUNCTION(parameter, "N|S")
+FALCON_DECLARE_FUNCTION(parameter, "nth:N|S")
 void Function_parameter::invoke( VMContext* ctx, int32 pCount )
 {
    if( pCount <= 0 )

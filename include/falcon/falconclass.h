@@ -359,8 +359,6 @@ public:
    /** Check if all the declared inheritances are pure falcon classes.
     \return True if this class can be generated as a Falcon Class.
 
-    To construct a Fa
-
     */
    bool isPureFalcon() const { return m_bPureFalcon; }
 
@@ -415,6 +413,11 @@ public:
    void flattenSelf( ItemArray& flatArray, bool asConstructed ) const;
    void unflattenSelf( ItemArray& flatArray );
    
+   /**
+    * Render the class back as source code.
+    */
+   void render( TextWriter* tw, int32 depth )  const;
+
    //=========================================================
    // Operators.
    //

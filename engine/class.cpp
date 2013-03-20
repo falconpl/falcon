@@ -29,6 +29,7 @@
 #include <falcon/errors/accesstypeerror.h>
 #include <falcon/stdhandlers.h>
 #include <falcon/extfunc.h>
+#include <falcon/textwriter.h>
 
 #include <falcon/function.h>
 #include <falcon/extfunc.h>
@@ -195,6 +196,21 @@ Class* Class::getParent( const String& name ) const
       return 0;
    }
    return m_parent;
+}
+
+
+void Class::render( TextWriter* tw, int32 depth ) const
+{
+   tw->write(PStep::renderPrefix(depth));
+
+   tw->write( "/* Native class " );
+   tw->write( this->fullName() );
+   tw->write( " */" );
+
+   if( depth >= 0 )
+   {
+      tw->write("\n");
+   }
 }
 
 

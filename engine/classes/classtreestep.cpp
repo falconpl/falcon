@@ -48,7 +48,6 @@ ClassTreeStep::ClassTreeStep():
    m_insertMethod.methodOf(this);
    m_removeMethod.methodOf(this);
    m_appendMethod.methodOf(this);
-   m_renderMethod.methodOf(this);
 }
 
 ClassTreeStep::ClassTreeStep( const String& name ):
@@ -57,7 +56,6 @@ ClassTreeStep::ClassTreeStep( const String& name ):
    m_insertMethod.methodOf(this);
    m_removeMethod.methodOf(this);
    m_appendMethod.methodOf(this);
-   m_renderMethod.methodOf(this);
 }
 
 
@@ -215,10 +213,6 @@ void ClassTreeStep::op_getProperty( VMContext* ctx, void* instance, const String
          ctx->topData().setNil();
       else
          ctx->topData().setUser( stmt->parent()->handler(), stmt->parent() );
-   }
-   else if( prop == "render" )
-   {
-      ctx->topData().methodize( &m_renderMethod );
    }
    else
    {
@@ -669,73 +663,6 @@ void ClassTreeStep::AppendMethod::invoke( VMContext* ctx, int32 )
    ctx->returnFrame();
 }
 
-
-//===============================================================
-// Render method
-//
-ClassTreeStep::RenderMethod::RenderMethod():
-   Function("render")
-{
-   parseDescription("stream:[Stream|TextWriter]");
-}
-
-ClassTreeStep::RenderMethod::~RenderMethod()
-{}
-
-
-void ClassTreeStep::RenderMethod::invoke( VMContext* ctx, int32 )
-{
-   static Class* streamClass = Engine::instance()->handlers()->streamClass();
-   static Module* core = ctx->process()->modSpace()->findByName("core");
-   static Class* writerClass = core == 0 ? 0 : core->getClass("TextWriter");
-
-   TreeStep* self = static_cast<TreeStep*>(ctx->self().asInst());
-
-   Item* i_stream = ctx->param(0);
-   if( i_stream != 0 )
-   {
-      Class* cls = 0;
-      void* inst = 0;
-      i_stream->asClassInst(cls, inst);
-
-      // is this a writer?
-      if( writerClass != 0 )
-      {
-         if( cls->isDerivedFrom(writerClass) )
-         {
-            // render on the writer.
-            TextWriter* tw = static_cast<TextWriter*>(cls->getParentData(writerClass, inst));
-            fassert(tw != 0);
-            self->render( tw, 0 );
-            ctx->returnFrame();
-            return;
-         }
-      }
-
-      if( cls->isDerivedFrom(streamClass) )
-      {
-         Stream* stream = static_cast<Stream*>(inst);
-         LocalRef<TextWriter> twr( new TextWriter(stream) );
-         self->render( &twr, 0 );
-         ctx->returnFrame();
-         return;
-      }
-
-      // invalid stream
-      throw paramError();
-   }
-
-   // if we're here, we don't have a parameter
-   StringStream* stream = new StringStream;
-   LocalRef<TextWriter> twr( new TextWriter(stream) );
-   stream->decref(); // the twr owns the stream
-   self->render(twr, 0);
-   twr->flush();
-
-   String* result = new String;
-   stream->closeToString(*result);
-   ctx->returnFrame( FALCON_GC_HANDLE(result) );
-}
 
 }
 /* end of classtreestep.cpp */

@@ -145,7 +145,22 @@ void ExprValue::render( TextWriter* tw, int32 depth ) const
    Class* cls;
    void* inst;
    m_item.forceClassInst(cls, inst);
-   cls->describe(inst, str, 1, -1 );
+
+   // we'll need a special treatment for anon function and classes.
+   if( cls->typeID() == FLC_CLASS_ID_FUNC || cls->typeID() == FLC_CLASS_ID_CLASS )
+   {
+      Mantra* mantra = static_cast<Mantra*>(inst);
+      if( mantra->name() == "" || mantra->name().startsWith("_anon#") )
+      {
+         mantra->render( tw, depth );
+      }
+      else {
+         cls->describe(inst, str, 1, -1 );
+      }
+   }
+   else {
+      cls->describe(inst, str, 1, -1 );
+   }
 
    tw->write( str );
 

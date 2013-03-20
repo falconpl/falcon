@@ -48,6 +48,7 @@ class Requirement;
 class ImportDef;
 class ModRequest;
 class ClassModule;
+class TextWriter;
 
 /** Standard Falcon Execution unit and library.
 
@@ -569,6 +570,12 @@ public:
 
    void incref() const { atomicInc(m_refcount); }
    void decref();
+
+   /**
+    * Generates a full source representation of the module.
+    */
+   void render( TextWriter* tw, int32 depth );
+
 
 protected:
    /** Invoked when refcount hits 0.

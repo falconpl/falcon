@@ -1,0 +1,56 @@
+
+:attrib1 => "Hello attribute"
+:attrib2 => "More attributes"
+
+function test(a,b)
+   > "A:", a
+   > "B:", b
+   :attrib => "Function attribute"
+end
+
+a = function(a,b)
+   > "A:", a
+   > "B:", b
+end
+
+function tmod()
+   > fself.module.render()
+end
+
+class test_class(a,b)
+   a = a+1
+   b = b +2
+   
+   : attrib => "Hello" 
+   
+   init
+      > "test"
+   end
+
+   function go()
+      > "a: ", self.a
+      > "b: ", self.b
+   end
+end
+
+> "Rendering a function:"
+> "========================================================"
+> test.render()
+> "========================================================"
+
+> "Rendering an anonymous function:"
+> "========================================================"
+> a.render()
+> "========================================================"
+
+> "Rendering a class:"
+> "========================================================"
+> test_class.render()
+> "========================================================"
+
+> "Rendering the whole module:"
+> "========================================================"
+tmod()
+> "========================================================"
+
+> "End"

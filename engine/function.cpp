@@ -144,18 +144,22 @@ void Function::render( TextWriter* tgt, int32 depth ) const
    }
 
    if( name() == "" || name().startsWith("_anon#") ) {
-      tgt->write( "{ " );
+      tgt->write( "{" );
    }
    else {
       tgt->write( "function " );
       tgt->write( name() );
-      tgt->write( "( " );
+      tgt->write( "(" );
    }
 
    // write the parameters
    int32 pcount = paramCount();
    for( int32 i = 0; i < pcount; ++i ) {
       const String& param = variables().getParamName(i);
+      if( i > 0 )
+      {
+         tgt->write(", ");
+      }
       tgt->write(param);
    }
 
@@ -172,13 +176,19 @@ void Function::render( TextWriter* tgt, int32 depth ) const
       tgt->write( String(" ").replicate(depth*PStep::depthIndent) );
    }
 
-   if( depth < 0 ) {
+   if( name() == "" || name().startsWith("_anon#") ) {
       tgt->write( "}" );
    }
    else {
-      tgt->write( "end\n" );
+      tgt->write( "end" );
+   }
+
+   if( depth >= 0 )
+   {
+      tgt->write("\n");
    }
 }
+
 
 void Function::renderFunctionBody( TextWriter* tgt, int32 depth ) const
 {
