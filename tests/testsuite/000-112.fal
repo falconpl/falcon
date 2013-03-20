@@ -27,17 +27,17 @@ x=^(
 )
 printl # x
 
-> "P0: ", x[0]
-> "P1: ", x[1]
-> "P2: ", x[2]
+> "P0: ", x[0]().describe
+> "P1: ", x[1]().describe
+> "P2: ", x[2]().describe
 > "Len: ", x.len
 
 > "---- ----"
 > "Changing 1"
 x[1] = " -- changed -- "
 printl # x
-> "P0: ", x[0]
-> "P1: ", x[1]
-> "P2: ", x[2]
+> "P0: ", x[0]().describe
+> "P1: ", x[1]().describe
+> "P2: ", x[2]().describe
 > "Len: ", x.len
 > "---- Done ----"

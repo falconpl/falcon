@@ -1,0 +1,8 @@
+
+stmt_try = Try( 
+   SynTree( nil, FastPrintNL("First"), FastPrintNL("Second") ),
+   Select( &z, SynTree( nil, FastPrintNL("CatchAll"))),
+   SynTree( nil, FastPrintNL("Finally!"))
+)
+
+> stmt_try.render()
