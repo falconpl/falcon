@@ -97,19 +97,20 @@ FALCON_DEFINE_FUNCTION_P(rest)
    ctx->returnFrame();
 }
 
-/*#
+/**
+ * Moved in sys
    @function epoch
    @ingroup general_purpose
    @brief Returns the number of seconds since the "epoch" (1 Jan 1970).
    @return An integer number of seconds.
 */
-FALCON_DEFINE_FUNCTION_P1(epoch)
+/*FALCON_DEFINE_FUNCTION_P1(epoch)
 {
    MESSAGE1( "-- called with 0 params" );
    int64 ep = Sys::_epoch();
    ctx->returnFrame(ep);
 }
-
+*/
 /*#
    @function seconds
    @ingroup general_purpose

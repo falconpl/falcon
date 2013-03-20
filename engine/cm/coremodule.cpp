@@ -67,7 +67,7 @@ CoreModule::CoreModule():
       << new Ext::Inspect
       << new Ext::Iff
       << new Ext::Function_rest
-      << new Ext::Function_epoch
+      //<< new Ext::Function_epoch
       << new Ext::Function_include
       << new Ext::Function_seconds
       << new Ext::Function_sleep
