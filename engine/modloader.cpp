@@ -496,6 +496,7 @@ void ModLoader::load_internal(
          }
          ins->shouldThrow(true);
          LocalRef<TextReader> input(new TextReader( ins, m_tcoder ));
+         ins->decref();  // the reader has it
          // compiler gets the ownership of input.
          Module* output = m_compiler->compile( &input, uri.encode(), modName, type == e_mt_ftd );
 
