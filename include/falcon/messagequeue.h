@@ -90,6 +90,7 @@ private:
 
    String m_name;
    uint32 m_version;
+   bool m_bSignal;
 
    // Messages are stored in a simple linked list as tokens.
    class Token;

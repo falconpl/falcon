@@ -19,6 +19,7 @@
 #include <falcon/item.h>
 #include <falcon/cm/fence.h>
 #include <falcon/stdhandlers.h>
+#include <falcon/contextmanager.h>
 
 #include <map>
 
@@ -66,6 +67,7 @@ MessageQueue::MessageQueue( ContextManager* mgr, const String& name ):
    m_ctxWeakRef( this ),
    m_name(name),
    m_version(0),
+   m_bSignal(true),
    m_firstToken(0),
    m_lastToken(0),
    m_recycleBin(0),
@@ -79,6 +81,11 @@ MessageQueue::MessageQueue( ContextManager* mgr, const String& name ):
    m_firstToken->m_sequence = 0;
    m_firstToken->m_readCount = 0;
    m_firstToken->m_next = 0;
+
+   // We're a context-specific resource.
+   // Wait and consumption operations can behave differently on
+   // different contexts.
+   m_bContextSpec = true;
 }
 
 
@@ -304,6 +311,8 @@ bool MessageQueue::sendEvent( const String& eventName, const Item& message )
    Token* token = allocToken();
    m_version++;
 
+   bool bSignal = m_bSignal;
+   m_bSignal = false;
    m_lastToken->m_next = token;
    token->m_sequence = m_lastToken->m_sequence + 1;
    // we're pretty sure that the message comes from the stack.
@@ -317,7 +326,9 @@ bool MessageQueue::sendEvent( const String& eventName, const Item& message )
    m_mtx.unlock();
 
    // just wake up existing subcribers, if any.
-   Shared::signal(1);
+   if ( bSignal ) {
+      notifyTo()->onSharedSignaled(this);
+   }
 
    return true;
 }
@@ -332,8 +343,6 @@ bool MessageQueue::get( VMContext* ctx, Item& msg )
 
 bool MessageQueue::getEvent( VMContext* ctx, String& eventName, Item& msg )
 {
-   Shared::consumeSignal(ctx, 1);
-
    m_mtx.lock();
    Private::ContextMap::iterator pos = _p->m_contexts.find( ctx );
    if( pos == _p->m_contexts.end() )
@@ -355,6 +364,12 @@ bool MessageQueue::getEvent( VMContext* ctx, String& eventName, Item& msg )
    Token* next = token->m_next;
    msg = next->m_item;
    eventName = next->m_evtName;
+
+   // last token for this context?
+   if( next->m_next == 0 )
+   {
+      m_bSignal = true;  // signal on arrival of new messages.
+   }
 
    // update the pointer for this context
    pos->second = next;

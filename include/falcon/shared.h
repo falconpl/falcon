@@ -143,9 +143,25 @@ public:
     */
    virtual void onWaiterWaiting(VMContext* ctx);
 
+   /**
+    * Determines whether this resource is context-specific.
+    *
+    * Context specific resources are consumed by context.
+    * This means that the context manager cannot presume that the
+    * resource cannot have more signals for other contexts when it
+    * finds that it has not any signal ready anymore for a specific
+    * context.
+    *
+    * With context specific resources, the manager must try a signaled
+    * resource on all the sleeping contexts.
+    *
+    */
+   bool isContetxSpecific() const { return m_bContextSpec; }
+
 protected:
 
    uint32 m_mark;
+   bool m_bContextSpec;
 
    virtual ~Shared();
 

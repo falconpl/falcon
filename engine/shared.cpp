@@ -26,6 +26,7 @@ namespace Falcon
 
 Shared::Shared( ContextManager* mgr, const Class* handler, bool acquireable, int32 signals ):
    m_mark(0),
+   m_bContextSpec(false),
    m_notifyTo(mgr),
    m_acquireable( acquireable ),
    m_cls( handler ),

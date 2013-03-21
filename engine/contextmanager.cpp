@@ -532,12 +532,32 @@ void ContextManager::manageSignal( Shared* shared )
 
    shared->_p->m_mtx.lock();
    Shared::Private::ContextList& clist = shared->_p->m_waiters;
+   if (shared->isContetxSpecific())
+   {
+      Shared::Private::ContextList::iterator cli = clist.begin();
 
-   while( ! clist.empty() && shared->lockedConsumeSignal( clist.front() ) ) {
-      VMContext* waiter = clist.front();
-      readyCtx.push_back( waiter );
-      waiter->decref();
-      clist.pop_front();
+      while( cli != clist.end() )
+      {
+         if( shared->lockedConsumeSignal( clist.front() ) )
+         {
+            VMContext* waiter = *cli;
+            readyCtx.push_back( waiter );
+            waiter->decref();
+            cli = clist.erase(cli);
+         }
+         else {
+            ++cli;
+         }
+      }
+   }
+   else
+   {
+      while( ! clist.empty() && shared->lockedConsumeSignal( clist.front() ) ) {
+         VMContext* waiter = clist.front();
+         readyCtx.push_back( waiter );
+         waiter->decref();
+         clist.pop_front();
+      }
    }
 
    shared->onWakeupComplete();
