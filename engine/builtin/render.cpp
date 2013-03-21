@@ -94,7 +94,7 @@ void Render::invoke( VMContext* ctx, int32 nParams )
    static Class* writerClass = core == 0 ? 0 : core->getClass("TextWriter");
 
    Item *elem;
-   Item *i_stream;
+   Item *i_stream = 0;
 
    if ( ctx->isMethodic() )
    {
