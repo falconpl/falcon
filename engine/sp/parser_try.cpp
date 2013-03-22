@@ -229,7 +229,7 @@ static void internal_apply_catch( int toks, Parser& p, int line, int chr,
 
       }
       else {
-         ctx->currentTree();
+         newBranch = ctx->currentTree();
       }
       
       // catch by name.
