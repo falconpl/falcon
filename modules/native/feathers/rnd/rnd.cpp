@@ -1,5 +1,5 @@
 /* FALCON - The Falcon Programming Language.
- * FILE: math_extra.cpp
+ * FILE: rnd.cpp
  * 
  * Extra math functions
  * Main module file, providing the module object to the Falcon engine.
@@ -89,5 +89,5 @@ FALCON_MODULE_DECL
    return mod;
 }
 
-/* end of math_extra.cpp */
+/* end of rnd.cpp */
 

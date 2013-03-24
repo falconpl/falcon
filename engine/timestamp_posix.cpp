@@ -29,39 +29,6 @@ namespace Falcon
 
 static TimeStamp::TimeZone s_cached_timezone = TimeStamp::tz_local; // which is also 0
 
-void TimeStamp::setCurrent(bool bLocal)
-{
-   struct timeval current;
-   struct tm date;
-   time_t t;
-
-   gettimeofday( &current, 0 );
-   time( &t );
-   
-   m_msec = current.tv_usec / 1000;
-   if( bLocal )
-   {
-     localtime_r( &t, &date );
-     m_timezone = tz_local;
-   }
-   else
-   {
-     gmtime_r( &t, &date );
-     m_timezone = tz_UTC;
-
-   }
-   m_year = date.tm_year + 1900;
-   m_month = date.tm_mon+1;
-   m_day = date.tm_mday;
-   m_hour = date.tm_hour;
-   m_minute = date.tm_min;
-   m_second = date.tm_sec;
-
-
-
-}
-
-
 TimeStamp::TimeZone TimeStamp::getLocalTimeZone()
 {
    // this function is not reentrant, but it's ok, as
@@ -150,63 +117,11 @@ TimeStamp::TimeZone TimeStamp::getLocalTimeZone()
 
          default:
             s_cached_timezone = tz_NONE;
+            break;
       }
    }
 
    return s_cached_timezone;
-}
-
-
-bool TimeStamp::absoluteWait( const TimeStamp &ts )
-{
-   TimeStamp now;
-   now.setCurrent();
-
-   if ( ts <= now )
-      return false;
-
-   TimeStamp diff = ts - now;
-
-   struct timespec tw;
-   tw.tv_nsec = diff.m_msec *10000000;
-   tw.tv_sec = (time_t) diff.m_day * (24*3600) + diff.m_hour * 3600 +
-      diff.m_minute * 60 + diff.m_second;
-
-   if ( nanosleep( &tw, 0 ) == -1 )
-      return false;
-
-   return true;
-}
-
-
-
-bool TimeStamp::relativeWait( const TimeStamp &ts )
-{   
-   struct timespec tw;
-   tw.tv_nsec = ts.m_msec *10000000;
-   tw.tv_sec = (time_t) ts.m_day * (24*3600) + ts.m_hour * 3600 + ts.m_minute * 60 + ts.m_second;
-
-   if ( nanosleep( &tw, 0 ) == -1 )
-      return false;
-
-   return true;
-}
-
-
-void TimeStamp::fromSystemTime( void* sys_ts )
-{
-   struct tm date;
-   localtime_r( (time_t*) sys_ts, &date );
-
-   m_year = date.tm_year + 1900;
-   m_month = date.tm_mon+1;
-   m_day = date.tm_mday;
-   m_hour = date.tm_hour;
-   m_minute = date.tm_min;
-   m_second = date.tm_sec;
-
-   // todo: collect day of year and weekday
-   m_timezone = tz_local;
 }
 
 }

@@ -24,6 +24,7 @@
 #include <falcon/types.h>
 #include <falcon/string.h>
 #include <falcon/refpointer.h>
+#include <falcon/date.h>
 
 namespace Falcon {
 
@@ -86,27 +87,23 @@ public:
       tz_NONE = 31
    } TimeZone;
 
+   /** Creates an empty date.
+    *
+    * The date points at epoch (1/1/1970, 00:00 GMT).
+    *
+    * To create a date already set at current time, use TimeStamp(Date::current()),
+    * and then eventually shift the timezone.
+    */
+   TimeStamp();
 
-   int16 m_year;
-   int16 m_month;
-   int16 m_day;
-   int16 m_hour;
-   int16 m_minute;
-   int16 m_second;
-   int16 m_msec;
-   TimeZone m_timezone;
-
-   TimeStamp( int16 y=0, int16 M=0, int16 d=0, int16 h=0, int16 m=0,
-               int16 s=0, int16 ms = 0, TimeZone tz=tz_NONE ):
-         m_year( y ),
-         m_month( M ),
-         m_day( d ),
-         m_hour( h ),
-         m_minute( m ),
-         m_second( s ),
-         m_msec( ms ),
-         m_timezone( tz )
-   {}
+   /** Creates a date from a given date field.
+    * \param date Date in GMT
+    * \param localTime set to true to transform the date in localtime.
+    *
+    * The input date is considered to be in GMT; if localTime is set to true,
+    * the timestamp will be shifted.
+    */
+   TimeStamp( const Date& date, bool localTime = false );
 
    TimeStamp( const TimeStamp &ts )
    {
@@ -115,7 +112,6 @@ public:
 
    virtual ~TimeStamp() {}
 
-
    /** Set this timestamp as the system current time.
     \param bLocal if true (default), the current time is set to the current timezone.
 
@@ -123,48 +119,26 @@ public:
    */
    void setCurrent( bool bLocal = true );
 
+   void copy( const TimeStamp &ts );
+
+
+
+
    /** Return the local timezone. */
    static TimeZone getLocalTimeZone();
 
-   /** Wait until the given timestamp expires.
-    \param ts The timestamp to wait for.
-    \return true if the wait was performed, false if the timestamp is in the past.
-    \throw InterruptedError if the wait was interrupted.
-
-    If the timestamp is in the past, no wait is actually performed.
-
+   /**
+    * Gets the date represented in this timestamp.
     */
-   static bool absoluteWait( const TimeStamp &ts );
+   const Date& date() const { return m_date; }
 
-   /** Wait the required amount of years, months, days etc...
-    \param ts Number of years, months etc. to wait for.
-    \return true if the wait was performed, false if the timestamp is in the past.
-    \throw InterruptedError if the wait was interrupted.
-
-    If the timestamp is negative , no wait is actually performed.
-   */
-   static bool relativeWait( const TimeStamp &ts );
-
-   /** Initialize this timestamp using a system time structure.
-    \param system_time A system-specific time structure that can be used to create
-                       a timestamp.
+   /**
+    * Gets the date represented in this timestamp.
+    *
+    * The non-const version of this method will set the changed field
+    * and force to recalculate the timestamp fields when required.
     */
-   void fromSystemTime( void* system_time );
-
-
-   TimeStamp &operator = ( const TimeStamp &ts );
-
-   TimeStamp &operator += ( const TimeStamp &ts )
-   {
-      add( ts );
-      return *this;
-   }
-
-   TimeStamp &operator -= ( const TimeStamp &ts )
-   {
-      distance(ts);
-      return *this;
-   }
+   Date& date() { m_bChanged = true; return m_date; }
 
    /** Return a RCF2822 timezone name.
       \param tz The timezone.
@@ -232,65 +206,351 @@ public:
    /** Parse a RFC2822 date format and configure the given timestamp. */
    static bool fromRFC2822( TimeStamp &target, const char *source );
 
-   /** Shifts this timestamp moving the old timezone into the new one. */
-   void changeTimezone( TimeZone tz );
-
-   void copy( const TimeStamp &ts );
    /**
     * Equivalent to setCurrent() on local timezone.
     */
    void currentTime();
-   bool isValid() const;
-   bool isLeapYear() const;
-   int16 dayOfYear() const;
+   bool isLeapYear() const
+   {
+      return isLeapYear( m_year );
+   }
+
+   static bool isLeapYear( int64 year )
+   {
+      if ( year % 100 == 0 ) {
+         // centuries that can be divided by 400 are leap
+         // others are not.
+         return ( year % 400 == 0 );
+      }
+
+      // all other divisible by 4 years are leap
+      return ( year % 4 == 0 );
+   }
+
+   static int16 dayOfYear(int64 year, int16 month, int16 day);
+
+   int16 dayOfYear() const
+   {
+      computeDateFields();
+      return dayOfYear(m_year, m_month, m_day );
+   }
+
 
    /** Gets the day of week.
+    \return the day of the week, in range 0-6 (0 is monday).
       Week starting on monday, 0 based.
    */
-   int16 dayOfWeek() const;
+   static int16 dayOfWeek(int64 year, int16 month, int16 day);
 
-   void add( const TimeStamp &ts );
+   int16 dayOfWeek() const
+   {
+      computeDateFields();
+      return dayOfWeek( m_year, m_month, m_day );
+   }
+
+   /**
+    * Returns the week of the year for the given date.
+    * \param year the date year
+    * \param month the date month (1-12)
+    * \param day the date day (1-31)
+    * \param iso8601_2000 if true, adjust the week as recommended by iso8601_2000.
+    *
+    * \see adjust_iso8601_2000
+    */
+   static int16 weekOfYear(int64 year, int16 month, int16 day, bool iso8601_2000 = false );
+
+   /**
+    * Returns the week of the year for this date.
+    * \param iso8601_2000 if true, adjust the week as recommended by iso8601_2000.
+    *
+    * \see adjust_iso8601_2000
+    */
+   int16 weekOfYear( bool iso8601_2000 = false ) const
+   {
+      computeDateFields();
+      return weekOfYear( m_year, m_month, m_day, iso8601_2000 );
+   }
+
+   /**
+    * Adds a given number of days, hours, minutes, seconds and milliseconds to the timestamp.
+    *
+    * \note To add a number of milliseconds to the timestamp, use the date() field and
+    * add the milliseconds to that.
+    */
    void add( int32 days, int32 hours=0, int32 mins=0, int32 secs=0, int32 msecs=0 );
-   void distance( const TimeStamp &ts );
-   int32 compare( const TimeStamp &ts ) const;
+
+
+   int64 compare( const TimeStamp &ts ) const;
+
+   /** Performs a simple conversion to staring.
+    * \target the string where to store the result
+    *
+    * This renders the timestamp in format "YYYY-MM-DD HH:mm:SS.sss" where "sss" is milliseconds.
+    * \see strftime
+    */
    void toString( String &target ) const;
 
-   bool toString( String &target, const String &fmt ) const;
+   /**
+    Converts the timestamp through a format string.
+    \param target Where to store the string
+    \param fmt The string format for rendering
+    \param posFail If non zero, will receive the position where the parsing failed in case of error
+    \return true on success, false on error.
+
+    This function renders the timestamp using a format that is similar to that of the POSIX strftime applied on
+    C time stamp structures.
+
+    Falcon doesn't support C locale functions natively (they are provided through a separate module), but
+    internationalization is supported in this function through Process::setTranslation() system.
+
+   The following conversion specifications are supported:
+
+    - %a: Replaced by the locale's abbreviated weekday name. By default, it's English 3 character names,
+          that can be overridden by setting the translations for "Mon","Tue", "Wed","Thu","Fri","Sat","Sun".
+    - %A: Replaced by the locale's full weekday name. By default, it's English day names, that can be overridden
+          by setting the translations for "Monday","Tuesday", "Wednesday","Thursday","Friday","Saturday","Sunday".
+    - %b: Replaced by the locale's abbreviated month name. By default, it's English 3 characters month names,
+            that can be overridden by setting the translations for
+            "Jan","Feb","Mar","Apr","May","Jun","Jul","Aug", "Sep","Oct","Nov","Dec".
+    - %B: Replaced by the locale's full month name. By default, it's English month names,
+            that can be overridden by setting the translations for
+            "January","February","March","April","May","June","July","August", "September","October","November","December".
+    - %c: Replaced by the locale's appropriate date and time representation.
+          By default, it's "%a %b %d %T %Y", but can be overridden by setting the "#TimeStamp::datetime" name.
+    - %C: Replaced by the year divided by 100 and truncated to an integer, as a decimal number [00,99].
+    - %d: Replaced by the day of the month as a decimal number [01,31]. [ tm_mday]
+    - %D: Equivalent to "%m/%d/%y".
+    - %e: Replaced by the day of the month as a decimal number [1,31]; a single digit is preceded by a space.
+    - %F: Equivalent to "%Y-%m-%d" (the ISO 8601:2000 standard date format).
+    - %g: Replaced by the last 2 digits of the week-based year (see below) as a decimal number [00,99].
+    - %G: Replaced by the week-based year (see below) as a decimal number (for example, 1977).
+    - %h: Equivalent to %b.
+    - %H: Replaced by the hour (24-hour clock) as a decimal number [00,23].
+    - %I: Replaced by the hour (12-hour clock) as a decimal number [01,12].
+    - %j: Replaced by the day of the year as a decimal number [001,366].
+    - %m: Replaced by the month as a decimal number [01,12].
+    - %M: Replaced by the minute as a decimal number [00,59].
+    - %n: Replaced by a <newline>.
+    - %p: Replaced by the locale's equivalent of either a.m. or p.m. Defaults to "AM" and "PM", and can be
+          overridden by setting the translations for "#TimeStamp::AM" and "#TimeStamp::PM"
+    - %r: Replaced by the time in a.m. and p.m. notation; by default, it's equivalent to "%I:%M:%S %p",
+          but can be overridden by setting the transation for "#TimeStamp::12h".
+    - %R: Replaced by the time in 24-hour notation "%H:%M".
+    - %S: Replaced by the second as a decimal number [00,60].
+    - %t: Replaced by a <tab>.
+    - %T: Replaced by the time ( %H : %M : %S ). [ tm_hour, tm_min, tm_sec]
+    - %u: Replaced by the weekday as a decimal number [1,7], with 1 representing Monday.
+    - %U: Replaced by the week number of the year as a decimal number [00,53]. The first Sunday of January is the
+          first day of week 1; days in the new year before this are in week 0.
+    - %V: Replaced by the week number of the year (Monday as the first day of the week) as a decimal number [01,53].
+          If the week containing 1 January has four or more days in the new year, then it is considered week 1.
+          Otherwise, it is the last week of the previous year, and the next week is week 1.
+          Both January 4th and the first Thursday of January are always in week 1.
+    - %w: Replaced by the weekday as a decimal number [0,6], with 0 representing Sunday.
+    - %W: Replaced by the week number of the year as a decimal number [00,53].
+          The first Monday of January is the first day of week 1; days in the new year before this are in week 0.
+    - %x: Replaced by the locale's appropriate date representation. By default, it's "%Y-%m-%d", but it can be
+          overridden by setting the translation for "#TimeStamp::date_format".
+    - %X: Replaced by the locale's appropriate time representation. By default, it's "%H:%M:%S", but it can be
+          overridden by setting the translation for "#TimeStamp::time_format".
+    - %y: Replaced by the last two digits of the year as a decimal number [00,99].
+    - %Y: Replaced by the year as a decimal number (for example, 1997).
+    - %z: Replaced by the offset from UTC in the ISO 8601:2000 standard format ( +hhmm or -hhmm ),
+          or by no characters if no timezone is determinable. For example, "-0430" means 4 hours 30 minutes
+          behind UTC (west of Greenwich).
+    - %Z: Replaced by the timezone name or abbreviation, or by no bytes if no timezone information exists.
+    - %%: Replaced by %.
+
+    Some of the formats can be specifically translated using the 'E' and 'O' type specifiers
+    - E  Uses the locale's alternative representation %Ec %EC %Ex %EX %Ey %EY. It's actually ignored.
+    - O  Uses the locale's alternative numeric symbols  %Od %Oe %OH %OI %Om %OM %OS %Ou %OU %OV %Ow %OW %Oy
+         To set locale symbols for the ciphers in place of the arabic cypers, use set the translation
+          "#TimeStamp::N", where N is 0 to 9;
+
+    Falcon also provides the following extension with respect to the standard formats:
+    - %i: Replaced by the international RFC2822 representation (HTTP and MIME headers format).
+    - %q: Replaced by the milliseconds, not padded.
+    - %Q: Replaced by the milliseconds, padded with zero, in range [000-999].
+   */
+
+   bool strftime( String &target, const String &fmt, length_t* posFail ) const;
+   bool strftimeChar( int32 chr, String &target ) const;
 
    void getTZDisplacement( int16 &hours, int16 &minutes ) const;
 
-   bool operator ==( const TimeStamp &ts ) const { return this->compare( ts ) == 0; }
-   bool operator !=( const TimeStamp &ts ) const { return this->compare( ts ) != 0; }
-   bool operator <( const TimeStamp &ts ) const { return this->compare( ts ) < 0; }
-   bool operator >( const TimeStamp &ts ) const { return this->compare( ts ) > 0; }
-   bool operator <=( const TimeStamp &ts ) const { return this->compare( ts ) <= 0; }
-   bool operator >=( const TimeStamp &ts ) const { return this->compare( ts ) >= 0; }
+   bool operator ==( const TimeStamp &ts ) const { return this->date() == ts.date(); }
+   bool operator !=( const TimeStamp &ts ) const { return this->date() != ts.date(); }
+   bool operator <( const TimeStamp &ts ) const  { return this->date() <  ts.date(); }
+   bool operator >( const TimeStamp &ts ) const  { return this->date() >  ts.date(); }
+   bool operator <=( const TimeStamp &ts ) const { return this->date() <= ts.date(); }
+   bool operator >=( const TimeStamp &ts ) const { return this->date() >= ts.date(); }
 
-   void serialize( DataWriter* dw ) const;
-   void read( DataReader* dr );
-   static TimeStamp* deserialize( DataReader* dw );
-
-   static TimeStamp* create();
+   void store( DataWriter* dw ) const;
+   void restore( DataReader* dr );
    virtual TimeStamp* clone() const;
 
+   /**
+    * Returns the days of the given months in the date year.
+    */
+
+   static int16 getDaysOfMonth( int16 month, int64 year );
+
+   int16 year() const { computeDateFields(); return m_year; }
+   int16 month() const { computeDateFields(); return m_month; }
+   int16 day() const { computeDateFields(); return m_day; }
+   int16 hour() const { computeDateFields(); return m_hour; }
+   int16 minute() const { computeDateFields(); return m_minute; }
+   int16 second() const { computeDateFields();  return m_second; }
+   int16 msec() const { computeDateFields();return m_msec; }
+   TimeZone timeZone() const { return m_timezone; }
+
+   /** Sets the year of the current date.
+    * \param value The year to be set.
+    * \return true if setting the year leaves a valid date.
+    *
+    * The function might return false if the current day of the date is February the 29nt,
+    * and the year that was set didn't have such day.
+    */
+   bool year(int16 value);
+
+   /** Sets the month of the current date.
+    * \param value The month to be set.
+    * \return false if the month is outside 1-12 range, or if
+    * the date would become invalid in setting that month.
+    *
+    * \note Do not use this function to set a whole date or time.
+    *  Use set() to set the whole date.
+    */
+   bool month(int16 value);
+
+   /** Sets the day of the current date.
+    * \param value The day to be set.
+    * \return false if the month is outside 1-<current month days> range, or if
+    * the date would become invalid in setting that month.
+    *
+    * \note Do not use this function to set a whole date or time.
+    *  Use set() to set the whole date.
+    */
+   bool day(int16 value);
+
+   /** Sets the hour of the current date.
+    * \param value The hour to be set.
+    * \return false if the month is outside 0-23 range.
+    *
+    * \note Do not use this function to set a whole date or time.
+    *  Use set() to set the whole date.
+    */
+   bool hour(int16 value);
+
+   /** Sets the minute of the current date.
+    * \param value The minute to be set.
+    * \return false if the minute is outside 0-59 range.
+    *
+    * \note Do not use this function to set a whole date or time.
+    *  Use set() to set the whole date.
+    */
+   bool minute(int16 value);
+
+   /** Sets the second of the current date.
+    * \param value The second to be set.
+    * \return false if the second is outside 0-59 range.
+    *
+    * \note Do not use this function to set a whole date or time.
+    *  Use set() to set the whole date.
+    */
+   bool second(int16 value);
+
+   /** Sets the second of the current date.
+    * \param value The second to be set.
+    * \return false if the month is outside 0-59 range.
+    *
+    * \note Do not use this function to set a whole date or time.
+    *  Use set() to set the whole date.
+    */
+   bool msec(int16 value);
+
+   /** Sets the date.
+    * \bool true if the date can be set, false if its' invalid.
+    *
+    */
+   bool set( int64 y, int16 M, int16 d, int16 h=0, int16 m=0,
+            int16 s=0, int16 ms = 0, TimeZone tz=tz_NONE );
+
+   /** Sets the time for the given date.
+    * \bool true if the date can be set, false if its' invalid.
+    */
+   bool setTime( int16 h=0, int16 m=0, int16 s=0, int16 ms = 0, TimeZone tz=tz_NONE );
+
+   /** Sets the date using a Date entity.
+    * \bool true if the date can be set, false if its' invalid.
+    */
+   void set( const Date& date );
+
+   /** Changes the timezone associated with this date.
+    * This will change the timezone, so that if you have a date in GMT,
+    * and the timezone is set to GMT+2, the time will be moved 2 hours
+    * forward.
+    *
+    * To change the timezone without changing the timestamp value,
+    * use changeTimeZone().
+    */
+   void timeZone(TimeZone tz) { m_bChanged = true; m_timezone = tz; }
+
+   /** Shifts this timestamp moving the old timezone into the new one.
+    * \param tz new timezone.
+    *
+    * This method changes the timezone without altering the date and time
+    * reported by this timestamp. For example, is the time is set to 22:31 GMT,
+    * and this function is used to set the timezone to GMT+2, the time becomes
+    * 22:31 GMT+2. To move the timezone and change the time relatively to GMT,
+    * use the timeZone() method.
+    */
+   void changeTimeZone( TimeZone tz );
+
+
+   /** Returns the adjustment for week-based year (According with ISO8601:2000)
+    * \param year the year of the date to be controlled
+    * \param month the month of the date to be controlled
+    * \param day the day of the date to be controlled
+    * \reutrn 0 if the date doesn't need to be adjusted, -1 if this week goes in the previous year,
+    *       +1 if it goes in the next year.
+    *
+    * In this system, weeks begin on a Monday and week 1 of the year is the week that includes January 4th,
+    * which is also the week that includes the first Thursday of the year, and is also the first week that
+    * contains at least four days in the year.
+    *
+    * If the first Monday of January is the 2nd, 3rd, or 4th,
+    *  the preceding days are part of the last week of the preceding year; thus, for Saturday 2nd January 1999,
+    *  the year is 1998 and the week is 53.
+    *
+    * If December 29th, 30th, or 31st is a Monday, it and any following days are part of week 1 of the following year.
+    *
+    */
+   static int16 adjust_iso8601_2000( int16 year, int16 month, int64 day );
+
 private:
-   void rollOver(  bool onlyDays = false);
-   int16 getDaysOfMonth( int16 month = -1 ) const;
+
+   mutable int64 m_year;
+   mutable int16 m_month;
+   mutable int16 m_day;
+   mutable int16 m_hour;
+   mutable int16 m_minute;
+   mutable int16 m_second;
+   mutable int16 m_msec;
+
+   TimeZone m_timezone;
+
+   mutable bool m_bChanged;
+
+   // The real underlying date.
+   Date m_date;
+
+   /**
+    * Compute date fields from the stored date entity.
+    */
+   void computeDateFields() const;
 };
 
-inline TimeStamp operator + ( const TimeStamp &ts1, const TimeStamp &ts2 )
-{
-   TimeStamp ts3(ts1);
-   ts3.add( ts2 );
-   return ts3;
-}
-
-inline TimeStamp operator - ( const TimeStamp &ts1, const TimeStamp &ts2 )
-{
-   TimeStamp ts3(ts1);
-   ts3.distance( ts2 );
-   return ts3;
-}
 
 }
 

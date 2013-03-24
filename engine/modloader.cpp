@@ -445,7 +445,7 @@ ModLoader::t_modtype ModLoader::checkFile_internal(
       if( st.type() != FileStat::_notFound )
       {
          // if yes, check if we should use it.
-         if( bestUri == -1 || stats[bestUri].mtime().compare(st.mtime()) < 0 )
+         if( bestUri == -1 || stats[bestUri].mtime() < st.mtime() )
          {
             bestUri = i;
          }

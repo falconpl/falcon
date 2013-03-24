@@ -176,6 +176,7 @@ numeric _localSeconds()
    return SYSTEMTIME_TO_SECONDS( st );
 }
 
+
 int64 _milliseconds()
 {
    SYSTEMTIME st;
@@ -183,10 +184,21 @@ int64 _milliseconds()
    return SYSTEMTIME_TO_MILLISECONDS( st );
 }
 
+
 int64 _epoch()
 {
    return (int64) _time64(0);
 }
+
+
+void _getCurrentDate( Date& date )
+{
+   SYSTEMTIME st;
+   GetSystemTime( &st );
+   int64 ms = SYSTEMTIME_TO_SECONDS( st );
+   date.fromMilliseconds(ms);
+}
+
 
 void _tempName( String &res )
 {

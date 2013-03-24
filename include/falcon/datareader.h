@@ -25,6 +25,7 @@
 namespace Falcon {
 
 class Stream;
+class Date;
 
 /** Class providing the ability to read data from a text oriented stream.
 
@@ -161,6 +162,13 @@ public:
     exceptions enabled -- which is the default for readers.
    */
    bool read(long double &value);
+
+   /** Reads a date value.
+    \return false if the value cannot be read.
+    \throw IOError instead of returning false if the underlying stream has throwing
+    exceptions enabled -- which is the default for readers.
+   */
+   bool read( Date &date );
 
    /** Reads an arbitrary amount of data.
     \return false if the value cannot be read.

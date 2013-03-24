@@ -18,6 +18,7 @@
 #include <falcon/stream.h>
 #include <falcon/function.h>
 #include <falcon/datareader.h>
+#include <falcon/date.h>
 #include <falcon/errors/ioerror.h>
 
 #include <string.h>
@@ -199,6 +200,33 @@ bool DataReader::read( double &value )
    if( ! ensure(sizeof(double)) ) return false;
    value = m_bIsSameEndianity ? getFloat64( m_buffer + m_bufPos ) : getFloat64Reverse( m_buffer + m_bufPos );
    m_bufPos += sizeof(double);
+   return true;
+}
+
+
+bool DataReader::read( Date &date )
+{
+   int64 secs, fsecs;
+
+   // ensure will throw if requested to
+   if( ! ensure(sizeof(int64)*2) ) return false;
+   if( m_bIsSameEndianity )
+   {
+      secs = (int64) getUInt64( m_buffer + m_bufPos );
+      m_bufPos += sizeof(int64);
+      fsecs = getUInt64( m_buffer + m_bufPos );
+      m_bufPos += sizeof(int64);
+   }
+   else {
+      secs = (int64) getUInt64Reverse( m_buffer + m_bufPos );
+      m_bufPos += sizeof(int64);
+      fsecs = getUInt64Reverse( m_buffer + m_bufPos );
+      m_bufPos += sizeof(int64);
+   }
+
+   date.seconds(secs);
+   date.femtoseconds(fsecs);
+
    return true;
 }
 

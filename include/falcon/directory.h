@@ -59,13 +59,18 @@ public:
    /** Returns the URI to which this directory handle refers. */
    const URI &path() const { return m_uri; }
 
+   uint32 gcMark() const { return m_gcMark; }
+   void gcMark( uint32 mark ) { m_gcMark = mark; }
+
 protected:
    /** Creates a directory entry referring to a certain URI. */
    Directory( const URI& uri ):
-      m_uri( uri )
+      m_uri( uri ),
+      m_gcMark(0)
    {}
 
    URI m_uri;
+   uint32 m_gcMark;
 };
 
 }

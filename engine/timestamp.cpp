@@ -2,7 +2,7 @@
    FALCON - The Falcon Programming Language.
    FILE: TimeStamp.cpp
 
-    Implementation of the non-system specific TimeStamp class
+   Implementation of the non-system specific TimeStamp class
    -------------------------------------------------------------------
    Author: Giancarlo Niccolai
    Begin: Fri, 25 Mar 2011 18:21:38 +0100
@@ -15,6 +15,8 @@
 
 #include <falcon/timestamp.h>
 #include <falcon/autocstring.h>
+#include <falcon/processor.h>
+#include <falcon/vmcontext.h>
 
 #include <falcon/datawriter.h>
 #include <falcon/datareader.h>
@@ -25,34 +27,149 @@
 
 static const char *RFC_2822_days[] = { "Mon","Tue", "Wed","Thu","Fri","Sat","Sun" };
 
+static const char *Full_days[] = { "Monday","Tuesday", "Wednesday","Thursday","Friday","Saturday","Sunday" };
+
 static const char *RFC_2822_months[] = {
    "Jan","Feb","Mar","Apr","May","Jun","Jul","Aug", "Sep","Oct","Nov","Dec" };
 
+static const char *Full_months[] = {
+   "January","February","March","April","May","June","July","August", "September","October","November","December" };
+
+
+#define SECOND_PER_DAY (60*60*24)
+
 namespace Falcon {
 
-inline bool i_isLeapYear( int year )
+
+TimeStamp::TimeStamp()
 {
-   if ( year % 100 == 0 ) {
-      // centuries that can be divided by 400 are leap
-      // others are not.
-      return ( year % 400 == 0 );
+   // date set to 0
+   m_bChanged = true;
+}
+
+
+TimeStamp::TimeStamp( const Date& date, bool localTime ):
+   m_date( date )
+{
+   m_bChanged = true;
+   m_timezone = localTime ? getLocalTimeZone() : tz_UTC;
+}
+
+
+void TimeStamp::computeDateFields() const
+{
+   // do this only if the date is not already known.
+   if( ! m_bChanged )
+   {
+      return;
    }
 
-   // all other divisible by 4 years are leap
-   return ( year % 4 == 0 );
+   m_bChanged = false;
+
+   // first, calculate the date since epoch.
+   int64 secs = m_date.seconds();
+   int64 days_since_epoch = secs;
+   days_since_epoch /= SECOND_PER_DAY;
+   secs %= SECOND_PER_DAY;
+
+   int64 year = 1970;
+   int16 month = 0;
+   int16 day = 0;
+   int16 month_days[] = {31,28,31,30,31,30,31,31,30,31,30,31};
+
+   if( secs > 0 )
+   {
+      while (days_since_epoch >= 356)
+      {
+         days_since_epoch -= isLeapYear(year) ? 356 : 355;
+         ++year;
+      }
+
+      if (isLeapYear(year))
+      {
+         month_days[1] = 29;
+      }
+
+
+      while( day >= month_days[month])
+      {
+         day -= month_days[month];
+         ++month;
+      }
+
+      m_day = day + 1;
+      m_month = month + 1;
+      m_year = year;
+
+      m_msec = m_date.femtoseconds()/1000000000000LL;
+   }
+   else
+   {
+      while (days_since_epoch <= -356)
+      {
+         days_since_epoch += isLeapYear(year) ? 356 : 355;
+         --year;
+      }
+
+      if (isLeapYear(year))
+      {
+         month_days[1] = 29;
+      }
+
+      month = 11;
+      while( day <= -month_days[month])
+      {
+         day += month_days[month];
+         --month;
+      }
+
+      m_day = day + 1;
+      m_month = month + 1;
+      m_year = year;
+
+      m_msec = (Date::MAX_FEMTOSECOND + m_date.femtoseconds())/Date::MILLISECOND_DIVIDER;
+      secs = (SECOND_PER_DAY-1) + secs;
+   }
+
+   m_hour = secs/24;
+   secs %= 24;
+   m_minute = secs / 60;
+   secs %= 60;
+   m_second = secs;
+
 }
+
+
+void TimeStamp::setCurrent(bool bLocal)
+{
+   m_bChanged = true;
+   m_date.setCurrent();
+   if ( bLocal )
+   {
+      changeTimeZone(getLocalTimeZone());
+   }
+
+}
+
 
 void TimeStamp::copy( const TimeStamp &ts )
 {
-   m_year = ts.m_year;
-   m_month = ts.m_month;
-   m_day = ts.m_day;
+   if( ! ts.m_bChanged )
+   {
+      m_year = ts.m_year;
+      m_month = ts.m_month;
+      m_day = ts.m_day;
+      m_hour = ts.m_hour;
+      m_minute = ts.m_minute;
+      m_second = ts.m_second;
+      m_msec = ts.m_msec;
+   }
+
+   m_bChanged = ts.m_bChanged;
    m_timezone = ts.m_timezone;
-   m_hour = ts.m_hour;
-   m_minute = ts.m_minute;
-   m_second = ts.m_second;
-   m_msec = ts.m_msec;
+   m_date = ts.m_date;
 }
+
 
 const char *TimeStamp::getRFC2822_ZoneName( TimeZone tz, bool bSemantic, bool bSaving )
 {
@@ -89,11 +206,11 @@ const char *TimeStamp::getRFC2822_ZoneName( TimeZone tz, bool bSemantic, bool bS
       case tz_UTC_W_11: return "-1100";
       case tz_UTC_W_12: return "-1200";
 
-      case tz_NFT: return "+1130";
-      case tz_ACDT: return "+1030";
-      case tz_ACST: return "+0930";
-      case tz_HAT: return "-0230";
-      case tz_NST: return "-0330";
+      case tz_NFT: if ( bSemantic ) return "NFT"; return "+1130";
+      case tz_ACDT: if ( bSemantic ) return "ACDT"; return "+1030";
+      case tz_ACST: if ( bSemantic ) return "ACST"; return "+0930";
+      case tz_HAT: if ( bSemantic ) return "HAT"; return "-0230";
+      case tz_NST: if ( bSemantic ) return "NST"; return "-0330";
    }
    return "+????";
 }
@@ -226,20 +343,10 @@ int16 TimeStamp::getRFC2822_Month( const char *name )
    return -1;
 }
 
-TimeStamp &TimeStamp::operator = ( const TimeStamp &ts )
-{
-   copy(ts);
-   return *this;
-}
-
 
 bool TimeStamp::toRFC2822( String &target, bool bSemantic, bool bDst ) const
 {
-   if ( ! isValid() )
-   {
-      target = "?";
-      return false;
-   }
+   computeDateFields();
 
    target.append( getRFC2822_WeekDayName( dayOfWeek() ) );
    target.append( ',' );
@@ -283,9 +390,17 @@ bool TimeStamp::fromRFC2822( TimeStamp &target, const String &source )
    return fromRFC2822( target, cstr.c_str() );
 }
 
+
 bool TimeStamp::fromRFC2822( TimeStamp &target, const char *source )
 {
    const char *pos = source;
+
+   int64 year;
+   int16 month;
+   int16 day;
+   int16 hour;
+   int16 minute;
+   int16 second;
 
    // Find the comma
    while ( *pos != 0 && *pos != ',' ) pos++;
@@ -304,138 +419,93 @@ bool TimeStamp::fromRFC2822( TimeStamp &target, const char *source )
    while( *mon != 0 && *mon != ' ' ) mon++;
    if ( *mon == 0 || (mon - pos) != 2)
       return false;
-   target.m_day = atoi( pos );
+   day = atoi( pos );
 
    mon++;
    pos = mon;
    while( *mon != 0 && *mon != ' ' ) mon++;
    if ( *mon == 0 || (mon - pos) != 3)
       return false;
-   target.m_month = getRFC2822_Month( pos );
+   month = getRFC2822_Month( pos );
 
    mon++;
    pos = mon;
    while( *mon != 0 && *mon != ' ' ) mon++;
    if ( *mon == 0 || (mon - pos) != 4)
       return false;
-   target.m_year = atoi( pos );
+   year = atoi( pos );
 
    mon++;
    pos = mon;
    while( *mon != 0 && *mon != ':' ) mon++;
    if ( *mon == 0 || (mon - pos) != 2 )
       return false;
-   target.m_hour = atoi( pos );
+   hour = atoi( pos );
 
    mon++;
    pos = mon;
    while( *mon != 0 && *mon != ':' ) mon++;
    if ( *mon == 0 || (mon - pos) != 2 )
       return false;
-   target.m_minute = atoi( pos );
+   minute = atoi( pos );
 
    mon++;
    pos = mon;
    while( *mon != 0 && *mon != ' ' ) mon++;
    if ( *mon == 0 || (mon - pos) != 2 )
       return false;
-   target.m_second = atoi( pos );
+   second = atoi( pos );
 
    mon++;
-   target.m_timezone = getRFC2822_Zone( mon );
-   if( target.m_timezone == tz_NONE )
+   TimeZone tz = getRFC2822_Zone( mon );
+   if( tz == tz_NONE )
       return false;
 
-   target.m_msec = 0;
-
-   return target.isValid();
-}
-
-bool TimeStamp::isValid() const
-{
-   if ( m_msec < 0 || m_msec >= 1000 )
-      return false;
-   if ( m_second < 0 || m_second >= 60 )
-      return false;
-   if ( m_minute < 0 || m_minute >= 60 )
-      return false;
-   if ( m_hour < 0 || m_hour >= 24 )
-      return false;
-   if ( m_month < 1 || m_month > 12 )
-      return false;
-   if ( m_day < 1 || m_day > 31 )
-      return false;
-
-   // exclude months with 31 days
-   if ( m_month == 1 || m_month == 3 || m_month == 5 || m_month == 7 || m_month == 8 ||
-        m_month == 10|| m_month == 12 )
-      return true;
-
-   // now exclude the months with 30 days
-   if ( m_month != 2 ) {
-      if ( m_day != 31 )
-         return true;
-      return false;  // 31 days in a 30 days long month
-   }
-
-   // february.
-   if ( m_day == 30 )
-      return false;
-   if ( m_day < 29 )
-      return true;
-
-   // we have to calculate the leap year
-   if ( isLeapYear() )
-      return true;
-
-   return false;
-}
-
-bool TimeStamp::isLeapYear() const
-{
-   if ( m_year % 100 == 0 ) {
-      // centuries that can be divided by 400 are leap
-      // others are not.
-      return ( m_year % 400 == 0 );
-   }
-
-   // all other divisible by 4 years are leap
-   return ( m_year % 4 == 0 );
+   return target.set(year,month,day,hour,minute,second,tz);
 }
 
 
-int16 TimeStamp::dayOfYear() const
-{
-   if ( ! isValid() )
-      return 0;
 
+int16 TimeStamp::dayOfYear(int64 year, int16 month, int16 day)
+{
    int days = 0;
    // add all the previous days
-   switch( m_month ) {
+   switch( month ) {
       case 12: days += 30;
+      /* no break */
       case 11: days += 31;
+      /* no break */
       case 10: days += 30;
+      /* no break */
       case 9: days += 31;
+      /* no break */
       case 8: days += 31;
+      /* no break */
       case 7: days += 30;
+      /* no break */
       case 6: days += 31;
+      /* no break */
       case 5: days += 30;
+      /* no break */
       case 4: days += 31;
-      case 3: days += 28; if ( isLeapYear() ) days ++;
+      /* no break */
+      case 3: days += 28; if ( isLeapYear(year) ) days ++;
+      /* no break */
       case 2: days += 31;
+      /* no break */
    }
-   days += m_day;
+   days += day;
 
    return days;
 }
 
-int16 TimeStamp::getDaysOfMonth( int16 month ) const
-{
-   if ( month == -1 ) month = m_month;
 
+
+int16 TimeStamp::getDaysOfMonth( int16 month, int64 year )
+{
    switch( month ) {
       case 1: return 31;
-      case 2: return isLeapYear()? 29 : 28;
+      case 2: return isLeapYear(year)? 29 : 28;
       case 3: return 31;
       case 4: return 30;
       case 5: return 31;
@@ -450,23 +520,23 @@ int16 TimeStamp::getDaysOfMonth( int16 month ) const
    return 0;
 }
 
-/** week starting on monday, 0 based. */
-int16 TimeStamp::dayOfWeek() const
+
+int16 TimeStamp::dayOfWeek(int64 year, int16 month, int16 day)
 {
    // consider 1700 the epoch
-   if ( m_year < 1700 )
+   if ( year < 1700 )
       return -1;
 
    // compute days since epoch.
-   int32 nyears = m_year - 1700;
+   int32 nyears = year - 1700;
    int32 nday = nyears * 365;
 
    // add leap years (up to the previous year. This year is  computed in dayOfYear()
-   if( m_year > 1700 )
+   if( year > 1700 )
       nday += ((nyears-1) / 4) - ((nyears-1) / 100) + ((nyears-1) / 400);
 
    // add day of the year.
-   nday += dayOfYear();
+   nday += dayOfYear(year, month, day);
 
    // add epoch (1/1/1700 was a Friday)
    nday += 4;
@@ -476,275 +546,62 @@ int16 TimeStamp::dayOfWeek() const
 }
 
 
-void TimeStamp::add( const TimeStamp &ts )
+int16 TimeStamp::weekOfYear(int64 year, int16 month, int16 day, bool iso8601_2000 )
 {
-   m_day += ts.m_day;
-   m_hour += ts.m_hour;
-   m_minute += ts.m_minute;
-   m_second += ts.m_second;
-   m_msec += ts.m_msec;
-
-   if ( m_timezone != ts.m_timezone && m_timezone != tz_NONE && ts.m_timezone != tz_NONE )
+   int16 doy = dayOfYear(year, month, day);
+   int16 week;
+   // adjust for iso?
+   if( iso8601_2000 )
    {
-      int16 hours=0, mins=0, ts_hours=0, ts_mins=0;
-      ts.getTZDisplacement( ts_hours, ts_mins );
-      getTZDisplacement( hours, mins );
-      m_hour += hours - ts_hours;
-      m_minute += hours - ts_mins;
+      week = (doy / 7)+1;
+      week += adjust_iso8601_2000(year, month, day);
+      if( week == 0 )
+      {
+         week = 53;
+      }
+   }
+   else
+   {
+      // compute the first monday
+      int firstDay = dayOfYear(year, month, 1);
+      int day = 1;
+      while( firstDay %7 != 0 )
+      {
+         firstDay++;
+         day++;
+      }
+      // week 0 is 1 -> 1st monday.
+      week = (doy + 7 - day) / 7;
    }
 
-   rollOver();
-   if ( m_timezone == tz_NONE )
-      m_timezone = ts.m_timezone;
+   return week;
 }
+
 
 void TimeStamp::add( int32 days, int32 hours, int32 mins, int32 secs, int32 msecs )
 {
-   m_day = days + dayOfYear();
-   m_hour += hours;
-   m_minute += mins;
-   m_second += secs;
-   m_msec += msecs;
-
-   rollOver();
+   int64 seconds = days * SECOND_PER_DAY + hours*60*60 + mins *60 * secs;
+   seconds *= 1000;
+   seconds += msecs;
+   if( seconds != 0 )
+   {
+      m_bChanged = true;
+      m_date.addMilliseconds(seconds);
+   }
 }
 
-inline void cplxSub( int &sub1, int sub2, int unit, int &change )
+
+int64 TimeStamp::compare( const TimeStamp &ts ) const
 {
-   sub1 -= sub2;
-   while( sub1 < 0 )
+   int64 dist = m_date.seconds() - ts.m_date.seconds();
+   if( dist == 0 )
    {
-      change--;
-      sub1 += unit;
+      dist = m_date.femtoseconds() - ts.m_date.femtoseconds();
    }
+
+   return dist;
 }
 
-void TimeStamp::distance( const TimeStamp &ts )
-{
-   int days = 0;
-
-   // first decide which date is bigger.
-   const TimeStamp *startDate, *endDate;
-   int comparation = this->compare( ts );
-   if (comparation == 0 ) {
-      // the same date, means no distance.
-      m_msec = m_second = m_minute = m_hour = m_day = m_month = m_year = 0;
-      return;
-   }
-
-   if ( comparation > 0 ) {
-      startDate = &ts;
-      endDate = this;
-   }
-   else {
-      startDate = this;
-      endDate = &ts;
-   }
-
-   // If year is different:
-   if( startDate->m_year != endDate->m_year )
-   {
-      // calculate the number of days in the in-between years
-      for ( int baseYear = startDate->m_year + 1; baseYear < endDate->m_year; baseYear++ )
-         days += i_isLeapYear( baseYear ) ? 366 : 365;
-
-      // calculate the number of days from start day to the end of the year.
-      int doy = ( startDate->isLeapYear() ? 366 : 365 ) - startDate->dayOfYear();
-      days += doy;
-
-      // and add the days in the year of the target date
-      days += endDate->dayOfYear();
-   }
-   else {
-      days += endDate->dayOfYear() - startDate->dayOfYear();
-   }
-
-   m_year = 0;
-   m_month = 0;
-
-   //int tday = days;
-   int thour = endDate->m_hour;
-   int tminute = endDate->m_minute;
-   int tsecond = endDate->m_second;
-   int tmsec = endDate->m_msec;
-
-   if ( m_timezone != ts.m_timezone && m_timezone != tz_NONE && ts.m_timezone != tz_NONE )
-   {
-      int16 hours=0, mins=0, ts_hours=0, ts_mins=0;
-      ts.getTZDisplacement( ts_hours, ts_mins );
-      getTZDisplacement( hours, mins );
-      // if ts bigger (positive distance) we must add the difference between TS timezone and us
-      if ( comparation < 0 )
-      {
-         thour += ts_hours - hours;
-         tminute += ts_mins - mins;
-      }
-      else {
-         // else we got to subtract it
-         thour += ts_hours - hours;
-         tminute += ts_mins - mins;
-      }
-   }
-
-   cplxSub( tmsec, startDate->m_msec, 1000, tsecond );
-   cplxSub( tsecond, startDate->m_second, 60, tminute );
-   cplxSub( tminute, startDate->m_minute, 60, thour );
-   cplxSub( thour, startDate->m_hour, 24, days );
-
-   m_day = days;
-   m_hour = thour;
-   m_minute = tminute;
-   m_second = tsecond;
-   m_msec = tmsec;
-
-   if( comparation > 0 )
-   {
-      // the negative sign goes on the first non-zero unit
-      if ( m_day != 0 )
-         m_day = -m_day;
-      else if ( m_hour != 0 )
-         m_hour = -m_hour;
-      else if ( m_minute != 0 )
-         m_minute = -m_minute;
-      else if ( m_second != 0 )
-         m_second = -m_second;
-      else
-         m_msec = -m_msec;
-   }
-
-   m_timezone = tz_NONE;
-}
-
-void TimeStamp::rollOver( bool onlyDays )
-{
-   // do rollovers
-   int32 adjust = 0;
-   if( m_msec < 0 ) {
-      adjust = - ( (-m_msec) / 1000 + 1 );
-      m_msec = 1000 - ((-m_msec)%1000);
-   }
-
-   if ( m_msec >= 1000 ) {
-      adjust += m_msec / 1000;
-      m_msec = m_msec % 1000;
-   }
-
-   m_second += adjust;
-   adjust = 0;
-   if( m_second < 0 ) {
-     adjust = - ( (-m_second) / 60 + 1 );
-     m_second = 60 - ((-m_second)%60);
-   }
-
-   if (m_second >= 60 ) {
-     adjust += m_second / 60;
-     m_second = m_second % 60;
-   }
-
-   m_minute += adjust;
-   adjust = 0;
-   if( m_minute < 0 ) {
-      adjust = - ( (-m_minute) / 60 + 1 );
-      m_minute = 60 - ((-m_minute)%60);
-   }
-
-   if ( m_minute >= 60 ) {
-      adjust += m_minute / 60;
-      m_minute = m_minute % 60;
-   }
-
-   m_hour += adjust;
-   adjust = 0;
-   if( m_hour < 0 ) {
-      adjust = - ( (-m_hour) / 24 + 1 );
-      m_hour = 24 - ((-m_hour)%24);
-   }
-
-   if ( m_hour >= 24 ) {
-      adjust += m_hour / 24;
-      m_hour = m_hour % 24;
-   }
-
-   m_day += adjust;
-   if ( onlyDays ) {
-      return;
-   }
-
-   if ( m_day > 0 )
-   {
-      int16 mdays;
-      while( m_day > (mdays = getDaysOfMonth( m_month )) )
-      {
-         m_day -= mdays;
-
-         if( m_month == 12 )
-         {
-            m_month = 1;
-            m_year++;
-         }
-         else
-            m_month++;
-      }
-   }
-   else {
-      while( m_day < 1 )
-      {
-         if ( m_month == 1 )
-         {
-            m_month = 12;
-            m_year--;
-         }
-         else
-            m_month --;
-         m_day += getDaysOfMonth( m_month );
-      }
-   }
-}
-
-int32 TimeStamp::compare( const TimeStamp &ts ) const
-{
-   if ( m_year < ts.m_year  ) return -1;
-   if ( m_year > ts.m_year  ) return 1;
-
-   if ( m_month < ts.m_month  ) return -1;
-   if ( m_month > ts.m_month  ) return 1;
-
-   if ( m_day < ts.m_day  ) return -1;
-   if ( m_day > ts.m_day  ) return 1;
-
-   if ( ts.m_timezone == m_timezone || ts.m_timezone == tz_NONE || m_timezone == tz_NONE )
-   {
-      if ( m_hour < ts.m_hour  ) return -1;
-      if ( m_hour > ts.m_hour  ) return 1;
-
-      if ( m_day < ts.m_day  ) return -1;
-      if ( m_day > ts.m_day  ) return 1;
-   }
-   else {
-      int16 hdisp=0, mdisp=0;
-      int16 ts_hdisp=0, ts_mdisp=0;\
-
-      getTZDisplacement( hdisp, mdisp );
-      ts.getTZDisplacement( ts_hdisp, ts_mdisp );
-
-      if ( m_hour + hdisp < ts.m_hour + ts_hdisp ) return -1;
-      if ( m_hour + hdisp > ts.m_hour + ts_hdisp ) return 1;
-
-      if ( m_day + mdisp < ts.m_day + ts_mdisp ) return -1;
-      if ( m_day + mdisp > ts.m_day + ts_mdisp ) return 1;
-   }
-
-   if ( m_minute < ts.m_minute  ) return -1;
-   if ( m_minute > ts.m_minute  ) return 1;
-
-   if ( m_second < ts.m_second  ) return -1;
-   if ( m_second > ts.m_second  ) return 1;
-
-   if ( m_msec < ts.m_msec  ) return -1;
-   if ( m_msec > ts.m_msec  ) return 1;
-
-   return 0;
-}
 
 void TimeStamp::getTZDisplacement( int16 &hours, int16 &minutes ) const
 {
@@ -805,77 +662,636 @@ void TimeStamp::toString( String &target ) const
    target.manipulator( &csh::handler_buffer );
    target.reserve(allocated);
    
+   computeDateFields();
    sprintf( (char *)target.getRawStorage(), "%04d-%02d-%02d %02d:%02d:%02d.%03d",
-      m_year, m_month, m_day, m_hour, m_minute, m_second, m_msec );
+      (int32)m_year, m_month, m_day, m_hour, m_minute, m_second, m_msec );
    target.size(25);
 }
 
-bool TimeStamp::toString( String &target, const String &fmt ) const
+bool TimeStamp::strftime( String &target, const String &fmt, length_t* posFail ) const
 {
-   AutoCString cfmt( fmt );
-   struct tm theTime;
+   computeDateFields();
 
-   theTime.tm_sec = m_second;
-   theTime.tm_min = m_minute;
-   theTime.tm_hour = m_hour;
-   theTime.tm_mday = m_day;
-   theTime.tm_mon = m_month-1;
-   theTime.tm_year = m_year - 1900;
+   target.size(0);
+   // a good guess.
+   target.reserve(fmt.length()*2);
 
-   char timeTgt[512];
-   if( strftime( timeTgt, 512, cfmt.c_str(), &theTime) != 0 )
+   // let's use a simple state machine
+   length_t pos = 0;
+   length_t len = fmt.length();
+   while( pos+1 < len )
    {
-      target.bufferize( timeTgt );
+      int32 chr = fmt.getCharAt(pos);
+      bool localeName = false;
+      bool localeNum = false;
 
-      uint32 pos = target.find( "%i" );
-      if( pos !=  String::npos )
+      // check escape char...
+      if( chr == (int32) '%' )
       {
-         String rfc;
-         toRFC2822( rfc );
-         while( pos != String::npos )
+         pos++;
+         chr = fmt.getCharAt(pos);
+         // type specifier?
+         // E is locale names
+         if( chr == 'E' )
          {
-            target.change( pos, pos + 2, rfc );
-            pos = target.find( "%i", pos + 2 );
+            ++pos;
+            if( pos == len )
+            {
+               if( posFail != 0 ) *posFail = pos;
+               return false;
+            }
+
+            chr = fmt.getCharAt(pos);
+            if( chr != 'c' && chr != 'C' && chr != 'x' && chr != 'X' && chr !=  'y' && chr != 'Y' )
+            {
+               if( posFail != 0 ) *posFail = pos;
+               return false;
+            }
+
+            localeName = true;
+        }
+        // O is locale numbers
+        else if( chr == 'O' )
+        {
+           ++pos;
+           if( pos == len )
+           {
+              if( posFail != 0 ) *posFail = pos;
+              return false;
+           }
+
+           chr = fmt.getCharAt(pos);
+
+           if( chr != 'd' && chr != 'e' && chr != 'H' && chr != 'I' && chr != 'm' &&
+               chr != 'M' && chr != 'S' && chr != 'u' && chr != 'U' && chr != 'V' &&
+               chr != 'w' && chr != 'W' && chr != 'y' )
+           {
+              if( posFail != 0 ) *posFail = pos;
+              return false;
+           }
+
+           localeNum = true;
+        }
+
+
+         if( chr != '%')
+         {
+            String temp;
+            if( ! strftimeChar( chr, temp ) )
+            {
+               if( posFail != 0 ) *posFail = pos;
+               return false;
+            }
+
+            if( localeName || localeNum )
+            {
+               Processor *proc = Processor::currentProcessor();
+               if( proc == 0 )
+               {
+                  if( posFail != 0 ) *posFail = pos;
+                  return false;
+               }
+
+               // Numbers require single cipher translation.
+               String temp2;
+               if( localeNum )
+               {
+                  String cipher = "#TimeStamp:: ";
+                  for( length_t i = 0; i < temp.length(); ++ i)
+                  {
+                     cipher.setCharAt(12, temp.getCharAt(i));
+                     proc->currentContext()->process()->getTranslation(cipher, temp2);
+                     target.append(temp2);
+                     temp2.size(0); // just in case
+                  }
+               }
+               else {
+                  //proc->currentContext()->process()->getTranslation(temp, temp2);
+                  //target.append(temp2);
+                  target.append(temp);
+               }
+            }
+            else
+            {
+               target.append(temp);
+            }
+         }
+         else {
+            target.append('%');
          }
       }
-
-      pos = target.find( "%q" );
-      if( pos !=  String::npos )
-      {
-         String msecs;
-         msecs.writeNumber( (int64) m_msec );
-         while( pos != String::npos )
-         {
-            target.change( pos, pos + 2, msecs );
-            pos = target.find( "%q", pos + 2 );
-         }
+      else {
+         target.append(chr);
       }
-
-      pos = target.find( "%Q" );
-      if( pos !=  String::npos )
-      {
-         String msecs;
-         if( m_msec < 10 )
-            msecs = "00";
-         else if ( m_msec < 100 )
-            msecs = "0";
-
-         msecs.writeNumber( (int64) m_msec );
-
-         while( pos != String::npos )
-         {
-            target.change( pos, pos + 2, msecs );
-            pos = target.find( "%Q", pos + 2 );
-         }
-      }
-
-      return true;
    }
 
-   return false;
+   if( pos + 1 < len )
+   {
+      // last unparsed char.
+      target.append(fmt.getCharAt(pos+1));
+   }
+
+   if( posFail != 0 ) *posFail = (length_t)-1;
+   return true;
 }
 
-void TimeStamp::changeTimezone( TimeZone tz )
+
+inline bool inner_translate( const String& source, String& target )
+{
+   Processor *proc = Processor::currentProcessor();
+   if( proc != 0 )
+   {
+      return proc->currentContext()->process()->getTranslation(source, target);
+   }
+   else {
+      target = source;
+      return false;
+   }
+}
+
+
+bool TimeStamp::strftimeChar( int32 chr, String &target ) const
+{
+   String temp;
+   switch (chr)
+   {
+   case 'a':
+      fassert( m_day >= 1 && m_day <= 7);
+      temp = RFC_2822_days[m_day-1];
+      inner_translate( temp, target );
+      break;
+
+   case 'A':
+      fassert( m_day >= 1 && m_day <= 7);
+      temp = Full_days[m_day-1];
+      inner_translate( temp, target );
+      break;
+
+   case 'h':
+   case 'b':
+      fassert( m_month >= 1 && m_month <= 12);
+      temp = RFC_2822_months[m_month-1];
+      inner_translate( temp, target );
+      break;
+
+   case 'B':
+      fassert( m_month >= 1 && m_month <= 12);
+      temp = Full_months[m_day-1];
+      inner_translate( temp, target );
+      break;
+
+   case 'c':
+      //Date and time representation *   Thu Aug 23 14:55:02 2001
+      {
+         String format = "%a %b %d %T %Y";
+         // allow an alternative format
+         Processor *proc = Processor::currentProcessor();
+         if( proc != 0 )
+         {
+            String tmpfmt;
+            if( proc->currentContext()->process()->getTranslation("#TimeStamp::datetime", tmpfmt) )
+            {
+              format = tmpfmt;
+            }
+         }
+         if (!strftime(target, format, 0) )
+         {
+            return false;
+         }
+
+      }
+      break;
+
+   case 'C':
+      // century
+      {
+         int64 century = m_year/100;
+         if( century < 10 )
+            target.append('0');
+         target.N(century);
+      }
+      break;
+
+   case 'd':
+      // day
+      {
+         if( m_day < 10 )
+            target.append('0');
+         target.N(m_day);
+      }
+      break;
+
+   case 'D':
+      // %m/%d/%y
+      if( ! strftime(target,"%m/%d/%y",0) )
+         return false;
+      break;
+
+   case 'e':
+      {
+         if( m_day < 10 )
+            target.append(' ');
+         target.N(m_day);
+      }
+      break;
+
+   case 'F':
+      // %Y-%m-%d
+      if( ! strftime(target,"%Y-%m-%d",0) )
+         return false;
+      break;
+
+   case 'g':
+   case 'G':
+      {
+         int64 year = adjust_iso8601_2000(m_year, m_month, m_day) + m_year;
+
+         if( chr == 'g' )
+         {
+            year /= 100;
+            if( year < 10 )
+               target.append('0');
+         }
+
+         target.N(year);
+      }
+      break;
+
+   case 'H':
+      if( m_hour < 10 )
+         target.append('0');
+      target.N(m_hour);
+      break;
+
+   case 'i':
+      toRFC2822(target,false, false);
+      break;
+
+   case 'I':
+      // our in range 1-12
+      {
+         int16 hour = m_hour % 12;
+         if( hour == 0 ) hour = 12;
+         if( hour < 10 )
+            target.append('0');
+         target.N(hour);
+         break;
+      }
+      break;
+
+   case 'j':
+      // dow
+      {
+         int16 dow = dayOfYear();
+         if( dow < 100 ) target.append('0');
+         if( dow < 10 ) target.append('0');
+         target.N(dow);
+      }
+      break;
+
+   case 'm':
+      if( m_month < 10 )
+         target.append('0');
+      target.N(m_month);
+      break;
+
+   case 'M':
+     if( m_minute < 10 ) target.append('0');
+     target.N(m_minute);
+     break;
+
+   case 'n':
+      target.append('\n');
+      break;
+
+   case 'p':
+      {
+         String marker = m_hour > 0 && m_hour <= 12 ? "AM" : "PM";
+         if( ! inner_translate("#TimeStamp::" + marker, target ) )
+         {
+            target = marker;
+         }
+      }
+      break;
+
+   case 'q':
+      target.append(m_msec);
+      break;
+
+   case 'Q':
+      if( m_msec < 100 ) target.append('0');
+      if( m_msec < 10 ) target.append('0');
+      target.append(m_msec);
+      break;
+
+   case 'r':
+      {
+         String format;
+         if (  ! inner_translate("#TimeStamp::12h", format ) )
+         {
+            format = "%I:%M:%S %p";
+         }
+
+         strftime(target, format, 0);
+      }
+      break;
+
+   case 'R':
+      strftime(target, "%H:%M", 0);
+      break;
+
+   case 'S':
+      if( m_second < 10 )
+         target.append('0');
+      target.N(m_second);
+      break;
+
+   case 't':
+      target.append('\t');
+      break;
+
+   case 'T':
+      strftime(target, "%H:%M:%S", 0);
+      break;
+
+   case 'u':
+      target.N( dayOfWeek()+1 );
+      break;
+
+   case 'U':
+      {
+         int16 woy = weekOfYear(false);
+         // we calculate monday as first day of week, but %U starts from sunday.
+         if( woy == 1 )
+         {
+            if( dayOfWeek() == 6) woy++;
+         }
+         else if( woy == 1 )
+         {
+            if( dayOfWeek() == 6) woy++;
+         }
+
+         if( woy < 10 ) target.append('0');
+         target.N( woy );
+      }
+      break;
+
+   case 'V':
+      {
+         int16 woy = weekOfYear(true);
+         if( woy < 10 ) target.append('0');
+         target.N( woy );
+      }
+      break;
+
+   case 'w':
+      target.N( (dayOfWeek()+1) % 7 );
+      break;
+
+   case 'W':
+      {
+         int16 woy = weekOfYear(false);
+         if( woy < 10 ) target.append('0');
+         target.N( woy );
+      }
+      break;
+
+   case 'x':
+      {
+         String format;
+         if( ! inner_translate("#TimeStamp::date_format", target ) )
+         {
+            format = "%Y-%m-%d";
+         }
+         strftime(target, format, 0);
+      }
+      break;
+
+   case 'X':
+      {
+         String format;
+         if( ! inner_translate("#TimeStamp::time_format", target ) )
+         {
+            format = "%H:%M:%S";
+         }
+         strftime(target, format, 0);
+      }
+      break;
+
+   case 'y':
+      {
+         int year = m_year % 100;
+         if( year < 10 ) target.append(year);
+         target.N(year);
+      }
+      break;
+
+   case 'Y':
+      target.N(m_year);
+      break;
+
+   case 'z':
+      {
+         int16 h = 0 ,m = 0;
+         getTZDisplacement(h,m);
+         target.append(h < 0 ? '-' : '+');
+         if( h < 10 ) target.append( '0' );
+         target.N(h);
+         if( m < 10 ) target.append( '0' );
+         target.N(m);
+      }
+      break;
+
+   case 'Z':
+      if( m_timezone != tz_NONE )
+      {
+         target.append(getRFC2822_ZoneName(m_timezone, true, false));
+      }
+      break;
+
+   default:
+      return false;
+   }
+
+   return true;
+}
+
+
+int16 TimeStamp::adjust_iso8601_2000( int16 year, int16 month, int64 day )
+{
+   if ( month == 1 )
+   {
+      if( day < 4 )
+      {
+         // 0 is monday...
+         int32 dw = dayOfWeek(year, month, day);
+         // so, if current day
+         if( (day - dw) < 0 )
+         {
+            return -1;
+         }
+      }
+   }
+   else if( month == 12 )
+   {
+      if( day > 28 )
+      {
+         int32 dw = dayOfWeek(year, month, day);
+         if ( (31-dw) > 28 )
+         {
+            return +1;
+         }
+      }
+   }
+
+   return 0;
+}
+
+
+
+bool TimeStamp::year(int16 value)
+{
+   computeDateFields();
+   return set( value, m_month, m_day, m_hour, m_minute, m_second, m_msec, m_timezone );
+}
+
+bool TimeStamp::month(int16 value)
+{
+   computeDateFields();
+   return set( m_year, value, m_day, m_hour, m_minute, m_second, m_msec, m_timezone );
+}
+
+
+bool TimeStamp::day(int16 value)
+{
+   computeDateFields();
+   return set( m_year, m_month, value, m_hour, m_minute, m_second, m_msec, m_timezone );
+}
+
+
+bool TimeStamp::hour(int16 value)
+{
+   computeDateFields();
+   return set( m_year, m_month, m_day, value, m_minute, m_second, m_msec, m_timezone );
+}
+
+
+bool TimeStamp::minute(int16 value)
+{
+   computeDateFields();
+   return set( m_year, m_month, m_day, m_hour, value, m_second, m_msec, m_timezone );
+}
+
+
+bool TimeStamp::second(int16 value)
+{
+   computeDateFields();
+   return set( m_year, m_month, m_day, m_hour, m_minute, value, m_msec, m_timezone );
+}
+
+
+bool TimeStamp::msec(int16 value)
+{
+   computeDateFields();
+   return set( m_year, m_month, m_day, m_hour, m_minute, m_second, value, m_timezone );
+}
+
+
+
+bool TimeStamp::set( int64 y, int16 M, int16 d, int16 h, int16 m,
+         int16 s, int16 ms, TimeZone tz )
+{
+   if( m < 1 || m > 12 || d < 1 || d > getDaysOfMonth(m,y) )
+   {
+      return false;
+   }
+
+   int16 hdisp = 0, mdisp = 0;
+   getTZDisplacement(tz, hdisp, mdisp);
+   int64 msecdisp = hdisp * 60*60 + mdisp*60;
+   msecdisp *= 1000;
+   int64 baseMs = 0;
+
+   // now the fun part, calculate the year displacement.
+   if( y >= 1970 )
+   {
+      int64 days = d;
+      int64 year = 1970;
+      while( year < y )
+      {
+         days += isLeapYear(year) ? 356: 355;
+         ++year;
+      }
+
+      int month = 1;
+      while( month < M )
+      {
+         days += getDaysOfMonth(month,y);
+         month++;
+      }
+
+      baseMs = s+ m*60 + h*3600 + days * SECOND_PER_DAY;
+      baseMs *= 1000;
+      baseMs += ms;
+   }
+   else
+   {
+      int64 days = 0;
+      int64 year = 1970;
+      while( year > y )
+      {
+         days -= isLeapYear(year) ? 356: 355;
+         --year;
+      }
+
+      int month = 12;
+      while( month > M )
+      {
+         days -= getDaysOfMonth(month,y);
+         month++;
+      }
+
+      days -= getDaysOfMonth(m,year) - d;
+      baseMs = (SECOND_PER_DAY-1) - (s+ m*60 + h*3600);
+      baseMs += days*SECOND_PER_DAY;
+      baseMs *= 1000;
+      baseMs -= 999-ms;
+   }
+
+   baseMs -= msecdisp;
+   m_date.fromMilliseconds(baseMs);
+   m_timezone = tz;
+
+   m_year = y;
+   m_month = M;
+   m_day = d;
+   m_hour = h;
+   m_minute = m;
+   m_second = s;
+   m_msec = ms;
+
+   // TEST: Recalculate all.
+   m_bChanged = true;
+
+   return true;
+}
+
+
+bool TimeStamp::setTime( int16 h, int16 m, int16 s, int16 ms, TimeZone tz )
+{
+   computeDateFields();
+   return set( m_year, m_month, m_day, h, m, s, ms, tz );
+}
+
+
+void TimeStamp::set( const Date& date )
+{
+   m_bChanged = true;
+   m_date = date;
+}
+
+
+void TimeStamp::changeTimeZone( TimeZone tz )
 {
    if  ( m_timezone == tz_local )
    {
@@ -896,69 +1312,35 @@ void TimeStamp::changeTimezone( TimeZone tz )
    int16 currentHour=0, currentMin=0, newHour=0, newMin=0;
    getTZDisplacement( tz, newHour, newMin );
    getTZDisplacement( m_timezone, currentHour, currentMin );
-
-   m_hour -= currentHour;
-   m_hour += newHour;
-   m_minute -= currentMin;
-   m_minute += newMin;
-   rollOver( false );
-   m_timezone = tz;
+   m_date.seconds( m_date.seconds()
+            - (currentHour*60*60) - (currentMin*60)
+            - (newHour*60*60) - (newMin*60)
+            );
 }
+
 
 TimeStamp *TimeStamp::clone() const
 {
    return new TimeStamp( *this );
 }
 
-TimeStamp *TimeStamp::create()
-{
-   return new TimeStamp();
-}
 
-void TimeStamp::serialize( DataWriter* dw ) const
+void TimeStamp::store( DataWriter* dw ) const
 {
-   dw->write(m_year);
-   dw->write(m_month);
-   dw->write(m_day);
-   dw->write(m_hour);
-   dw->write(m_minute);
-   dw->write(m_second);
-   dw->write(m_msec);
    dw->write((char) m_timezone);
+   dw->write(m_date);
 }
 
 
-void TimeStamp::read( DataReader* dr )
+void TimeStamp::restore( DataReader* dr )
 {
-   char tzone;
-
-   dr->read(m_year);
-   dr->read(m_month);
-   dr->read(m_day);
-   dr->read(m_hour);
-   dr->read(m_minute);
-   dr->read(m_second);
-   dr->read(m_msec);
-   dr->read(tzone);
-
-   m_timezone = (TimeZone) tzone;
+   char tz;
+   dr->read(tz);
+   dr->read(m_date);
+   m_timezone = (TimeZone) tz;
+   m_bChanged = true;
 }
 
-TimeStamp* TimeStamp::deserialize( DataReader* dr )
-{
-   TimeStamp* ts = create();
-
-   try
-   {
-      ts->read( dr );
-      return ts;
-   }
-   catch( ... )
-   {
-      delete ts;
-      throw;
-   }
-}
 
 void TimeStamp::currentTime()
 {

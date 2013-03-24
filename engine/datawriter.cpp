@@ -17,6 +17,7 @@
 #include <falcon/endianity.h>
 #include <falcon/stream.h>
 #include <falcon/datawriter.h>
+#include <falcon/date.h>
 #include <falcon/errors/ioerror.h>
 
 #include <string.h>
@@ -216,6 +217,12 @@ bool DataWriter::write( double value )
       return Writer::writeRaw( locBuf, 8 );
    }
 
+}
+
+
+bool DataWriter::write( const Date& date )
+{
+   return write(date.seconds()) && write(date.femtoseconds());
 }
 
 

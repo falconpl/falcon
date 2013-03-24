@@ -22,8 +22,8 @@
 #include <falcon/errors/linkerror.h>
 
 #include "vfs.h"
-#include "open.h"
-#include "create.h"
+#include "vfs_ext.h"
+#include "classvfs.h"
 
 namespace Falcon {
 
@@ -37,8 +37,10 @@ VFSModule::VFSModule():
    
    *this
       // Standard functions
-      << new Ext::Open( this )
-      << new Ext::Create( this )
+      << new Ext::ClassVFS
+      << new Ext::Function_IOStream
+      << new Ext::Function_InputStream
+      << new Ext::Function_OutputStream
       
       // Standard classes
       ;
@@ -56,9 +58,6 @@ VFSModule::VFSModule():
    this->addConstant( "C_NOOVR", (int64)VFSProvider::CParams::e_cflag_noovr );
    this->addConstant( "C_NOSTREAM", (int64)VFSProvider::CParams::e_cflag_nostream );
    //this->addConstant( "C_RAW", (int64)FALCON_VFS_MODE_FLAG_RAW );
-   
-   
-
 }
 
 VFSModule::~VFSModule()

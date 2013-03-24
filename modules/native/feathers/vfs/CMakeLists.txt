@@ -11,8 +11,8 @@ include_directories(
 #Specific system files
 
 add_library(vfs_fm MODULE
-   create.cpp
-   open.cpp
+   vfs_ext.cpp
+   classvfs.cpp
 
    vfs.cpp
 )

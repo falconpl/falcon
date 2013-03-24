@@ -61,16 +61,16 @@ public:
    void size( int64 t ) { m_size = t; }
 
    /** Creation or status change */
-   const TimeStamp& ctime() const { return m_ctime; }
-   TimeStamp& ctime() { return m_ctime; }
+   const int64& ctime() const { return m_ctime; }
+   void ctime( int64 v ) { m_ctime = v; }
 
    /** Last write time */
-   const TimeStamp& mtime() const { return m_mtime; }
-   TimeStamp& mtime() { return m_mtime; }
+   const int64& mtime() const { return m_mtime; }
+   void mtime( int64 v ) { m_mtime = v; }
 
    /** Last access time */
-   const TimeStamp& atime() const { return m_atime; }
-   TimeStamp& atime() { return m_atime; }
+   const int64& atime() const { return m_atime; }
+   void atime( int64 v ) { m_atime = v; }
 
 private:
    /** Type of the found file. */
@@ -79,14 +79,14 @@ private:
    /** Size of the required file */
    int64 m_size;
 
-   /** Creation or status change */
-   TimeStamp m_ctime;
+   /** Creation or status change in milliseconds since epoch */
+   int64 m_ctime;
 
-   /** Last write time */
-   TimeStamp m_mtime;
+   /** Creation or status change in milliseconds since epoch */
+   int64 m_mtime;
 
-   /** Last access time */
-   TimeStamp m_atime;
+   /** Creation or status change in milliseconds since epoch */
+   int64 m_atime;
 };
 
 }

@@ -40,6 +40,7 @@ extern "C"
 #include <falcon/types.h>
 #include <falcon/sys.h>
 #include <falcon/string.h>
+#include <falcon/date.h>
 //#include <falcon/transcoding.h>
 
 namespace Falcon {
@@ -91,10 +92,30 @@ int64 _milliseconds()
 #endif
 }
 
+
 int64 _epoch()
 {
    return (int64) time(0);
 }
+
+
+void _getCurrentDate( Date& date )
+{
+#if POSIX_TIMERS > 0
+   struct timespec ts;
+   // nanoseconds since epoch
+   clock_gettime( CLOCK_REALTIME, &ts );
+   date.seconds( ts.tv_sec );
+   date.femtoseconds( static_cast<int64>(ts.tv_nsec) * 1000000LL );
+
+#else
+   struct timeval tv;
+   gettimeofday( &tv, 0 );
+   date.seconds( tv.tv_sec );
+   date.femtoseconds( static_cast<int64>(tv.tv_usec) * 1000000000LL );
+#endif
+}
+
 
 void _tempName( String &res )
 {

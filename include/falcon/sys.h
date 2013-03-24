@@ -26,6 +26,7 @@
 namespace Falcon {
 
 class String;
+class Date;
 
 namespace Sys {
 
@@ -77,6 +78,12 @@ FALCON_DYN_SYM bool _unsetEnv( const String &var );
 */
 
 FALCON_DYN_SYM int64 _epoch();
+
+/** Sets a date at the current system time.
+
+   The date is set in seconds since epoch; GMT date is used.
+*/
+FALCON_DYN_SYM void _getCurrentDate( Date& date );
 
 /** Callback for environment variable enumeration.
  \see _enumerateEnvironment

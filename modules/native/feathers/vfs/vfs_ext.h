@@ -1,20 +1,20 @@
 /*
    FALCON - The Falcon Programming Language.
-   FILE: open.h
+   FILE: vfs_ext.h
 
-   Interface to Falcon Virtual File System -- open() function decl
+   Interface to Falcon Virtual File System -- various
    -------------------------------------------------------------------
    Author: Giancarlo Niccolai
-   Begin: Mon, 24 Oct 2011 14:34:31 +0200
+   Begin: Thu, 21 Mar 2013 22:23:59 +0100
 
    -------------------------------------------------------------------
-   (C) Copyright 2011: the FALCON developers (see list in AUTHORS file)
+   (C) Copyright 2013: the FALCON developers (see list in AUTHORS file)
 
    See LICENSE file for licensing details.
 */
 
-#ifndef FALCON_FEATHERS_VFS_OPEN_H
-#define FALCON_FEATHERS_VFS_OPEN_H
+#ifndef FALCON_FEATHERS_VFS_EXT_H
+#define FALCON_FEATHERS_VFS_EXT_H
 
 #include <falcon/setup.h>
 #include <falcon/function.h>
@@ -25,53 +25,27 @@ class VFSModule;
 
 namespace Ext {
 
-/*# Opens a VFS entity.
- @param uri The VFS uri (string or URI entity) to be opened.
- @optparam mode Open read mode.
-
- The open mode could be an (bitwise-or) combination of the following:
- - @b O_RD: Read only
- - @b O_WR: Write only
- - @b O_APPEND: Set the file pointer at end
- - @b O_TRUNC:  Truncate
-
- - @b SH_NR: Shared read
- - @b SH_NW: Shared write
-
-  The real meaning of the settings depends on the final
-  virtual file system driver.
-
-  By default the stream is opened as O_RD.
- */
-class Open: public Function
-{
-public:
-   Open( VFSModule* mod );
-   virtual ~Open();   
-   virtual void invoke( Falcon::VMContext* ctx, int );
-   
-private:
-   VFSModule* m_module;
-};
-
-
 /*# Opens a read-only input stream.
- @param uri The VFS uri (string or URI entity) to be opened.
-
+ @param uri The VFS uri (string) to be opened.
+ @return On success a new stream.
+ @raise IoError on error.
+@deprecated
  */
 FALCON_DECLARE_FUNCTION(InputStream, "uri:S");
 
 /*# Creates a new write-only output stream
- @param uri The VFS uri (string or URI entity) to be opened.
- @optparam mode Open read mode.
-
+ @param uri The VFS uri (string) to be opened.
+ @return On success a new stream.
+ @raise IoError on error.
+@deprecated
  */
 FALCON_DECLARE_FUNCTION(OutputStream, "uri:S");
 
 /*# Opens a VFS entity.
- @param uri The VFS uri (string or URI entity) to be opened.
- @optparam mode Open read mode.
-
+ @param uri The VFS uri (string) to be opened.
+ @return On success a new stream.
+ @raise IoError on error.
+ @deprecated
  */
 FALCON_DECLARE_FUNCTION(IOStream, "uri:S");
 
@@ -79,4 +53,7 @@ FALCON_DECLARE_FUNCTION(IOStream, "uri:S");
 }
 
 
-#endif	/* OPEN_H */
+#endif
+
+/* end of vfs_ext.h */
+

@@ -25,6 +25,7 @@
 namespace Falcon {
 
 class Stream;
+class Date;
 
 /** Class providing the ability to write data to a binary oriented stream.
 
@@ -84,49 +85,49 @@ public:
    bool isSameEndianity() const { return m_bIsSameEndianity; }
 
    /** Writes a boolean value.
-    \return false if the value cannot be read.
+    \return false if the value cannot be written.
     \throw IOError instead of returning false if the underlying stream has throwing
     exceptions enabled -- which is the default for readers.
     */
    bool write(bool value);
 
    /** Writes a signed 8-bit integer value.
-    \return false if the value cannot be read.
+    \return false if the value cannot be written.
     \throw IOError instead of returning false if the underlying stream has throwing
     exceptions enabled -- which is the default for readers.
     */
    bool write(char value);
 
    /** Writes an unsigned 8-bit integer value.
-    \return false if the value cannot be read.
+    \return false if the value cannot be written.
     \throw IOError instead of returning false if the underlying stream has throwing
     exceptions enabled -- which is the default for readers.
     */
    bool write(byte value);
 
    /** Writes an 16 bit signed integer value.
-    \return false if the value cannot be read.
+    \return false if the value cannot be written.
     \throw IOError instead of returning false if the underlying stream has throwing
     exceptions enabled -- which is the default for readers.
    */
    bool write(int16 value) { return write((uint16) value); }
 
    /** Writes an 16 bit signed integer value.
-    \return false if the value cannot be read.
+    \return false if the value cannot be written.
     \throw IOError instead of returning false if the underlying stream has throwing
     exceptions enabled -- which is the default for readers.
    */
    bool write(uint16 value);
 
    /** Writes a 32 bit signed integer value.
-    \return false if the value cannot be read.
+    \return false if the value cannot be written.
     \throw IOError instead of returning false if the underlying stream has throwing
     exceptions enabled -- which is the default for readers.
    */
    bool write(int32 value) { return write((uint32) value); }
 
    /** Writes a 32 bit signed integer value.
-    \return false if the value cannot be read.
+    \return false if the value cannot be written.
     \throw IOError instead of returning false if the underlying stream has throwing
     exceptions enabled -- which is the default for readers.
    */
@@ -134,14 +135,14 @@ public:
 
 
    /** Writes a 64 bit signed integer value.
-    \return false if the boolean value cannot be read.
+    \return false if the boolean value cannot be written.
     \throw IOError instead of returning false if the underlying stream has throwing
     exceptions enabled -- which is the default for readers.
    */
    bool write(int64 value) { return write((uint64) value); }
 
    /** Writes a 64 bit signed integer value.
-    \return false if the value cannot be read.
+    \return false if the value cannot be written.
     \throw IOError instead of returning false if the underlying stream has throwing
     exceptions enabled -- which is the default for readers.
    */
@@ -149,31 +150,38 @@ public:
 
 
    /** Writes a 32 bit float value.
-    \return false if the boolean value cannot be read.
+    \return false if the boolean value cannot be written.
     \throw IOError instead of returning false if the underlying stream has throwing
     exceptions enabled -- which is the default for readers.
    */
    bool write(float value);
 
    /** Writes a 64 bit float value.
-    \return false if the value cannot be read.
+    \return false if the value cannot be written.
     \throw IOError instead of returning false if the underlying stream has throwing
     exceptions enabled -- which is the default for readers.
    */
    bool write(double value);
 
    /** Writes a previously written string.
-    \return false if the value cannot be read.
+    \return false if the value cannot be written.
     \throw IOError instead of returning false if the underlying stream has throwing
     exceptions enabled -- which is the default for readers.
 
-    This method de-serializes a string previously written by a data writer.
+    This method writes a string on the target stream.
 
-    Falcon Strings are not encoded through a text encoder; they store an internal
+    When stored this way, Strings are not encoded through a text encoder; they store an internal
     representation of the character values. 
     */
    bool write( const String& tgt );
    
+   /** Writes a date on the underlying stream.
+    \return false if the value cannot be written.
+    \throw IOError instead of returning false if the underlying stream has throwing
+    exceptions enabled -- which is the default for readers.
+    */
+   bool write( const Date& date );
+
    bool write( const char* data ) { return write(String(data)); }
 
 private:
