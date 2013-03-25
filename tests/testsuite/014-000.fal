@@ -20,6 +20,6 @@ Done
 load vfs
 
 > "Smoke test for module loading"
-> "open() class name: ", open.className
-> "create() class name: ", create.className
+> "open() class name: ", VFS.open.className
+> "create() class name: ", VFS.create.className
 > "Done"

@@ -14,10 +14,10 @@ Done
 
 */
 
-import open from vfs as myopen
-import open from vfs as myopen2
+import VFS from vfs as myopen
+import VFS from vfs as myopen2
 
 > "Import from/as directive with double alias"
-> "open() class name: ", myopen.className
-> "open() (again) class name: ", myopen2.className
+> "open() class name: ", myopen.open.className
+> "open() (again) class name: ", myopen2.open.className
 > "Done"

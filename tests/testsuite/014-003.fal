@@ -14,9 +14,9 @@ Done
 
 */
 
-import open, create from vfs
+import VFS from vfs
 
 > "Import syms from/in directive"
-> "open() class name: ", open.className
-> "create() class name: ", create.className
+> "open() class name: ", VFS.open.className
+> "create() class name: ", VFS.create.className
 > "Done"

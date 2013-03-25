@@ -8,17 +8,17 @@ this test prints their className.
 @output
 Import from/as directive
 open() class name: Function
-create() class name: Function
+TimeStamp class name: $MetaClass
 Done
 Import from/as directive with double alias
-open() class name: Function
+open() class name: $MetaClass
 Done
 @endoutput
 
 */
 
-import test.create from "./014-005" in retest
+import test.tss from "./014-005" in retest
 
 > "Import from/as directive with double alias"
-> "open() class name: ", retest.create.className
+> "open() class name: ", retest.tss.className
 > "Done"

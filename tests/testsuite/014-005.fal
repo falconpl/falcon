@@ -8,19 +8,19 @@ this test prints their className.
 @output
 Import from/as directive
 open() class name: Function
-create() class name: Function
+TimeStamp class name: $MetaClass
 Done
 @endoutput
 
 */
 
-import open from vfs as myopen
+import VFS from vfs as myopen
 namespace test
-import create from vfs as test.create
+import TimeStamp from timestamp as test.tss
 
 > "Import from/as directive"
-> "open() class name: ", myopen.className
-> "create() class name: ", test.create.className
+> "open() class name: ", myopen.open.className
+> "TimeStamp class name: ", test.tss.className
 > "Done"
 
 return "Pippo"
