@@ -1,0 +1,19 @@
+/*
+@name Basic unpack
+@category Expressions
+
+@output
+Unpack
+a: 1
+b: 2
+c: 3
+@endoutput
+*/
+
+> "Unpack"
+a,b,c = [1,2,3]
+
+> "a: ", a
+> "b: ", b
+> "c: ", c
+

@@ -1,0 +1,22 @@
+/*
+@name Dot array
+@category Expressions
+
+@output
+Dot array
+array[0]: 1
+array[1]: 2
+array[2][0]: 3
+array[2][1]: 4
+@endoutput
+*/
+
+> "Dot array"
+array = .[ 1 2 .[3 4] ]
+
+> "array[0]: ", array[0]
+> "array[1]: ", array[1]
+> "array[2][0]: ", array[2][0]
+> "array[2][1]: ", array[2][1]
+
+

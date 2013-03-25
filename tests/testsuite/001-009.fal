@@ -1,0 +1,20 @@
+/*
+@name Deep multiassignment
+@category Expressions
+
+@output
+Deep multiassignment
+a[0]: 1
+a[1]: 2
+a[2]: 3
+@endoutput
+*/
+
+> "Deep multiassignment"
+a = .[ 0 1 2 ]
+a[0], a[1], a[2] = 1,2,3
+
+> "a[0]: ", a[0]
+> "a[1]: ", a[1]
+> "a[2]: ", a[2]
+

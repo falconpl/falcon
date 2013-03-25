@@ -1,0 +1,11 @@
+/*
+@name Basic assignment
+@category Expressions
+
+@return Ok
+*/
+
+> "Test for basic assignment"
+a = "Ok"
+> a
+return a

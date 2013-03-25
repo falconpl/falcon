@@ -1,0 +1,19 @@
+/*
+@name Basic multiassignment
+@category Expressions
+
+@output
+Multiassignment
+a: 1
+b: 2
+c: 3
+@endoutput
+*/
+
+> "Multiassignment"
+a,b,c = 1,2,3
+
+> "a: ", a
+> "b: ", b
+> "c: ", c
+

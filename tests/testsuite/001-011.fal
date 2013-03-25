@@ -1,0 +1,21 @@
+/*
+@name Deep unpack
+@category Expressions
+
+@output
+Deep unpack
+a[0]: 0
+a[1]: 1
+a[2]: 2
+@endoutput
+*/
+
+> "Deep unpack"
+b = .[ 0 1 2 ]
+a = [ -1, -1, -1, ]
+a[0], a[1], a[2] = b
+
+> "a[0]: ", a[0]
+> "a[1]: ", a[1]
+> "a[2]: ", a[2]
+
