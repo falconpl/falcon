@@ -16,14 +16,14 @@
 #ifndef FALCON_EXPRUNPACK_H_
 #define FALCON_EXPRUNPACK_H_
 
-#include <falcon/expression.h>
+#include <falcon/psteps/exprvector.h>
 
 #include <vector>
 
 namespace Falcon {
 
 /** Expression used to unpack a single value into multiple symbols. */
-class FALCON_DYN_CLASS ExprUnpack: public Expression
+class FALCON_DYN_CLASS ExprUnpack: public ExprVector
 {
 public:
    ExprUnpack( int line = 0, int chr = 0 );
@@ -36,10 +36,6 @@ public:
    virtual void render( TextWriter* tw, int32 depth ) const;
    inline virtual bool isStandAlone() const { return true; }
 
-   int targetCount() const;
-   Symbol* getAssignand( int n ) const;
-   ExprUnpack& addAssignand( Symbol* );
-
    virtual bool isStatic() const { return false; }
 
    virtual Expression* selector() const
@@ -49,13 +45,14 @@ public:
 
    bool selector( Expression* sel );
 
+   virtual bool setNth( int32 n, TreeStep* ts );
+   virtual bool insert( int32 pos, TreeStep* element );
+   virtual bool append( TreeStep* element );
+
 protected:
    Expression* m_expander;
    
 private:
-   class Private;
-   Private* _p;
-
    static void apply_( const PStep*, VMContext* ctx );
 };
 

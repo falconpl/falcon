@@ -151,8 +151,6 @@ FALCON_SYNCLASS_DECLARATOR(m_expr_arshift, AutoRShift, Expression)
 // Functional
 FALCON_SYNCLASS_DECLARATOR(m_expr_compose, Compose, Expression)
 
-FALCON_SYNCLASS_DECLARATOR(m_expr_munpack, MUnpack, Expression )
-
 FALCON_SYNCLASS_DECLARATOR(m_expr_neg, Neg, Expression)
 // OOB
 FALCON_SYNCLASS_DECLARATOR(m_expr_oob, Oob, Expression)
@@ -170,9 +168,8 @@ FALCON_SYNCLASS_DECLARATOR(m_expr_self, Self, Expression)
 FALCON_SYNCLASS_DECLARATOR(m_expr_fself, FSelf, Expression)
 FALCON_SYNCLASS_DECLARATOR(m_expr_init, Init, Expression)
 FALCON_SYNCLASS_DECLARATOR(m_expr_starindex, StarIndexAccess, Expression)
-FALCON_SYNCLASS_DECLARATOR_EX(m_expr_unpack, Unpack, Expression, \
-      virtual void store( VMContext*, DataWriter* dw, void* instance ) const; \
-      )
+FALCON_SYNCLASS_DECLARATOR(m_expr_unpack, Unpack, Expression )
+FALCON_SYNCLASS_DECLARATOR(m_expr_munpack, MUnpack, Expression )
 
 
 FALCON_SYNCLASS_DECLARATOR(m_expr_unquote, Unquote, Expression)

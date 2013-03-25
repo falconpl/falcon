@@ -123,3 +123,36 @@ The RuleSynTree is used by the @a Rule class as a single branch of its alternati
  @optparam ... Parameters for the call.
 
 */
+
+/*#
+ @class Unpack
+ @from TreeStep
+ @brief Homoiconic reflection of the array-unpack assignment.
+ @param packed The expression generating the array to be unpacked.
+ @optparam ... Destination where the unpacked values are stored.
+
+ The target expressions must be assignable expressions (as dot
+ accessors or similar).
+ 
+ The selector of this class is the @b packed expression, while
+ the arity is the number of assignee expressions.
+*/
+
+/*#
+ @class MUnpack
+ @from TreeStep
+ @brief Homoiconic reflection of the muilti-unpack assignment.
+ @optparam ... Assignment expressions.
+
+ This class reflects the "a,b,c = 1,2,3" sort of multiple assignments.
+ It's actually a vector of assignment expressions, as the above
+ code is then turned into a MUnpack instance having "a=1", "b=2"
+ and "c=3" expressions.
+ 
+ This class has not any selector, and the arity is the number of
+ assigments held in this multi-unpack. 
+ 
+ The multi-unpack expressions accepts Assign() expressions only
+ as children.
+
+*/

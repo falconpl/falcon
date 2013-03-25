@@ -35,6 +35,10 @@ public:
    inline virtual bool isStandAlone() const { return true; }
    virtual const String& exprName() const;
 
+   /** Reimplemented to prevent setting of non-assignable expressions.
+    *
+    */
+   virtual bool setNth( int32 n, TreeStep* ts );
 protected:
    static void apply_( const PStep* ps, VMContext* ctx );
 };

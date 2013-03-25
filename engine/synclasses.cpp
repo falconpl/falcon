@@ -343,7 +343,6 @@ FALCON_STANDARD_SYNCLASS_OP_CREATE( AutoRShift, ExprAutoRShift, binaryExprSet )
 
 // Functional
 FALCON_STANDARD_SYNCLASS_OP_CREATE( Compose, ExprCompose, binaryExprSet )
-FALCON_STANDARD_SYNCLASS_OP_CREATE( MUnpack, ExprMultiUnpack, varExprInsert )
 FALCON_STANDARD_SYNCLASS_OP_CREATE( Neg, ExprNeg, unaryExprSet )
 
 // OOB
@@ -363,6 +362,8 @@ FALCON_STANDARD_SYNCLASS_OP_CREATE( StarIndexAccess, ExprStarIndex, binaryExprSe
 
 // Sym -- separated
 // Unpack -- separated
+FALCON_STANDARD_SYNCLASS_OP_CREATE( Unpack, ExprUnpack, varExprInsert_sel )
+FALCON_STANDARD_SYNCLASS_OP_CREATE( MUnpack, ExprMultiUnpack, varExprInsert )
 FALCON_STANDARD_SYNCLASS_OP_CREATE( Unquote, ExprUnquote, unaryExprSet )
 FALCON_STANDARD_SYNCLASS_OP_CREATE( EvalRet, ExprEvalRet, unaryExprSet )
 FALCON_STANDARD_SYNCLASS_OP_CREATE( EvalRetExec, ExprEvalRetExec, unaryExprSet )
@@ -573,53 +574,6 @@ void SynClasses::ClassPseudoCall::restore( VMContext* ctx, DataReader*dr ) const
    m_parent->restore( ctx, dr );
 }
 
-void* SynClasses::ClassUnpack::createInstance() const
-{       
-   return new ExprUnpack;
-}
-bool SynClasses::ClassUnpack::op_init( VMContext* ctx, void* instance, int pcount ) const
-{       
-   // TODO -- parse a list of pairs symbol, + 1 terminal expression
-   return Class::op_init( ctx, instance, pcount );
-}
-void SynClasses::ClassUnpack::store(Falcon::VMContext* ctx, Falcon::DataWriter* stream, void* instance) const
-{
-   ExprUnpack* expr = static_cast<ExprUnpack*>( instance );
-   uint32 count = expr->targetCount();
-   stream->write( count );
-   for( uint32 i = 0; i < count; ++i )
-   {
-      Symbol* sym = expr->getAssignand(i);
-      stream->write( sym->name() );
-   }
-
-   m_parent->store( ctx, stream, instance );
-}
-void SynClasses::ClassUnpack::restore( VMContext* ctx, DataReader*dr ) const
-{
-   ExprUnpack* expr = new ExprUnpack;
-   try {
-      uint32 count;
-      dr->read( count );
-
-      for( uint32 i = 0; i < count; ++i )
-      {
-         String name;
-         dr->read(name);
-
-         Symbol* sym = Engine::getSymbol( name );
-         expr->addAssignand(sym);
-      }
-
-      ctx->pushData( Item( this, expr ) );
-      m_parent->restore( ctx, dr );
-   }
-   catch(...) {
-      ctx->popData();
-      delete expr;
-      throw;
-   }
-}
 
 void* SynClasses::ClassGenRange::createInstance() const
 {       

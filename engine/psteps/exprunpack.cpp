@@ -26,23 +26,18 @@
 #include <falcon/synclasses.h>
 #include <falcon/engine.h>
 
-#include <vector>
+#include "exprvector_private.h"
 
 namespace Falcon {
 
 
-class ExprUnpack::Private {
-public:
-   std::vector<Symbol*> m_params;
-};
 
 //=========================================================
 // Unpack
 
 ExprUnpack::ExprUnpack( Expression* op1, int line, int chr ):
-   Expression(line, chr),
-   m_expander(op1),
-   _p( new Private )
+   ExprVector(line, chr),
+   m_expander(op1)
 {
    FALCON_DECLARE_SYN_CLASS( expr_unpack )
    apply = apply_;
@@ -50,9 +45,8 @@ ExprUnpack::ExprUnpack( Expression* op1, int line, int chr ):
 }
 
 ExprUnpack::ExprUnpack( int line, int chr ):
-   Expression(line, chr),
-   m_expander(0),
-   _p( new Private )
+   ExprVector(line, chr),
+   m_expander(0)
 {
    FALCON_DECLARE_SYN_CLASS( expr_unpack )
    apply = apply_;
@@ -60,32 +54,16 @@ ExprUnpack::ExprUnpack( int line, int chr ):
 }
 
 ExprUnpack::ExprUnpack( const ExprUnpack& other ):
-   Expression(other)
+   ExprVector(other)
 {
-   _p = new Private;
    m_trait = Expression::e_trait_composite;
    m_expander = other.m_expander->clone();
    m_expander->setParent(this);
-
-   _p->m_params.reserve(other._p->m_params.size());
-   std::vector<Symbol*>::const_iterator iter = other._p->m_params.begin();
-   while( iter != other._p->m_params.end() )
-   {
-      (*iter)->incref();
-      _p->m_params.push_back( *iter );
-      ++iter;
-   }
 }
 
 ExprUnpack::~ExprUnpack()
 {
    dispose( m_expander );
-   std::vector<Symbol*>::const_iterator iter = _p->m_params.begin();
-   while( iter != _p->m_params.end() )
-   {
-      (*iter)->decref();
-      ++iter;
-   }
 }
 
 
@@ -107,6 +85,43 @@ bool ExprUnpack::simplify( Item& ) const
 }
 
 
+bool ExprUnpack::setNth( int32 n, TreeStep* ts )
+{
+   // we accept assignable expressions only
+   Expression* temp = static_cast<Expression*>(ts);
+   if( ts->category() != TreeStep::e_cat_expression || temp->lvalueStep() == 0 )
+   {
+      return false;
+   }
+
+   return ExprVector::setNth(n,  ts);
+}
+
+
+bool ExprUnpack::insert( int32 n, TreeStep* ts )
+{
+   Expression* temp = static_cast<Expression*>(ts);
+   if( ts->category() != TreeStep::e_cat_expression || temp->lvalueStep() == 0 )
+   {
+      return false;
+   }
+
+   return ExprVector::insert(n, ts);
+}
+
+
+bool ExprUnpack::append( TreeStep* ts )
+{
+   Expression* temp = static_cast<Expression*>(ts);
+   if( ts->category() != TreeStep::e_cat_expression || temp->lvalueStep() == 0 )
+   {
+      return false;
+   }
+
+   return ExprVector::append(ts);
+}
+
+
 void ExprUnpack::render( TextWriter* tw, int32 depth ) const
 {
    tw->write( renderPrefix(depth) );
@@ -119,13 +134,13 @@ void ExprUnpack::render( TextWriter* tw, int32 depth ) const
    {
 
       // and generate all the expressions, in inverse order.
-      for( unsigned int i = 0; i < _p->m_params.size(); ++i )
+      for( unsigned int i = 0; i < _p->m_exprs.size(); ++i )
       {
          if ( i > 0 )
          {
             tw->write(", ");
          }
-         tw->write(_p->m_params[i]->name());
+         _p->m_exprs[i]->render(tw, relativeDepth(depth));
       }
 
       tw->write( " = " );
@@ -139,32 +154,12 @@ void ExprUnpack::render( TextWriter* tw, int32 depth ) const
 }
 
 
-
-int ExprUnpack::targetCount() const
-{
-   return _p->m_params.size();
-}
-
-Symbol* ExprUnpack::getAssignand( int i) const
-{
-   return _p->m_params[i];
-}
-
-ExprUnpack& ExprUnpack::addAssignand(Symbol* e)
-{
-   _p->m_params.push_back(e);
-   e->incref();
-   return *this;
-}
-
-
 void ExprUnpack::apply_( const PStep* ps, VMContext* ctx )
 {
    TRACE3( "Apply unpack: %p (%s)", ps, ps->describe().c_ize() );
 
    const ExprUnpack* self = static_cast<const ExprUnpack*>(ps);
-   std::vector<Symbol*> &syms = self->_p->m_params;
-   size_t pcount = syms.size();
+   int pcount = (int) self->_p->m_exprs.size();
    
    // eventually generate the expander.
    CodeFrame& cf = ctx->currentCode();
@@ -178,7 +173,6 @@ void ExprUnpack::apply_( const PStep* ps, VMContext* ctx )
    }
    
    // we won't be called anymore
-   ctx->popCode();
    register Item& expander = ctx->topData();
    if ( ! expander.isArray() )
    {
@@ -188,18 +182,31 @@ void ExprUnpack::apply_( const PStep* ps, VMContext* ctx )
    }
    ItemArray& array = *(ItemArray*) expander.asInst();
 
-   if( pcount != array.length() )
+   if( pcount != (int) array.length() )
    {
       throw
          new OperandError( ErrorParam(e_unpack_size, __LINE__ ).extra("Different size") );
    }
 
-   size_t i;
-   for( i = 0; i < pcount; ++i )
+   while( cf.m_seqId <= pcount )
    {
-      ctx->resolveSymbol(syms[i], true)->assign(array[i]);
+      // we start from 1...
+      register int pos = cf.m_seqId-1;
+      Expression* expr = self->_p->m_exprs[pos];
+      ctx->pushData( array[pos] );
+      fassert( expr->lvalueStep() != 0 );
+      cf.m_seqId++;
+
+      if( ctx->stepInYield( expr->lvalueStep(), cf ) )
+      {
+         return;
+      }
    }
 
+   if( pcount > 1) ctx->popData(pcount-1);
+   ctx->topData().setNil();
+
+   ctx->popCode();
    // leave the expander in the stack.
 }
 

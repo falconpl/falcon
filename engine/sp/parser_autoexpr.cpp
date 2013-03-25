@@ -140,17 +140,14 @@ void apply_stmt_assign_list( const Rule&, Parser& p )
          while( iterRight != listLeft->end() )
          {
             Expression* expr = *iterRight;
-            if( expr->trait() != Expression::e_trait_symbol )
-            {
-               p.addError(e_syn_unpack, p.currentSource(), v2->line(), v2->chr());
-               p.simplify(3, ti);
-               return;
-            }
 
             // accept this item -- abandon it from the list
-            Symbol* symbol = static_cast<ExprSymbol*>(expr)->symbol();
-            ctx->defineSymbol(symbol->name());
-            unpack->addAssignand(symbol);
+            ctx->defineSymbols(expr);
+            if (! unpack->append(expr) )
+            {
+               sp.addError(e_assign_sym, p.currentSource(), expr->line(), expr->chr());
+               delete expr; // the expression was not accepted
+            }
             ++iterRight;
          }
           // don't clear the right side list, we got the symbols -- let the expr to die
@@ -187,6 +184,11 @@ void apply_stmt_assign_list( const Rule&, Parser& p )
          listRight->pop_front();
 
          ctx->defineSymbols(expr);
+         if( expr->lvalueStep() == 0 )
+         {
+            sp.addError(e_assign_sym, p.currentSource(), expr->line(), expr->chr());
+            // but keep the expression, as ExprAssing will accept it just the same.
+         }
          unpack->add( new ExprAssign( expr, assignand, v2->line(), v2->chr() ) );
          ++iterRight;
 

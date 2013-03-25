@@ -94,6 +94,21 @@ const String& ExprAssign::exprName() const
    return name;
 }
 
+
+bool ExprAssign::setNth( int32 n, TreeStep* ts )
+{
+   if( n == 0 &&
+            (ts->category() != TreeStep::e_cat_expression
+                     || static_cast<Expression*>(ts)->lvalueStep() == 0)
+      )
+   {
+      return false;
+   }
+
+   return BinaryExpression::setNth(n,ts);
+}
+
+
 void ExprAssign::apply_( const PStep* ps, VMContext* ctx )
 {
    const ExprAssign* self = static_cast<const ExprAssign*>(ps);
