@@ -33,23 +33,24 @@ namespace Falcon
 Module* DynLoader::load_sys( const String& filePath )
 {
    AutoCString cname( filePath );
-   
+   errno = 0;
    void* modData = ::dlopen( cname.c_str(), RTLD_NOW |RTLD_LOCAL);
    if( modData == 0 )
    {
       throw new IOError( ErrorParam( e_binload, __LINE__, SRC )
          .origin( ErrorParam::e_orig_loader )
          .sysError(errno)
-         .extra( filePath ) );
+         .extra( filePath + " - " + dlerror() ) );
    }
  
    Module* (*module_init)();
+   (void) dlerror();
    module_init = (Module* (*)())::dlsym( modData, DEFALUT_FALCON_MODULE_INIT_NAME );
    if ( module_init == 0 )
    {
       throw new IOError( ErrorParam( e_binstartup, __LINE__, SRC )
          .origin( ErrorParam::e_orig_loader )
-         .extra( filePath ) );
+         .extra( filePath + " - " + dlerror() ) );
    }
    Module* mod = module_init();
    

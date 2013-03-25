@@ -528,6 +528,10 @@ public:
     */
    static int16 adjust_iso8601_2000( int16 year, int16 month, int64 day );
 
+
+   void gcMark(uint32 mark ) { m_gcMark = mark; }
+   uint32 currentMark() const { return m_gcMark; }
+
 private:
 
    mutable int64 m_year;
@@ -545,6 +549,7 @@ private:
    // The real underlying date.
    Date m_date;
 
+   uint32 m_gcMark;
    /**
     * Compute date fields from the stored date entity.
     */
