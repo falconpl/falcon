@@ -120,8 +120,10 @@ void apply_stmt_assign_list( const Rule&, Parser& p )
          // create the expression even on failure.
          Expression* first = listLeft->front();
          Expression* second = listRight->front();
-         ctx->defineSymbols(first);
+         // first access...
          ctx->accessSymbols(second);
+         // then define
+         ctx->defineSymbols(first);
 
          ExprAssign* assign = new ExprAssign( first, second, v2->line(), v2->chr() );
          listLeft->clear();
@@ -150,7 +152,8 @@ void apply_stmt_assign_list( const Rule&, Parser& p )
             }
             ++iterRight;
          }
-          // don't clear the right side list, we got the symbols -- let the expr to die
+         // we need the expressions that we kept...
+         listLeft->clear();
       }
    }
    else
@@ -195,7 +198,8 @@ void apply_stmt_assign_list( const Rule&, Parser& p )
       }
       fassert( listRight->empty() );
 
-      // let the simplify to kill the symbol expressions
+      // don't let the simplify to kill the expressions
+      listLeft->clear();
    }
 
    p.simplify(3, ti); // actually it has no value

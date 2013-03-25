@@ -40,7 +40,7 @@ using namespace Parsing;
 
 void apply_expr_assign( const Rule&, Parser& p )
 {
-   // << (r_Expr_assign << "Expr_assign" << apply_expr_assign << Expr << T_EqSign << NeListExpr)
+   // << (r_Expr_assign << "Expr_assign" << apply_expr_assign << Expr << T_EqSign << Expr)
    SourceParser& sp = static_cast<SourceParser&>(p);
    ParserContext* ctx = static_cast<ParserContext*>(p.context());
 
@@ -52,88 +52,15 @@ void apply_expr_assign( const Rule&, Parser& p )
    Expression* secondPart = static_cast<Expression*>(v2->detachValue());
    TokenInstance* ti = TokenInstance::alloc(v1->line(), v1->chr(), sp.Expr);
    
+   // first access, then define
    ctx->accessSymbols(secondPart);
+   ctx->defineSymbols(firstPart);
    ti->setValue(
       new ExprAssign( firstPart, secondPart, v1->line(), v1->chr() ),
       treestep_deletor );
 
-   // do not detach, we don't care about the list
-   /*
-   List* list = static_cast<List*>(v2->asData());
-   fassert( ! list->empty() );
-   if( list->size() == 1 )
-   {
-      ctx->accessSymbols(list->front());
-      ti->setValue(
-         new ExprAssign( firstPart, list->front(), v1->line(), v1->chr() ),
-         treestep_deletor );
-   }
-   else
-   {
-      // a list assignment.
-
-      ExprArray* array = new ExprArray(v1->line(), v1->chr() );
-      List::iterator iter = list->begin();
-      while( iter != list->end() )
-      {
-         // Todo -- make the array expression
-         Expression* expr = *iter;
-         ctx->accessSymbols(expr);
-         array->add(expr);
-         ++iter;
-      }
-
-      ti->setValue(
-         new ExprAssign( firstPart, array, v1->line(), v1->chr() ),
-         treestep_deletor );
-   }
-   // clear, so we keep the expr even if destroyed
-   list->clear();
-
-   // assignable expressions are only expressions having a lvalue pstep:
-   // -- symbols
-   // -- accessors
-   if( firstPart->lvalueStep() == 0  )
-   {
-      p.addError( e_assign_sym, p.currentSource(), v1->line(), v1->chr(), 0 );
-   }
-   else
-   {
-      ctx->defineSymbols(firstPart);
-   }
-   */
    p.simplify(3,ti);
 }
-
-#if 0
-//TODO Remove
-static void apply_expr_list( const Rule&, Parser& p )
-{
-   //<< (r_Expr_list << "Expr_list" << apply_expr_list << ListExpr )
-   parser_assign& sp = static_cast<parser_assign&>(p);
-
-   TokenInstance* v1 = p.getNextToken();
-
-   List* list = static_cast<List*>(v1->detachValue());
-
-   ExprArray* array = new ExprArray;
-   // it's a dictionary declaration
-   List::iterator iter = list->begin();
-   while( iter != list->end() )
-   {
-      // Todo -- make the array expression
-      array->add(*iter);
-      ++iter;
-   }
-   TokenInstance* ti = TokenInstance::alloc(v1->line(), v1->chr(), sp.Expr);
-   ti->setValue( array, treestep_deletor );
-
-   // free the expressions in the list
-   list->clear();
-
-   p.simplify(1,ti);
-}
-#endif
 
 }
 
