@@ -34,6 +34,7 @@
 
 #include <falcon/engine.h>
 #include <falcon/vmcontext.h>
+#include <falcon/timestamp.h>
 
 #include <falcon/error.h>
 #include <falcon/errors/paramerror.h>
@@ -80,7 +81,13 @@ namespace _classTimeStamp {
     @prop dayOfWeek Day of the week (0=monday, 6=sunday)
     @prop weekOfYear (1-53)
     @prop dayOfYear Day of the year.
-    @prop msSinceEpoch Milliseconds from epoch; can be used to compare, sum or subtract dates.
+    @prop msSinceEpoch Milliseconds elapsed since epoch; can be used to compare, sum or subtract dates, and can be negative.
+
+    @prop msInSeconds (static) Constant keeping the number of milliseconds in seconds (1000)
+    @prop msInMinutes (static) Constant keeping the number of milliseconds in seconds (60,000)
+    @prop msInHours (static) Constant keeping the number of milliseconds in hours (3,600,000)
+    @prop msInDays (static) Constant keeping the number of milliseconds in days (3,600,000*24)
+
 */
 
 FALCON_DECLARE_FUNCTION(_constructor, "msSinceEpoch:[N]")
@@ -101,15 +108,15 @@ void Function__constructor::invoke ( ::Falcon::VMContext* ctx, int32 )
 }
 
 /*#
-   @method currentTime TimeStamp
+   @method current TimeStamp
    @brief Fills this item with current time.
    @return self
 
    Fills the value of the date with the current local time on the system.
    The timezone is set accordingly
 */
-FALCON_DECLARE_FUNCTION(currentTime, "")
-void Function_currentTime::invoke ( ::Falcon::VMContext* ctx, int32 )
+FALCON_DECLARE_FUNCTION(current, "")
+void Function_current::invoke ( ::Falcon::VMContext* ctx, int32 )
 {
    TimeStamp* self = static_cast<TimeStamp*>(ctx->self().asInst());
    self->currentTime();
@@ -129,7 +136,6 @@ FALCON_DECLARE_FUNCTION(strftime, "format:S")
 void Function_strftime::invoke ( ::Falcon::VMContext* ctx, int32 )
 {
    TimeStamp* self = static_cast<TimeStamp*>(ctx->self().asInst());
-   String* tgt = new String;
 
    Item* i_format = ctx->param(0);
    if( i_format == 0 || ! i_format->isString() )
@@ -140,7 +146,7 @@ void Function_strftime::invoke ( ::Falcon::VMContext* ctx, int32 )
    const String& format = *i_format->asString();
    String* str = new String;
 
-   if( ! self->strftime(*tgt, format, 0) )
+   if( ! self->strftime(*str, format, 0) )
    {
       delete str;
       throw FALCON_SIGN_XERROR( ParamError, e_param_range, .extra("Invalid strftime format") );
@@ -253,7 +259,7 @@ void Function_toRFC2822::invoke ( ::Falcon::VMContext* ctx, int32 )
 
  For example, to convert the local time in GMT:
  @code
-    now = CurrentTime()
+    now = currentTime()
     > "Local time: ", now
     now.changeZone( TimeZone.GMT )
     > "GMT: ", now
@@ -299,6 +305,7 @@ void Function_changeZone::invoke ( ::Falcon::VMContext* ctx, int32 )
    TimeStamp* self = static_cast<TimeStamp*>(ctx->self().asInst());
 
    self->changeTimeZone( (TimeStamp::TimeZone) tz );
+   ctx->returnFrame();
 }
 
 }
@@ -541,7 +548,7 @@ ClassTimeStamp::ClassTimeStamp():
 
    addMethod( new _classTimeStamp::Function_changeZone);
    addMethod( new _classTimeStamp::Function_compare);
-   addMethod( new _classTimeStamp::Function_currentTime);
+   addMethod( new _classTimeStamp::Function_current);
    addMethod( new _classTimeStamp::Function_fromRFC2822 );
    addMethod( new _classTimeStamp::Function_strftime );
    addMethod( new _classTimeStamp::Function_toRFC2822 );
@@ -560,6 +567,11 @@ ClassTimeStamp::ClassTimeStamp():
    addProperty("dayOfWeek", &get_dayOfWeek );
    addProperty("dayOfYear", &get_dayOfYear );
    addProperty("weekOfYear", &get_weekOfYear );
+
+   addConstant("msInSeconds", 1000 );
+   addConstant("msInMinutes", 60*1000 );
+   addConstant("msInHours", 60*60*1000 );
+   addConstant("msInDays", 24*60*60*1000 );
 }
 
 ClassTimeStamp::~ClassTimeStamp()
@@ -849,7 +861,7 @@ void Function_parseRFC2822::invoke ( VMContext* ctx, int32 )
 }
 
 /*#
- @function CurrentTime
+ @function currentTime
  @brief Returns the current system local time as a TimeStamp instance.
  @return A new TimeStamp instance.
 

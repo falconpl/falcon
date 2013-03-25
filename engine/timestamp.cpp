@@ -45,6 +45,7 @@ TimeStamp::TimeStamp()
 {
    // date set to 0
    m_bChanged = true;
+   m_timezone = tz_UTC;
 }
 
 
@@ -72,16 +73,16 @@ void TimeStamp::computeDateFields() const
    days_since_epoch /= SECOND_PER_DAY;
    secs %= SECOND_PER_DAY;
 
-   int64 year = 1970;
+   int64 year;
    int16 month = 0;
-   int16 day = 0;
    int16 month_days[] = {31,28,31,30,31,30,31,31,30,31,30,31};
 
-   if( secs > 0 )
+   if( m_date.seconds() >= 0 )
    {
-      while (days_since_epoch >= 356)
+      year = 1970;
+      while (days_since_epoch >= 365)
       {
-         days_since_epoch -= isLeapYear(year) ? 356 : 355;
+         days_since_epoch -= isLeapYear(year) ? 366 : 365;
          ++year;
       }
 
@@ -90,14 +91,13 @@ void TimeStamp::computeDateFields() const
          month_days[1] = 29;
       }
 
-
-      while( day >= month_days[month])
+      while( days_since_epoch >= month_days[month])
       {
-         day -= month_days[month];
+         days_since_epoch -= month_days[month];
          ++month;
       }
 
-      m_day = day + 1;
+      m_day = days_since_epoch + 1;
       m_month = month + 1;
       m_year = year;
 
@@ -105,9 +105,26 @@ void TimeStamp::computeDateFields() const
    }
    else
    {
-      while (days_since_epoch <= -356)
+      m_msec = ((Date::FEMTOSECONDS + m_date.femtoseconds())/Date::MILLISECOND_DIVIDER);
+      secs = SECOND_PER_DAY-1 + secs;
+      // roll over milliseconds?
+      if ( m_msec == 1000 )
       {
-         days_since_epoch += isLeapYear(year) ? 356 : 355;
+         secs++;
+         m_msec = 0;
+      }
+
+      // roll over day?
+      if( secs == SECOND_PER_DAY )
+      {
+         days_since_epoch ++;
+         secs = 0;
+      }
+
+      year = 1969;
+      while (days_since_epoch <= -365)
+      {
+         days_since_epoch += isLeapYear(year) ? 366 : 365;
          --year;
       }
 
@@ -117,22 +134,19 @@ void TimeStamp::computeDateFields() const
       }
 
       month = 11;
-      while( day <= -month_days[month])
+      while( days_since_epoch <= -month_days[month])
       {
-         day += month_days[month];
+         days_since_epoch += month_days[month];
          --month;
       }
 
-      m_day = day + 1;
+      m_day = month_days[month] + days_since_epoch;
       m_month = month + 1;
       m_year = year;
-
-      m_msec = (Date::MAX_FEMTOSECOND + m_date.femtoseconds())/Date::MILLISECOND_DIVIDER;
-      secs = (SECOND_PER_DAY-1) + secs;
    }
 
-   m_hour = secs/24;
-   secs %= 24;
+   m_hour = secs/(60*60);
+   secs %= (60*60);
    m_minute = secs / 60;
    secs %= 60;
    m_second = secs;
@@ -357,8 +371,9 @@ bool TimeStamp::toRFC2822( String &target, bool bSemantic, bool bDst ) const
    target.append( ' ' );
    target.append( getRFC2822_MonthName( m_month ) );
    target.append( ' ' );
-   if ( m_year < 0 )
+   if ( m_year < 0 ) {
       target.append( "0000" );
+   }
    else {
       target.writeNumber( (int64) m_year, "%04d" );
    }
@@ -783,6 +798,8 @@ bool TimeStamp::strftime( String &target, const String &fmt, length_t* posFail )
       else {
          target.append(chr);
       }
+
+      pos++;
    }
 
    if( pos + 1 < len )
@@ -1201,7 +1218,7 @@ bool TimeStamp::msec(int16 value)
 bool TimeStamp::set( int64 y, int16 M, int16 d, int16 h, int16 m,
          int16 s, int16 ms, TimeZone tz )
 {
-   if( m < 1 || m > 12 || d < 1 || d > getDaysOfMonth(m,y) )
+   if( M < 1 || M > 12 || d < 1 || d > getDaysOfMonth(M,y) )
    {
       return false;
    }
@@ -1212,14 +1229,15 @@ bool TimeStamp::set( int64 y, int16 M, int16 d, int16 h, int16 m,
    msecdisp *= 1000;
    int64 baseMs = 0;
 
+
    // now the fun part, calculate the year displacement.
    if( y >= 1970 )
    {
-      int64 days = d;
+      int64 days = d-1;
       int64 year = 1970;
       while( year < y )
       {
-         days += isLeapYear(year) ? 356: 355;
+         days += isLeapYear(year) ? 366: 365;
          ++year;
       }
 
@@ -1237,10 +1255,10 @@ bool TimeStamp::set( int64 y, int16 M, int16 d, int16 h, int16 m,
    else
    {
       int64 days = 0;
-      int64 year = 1970;
+      int64 year = 1969;
       while( year > y )
       {
-         days -= isLeapYear(year) ? 356: 355;
+         days -= isLeapYear(year) ? 366: 365;
          --year;
       }
 
@@ -1248,14 +1266,12 @@ bool TimeStamp::set( int64 y, int16 M, int16 d, int16 h, int16 m,
       while( month > M )
       {
          days -= getDaysOfMonth(month,y);
-         month++;
+         month--;
       }
 
-      days -= getDaysOfMonth(m,year) - d;
-      baseMs = (SECOND_PER_DAY-1) - (s+ m*60 + h*3600);
-      baseMs += days*SECOND_PER_DAY;
-      baseMs *= 1000;
-      baseMs -= 999-ms;
+      days -= getDaysOfMonth(M,year) - d; // would be -d+1 but...
+      baseMs = -(SECOND_PER_DAY*1000) + (s*1000+ m*60000 + h*3600000 + ms);  // we must consider the part of the day we're adding.
+      baseMs += days*SECOND_PER_DAY*1000;
    }
 
    baseMs -= msecdisp;
@@ -1293,18 +1309,10 @@ void TimeStamp::set( const Date& date )
 
 void TimeStamp::changeTimeZone( TimeZone tz )
 {
-   if  ( m_timezone == tz_local )
-   {
-      m_timezone = getLocalTimeZone();
-
-      if (tz == tz_local ) // no shift...
-         return;
-   }
-
    if ( tz == tz_local )
       tz = getLocalTimeZone();
 
-   // no shift
+   // no shift?
    if ( tz == m_timezone )
       return;
 
@@ -1314,8 +1322,10 @@ void TimeStamp::changeTimeZone( TimeZone tz )
    getTZDisplacement( m_timezone, currentHour, currentMin );
    m_date.seconds( m_date.seconds()
             - (currentHour*60*60) - (currentMin*60)
-            - (newHour*60*60) - (newMin*60)
+            + (newHour*60*60) + (newMin*60)
             );
+   m_timezone = tz;
+   m_bChanged = true;
 }
 
 

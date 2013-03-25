@@ -21,7 +21,6 @@
 #include <falcon/vm.h>
 #include <falcon/item.h>
 #include <falcon/string.h>
-#include <falcon/timestamp.h>
 #include <falcon/range.h>
 #include <falcon/errors/paramerror.h>
 #include <falcon/stdhandlers.h>

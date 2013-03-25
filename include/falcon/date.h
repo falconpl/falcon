@@ -40,12 +40,12 @@ class DataReader;
 class Date
 {
 public:
-   static const int64 MAX_FEMTOSECOND =  9999999999999999LL;
-   static const int64 FEMTOSECONDS    = 10000000000000000LL;
+   static const int64 MAX_FEMTOSECOND      =  999999999999999LL;
+   static const int64 FEMTOSECONDS         = 1000000000000000LL;
    static const int64 MILLISECOND_DIVIDER  = 1000000000000LL;
-   static const int64 MICROSECOND_DIVIDER = 1000000000LL;
-   static const int64 NANOSECOND_DIVIDER  = 1000000LL;
-   static const int64 PICOSECOND_DIVIDER  = 1000LL;
+   static const int64 MICROSECOND_DIVIDER  = 1000000000LL;
+   static const int64 NANOSECOND_DIVIDER   = 1000000LL;
+   static const int64 PICOSECOND_DIVIDER   = 1000LL;
 
    /** Creates an empty date.
     * The date is set at epoch (1/1/1970 00 GMT)
@@ -205,9 +205,9 @@ public:
     */
    void fromMilliseconds( int64 msecs )
    {
-      m_seconds = msecs /= 1000LL;
+      m_seconds = msecs / 1000LL;
       m_femtoseconds = msecs % 1000;
-      m_femtoseconds *= 1000000000000LL;
+      m_femtoseconds *= MILLISECOND_DIVIDER;
    }
 
    void addSeconds( int64 secs )

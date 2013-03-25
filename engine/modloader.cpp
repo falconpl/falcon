@@ -437,7 +437,6 @@ ModLoader::t_modtype ModLoader::checkFile_internal(
 
    // who is the winner?
    int bestUri = -1;
-   TimeStamp best;
    for( int i = 0; i < 4; ++i )
    {
       FileStat& st = stats[i];
