@@ -118,6 +118,7 @@ SynClasses::SynClasses( Class* classSynTree, Class* classStatement, Class* class
    m_stmt_try->userFlags(FALCON_SYNCLASS_ID_CATCHHOST);
    m_expr_call->userFlags(FALCON_SYNCLASS_ID_CALLFUNC);
    m_expr_pseudocall->userFlags(FALCON_SYNCLASS_ID_CALLFUNC);
+   m_expr_assign->userFlags(FALCON_SYNCLASS_ID_ASSIGN);
 
    m_expr_tree->userFlags(FALCON_SYNCLASS_ID_TREE);
    m_st_rulest->userFlags(FALCON_SYNCLASS_ID_RULE_SYNTREE);
@@ -342,8 +343,7 @@ FALCON_STANDARD_SYNCLASS_OP_CREATE( AutoRShift, ExprAutoRShift, binaryExprSet )
 
 // Functional
 FALCON_STANDARD_SYNCLASS_OP_CREATE( Compose, ExprCompose, binaryExprSet )
-
-// MUnpack -- separated
+FALCON_STANDARD_SYNCLASS_OP_CREATE( MUnpack, ExprMultiUnpack, varExprInsert )
 FALCON_STANDARD_SYNCLASS_OP_CREATE( Neg, ExprNeg, unaryExprSet )
 
 // OOB
@@ -501,70 +501,6 @@ void SynClasses::ClassDotAccess::restore( VMContext* ctx, DataReader*dr ) const
       throw;
    }
 }
-
-
-void* SynClasses::ClassMUnpack::createInstance() const
-{       
-   return new ExprMultiUnpack;
-}
-
-bool SynClasses::ClassMUnpack::op_init( VMContext* ctx, void* instance, int pcount ) const
-{       
-   // TODO -- parse a list of pairs symbol->expression
-   return Class::op_init( ctx, instance, pcount );
-}
-void SynClasses::ClassMUnpack::store(Falcon::VMContext* ctx, Falcon::DataWriter* stream, void* inst ) const
-{
-   ExprMultiUnpack* expr = static_cast<ExprMultiUnpack*>(inst);
-   stream->write(expr->isTop());
-   m_parent->store( ctx, stream, inst );
-}
-void SynClasses::ClassMUnpack::restore( VMContext* ctx, DataReader*dr ) const
-{
-   bool isTop;
-   dr->read(isTop);
-
-   ExprMultiUnpack* expr = new ExprMultiUnpack(isTop);
-   try {
-      ctx->pushData( Item( this, expr ) );
-      m_parent->restore( ctx, dr );
-   }
-   catch(...) {
-      ctx->popData();
-      delete expr;
-      throw;
-   }
-}
-void SynClasses::ClassMUnpack::flatten( VMContext*, ItemArray& subItems, void* instance ) const
-{
-   static Class* symClass = Engine::handlers()->symbolClass();
-   ExprMultiUnpack* expr = static_cast<ExprMultiUnpack*>( instance );
-
-   uint32 count = expr->targetCount();
-   subItems.resize(count*2);
-   for( uint32 i = 0; i < count; ++i )
-   {
-      Symbol* assignand = expr->getAssignand(i);
-      Expression* assignee = expr->getAssignee(i);
-      subItems[i*2].setUser(symClass, assignand );
-      subItems[i*2+1].setUser(assignee->handler(), assignee);
-   }
-}
-
-void SynClasses::ClassMUnpack::unflatten( VMContext*, ItemArray& subItems, void* instance ) const
-{
-   ExprMultiUnpack* expr = static_cast<ExprMultiUnpack*>( instance );
-   fassert(subItems.length() % 2 == 0);
-
-   uint32 count = 0;
-   while( count < subItems.length() )
-   {
-      Symbol* sym = static_cast<Symbol*>(subItems[count++].asInst());
-      Expression* assign = static_cast<Expression*>(subItems[count++].asInst());
-      expr->addAssignment( sym, assign );
-   }
-}
-
 
 void* SynClasses::ClassGenProto::createInstance() const
 {       

@@ -99,6 +99,14 @@ ExprVector& ExprVector::add( Expression* e )
    return *this;
 }
 
+
+void ExprVector::resolveUnquote( VMContext* ctx )
+{
+   for ( uint32 i = 0; i < _p->m_exprs.size(); ++i ) {
+      _p->m_exprs[i]->resolveUnquote(ctx);
+   }
+}
+
 }
 
 /* end of exprvector.cpp */

@@ -151,11 +151,7 @@ FALCON_SYNCLASS_DECLARATOR(m_expr_arshift, AutoRShift, Expression)
 // Functional
 FALCON_SYNCLASS_DECLARATOR(m_expr_compose, Compose, Expression)
 
-// 
-FALCON_SYNCLASS_DECLARATOR_EX(m_expr_munpack, MUnpack, Expression, \
-         virtual void store( VMContext*, DataWriter* dw, void* instance ) const; \
-         virtual void flatten( VMContext* ctx, ItemArray& subItems, void* instance ) const;\
-         virtual void unflatten( VMContext* ctx, ItemArray& subItems, void* instance ) const; )
+FALCON_SYNCLASS_DECLARATOR(m_expr_munpack, MUnpack, Expression )
 
 FALCON_SYNCLASS_DECLARATOR(m_expr_neg, Neg, Expression)
 // OOB

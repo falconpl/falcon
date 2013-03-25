@@ -173,7 +173,7 @@ void apply_NeListExpr_ungreed_first( const Rule&, Parser& p )
    //TODO: Get current lexer char/line
    TokenInstance* texpr = p.getNextToken();
 
-   Expression* expr = static_cast<Expression*>(texpr->detachValue());;
+   Expression* expr = static_cast<Expression*>(texpr->detachValue());
 
    List* list = new List;
    list->push_back(expr);

@@ -159,7 +159,7 @@ void apply_stmt_assign_list( const Rule&, Parser& p )
    else
    {
       // save the unpack already. Even on error, it WAS a try to unpack.
-      ExprMultiUnpack* unpack = new ExprMultiUnpack( true, v2->line(), v2->chr() );
+      ExprMultiUnpack* unpack = new ExprMultiUnpack( v2->line(), v2->chr() );
       ti->setValue( unpack, treestep_deletor );
 
       // multiple assignment
@@ -186,9 +186,8 @@ void apply_stmt_assign_list( const Rule&, Parser& p )
          ctx->accessSymbols(assignand);
          listRight->pop_front();
 
-         Symbol* symbol = static_cast<ExprSymbol*>(expr)->symbol();
-         ctx->defineSymbol(symbol->name());
-         unpack->addAssignment(symbol, assignand );
+         ctx->defineSymbols(expr);
+         unpack->add( new ExprAssign( expr, assignand, v2->line(), v2->chr() ) );
          ++iterRight;
 
       }

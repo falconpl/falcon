@@ -210,7 +210,7 @@ SourceParser::SourceParser():
 
    S_Autoexpr << "Autoexpr"
       << (r_line_autoexpr << "Autoexpr" << apply_line_expr << Expr << T_EOL)
-      << (r_assign_list << "Autoexpr_list" << apply_autoexpr_list << S_MultiAssign << T_EOL )
+      << (r_assign_list << "Autoexpr_list" << apply_autoexpr_list << S_MultiAssign )
       ;
 
    S_If << "IF" << errhand_if;
@@ -317,7 +317,8 @@ SourceParser::SourceParser():
       ;
 
    S_MultiAssign << "MultiAssign"
-      << (r_Stmt_assign_list << "STMT_assign_list" << apply_stmt_assign_list << NeListExpr_ungreed << T_EqSign << NeListExpr )
+      //<< (r_Stmt_assign_list << "STMT_assign_list" << apply_stmt_assign_list << NeListExpr_ungreed << T_EqSign << NeListExpr )
+            << (r_Stmt_assign_list << "STMT_assign_list" << apply_stmt_assign_list << NeListExpr << T_EqSign << NeListExpr << T_EOL )
       ;
 
    S_FastPrint << "FastPrint";
@@ -436,7 +437,7 @@ SourceParser::SourceParser():
 
    Expr<< (r_Expr_provides << "Expr_provides" << apply_expr_provides << Expr << T_provides << T_Name);
 
-   Expr << (r_Expr_assign << "Expr_assign" << apply_expr_assign << Expr << T_EqSign << NeListExpr );
+   Expr << (r_Expr_assign << "Expr_assign" << apply_expr_assign << Expr << T_EqSign << Expr );
 
 
    Expr<< (r_Expr_equal << "Expr_equal" << apply_expr_equal << Expr << T_DblEq << Expr);
@@ -571,6 +572,12 @@ SourceParser::SourceParser():
    NeListExpr << expr_errhand;
    NeListExpr<< (r_NeListExpr_next << "NeListExpr_next" << apply_NeListExpr_next << NeListExpr << T_Comma << Expr );
    NeListExpr<< (r_NeListExpr_first << "NeListExpr_first" << apply_NeListExpr_first << Expr );
+   //NeListExpr.prio(190); // just right below "="
+
+   NeListExpr_ungreed << "NeListExpr_ungreed" << expr_errhand;
+   NeListExpr_ungreed<< (r_NeListExpr_ungreed_next << "NeListExpr_ungreed_next" << apply_NeListExpr_ungreed_next << NeListExpr_ungreed << T_Comma << Expr );
+   NeListExpr_ungreed<< (r_NeListExpr_ungreed_first << "NeListExpr_ungreed_first" << apply_NeListExpr_ungreed_first << Expr );
+   //r_NeListExpr_ungreed_next.setGreedy(false);
 
    CaseListRange << "CaseListRange";
    CaseListRange << (r_CaseListRange_int << "CaseListRange int" << apply_CaseListRange_int << T_Int << T_to << T_Int );
@@ -593,12 +600,6 @@ SourceParser::SourceParser():
    // (in is an operator and has a priority, but it is used as a keyword token in catches)
    CaseList.setRightAssoc(true);
    r_CaseList_next.setGreedy(false);
-   
-
-   NeListExpr_ungreed << "NeListExpr_ungreed" << expr_errhand;
-   NeListExpr_ungreed<< (r_NeListExpr_ungreed_next << "NeListExpr_ungreed_next" << apply_NeListExpr_ungreed_next << NeListExpr_ungreed << T_Comma << Expr );
-   NeListExpr_ungreed<< (r_NeListExpr_ungreed_first << "NeListExpr_ungreed_first" << apply_NeListExpr_ungreed_first << Expr );
-   r_NeListExpr_ungreed_next.setGreedy(false);
 
    ListSymbol << "ListSymbol";
    ListSymbol<< (r_ListSymbol_eol << "ListSymbol_eol" << apply_dummy << T_EOL );

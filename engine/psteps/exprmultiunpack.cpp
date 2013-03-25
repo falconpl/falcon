@@ -21,88 +21,37 @@
 #include <falcon/errors/codeerror.h>
 #include <falcon/itemarray.h>
 #include <falcon/symbol.h>
+#include <falcon/synclasses_id.h>
 #include <falcon/textwriter.h>
 
 #include <falcon/synclasses.h>
 #include <falcon/engine.h>
-
-#include <vector>
+#include <falcon/psteps/exprassign.h>
+#include "exprvector_private.h"
 
 namespace Falcon {
-
-class ExprMultiUnpack::Private {
-public:
-   std::vector<Symbol*> m_params;
-   std::vector<Expression*> m_assignee;
-};
 
 //=========================================================
 // MultiUnpack
 //
 ExprMultiUnpack::ExprMultiUnpack( int line, int chr ):
-   Expression(line, chr),
-   m_bIsTop( true ),
-   _p( new Private )
+   ExprVector(line, chr)
 {
    FALCON_DECLARE_SYN_CLASS( expr_munpack )
    apply = apply_;
    m_trait = Expression::e_trait_composite;
 }
-
-ExprMultiUnpack::ExprMultiUnpack( bool isTop, int line, int chr ):
-   Expression(line, chr),
-   m_bIsTop( isTop ),
-   _p( new Private )
-{
-   FALCON_DECLARE_SYN_CLASS( expr_munpack )
-   apply = apply_;
-   m_trait = Expression::e_trait_composite;
-}
-
 
 ExprMultiUnpack::ExprMultiUnpack( const ExprMultiUnpack& other ):
-         Expression(other)
+         ExprVector(other)
 {
    apply = apply_;
    m_trait = Expression::e_trait_composite;
-
-   _p = new Private;
-
-   _p->m_params.reserve(other._p->m_params.size());
-   std::vector<Symbol*>::const_iterator iter = other._p->m_params.begin();
-   while( iter != other._p->m_params.end() )
-   {
-      _p->m_params.push_back( *iter );
-      ++iter;
-   }
-
-   _p->m_assignee.reserve(other._p->m_assignee.size());
-   std::vector<Expression*>::const_iterator itere = other._p->m_assignee.begin();
-   while( itere != other._p->m_assignee.end() )
-   {
-      Expression* expr = (*itere)->clone();
-      expr->setParent(this);
-      _p->m_assignee.push_back( expr );
-      ++itere;
-   }
 }
 
 
 ExprMultiUnpack::~ExprMultiUnpack()
 {
-   std::vector<Symbol*>::const_iterator si = _p->m_params.begin();
-   while( si != _p->m_params.end() )
-   {
-      (*si)->decref();
-      ++si;
-   }
-
-   std::vector<Expression*>::const_iterator iter = _p->m_assignee.begin();
-   while( iter != _p->m_assignee.end() )
-   {
-      dispose( *iter );
-      ++iter;
-   }
 }
 
 
@@ -110,6 +59,39 @@ bool ExprMultiUnpack::simplify( Item& ) const
 {
    return false;
 }
+
+bool ExprMultiUnpack::setNth( int32 n, TreeStep* ts )
+{
+   if ( ts->handler()->userFlags() != FALCON_SYNCLASS_ID_ASSIGN )
+   {
+      return false;
+   }
+
+   return ExprVector::setNth( n, ts );
+}
+
+
+bool ExprMultiUnpack::insert( int32 n, TreeStep* ts )
+{
+   if ( ts->handler()->userFlags() != FALCON_SYNCLASS_ID_ASSIGN )
+   {
+      return false;
+   }
+
+   return ExprVector::insert( n, ts );
+}
+
+
+bool ExprMultiUnpack::append( TreeStep* ts )
+{
+   if ( ts->handler()->userFlags() != FALCON_SYNCLASS_ID_ASSIGN )
+   {
+      return false;
+   }
+
+   return ExprVector::append( ts );
+}
+
 
 void ExprMultiUnpack::render( TextWriter* tw, int32 depth ) const
 {
@@ -120,25 +102,28 @@ void ExprMultiUnpack::render( TextWriter* tw, int32 depth ) const
       tw->write("(" );
    }
 
-   for( unsigned int i = 0; i < _p->m_params.size(); ++i )
+   for( unsigned int i = 0; i < _p->m_exprs.size(); ++i )
    {
+      ExprAssign* ea = static_cast<ExprAssign*>(_p->m_exprs[i]);
       if ( i >= 1 )
       {
          tw->write(", ");
       }
-      tw->write(_p->m_params[i]->name());
+
+      ea->first()->render(tw, relativeDepth(depth));
    }
 
    tw->write( " = " );
 
-   for( unsigned int i = 0; i < _p->m_assignee.size(); ++i )
+   for( unsigned int i = 0; i < _p->m_exprs.size(); ++i )
    {
+      ExprAssign* ea = static_cast<ExprAssign*>(_p->m_exprs[i]);
       if ( i >= 1 )
       {
          tw->write(", ");
       }
 
-      _p->m_assignee[i]->render(tw, relativeDepth(depth));
+      ea->second()->render(tw, relativeDepth(depth));
    }
 
    if( depth < 0 )
@@ -149,42 +134,8 @@ void ExprMultiUnpack::render( TextWriter* tw, int32 depth ) const
    {
       tw->write("\n" );
    }
-
 }
 
-
-int ExprMultiUnpack::targetCount() const
-{
-   return _p->m_params.size();
-}
-
-Symbol* ExprMultiUnpack::getAssignand( int i) const
-{
-   return _p->m_params[i];
-}
-
-Expression* ExprMultiUnpack::getAssignee( int i) const
-{
-   return _p->m_assignee[i];
-}
-
-
-ExprMultiUnpack& ExprMultiUnpack::addAssignment( Symbol* e, Expression* expr)
-{
-   // save exprs and symbols in a parallel array
-   _p->m_params.push_back(e);
-   e->incref();
-   _p->m_assignee.push_back(expr);
-
-   return *this;
-}
-
-void ExprMultiUnpack::resolveUnquote( VMContext* ctx )
-{
-   for ( uint32 i = 0; i < _p->m_assignee.size(); ++i ) {
-      _p->m_assignee[i]->resolveUnquote(ctx);
-   }
-}
 
 
 void ExprMultiUnpack::apply_( const PStep* ps, VMContext* ctx )
@@ -192,49 +143,21 @@ void ExprMultiUnpack::apply_( const PStep* ps, VMContext* ctx )
    TRACE3( "Apply multi unpack: %p (%s)", ps, ps->describe().c_ize() );
 
    ExprMultiUnpack* self = (ExprMultiUnpack*) ps;
-   std::vector<Symbol*> &syms = self->_p->m_params;
 
    // invoke all the expressions.
    CodeFrame& cf = ctx->currentCode();
-   std::vector<Expression*>& assignee = self->_p->m_assignee;
-   int size = (int) assignee.size();
+   int size = (int) self->_p->m_exprs.size();
    while( cf.m_seqId < size )
    {
-      Expression* an = assignee[cf.m_seqId++];
+      Expression* an = self->_p->m_exprs[cf.m_seqId++];
       if( ctx->stepInYield( an, cf ) )
       {
          return;
       }
    }
    
-   size_t pcount = syms.size();
-
-   size_t i = 0;
-   Item* topStack = &ctx->topData() - pcount+1;
-   for( ; i < pcount; ++i, ++topStack )
-   {
-      *ctx->resolveSymbol( syms[i], true ) = *topStack;
-   }
-   
-   if ( self->isTop() )
-   {
-      // no need to create an array if noone is using it
-      ctx->popData(pcount-1);
-      ctx->topData().setNil();
-   }
-   else
-   {
-      ItemArray* retval = new ItemArray(pcount);
-      i = 0;
-      topStack = &ctx->topData() - pcount+1;
-      for( ; i < pcount; ++i, ++topStack )
-      {
-         (*retval)[i] = *topStack;
-      }
-      ctx->popData(pcount-1);
-      ctx->topData().setUser( FALCON_GC_STORE( retval->handler(), retval ) );
-   }
-   
+   if( size > 1 ) ctx->popData( size-1 );
+   ctx->topData().setNil();
    ctx->popCode();
 }
 

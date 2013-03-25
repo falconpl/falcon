@@ -49,10 +49,16 @@ void apply_expr_assign( const Rule&, Parser& p )
    TokenInstance* v2 = p.getNextToken();
 
    Expression* firstPart = static_cast<Expression*>(v1->detachValue());
-   
+   Expression* secondPart = static_cast<Expression*>(v2->detachValue());
    TokenInstance* ti = TokenInstance::alloc(v1->line(), v1->chr(), sp.Expr);
+   
+   ctx->accessSymbols(secondPart);
+   ti->setValue(
+      new ExprAssign( firstPart, secondPart, v1->line(), v1->chr() ),
+      treestep_deletor );
 
    // do not detach, we don't care about the list
+   /*
    List* list = static_cast<List*>(v2->asData());
    fassert( ! list->empty() );
    if( list->size() == 1 )
@@ -95,7 +101,7 @@ void apply_expr_assign( const Rule&, Parser& p )
    {
       ctx->defineSymbols(firstPart);
    }
-
+   */
    p.simplify(3,ti);
 }
 

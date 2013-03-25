@@ -50,6 +50,8 @@ public:
     */
    ExprVector& add( Expression* e );
    
+   void resolveUnquote( VMContext* ctx );
+
 protected:
    ExprVector_Private* _p;
    ExprVector();   
