@@ -77,7 +77,7 @@ void TimeStamp::computeDateFields() const
    int16 month = 0;
    int16 month_days[] = {31,28,31,30,31,30,31,31,30,31,30,31};
 
-   if( m_date.seconds() >= 0 )
+   if( m_date.seconds() > 0 || (m_date.seconds() == 0 && m_date.femtoseconds() >= 0))
    {
       year = 1970;
       while (days_since_epoch >= 365)
@@ -476,7 +476,12 @@ bool TimeStamp::fromRFC2822( TimeStamp &target, const char *source )
    if( tz == tz_NONE )
       return false;
 
-   return target.set(year,month,day,hour,minute,second,tz);
+   if( ! target.set(year,month,day,hour,minute,second,0) )
+   {
+      return false;
+   }
+   target.changeTimeZone(tz);
+   return true;
 }
 
 
@@ -680,7 +685,7 @@ void TimeStamp::toString( String &target ) const
    computeDateFields();
    sprintf( (char *)target.getRawStorage(), "%04d-%02d-%02d %02d:%02d:%02d.%03d",
       (int32)m_year, m_month, m_day, m_hour, m_minute, m_second, m_msec );
-   target.size(25);
+   target.size(23);
 }
 
 bool TimeStamp::strftime( String &target, const String &fmt, length_t* posFail ) const
