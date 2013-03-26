@@ -9,6 +9,7 @@
 
 #include <falcon/engine.h>
 #include <falcon/garbagelock.h>
+#include <falcon/error.h>
 
 #include <dmtx.h>
 
@@ -254,7 +255,6 @@ DataMatrix::internalEncode( const char* data,
     CoreObject* ctxt = mContext->item().asObjectSafe();
     Falcon::Item meth;
     VMachine* vm = VMachine::getCurrent();
-    int row, col;
     int rgb[3];
 
     // create the dmtx encoder
@@ -279,6 +279,12 @@ DataMatrix::internalEncode( const char* data,
 
     dmtxEncodeDataMatrix( enc, sz, (unsigned char*) data );
 
+    if( enc->image == 0 )
+    {
+    	throw new ParamError(ErrorParam(e_inv_params, __LINE__)
+    			.extra("Data cannot be encoded"));
+    }
+
     // call context start( width, height )
     if ( ctxt->getMethod( "start", meth ) )
     {
@@ -292,15 +298,15 @@ DataMatrix::internalEncode( const char* data,
     ctxt->getMethod( "plot", meth );
     fassert( meth.isCallable() );
 
-    for ( row = 0; row < enc->image->height; ++row )
+    for ( int x = 0; x < enc->image->width; ++x )
     {
-        for ( col = 0; col < enc->image->width; ++col )
+        for ( int y = 0; y < enc->image->height; ++y )
         {
-            dmtxImageGetPixelValue( enc->image, col, row, 0, &rgb[0] );
-            dmtxImageGetPixelValue( enc->image, col, row, 1, &rgb[1] );
-            dmtxImageGetPixelValue( enc->image, col, row, 2, &rgb[2] );
-            vm->pushParam( row );
-            vm->pushParam( col );
+            dmtxImageGetPixelValue( enc->image, x, y, 0, &rgb[0] );
+            dmtxImageGetPixelValue( enc->image, x, y, 1, &rgb[1] );
+            dmtxImageGetPixelValue( enc->image, x, y, 2, &rgb[2] );
+            vm->pushParam( x );
+            vm->pushParam( y );
             vm->pushParam( rgb[0] );
             vm->pushParam( rgb[1] );
             vm->pushParam( rgb[2] );
