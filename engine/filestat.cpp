@@ -19,7 +19,8 @@ namespace Falcon {
 
 FileStat::FileStat():
    m_type(_notFound),
-   m_size(0)
+   m_size(0),
+   m_mark(0)
 {
 }
 
@@ -29,7 +30,8 @@ FileStat::FileStat( const FileStat &other ):
    m_size( other.m_size ),
    m_ctime( other.m_ctime ),
    m_mtime( other.m_ctime ),
-   m_atime( other.m_ctime )
+   m_atime( other.m_ctime ),
+   m_mark(0)
 {
 }
 

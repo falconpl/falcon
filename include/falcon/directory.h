@@ -62,6 +62,10 @@ public:
    uint32 gcMark() const { return m_gcMark; }
    void gcMark( uint32 mark ) { m_gcMark = mark; }
 
+   /** utility next file, used by ClassDirectory **/
+   const String& next() const { return m_next; }
+   String& next() { return m_next; }
+
 protected:
    /** Creates a directory entry referring to a certain URI. */
    Directory( const URI& uri ):
@@ -71,6 +75,8 @@ protected:
 
    URI m_uri;
    uint32 m_gcMark;
+   // utility next file, used by ClassDirectory
+   String m_next;
 };
 
 }

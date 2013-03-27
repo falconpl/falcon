@@ -13,6 +13,8 @@ include_directories(
 add_library(vfs_fm MODULE
    vfs_ext.cpp
    classvfs.cpp
+   classfilestat.cpp
+   classdirectory.cpp
 
    vfs.cpp
 )

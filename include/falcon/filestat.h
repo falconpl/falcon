@@ -71,6 +71,8 @@ public:
    const int64& atime() const { return m_atime; }
    void atime( int64 v ) { m_atime = v; }
 
+   void gcMark( uint32 mark ) { m_mark = mark; }
+   uint32 currentMark() const { return m_mark; }
 private:
    /** Type of the found file. */
    t_fileType m_type;
@@ -86,6 +88,8 @@ private:
 
    /** Creation or status change in milliseconds since epoch */
    int64 m_atime;
+
+   uint32 m_mark;
 };
 
 }

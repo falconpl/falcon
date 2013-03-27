@@ -24,6 +24,8 @@
 #include "vfs.h"
 #include "vfs_ext.h"
 #include "classvfs.h"
+#include "classfilestat.h"
+#include "classdirectory.h"
 
 namespace Falcon {
 
@@ -38,6 +40,8 @@ VFSModule::VFSModule():
    *this
       // Standard functions
       << new Ext::ClassVFS
+      << new Ext::ClassFileStat
+      << new Ext::ClassDirectory
       << new Ext::Function_IOStream
       << new Ext::Function_InputStream
       << new Ext::Function_OutputStream

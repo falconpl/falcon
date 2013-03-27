@@ -41,6 +41,9 @@ public:
    virtual void* createInstance() const;
    virtual void dispose( void* instance ) const;
    virtual void* clone( void* instance ) const;
+
+   virtual void gcMarkInstance( void* instance, uint32 mark ) const;
+   virtual bool gcCheckInstance( void* instance, uint32 mark ) const;
 };
 
 }

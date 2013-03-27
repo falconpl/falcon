@@ -1,8 +1,8 @@
 /*
    FALCON - The Falcon Programming Language.
-   FILE: classvfs.h
+   FILE: classdirectory.h
 
-   Falcon core module -- Interface to abstract virtual file system.
+   Falcon core module -- Handler to read VFS directory entries.
    -------------------------------------------------------------------
    Author: Giancarlo Niccolai
    Begin: Fri, 22 Mar 2013 00:25:26 +0100
@@ -13,8 +13,8 @@
    See LICENSE file for licensing details.
 */
 
-#ifndef FALCON_FEATHERS_VFS_CLASSVFS_H
-#define FALCON_FEATHERS_VFS_CLASSVFS_H
+#ifndef FALCON_FEATHERS_VFS_CLASSDIRECTORY_H
+#define FALCON_FEATHERS_VFS_CLASSDIRECTORY_H
 
 #include <falcon/setup.h>
 #include <falcon/types.h>
@@ -22,21 +22,15 @@
 #include <falcon/string.h>
 #include <falcon/class.h>
 
-#include <falcon/errors/paramerror.h>
-
 namespace Falcon {
 namespace Ext {
 
-/*#
- @class VFS
- @brief Interface to abstract virtual file system.
 
- */
-class FALCON_DYN_CLASS ClassVFS: public Class
+class FALCON_DYN_CLASS ClassDirectory: public Class
 {
 public:
-   ClassVFS();
-   virtual ~ClassVFS();
+   ClassDirectory();
+   virtual ~ClassDirectory();
 
    //=============================================================
    //
@@ -44,7 +38,8 @@ public:
    virtual void dispose( void* instance ) const;
    virtual void* clone( void* instance ) const;
 
-   static URI* internal_get_uri( Item* i_uri, URI& tempURI, Module* mod );
+   virtual void gcMarkInstance( void* instance, uint32 mark ) const;
+   virtual bool gcCheckInstance( void* instance, uint32 mark ) const;
 };
 
 }
@@ -54,4 +49,4 @@ public:
 
 #endif
 
-/* end of classvfs.h */
+/* end of classdirectory.h */

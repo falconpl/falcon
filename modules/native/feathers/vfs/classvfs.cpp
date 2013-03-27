@@ -30,7 +30,7 @@
 namespace Falcon {
 namespace Ext {
 
-static URI* internal_get_uri( Item* i_uri, URI& tempURI, Module* mod )
+URI* ClassVFS::internal_get_uri( Item* i_uri, URI& tempURI, Module* mod )
 {
    VFSModule* vfsMod = static_cast<VFSModule*>(mod);
 
@@ -169,7 +169,7 @@ void Function_open::invoke( Falcon::VMContext* ctx, int )
 
    URI tmpUri;
    URI* uri;
-   if ( (uri = internal_get_uri( i_uri, tmpUri, m_module )) == 0
+   if ( (uri = ClassVFS::internal_get_uri( i_uri, tmpUri, m_module )) == 0
         || (i_mode != 0 && (i_mode->isInteger()||i_mode->isNil()))
         || (i_shmode != 0 && i_shmode->isInteger())
       )
@@ -243,7 +243,7 @@ void Function_create::invoke( Falcon::VMContext* ctx, int )
 
    URI tmpUri;
    URI* uri;
-   if ( (uri = internal_get_uri( i_uri, tmpUri, m_module )) == 0
+   if ( (uri = ClassVFS::internal_get_uri( i_uri, tmpUri, m_module )) == 0
         || (i_mode != 0 && i_mode->isInteger())
       )
    {
@@ -300,7 +300,7 @@ void Function_mkdir::invoke( Falcon::VMContext* ctx, int )
 
    URI tmpUri;
    URI* uri;
-   if ( (uri = internal_get_uri( i_uri, tmpUri, m_module )) == 0 )
+   if ( (uri = ClassVFS::internal_get_uri( i_uri, tmpUri, m_module )) == 0 )
    {
       ctx->raiseError(paramError( __LINE__, SRC ) );
       return;
@@ -330,7 +330,7 @@ void Function_erase::invoke( Falcon::VMContext* ctx, int )
 
    URI tmpUri;
    URI* uri;
-   if ( (uri = internal_get_uri( i_uri, tmpUri, m_module )) )
+   if ( (uri = ClassVFS::internal_get_uri( i_uri, tmpUri, m_module )) == 0 )
    {
       ctx->raiseError(paramError( __LINE__, SRC ) );
       return;
@@ -364,8 +364,8 @@ void Function_move::invoke( Falcon::VMContext* ctx, int )
    URI tmpUri1, tmpUri2;
    URI* uri1, *uri2;
    if (
-         (uri1 = internal_get_uri( i_source, tmpUri1, m_module )) == 0
-         || (uri2 = internal_get_uri( i_dest, tmpUri2, m_module )) == 0
+         (uri1 = ClassVFS::internal_get_uri( i_source, tmpUri1, m_module )) == 0
+         || (uri2 = ClassVFS::internal_get_uri( i_dest, tmpUri2, m_module )) == 0
       )
    {
       ctx->raiseError(paramError( __LINE__, SRC ) );
@@ -404,7 +404,7 @@ void Function_fileType::invoke( Falcon::VMContext* ctx, int )
 
    URI tmpUri;
    URI* uri;
-   if ( (uri = internal_get_uri( i_uri, tmpUri, m_module )) )
+   if ( (uri = ClassVFS::internal_get_uri( i_uri, tmpUri, m_module )) == 0 )
    {
       ctx->raiseError(paramError( __LINE__, SRC ) );
       return;
@@ -418,6 +418,96 @@ void Function_fileType::invoke( Falcon::VMContext* ctx, int )
    ctx->returnFrame( (int64) ft );
 }
 
+
+/*#
+ @method readStats VFS
+ @brief Reads the generic file stats associated with a given URI.
+ @param uri The target file.
+ @optparam deref If true, dereference logical links automatically as the target file type.
+ @return A @a FileStat instance on success, nil if the given file doesn't exist.
+
+ This method creates a new FileStat instance each time it is invoked. When repeatedly
+ asking the stats of multiple files, it's preferable to use the @a FileStat.read to
+ use the same FileStat instance multiple times.
+
+ */
+
+FALCON_DECLARE_FUNCTION( readStats ,"uri:S|URI,deref:[B]" )
+void Function_readStats::invoke( Falcon::VMContext* ctx, int )
+{
+   static Class* statCls = methodOf()->module()->getClass("FileStat");
+   fassert( statCls != 0 );
+
+   Item* i_uri   = ctx->param(0);
+   URI tmpUri;
+   URI* uri;
+   if ( (uri = ClassVFS::internal_get_uri( i_uri, tmpUri, m_module )) == 0 )
+   {
+      ctx->raiseError(paramError( __LINE__, SRC ) );
+      return;
+   }
+
+   Item* i_deref = ctx->param(1);
+   bool bDeref = i_deref != 0 && i_deref->isTrue();
+
+   VFSProvider* iface = internal_get_provider( ctx->self(), uri->scheme() );
+   FileStat fs;
+   if( iface->readStats( *uri, fs, bDeref) )
+   {
+      ctx->returnFrame( FALCON_GC_STORE(statCls, new FileStat(fs) ) );
+   }
+   else {
+      ctx->returnFrame();
+   }
+}
+
+/*#
+ @method openDir VFS
+ @brief Open a virtual directory handle to read the contents of a directory.
+ @param uri The directory to be opened.
+ @return A @a Directory instance.
+ @raise IoError if the directory cannot be accessed (or is not a directory).
+*/
+
+FALCON_DECLARE_FUNCTION( openDir ,"uri:S|URI" )
+void Function_openDir::invoke( Falcon::VMContext* ctx, int )
+{
+   static Class* dirCls = methodOf()->module()->getClass("Directory");
+   fassert( dirCls != 0 );
+
+   Item* i_uri = ctx->param(0);
+   URI tmpUri;
+   URI* uri;
+   if ( (uri = ClassVFS::internal_get_uri( i_uri, tmpUri, m_module )) == 0 )
+   {
+      ctx->raiseError(paramError( __LINE__, SRC ) );
+      return;
+   }
+
+   VFSProvider* iface = internal_get_provider( ctx->self(), uri->scheme() );
+   Directory* dir = iface->openDir( *uri );
+   fassert( dir != 0 ); // or we should have raised.
+   if( dir != 0 )
+   {
+      // read the first entry now, dir->read() expects it
+      dir->read(dir->next());
+      ctx->returnFrame( FALCON_GC_STORE(dirCls, dir) );
+      return;
+   }
+
+   // just in case.
+   ctx->returnFrame();
+}
+
+}
+
+/*# @property protocol VFS
+ @brief Gets the protocol name associated with this virtual file system.
+ */
+static void get_protocol( const Class*, const String&, void *instance, Item& value )
+{
+   VFSProvider* prov = static_cast<VFSProvider*>(instance);
+   value = FALCON_GC_HANDLE(new String(prov->protocol()));
 }
 
 //=========================================================
@@ -435,10 +525,11 @@ ClassVFS::ClassVFS():
    addMethod( new _classVFS::Function_mkdir, true);
    addMethod( new _classVFS::Function_erase, true);
    addMethod( new _classVFS::Function_move, true);
-
+   addMethod( new _classVFS::Function_readStats, true);
    addMethod( new _classVFS::Function_fileType, true);
+   addMethod( new _classVFS::Function_openDir, true);
 
-
+   addProperty( "protocol", &get_protocol );
 
    addConstant( "NOT_FOUND", FileStat::_notFound );
    addConstant( "UNKNOWN", FileStat::_unknown );
