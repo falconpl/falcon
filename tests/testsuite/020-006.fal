@@ -3,8 +3,12 @@
 @category Core-module
 
 @output
-Generator class used in for/in
-Looping: a, b, c, d, e.
+Generator class used in while
+a
+b
+c
+d
+e
 Done
 @endoutput
 */

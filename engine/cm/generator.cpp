@@ -14,7 +14,13 @@
 */
 
 #include <falcon/cm/generator.h>
+#include <falcon/datareader.h>
+#include <falcon/datawriter.h>
+#include <falcon/vmcontext.h>
+#include <falcon/itemarray.h>
+
 #include <falcon/errors/paramerror.h>
+#include <falcon/errors/accesserror.h>
 
 namespace Falcon {
 namespace Ext {
@@ -189,7 +195,7 @@ bool ClassGenerator::op_init( VMContext* ctx, void* instance, int pcount ) const
    }
 
    Item* params = ctx->opcodeParams(pcount);
-   if( params >= 3 )
+   if( pcount >= 3 )
    {
       gen->m_iterator = params[2];
    }
@@ -211,11 +217,11 @@ void ClassGenerator::op_getProperty( VMContext* ctx, void* instance, const Strin
       {
          ctx->pushData( Item(this, gen) );
          ctx->pushCode(&m_stepAfterHasNext);
-         Item params = {gen->m_data, Item(this, gen) };
-         ctx->callItem(gen->m_function, 2, &params );
+         Item params[] = {gen->m_data, Item(this, gen) };
+         ctx->callItem(gen->m_function, 2, params );
       }
       else {
-         ctx->pushData(Item().setBoolean(! gen->m_bComplete));
+         ctx->topData().setBoolean(! gen->m_bComplete);
       }
    }
    else if( prop == "next" )
@@ -232,8 +238,8 @@ void ClassGenerator::op_getProperty( VMContext* ctx, void* instance, const Strin
       else {
          ctx->pushData( Item(this, gen) );
          ctx->pushCode(&m_stepAfterNext);
-         Item params = {gen->m_data, Item(this, gen) };
-         ctx->callItem(gen->m_function, 2, &params );
+         Item params[] = {gen->m_data, Item(this, gen) };
+         ctx->callItem(gen->m_function, 2, params );
       }
    }
    else if( prop == "func" )
@@ -278,28 +284,33 @@ void ClassGenerator::op_iter( VMContext* ctx, void* instance ) const
 void ClassGenerator::op_next( VMContext* ctx, void* instance ) const
 {
    Generator* gen = static_cast<Generator*>(instance);
-   Item params = {gen->m_data, Item(this, gen) };
-   ctx->callItem(gen->m_function, 2, &params );
+   Item params[] = {gen->m_data, Item(this, gen) };
+   ctx->callItem(gen->m_function, 2, params );
 }
 
 
-void ClassGenerator::PStepAfterHasNext::apply_( const PStep* ps, VMContext* ctx )
+void ClassGenerator::PStepAfterHasNext::apply_( const PStep*, VMContext* ctx )
 {
+   ctx->popCode();
+
    // we have called the function, do we have a next?
    Item next = ctx->topData();
    ctx->popData();
    Generator* gen = static_cast<Generator*>(ctx->topData().asInst());
-   gen->m_next = ctx->topData();
-   gen->m_bHasCache = true;
+   gen->m_next = next;
+   gen->m_bHasCache = ! next.isBreak();
    gen->m_bComplete = next.isBreak();
-   gen->m_bMore = ! next.isDoubt();
+   gen->m_bMore = next.isDoubt();
 
    ctx->popData();
    ctx->topData().setBoolean(!gen->m_bComplete);
 }
 
-void ClassGenerator::PStepAfterNext::apply_( const PStep* ps, VMContext* ctx )
+
+void ClassGenerator::PStepAfterNext::apply_( const PStep*, VMContext* ctx )
 {
+   ctx->popCode();
+
    // we have called the function, do we have a next?
    Item next = ctx->topData();
    ctx->popData();

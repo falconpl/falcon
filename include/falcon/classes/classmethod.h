@@ -56,6 +56,10 @@ public:
    virtual void op_call( VMContext* ctx, int32 paramCount, void* self ) const;
 
    virtual void op_getProperty( VMContext* ctx, void* instance, const String& prop) const;
+
+   // as generator...
+   virtual void op_iter( VMContext* ctx, void* instance ) const;
+   virtual void op_next( VMContext* ctx, void* instance ) const;
 };
 
 }

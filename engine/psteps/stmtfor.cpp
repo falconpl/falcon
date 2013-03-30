@@ -571,7 +571,7 @@ void StmtForIn::PStepBegin::apply_( const PStep* ps, VMContext* ctx )
    // we have the evaluated expression on top of the stack -- make it to next.
    Class* cls;
    void* dt;
-   if( ctx->topData().asClassInst( cls, dt )  )
+   if( ctx->topData().asClassInst( cls, dt ) )
    {       
       // Prepare to get the first op_next after op_iter
       ctx->resetCode( &self->m_stepGetFirst );
@@ -585,6 +585,12 @@ void StmtForIn::PStepBegin::apply_( const PStep* ps, VMContext* ctx )
       // keep the nil as for/in result
       ctx->popCode();
    }
+   else if( ctx->topData().isMethod() )
+   {
+      ctx->topData().forceClassInst(cls, dt);
+      ctx->resetCode( &self->m_stepGetFirst );
+      cls->op_iter( ctx, dt );
+   }
    else
    {
       throw new CodeError( 
@@ -597,7 +603,7 @@ void StmtForIn::PStepBegin::apply_( const PStep* ps, VMContext* ctx )
 void StmtForIn::PStepGetFirst::apply_( const PStep* ps, VMContext* ctx )
 {
    const StmtForIn::PStepGetFirst* step = static_cast<const StmtForIn::PStepGetFirst*>(ps);
-    fassert( ctx->opcodeParam(1).isUser() );
+    fassert( ctx->opcodeParam(1).isUser() || ctx->opcodeParam(1).isMethod() );
 
    // we're never needed anymore
    ctx->resetCode(&step->m_owner->m_stepFirst);
@@ -605,7 +611,7 @@ void StmtForIn::PStepGetFirst::apply_( const PStep* ps, VMContext* ctx )
    Class* cls = 0;
    void* dt = 0;
    // here we have seq, iter, <space>...
-   ctx->opcodeParam(1).asClassInst( cls, dt );
+   ctx->opcodeParam(1).forceClassInst( cls, dt );
    // ... pass them to next.
    cls->op_next( ctx, dt );
 }
@@ -615,7 +621,7 @@ void StmtForIn::PStepGetNext::apply_( const PStep*, VMContext* ctx )
 {
    ctx->restoreUnrollPoint();
 
-   fassert( ctx->opcodeParam(1).isUser() );
+   fassert( ctx->opcodeParam(1).isUser() || ctx->opcodeParam(1).isMethod() );
 
    // we're never needed anymore -- stepNext is behind us
    ctx->popCode();
@@ -623,7 +629,7 @@ void StmtForIn::PStepGetNext::apply_( const PStep*, VMContext* ctx )
    Class* cls = 0;
    void* dt = 0;
    // here we have seq, iter, <space>...
-   ctx->opcodeParam(1).asClassInst( cls, dt );
+   ctx->opcodeParam(1).forceClassInst( cls, dt );
    // ... pass them to next.
    cls->op_next( ctx, dt );
 }

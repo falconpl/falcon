@@ -52,6 +52,9 @@ public:
    //=============================================================
 
    virtual void op_call( VMContext* ctx, int32 paramCount, void* instance ) const;
+
+   virtual void op_iter( VMContext* ctx, void* instance ) const;
+   virtual void op_next( VMContext* ctx, void* instance ) const;
 };
 
 }

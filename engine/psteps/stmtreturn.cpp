@@ -34,7 +34,8 @@ StmtReturn::StmtReturn( int32 line, int32 chr ):
    Statement( line, chr ),
    m_expr( 0 ),
    m_bHasDoubt( false ),
-   m_bHasEval( false )
+   m_bHasEval( false ),
+   m_bHasBreak( false )
 {
    FALCON_DECLARE_SYN_CLASS( stmt_return );   
    apply = apply_;
@@ -44,7 +45,8 @@ StmtReturn::StmtReturn( Expression* expr, int32 line, int32 chr ):
    Statement( line, chr ),
    m_expr( expr ),
    m_bHasDoubt( false ),
-   m_bHasEval(false)
+   m_bHasEval(false),
+   m_bHasBreak(false)
 {
    FALCON_DECLARE_SYN_CLASS( stmt_return );   
    apply = apply_;
@@ -55,7 +57,8 @@ StmtReturn::StmtReturn( const StmtReturn& other ):
    Statement( other ),
    m_expr( 0 ),
    m_bHasDoubt( other.m_bHasDoubt ),
-   m_bHasEval( other.m_bHasEval )
+   m_bHasEval( other.m_bHasEval ),
+   m_bHasBreak( other.m_bHasBreak )
 {
    FALCON_DECLARE_SYN_CLASS( stmt_return );
    apply = apply_;
@@ -112,12 +115,23 @@ void StmtReturn::hasEval( bool b )
 {
    m_bHasEval = b;   
 }
+
+
+void StmtReturn::hasBreak( bool b )
+{
+   m_bHasBreak = b;
+}
  
 
 void StmtReturn::render( TextWriter* tw, int32 depth ) const
 {
    tw->write( renderPrefix(depth) );
    tw->write( "return" );
+
+   if( m_bHasBreak )
+   {
+      tw->write( " break");
+   }
 
    if( m_bHasEval )
    {
@@ -179,6 +193,13 @@ void StmtReturn::apply_( const PStep* ps, VMContext* ctx )
    }
 
    // after a returnFrame, we are popped for good.
+   if( self->m_bHasBreak )
+   {
+      ctx->topData().setBoolean(false);
+      ctx->topData().setBreak();
+      return;
+   }
+
    if( self->m_bHasDoubt )
    {
       ctx->topData().setDoubt();

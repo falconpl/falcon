@@ -29,6 +29,7 @@
 #include <falcon/cm/uri.h>
 #include <falcon/cm/path.h>
 #include <falcon/cm/gc.h>
+#include <falcon/cm/generator.h>
 #include <falcon/cm/textstream.h>
 #include <falcon/cm/textwriter.h>
 #include <falcon/cm/textreader.h>
@@ -87,6 +88,7 @@ CoreModule::CoreModule():
       << new Ext::ClassParallel
       << new Ext::ClassIterator
       << new Ext::ClassMutex
+      << new Ext::ClassGenerator
       << new Ext::ClassTextStream( classStream )
       << new Ext::ClassTextWriter( classStream )
       << new Ext::ClassTextReader( classStream )

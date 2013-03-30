@@ -34,6 +34,7 @@ void apply_expr_func(const Rule&, Parser& p);
 void apply_expr_funcEta(const Rule&, Parser& p);
 void apply_return_doubt(const Rule&, Parser& p);
 void apply_return_eval(const Rule&, Parser& p);
+void apply_return_break(const Rule&, Parser& p);
 void apply_return_expr(const Rule&, Parser& p);
 void apply_return(const Rule&, Parser& p);
 void apply_expr_lambda(const Rule&, Parser& p);

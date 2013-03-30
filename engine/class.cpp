@@ -831,7 +831,9 @@ void Class::op_iter( VMContext* ctx, void* ) const
 
 void Class::op_next( VMContext* ctx, void* ) const
 {
-   ctx->topData().setBreak();
+   Item item;
+   item.setBreak();
+   ctx->pushData(item);
 }
 
 }

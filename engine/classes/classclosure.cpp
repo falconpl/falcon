@@ -112,6 +112,20 @@ void ClassClosure::op_call( VMContext* ctx, int32 paramCount, void* instance ) c
    ctx->callInternal( closure, paramCount );
 }
 
+
+void ClassClosure::op_iter( VMContext* ctx, void* instance ) const
+{
+   ctx->pushData(Item(this, instance));
+}
+
+void ClassClosure::op_next( VMContext* ctx, void* instance ) const
+{
+   //self (function) is already on top of the stack.
+   Closure* func = static_cast<Closure*>(instance);
+   ctx->pushData(Item(this, func));
+   ctx->callInternal(func,0);
+}
+
 }
 
 /* end of classclosure.cpp */

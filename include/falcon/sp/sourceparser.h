@@ -450,6 +450,7 @@ public:
    Parsing::NonTerminal S_Return;
    Parsing::Rule r_return_doubt;
    Parsing::Rule r_return_eval;
+   Parsing::Rule r_return_break;
    Parsing::Rule r_return_expr;
    Parsing::Rule r_return;
 

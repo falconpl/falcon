@@ -160,6 +160,24 @@ void ClassMethod::op_getProperty( VMContext* ctx, void* instance, const String& 
    }
 }
 
+
+void ClassMethod::op_iter( VMContext* ctx, void* instance ) const
+{
+   Item* self = static_cast<Item*>(instance);
+   ctx->pushData(*self);
+}
+
+void ClassMethod::op_next( VMContext* ctx, void* instance ) const
+{
+   //self (function) is already on top of the stack.
+   Item* self = static_cast<Item*>(instance);
+   ctx->pushData(*self);
+   Item copy = *static_cast<Item*>(self);
+   Function* fmth = copy.asMethodFunction();
+   copy.unmethodize();
+   ctx->callInternal( fmth, 0, copy );
+}
+
 }
 
 /* end of classmethod.cpp */

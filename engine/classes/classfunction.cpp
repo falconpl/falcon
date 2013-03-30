@@ -328,6 +328,19 @@ void ClassFunction::op_toString( VMContext* ctx, void* self ) const
    ctx->pushData( FALCON_GC_HANDLE( ret ) );
 }
 
+void ClassFunction::op_iter( VMContext* ctx, void* instance ) const
+{
+   ctx->pushData(Item(this, instance));
+}
+
+void ClassFunction::op_next( VMContext* ctx, void* instance ) const
+{
+   //self (function) is already on top of the stack.
+   Function* func = static_cast<Function*>(instance);
+   ctx->pushData(Item(this, func));
+   ctx->callInternal(func,0);
+}
+
 }
 
 /* end of classfunction.cpp */

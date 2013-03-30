@@ -147,6 +147,7 @@ add_library(falcon_engine SHARED
   cm/event.cpp
   cm/fence.cpp
   cm/gc.cpp
+  cm/generator.cpp
   cm/iff.cpp
   cm/include.cpp
   cm/inspect.cpp

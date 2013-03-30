@@ -538,6 +538,7 @@ SourceParser::SourceParser():
    S_Return << "Return"
       << (r_return_doubt << "return doubt" << apply_return_doubt << T_return << T_QMark << Expr << T_EOL)
       << (r_return_eval << "return eval" << apply_return_eval << T_return << T_Times << Expr << T_EOL)
+      << (r_return_break << "return break" << apply_return_break << T_return << T_break << T_EOL)
       << (r_return_expr << "return expr" << apply_return_expr << T_return << Expr << T_EOL)
       << (r_return << "return" << apply_return << T_return << T_EOL)
       ;

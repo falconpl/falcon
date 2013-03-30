@@ -47,6 +47,9 @@ public:
    virtual void op_call( VMContext* ctx, int32 paramCount, void* self ) const;
    virtual void op_toString( VMContext* ctx, void* self ) const;
 
+   virtual void op_iter( VMContext* ctx, void* instance ) const;
+   virtual void op_next( VMContext* ctx, void* instance ) const;
+
 protected:
    ClassFunction( const String& name, int64 type ):
       ClassMantra( name, type )

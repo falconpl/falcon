@@ -1477,6 +1477,7 @@ void SynClasses::ClassReturn::store( VMContext* ctx, DataWriter*wr, void* instan
    StmtReturn* ret = static_cast<StmtReturn*>( instance );
    wr->write(ret->hasDoubt());
    wr->write(ret->hasEval());
+   wr->write(ret->hasBreak());
    m_parent->store( ctx, wr, ret );
 }
 
@@ -1484,13 +1485,17 @@ void SynClasses::ClassReturn::restore( VMContext* ctx, DataReader*dr ) const
 {
    bool bHasDoubt;
    bool bHasEval;
+   bool bHasBreak;
 
    dr->read( bHasDoubt );
    dr->read( bHasEval );
+   dr->read( bHasBreak );
+
 
    StmtReturn* expr = new StmtReturn;
    expr->hasDoubt(bHasDoubt);
    expr->hasEval(bHasEval);
+   expr->hasBreak(bHasBreak);
 
    try {
       ctx->pushData( Item( this, expr ) );

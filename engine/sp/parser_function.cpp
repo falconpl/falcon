@@ -311,6 +311,18 @@ void apply_return_eval(const Rule&, Parser& p)
    p.simplify(4);
 }
 
+
+void apply_return_break(const Rule&, Parser& p)
+{
+   ParserContext* ctx = static_cast<ParserContext*>(p.context());
+   TokenInstance* texpr= p.getNextToken();//T_return
+
+   StmtReturn* stmt_ret = new StmtReturn( texpr->line(), texpr->chr() );
+   stmt_ret->hasBreak(true);
+   ctx->addStatement(stmt_ret);
+   p.simplify(3);
+}
+
 void apply_return_expr(const Rule&, Parser& p)
 {
    ParserContext* ctx = static_cast<ParserContext*>(p.context());

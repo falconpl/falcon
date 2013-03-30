@@ -46,11 +46,15 @@ public:
    
    bool hasEval() const { return m_bHasEval; }
    void hasEval( bool  b ) ;
-   
+
+   bool hasBreak() const { return m_bHasBreak; }
+   void hasBreak( bool  b ) ;
+
 private:
    Expression* m_expr;
    bool m_bHasDoubt;
    bool m_bHasEval;
+   bool m_bHasBreak;
    
    static void apply_( const PStep*, VMContext* ctx );
 };
