@@ -1,0 +1,41 @@
+/*
+@name For/in with method generator
+@category Loops-adv
+
+@output
+Looping: a, b, c, d, e, f, g.
+Done
+@endoutput
+*/
+
+x = VMContext
+dd = x.dataDepth
+
+class Gen
+   data = .[ 'a' 'b' 'c' 'd' 'e' 'f' 'g' ]
+   proc = 0
+   
+   function generator()
+      value = self.data[self.proc++]
+      if self.proc == self.data.len 
+         return value         
+      else
+         return? value
+      end
+   end
+end
+
+data = Gen()
+for val in data.generator
+   forfirst: >> "Looping: "
+   >> val
+   formiddle: >> ", "
+   forlast: >"."
+end
+
+dd1 = x.dataDepth
+if dd != dd1
+   > "Failed on data depth: ", dd, " vs ", x.dataDepth
+end
+
+> "Done"

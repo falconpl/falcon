@@ -1,0 +1,40 @@
+/*
+@name Generator class (1)
+@category Core-module
+
+@output
+Generator class used in for/in
+Looping: a, b, c, d, e.
+Done
+@endoutput
+*/
+
+> "Generator class used in for/in"
+
+x = VMContext
+dd = x.dataDepth
+
+function func( data, gen )   
+   value = data[gen.iterator++]
+   if gen.iterator == data.len 
+      return value         
+   else
+      return? value
+   end
+end
+   
+gen = Generator( func, .['a' 'b' 'c' 'd' 'e'], 0 )
+
+for val in gen
+   forfirst: >> "Looping: "
+   >> val
+   formiddle: >> ", "
+   forlast: > "."
+end
+
+dd1 = x.dataDepth
+if dd != dd1
+   > "Failed on data depth: ", dd, " vs ", x.dataDepth
+end
+
+> "Done"

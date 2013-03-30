@@ -1,0 +1,42 @@
+/*
+@name For/in with closure generator
+@category Loops-adv
+
+@output
+Gen called
+Looping: a, b, c, d, e, f, g.
+Done
+@endoutput
+*/
+
+x = VMContext
+dd = x.dataDepth
+
+function gen()
+   > "Gen called"
+   data = .[ 'a' 'b' 'c' 'd' 'e' 'f' 'g' ]
+   proc = 0
+   return {=>
+      value = data[proc++]
+      if proc == data.len 
+         return value
+      else
+         return? value
+      end
+   }
+end
+
+for val in gen()
+   forfirst: >> "Looping: "
+   >> val
+   formiddle: >> ", "
+   forlast: >"."
+end
+
+
+dd1 = x.dataDepth
+if dd != dd1
+   > "Failed on data depth: ", dd, " vs ", x.dataDepth
+end
+
+> "Done"
