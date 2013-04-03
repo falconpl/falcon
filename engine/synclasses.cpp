@@ -367,6 +367,7 @@ FALCON_STANDARD_SYNCLASS_OP_CREATE( MUnpack, ExprMultiUnpack, varExprInsert )
 FALCON_STANDARD_SYNCLASS_OP_CREATE( Unquote, ExprUnquote, unaryExprSet )
 FALCON_STANDARD_SYNCLASS_OP_CREATE( EvalRet, ExprEvalRet, unaryExprSet )
 FALCON_STANDARD_SYNCLASS_OP_CREATE( EvalRetExec, ExprEvalRetExec, unaryExprSet )
+FALCON_STANDARD_SYNCLASS_OP_CREATE( EvalRetDoubt, ExprEvalRetDoubt, unaryExprSet )
 // Value -- separated
    
 //=================================================================

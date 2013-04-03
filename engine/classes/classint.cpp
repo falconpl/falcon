@@ -592,6 +592,51 @@ void ClassInt::op_decpost( VMContext* ctx, void* self ) const
    iself->setInteger(iself->asInteger() - 1);
 }
 
+
+
+void ClassInt::op_iter( VMContext* ctx, void* self ) const
+{
+   Item* item = (Item*)self;
+   int64 value = item->asInteger();
+   if( value == 0 )
+   {
+      ctx->pushData(*item);
+      ctx->topData().setBreak();
+   }
+   else if ( value < 0 )
+   {
+      ctx->pushData( Item((int64)-1) );
+   }
+   else
+   {
+      ctx->pushData( Item((int64)1) );
+   }
+}
+
+
+void ClassInt::op_next( VMContext* ctx, void* self ) const
+{
+   Item* item = (Item*)self;
+   int64 limit = item->asInteger();
+
+   int64 current = ctx->topData().asInteger();
+   ctx->pushData(Item(current));
+   if( current != limit )
+   {
+      // ask another loop
+      ctx->topData().setDoubt();
+      // prepare for next loop
+      if ( current < 0 )
+      {
+         ctx->opcodeParam(1).setInteger(current-1);
+      }
+      else
+      {
+         ctx->opcodeParam(1).setInteger(current+1);
+      }
+   }
+}
+
 }
 
 /* end of classint.cpp */

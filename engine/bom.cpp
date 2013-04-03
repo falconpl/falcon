@@ -63,6 +63,10 @@ BOM::BOM():
    hm["properties"] = &BOMH::properties;
 
    hm["render"] = &BOMH::render;
+
+   hm["foreach"] = &BOMH::foreach;
+   //hm["render"] = &BOMH::render;
+
 }
 
 BOM::~BOM()
@@ -248,6 +252,16 @@ void render(VMContext* ctx, const Class*, void*)
   Item &value = ctx->topData();
   value.methodize(func);
 }
+
+void foreach(VMContext* ctx, const Class*, void*)
+{
+  static Function* func = static_cast<Function*>(Engine::instance()->getMantra("foreach"));
+  fassert( func != 0 );
+
+  Item &value = ctx->topData();
+  value.methodize(func);
+}
+
 
 }
 

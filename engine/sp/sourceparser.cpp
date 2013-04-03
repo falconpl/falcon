@@ -104,11 +104,12 @@ SourceParser::SourceParser():
    T_OOB("^+", 24),
    T_DEOOB("^-", 24),
    T_XOOB("^%", 24),
-   T_ISOOB("^?", 24),
+   T_ISOOB("^$", 24),
    T_UNQUOTE("^~", 10 ),
    T_COMPOSE("^.", 60),
    T_EVALRET( "^=", 150),
    T_EVALRET_EXEC( "^*", 150),
+   T_EVALRET_DOUBT( "^?", 150),
    T_STARARROW( "*=>", 170),
 
    T_Comma( "," , 180 ),
@@ -434,6 +435,7 @@ SourceParser::SourceParser():
 
    Expr<< (r_Expr_expr_evalret << "Expr_evarlet"  << apply_expr_evalret << T_EVALRET << Expr );
    Expr<< (r_Expr_expr_evalret_exec << "Expr_evarlet_exec"  << apply_expr_evalret_exec << T_EVALRET_EXEC << Expr );
+   Expr<< (r_Expr_expr_evalret_doubt << "Expr_evarlet_doubt"  << apply_expr_evalret_doubt << T_EVALRET_DOUBT << Expr );
 
    Expr<< (r_Expr_provides << "Expr_provides" << apply_expr_provides << Expr << T_provides << T_Name);
 

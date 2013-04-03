@@ -72,6 +72,9 @@ public:
    virtual void op_dec(VMContext* ctx, void* self) const;
    virtual void op_incpost(VMContext* ctx, void* self ) const;
    virtual void op_decpost(VMContext* ctx, void* self ) const;
+
+   virtual void op_iter( VMContext* ctx, void* self ) const;
+   virtual void op_next( VMContext* ctx, void* self ) const;
 };
 
 }

@@ -81,6 +81,7 @@ void apply_expr_unquote( const Rule&, Parser& p );
 
 void apply_expr_evalret( const Rule&r, Parser& p );
 void apply_expr_evalret_exec( const Rule&r, Parser& p );
+void apply_expr_evalret_doubt( const Rule&r, Parser& p );
 
 
 void apply_expr_auto_add( const Rule&, Parser& p );

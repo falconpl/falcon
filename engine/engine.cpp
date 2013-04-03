@@ -59,6 +59,7 @@
 #include <falcon/builtin/classname.h>
 #include <falcon/builtin/baseclass.h>
 #include <falcon/builtin/describe.h>
+#include <falcon/builtin/foreach.h>
 #include <falcon/builtin/render.h>
 #include <falcon/builtin/tostring.h>
 #include <falcon/builtin/dynprop.h>
@@ -287,6 +288,7 @@ Engine::Engine()
    addMantra(new Ext::Set);
    addMantra(new Ext::Has);
    addMantra(new Ext::Properties);
+   addMantra(new Ext::Foreach);
 
    //============================================
    // Creating singletons

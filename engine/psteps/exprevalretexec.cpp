@@ -59,6 +59,47 @@ const String& ExprEvalRetExec::exprName() const
    return name;
 }
 
+
+
+bool ExprEvalRetDoubt::simplify( Item& ) const
+{
+   return false;
+}
+
+void ExprEvalRetDoubt::apply_( const PStep* ps, VMContext* ctx )
+{
+   const ExprEvalRetDoubt* self = static_cast<const ExprEvalRetDoubt*>(ps);
+   TRACE2( "Apply \"%s\"", self->describe().c_ize() );
+
+   fassert( self->first() != 0 );
+   CodeFrame& cf = ctx->currentCode();
+   switch( cf.m_seqId )
+   {
+      case 0:
+      cf.m_seqId = 1;
+      if( ctx->stepInYield( self->m_first, cf ) )
+      {
+         return;
+      }
+      /* no break */
+
+      case 1:
+      {
+         // we're done now.
+         // ctx->popCode(); will pop
+         ctx->exitLocalFrame( false );
+         ctx->topData().setDoubt();
+      }
+      /* no break */
+   }
+}
+
+const String& ExprEvalRetDoubt::exprName() const
+{
+   static String name("^?");
+   return name;
+}
+
 }
 
 /* end of exprneg.cpp */

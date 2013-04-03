@@ -22,11 +22,19 @@
 
 namespace Falcon {
 
-/** Unary negative. */
+/** Unary evaluate return exec. */
 class FALCON_DYN_CLASS ExprEvalRetExec: public UnaryExpression
 {
 public:
    FALCON_UNARY_EXPRESSION_CLASS_DECLARATOR( ExprEvalRetExec, expr_evalretexec );
+   virtual bool isStandAlone() const { return true; }
+};
+
+/** Unary evaluate return exec. */
+class FALCON_DYN_CLASS ExprEvalRetDoubt: public UnaryExpression
+{
+public:
+   FALCON_UNARY_EXPRESSION_CLASS_DECLARATOR( ExprEvalRetDoubt, expr_evalretdoubt );
    virtual bool isStandAlone() const { return true; }
 };
 

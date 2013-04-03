@@ -463,6 +463,17 @@ void apply_expr_evalret_exec( const Rule&r, Parser& p )
 }
 
 
+void apply_expr_evalret_doubt( const Rule&r, Parser& p )
+{
+   ParserContext* ctx = static_cast<ParserContext*>(p.context());
+   if( ctx->currentLitContext() == 0 ) {
+      p.addError(e_syn_evalret_out, p.currentSource(), p.currentLine(), p.currentLexer()->character(), 0);
+   }
+
+   // add the expression nevertheless.
+   apply_expr_unary( r, p, new ExprEvalRetDoubt );
+}
+
 //=======================================================
 // Other expressions.
 //

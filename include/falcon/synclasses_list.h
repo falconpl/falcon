@@ -175,6 +175,7 @@ FALCON_SYNCLASS_DECLARATOR(m_expr_munpack, MUnpack, Expression )
 FALCON_SYNCLASS_DECLARATOR(m_expr_unquote, Unquote, Expression)
 FALCON_SYNCLASS_DECLARATOR(m_expr_evalret, EvalRet, Expression)
 FALCON_SYNCLASS_DECLARATOR(m_expr_evalretexec, EvalRetExec, Expression)
+FALCON_SYNCLASS_DECLARATOR(m_expr_evalretdoubt, EvalRetDoubt, Expression)
 
 
 FALCON_SYNCLASS_DECLARATOR_EX(m_expr_sym, GenSym, Expression, \

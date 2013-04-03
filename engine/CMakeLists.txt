@@ -132,12 +132,13 @@ add_library(falcon_engine SHARED
   builtin/compare.cpp
   builtin/derivedfrom.cpp
   builtin/describe.cpp
-  builtin/tostring.cpp
-  builtin/typeid.cpp
+  builtin/dynprop.cpp
+  builtin/foreach.cpp
   builtin/len.cpp
   builtin/minmax.cpp
   builtin/render.cpp
-  builtin/dynprop.cpp
+  builtin/tostring.cpp
+  builtin/typeid.cpp
  
  
   cm/barrier.cpp

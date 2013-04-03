@@ -80,6 +80,7 @@ public:
    Parsing::Terminal T_COMPOSE;
    Parsing::Terminal T_EVALRET;
    Parsing::Terminal T_EVALRET_EXEC;
+   Parsing::Terminal T_EVALRET_DOUBT;
    Parsing::Terminal T_STARARROW;
    
    Parsing::Terminal T_Comma;
@@ -404,6 +405,7 @@ public:
 
    Parsing::Rule r_Expr_expr_evalret;
    Parsing::Rule r_Expr_expr_evalret_exec;
+   Parsing::Rule r_Expr_expr_evalret_doubt;
    Parsing::Rule r_Expr_provides;
    
    Parsing::Rule r_Expr_auto_add;

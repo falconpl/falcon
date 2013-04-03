@@ -1325,7 +1325,7 @@ void VMContext::pushBreak()
 void VMContext::callInternal( Function* function, int nparams, const Item& self )
 {
    TRACE( "Calling method %s.%s -- call frame code:%p, data:%p, call:%p",
-         self.asClass()->name().c_ize(), function->locate().c_ize(),
+         (self.isUser() ? self.asClass()->name().c_ize() : "<flat class>"), function->locate().c_ize(),
          m_codeStack.m_top, m_dataStack.m_top, m_callStack.m_top  );
 
    makeCallFrame( function, nparams, self );
@@ -1774,7 +1774,7 @@ Item* VMContext::resolveSymbol( const Symbol* dyns, bool forAssign )
          }
 
          // this might be a rule base. If it is, we have things to copy below.
-         if( ! isRule && dd->m_internal.type() == FLC_ITEM_FRAMING) {
+         if( dd->m_internal.type() == FLC_ITEM_FRAMING) {
             isRule = true;
          }
       }

@@ -1372,13 +1372,14 @@ Parsing::TokenInstance* SourceLexer::checkOperator()
          if( m_text == "^+" ) return parser->T_OOB.makeInstance(m_sline, m_schr);
          if( m_text == "^-" ) return parser->T_DEOOB.makeInstance(m_sline, m_schr);
          if( m_text == "^%" ) return parser->T_XOOB.makeInstance(m_sline, m_schr);
-         if( m_text == "^?" ) return parser->T_ISOOB.makeInstance(m_sline, m_schr);
+         if( m_text == "^$" ) return parser->T_ISOOB.makeInstance(m_sline, m_schr);
          
          if( m_text == "^~" ) return parser->T_UNQUOTE.makeInstance(m_sline, m_schr);
          if( m_text == "^." ) return parser->T_COMPOSE.makeInstance(m_sline, m_schr);
          
          if( m_text == "^=" ) return parser->T_EVALRET.makeInstance(m_sline, m_schr);
          if( m_text == "^*" ) return parser->T_EVALRET_EXEC.makeInstance(m_sline, m_schr);
+         if( m_text == "^?" ) return parser->T_EVALRET_DOUBT.makeInstance(m_sline, m_schr);
 
          // outscaping?
          if( m_bParsingFtd && m_text == "?>" ) {
