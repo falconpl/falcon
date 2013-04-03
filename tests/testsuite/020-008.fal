@@ -1,0 +1,38 @@
+/*
+@name BOM foreach
+@category Core-module
+
+@output
+BOM foreach
+On a sequence
+abc.
+On an integer
+123.
+On an integer, reverse
+-1-2-3.
+On a generator
+123.
+Done
+@endoutput
+*/
+
+> "BOM foreach"
+
+> "On a sequence"
+.['a' 'b' 'c'].foreach(print)
+>"."
+
+> "On an integer"
+3.foreach(print)
+>"."
+
+> "On an integer, reverse"
+-3.foreach(print)
+>"."
+
+> "On a generator"
+i = 1
+{=> if i == 3: return 3; return? i++ }.foreach(print)
+>"."
+
+> "Done"

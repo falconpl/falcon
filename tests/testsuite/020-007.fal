@@ -1,0 +1,38 @@
+/*
+@name Funcion foreach
+@category Core-module
+
+@output
+Funcion foreach
+On a sequence
+abc.
+On an integer
+123.
+On an integer, reverse
+-1-2-3.
+On a generator
+123.
+Done
+@endoutput
+*/
+
+> "Funcion foreach"
+
+> "On a sequence"
+foreach(.['a' 'b' 'c'], print)
+>"."
+
+> "On an integer"
+foreach(3, print)
+>"."
+
+> "On an integer, reverse"
+foreach(-3, print)
+>"."
+
+> "On a generator"
+i = 1
+foreach({=> if i == 3: return 3; return? i++}, print)
+>"."
+
+> "Done"
