@@ -915,13 +915,13 @@ Parsing::TokenInstance* SourceLexer::nextToken()
             {
                resetState();
                unget( chr );
-               double retval = 1; // to avoid stupid division by zero in case of errors
+               int64 retval = 1; // to avoid stupid division by zero in case of errors
                m_text.remove(m_text.length()-1,1);
-               if ( ! m_text.parseDouble( retval ) )
+               if ( ! m_text.parseInt( retval ) )
                   addError( e_inv_num_format );
 
                _p->m_nextTokens.push_back( parser->T_Dot.makeInstance(m_sline, m_schr) );
-               return m_parser->T_Float.makeInstance(m_sline, m_schr, retval);
+               return m_parser->T_Int.makeInstance(m_sline, m_schr, retval);
             }
             else if ( chr != '_' )
             {
