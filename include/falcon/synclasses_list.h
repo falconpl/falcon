@@ -55,6 +55,7 @@
 //
 FALCON_SYNCLASS_DECLARATOR(m_expr_genarray, GenArray, Expression)
 FALCON_SYNCLASS_DECLARATOR(m_expr_assign, Assign, Expression)
+FALCON_SYNCLASS_DECLARATOR(m_expr_accumulator, Accumulator, Expression)
 FALCON_SYNCLASS_DECLARATOR(m_expr_bnot, BNot, Expression)
 FALCON_SYNCLASS_DECLARATOR(m_expr_call, Call, Expression)
 FALCON_SYNCLASS_DECLARATOR_EX(m_expr_case, Case, Expression, \

@@ -1080,6 +1080,14 @@ Parsing::TokenInstance* SourceLexer::nextToken()
 
                      return parser->T_CapPar.makeInstance(m_sline, m_schr );
                   }
+                  else if( chr == '[' )
+                  {
+                     m_chr++;
+                     m_squareCount++;
+                     resetState();
+
+                     return parser->T_CapSquare.makeInstance(m_sline, m_schr );
+                  }
                }
 
                unget(chr);

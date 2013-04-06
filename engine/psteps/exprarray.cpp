@@ -58,7 +58,11 @@ void ExprArray::render( TextWriter* tw, int32 depth ) const
    ExprVector_Private::ExprVector& mye = _p->m_exprs;
    if( mye.empty() )
    {
-      tw->write( "[]\n" );
+      tw->write( "[]" );
+      if( depth >= 0 )
+      {
+         tw->write("\n");
+      }
       return;
    }
 

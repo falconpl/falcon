@@ -171,6 +171,7 @@ add_library(falcon_engine SHARED
   cm/waiter.cpp
   cm/coremodule.cpp
 
+  sp/parser_accumulator.cpp
   sp/parser_arraydecl.cpp
   sp/parser_attribute.cpp
   sp/parser_assign.cpp
@@ -207,6 +208,7 @@ add_library(falcon_engine SHARED
   psteps/breakpoint.cpp
   psteps/exprarray.cpp
   psteps/exprassign.cpp
+  psteps/expraccumulator.cpp
   psteps/exprbitwise.cpp
   psteps/exprcall.cpp
   psteps/exprcase.cpp

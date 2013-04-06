@@ -27,6 +27,7 @@
 #include <falcon/sp/parser_assign.h>
 #include <falcon/sp/parser_atom.h>
 #include <falcon/sp/parser_autoexpr.h>
+#include <falcon/sp/parser_accumulator.h>
 #include <falcon/sp/parser_class.h>
 #include <falcon/sp/parser_call.h>
 #include <falcon/sp/parser_dynsym.h>
@@ -77,6 +78,7 @@ SourceParser::SourceParser():
    T_Closepar(")"),
    T_OpenSquare("[", 20),
    T_CapPar("^("),
+   T_CapSquare("^["),
    T_DotPar(".("),
    T_DotSquare(".["),
    T_CloseSquare("]"),
@@ -468,6 +470,7 @@ SourceParser::SourceParser():
    
    Expr<< (r_Expr_array_decl << "Expr_array_decl" << apply_expr_array_decl << T_OpenSquare );
    Expr<< (r_Expr_array_decl2 << "Expr_array_decl2" << apply_expr_array_decl2 << T_DotSquare );
+   Expr<< (r_Expr_accumulator << "Expr_accumulator" << apply_expr_accumulator << T_CapSquare << AccumulatorBody );
    
    Expr<< (r_Expr_amper << "Expr_dyns" << apply_expr_amper << T_Amper << T_Name );
    
@@ -658,6 +661,14 @@ SourceParser::SourceParser():
                         << ListSymbol << T_Arrow );
 
    EPBody << ( r_lit_epbody << "EP" << apply_ep_body << ListExpr << T_Closepar );
+
+   AccumulatorBody << ( r_accumulator_complete << "Accumulator complete" << apply_accumulator_complete << ListExpr << T_CloseSquare
+               << Expr <<  T_Arrow << Expr );
+   AccumulatorBody << ( r_accumulator_w_target << "Accumulator target" << apply_accumulator_w_target << ListExpr << T_CloseSquare
+               << T_Arrow << Expr );
+   AccumulatorBody << ( r_accumulator_w_filter << "Accumulator filter" << apply_accumulator_w_filter << ListExpr << T_CloseSquare
+               << Expr );
+   AccumulatorBody << ( r_accumulator_simple << "Accumulator simple" << apply_accumulator_simple << ListExpr << T_CloseSquare );
 
    //==========================================================================
    // Class/Object heading

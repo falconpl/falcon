@@ -29,6 +29,7 @@
 
 #include <falcon/psteps/breakpoint.h>
 #include <falcon/psteps/exprarray.h>
+#include <falcon/psteps/expraccumulator.h>
 #include <falcon/psteps/exprassign.h>
 #include <falcon/psteps/exprbitwise.h>
 #include <falcon/psteps/exprcall.h>
@@ -280,6 +281,7 @@ GCToken* SynClasses::collect( const Class* cls, TreeStep* earr, int line )
 
 
 FALCON_STANDARD_SYNCLASS_OP_CREATE( GenArray, ExprArray, varExprInsert )
+FALCON_STANDARD_SYNCLASS_OP_CREATE( Accumulator, ExprAccumulator, ternaryExprSet)
 FALCON_STANDARD_SYNCLASS_OP_CREATE( Assign, ExprAssign, binaryExprSet )
 FALCON_STANDARD_SYNCLASS_OP_CREATE( BNot, ExprBNOT, unaryExprSet )
 FALCON_STANDARD_SYNCLASS_OP_CREATE( Call, ExprCall, varExprInsert_sel )

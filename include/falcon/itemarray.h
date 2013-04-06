@@ -218,6 +218,13 @@ public:
    
    static Class* handler();
 
+   /** Copies items from a Item pointer buffer.
+    * \param data The data to be copied
+    * \param size The size of the data (number of items)
+    * \param startPos The position where to put the items in this array.
+    */
+   void copyFromData( const Item* data, length_t size, length_t startPos = 0 );
+
 private:
    length_t m_alloc;
    length_t m_size;
@@ -245,6 +252,7 @@ private:
    };
 
    int compare( const ItemArray& other, Parentship* parent ) const;
+   void reserve_unlocked( length_t size );
 
    class Helper;
    friend class Helper;

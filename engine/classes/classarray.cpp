@@ -491,20 +491,20 @@ void ClassArray::op_aadd( VMContext* ctx, void* self ) const
    Item* op1, *op2;
    ctx->operands( op1, op2 );
 
-   Class* cls;
-   void* inst;
+   //Class* cls;
+   //void* inst;
 
    // a basic type?
-   if( ! op2->asClassInst( cls, inst ) || cls->typeID() != typeID() )
+   //if( ! op2->asClassInst( cls, inst ) || cls->typeID() != typeID() )
    {
       op2->copied( true );
       array->append( *op2 );
    }
-   else {
+   /*else {
       // it's an array!
       ItemArray* other = static_cast<ItemArray*>( inst );
       array->merge( *other );
-   }
+   }*/
 
    // just remove the topmost item,
    ctx->popData();

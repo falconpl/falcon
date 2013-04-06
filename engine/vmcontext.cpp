@@ -1470,7 +1470,7 @@ void VMContext::addLocalFrame( VarMap* st, int pcount )
    // add a base marker.
    DynsData* baseDyn = m_dynsStack.addSlot();
    baseDyn->m_sym = base;
-   baseDyn->m_value = m_dataStack.m_top;
+   baseDyn->m_value = m_dataStack.m_top-pcount;
 
    // if we don't have a map, there's nothing else we should do.
    if( st == 0 ) {
@@ -1481,6 +1481,10 @@ void VMContext::addLocalFrame( VarMap* st, int pcount )
    // Assign the parameters
    Item* top = &topData() - pcount+1;
    int32 p = 0;
+   if( pcount > (int32)st->paramCount() )
+   {
+      pcount = st->paramCount();
+   }
    while( p < pcount )
    {
       DynsData* dd = m_dynsStack.addSlot();

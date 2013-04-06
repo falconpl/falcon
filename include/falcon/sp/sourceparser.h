@@ -50,6 +50,7 @@ public:
    Parsing::Terminal T_Closepar;
    Parsing::Terminal T_OpenSquare;
    Parsing::Terminal T_CapPar;
+   Parsing::Terminal T_CapSquare;
    Parsing::Terminal T_DotPar;
    Parsing::Terminal T_DotSquare;
    Parsing::Terminal T_CloseSquare;
@@ -435,6 +436,7 @@ public:
    Parsing::Rule r_Expr_functionEta;
    Parsing::Rule r_Expr_lambda;
    Parsing::Rule r_Expr_ep;
+   Parsing::Rule r_Expr_accumulator;
    Parsing::Rule r_Expr_class;
    Parsing::Rule r_Expr_proto;
    Parsing::Rule r_Expr_lit;
@@ -563,6 +565,12 @@ public:
 
    Parsing::NonTerminal EPBody;
    Parsing::Rule r_lit_epbody;
+
+   Parsing::NonTerminal AccumulatorBody;
+   Parsing::Rule r_accumulator_complete;
+   Parsing::Rule r_accumulator_w_filter;
+   Parsing::Rule r_accumulator_w_target;
+   Parsing::Rule r_accumulator_simple;
 
    Parsing::NonTerminal ClassParams;
    Parsing::NonTerminal ObjectParams;
