@@ -555,17 +555,30 @@ void ExprAccumulator::PStepAfterFilter::apply_( const PStep* ps, VMContext* ctx 
       ctx->topData() = target;
       return;
    }
-   else if( top.isTrue() )
+   else if( self->m_target != 0 )
    {
-      // Send this data to the target, if any.
-      if ( self->m_target != 0 )
+      if( top.isOob() )
+      {
+         top.setOob(false);
+         ctx->pushCode(&self->m_stepAfterAddTarget);
+
+         // invoke the target aadd
+         Item& target = *ctx->opcodeParams( arity* 2 + 2 );
+         Class* cls = 0;
+         void* data = 0;
+         target.forceClassInst(cls, data);
+         ctx->pushData(target);
+         ctx->pushData(top);
+         cls->op_aadd(ctx, data);
+         return;
+      }
+      else if( top.isTrue() )
       {
          Item* base = ctx->opcodeParams( arity* 3 + 2 );
          self->addToTarget( ctx, base, arity );
          return;
       }
    }
-
    // In any other case, just regress
    self->regress(ctx);
 }
