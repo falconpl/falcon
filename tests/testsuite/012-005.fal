@@ -1,0 +1,29 @@
+/*
+@name Accumulator filter/target/change
+@category accumulator
+
+@output
+Accumulator filter/target/change
+[Square:,1]
+[1,2]
+[1,3]
+[2,1]
+[Square:,4]
+[2,3]
+[3,1]
+[3,2]
+[Square:,9]
+Done
+@endoutput
+*/
+
+> "Accumulator filter/target/change"
+tg = ^[ 3, 3 ] \
+      {a,b => if a!= b: return true; return ^+ ['Square:', b**2] } \
+      => []
+
+for a,b in tg
+   > "[", a, ",",b,"]"
+end 
+
+>"Done"

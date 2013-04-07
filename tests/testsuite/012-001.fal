@@ -1,0 +1,32 @@
+/*
+@name Accumulator filter
+@category accumulator
+
+@output
+Accumulator filter
+1
+2
+3
+4
+5
+Double filter
+11
+12
+13
+21
+22
+23
+31
+32
+33
+Done
+@endoutput
+*/
+
+> "Accumulator filter"
+^[5] printl
+
+> "Double filter"
+^[3,3] printl
+>"Done"
+

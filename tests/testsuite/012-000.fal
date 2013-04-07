@@ -1,0 +1,12 @@
+/*
+@name Accumulator smoke
+@category accumulator
+
+@output
+Accumulator smoke
+10
+@endoutput
+*/
+
+> "Accumulator smoke"
+> (^[10])[0]

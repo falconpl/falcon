@@ -1,0 +1,41 @@
+/*
+@name Accumulator target
+@category accumulator
+
+@output
+Accumulator target
+1
+2
+3
+4
+5
+Double target
+[1,1]
+[1,2]
+[1,3]
+[2,1]
+[2,2]
+[2,3]
+[3,1]
+[3,2]
+[3,3]
+Done
+@endoutput
+*/
+
+> "Accumulator target"
+tg = ^[5] => []
+
+for v in tg
+   > v
+end 
+
+> "Double target"
+tg = ^[3,3] => []
+
+for a,b in tg
+   > "[", a, ",",b,"]"
+end 
+
+>"Done"
+

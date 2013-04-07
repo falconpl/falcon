@@ -1,0 +1,31 @@
+/*
+@name Accumulator filter/target
+@category accumulator
+
+@output
+Accumulator filter/target
+[2,4]
+[2,6]
+[2,8]
+[4,2]
+[4,6]
+[4,8]
+[6,2]
+[6,4]
+[6,8]
+[8,2]
+[8,4]
+[8,6]
+Done
+@endoutput
+*/
+
+> "Accumulator filter/target"
+tg = ^[ [2:9], [2:9] ] {a,b => a!= b and a%2 == 0 and b%2 == 0} => []
+
+for a,b in tg
+   > "[", a, ",",b,"]"
+end 
+
+>"Done"
+

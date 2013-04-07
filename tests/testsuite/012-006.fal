@@ -1,0 +1,26 @@
+/*
+@name Accumulator eval
+@category accumulator
+
+@output
+Accumulator eval
+[1,2]
+[1,3]
+[2,1]
+[2,3]
+[3,1]
+[3,2]
+Done
+@endoutput
+*/
+
+> "Accumulator eval"
+tg = ^[ 3, 3 ] \
+      {(a,b) a!=b } \
+      => []
+
+for a,b in tg
+   > "[", a, ",",b,"]"
+end 
+
+>"Done"
