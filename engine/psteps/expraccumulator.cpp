@@ -408,7 +408,7 @@ void ExprAccumulator::PStepGenNext::apply_( const PStep* ps, VMContext* ctx )
    int32 arity = self->m_vector->arity();
 
    TRACE("ExprAccumulator::PStepGenNext::apply_ at step %d/%d -- dataDepth: %d", seqId, arity, (int)ctx->dataSize() );
-   if( ctx->topData().isBreak() )
+   if( ctx->topData().isNil() ) // nil is the non-iterator.
    {
       // roll back the iter operation:
       ctx->popCode();

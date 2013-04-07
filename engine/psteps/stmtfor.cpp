@@ -603,7 +603,16 @@ void StmtForIn::PStepBegin::apply_( const PStep* ps, VMContext* ctx )
 void StmtForIn::PStepGetFirst::apply_( const PStep* ps, VMContext* ctx )
 {
    const StmtForIn::PStepGetFirst* step = static_cast<const StmtForIn::PStepGetFirst*>(ps);
-    fassert( ctx->opcodeParam(1).isUser() || ctx->opcodeParam(1).isMethod() );
+   fassert( ctx->opcodeParam(1).isUser() || ctx->opcodeParam(1).isMethod() );
+
+   // Nil is the non-iterator
+   if( ctx->topData().isNil() )
+   {
+      ctx->popCode();
+      ctx->popData();
+      ctx->topData().setNil();
+      return;
+   }
 
    // we're never needed anymore
    ctx->resetCode(&step->m_owner->m_stepFirst);

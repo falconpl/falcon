@@ -399,25 +399,20 @@ void generic_apply_( const PStep* ps, VMContext* ctx )
 
          default:
          {
-            // classes don't auto-assign, they use auto operators
-            ctx->popCode();
-
             Class* cls = 0;
             void* inst = 0;
             op1->forceClassInst( cls, inst );
             _cpr::operate( ctx, cls, inst );
-            // we're done here.
-            return;
          }
       }
       
-         // might have gone deep
-         if( &cf != &ctx->currentCode() )
-         {
-            return;
-         }
-      }      
-      // fallthrough
+      // might have gone deep
+      if( &cf != &ctx->currentCode() )
+      {
+         return;
+      }
+   }
+   /* no break */
    
       // Phase 3 -- assigning the topmost value back.
    case 3:
@@ -425,7 +420,7 @@ void generic_apply_( const PStep* ps, VMContext* ctx )
       ctx->popCode();
       // however, eventually assign the that we have on the stack back.
       _cpr::assign( self->first()->lvalueStep(), ctx );      
-      
+      /* no break */
    }
 }
 

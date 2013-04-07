@@ -22,6 +22,7 @@
 #include <falcon/vmcontext.h>
 #include <falcon/optoken.h>
 #include <falcon/errors/accesserror.h>
+#include <falcon/errors/operanderror.h>
 
 #include <falcon/datareader.h>
 #include <falcon/datawriter.h>
@@ -472,6 +473,153 @@ void ClassString::InitNext::apply_( const PStep*, VMContext* ctx )
    ctx->popCode();
 }
 
+
+//===============================================================
+//
+
+void ClassString::op_mul( VMContext* ctx, void* instance ) const
+{
+   // self count => new
+   Item& i_count = ctx->topData();
+   if( ! i_count.isOrdinal() )
+   {
+      throw new OperandError( ErrorParam( e_op_params, __LINE__ ).extra( "N" ) );
+   }
+
+   int64 count = i_count.forceInteger();
+   ctx->popData();
+   if( count == 0 )
+   {
+      ctx->topData() = FALCON_GC_HANDLE(new String);
+      return;
+   }
+
+   String* self = static_cast<String*>(instance);
+   InstanceLock::Token* tk = m_lock.lock(self);
+
+   String copy(*self);
+   m_lock.unlock(tk);
+
+   String* result = new String;
+   result->reserve(copy.size() * count);
+   for( int64 i = 0; i < count; ++i )
+   {
+      result->append(copy);
+   }
+
+   ctx->topData() = FALCON_GC_HANDLE(result);
+}
+
+
+void ClassString::op_amul( VMContext* ctx, void* instance ) const
+{
+   // self count => self
+   Item& i_count = ctx->topData();
+   if( ! i_count.isOrdinal() )
+   {
+      throw new OperandError( ErrorParam( e_op_params, __LINE__ ).extra( "N" ) );
+   }
+
+   int64 count = i_count.forceInteger();
+   ctx->popData();
+
+   String* self = static_cast<String*>(instance);
+   String* target;
+   InstanceLock::Token* tk = m_lock.lock(self);
+
+   String copy(*self);
+   if( ctx->topData().copied() )
+   {
+      target = new String(copy);
+      ctx->topData() = FALCON_GC_HANDLE(target);
+      m_lock.unlock(tk);
+      tk = 0;
+   }
+   else {
+      target = self;
+   }
+
+   if( count == 0 )
+   {
+      target->size(0);
+   }
+   else
+   {
+      target->reserve( target->size() * count);
+      // start from 1: we have already 1 copy in place
+      for( int64 i = 1; i < count; ++i )
+      {
+         target->append(copy);
+      }
+   }
+
+   if( tk != 0 )
+   {
+      m_lock.unlock(tk);
+   }
+}
+
+void ClassString::op_div( VMContext* ctx, void* instance ) const
+{
+   // self count => new
+   Item& i_count = ctx->topData();
+   if( ! i_count.isOrdinal() )
+   {
+      throw new OperandError( ErrorParam( e_op_params, __LINE__ ).extra( "N" ) );
+   }
+
+   int64 count = i_count.forceInteger();
+   ctx->popData();
+
+   if ( count < 0 || count >= 0xFFFFFFFFLL )
+   {
+      throw new OperandError( ErrorParam( e_op_params, __LINE__ ).extra( "out of range" ) );
+   }
+
+   String* self = static_cast<String*>(instance);
+   InstanceLock::Token* tk = m_lock.lock(self);
+   String* target = new String(*self);
+   target->append((char_t) count);
+   ctx->topData() = FALCON_GC_HANDLE( target );
+   m_lock.unlock(tk);
+}
+
+
+void ClassString::op_adiv( VMContext* ctx, void* instance ) const
+{
+   // self count => new
+   Item& i_count = ctx->topData();
+   if( ! i_count.isOrdinal() )
+   {
+      throw new OperandError( ErrorParam( e_op_params, __LINE__ ).extra( "N" ) );
+   }
+
+   int64 count = i_count.forceInteger();
+   ctx->popData();
+
+   if ( count < 0 || count >= 0xFFFFFFFFLL )
+   {
+      throw new OperandError( ErrorParam( e_op_params, __LINE__ ).extra( "out of range" ) );
+   }
+
+   String* self = static_cast<String*>(instance);
+   InstanceLock::Token* tk = m_lock.lock(self);
+
+   String* target;
+   if( ctx->topData().copied() )
+   {
+      target = new String(*self);
+      ctx->topData() = FALCON_GC_HANDLE(target);
+   }
+   else {
+      target = self;
+   }
+
+   target->append((char_t) count);
+   m_lock.unlock(tk);
+}
+
+
 void ClassString::op_getIndex( VMContext* ctx, void* self ) const
 {
    Item *index, *stritem;
@@ -728,6 +876,40 @@ void ClassString::op_isTrue( VMContext* ctx, void* str ) const
    /* No lock -- we can accept sub-program level uncertainty */
    ctx->topData().setBoolean( static_cast<String*>( str )->size() != 0 );
 }
+
+
+void ClassString::op_iter( VMContext* ctx, void* self ) const
+{
+   /* No lock -- we can accept sub-program level uncertainty */
+   length_t size = static_cast<String*>( self )->size();
+   if( size == 0 ) {
+      ctx->pushData(Item()); // we should not loop
+   }
+   else
+   {
+      ctx->pushData(Item(0));
+   }
+}
+
+
+void ClassString::op_next( VMContext* ctx, void* instance ) const
+{
+   length_t pos = (length_t) ctx->topData().asInteger();
+
+   String* self = static_cast<String*>(instance);
+   InstanceLock::Token* tk = m_lock.lock(self);
+   char_t chr = self->getCharAt(pos);
+   ++pos;
+   bool isLast = self->length() <= pos;
+   m_lock.unlock(tk);
+
+   ctx->topData().setInteger(pos);
+   String* schr = new String;
+   schr->append(chr);
+   ctx->pushData( FALCON_GC_HANDLE(schr));
+   if( ! isLast ) ctx->topData().setDoubt();
+}
+
 
 }
 

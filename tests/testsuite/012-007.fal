@@ -1,0 +1,36 @@
+/*
+@name Iterating over strings.
+@category string-iterator
+
+@output
+Iterating over strings
+Empty loop
+One char
+Characters: a.
+Multiple chars
+Characters: a, b, c, d.
+Done.
+@endoutput
+*/
+
+> "Iterating over strings"
+
+function iter( text )
+   for chr in text
+      forfirst: >> "Characters: "   
+      >> chr
+      formiddle: >> ", "
+      forlast: > "."
+   end
+end
+
+> "Empty loop"
+iter("")
+
+> "One char"
+iter("a")
+
+> "Multiple chars"
+iter("abcd")
+
+> "Done."

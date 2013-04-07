@@ -55,12 +55,20 @@ public:
    virtual void op_add( VMContext* ctx, void* self ) const;
    virtual void op_aadd( VMContext* ctx, void* self ) const;
 
+   virtual void op_mul( VMContext* ctx, void* self ) const;
+   virtual void op_amul( VMContext* ctx, void* self ) const;
+   virtual void op_div( VMContext* ctx, void* self ) const;
+   virtual void op_adiv( VMContext* ctx, void* self ) const;
+
    virtual void op_getIndex( VMContext* ctx, void* self ) const;
    virtual void op_setIndex( VMContext* ctx, void* self ) const;
 
    virtual void op_compare( VMContext* ctx, void* self ) const;
    virtual void op_toString( VMContext* ctx, void* self ) const;
    virtual void op_isTrue( VMContext* ctx, void* self ) const;
+
+   virtual void op_iter( VMContext* ctx, void* self ) const;
+   virtual void op_next( VMContext* ctx, void* self ) const;
 
 private:
    InstanceLock m_lock;
