@@ -1,0 +1,37 @@
+/*
+@name String operator in test
+@category datatype
+
+@output
+String operator in test
+'' in 'abc': false
+'a' in 'abc': true
+'ab' in 'abc': true
+'abc' in 'abc': true
+'abcd' in 'abc': false
+'n' in 'abc': false
+'n1' in 'abc': false
+'n2' in '': false
+'' in '': false
+Done
+
+@endoutput
+*/
+
+> "String operator in test"
+
+function test( s1, s2 )
+   > @"'$s1' in '$s2': ", s1 in s2
+end
+
+test('', 'abc' )
+test('a', 'abc' )
+test('ab', 'abc' )
+test('abc', 'abc' )
+test('abcd', 'abc' )
+test('n', 'abc' )
+test('n1', 'abc' )
+test('n2', '' )
+test('', '' )
+
+> "Done"

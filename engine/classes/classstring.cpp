@@ -664,16 +664,12 @@ void ClassString::op_getIndex( VMContext* ctx, void* self ) const
 
       Class *cls;
       void *udata;
-
-      if ( ! index->asClassInst( cls, udata ) )
-      {
-         throw new AccessError( ErrorParam( e_arracc, __LINE__ ).extra( "type error" ) );
-      }
+      index->forceClassInst( cls, udata );
 
       // Confirm we have a range
       if ( cls->typeID() != FLC_CLASS_ID_RANGE )
       {
-         throw new AccessError( ErrorParam( e_arracc, __LINE__ ).extra( "unknown index" ) );
+         throw new OperandError( ErrorParam( e_op_params, __LINE__ ).extra( "Range" ) );
       }
 
       Range& rng = *static_cast<Range*>( udata );
@@ -758,7 +754,7 @@ void ClassString::op_setIndex( VMContext* ctx, void* self ) const
 
    if ( ! value->isString() && ! value->isOrdinal())
    {
-      throw new AccessError( ErrorParam( e_arracc, __LINE__ ).extra("non string/char being assigned") );
+      throw new OperandError( ErrorParam( e_op_params, __LINE__ ).extra( "S" ) );
    }
 
    if ( index->isOrdinal() )
@@ -824,7 +820,7 @@ void ClassString::op_setIndex( VMContext* ctx, void* self ) const
    }
    else
    {
-      throw new AccessError( ErrorParam( e_arracc, __LINE__ ).extra("invalid assignment to string") );
+      throw new OperandError( ErrorParam( e_op_params, __LINE__ ).extra( "I|R" ) );
    }
 }
 
@@ -877,6 +873,36 @@ void ClassString::op_isTrue( VMContext* ctx, void* str ) const
    ctx->topData().setBoolean( static_cast<String*>( str )->size() != 0 );
 }
 
+
+void ClassString::op_in( VMContext* ctx, void* instance ) const
+{
+   if( ! ctx->topData().isString() )
+   {
+      throw new OperandError( ErrorParam( e_op_params, __LINE__ ).extra( "S" ) );
+      return;
+   }
+
+
+   /* No lock -- we can accept sub-program level uncertainty */
+   String* self = static_cast<String*>(instance);
+   String* other = ctx->topData().asString();
+   ctx->popData();
+   if( other == self )
+   {
+      ctx->topData().setBoolean(true);
+      return;
+   }
+
+   InstanceLock::Token* l1 = m_lock.lock(self);
+   InstanceLock::Token* l2 = m_lock.lock(other);
+
+   length_t pos = self->find(*other);
+
+   m_lock.unlock(l2);
+   m_lock.unlock(l1);
+
+   ctx->topData().setBoolean( pos != String::npos );
+}
 
 void ClassString::op_iter( VMContext* ctx, void* self ) const
 {
