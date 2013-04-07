@@ -50,6 +50,7 @@ void VMContext::LinearStack<datatype__>::init( int base )
    memset(m_base, 0, INITIAL_STACK_ALLOC * sizeof(datatype__));
    m_top = m_base + base;
    m_max = m_base + INITIAL_STACK_ALLOC;
+   m_allocSize = INITIAL_STACK_ALLOC;
 }
 
 template<class datatype__>
