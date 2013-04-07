@@ -13,7 +13,7 @@ dd0 = VMContext.dataDepth
 b = "OK"
 block =  {[] a = ^~b}
 a = nil
-> "The unquoted block is: ", block.render()
+> "The unquoted block is: ", block.render(-1)
 block()
 > "A=", a
 
