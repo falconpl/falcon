@@ -64,7 +64,6 @@ public:
    const String& original() const;
 
    virtual ExprIString* clone() const;
-   virtual bool isStatic() const;
    virtual void render( TextWriter* tw, int depth ) const;
    virtual bool isStandAlone() const;
 

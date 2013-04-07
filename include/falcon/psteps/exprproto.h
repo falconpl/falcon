@@ -64,7 +64,6 @@ public:
 
    inline virtual ExprProto* clone() const { return new ExprProto( *this ); }
 
-   virtual bool isStatic() const { return false; }
    virtual bool simplify( Item& result ) const;
    virtual void render( TextWriter* tw, int32 depth ) const;
    

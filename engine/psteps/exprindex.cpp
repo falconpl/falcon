@@ -67,7 +67,7 @@ inline void generic_apply( const ExprIndex* self, VMContext* ctx )
 
    CodeFrame& cf = ctx->currentCode();
    Expression::t_trait trait;
-   register Expression* current;
+   register TreeStep* current;
 
    switch( cf.m_seqId )
    {
@@ -77,7 +77,7 @@ inline void generic_apply( const ExprIndex* self, VMContext* ctx )
          // don't bother to call if we know what it is
          // TODO: it's better optimized through a specific pstep.
          current = self->first();
-         trait = current->trait();
+         trait = current->category() == TreeStep::e_cat_expression ? static_cast<Expression*>(current)->trait() : Expression::e_trait_none;
          if( trait == Expression::e_trait_symbol )
          {
             Item* value = ctx->resolveSymbol(static_cast<ExprSymbol*>( current )->symbol(), false);
@@ -93,7 +93,7 @@ inline void generic_apply( const ExprIndex* self, VMContext* ctx )
          // don't bother to call if we know what it is
          // TODO: it's better optimized through a specific pstep.
          current = self->second();
-         trait = current->trait();
+         trait = current->category() == TreeStep::e_cat_expression ? static_cast<Expression*>(current)->trait() : Expression::e_trait_none;
          if( trait == Expression::e_trait_value )
          {
             ctx->pushData(static_cast<ExprValue*>( current )->item());

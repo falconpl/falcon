@@ -45,12 +45,6 @@ ExprInit::ExprInit( const ExprInit &other ):
 ExprInit::~ExprInit() {}
 
 
-bool ExprInit::isStatic() const
-{
-   return false;
-}
-
-
 void ExprInit::render( TextWriter* tw, int ) const
 {
    tw->write("init");

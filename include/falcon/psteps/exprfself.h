@@ -29,7 +29,6 @@ public:
    ExprFSelf( const ExprFSelf &other );
    virtual ~ExprFSelf();
 
-   virtual bool isStatic() const;
    virtual ExprFSelf* clone() const;
    virtual bool simplify( Item& result ) const;
    virtual void render( TextWriter* tw, int depth ) const;

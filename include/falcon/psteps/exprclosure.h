@@ -34,7 +34,6 @@ public:
    virtual void render( TextWriter* tgt, int32 depth ) const;
    inline virtual ExprClosure* clone() const { return new ExprClosure( *this ); }
 
-   virtual bool isStatic() const { return false; }
    virtual bool simplify( Item& ) const { return false; }
    
    Function* function() const { return m_function; }

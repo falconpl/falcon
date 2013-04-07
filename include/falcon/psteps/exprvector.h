@@ -21,7 +21,7 @@
 namespace Falcon
 {
 
-class ExprVector_Private;
+class TreeStepVector_Private;
 
 /** Common interface for expressions holding vector of expressions.
  This is an abstract class; you can't instance it directly
@@ -42,18 +42,18 @@ public:
     \param n The number of the expression that must be accessed.
     \return the nth expression or 0 if n is out of range.
     */
-   Expression* get( size_t n ) const;
+   TreeStep* get( size_t n ) const;
    
 
    /** Adds another expression to this array.
     \return itself (useful for declarations in sources)
     */
-   ExprVector& add( Expression* e );
+   ExprVector& add( TreeStep* e );
    
-   void resolveUnquote( VMContext* ctx );
+   void resolveUnquote( VMContext* ctx, const UnquoteResolver& );
 
 protected:
-   ExprVector_Private* _p;
+   TreeStepVector_Private* _p;
    ExprVector();   
    ExprVector( int line, int chr);
    ExprVector( const ExprVector& other );

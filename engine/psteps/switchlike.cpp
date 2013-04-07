@@ -131,7 +131,8 @@ bool SwitchlikeStatement::setNth( int32 n, TreeStep* ts )
    if( n < 0 ) n = size + n;
    if( n < 0 || n > size
             || ts->category() != TreeStep::e_cat_syntree
-            || (ts->selector() == 0 || ts->selector()->trait() != Expression::e_trait_case )
+            || (ts->selector() == 0 || ts->category() != TreeStep::e_cat_expression ||
+                     static_cast<Expression*>(ts->selector())->trait() != Expression::e_trait_case )
             || ! ts->setParent(this) )
    {
       return false;
@@ -155,7 +156,8 @@ bool SwitchlikeStatement::insert( int32 pos, TreeStep* ts )
    if( pos < 0 ) pos = size + pos;
    if( pos < 0 || pos > size
             || ts->category() != TreeStep::e_cat_syntree
-            || (ts->selector() == 0 || ts->selector()->trait() != Expression::e_trait_case )
+            || (ts->selector() == 0 || ts->category() != TreeStep::e_cat_expression ||
+                     static_cast<Expression*>(ts->selector())->trait() != Expression::e_trait_case )
             || ! ts->setParent(this) )
    {
       return false;
@@ -188,7 +190,8 @@ bool SwitchlikeStatement::append( TreeStep* element )
    }
    else
    {
-      if( element->selector()->trait() != Expression::e_trait_case || ! element->setParent( this ) )
+      if( element->category() != TreeStep::e_cat_expression ||
+               static_cast<Expression*>(element->selector())->trait() != Expression::e_trait_case || ! element->setParent( this ) )
       {
          return false;
       }
@@ -242,14 +245,14 @@ SynTree* SwitchlikeStatement::findBlock( const Item& value, const __T& verifier 
    while( iter != _p->m_blocks.end() )
    {
       SynTree* st = *iter;
-      Expression* sel = st->selector();
+      TreeStep* sel = st->selector();
       if( sel == 0 )
       {
          // the default block
          return st;
       }
 
-      if(sel->trait() == Expression::e_trait_case )
+      if( sel->category() == TreeStep::e_cat_expression && static_cast<Expression*>(sel)->trait() == Expression::e_trait_case )
       {
          ExprCase* cs = static_cast<ExprCase*>(sel);
          if( verifier.check(cs, value) ) {
@@ -335,13 +338,13 @@ SynTree* SwitchlikeStatement::getDefault() const
 }
 
 /** Returns the selector for this expression.*/
-Expression* SwitchlikeStatement::selector() const
+TreeStep* SwitchlikeStatement::selector() const
 {
    return m_expr;
 }
 
 
-bool SwitchlikeStatement::selector( Expression* expr )
+bool SwitchlikeStatement::selector( TreeStep* expr )
 {
    if( expr == 0 )
    {
@@ -376,8 +379,8 @@ void SwitchlikeStatement::render( TextWriter* tw, int32 depth ) const
       while( iter != _p->m_blocks.end() )
       {
          SynTree* st = *iter;
-         Expression* sel = st->selector();
-         if( sel == 0 || sel->trait() != Expression::e_trait_case )
+         TreeStep* sel = st->selector();
+         if( sel == 0 || sel->category() != TreeStep::e_cat_expression || static_cast<Expression*>(sel)->trait() != Expression::e_trait_case )
          {
             tw->write( renderPrefix(dp) );
             tw->write( "default\n" );
@@ -391,7 +394,7 @@ void SwitchlikeStatement::render( TextWriter* tw, int32 depth ) const
 
          st->render( tw, dp + 1 );
          ++iter;
-         if( sel == 0 || sel->trait() != Expression::e_trait_case )
+         if( sel == 0 || sel->category() != TreeStep::e_cat_expression || static_cast<Expression*>(sel)->trait() != Expression::e_trait_case )
          {
             // force the default block to be the last
             break;

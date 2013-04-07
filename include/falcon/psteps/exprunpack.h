@@ -36,21 +36,19 @@ public:
    virtual void render( TextWriter* tw, int32 depth ) const;
    inline virtual bool isStandAlone() const { return true; }
 
-   virtual bool isStatic() const { return false; }
-
-   virtual Expression* selector() const
+   virtual TreeStep* selector() const
    {
       return m_expander;
    }
 
-   bool selector( Expression* sel );
+   bool selector( TreeStep* sel );
 
    virtual bool setNth( int32 n, TreeStep* ts );
    virtual bool insert( int32 pos, TreeStep* element );
    virtual bool append( TreeStep* element );
 
 protected:
-   Expression* m_expander;
+   TreeStep* m_expander;
    
 private:
    static void apply_( const PStep*, VMContext* ctx );

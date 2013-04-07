@@ -33,6 +33,7 @@ TreeStep::TreeStep( const TreeStep& other ):
    PStep( other ),
    m_handler( other.m_handler ),
    m_parent(0),
+   m_pstep_lvalue(0),
    m_cat( other.m_cat ),
    m_bInGC(false)
 {
@@ -102,12 +103,12 @@ bool TreeStep::remove( int32 )
    return false;
 }
 
-Expression* TreeStep::selector() const
+TreeStep* TreeStep::selector() const
 {
    return 0;
 }
 
-bool TreeStep::selector( Expression* )
+bool TreeStep::selector( TreeStep* )
 {
    return false;
 }
@@ -200,17 +201,54 @@ SynTree* TreeStep::checkSyntree( const Item& item )
    return 0;
 }
 
-void TreeStep::resolveUnquote( VMContext* ctx )
+void TreeStep::resolveUnquote( VMContext* ctx, const UnquoteResolver& )
 {
+   class SelectorUnquoteResolver: public UnquoteResolver
+   {
+   public:
+      SelectorUnquoteResolver( TreeStep* parent ):
+         m_parent(parent)
+      {}
+
+      virtual ~SelectorUnquoteResolver() {}
+
+      virtual void onUnquoteResolved( TreeStep* newStep ) const {
+         m_parent->selector(newStep);
+      }
+
+   private:
+      TreeStep* m_parent;
+   };
+
+   class BranchUnquoteResolver: public UnquoteResolver
+   {
+   public:
+      BranchUnquoteResolver( TreeStep* parent, int32 n ):
+         m_parent(parent),
+         m_pos(n)
+      {}
+
+      virtual ~BranchUnquoteResolver() {}
+
+      virtual void onUnquoteResolved( TreeStep* newStep ) const {
+         m_parent->setNth(m_pos,newStep);
+      }
+
+   private:
+      TreeStep* m_parent;
+      int32 m_pos;
+   };
+
+
    int32 rty = arity();
-   Expression* sel = selector();
+   TreeStep* sel = selector();
    if( sel != 0 )
    {
-      sel->resolveUnquote(ctx);
+      sel->resolveUnquote(ctx, SelectorUnquoteResolver(this) );
    }
 
    for (int i = rty-1; i >=0; --i ) {
-      nth(i)->resolveUnquote(ctx);
+      nth(i)->resolveUnquote(ctx, BranchUnquoteResolver(this, i) );
    }
 }
 

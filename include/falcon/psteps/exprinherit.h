@@ -71,7 +71,6 @@ public:
 
    virtual void render( TextWriter* tw, int depth ) const;
 
-   virtual bool isStatic() const { return false; }
    virtual bool simplify( Item& ) const { return false; }  
    virtual ExprInherit* clone() const { return new ExprInherit(*this); }
    

@@ -226,9 +226,26 @@ void ExprLit::apply_( const PStep* ps, VMContext* ctx )
    ctx->popCode();
    TreeStep* nchild = self->child()->clone();
 
+   class ChildUnquoteResolver: public UnquoteResolver
+   {
+   public:
+      ChildUnquoteResolver( TreeStep*& child ):
+         m_child(child)
+      {}
+      virtual ~ChildUnquoteResolver() {}
+      virtual void onUnquoteResolved( TreeStep* newStep ) const
+      {
+         m_child = newStep;
+      }
+
+   private:
+      TreeStep*& m_child;
+   };
+
    if( evsize ) {
-      nchild->resolveUnquote( ctx );
+      nchild->resolveUnquote( ctx, ChildUnquoteResolver(nchild) );
    }
+
    nchild->setInGC();
    ctx->pushData( FALCON_GC_HANDLE( nchild )  );
 }

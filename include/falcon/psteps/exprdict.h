@@ -49,14 +49,14 @@ public:
     \param second The second expression of the pair.
     \return true if the expressions can be get, false otherwise.
     */
-    bool get( size_t n, Expression* &first, Expression* &second ) const;
+    bool get( size_t n, TreeStep* &first, TreeStep* &second ) const;
 
    /** Adds another expression to this array.
     \param k The first expression of the new pair.
     \param k The second expression of the new pair.
     \return itself (useful for declarations in sources)
     */
-   ExprDict& add( Expression* k, Expression* v );
+   ExprDict& add( TreeStep* k, TreeStep* v );
 
    void render( TextWriter* tw, int depth ) const;
    
@@ -64,7 +64,6 @@ public:
 
    inline virtual ExprDict* clone() const { return new ExprDict( *this ); }
 
-   virtual bool isStatic() const { return false; }
    virtual bool simplify( Item& result ) const;
 
 };

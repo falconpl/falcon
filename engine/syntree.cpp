@@ -111,7 +111,7 @@ void SynTree::target( Symbol* s )
 }
 
 
-bool SynTree::selector( Expression* expr )
+bool SynTree::selector( TreeStep* expr )
 {
    if ( expr != 0 && ! expr->setParent( this ) )
    {

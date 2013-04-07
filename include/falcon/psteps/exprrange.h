@@ -42,7 +42,6 @@ public:
    static void apply_( const PStep*, VMContext* ctx );
 
    inline virtual ExprRange* clone() const { return new ExprRange( *this ); }
-   virtual bool isStatic() const { return false; }
    virtual bool simplify( Item& result ) const;
    
    virtual void render( TextWriter* tw, int32 depth ) const;

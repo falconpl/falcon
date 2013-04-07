@@ -46,13 +46,13 @@ public:
 
    /** Gets the expression generating the item to be raised. 
     */
-   Expression* expr() const { return m_expr; }      
+   TreeStep* expr() const { return m_expr; }
 
-   virtual Expression* selector() const; 
-   virtual bool selector( Expression* e ); 
+   virtual TreeStep* selector() const;
+   virtual bool selector( TreeStep* e );
    
 private:
-   Expression* m_expr;
+   TreeStep* m_expr;
    
    static void apply_( const PStep*, VMContext* ctx );
 };

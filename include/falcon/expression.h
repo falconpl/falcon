@@ -56,32 +56,6 @@ public:
    
    // TODO: Rename in trait()
    t_trait trait() const { return m_trait; }
-   
-
-   /** Returns true if the expression can be found alone in a statement. */
-   inline virtual bool isStandAlone() const { return false; }
-
-   /** Returns true if the expression is composed of just constants.
-    * When this method returns true, the expression can be simplified at compile time.
-    */
-   virtual bool isStatic() const = 0;
-
-   /** Step that should be performed if this expression is lvalue.    
-    @return A valid pstep if l-value is possible, 0 if this expression has no l-vaue.
-    
-    The PStep of an expression generates a value. The l-value pstep will use this
-    expression to set a value when an assignment is required.
-    */
-   inline PStep* lvalueStep() const { return m_pstep_lvalue; }
-
-
-   /** Evaluates the expression when all its components are static.
-    * @Return true if the expression can be simplified, false if it's not statitc
-    *
-    * Used during compilation to simplify static expressions, that is,
-    * reducing expressions at compile time.
-    */
-   virtual bool simplify( Item& result ) const = 0;   
       
    /** True if an automatic definition of this expression can define symbols. */
    virtual bool fullDefining() { return false; }
@@ -92,25 +66,9 @@ protected:
    
    Expression( int line = 0, int chr = 0  ):
       TreeStep( e_cat_expression, line, chr ),
-      m_pstep_lvalue(0),
       m_trait( e_trait_none )
    {}
       
-   /** Apply-modify function.
-    
-    Expression accepting a modify operator (i.e. ++, += *= etc.)
-    can declare this modify step that will be used by auto-expression
-    to perform the required modufy.
-    
-    If left uninitialized (to 0), this step won't be performed. This is the
-    case of read-only expressions, i.e, function calls. In this case, 
-    expressions like "call() += n" are legit, but they will be interpreted as
-    "call() + n" as there is noting to be l-valued in "call()".
-    
-    \note It's supposed that the subclass own this pstep and sets it via &pstep,
-    so that destruction of the pstep happens with the child class.
-    */
-   PStep* m_pstep_lvalue;
    t_trait m_trait;
 };
 
@@ -119,7 +77,7 @@ protected:
 class FALCON_DYN_CLASS UnaryExpression: public Expression
 {
 public:
-   inline UnaryExpression( Expression* op1, int line = 0, int chr = 0 ):
+   inline UnaryExpression( TreeStep* op1, int line = 0, int chr = 0 ):
       Expression( line, chr ),
       m_first( op1 )
    {
@@ -134,10 +92,8 @@ public:
    UnaryExpression( const UnaryExpression& other );
    virtual ~UnaryExpression();
 
-   virtual bool isStatic() const;
-
-   Expression *first() const { return m_first; }
-   void first( Expression *f ) { 
+   TreeStep *first() const { return m_first; }
+   void first( TreeStep *f ) {
       if ( f->setParent(this) )
       {
          dispose( m_first );
@@ -153,7 +109,7 @@ public:
    void render( TextWriter* tw, int depth ) const;
    
 protected:
-   Expression* m_first;
+   TreeStep* m_first;
 };
 
 
@@ -168,7 +124,7 @@ public:
       m_second( 0 )
    {}
       
-   inline BinaryExpression( Expression* op1, Expression* op2, int line = 0, int chr = 0 ):
+   inline BinaryExpression( TreeStep* op1, TreeStep* op2, int line = 0, int chr = 0 ):
       Expression( line, chr ),
       m_first( op1 ),
       m_second( op2 )
@@ -180,24 +136,22 @@ public:
    BinaryExpression( const BinaryExpression& other );
    virtual ~BinaryExpression();
 
-   Expression *first() const { return m_first; }
-   void first( Expression *f ) { 
+   TreeStep *first() const { return m_first; }
+   void first( TreeStep *f ) {
       if ( f->setParent(this) )
       {
          dispose( m_first );
          m_first= f; 
       }
    }
-   Expression *second() const { return m_second; }
-   void second( Expression *f ) { 
+   TreeStep *second() const { return m_second; }
+   void second( TreeStep *f ) {
       if ( f->setParent(this) )
       {
          dispose( m_second );
          m_second= f; 
       }
    }
-
-   virtual bool isStatic() const;
 
    virtual int32 arity() const;
    virtual TreeStep* nth( int32 n ) const;
@@ -207,8 +161,8 @@ public:
    void render( TextWriter* tw, int depth ) const;
 protected:
    
-   Expression* m_first;
-   Expression* m_second;
+   TreeStep* m_first;
+   TreeStep* m_second;
    
 };
 
@@ -218,7 +172,7 @@ class FALCON_DYN_CLASS TernaryExpression: public Expression
 {
 public:
   
-   inline TernaryExpression( Expression* op1, Expression* op2, Expression* op3, int line = 0, int chr = 0 ):
+   inline TernaryExpression( TreeStep* op1, TreeStep* op2, TreeStep* op3, int line = 0, int chr = 0 ):
       Expression( line, chr ),
       m_first( op1 ),
       m_second( op2 ),
@@ -239,26 +193,25 @@ public:
    TernaryExpression( const TernaryExpression& other );
 
    virtual ~TernaryExpression();
-   virtual bool isStatic() const;
 
-   Expression *first() const { return m_first; }
-   void first( Expression *f ) { 
+   TreeStep *first() const { return m_first; }
+   void first( TreeStep *f ) {
       if ( f->setParent(this) )
       {
          dispose( m_first );
          m_first= f; 
       }
    }
-   Expression *second() const { return m_second; }
-   void second( Expression *f ) { 
+   TreeStep *second() const { return m_second; }
+   void second( TreeStep *f ) {
       if ( f->setParent(this) )
       {
          dispose( m_second );
          m_second= f; 
       }
    }
-   Expression *third() const { return m_third; }
-   void third( Expression *f ) { 
+   TreeStep *third() const { return m_third; }
+   void third( TreeStep *f ) {
       if ( f->setParent(this) )
       {
          dispose( m_third );
@@ -271,9 +224,9 @@ public:
    virtual bool setNth( int32 n, TreeStep* ts );
    
 protected:
-   Expression* m_first;
-   Expression* m_second;   
-   Expression* m_third;
+   TreeStep* m_first;
+   TreeStep* m_second;
+   TreeStep* m_third;
 };
 
 //==============================================================
@@ -284,7 +237,7 @@ protected:
          FALCON_UNARY_EXPRESSION_CLASS_DECLARATOR_EX( class_name, handler, )
 
 #define FALCON_UNARY_EXPRESSION_CLASS_DECLARATOR_EX( class_name, handler, extend_constructor ) \
-   inline class_name( Expression* op1, int line=0, int chr=0 ): \
+   inline class_name( TreeStep* op1, int line=0, int chr=0 ): \
             UnaryExpression( op1, line, chr ) { FALCON_DECLARE_SYN_CLASS( handler ); apply = apply_; extend_constructor} \
    inline class_name(int line=0, int chr=0): \
             UnaryExpression(line,chr) { FALCON_DECLARE_SYN_CLASS( handler );  apply = apply_; extend_constructor }\
@@ -301,7 +254,7 @@ protected:
    FALCON_BINARY_EXPRESSION_CLASS_DECLARATOR_EX( class_name, handler, )
 
 #define FALCON_BINARY_EXPRESSION_CLASS_DECLARATOR_EX( class_name, handler, extended_constructor ) \
-   inline class_name( Expression* op1, Expression* op2, int line=0, int chr=0 ): \
+   inline class_name( TreeStep* op1, TreeStep* op2, int line=0, int chr=0 ): \
             BinaryExpression( op1, op2, line, chr ) { FALCON_DECLARE_SYN_CLASS( handler ); apply = apply_; extended_constructor} \
    inline class_name(int line=0, int chr=0): \
             BinaryExpression(line,chr) { FALCON_DECLARE_SYN_CLASS( handler );  apply = apply_; extended_constructor}\
@@ -315,7 +268,7 @@ protected:
    public:
 
 #define FALCON_TERNARY_EXPRESSION_CLASS_DECLARATOR( class_name, handler ) \
-   inline class_name( Expression* op1, Expression* op2, Expression* op3, int line=0, int chr=0 ): \
+   inline class_name( TreeStep* op1, TreeStep* op2, TreeStep* op3, int line=0, int chr=0 ): \
             TernaryExpression( op1, op2, op3, line, chr ) { FALCON_DECLARE_SYN_CLASS( handler ); apply = apply_;} \
    inline class_name(int line=0, int chr=0): \
             TernaryExpression(line,chr) { FALCON_DECLARE_SYN_CLASS( handler );  apply = apply_; }\

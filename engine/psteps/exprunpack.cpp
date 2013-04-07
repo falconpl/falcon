@@ -67,7 +67,7 @@ ExprUnpack::~ExprUnpack()
 }
 
 
-bool ExprUnpack::selector( Expression* sel )
+bool ExprUnpack::selector( TreeStep* sel )
 {
    if( sel->setParent(this) ) {
       dispose(m_expander);
@@ -192,7 +192,7 @@ void ExprUnpack::apply_( const PStep* ps, VMContext* ctx )
    {
       // we start from 1...
       register int pos = cf.m_seqId-1;
-      Expression* expr = self->_p->m_exprs[pos];
+      TreeStep* expr = self->_p->m_exprs[pos];
       ctx->pushData( array[pos] );
       fassert( expr->lvalueStep() != 0 );
       cf.m_seqId++;

@@ -62,6 +62,9 @@ public:
    TreeStep* first() const;
    TreeStep* last() const;
    
+   /** Returns true if the expression can be found alone in a statement. */
+   inline virtual bool isStandAlone() const { return true; }
+
    virtual void render( TextWriter* tw, int32 depth ) const;
    virtual SynTree* clone() const { return new SynTree(*this); }
 
@@ -79,14 +82,14 @@ public:
     Conditional blocks have selector expression determining whether the 
     block should be entered or not.
     */   
-   virtual Expression* selector() const { return m_selector; }
+   virtual TreeStep* selector() const { return m_selector; }
    /** Changes the selector for this block
     \param e A new unparented selector expression.
 
     Conditional blocks have selector expression determining whether the 
     block should be entered or not.
     */  
-   virtual bool selector( Expression* e ); 
+   virtual bool selector( TreeStep* e );
 
       
    /** Appends a statement.
@@ -134,7 +137,7 @@ protected:
    Private* _p;
    
    Symbol* m_head;
-   Expression* m_selector;
+   TreeStep* m_selector;
 
    friend class ClassSynTree;
 };

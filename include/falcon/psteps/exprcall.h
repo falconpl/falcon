@@ -53,15 +53,13 @@ public:
 
    inline virtual bool isStandAlone() const { return true; }
 
-   virtual bool isStatic() const { return false; }
-
-   virtual Expression* selector() const;
-   virtual bool selector( Expression* e ); 
+   virtual TreeStep* selector() const;
+   virtual bool selector( TreeStep* e );
    
    void render( TextWriter* tw, int32 depth ) const;
 
 protected:
-   Expression* m_callExpr;
+   TreeStep* m_callExpr;
 
 private:
    

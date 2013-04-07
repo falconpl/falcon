@@ -25,7 +25,6 @@ namespace Falcon {
 
 Expression::Expression( const Expression &other ):
    TreeStep(other),
-   m_pstep_lvalue(0),
    m_trait( other.m_trait )
 {}
 
@@ -44,12 +43,6 @@ UnaryExpression::UnaryExpression( const UnaryExpression &other ):
 UnaryExpression::~UnaryExpression()
 {
    dispose( m_first );
-}
-
-
-bool UnaryExpression::isStatic() const
-{
-   return m_first->isStatic();
 }
 
 
@@ -123,12 +116,6 @@ BinaryExpression::~BinaryExpression()
 {
    dispose( m_first );
    dispose( m_second );
-}
-
-
-bool BinaryExpression::isStatic() const
-{
-   return m_first->isStatic() && m_second->isStatic();
 }
 
 
@@ -211,11 +198,6 @@ TernaryExpression::~TernaryExpression()
    dispose( m_first );
    dispose( m_second );
    dispose( m_third );
-}
-
-bool TernaryExpression::isStatic() const
-{
-   return m_first->isStatic() && m_second->isStatic() && m_third->isStatic();
 }
 
 

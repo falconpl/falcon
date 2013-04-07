@@ -96,6 +96,7 @@ void ExprCall::apply_( const PStep* v, VMContext* ctx )
          {
             return;
          }
+         /* no break */
          
       case 1:
          // Evaluate the eta-ness of the called item
@@ -134,6 +135,7 @@ void ExprCall::apply_( const PStep* v, VMContext* ctx )
                }
             }
          }
+         break;
    }     
    
    // now got to generate all the paraeters, if any.
@@ -141,14 +143,14 @@ void ExprCall::apply_( const PStep* v, VMContext* ctx )
    
    if( pcount >= cf.m_seqId )
    {
-      ExprVector_Private::ExprVector::iterator pos = self->_p->m_exprs.begin() + (cf.m_seqId-1);
-      ExprVector_Private::ExprVector::iterator end = self->_p->m_exprs.end();
+      TreeStepVector_Private::ExprVector::iterator pos = self->_p->m_exprs.begin() + (cf.m_seqId-1);
+      TreeStepVector_Private::ExprVector::iterator end = self->_p->m_exprs.end();
       
       if( bHaveEta )
       {
          while( pos < end )
          {
-            Expression* expr = *pos;
+            TreeStep* expr = *pos;
             ctx->pushData( Item(expr->handler(), expr ) );
             ++pos;
          }
@@ -204,13 +206,13 @@ void ExprCall::apply_( const PStep* v, VMContext* ctx )
 }
 
 
-Expression* ExprCall::selector() const
+TreeStep* ExprCall::selector() const
 {
    return m_callExpr;
 }
 
 
-bool ExprCall::selector( Expression* e )
+bool ExprCall::selector( TreeStep* e )
 {
    if( e->setParent(this))
    {

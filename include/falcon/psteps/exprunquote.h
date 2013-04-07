@@ -78,10 +78,9 @@ public:
    inline virtual bool isStandAlone() const { return false; }      
    const String& exprName() const;
    virtual bool simplify(Falcon::Item&) const;
-   virtual bool isStatic() const { return false; }
    virtual ExprUnquote* clone() const { return new ExprUnquote(*this); }
    
-   virtual void resolveUnquote( VMContext* ctx );
+   virtual void resolveUnquote( VMContext* ctx, const UnquoteResolver& resolver );
 private:
    static void apply_( const PStep*, VMContext* ctx );
 

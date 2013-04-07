@@ -44,7 +44,6 @@ public:
 
    inline virtual ExprArray* clone() const { return new ExprArray( *this ); }
 
-   virtual bool isStatic() const { return false; }
    virtual bool simplify( Item& result ) const;
 
 };

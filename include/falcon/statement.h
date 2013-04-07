@@ -55,6 +55,9 @@ public:
    /** Subclasses can set this to true to be discareded during parsing.*/
    inline bool discardable() const { return m_discardable; }
    
+   /** Returns true if the expression can be found alone in a statement. */
+   inline virtual bool isStandAlone() const { return true; }
+
 protected:
    bool m_discardable;
 

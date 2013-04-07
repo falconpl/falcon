@@ -42,11 +42,6 @@ ExprFSelf::ExprFSelf( const ExprFSelf &other ):
 ExprFSelf::~ExprFSelf() {}
 
 
-bool ExprFSelf::isStatic() const
-{
-   return false;
-}
-
 ExprFSelf* ExprFSelf::clone() const
 {
    return new ExprFSelf( *this );

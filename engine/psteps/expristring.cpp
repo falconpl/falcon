@@ -97,12 +97,6 @@ ExprIString* ExprIString::clone() const
 }
 
 
-bool ExprIString::isStatic() const
-{
-   return true;
-}
-
-
 void ExprIString::render( TextWriter* tw, int depth ) const
 {
    tw->write(renderPrefix(depth));

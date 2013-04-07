@@ -29,9 +29,7 @@ public:
    ExprSelf( const ExprSelf &other );
    virtual ~ExprSelf();
 
-   virtual bool isStatic() const;
    virtual ExprSelf* clone() const;
-   virtual bool simplify( Item& result ) const;
    virtual void render( TextWriter* tw, int32 depth ) const;
 
 private:

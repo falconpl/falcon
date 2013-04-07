@@ -98,7 +98,8 @@ void ExprEEQ::apply_( const PStep* ps, VMContext* ctx )
 bool ExprEEQ::simplify( Item& value ) const
 {
    Item d1, d2;
-   if( m_first->simplify(d1) && m_second->simplify(d2) )
+   if(  m_first->category() == TreeStep::e_cat_expression && m_second->category() == TreeStep::e_cat_expression
+        && static_cast<Expression*>(m_first)->simplify(d1) && static_cast<Expression*>(m_second)->simplify(d2) )
    {
       value.setBoolean( d1.compare(d2) == 0 );
       return true;

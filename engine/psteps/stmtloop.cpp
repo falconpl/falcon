@@ -94,7 +94,7 @@ void StmtLoop::render( TextWriter* tw, int32 depth ) const
 }
 
 
-bool StmtLoop::selector( Expression* e )
+bool StmtLoop::selector( TreeStep* e )
 {
    if( e == 0 )
    {

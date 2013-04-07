@@ -53,7 +53,6 @@ public:
     
    virtual Expression* clone() const { return new ExprLit(*this); }
    inline virtual bool isStandAlone() const { return true; }
-   virtual bool isStatic() const {return false; }
    virtual bool simplify( Item& ) const { return false; }      
 
    void registerUnquote( Expression* unquoted );

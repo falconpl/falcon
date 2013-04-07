@@ -58,15 +58,17 @@ ExprIIF::~ExprIIF()
 bool ExprIIF::simplify( Item& value ) const
 {
    Item temp;
-   if( m_first->simplify( temp ) )
+   if( m_first->category() == TreeStep::e_cat_expression
+       && m_second->category() == TreeStep::e_cat_expression
+       && static_cast<Expression*>(m_first)->simplify( temp ) )
    {
       if (temp.isTrue())
       {
-         return m_second->simplify( value );
+         return static_cast<Expression*>(m_second)->simplify( value );
       }
       else
       {
-         return m_third->simplify( value );
+         return static_cast<Expression*>(m_third)->simplify( value );
       }
    }
 

@@ -149,7 +149,7 @@ void ExprMultiUnpack::apply_( const PStep* ps, VMContext* ctx )
    int size = (int) self->_p->m_exprs.size();
    while( cf.m_seqId < size )
    {
-      Expression* an = self->_p->m_exprs[cf.m_seqId++];
+      TreeStep* an = self->_p->m_exprs[cf.m_seqId++];
       if( ctx->stepInYield( an, cf ) )
       {
          return;

@@ -27,7 +27,6 @@ public:
    virtual ~ExprCompare();
 
    inline virtual bool isStandAlone() const { return false; }
-   virtual bool isStatic() const { return false; }
 
    virtual bool checkCompare( int64 compresult ) const = 0;
 

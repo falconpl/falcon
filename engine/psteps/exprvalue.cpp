@@ -131,11 +131,6 @@ ExprValue* ExprValue::clone() const
 }
 
 
-bool ExprValue::isStatic() const
-{
-   return true;
-}
-
 
 void ExprValue::render( TextWriter* tw, int32 depth ) const
 {

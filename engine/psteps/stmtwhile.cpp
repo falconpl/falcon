@@ -105,13 +105,13 @@ void StmtWhile::minimize()
    m_child = minimize_basic(m_child);
 }
 
-Expression* StmtWhile::selector() const
+TreeStep* StmtWhile::selector() const
 {
    return m_expr;
 }
 
 
-bool StmtWhile::selector( Expression* e )
+bool StmtWhile::selector( TreeStep* e )
 {
    if( e!= 0 && e->setParent(this))
    {

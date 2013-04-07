@@ -80,13 +80,13 @@ StmtReturn::~StmtReturn()
    dispose( m_expr );
 }
 
-Expression* StmtReturn::selector() const
+TreeStep* StmtReturn::selector() const
 {
    return m_expr;
 }
 
 
-bool StmtReturn::selector( Expression* e )
+bool StmtReturn::selector( TreeStep* e )
 {
    if( e!= 0  )
    {

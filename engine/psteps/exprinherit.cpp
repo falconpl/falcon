@@ -107,10 +107,10 @@ void ExprInherit::render( TextWriter* tw, int depth ) const
       tw->write( m_name );
       tw->write( "(" );
 
-      ExprVector_Private::ExprVector::const_iterator iter = _p->m_exprs.begin();
+      TreeStepVector_Private::ExprVector::const_iterator iter = _p->m_exprs.begin();
       while( _p->m_exprs.end() != iter )
       {
-         Expression* param = *iter;
+         TreeStep* param = *iter;
          if( _p->m_exprs.begin() != iter )
          {
             tw->write(", ");
@@ -138,14 +138,14 @@ void ExprInherit::apply_( const PStep* ps, VMContext* ctx )
    // we need to "produce" the parameters, were any of it.
    CodeFrame& cf = ctx->currentCode();
    int& seqId = cf.m_seqId;
-   const ExprVector_Private::ExprVector& exprs = self->_p->m_exprs;   
+   const TreeStepVector_Private::ExprVector& exprs = self->_p->m_exprs;
    int size = (int) exprs.size();   
    
    TRACE1("Apply with %d/%d parameters", seqId, size );
    
    while( seqId < size )
    {
-      Expression* exp = exprs[seqId++];
+      TreeStep* exp = exprs[seqId++];
       if( ctx->stepInYield( exp, cf ) )
       {
          return;

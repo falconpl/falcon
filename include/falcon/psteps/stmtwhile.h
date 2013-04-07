@@ -55,15 +55,15 @@ public:
    virtual bool insert( int32 pos, TreeStep* element );
    virtual bool append( TreeStep* element );
    
-   virtual Expression* selector() const;   
-   virtual bool selector( Expression* e ); 
+   virtual TreeStep* selector() const;
+   virtual bool selector( TreeStep* e );
 
    /** We can remove a bit of stuff. */
    virtual void minimize();
 
 protected:
    TreeStep* m_child;
-   Expression* m_expr;
+   TreeStep* m_expr;
 
    // changes our single child into a syntree with two children.
    void singleToMultipleChild( TreeStep* element, bool last );

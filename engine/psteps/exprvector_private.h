@@ -133,18 +133,6 @@ public:
 };
 
 
-class ExprVector_Private: public TSVector_Private<Expression>
-{
-public:
-   
-   ExprVector_Private() {}
-   ~ExprVector_Private() {}
-   
-   ExprVector_Private( const ExprVector_Private& other, TreeStep* owner ):
-      TSVector_Private<Expression>( other, owner )
-   {}
-};
-
 class TreeStepVector_Private: public TSVector_Private<TreeStep>
 {
 public:

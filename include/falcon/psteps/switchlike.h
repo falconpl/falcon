@@ -27,8 +27,8 @@ public:
    SwitchlikeStatement( const SwitchlikeStatement& other );
    virtual ~SwitchlikeStatement();
 
-   Expression* selector() const;
-   bool selector(Expression* );
+   TreeStep* selector() const;
+   bool selector(TreeStep* );
 
    /** A dummy tree that is used during compilation to avoid unbound statements.    
     \return A temporary syntree.    
@@ -56,7 +56,7 @@ protected:
    class Private;
    Private* _p;
 
-   Expression* m_expr;
+   TreeStep* m_expr;
    SynTree* m_dummyTree;
 
 private:

@@ -24,7 +24,7 @@ namespace Falcon {
 
 bool ExprBNOT::simplify( Item& value ) const
 {
-   if( m_first->simplify( value ) )
+   if( m_first->category() == TreeStep::e_cat_expression && static_cast<Expression*>(m_first)->simplify( value ) )
    {
       switch( value.type() )
       {

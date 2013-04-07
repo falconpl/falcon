@@ -29,7 +29,6 @@ public:
    ExprInit( const ExprInit &other );
    virtual ~ExprInit();
 
-   virtual bool isStatic() const;
    virtual ExprInit* clone() const { return new ExprInit(*this); }
    virtual bool simplify( Item& ) const { return false; }
    virtual void render( TextWriter* tw, int depth ) const;

@@ -40,7 +40,6 @@ public:
    virtual void render( TextWriter* tw, int32 depth ) const;
    virtual ExprRule* clone() const { return new ExprRule(*this); }
    
-   virtual bool isStatic() const {return false;}
    virtual bool simplify(Falcon::Item&) const {return false; }
    virtual bool isStandAlone() const {return true; }
 
@@ -77,11 +76,11 @@ public:
    
    virtual StmtCut* clone() const { return new StmtCut(*this); }
    
-   virtual Expression* selector()  const;
-   virtual bool selector( Expression* expr );
+   virtual TreeStep* selector()  const;
+   virtual bool selector( TreeStep* expr );
    
 private:
-   Expression* m_expr;
+   TreeStep* m_expr;
    
    static void apply_( const PStep*, VMContext* ctx );
    static void apply_cut_expr_( const PStep*, VMContext* ctx );
@@ -102,11 +101,11 @@ public:
    virtual void render( TextWriter* tw, int32 depth ) const;
    virtual StmtDoubt* clone() const { return new StmtDoubt(*this); }
    
-   virtual Expression* selector() const;
-   virtual bool selector( Expression* e );
+   virtual TreeStep* selector() const;
+   virtual bool selector( TreeStep* e );
 
 private:
-   Expression* m_expr;
+   TreeStep* m_expr;
    static void apply_( const PStep*, VMContext* ctx );
 };
 

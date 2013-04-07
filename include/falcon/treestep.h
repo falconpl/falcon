@@ -113,7 +113,7 @@ class TextWriter;
  
  Keep in mind that arity(), nth(), insert() and remove() are proxy functions
  that are re-implemented by each concrete class to perform a coherent behavior.
- For instance, the While staement has just one syntree block, which can be
+ For instance, the While statement has just one syntree block, which can be
  directly accessed through a proper (inlined) method in the While statement.
  
  The reason for the general interface accessing sub-trees is that to minimize
@@ -142,7 +142,7 @@ class TextWriter;
    @endcode
     Notice that standard language classes use the macro FALCON_DECLARE_SYN_CLASS( syntoken ),
     declared in synclasses.h, where all the handlers for standard language classes are hosted.
- - Check for "blanking" in describeTo and eventually oneLiner ovverrides. Blank entities
+ - Check for "blanking" in describeTo and eventually oneLiner overrides. Blank entities
    are those created through the empty constructor, and are not ready to be used.
    The representation must be "&gt;Blank classname&lt;"
  - Assert via fassert for all the necessary elements of the entity to have been filled
@@ -316,7 +316,7 @@ public:
     \return the selector of this step or 0.
     
     Many tree elements have a "selector", that is, a single expression that
-    has a relevant meaning (ususally selects if a block or statement must be
+    has a relevant meaning (usually selects if a block or statement must be
     entered or not). Selectors are always expressions, and various elements
     can expose them. SynTrees always have it (even if not all the syntrees will
     use it), many statements have and even some expressions (as the fast-if
@@ -324,14 +324,14 @@ public:
     
     If the step has not a selector, this method returns 0.
     */
-   virtual Expression* selector() const; 
+   virtual TreeStep* selector() const;
    
    /** Returns the selector of this tree step.
     \param e An expression that will be used as a selector.
     \return true if this step accepts a selector, false otherwise.
     
     */
-   virtual bool selector( Expression* e ); 
+   virtual bool selector( TreeStep* e );
    
    /** Check if this TreeStep could host the given target.
     \param target A PStep that might be inserted here.
@@ -351,7 +351,14 @@ public:
          || (m_cat == e_cat_expression && cat == e_cat_expression);
    }
 
-   virtual void resolveUnquote( VMContext* ctx );
+   class UnquoteResolver
+   {
+   public:
+      inline virtual ~UnquoteResolver() {};
+      virtual void onUnquoteResolved( TreeStep* newStep ) const = 0;
+   };
+
+   virtual void resolveUnquote( VMContext* ctx, const UnquoteResolver& resolver );
 
    bool isInGC() const { return m_bInGC; }
    void setInGC() { m_bInGC = true; }
@@ -361,11 +368,47 @@ public:
 
    void describeTo( String& str ) const;
 
+   /** Returns true if the expression can be found alone in a statement. */
+   inline virtual bool isStandAlone() const { return false; }
+
+   /** Step that should be performed if this expression is lvalue.
+    @return A valid pstep if l-value is possible, 0 if this expression has no l-vaue.
+
+    The PStep of an expression generates a value. The l-value pstep will use this
+    expression to set a value when an assignment is required.
+    */
+   inline PStep* lvalueStep() const { return m_pstep_lvalue; }
+
+   /** Evaluates the expression when all its components are static.
+    * @Return true if the expression can be simplified, false if it's not statitc
+    *
+    * Used during compilation to simplify static expressions, that is,
+    * reducing expressions at compile time.
+    */
+   virtual bool simplify( Item&  ) const { return false; }
+
 protected:
 
    uint32 m_gcMark; 
    Class* m_handler;
    TreeStep* m_parent;
+
+   /** Apply-modify function.
+
+    Expression accepting a modify operator (i.e. ++, += *= etc.)
+    can declare this modify step that will be used by auto-expression
+    to perform the required modify.
+
+    If left uninitialized (to 0), this step won't be performed. This is the
+    case of read-only expressions, i.e, function calls. In this case,
+    expressions like "call() += n" are legal, but they will be interpreted as
+    "call() + n" as there is noting to be l-valued in "call()".
+
+    \note It's supposed that the subclass own this pstep and sets it via &pstep,
+    so that destruction of the pstep happens with the child class.
+    */
+   PStep* m_pstep_lvalue;
+
    t_category m_cat;
    bool m_bInGC;
    
@@ -373,6 +416,7 @@ protected:
       PStep(line, chr ),
       m_handler( cls ),
       m_parent(0),
+      m_pstep_lvalue(0),
       m_cat(t),
       m_bInGC(false)
    {}
@@ -382,6 +426,7 @@ protected:
       PStep(line, chr ),
       m_handler( 0 ),
       m_parent(0),
+      m_pstep_lvalue(0),
       m_cat(t),
       m_bInGC(false)
    {}

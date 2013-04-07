@@ -30,10 +30,12 @@ namespace Falcon {
 
 // Inline class to simplify
 template <class _cpr >
-bool generic_simplify( Item& value, Expression* m_first, Expression* m_second )
+bool generic_simplify( Item& value, TreeStep* m_first, TreeStep* m_second )
 {
    Item d1, d2;
-   if( m_first->simplify(d1) && m_second->simplify(d2) )
+   if(
+            m_first->category() == TreeStep::e_cat_expression && static_cast<Expression*>(m_first)->simplify(d1)
+         && m_second->category() == TreeStep::e_cat_expression && static_cast<Expression*>(m_second)->simplify(d2) )
    {
       switch ( d1.type() << 8 | d2.type() )
       {

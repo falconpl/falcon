@@ -45,7 +45,8 @@ void ExprStrIPol::apply_( const PStep* ps, VMContext* ctx )
          self->m_mtx.unlock();
 
          // the expression is not going to change.
-         if ( self->m_first->trait() == Expression::e_trait_value )
+         if ( self->m_first->category() == TreeStep::e_cat_expression &&
+                  static_cast<Expression*>(self->m_first)->trait() == Expression::e_trait_value )
          {
             const Item& value = static_cast<ExprValue*>(self->first())->item();
             if( value.isString() )

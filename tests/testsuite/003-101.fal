@@ -1,0 +1,25 @@
+/*
+@name Literal with unquote
+@category codeblocks
+
+@result OK
+*/
+
+
+> "Literal with unquote"
+
+dd0 = VMContext.dataDepth
+
+b = "OK"
+block =  {[] a = ^~b}
+a = nil
+> "The unquoted block is: ", block.render()
+block()
+> "A=", a
+
+dd1 = VMContext.dataDepth
+if dd0 != dd1
+   raise "Data stack corruption: " + dd0 + " vs " + dd1
+end
+
+return a

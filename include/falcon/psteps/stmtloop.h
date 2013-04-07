@@ -48,7 +48,7 @@ public:
    virtual void render( TextWriter* tw, int32 depth ) const;
    virtual StmtLoop* clone() const { return new StmtLoop(*this); }
 
-   virtual bool selector( Expression* e );
+   virtual bool selector( TreeStep* e );
 
    static void apply_withexpr_( const PStep*, VMContext* ctx );
    static void apply_pure_( const PStep*, VMContext* ctx );

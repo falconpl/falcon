@@ -221,7 +221,7 @@ bool ClassSynTree::op_init( VMContext* ctx, void* instance, int32 pcount ) const
    }
    else
    {
-      if ( ! tree->selector(static_cast<Expression*>(first)) )
+      if ( ! tree->selector(first) )
       {
          throw FALCON_SIGN_XERROR(ParamError, e_param_range, .extra("Parented expression at 0"));
       }

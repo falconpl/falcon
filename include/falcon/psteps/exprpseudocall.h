@@ -57,8 +57,6 @@ public:
 
    inline virtual bool isStandAlone() const { return false; }
 
-   virtual bool isStatic() const { return false; }
-
    /** Returns the pseudofunction associated with this call.
     \return Pseudofunction associated with this expression.
     */

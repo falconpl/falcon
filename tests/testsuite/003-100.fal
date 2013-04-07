@@ -1,0 +1,24 @@
+/*
+@name Literal base
+@category codeblocks
+
+@result OK
+*/
+
+
+> "Literal base"
+
+dd0 = VMContext.dataDepth
+
+block =  {[] a = "OK"}
+a = nil
+block()
+
+> "A=", a
+
+dd1 = VMContext.dataDepth
+if dd0 != dd1
+   raise "Data stack corruption: " + dd0 + " vs " + dd1
+end
+
+return a

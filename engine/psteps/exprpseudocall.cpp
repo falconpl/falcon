@@ -86,8 +86,8 @@ void ExprPseudoCall::apply_( const PStep* v, VMContext* ctx )
    // prepare the call expression.
    if( psSemantic )
    {  
-      ExprVector_Private::ExprVector::iterator pos = self->_p->m_exprs.begin() + cf.m_seqId;
-      ExprVector_Private::ExprVector::iterator end = self->_p->m_exprs.end();
+      TreeStepVector_Private::ExprVector::iterator pos = self->_p->m_exprs.begin() + cf.m_seqId;
+      TreeStepVector_Private::ExprVector::iterator end = self->_p->m_exprs.end();
       
       while( pos < end )
       {
@@ -114,8 +114,8 @@ void ExprPseudoCall::apply_( const PStep* v, VMContext* ctx )
       }
       
       // just push the parameters
-      ExprVector_Private::ExprVector::iterator pos = self->_p->m_exprs.begin() + (cf.m_seqId-1);
-      ExprVector_Private::ExprVector::iterator end = self->_p->m_exprs.end();
+      TreeStepVector_Private::ExprVector::iterator pos = self->_p->m_exprs.begin() + (cf.m_seqId-1);
+      TreeStepVector_Private::ExprVector::iterator end = self->_p->m_exprs.end();
       
       while( pos < end )
       {
@@ -151,12 +151,12 @@ void ExprPseudoCall::apply_eta_( const PStep* v, VMContext* ctx )
       ctx->pushData( self->m_func );
    }
   
-   ExprVector_Private::ExprVector::iterator pos = self->_p->m_exprs.begin();
-   ExprVector_Private::ExprVector::iterator end = self->_p->m_exprs.end();
+   TreeStepVector_Private::ExprVector::iterator pos = self->_p->m_exprs.begin();
+   TreeStepVector_Private::ExprVector::iterator end = self->_p->m_exprs.end();
 
    while( pos < end )
    {
-      Expression* expr = *pos;
+      TreeStep* expr = *pos;
       ctx->pushData( Item(expr->handler(), expr) );
       ++pos;
    }

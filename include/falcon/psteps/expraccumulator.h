@@ -45,7 +45,6 @@ public:
 
    inline virtual ExprAccumulator* clone() const { return new ExprAccumulator( *this ); }
    virtual bool simplify( Item& value ) const;
-   bool isStatic() const { return false; }
    inline virtual bool isStandAlone() const { return true; }
 
    virtual void render( TextWriter* tw, int depth ) const;
@@ -55,8 +54,8 @@ public:
    virtual TreeStep* nth( int32 n ) const;
    virtual bool setNth( int32 n, TreeStep* ts );
 
-   virtual Expression* selector() const;
-   virtual bool selector( Expression* e );
+   virtual TreeStep* selector() const;
+   virtual bool selector( TreeStep* e );
 
    bool filter( TreeStep* ts );
    TreeStep* filter() const { return m_filter; }
@@ -67,7 +66,7 @@ private:
    TreeStep* m_target;
    TreeStep* m_filter;
 
-   Expression* m_vector;
+   TreeStep* m_vector;
 
    FALCON_DECLARE_INTERNAL_PSTEP_OWNED( GenIter, ExprAccumulator );
    FALCON_DECLARE_INTERNAL_PSTEP_OWNED( GenNext, ExprAccumulator );

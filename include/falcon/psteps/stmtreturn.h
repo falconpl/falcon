@@ -41,8 +41,8 @@ public:
    bool hasDoubt() const { return m_bHasDoubt; }
    void hasDoubt( bool b );
    
-   virtual Expression* selector() const; 
-   virtual bool selector( Expression* e );
+   virtual TreeStep* selector() const;
+   virtual bool selector( TreeStep* e );
    
    bool hasEval() const { return m_bHasEval; }
    void hasEval( bool  b ) ;
@@ -51,7 +51,7 @@ public:
    void hasBreak( bool  b ) ;
 
 private:
-   Expression* m_expr;
+   TreeStep* m_expr;
    bool m_bHasDoubt;
    bool m_bHasEval;
    bool m_bHasBreak;

@@ -78,8 +78,6 @@ public:
 
    inline virtual bool isStandAlone() const { return false; }
 
-   virtual bool isStatic() const { return false; }
-
 private:
    static void apply_( const PStep*, VMContext* ctx );
 };

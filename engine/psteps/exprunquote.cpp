@@ -68,23 +68,23 @@ bool ExprUnquote::simplify(Falcon::Item& ) const
 }
 
 
-void ExprUnquote::resolveUnquote( VMContext* ctx )
+void ExprUnquote::resolveUnquote( VMContext* ctx, const UnquoteResolver& resolver )
 {
    static Class* expr = Engine::handlers()->expressionClass();
-
-   dispose( m_first );
 
    Item& value = ctx->topData();
    void* inst;
    Class* cls;
-   if ( value.asClassInst( cls, inst ) && cls->isDerivedFrom(expr) ) {
-      m_first = static_cast<Expression*>( inst )->clone();
-      m_first->setParent(this);
+   TreeStep* resolved;
+   if ( value.asClassInst( cls, inst ) && cls->isDerivedFrom(expr) )
+   {
+      resolved = static_cast<TreeStep*>( inst )->clone();
    }
    else {
-      m_first = new ExprValue( value );
+      resolved = new ExprValue( value );
    }
-   TRACE1( "ExprUnquote::resolveUnquote \"%s\"", m_first->describe().c_ize() );
+   TRACE1( "ExprUnquote::resolveUnquote \"%s\" -> \"%s\"", m_first->describe().c_ize(), resolved->describe().c_ize() );
+   resolver.onUnquoteResolved( resolved );
 
    ctx->popData();
 }

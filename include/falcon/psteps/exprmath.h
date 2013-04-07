@@ -26,7 +26,6 @@ public:
    inline virtual ~ExprMath() {}
 
    inline virtual bool isStandAlone() const { return false; }
-   virtual bool isStatic() const { return false; }
 
 protected:
    

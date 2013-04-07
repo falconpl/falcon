@@ -437,12 +437,12 @@ void StmtForIn::addParameter( Symbol* sym )
    _p->m_params.push_back( sym );
 }
 
-Expression*  StmtForIn::selector() const
+TreeStep*  StmtForIn::selector() const
 {
    return generator();
 }
 
-bool StmtForIn::selector( Expression* e )
+bool StmtForIn::selector( TreeStep* e )
 {
    if( e != 0 && e->setParent( this ) )
    {

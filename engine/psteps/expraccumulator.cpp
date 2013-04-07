@@ -155,15 +155,15 @@ int32 ExprAccumulator::arity() const
 }
 
 
-Expression* ExprAccumulator::selector() const
+TreeStep* ExprAccumulator::selector() const
 {
    return m_vector;
 }
 
 
-bool ExprAccumulator::selector( Expression* e )
+bool ExprAccumulator::selector( TreeStep* e )
 {
-   if( e == 0 || (e->trait() == Expression::e_trait_vectorial && e->setParent(this)) )
+   if( e == 0 || (e->category() == TreeStep::e_cat_expression && static_cast<Expression*>(e)->trait() == Expression::e_trait_vectorial && e->setParent(this)) )
    {
       dispose(m_vector);
       m_vector = e;

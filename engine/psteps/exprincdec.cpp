@@ -85,9 +85,9 @@ public:
 
 // Inline class to simplify
 template <class _cpr >
-bool generic_simplify( Item& value, Expression* first )
+bool generic_simplify( Item& value, TreeStep* first )
 {
-   if( first->simplify( value ) )
+   if( first->category() == TreeStep::e_cat_expression && static_cast<Expression*>(first)->simplify( value ) )
    {
       switch( value.type() )
       {

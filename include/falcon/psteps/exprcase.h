@@ -40,7 +40,6 @@ public:
 
    inline virtual ExprCase* clone() const { return new ExprCase( *this ); }
    virtual bool simplify( Item& value ) const;
-   bool isStatic() const { return false; }
    inline virtual bool isStandAlone() const {
       return false;
    }

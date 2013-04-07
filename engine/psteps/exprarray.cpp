@@ -55,7 +55,7 @@ void ExprArray::render( TextWriter* tw, int32 depth ) const
 {
    tw->write( renderPrefix(depth) );
 
-   ExprVector_Private::ExprVector& mye = _p->m_exprs;
+   TreeStepVector_Private::ExprVector& mye = _p->m_exprs;
    if( mye.empty() )
    {
       tw->write( "[]" );
@@ -68,7 +68,7 @@ void ExprArray::render( TextWriter* tw, int32 depth ) const
 
    tw->write( "[ " );
    bool bFirst = true;
-   ExprVector_Private::ExprVector::const_iterator iter = mye.begin();
+   TreeStepVector_Private::ExprVector::const_iterator iter = mye.begin();
    while( iter != mye.end() )
    {
       TreeStep* ts = *iter;
@@ -108,7 +108,7 @@ void ExprArray::apply_( const PStep* ps, VMContext* ctx )
    static Class* ca_class = Engine::handlers()->arrayClass();
    
    const ExprArray* ea = static_cast<const ExprArray*>(ps);
-   ExprVector_Private::ExprVector& mye = ea->_p->m_exprs;
+   TreeStepVector_Private::ExprVector& mye = ea->_p->m_exprs;
 
    // invoke all the expressions.
    CodeFrame& cf = ctx->currentCode();

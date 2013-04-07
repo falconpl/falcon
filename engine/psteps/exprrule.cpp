@@ -345,13 +345,13 @@ void StmtCut::render( TextWriter* tw, int32 depth ) const
 }
 
 
-Expression* StmtCut::selector()  const
+TreeStep* StmtCut::selector()  const
 {
    return m_expr;
 }
 
 
-bool StmtCut::selector( Expression* expr )
+bool StmtCut::selector( TreeStep* expr )
 {
    if( expr == 0 )
    {
@@ -459,13 +459,13 @@ void StmtDoubt::render( TextWriter* tw, int32 depth ) const
 }
 
 
-Expression* StmtDoubt::selector()  const
+TreeStep* StmtDoubt::selector()  const
 {
    return m_expr;
 }
 
 
-bool StmtDoubt::selector( Expression* expr )
+bool StmtDoubt::selector( TreeStep* expr )
 {
    if( expr != 0  && expr->setParent(this) )
    {

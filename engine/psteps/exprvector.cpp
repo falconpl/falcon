@@ -23,21 +23,21 @@ namespace Falcon
 ExprVector::ExprVector():
    Expression()
 {
-   _p = new ExprVector_Private;
+   _p = new TreeStepVector_Private;
 }
 
 
 ExprVector::ExprVector( int line, int chr):
    Expression(line, chr)
 {
-   _p = new ExprVector_Private;
+   _p = new TreeStepVector_Private;
 }
 
 
 ExprVector::ExprVector( const ExprVector& other ):
    Expression(other)
 {
-   _p = new ExprVector_Private(*other._p, this);
+   _p = new TreeStepVector_Private(*other._p, this);
 }
 
 ExprVector::~ExprVector()
@@ -79,9 +79,9 @@ bool ExprVector::remove( int32 n )
 }
 
 
-Expression* ExprVector::get( size_t n ) const
+TreeStep* ExprVector::get( size_t n ) const
 {
-   ExprVector_Private::ExprVector& mye = _p->m_exprs;
+   TreeStepVector_Private::ExprVector& mye = _p->m_exprs;
    if( n < mye.size() )
    {
       return mye[n];
@@ -90,7 +90,7 @@ Expression* ExprVector::get( size_t n ) const
    return 0;
 }
 
-ExprVector& ExprVector::add( Expression* e )
+ExprVector& ExprVector::add( TreeStep* e )
 {
    if( e->setParent(this) )
    {
@@ -100,10 +100,33 @@ ExprVector& ExprVector::add( Expression* e )
 }
 
 
-void ExprVector::resolveUnquote( VMContext* ctx )
+void ExprVector::resolveUnquote( VMContext* ctx, const UnquoteResolver& )
 {
+   class ElemUR: public UnquoteResolver
+   {
+   public:
+      ElemUR( TreeStep* parent, TreeStepVector_Private::ExprVector* exprs ):
+         m_parent(parent),
+         m_exprs(exprs)
+      {}
+
+      virtual ~ElemUR() {}
+
+      void onUnquoteResolved( TreeStep* newStep ) const
+      {
+         newStep->setParent(m_parent);
+         TreeStep::dispose((*m_exprs)[m_pos]);
+         (*m_exprs)[m_pos] = newStep;
+      }
+      TreeStep* m_parent;
+      TreeStepVector_Private::ExprVector* m_exprs;
+      int32 m_pos;
+   };
+
+   ElemUR ur(this, &_p->m_exprs);
    for ( uint32 i = 0; i < _p->m_exprs.size(); ++i ) {
-      _p->m_exprs[i]->resolveUnquote(ctx);
+      ur.m_pos = i;
+      _p->m_exprs[i]->resolveUnquote(ctx, ur);
    }
 }
 

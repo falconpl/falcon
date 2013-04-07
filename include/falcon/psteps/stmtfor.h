@@ -128,7 +128,7 @@ public:
    virtual ~StmtForIn();
 
    /** Returns the generator associated with this for/in statement. */
-   Expression* generator() const { return m_expr; }
+   TreeStep* generator() const { return m_expr; }
 
    /** Adds an item expansion parameter. */
    void addParameter( Symbol* sym );
@@ -141,8 +141,8 @@ public:
 
    void expandItem( Item& itm, VMContext* ctx ) const;
 
-   virtual Expression* selector() const;
-   virtual bool selector( Expression* e );
+   virtual TreeStep* selector() const;
+   virtual bool selector( TreeStep* expr );
    virtual StmtForIn* clone() const { return new StmtForIn(*this); }
 
    virtual bool isValid() const;
@@ -214,7 +214,7 @@ private:
    };
 
 
-   Expression* m_expr;
+   TreeStep* m_expr;
 
    PStepBegin m_stepBegin;
    PStepFirst m_stepFirst;

@@ -65,12 +65,12 @@ StmtRaise::~StmtRaise()
 }
 
 
-Expression* StmtRaise::selector() const
+TreeStep* StmtRaise::selector() const
 {
    return m_expr;
 }
 
-bool StmtRaise::selector( Expression* e )
+bool StmtRaise::selector( TreeStep* e )
 {
    if( e!= 0 && e->setParent(this) )
    {

@@ -79,9 +79,9 @@ bool ExprDict::remove( int32 pos )
 }
 
 
-bool ExprDict::get( size_t n, Expression* &first, Expression* &second ) const
+bool ExprDict::get( size_t n, TreeStep* &first, TreeStep* &second ) const
 {
-   ExprVector_Private::ExprVector& mye = _p->m_exprs;
+   TreeStepVector_Private::ExprVector& mye = _p->m_exprs;
    if( n < mye.size() )
    {
       first = mye[n/2];
@@ -92,7 +92,7 @@ bool ExprDict::get( size_t n, Expression* &first, Expression* &second ) const
    return false;
 }
 
-ExprDict& ExprDict::add( Expression* k, Expression* v )
+ExprDict& ExprDict::add( TreeStep* k, TreeStep* v )
 {
    _p->m_exprs.push_back( k );
    _p->m_exprs.push_back( v );
@@ -105,7 +105,7 @@ void ExprDict::render( TextWriter* tw, int depth ) const
 {
    tw->write( renderPrefix(depth) );
 
-   ExprVector_Private::ExprVector& mye = _p->m_exprs;
+   TreeStepVector_Private::ExprVector& mye = _p->m_exprs;
 
    if( mye.empty() )
    {
@@ -114,7 +114,7 @@ void ExprDict::render( TextWriter* tw, int depth ) const
    else
    {
       tw->write("[ ");
-      ExprVector_Private::ExprVector::const_iterator iter = mye.begin();
+      TreeStepVector_Private::ExprVector::const_iterator iter = mye.begin();
       while( iter != mye.end() )
       {
         if( iter != mye.begin() )
@@ -122,7 +122,7 @@ void ExprDict::render( TextWriter* tw, int depth ) const
            tw->write(", ");
         }
 
-        Expression* expr = *iter;
+        TreeStep* expr = *iter;
         expr->render( tw, relativeDepth(depth) );
         ++iter;
         tw->write( " => " );
@@ -153,8 +153,8 @@ void ExprDict::apply_( const PStep* ps, VMContext* ctx )
    const ExprDict* ea = static_cast<const ExprDict*>(ps);
    
    CodeFrame& cf = ctx->currentCode(); 
-   ExprVector_Private::ExprVector& mye = ea->_p->m_exprs ;
-   ExprVector_Private::ExprVector::const_iterator iter = mye.begin() + cf.m_seqId;
+   TreeStepVector_Private::ExprVector& mye = ea->_p->m_exprs ;
+   TreeStepVector_Private::ExprVector::const_iterator iter = mye.begin() + cf.m_seqId;
    while( iter != mye.end() )
    {
       // generate the expression and eventually yield back.

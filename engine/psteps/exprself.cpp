@@ -40,19 +40,9 @@ ExprSelf::ExprSelf( const ExprSelf &other ):
 ExprSelf::~ExprSelf() {}
 
 
-bool ExprSelf::isStatic() const
-{
-   return false;
-}
-
 ExprSelf* ExprSelf::clone() const
 {
    return new ExprSelf( *this );
-}
-
-bool ExprSelf::simplify( Item& ) const
-{
-   return false;
 }
 
 

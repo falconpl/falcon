@@ -143,7 +143,7 @@ void ClassTreeStep::enumeratePV( void* instance, Class::PVEnumerator& cb ) const
    Item temp = (int64) stmt->arity();
 
    cb("arity", temp );
-   Expression* expr = stmt->selector();
+   TreeStep* expr = stmt->selector();
    if( expr != 0 )
    {
       temp.setUser( expr->handler(), expr );
@@ -194,7 +194,7 @@ void ClassTreeStep::op_getProperty( VMContext* ctx, void* instance, const String
    }
    else if( prop == "selector")
    {
-      Expression* expr = stmt->selector();
+      TreeStep* expr = stmt->selector();
       if( expr != 0 )
       {
          ctx->topData().setUser( expr->handler(), expr );
@@ -345,7 +345,7 @@ void ClassTreeStep::unflatten( VMContext*, ItemArray& subItems, void* instance )
       static Class* clsTreeStep = Engine::instance()->stdHandlers()->treeStepClass();
       fassert( subItems[0].asClass()->isDerivedFrom(clsTreeStep) );
 #endif
-      ts->selector( static_cast<Expression*>(subItems[0].asInst()) );
+      ts->selector( static_cast<TreeStep*>(subItems[0].asInst()) );
    }
 
    for( int i = 1; i < (int) subItems.length(); ++i )
