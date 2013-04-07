@@ -1,0 +1,32 @@
+/*
+@name Codeblock parametric evaluation
+@category codeblocks
+
+@output
+Codeblock parametric evaluation
+ 'a'+'b'+nil     = abNil
+ 'a'+'b'+'c'     = abc
+ 'a'+'b'+'c'+'d' = abc
+@endoutput
+*/
+
+
+> "Codeblock parametric evaluation"
+
+dd0 = VMContext.dataDepth
+
+a = "Hello"
+b = "World"
+
+block =  {(a,b,c) a+b+c }
+
+> " 'a'+'b'+nil     = ", block('a','b')
+> " 'a'+'b'+'c'     = ", block('a','b', 'c')
+> " 'a'+'b'+'c'+'d' = ", block('a','b', 'c', 'd')
+
+
+dd1 = VMContext.dataDepth
+if dd0 != dd1
+   raise "Data stack corruption: " + dd0 + " vs " + dd1
+end
+

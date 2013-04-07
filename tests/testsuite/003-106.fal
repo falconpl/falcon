@@ -1,0 +1,31 @@
+/*
+@name Codeblock exit doubt operator
+@category codeblocks
+
+@result 45
+*/
+
+
+> "Codeblock exit doubt operator"
+
+dd0 = VMContext.dataDepth
+
+block =  {() 
+   a = 0; value = 0
+   while a < 10
+      value += a
+      ++a
+   end 
+   ^? value
+}
+
+result = block()
+
+> "result = ", result
+
+dd1 = VMContext.dataDepth
+if dd0 != dd1
+   raise "Data stack corruption: " + dd0 + " vs " + dd1
+end
+
+return "" + result

@@ -682,6 +682,17 @@ bool SynClasses::ClassGenSym::op_init( VMContext* ctx, void* instance, int pcoun
          .extra( String("Symbol|S") ) );
    //TODO:TreeStepInherit
 }
+void SynClasses::ClassGenSym::op_call(VMContext* ctx, int pcount, void* instance) const
+{
+   ExprSymbol* esym = static_cast<ExprSymbol*>(instance);
+   Symbol* sym = esym->symbol();
+
+   Item* res = ctx->resolveSymbol(sym, false);
+   if( res == 0 )
+      ctx->stackResult(pcount+1, Item());
+   else
+      ctx->stackResult(pcount+1, *res);
+}
 void SynClasses::ClassGenSym::store( VMContext*, DataWriter* dw, void* instance ) const
 {
    ExprSymbol* es = static_cast<ExprSymbol*>(instance);

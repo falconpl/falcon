@@ -190,7 +190,7 @@ bool SwitchlikeStatement::append( TreeStep* element )
    }
    else
    {
-      if( element->category() != TreeStep::e_cat_expression ||
+      if( element->selector()->category() != TreeStep::e_cat_expression ||
                static_cast<Expression*>(element->selector())->trait() != Expression::e_trait_case || ! element->setParent( this ) )
       {
          return false;

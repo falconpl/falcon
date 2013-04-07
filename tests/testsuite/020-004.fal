@@ -24,5 +24,6 @@ p = Parallel( f0, f1, f2, f3 )
 p.launch()
 
 > "Test failed..."
+
 return "Failure"
 

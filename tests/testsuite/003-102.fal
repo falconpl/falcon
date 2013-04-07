@@ -1,25 +1,28 @@
 /*
-@name Literal with unquote
+@name Literal evaluation
 @category codeblocks
 
-@result OK
+@output
+Literal evaluation
+A=OK
+B=Nil
+@endoutput
 */
 
 
-> "Literal with unquote"
+> "Literal evaluation"
 
 dd0 = VMContext.dataDepth
 
-b = "OK"
-block =  {[] a = ^~b}
+block =  {() b = "OK"}
 a = nil
-> "The unquoted block is: ", block.render()
-block()
+b = nil
+a = block()
+
 > "A=", a
+> "B=", b
 
 dd1 = VMContext.dataDepth
 if dd0 != dd1
    raise "Data stack corruption: " + dd0 + " vs " + dd1
 end
-
-return a

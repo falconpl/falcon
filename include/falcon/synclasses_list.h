@@ -181,6 +181,7 @@ FALCON_SYNCLASS_DECLARATOR(m_expr_evalretdoubt, EvalRetDoubt, Expression)
 
 FALCON_SYNCLASS_DECLARATOR_EX(m_expr_sym, GenSym, Expression, \
       virtual void store( VMContext*, DataWriter* dw, void* instance ) const; \
+      virtual void op_call(VMContext* ctx, int pcount, void* instance) const; \
       )
 
 FALCON_SYNCLASS_DECLARATOR_EX(m_expr_value, Value, Expression, \

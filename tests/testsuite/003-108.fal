@@ -1,0 +1,27 @@
+/*
+@name Codeblock exit-eval
+@category codeblocks
+
+@result Hello World
+*/
+
+
+> "Codeblock exit-eval"
+
+dd0 = VMContext.dataDepth
+
+a = "Hello"
+b = "World"
+
+block =  {() ^*(a+" "+b) }
+
+result = block()
+>> "Block = ", block.render()
+> "result = ", result
+
+dd1 = VMContext.dataDepth
+if dd0 != dd1
+   raise "Data stack corruption: " + dd0 + " vs " + dd1
+end
+
+return result

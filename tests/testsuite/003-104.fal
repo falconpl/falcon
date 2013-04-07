@@ -1,0 +1,33 @@
+/*
+@name Literal evaluation with complex unquote
+@category codeblocks
+
+@output
+Literal evaluation with complex unquote
+A=OK
+B=Nil
+Check value:"OK"
+@endoutput
+*/
+
+
+> "Literal evaluation with complex unquote"
+
+dd0 = VMContext.dataDepth
+
+c = "O"
+d = "K"
+
+block =  {() b = ^~( c+d ) }
+a = nil
+b = nil
+a = block()
+
+> "A=", a
+> "B=", b
+>> "Check value:", block[0][1].render()
+
+dd1 = VMContext.dataDepth
+if dd0 != dd1
+   raise "Data stack corruption: " + dd0 + " vs " + dd1
+end

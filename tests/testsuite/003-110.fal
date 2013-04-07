@@ -1,0 +1,33 @@
+/*
+@name Codeblock parametric ETA evaluation
+@category codeblocks
+
+@output
+Codeblock parametric evaluation
+Setting a = 0
+A is zero
+Setting a = 10
+A is nonzero
+@endoutput
+*/
+
+
+> "Codeblock parametric evaluation"
+
+dd0 = VMContext.dataDepth
+
+block =  {[__comp,b,c] __comp() ? b() : c() }
+
+> "Setting a = 0"
+a = 0
+
+block( ~a == 0 , printl("A is zero"), printl("A is nonzero") )
+> "Setting a = 10"
+a = 10
+block( ~a == 0, printl("A is zero"), printl("A is nonzero") )
+
+dd1 = VMContext.dataDepth
+if dd0 != dd1
+   raise "Data stack corruption: " + dd0 + " vs " + dd1
+end
+

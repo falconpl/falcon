@@ -119,7 +119,7 @@ void Render::invoke( VMContext* ctx, int32 nParams )
    {
       Class* cls = 0;
       void* inst = 0;
-      i_stream->asClassInst(cls, inst);
+      i_stream->forceClassInst(cls, inst);
 
       // is this a writer?
       if( writerClass != 0 )

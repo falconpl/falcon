@@ -1675,7 +1675,7 @@ protected:
       datatype__* m_top;
       datatype__* m_max;
 
-      LinearStack(): m_base(0) {}
+      LinearStack(): m_allocSize(0), m_base(0), m_top(0), m_max(0) {}
       ~LinearStack();
 
       void init( int base = -1 );
