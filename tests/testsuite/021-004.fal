@@ -1,0 +1,73 @@
+/*
+@name String methods - split
+@category Core-string
+
+@output
+String methods - splittr
+Test as a method:
+"","",-1 =>[""]
+"",",",-1 =>[""]
+",",",",-1 =>[""]
+"one","",-1 =>["o", "n", "e"]
+"one",",",-1 =>["one"]
+"one,two",",",-1 =>["one", "two"]
+"one,,two",",",-1 =>["one", "two"]
+"one,,two,",",",-1 =>["one", "two", ""]
+",one,,two,",",",-1 =>["", "one", "two", ""]
+"one,,two,three",",",-1 =>["one", "two", "three"]
+"one,two,three",",",0 =>[]
+"one,two,three",",",1 =>["one,two,three"]
+"one,two,three",",",2 =>["one", "two,three"]
+"one,two,three",",",3 =>["one", "two", "three"]
+"one,two,three",",",4 =>["one", "two", "three"]
+Test as a static function:
+"","",-1 =>[""]
+"",",",-1 =>[""]
+",",",",-1 =>[""]
+"one","",-1 =>["o", "n", "e"]
+"one",",",-1 =>["one"]
+"one,two",",",-1 =>["one", "two"]
+"one,,two",",",-1 =>["one", "two"]
+"one,,two,",",",-1 =>["one", "two", ""]
+",one,,two,",",",-1 =>["", "one", "two", ""]
+"one,,two,three",",",-1 =>["one", "two", "three"]
+"one,two,three",",",0 =>[]
+"one,two,three",",",1 =>["one,two,three"]
+"one,two,three",",",2 =>["one", "two,three"]
+"one,two,three",",",3 =>["one", "two", "three"]
+"one,two,three",",",4 =>["one", "two", "three"]
+Done
+@endoutput
+*/
+
+> "String methods - splittr"
+
+tests = .[ 
+   .["" "", -1]
+   .["" ",", -1]
+   .["," ",", -1]
+   .["one" "", -1]
+   .["one" ",", -1]
+   .["one,two" ",", -1]
+   .["one,,two" ",", -1]
+   .["one,,two," ",", -1]
+   .[",one,,two," ",", -1]
+   .["one,,two,three" ",", -1]
+   .["one,two,three" "," 0]
+   .["one,two,three" "," 1]
+   .["one,two,three" "," 2]
+   .["one,two,three" "," 3]
+   .["one,two,three" "," 4]
+]
+
+function test( code, x )
+   > @"\"${x[0]}\",\"${x[1]}\",${x[2]} =>", code(x).describe()
+end
+
+> "Test as a method:"
+^[ tests ] .[test {(x) x[0].splittr(x[1],x[2]) }]
+
+> "Test as a static function:"
+^[ tests ] .[test {(x) String.splittr(x[0],x[1],x[2]) }]
+
+> "Done"

@@ -1,0 +1,52 @@
+/*
+@name String methods - merge
+@category Core-string
+
+@output
+String methods - merge
+Test as a method:
+"",[],0 =>""
+",",[],0 =>""
+",",[],1 =>""
+",",["one"],0 =>""
+",",["one"],Nil =>"one"
+",",["one", "two"],Nil =>"one,two"
+",",["one", "two", "three"],Nil =>"one,two,three"
+"",["one", "two", "three"],Nil =>"onetwothree"
+Test as a static function:
+"",[],0 =>""
+",",[],0 =>""
+",",[],1 =>""
+",",["one"],0 =>""
+",",["one"],Nil =>"one"
+",",["one", "two"],Nil =>"one,two"
+",",["one", "two", "three"],Nil =>"one,two,three"
+"",["one", "two", "three"],Nil =>"onetwothree"
+Done
+@endoutput
+*/
+
+> "String methods - merge"
+
+tests = .[ 
+   .["" .[] 0]
+   .["," .[] 0]
+   .["," .[] 1]
+   .["," .["one"] 0]
+   .["," .["one"] nil]
+   .["," .["one" "two"] nil]
+   .["," .["one" "two" "three"] nil]
+   .["" .["one" "two" "three"] nil]
+]
+
+function test( code, x )
+   > @"\"${x[0]}\",${x[1].describe()},${x[2]} =>", code(x).describe()
+end
+
+> "Test as a method:"
+^[ tests ] .[test {(x) x[0].merge(x[1],x[2]) }]
+
+> "Test as a static function:"
+^[ tests ] .[test {(x) String.merge(x[0],x[1],x[2]) }]
+
+> "Done"

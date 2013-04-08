@@ -292,7 +292,7 @@ FALCON_DEFINE_FUNCTION_P1(splittr)
          limit = tg_len;
 
       ItemArray* ca = new ItemArray( limit );
-      for( uint32 i = 0; i < limit - 1; ++i )
+      for( uint32 i = 0; i + 1 < limit; ++i )
       {
          String* elem = new String(1);
          elem->append( tg_str->getCharAt(i) );
@@ -458,7 +458,7 @@ FALCON_DEFINE_FUNCTION_P1(split)
          limit = tg_len;
 
       ItemArray* ca = new ItemArray( limit );
-      for( uint32 i = 0; i < limit - 1; ++i )
+      for( uint32 i = 0; i+1 < limit; ++i )
       {
          String* elem = new String(1);
          elem->append( tg_str->getCharAt(i) );
@@ -474,7 +474,6 @@ FALCON_DEFINE_FUNCTION_P1(split)
 
    String *sp_str = splitstr->asString();
    uint32 sp_len = sp_str->length();
-
 
    // return item.
    ItemArray *retarr = new ItemArray;
@@ -530,6 +529,168 @@ FALCON_DEFINE_FUNCTION_P1(split)
    ctx->returnFrame( FALCON_GC_HANDLE(retarr) );
 }
 
+
+
+/*#
+   @method merge String
+   @brief Merges an array of strings into one.
+   @param array An array of strings to be merged.
+   @optparam separator The separator used to merge the strings.
+   @optparam count Maximum count of merges.
+   @return The merged string.
+
+   The method will return a new string containing the concatenation
+   of the strings inside the array parameter. If the array is empty,
+   an empty string is returned. If a mergeStr parameter is given, it
+   is added to each pair of string merged; mergeStr is never added at
+   the end of the new string. A count parameter may be specified to
+   limit the number of elements merged in the array.
+
+   The function may be used in this way:
+   @code
+   a = " ".merge( [ "a", "string", "of", "words" ] )
+   printl( a ) // prints "a string of words"
+   @endcode
+
+   Or, using the function statically from the class:
+
+   @code
+   a = String.merge( " ", [ "a", "string", "of", "words" ] )
+   printl( a ) // prints "a string of words"
+   @endcode
+
+   If an element of the array is not a string, an error is raised.
+*/
+
+FALCON_DECLARE_FUNCTION( merge, "separator:[S],array:[S],count:[N]" );
+FALCON_DEFINE_FUNCTION_P1(merge)
+{
+   Item *mergestr, *source, *count;
+
+   // Parameter checking;
+   if( ctx->isMethodic() )
+   {
+      mergestr = &ctx->self();
+      source = ctx->param(0);
+      count = ctx->param(1);
+   }
+   else {
+      mergestr = ctx->param(0);
+      source = ctx->param(1);
+      count = ctx->param(2);
+   }
+   uint64 limit;
+
+   if ( source == 0 || ! source->isArray()
+        || ( mergestr != 0 && ! mergestr->isString() )
+        || ( count != 0 && ! count->isNil() && ! count->isOrdinal() ) )
+   {
+      throw paramError(__LINE__,SRC, ctx->isMethodic() );
+   }
+
+   // Parameter estraction.
+   limit = count == 0 || count->isNil() ? 0xffffffff: count->forceInteger();
+
+   String* mr_str = mergestr->asString();
+   ItemArray *elements = source->asArray();
+   uint32 len = elements->length();
+   if ( limit < len )
+      len = (uint32) limit;
+
+   String *ts = new String;
+
+   // filling the target.
+   for( uint32 i = 1; i <= len ; i ++ )
+   {
+      Item* item = &elements->at(i-1);
+
+      if ( item->isString() )
+         *ts += *item->asString();
+      else
+      {
+         delete ts;
+         throw FALCON_SIGN_XERROR( ParamError, e_param_type, .extra("Need to be string") );
+      }
+
+      if ( mr_str != 0 && i < len )
+         ts->append( *mr_str );
+
+      ts->reserve( len/i * ts->size() );
+   }
+
+   ctx->returnFrame( FALCON_GC_HANDLE(ts) );
+}
+
+
+/*#
+   @method join String
+   @brief Joins the parameters into a new string.
+   @param ...
+   @return A new string created joining the parameters, left to right.
+
+   If this string is not empty, it is copied between each joined string.
+
+   For example, the next code separates each value with ", "
+
+   @code
+   > ", ".join( "have", "a", "nice", "day" )
+   @endcode
+
+   If the parameters are not string, a standard @a toString conversion is tried.
+*/
+
+FALCON_DECLARE_FUNCTION( join, "separator:S,..." );
+FALCON_DEFINE_FUNCTION_P1(join)
+{
+   Item *mergestr;
+   int32 first;
+
+   // Parameter checking;
+   if( ctx->isMethodic() )
+   {
+      mergestr = &ctx->self();
+      first = 0;
+   }
+   else {
+      mergestr = ctx->param(0);
+      first = 1;
+   }
+
+   if ( mergestr != 0 && ! mergestr->isString() )
+   {
+      throw paramError(__LINE__, SRC, ctx->isMethodic());
+   }
+
+   String* mr_str = mergestr->asString();
+   int32 len = ctx->paramCount();
+   String *ts = new String;
+
+   // filling the target.
+   for( int32 i = 1+first; i <= len ; i ++ )
+   {
+      Item* item = ctx->param(i-1);
+
+      if ( item->isString() )
+      {
+         *ts += *item->asString();
+      }
+      else
+      {
+         delete ts;
+         throw FALCON_SIGN_XERROR( ParamError, e_param_type, .extra("Parameters must be strings") );
+      }
+
+      if ( i < len )
+      {
+         ts->append( *mr_str );
+      }
+
+      ts->reserve( len/i * ts->size() );
+   }
+
+   ctx->returnFrame( FALCON_GC_HANDLE(ts) );
+}
+
 }
 
 //
@@ -563,6 +724,8 @@ void ClassString::init()
    addMethod( new _classString::Function_back, true );
    addMethod( new _classString::Function_split, true );
    addMethod( new _classString::Function_splittr, true );
+   addMethod( new _classString::Function_merge, true );
+   addMethod( new _classString::Function_join, true );
 }
 
 

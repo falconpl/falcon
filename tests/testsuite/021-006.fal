@@ -1,0 +1,46 @@
+/*
+@name String methods - join
+@category Core-string
+
+@output
+String methods - join
+Test as a method:
+"",[]=>""
+",",[]=>""
+",",["one"]=>"one"
+",",["one", "two"]=>"one,two"
+",",["one", "two", "three"]=>"one,two,three"
+"",["one", "two", "three"]=>"onetwothree"
+Test as a static function:
+"",[]=>""
+",",[]=>""
+",",["one"]=>"one"
+",",["one", "two"]=>"one,two"
+",",["one", "two", "three"]=>"one,two,three"
+"",["one", "two", "three"]=>"onetwothree"
+Done
+@endoutput
+*/
+
+> "String methods - join"
+
+tests = .[ 
+   .["" .[]]
+   .["," .[]]
+   .["," .["one"]]
+   .["," .["one" "two"]]
+   .["," .["one" "two" "three"]]
+   .["" .["one" "two" "three"]]
+]
+
+function test( code, x )
+   > @"\"${x[0]}\",${x[1].describe()}=>", code(x).describe()
+end
+
+> "Test as a method:"
+^[ tests ] .[test {(x) call(x[0].join, x[1]) }]
+
+> "Test as a static function:"
+^[ tests ] .[test {(x) y = [x[0]]; ^[x[1]]=>y; call( String.join, y) }]
+
+> "Done"
