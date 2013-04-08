@@ -233,7 +233,7 @@ void ModSpace::add( Module* mod )
          if( gval != 0 )
          {
             // Success!
-            gval->assignFromLocal( Item( cls, cls->createInstance() ) );
+            gval->copyFromLocal( Item( cls, cls->createInstance() ) );
          }
       }
    }

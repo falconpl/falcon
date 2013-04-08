@@ -368,7 +368,7 @@ void StdSteps::PStepFillInstance::apply_( const PStep*, VMContext* ctx )
             if( gval != 0 )
             {
                // Success!
-               gval->assignFromLocal(inst);
+               gval->copyFromLocal(inst);
                ctx->popData();
                return;
             }

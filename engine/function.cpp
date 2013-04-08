@@ -126,16 +126,27 @@ bool Function::parseDescription( const String& params )
 }
 
 
-Error* Function::paramError(int line, const char* place ) const
+Error* Function::paramError(int line, const char* place, bool methodic ) const
 {
    String placeName = place == 0 ? (m_module == 0 ? "" : m_module->name() ) : place;
    placeName.bufferize();
    return new ParamError(
            ErrorParam(e_inv_params, line == 0 ? m_sr.line(): line, placeName)
-           .extra(m_signature) );
+           .extra( methodic ? methodicSignature() : m_signature) );
    
 }
 
+
+String Function::methodicSignature() const
+{
+   length_t comma = m_signature.find(',');
+   if( comma == String::npos )
+   {
+      return "";
+   }
+
+   return m_signature.subString( comma+1 );
+}
 
 void Function::render( TextWriter* tgt, int32 depth ) const
 {

@@ -350,7 +350,7 @@ void generic_apply_( const PStep* ps, VMContext* ctx )
       {
          return;
       }
-      // fallthrough
+      /* no break */
       
       // Phase 1 -- generate the other item.
    case 1:
@@ -359,7 +359,7 @@ void generic_apply_( const PStep* ps, VMContext* ctx )
       {
          return;
       }
-      // fallthrough
+      /* no break */
    
       // Phase 2 -- operate
    case 2:
@@ -398,21 +398,25 @@ void generic_apply_( const PStep* ps, VMContext* ctx )
             break;
 
          default:
+            {
+               // deep items do not require to copy them back.
+               ctx->popCode();
+
+               Class* cls = 0;
+               void* inst = 0;
+               op1->forceClassInst( cls, inst );
+               _cpr::operate( ctx, cls, inst );
+               return;
+            }
+         }
+
+         // might have gone deep
+         if( &cf != &ctx->currentCode() )
          {
-            Class* cls = 0;
-            void* inst = 0;
-            op1->forceClassInst( cls, inst );
-            _cpr::operate( ctx, cls, inst );
+            return;
          }
       }
-      
-      // might have gone deep
-      if( &cf != &ctx->currentCode() )
-      {
-         return;
-      }
-   }
-   /* no break */
+      /* no break */
    
       // Phase 3 -- assigning the topmost value back.
    case 3:

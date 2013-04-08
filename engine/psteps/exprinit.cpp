@@ -67,7 +67,6 @@ void ExprInit::PStepLValue::describeTo( String& str ) const
 void ExprInit::PStepLValue::apply_( const PStep*, VMContext* ctx )
 {
    ctx->popCode();
-   ctx->topData().copied(true);
    ctx->writeInit(ctx->topData());
 }
 

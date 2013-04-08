@@ -318,7 +318,7 @@ void PrototypeClass::op_setProperty( VMContext* ctx, void* self, const String& p
       else
       {
          fd->base().resize(1);
-         fd->base()[0].assign(value);
+         fd->base()[0].copyInterlocked(value);
       }
    }
    else if( prop == FALCON_PROTOTYPE_PROPERTY_OVERRIDE_PROTOTYPE )
@@ -330,8 +330,7 @@ void PrototypeClass::op_setProperty( VMContext* ctx, void* self, const String& p
       {
          fd->base().resize(1);
       }
-      
-      value.copied();
+
       fd->base()[0] = value;
    }
    else if( prop == FALCON_PROTOTYPE_PROPERTY_OVERRIDE_ISBASE )

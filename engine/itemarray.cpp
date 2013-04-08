@@ -67,19 +67,6 @@ public:
       memcpy( newData, m_master->m_data, ItemArray::esize( m_master->m_size ) );
       return newData;
    }
-
-   static inline void setCopied( const ItemArray& other )
-   {
-      register Item* data = other.m_data;
-      Item* end = data + other.m_size;
-      while( data < end )
-      {
-         //data->lock();
-         data->copied(true);
-         //data->unlock();
-         ++data;
-      }
-   }
 };
 
 //========================================================
@@ -104,7 +91,6 @@ ItemArray::ItemArray( const ItemArray& other ):
       m_size = other.m_size;
 
       // set all the items in the source as copied.
-      Helper(this).setCopied( other );
       m_data = allocate( m_size );
       memcpy( m_data, other.m_data, esize(m_size) );
    }
@@ -202,9 +188,6 @@ void ItemArray::merge( const ItemArray &source )
       return;
    }
 
-   // set all the items in the source as copied.
-   Helper(this).setCopied( source );
-
    if ( m_alloc < m_size + source.m_size ) {
       m_alloc = m_size + source.m_size;
       Item* newData = Helper(this).reallocate( m_alloc );
@@ -237,9 +220,6 @@ void ItemArray::merge_front( const ItemArray &other )
 {
    if ( other.m_size == 0 )
       return;
-
-   // set all the items in the source as copied.
-   Helper(this).setCopied( other );
 
    if ( m_alloc < m_size + other.m_size )
    {
@@ -299,8 +279,6 @@ bool ItemArray::insert( const ItemArray &other, length_t pos )
    if ( pos > m_size )
       return false;
 
-   Helper(this).setCopied( other );
-   
    if ( m_alloc < m_size + other.m_size ) {
       m_alloc = m_size + other.m_size;
       Item *mem = allocate(m_alloc);
@@ -375,8 +353,6 @@ bool ItemArray::change( const ItemArray &other, length_t begin, length_t rsize )
    if( end > m_size )
       return false;
 
-   Helper(this).setCopied( other );
-   
    // we're considering end as "included" from now on.
    // this considers also negative range which already includes their extreme.
    if ( m_size - rsize + other.m_size > m_alloc )
@@ -460,21 +436,11 @@ ItemArray *ItemArray::partition( length_t start, length_t size, bool bReverse ) 
       {
          // we need to set the original items as copied.
          Item& item = m_data[start - i];
-         item.copied(true);
          buffer[i] = item;
       }
    }
    else
    {
-      // set to copied all the interested items in this array
-      Item* bp = m_data + start;
-      Item* bend = bp + size;
-      while( bp < bend )
-      {
-         bp->copied(true);
-         ++bp;
-      }
-
       buffer = allocate(size);
       memcpy( buffer, m_data + start, esize( size )  );
    }

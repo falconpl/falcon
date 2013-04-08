@@ -230,6 +230,7 @@ Parsing::TokenInstance* SourceLexer::makeString()
    {
    case e_st_normal: return sp->T_String.makeInstance( m_sline, m_schr, m_text );
    case e_st_intl: return sp->T_IString.makeInstance( m_sline, m_schr, m_text );
+   case e_st_mutable: return sp->T_MString.makeInstance( m_sline, m_schr, m_text );
    case e_st_regex:
    {
       // read the regex options
@@ -994,10 +995,14 @@ Parsing::TokenInstance* SourceLexer::nextToken()
                   m_text.size(0);
                   break;
                }
-               else if( (m_text == "i" || m_text == "r" || m_text == "R" ) && (chr == '"' || chr == '\'') )
+               else if( (m_text == "i" || m_text == "m" || m_text == "r" || m_text == "R" ) && (chr == '"' || chr == '\'') )
                {
                   if( m_text == "i" ) {
                      m_string_type = e_st_intl;
+                  }
+                  else if( m_text == "m" )
+                  {
+                     m_string_type = e_st_mutable;
                   }
                   else {
                      m_string_type = e_st_regex;

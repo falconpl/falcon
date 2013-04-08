@@ -226,7 +226,7 @@ void Function_descend::invoke( Falcon::VMContext* ctx, int )
    *ctx->local(0) = FALCON_GC_STORE( vfs->uriClass(), uric );
 
    // we'll use local 1 as a marker that we're done, leaving it nil
-   ctx->local(2)->assign(ctx->self()); // here we have the topmost entity
+   ctx->local(2)->copyInterlocked(ctx->self()); // here we have the topmost entity
 
    // push the next step
    ctx->pushCode( &m_next );

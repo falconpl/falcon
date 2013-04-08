@@ -163,6 +163,7 @@ public:
    
    Parsing::Terminal T_RString;
    Parsing::Terminal T_IString;
+   Parsing::Terminal T_MString;
 
    Parsing::Terminal T_provides;
    //================================================
@@ -496,6 +497,7 @@ public:
    Parsing::Rule r_Atom_String;
    Parsing::Rule r_Atom_RString;
    Parsing::Rule r_Atom_IString;
+   Parsing::Rule r_Atom_MString;
    Parsing::Rule r_Atom_False;
    Parsing::Rule r_Atom_True;
    Parsing::Rule r_Atom_self;

@@ -330,7 +330,6 @@ void Function_pop::invoke( VMContext* ctx, int32 )
       if( i_dflt != 0 )
       {
          dflt = *i_dflt;
-         dflt.copied(true);
       }
 
       queue->pop( dflt );

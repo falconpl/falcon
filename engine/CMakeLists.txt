@@ -206,9 +206,10 @@ add_library(falcon_engine SHARED
   sp/sourceparser.cpp
 
   psteps/breakpoint.cpp
+  psteps/expraccumulator.cpp
   psteps/exprarray.cpp
   psteps/exprassign.cpp
-  psteps/expraccumulator.cpp
+  psteps/exprautoclone.cpp
   psteps/exprbitwise.cpp
   psteps/exprcall.cpp
   psteps/exprcase.cpp
@@ -288,6 +289,7 @@ add_library(falcon_engine SHARED
   classes/classmessagequeue.cpp
   classes/classmodule.cpp
   classes/classmodspace.cpp
+  classes/classmstring.cpp
   classes/classmulti.cpp
   classes/classnumber.cpp
   classes/classnumeric.cpp

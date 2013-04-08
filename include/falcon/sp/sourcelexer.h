@@ -106,7 +106,8 @@ private:
    {
       e_st_normal,
       e_st_intl,
-      e_st_regex
+      e_st_regex,
+      e_st_mutable
    }
    t_string_type;
    t_string_type m_string_type;

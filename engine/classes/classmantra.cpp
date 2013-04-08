@@ -343,7 +343,7 @@ void ClassMantra::SetAttributeMethod::invoke( VMContext* ctx, int32 )
          attr = mantra->attributes().add(attName);
       }
 
-      attr->value().assign( *i_value );
+      attr->value().copyInterlocked( *i_value );
    }
 
    ctx->returnFrame();

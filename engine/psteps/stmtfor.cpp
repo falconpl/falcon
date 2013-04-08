@@ -523,7 +523,7 @@ void StmtForIn::expandItem( Item& itm, VMContext* ctx ) const
 {
    if( _p->m_params.size() == 1 )
    {
-      ctx->resolveSymbol(_p->m_params[0], true)->assign(itm);
+      ctx->resolveSymbol(_p->m_params[0], true)->copyInterlocked(itm);
    }
    else
    {
@@ -535,7 +535,7 @@ void StmtForIn::expandItem( Item& itm, VMContext* ctx ) const
          {
             for( length_t i = 0; i < ar->length(); ++i )
             {
-               ctx->resolveSymbol(_p->m_params[i], true)->assign((*ar)[i]);
+               ctx->resolveSymbol(_p->m_params[i], true)->copyInterlocked((*ar)[i]);
             }
             return;
          }

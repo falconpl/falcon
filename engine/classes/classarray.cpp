@@ -333,7 +333,7 @@ void ClassArray::op_setIndex( VMContext* ctx, void* self ) const
          throw new AccessError( ErrorParam( e_arracc, __LINE__ ).extra( "index out of range" ) );
       }
 
-      array[(length_t)v].assignFromLocal(*value);
+      array[(length_t)v].copyFromLocal(*value);
       ctx->popData(2); // our value is already the thirdmost element in the stack.
       return;
    }
@@ -399,8 +399,6 @@ void ClassArray::op_setIndex( VMContext* ctx, void* self ) const
       }
       else
       {
-         value->copied( true );    // the value is copied here.
-
          array[ (length_t)(( start == end ) ? start + 1 : start) ] = *value;
 
          if ( rangeLen > 1 )
@@ -411,8 +409,6 @@ void ClassArray::op_setIndex( VMContext* ctx, void* self ) const
    }
    else  // Not a deep class
    {
-      value->copied( true );    // the value is copied here.
-
       if ( rangeLen > 1 )
       {
          array[ (length_t)(( start == end ) ? start + 1 : start) ] = *value;
@@ -468,8 +464,6 @@ void ClassArray::op_add( VMContext* ctx, void* self ) const
    {
       result->reserve( array->length() + 1 );
       result->merge( *array );
-
-      op2->copied( true );
       result->append( *op2 );
    }
    else {
@@ -488,23 +482,7 @@ void ClassArray::op_add( VMContext* ctx, void* self ) const
 void ClassArray::op_aadd( VMContext* ctx, void* self ) const
 {
    ItemArray* array = static_cast<ItemArray*>( self );
-   Item* op1, *op2;
-   ctx->operands( op1, op2 );
-
-   //Class* cls;
-   //void* inst;
-
-   // a basic type?
-   //if( ! op2->asClassInst( cls, inst ) || cls->typeID() != typeID() )
-   {
-      op2->copied( true );
-      array->append( *op2 );
-   }
-   /*else {
-      // it's an array!
-      ItemArray* other = static_cast<ItemArray*>( inst );
-      array->merge( *other );
-   }*/
+   array->append( ctx->topData() );
 
    // just remove the topmost item,
    ctx->popData();
@@ -582,10 +560,7 @@ void ClassArray::op_next( VMContext* ctx, void* instance ) const
    }
    else
    {
-
       Item& value = arr->at( pos++ );
-
-      value.copied();
       iter.setInteger( pos );
       ctx->pushData( value );
 

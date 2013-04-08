@@ -170,7 +170,7 @@ FALCON_DECLARE_FUNCTION( find, "target:S,begin_:[N],end_[N]" );
  range [begin, end[. If end is not set, it goes up to the end of
  the string.
 */
-FALCON_DECLARE_FUNCTION( findAll, "target:S,begin_:[N],end_[N]" );
+FALCON_DECLARE_FUNCTION( findAll, "target:S,begin_:[N],end_:[N]" );
 
 
 /*#

@@ -137,7 +137,7 @@ static void get_selfItem( const Class*, const String&, void* instance, Item& val
       ctx = static_cast<VMContext*>(instance);
    }
 
-   value.assign(ctx->currentFrame().m_self);
+   value.copyInterlocked(ctx->currentFrame().m_self);
 }
 
 

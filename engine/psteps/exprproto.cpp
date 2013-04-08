@@ -211,7 +211,6 @@ void ExprProto::apply_( const PStep* ps, VMContext* ctx )
          else
          {
             value->base().resize(1);
-            result->copied();
             value->base()[0] = *result;
          }
       }

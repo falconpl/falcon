@@ -189,28 +189,28 @@ void ItemDict::insert( const Item& key, const Item& value )
    {      
       case FLC_ITEM_NIL:
          _p->m_bHasNil = true;
-         _p->m_itemNil.assign(value);
+         _p->m_itemNil.copyInterlocked(value);
          break;
          
       case FLC_ITEM_BOOL:
          if( key.asBoolean() )
          {
             _p->m_bHasTrue = true;
-            _p->m_itemTrue.assign(value);
+            _p->m_itemTrue.copyInterlocked(value);
          }
          else
          {
             _p->m_bHasFalse = true;
-            _p->m_itemFalse.assign(value);
+            _p->m_itemFalse.copyInterlocked(value);
          }
          break;
          
       case FLC_ITEM_INT:
-         _p->m_intMap[ key.asInteger() ].assign(value);
+         _p->m_intMap[ key.asInteger() ].copyInterlocked(value);
          break;
          
       case FLC_ITEM_NUM:
-         _p->m_intMap[ (int64) key.asNumeric() ].assign(value);
+         _p->m_intMap[ (int64) key.asNumeric() ].copyInterlocked(value);
          break;
                        
       default:
@@ -222,16 +222,16 @@ void ItemDict::insert( const Item& key, const Item& value )
          switch( cls->typeID() )
          {
             case FLC_CLASS_ID_STRING:
-               _p->m_stringMap[ *static_cast<String*>(data) ].assign(value);
+               _p->m_stringMap[ *static_cast<String*>(data) ].copyInterlocked(value);
                break;
                
             case FLC_CLASS_ID_RANGE:
-               _p->m_rangeMap[ *static_cast<Range*>(data) ].assign(value);
+               _p->m_rangeMap[ *static_cast<Range*>(data) ].copyInterlocked(value);
                break;
                
             default:
                _p->m_instMap[ 
-                  Private::class_data_pair( cls, data ) ].assign(value);
+                  Private::class_data_pair( cls, data ) ].copyInterlocked(value);
                break;
          }
       }
@@ -787,7 +787,6 @@ void ItemDict::Iterator::advance()
 
             _pm->m_pair[0].lock();
             _pm->m_pair[0].setUser( scls, &m_tempString );
-            _pm->m_pair[0].copied();
             _pm->m_pair[0].unlock();
 
             _pm->m_pair[1].lock();

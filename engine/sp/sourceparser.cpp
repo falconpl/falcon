@@ -205,6 +205,7 @@ SourceParser::SourceParser():
 
    T_RString("R-String"),
    T_IString("I-String"),
+   T_MString("M-String"),
    T_provides("provides")
    
 {
@@ -556,6 +557,7 @@ SourceParser::SourceParser():
       << (r_Atom_String << "Atom_String" << apply_Atom_String << T_String )
       << (r_Atom_RString << "Atom_RString" << apply_Atom_RString << T_RString )
       << (r_Atom_IString << "Atom_IString" << apply_Atom_IString << T_IString )
+      << (r_Atom_MString << "Atom_MString" << apply_Atom_MString << T_MString )
       << (r_Atom_False<< "Atom_False" << apply_Atom_False << T_false )
       << (r_Atom_True<< "Atom_True" << apply_Atom_True << T_true )
       << (r_Atom_self<< "Atom_Self" << apply_Atom_Self << T_self )

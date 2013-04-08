@@ -23,13 +23,71 @@
 #include <falcon/optoken.h>
 #include <falcon/errors/accesserror.h>
 #include <falcon/errors/operanderror.h>
+#include <falcon/errors/paramerror.h>
+
+#include <falcon/function.h>
 
 #include <falcon/datareader.h>
 #include <falcon/datawriter.h>
 
 namespace Falcon {
 
-   
+//===============================================================================
+// Opcodes
+//
+
+class ClassString::PStepInitNext: public PStep
+{
+public:
+   PStepInitNext() { apply = apply_; }
+   virtual ~PStepInitNext() {}
+   virtual void describeTo(String& tg) const { tg = "ClassString::PStepInitNext";}
+   static void apply_( const PStep*, VMContext* vm );
+};
+
+
+void ClassString::PStepInitNext::apply_( const PStep*, VMContext* ctx )
+{
+   ctx->opcodeParam(1).asString()->copy( *ctx->topData().asString() );
+   // remove the locally pushed data and the parameters.
+   ctx->popData( 2 + ctx->currentCode().m_seqId );
+   ctx->popCode();
+}
+
+
+class ClassString::PStepNextOp: public PStep
+{
+public:
+   PStepNextOp( ClassString* owner ): m_owner(owner) { apply = apply_; }
+   virtual ~PStepNextOp() {}
+   virtual void describeTo(String& tg) const { tg = "ClassString::PStepNextOp";}
+   static void apply_( const PStep*, VMContext* vm );
+
+private:
+   ClassString* m_owner;
+};
+
+
+void ClassString::PStepNextOp::apply_( const PStep* ps, VMContext* ctx )
+{
+   const PStepNextOp* step = static_cast<const PStepNextOp*>(ps);
+
+   // The result of a deep call is in A
+   Item* op1, *op2;
+
+   ctx->operands( op1, op2 ); // we'll discard op2
+
+   String* deep = op2->asString();
+   String* self = op1->asString();
+
+   ctx->popData();
+   InstanceLock::Token* tk = step->m_owner->m_lock.lock(self);
+   self->append( *deep );
+   step->m_owner->m_lock.unlock(tk);
+   ctx->popCode();
+}
+
+
 //=====================================================================
 // Properties
 //
@@ -62,16 +120,30 @@ static void set_isText( const Class*, const String&, void* instance, const Item&
 //
 
 ClassString::ClassString():
-   Class( "String", FLC_CLASS_ID_STRING ),
-   m_nextOp(this)
+   Class( "String", FLC_CLASS_ID_STRING )
 {
+   init();
+}
+
+ClassString::ClassString( const String& subname ):
+         Class( subname, FLC_CLASS_ID_STRING )
+{
+   init();
+}
+
+void ClassString::init()
+{
+   m_initNext = new PStepInitNext;
+   m_nextOp = new PStepNextOp(this);
+
    addProperty( "isText", &get_isText, &set_isText );
    addProperty( "len", &get_len );
 }
 
-
 ClassString::~ClassString()
 {
+   delete m_initNext;
+   delete m_nextOp;
 }
 
 int64 ClassString::occupiedMemory( void* instance ) const
@@ -249,12 +321,12 @@ void ClassString::op_add( VMContext* ctx, void* self ) const
    }
 
    // else we surrender, and we let the virtual system to find a way.
-   ctx->pushCode( &m_nextOp );
+   ctx->pushCode( m_nextOp );
 
    // this will transform op2 slot into its string representation.
    cls->op_toString( ctx, inst );
 
-   if ( ! ctx->wentDeep( &m_nextOp ) )
+   if ( ! ctx->wentDeep( m_nextOp ) )
    {
       ctx->popCode();
 
@@ -295,7 +367,7 @@ bool ClassString::op_init( VMContext* ctx, void* instance, int pcount ) const
          }
 
          // apply the op_toString on the item.
-         ctx->pushCode( &m_initNext );
+         ctx->pushCode( m_initNext );
          ctx->currentCode().m_seqId = pcount;
          long depth = ctx->codeDepth();
 
@@ -331,148 +403,6 @@ bool ClassString::op_init( VMContext* ctx, void* instance, int pcount ) const
 
    return false;
 }
-
-
-void ClassString::op_aadd( VMContext* ctx, void* self ) const
-{
-   String* str = static_cast<String*>( self );
-
-   Item* op1, *op2;
-   ctx->operands( op1, op2 );
-
-   Class* cls=0;
-   void* inst=0;
-
-   if ( op2->isString() )
-   {
-      if ( op1->copied() )
-      {
-         String* copy = new String;
-         InstanceLock::Token* tk = m_lock.lock(str);
-         copy->append( *str );
-         m_lock.unlock(tk);
-
-         tk = m_lock.lock(op2->asString());
-         copy->append( *op2->asString() );
-         m_lock.unlock(tk);
-         ctx->stackResult( 2, FALCON_GC_HANDLE_IN(ctx, copy) );
-      }
-      else
-      {
-#ifdef FALCON_MT_UNSAFE
-         op1->asString()->append( *op2->asString() );
-#else
-         InstanceLock::Token* tk = m_lock.lock(op2->asString());
-         String copy( *op2->asString() );
-         m_lock.unlock(tk);
-
-         tk = m_lock.lock(op1->asString());
-         op1->asString()->append(copy);
-         m_lock.unlock(tk);
-#endif
-
-         ctx->popData();
-      }
-
-      return;
-   }
-   else if ( ! op2->asClassInst( cls, inst ) )
-   {
-      // a flat entity
-      if ( op1->copied() )
-      {
-         String* copy = new String;
-         InstanceLock::Token* tk = m_lock.lock(str);
-         copy->append( *str );
-         m_lock.unlock(tk);
-
-         copy->append( op2->describe() );
-         ctx->stackResult( 2, FALCON_GC_HANDLE_IN(ctx,copy) );
-      }
-      else
-      {
-         InstanceLock::Token* tk = m_lock.lock(op1->asString());
-         op1->asString()->append( op2->describe() );
-         m_lock.unlock(tk);
-      }
-      return;
-   }
-
-
-   // else we surrender, and we let the virtual system to find a way.
-   ctx->pushCode( &m_nextOp );
-
-   // this will transform op2 slot into its string representation.
-   cls->op_toString( ctx, inst );
-
-   if( ! ctx->wentDeep( &m_nextOp ) )
-   {
-      ctx->popCode();
-
-      // op2 has been transformed (and is ours)
-      String* deep = (String*) op2->asInst();
-
-      InstanceLock::Token* tk = m_lock.lock(str);
-      deep->prepend( *str );
-      m_lock.unlock(tk);
-   }
-}
-
-
-ClassString::NextOp::NextOp( ClassString* owner ):
-         m_owner(owner)
-{
-   apply = apply_;
-}
-
-
-void ClassString::NextOp::apply_( const PStep* ps, VMContext* ctx )
-{
-   const ClassString::NextOp* step = static_cast<const ClassString::NextOp*>(ps);
-
-   // The result of a deep call is in A
-   Item* op1, *op2;
-
-   ctx->operands( op1, op2 ); // we'll discard op2
-
-   String* deep = op2->asString();
-   String* self = op1->asString();
-
-   if( op1->copied() )
-   {
-      String* copy = new String;
-      InstanceLock::Token* tk = step->m_owner->m_lock.lock(self);
-      copy->append( *self );
-      step->m_owner->m_lock.unlock(tk);
-      copy->append( *deep );
-      ctx->stackResult( 2, FALCON_GC_HANDLE_IN(ctx,copy) );
-   }
-   else
-   {
-      ctx->popData();
-      InstanceLock::Token* tk = step->m_owner->m_lock.lock(self);
-      self->append( *deep );
-      step->m_owner->m_lock.unlock(tk);
-   }
-
-   ctx->popCode();
-}
-
-
-ClassString::InitNext::InitNext()
-{
-   apply = apply_;
-}
-
-
-void ClassString::InitNext::apply_( const PStep*, VMContext* ctx )
-{
-   ctx->opcodeParam(1).asString()->copy( *ctx->topData().asString() );
-   // remove the locally pushed data and the parameters.
-   ctx->popData( 2 + ctx->currentCode().m_seqId );
-   ctx->popCode();
-}
-
 
 //===============================================================
 //
@@ -511,54 +441,6 @@ void ClassString::op_mul( VMContext* ctx, void* instance ) const
 }
 
 
-void ClassString::op_amul( VMContext* ctx, void* instance ) const
-{
-   // self count => self
-   Item& i_count = ctx->topData();
-   if( ! i_count.isOrdinal() )
-   {
-      throw new OperandError( ErrorParam( e_op_params, __LINE__ ).extra( "N" ) );
-   }
-
-   int64 count = i_count.forceInteger();
-   ctx->popData();
-
-   String* self = static_cast<String*>(instance);
-   String* target;
-   InstanceLock::Token* tk = m_lock.lock(self);
-
-   String copy(*self);
-   if( ctx->topData().copied() )
-   {
-      target = new String(copy);
-      ctx->topData() = FALCON_GC_HANDLE(target);
-      m_lock.unlock(tk);
-      tk = 0;
-   }
-   else {
-      target = self;
-   }
-
-   if( count == 0 )
-   {
-      target->size(0);
-   }
-   else
-   {
-      target->reserve( target->size() * count);
-      // start from 1: we have already 1 copy in place
-      for( int64 i = 1; i < count; ++i )
-      {
-         target->append(copy);
-      }
-   }
-
-   if( tk != 0 )
-   {
-      m_lock.unlock(tk);
-   }
-}
-
 void ClassString::op_div( VMContext* ctx, void* instance ) const
 {
    // self count => new
@@ -581,41 +463,6 @@ void ClassString::op_div( VMContext* ctx, void* instance ) const
    String* target = new String(*self);
    target->append((char_t) count);
    ctx->topData() = FALCON_GC_HANDLE( target );
-   m_lock.unlock(tk);
-}
-
-
-void ClassString::op_adiv( VMContext* ctx, void* instance ) const
-{
-   // self count => new
-   Item& i_count = ctx->topData();
-   if( ! i_count.isOrdinal() )
-   {
-      throw new OperandError( ErrorParam( e_op_params, __LINE__ ).extra( "N" ) );
-   }
-
-   int64 count = i_count.forceInteger();
-   ctx->popData();
-
-   if ( count < 0 || count >= 0xFFFFFFFFLL )
-   {
-      throw new OperandError( ErrorParam( e_op_params, __LINE__ ).extra( "out of range" ) );
-   }
-
-   String* self = static_cast<String*>(instance);
-   InstanceLock::Token* tk = m_lock.lock(self);
-
-   String* target;
-   if( ctx->topData().copied() )
-   {
-      target = new String(*self);
-      ctx->topData() = FALCON_GC_HANDLE(target);
-   }
-   else {
-      target = self;
-   }
-
-   target->append((char_t) count);
    m_lock.unlock(tk);
 }
 
@@ -744,89 +591,8 @@ void ClassString::op_getIndex( VMContext* ctx, void* self ) const
 }
 
 
-void ClassString::op_setIndex( VMContext* ctx, void* self ) const
-{
-   Item* value, *arritem, *index;
-
-   ctx->operands( value, arritem, index );
-
-   String& str = *static_cast<String*>( self );
-
-   if ( ! value->isString() && ! value->isOrdinal())
-   {
-      throw new OperandError( ErrorParam( e_op_params, __LINE__ ).extra( "S" ) );
-   }
-
-   if ( index->isOrdinal() )
-   {
-      // simple index assignment: a[x] = value
-      {
-         InstanceLock::Locker( &m_lock, &str );
-
-         int64 v = index->forceInteger();
-
-         if ( v < 0 ) v = str.length() + v;
-
-         if ( v >= str.length() )
-         {
-            throw new AccessError( ErrorParam( e_arracc, __LINE__ ).extra("index out of range") );
-         }
-
-         if( value->isOrdinal() ) {
-            str.setCharAt( (length_t) v, (char_t) value->forceInteger() );
-         }
-         else {
-            str.setCharAt( (length_t) v, (char_t) value->asString()->getCharAt( 0 ) );
-         }
-      }
-
-      ctx->stackResult( 3, *value );
-   }
-   else if ( index->isRange() )
-   {
-      Range& rng = *static_cast<Range*>( index->asInst() );
-
-      {
-         InstanceLock::Locker( &m_lock, &str );
-
-         int64 strLen = str.length();
-         int64 start = rng.start();
-         int64 end = ( rng.isOpen() ) ? strLen : rng.end();
-
-         // handle negative indexes
-         if ( start < 0 ) start = strLen + start;
-         if ( end < 0 ) end = strLen + end;
-
-         // do some validation checks before proceeding
-         if ( start >= strLen  || end > strLen )
-         {
-            throw new AccessError( ErrorParam( e_arracc, __LINE__ ).extra("index out of range") );
-         }
-
-         if ( value->isString() )  // should be a string
-         {
-            String& strVal = *value->asString();
-            str.change( (Falcon::length_t)start, (Falcon::length_t)end, strVal );
-         }
-         else
-         {
-            String temp;
-            temp.append((char_t)value->forceInteger());
-            str.change((Falcon::length_t)start, (Falcon::length_t)end, temp );
-         }
-      }
-
-      ctx->stackResult( 3, *value );
-   }
-   else
-   {
-      throw new OperandError( ErrorParam( e_op_params, __LINE__ ).extra( "I|R" ) );
-   }
-}
-
-
 //=======================================================================
-// Comparation
+// Comparison
 //
 
 void ClassString::op_compare( VMContext* ctx, void* self ) const
@@ -935,6 +701,8 @@ void ClassString::op_next( VMContext* ctx, void* instance ) const
    ctx->pushData( FALCON_GC_HANDLE(schr));
    if( ! isLast ) ctx->topData().setDoubt();
 }
+
+
 
 
 }

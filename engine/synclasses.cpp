@@ -31,6 +31,7 @@
 #include <falcon/psteps/exprarray.h>
 #include <falcon/psteps/expraccumulator.h>
 #include <falcon/psteps/exprassign.h>
+#include <falcon/psteps/exprautoclone.h>
 #include <falcon/psteps/exprbitwise.h>
 #include <falcon/psteps/exprcall.h>
 #include <falcon/psteps/exprcase.h>
@@ -759,6 +760,64 @@ void SynClasses::ClassValue::unflatten( VMContext*, ItemArray& subItems, void* i
 void SynClasses::ClassValue::restore( VMContext* ctx, DataReader*dr ) const
 {
    ExprValue* expr = new ExprValue;
+   try {
+      ctx->pushData( Item( this, expr ) );
+      m_parent->restore( ctx, dr );
+   }
+   catch(...) {
+      ctx->popData();
+      delete expr;
+      throw;
+   }
+}
+
+//==========================================
+// Expr value
+void* SynClasses::ClassAutoClone::createInstance() const
+{
+   return new ExprValue;
+}
+bool SynClasses::ClassAutoClone::op_init( VMContext* ctx, void* instance, int pcount ) const
+{
+   if( pcount < 1 )
+   {
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__, SRC )
+            .origin( ErrorParam::e_orig_runtime)
+            .extra( String("X") ) );
+   }
+
+   ExprAutoClone* expr = static_cast<ExprAutoClone*>(instance);
+   expr->setInGC();
+   Class* cls;
+   void* value;
+   ctx->topData().forceClassInst(cls, value);
+   expr->set( cls, cls->clone(value) );
+   return false;
+}
+
+void SynClasses::ClassAutoClone::flatten( VMContext*, ItemArray& subItems, void* instance ) const
+{
+   ExprAutoClone* ev = static_cast<ExprAutoClone*>( instance );
+   subItems.resize(1);
+   if( ev->cloneHandler() != 0 )
+   {
+      subItems[0].setUser(ev->cloneHandler(), ev->cloneData());
+   }
+}
+
+void SynClasses::ClassAutoClone::unflatten( VMContext*, ItemArray& subItems, void* instance ) const
+{
+   fassert(subItems.length() == 1);
+   ExprAutoClone* ev = static_cast<ExprAutoClone*>( instance );
+   if( subItems[0].isUser() )
+   {
+      ev->set( subItems[0].asClass(), subItems[0].asInst() );
+   }
+}
+
+void SynClasses::ClassAutoClone::restore( VMContext* ctx, DataReader*dr ) const
+{
+   ExprAutoClone* expr = new ExprAutoClone;
    try {
       ctx->pushData( Item( this, expr ) );
       m_parent->restore( ctx, dr );

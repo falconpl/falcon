@@ -31,6 +31,7 @@
 #include <falcon/classes/classdict.h>
 #include <falcon/classes/classgeneric.h>
 #include <falcon/classes/classformat.h>
+#include <falcon/classes/classmstring.h>
 #include <falcon/prototypeclass.h>
 #include <falcon/classes/classnumeric.h>
 #include <falcon/classes/classmantra.h>
@@ -75,6 +76,7 @@ void StdHandlers::subscribe(Engine* engine)
 
    m_functionClass = new ClassFunction(mantra);
    m_stringClass = new ClassString;
+   m_mstringClass = new ClassMString;
    m_rangeClass = new ClassRange;
    m_arrayClass = new ClassArray;
    m_dictClass = new ClassDict;
@@ -111,6 +113,7 @@ void StdHandlers::subscribe(Engine* engine)
 
    engine->addMantra( m_functionClass );
    engine->addMantra( m_stringClass );
+   engine->addMantra( m_mstringClass );
    engine->addMantra( m_arrayClass );
    engine->addMantra( m_dictClass );
    engine->addMantra( m_protoClass );

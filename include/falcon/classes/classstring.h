@@ -53,15 +53,11 @@ public:
    virtual bool op_init( VMContext* ctx, void*, int32 pcount ) const;
 
    virtual void op_add( VMContext* ctx, void* self ) const;
-   virtual void op_aadd( VMContext* ctx, void* self ) const;
 
    virtual void op_mul( VMContext* ctx, void* self ) const;
-   virtual void op_amul( VMContext* ctx, void* self ) const;
    virtual void op_div( VMContext* ctx, void* self ) const;
-   virtual void op_adiv( VMContext* ctx, void* self ) const;
 
    virtual void op_getIndex( VMContext* ctx, void* self ) const;
-   virtual void op_setIndex( VMContext* ctx, void* self ) const;
 
    virtual void op_compare( VMContext* ctx, void* self ) const;
    virtual void op_toString( VMContext* ctx, void* self ) const;
@@ -72,24 +68,20 @@ public:
    virtual void op_iter( VMContext* ctx, void* self ) const;
    virtual void op_next( VMContext* ctx, void* self ) const;
 
-private:
+protected:
+   ClassString( const String& subclassName );
+
+   class PStepInitNext;
+   PStep* m_initNext;
+
+   class PStepNextOp;
+   class PStep* m_nextOp;
+
    InstanceLock m_lock;
 
-   class FALCON_DYN_CLASS NextOp: public PStep
-   {
-   public:
-      NextOp( ClassString* owner );
-      static void apply_( const PStep*, VMContext* vm );
-   private:
-      ClassString* m_owner;
-   } m_nextOp;
-   
-   class FALCON_DYN_CLASS InitNext: public PStep
-   {
-   public:
-      InitNext();
-      static void apply_( const PStep*, VMContext* vm );
-   } m_initNext;
+private:
+
+   void init();
 };
 
 }

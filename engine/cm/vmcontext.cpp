@@ -50,7 +50,6 @@ static void get_params( const Class*, const String&, void*, Item& value )
    for( int32 i = 0; i < count; ++ i )
    {
       Item* param = ctx->param(i);
-      param->copied();
       ia->at(i) = *param;
    }
 

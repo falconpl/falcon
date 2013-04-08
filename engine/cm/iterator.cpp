@@ -166,7 +166,7 @@ bool ClassIterator::op_init( VMContext* ctx, void* instance, int pcount ) const
    if ( pcount >= 1 )
    {
       Item& other = *ctx->opcodeParams(pcount);
-      ic->m_source.assignFromRemote(other);
+      ic->m_source.copyFromRemote(other);
    }
    else
    {

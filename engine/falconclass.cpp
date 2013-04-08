@@ -1201,7 +1201,7 @@ void FalconClass::op_getProperty( VMContext* ctx, void* self, const String& prop
                   fassert( prop->m_type == Property::t_prop );
                }
                
-               target.assignFromRemote(inst->data()[ prop->m_value.id ]);
+               target.copyFromRemote(inst->data()[ prop->m_value.id ]);
                
                if( target.isFunction() ) {
                   Function* func = target.asFunction();
@@ -1251,7 +1251,7 @@ void FalconClass::op_setProperty( VMContext* ctx, void* self, const String& prop
          throw new AccessTypeError( ErrorParam( e_prop_ro, __LINE__, __FILE__ ).extra( propName ) );
       }
 
-      inst->m_data[ prop->m_value.id ].assignFromLocal( ctx->opcodeParam(1) );
+      inst->m_data[ prop->m_value.id ].copyFromLocal( ctx->opcodeParam(1) );
       ctx->popData();
    }
 }
@@ -1395,7 +1395,7 @@ void FalconClass::PStepInitExpr::apply_( const PStep* ps, VMContext* ctx )
       fassert( prop->m_type == FalconClass::Property::t_prop );
       fassert( prop->expression() != 0 );
       
-      inst->data()[prop->m_value.id].assignFromLocal( ctx->topData());
+      inst->data()[prop->m_value.id].copyFromLocal( ctx->topData());
       ctx->popData();
    }
 
@@ -1427,7 +1427,7 @@ void FalconClass::PStepInitExpr::apply_( const PStep* ps, VMContext* ctx )
          fassert( prop->m_type == FalconClass::Property::t_prop );
       }
       
-      inst->data()[prop->m_value.id].assignFromLocal( ctx->topData() );
+      inst->data()[prop->m_value.id].copyFromLocal( ctx->topData() );
       ctx->popData();
    }
 

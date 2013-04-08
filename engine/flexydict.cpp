@@ -277,7 +277,7 @@ Item* FlexyDict::find( const String& value ) const
 
 void FlexyDict::insert( const String& key, Item& value )
 {
-   _p->m_im[key].assign(value);
+   _p->m_im[key].copyInterlocked(value);
 }
 
 

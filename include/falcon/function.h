@@ -111,7 +111,12 @@ public:
     */
    const String& signature() const { return m_signature; }
 
-   Error* paramError( int line = 0, const char* modName = 0 ) const;
+   /** Calculates the signature removing the first parameter.
+     This is used by methodic functions to calculate the signature of the method version.
+    */
+   String methodicSignature() const;
+
+   Error* paramError( int line = 0, const char* modName = 0, bool methodic=false ) const;
 
    /** Executes the call.
     \param ctx The Virtual Machine context on which the function is executed.

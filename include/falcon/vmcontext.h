@@ -471,7 +471,7 @@ public:
 
    void writeInit( const Item& init )
    {
-      m_initWrite.assignFromRemote( init );
+      m_initWrite.copyFromRemote( init );
    }
 
    void commitInit() {

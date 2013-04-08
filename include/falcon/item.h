@@ -68,7 +68,7 @@ public:
            byte type;
            byte flags;
            byte oldType;
-           byte copied;
+           byte reserved;
         } bits;
         uint16 half;
         uint32 whole;
@@ -130,7 +130,6 @@ public:
    {
       lockId = 0;
       other.lock();
-      other.copied(true);
       copy( other );
       other.unlock();
    }
@@ -389,8 +388,7 @@ public:
 
       The copy marker is cleared as well.
    */
-   void type( byte nt ) { 
-      content.base.bits.copied = false;
+   void type( byte nt ) {
       content.base.bits.flags = 0;
       content.base.bits.type = nt;
    }
@@ -411,18 +409,6 @@ public:
       content.base.bits.flags |= flagIsGarbage;
    }
 
-   /** Returns true if this item has the copy-marker.
-    \return true if copied.
-    */
-   bool copied() const { return content.base.bits.copied != 0; }
-
-   /** Sets the copy mode.
-      \note the method is marked "const" because it operates on
-      a "virtually mutable" copied marker.
-    */
-   void copied( bool bMode ) const {
-      const_cast<Item*>(this)->content.base.bits.copied = bMode;
-   }
 
    /** Copies the full contents of another item.
       \param other The copied item.
@@ -434,10 +420,6 @@ public:
     may not have this semantic at lower level. For example, one may make a
     temporary flat copy of a stack item without willing to notify that to the
     VM.
-
-    The copy mark is actually copied as any other flag or value in the original
-    item. To explicitly declare the original item copied, use the assign()
-    method or used the explicit copied(bool) method.
     */
    void copy( const Item &other )
    {
@@ -456,14 +438,13 @@ public:
    }
 
    /** Assign an item to this item.    
-    This operation resolves into marking the source item as copied, and then
-    applying the copy item.
+    This operation performs a three-way full interlocked copy of the item.
+    To be used when both items might be in a global space.
     */
-   void assign( const Item& other  )
+   void copyInterlocked( const Item& other  )
    {
       Item temp;
       other.lock();
-      other.copied(true);
       temp.copy(other);
       other.unlock();
 
@@ -473,15 +454,14 @@ public:
    }
 
    /**
-    * Assign without interlocking the other item.
+    * Assign without interlocking the remote item.
     * \param local The local item from which we do an unlocked copy.
     *
     * This method only locks this item; this is ok
     * if the source is in the local context data stack.
     */
-   void assignFromLocal( const Item& local  )
+   void copyFromLocal( const Item& local  )
    {
-      local.copied(true);
       lock();
       copy(local);
       unlock();
@@ -491,31 +471,16 @@ public:
     * Perform an assignment from a remote locked item to a local copy.
     * \param remote The remote, non local item from which we do locked copy.
     *
-    * This method only locks this item; this is ok
-    * if the source is in the local context data stack.
+    * This method only locks the remote item; this is ok
+    * if this item is in the local context data stack.
     */
-   void assignFromRemote( const Item& remote )
+   void copyFromRemote( const Item& remote )
    {
       remote.lock();
-      remote.copied(true);
       copy(remote);
       remote.unlock();
    }
 
-
-   /**
-    * Perform a non-assignment local copy.
-    * \param other The local item from which we do an unlocked copy.
-    *
-    * This method only locks this item; this is ok
-    * if the source is in the local context data stack.
-    */
-   void copyFromLocal( const Item& other )
-   {
-      lock();
-      copy(other);
-      unlock();
-   }
 
    bool asBoolean() const { return content.data.val32 != 0; }
    int64 asInteger() const { return content.data.val64; }
