@@ -27,7 +27,7 @@ namespace Ext {
 
 FALCON_DECLARE_FUNCTION(sleep, "time:N");
 FALCON_DECLARE_FUNCTION(rest, "time:N");
-//FALCON_DECLARE_FUNCTION(epoch, "");
+//FALCON_DECLARE_FUNCTION(epoch, ""); moved in sys
 FALCON_DECLARE_FUNCTION(seconds, "");
 FALCON_DECLARE_FUNCTION(quit, "value:X");
 FALCON_DECLARE_FUNCTION(advance, "collection:X");
@@ -35,7 +35,7 @@ FALCON_DECLARE_FUNCTION(int, "item:N|S");
 FALCON_DECLARE_FUNCTION(numeric, "item:N|S");
 FALCON_DECLARE_FUNCTION(input, "");
 FALCON_DECLARE_FUNCTION(passvp, "citem:[C]");
-
+FALCON_DECLARE_FUNCTION(call, "callee:C, params:[A]")
 }
 }
 

@@ -232,7 +232,6 @@ void Function_parameter::invoke( VMContext* ctx, int32 pCount )
    }
 }
 
-
 // I want to try the Ext function constructor...
 static void mth_ctor( VMContext* ctx, int32 )
 {
@@ -272,6 +271,60 @@ static void mth_ctor( VMContext* ctx, int32 )
    ctx->pushData(FALCON_GC_HANDLE(func));
 }
 
+
+/*#
+ @method call Funciton
+ @brief Invokes the given function passing the parameters from an array.
+ @optparam params Array of parameters to be sent to the function.
+ @return The value returned by the invoked function.
+
+ This function can be used to efficiently invoke a function for which
+ the parameters have been stored in a an array.
+
+ The called function replaces this method in the call stack, as if
+ it was directly called.
+
+ The following calls are equivalent:
+ @code
+    function test(a,b)
+       > "A: ", a
+       > "B: ", b
+    end
+
+    test("a","b")
+    [test, "a"]("b")
+    test.call( ["a","b"])
+ @endcode
+
+ @see passvp
+ */
+FALCON_DECLARE_FUNCTION(call, "params:[A]")
+void Function_call::invoke( VMContext* ctx, int32 )
+{
+   Item* iParams = ctx->param(0);
+   if(iParams != 0 && ! iParams->isArray())
+   {
+      throw paramError(__LINE__, SRC);
+   }
+
+   ItemArray* ir = iParams == 0 ? 0 : iParams->asArray();
+   Item self = ctx->self();
+   ctx->returnFrame();
+   ctx->popData();
+
+   if( ir == 0 )
+   {
+      ctx->callItem(self);
+   }
+   else {
+      ItemArray local;
+      // mutlitasking wise...
+      local.copyOnto( *ir );
+      ctx->callItem( self, local.length(), local.elements() );
+   }
+}
+
+
 }
 
 
@@ -292,6 +345,7 @@ ClassFunction::ClassFunction(ClassMantra* parent):
    addProperty("paramlist", &get_paramlist );
 
    addMethod(new CFunction::Function_parameter, true);
+   addMethod(new CFunction::Function_call );
    setConstuctor( &CFunction::mth_ctor, "name:[S]");
 
    setParent(parent);

@@ -78,6 +78,7 @@ CoreModule::CoreModule():
       << new Ext::Function_int
       << new Ext::Function_numeric
       << new Ext::Function_passvp
+      << new Ext::Function_call
       
       // Standard classes
       << new Ext::ClassBarrier
