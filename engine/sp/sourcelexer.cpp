@@ -873,7 +873,7 @@ Parsing::TokenInstance* SourceLexer::nextToken()
             else if( chr == '}' ) {
                m_chr++;
                resetState();
-               Parsing::TokenInstance* ti = m_parser->T_String.makeInstance( m_sline, m_schr, m_text );
+               Parsing::TokenInstance* ti = parser->T_MString.makeInstance( m_sline, m_schr, m_text );
                ti->asString()->toMemBuf();
                return ti;
             }

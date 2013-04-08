@@ -32,6 +32,48 @@ namespace Falcon {
 //=====================================================================
 // Properties
 //
+static void get_isText( const Class*, const String&, void* instance, Item& value )
+{
+   value.setBoolean( static_cast<String*>( instance )->isText() );
+}
+
+static void set_isText( const Class*, const String&, void* instance, const Item& value )
+{
+   String* str = static_cast<String*>( instance );
+   if( value.isTrue() ) {
+      if( ! str->isText() ) {
+         str->manipulator( str->manipulator()->bufferedManipulator() );
+      }
+   }
+   else {
+      str->toMemBuf();
+   }
+}
+
+static void get_charSize( const Class*, const String&, void* instance, Item& value )
+{
+   String* str = static_cast<String*>(instance);
+   value.setInteger( str->manipulator()->charSize() );
+}
+
+static void set_charSize( const Class*, const String&, void* instance, const Item& value )
+{
+   String* str = static_cast<String*>(instance);
+
+   if( ! value.isOrdinal() )
+   {
+      throw new OperandError( ErrorParam( e_inv_params, __LINE__, SRC )
+         .extra( "N" ) );
+   }
+
+   uint32 bpc = (uint32) value.isOrdinal();
+   if ( ! str->setCharSize( bpc ) )
+   {
+      throw new  OperandError( ErrorParam( e_param_range, __LINE__, SRC ) );
+   }
+}
+
+
 
 namespace _classMString
 {
@@ -44,9 +86,11 @@ namespace _classMString
    This method fills the physical storage of the given string with a single
    character or a repeated substring. This can be useful to clean a string used repeatedly
    as input buffer.
+
+   @note When used statically as a class method, the first parameter can be a mutable string.
 */
 
-FALCON_DECLARE_FUNCTION( fill, "target:S,chr:N|S" );
+FALCON_DECLARE_FUNCTION( fill, "target:MString,chr:N|S" );
 
 FALCON_DEFINE_FUNCTION_P1(fill)
 {
@@ -65,7 +109,7 @@ FALCON_DEFINE_FUNCTION_P1(fill)
       i_chr = ctx->param(1);
    }
 
-   if( i_string == 0 || ! i_string->isString()
+   if( i_string == 0 || ! i_string->asClass()->isDerivedFrom( methodOf() )
       || i_chr == 0 || ( ! i_chr->isOrdinal() && !i_chr->isString())
       )
    {
@@ -115,6 +159,9 @@ FALCON_DEFINE_FUNCTION_P1(fill)
 ClassMString::ClassMString():
    ClassString( "MString" )
 {
+   addProperty( "isText", &get_isText, &set_isText );
+   addProperty( "charSize", &get_charSize, &set_charSize );
+
    addMethod( new _classMString::Function_fill, true );
 }
 

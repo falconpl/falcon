@@ -1,0 +1,33 @@
+/*
+@name MString fill
+@category Core-string
+
+@output
+MString.fill test
+As method
+
+A
+AA
+AAA
+As static method
+
+A
+AA
+AAA
+@endoutput
+*/
+
+> "MString.fill test"
+
+> "As method"
+> m"".fill(65)
+> m".".fill(65)
+> m"..".fill(65)
+> m"...".fill(65)
+
+> "As static method"
+> MString.fill( m"", 65)
+> MString.fill( m".", 65)
+> MString.fill( m"..", 65)
+> MString.fill( m"...", 65)
+

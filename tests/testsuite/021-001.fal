@@ -1,0 +1,46 @@
+/*
+@name String methods - front
+@category Core-string
+
+@output
+String methods - front
+Test as a method:
+"",10:
+"",0:
+"a",0:
+"efgh",10:efgh
+"ilmn",1:i
+"opqr",2:op
+Test as a static function:
+"",10:
+"",0:
+"a",0:
+"efgh",10:efgh
+"ilmn",1:i
+"opqr",2:op
+Done
+@endoutput
+*/
+
+> "String methods - front"
+
+tests = .[ 
+   .["" 10]
+   .["" 0 ]
+   .["a" 0 ]
+   .["efgh" 10]
+   .["ilmn" 1]
+   .["opqr" 2]
+]
+
+function test( code, x )
+   > @"\"${x[0]}\",${x[1]}:", code(x)
+end
+
+> "Test as a method:"
+^[ tests ] .[test {(x) x[0].front(x[1]) }]
+
+> "Test as a static function:"
+^[ tests ] .[test {(x) String.front(x[0],x[1]) }]
+
+> "Done"

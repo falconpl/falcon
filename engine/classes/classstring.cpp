@@ -25,6 +25,7 @@
 #include <falcon/errors/operanderror.h>
 #include <falcon/errors/paramerror.h>
 
+#include <falcon/itemarray.h>
 #include <falcon/function.h>
 
 #include <falcon/datareader.h>
@@ -102,17 +103,433 @@ static void get_isText( const Class*, const String&, void* instance, Item& value
    value.setBoolean( static_cast<String*>( instance )->isText() );
 }
 
-static void set_isText( const Class*, const String&, void* instance, const Item& value )
+/*#
+   @property charSize String
+   @brief Returns or changes the size in bytes in this string.
+
+   This properties control the count bytes per character (1, 2 or 4) used to store
+   each character in this string.
+*/
+static void get_charSize( const Class*, const String&, void* instance, Item& value )
 {
-   String* str = static_cast<String*>( instance );
-   if( value.isTrue() ) {
-      if( ! str->isText() ) {
-         str->manipulator( str->manipulator()->bufferedManipulator() );
-      }
+   String* str = static_cast<String*>(instance);
+   value.setInteger( str->manipulator()->charSize() );
+}
+
+
+//=========================================================================
+//
+//
+
+namespace _classString
+{
+
+/*#
+   @method front String
+   @brief Returns the first characters in a string.
+   @param count Number of characters to be returned.
+   @return The first elements or an empty string if the string is empty
+
+   This method returns a string containing characters from the beginning of the string.
+
+   @note when used statically, it takes a the target string as first parameter.
+*/
+FALCON_DECLARE_FUNCTION( front, "string:S,count:N" );
+FALCON_DEFINE_FUNCTION_P1(front)
+{
+   String *str;
+   Item* i_len;
+   int64 len;
+
+   if( ctx->isMethodic() )
+   {
+      str = ctx->self().asString();
+      i_len = ctx->param(0);
+      if( ! i_len->isOrdinal() ) throw paramError( __LINE__, SRC, true );
+      len = i_len->forceInteger();
    }
    else {
-      str->toMemBuf();
+      Item* i_str = ctx->param(0);
+      i_len = ctx->param(1);
+
+      if( ! i_str->isString() || ! i_len->isOrdinal() ) {
+         throw paramError( __LINE__, SRC, true );
+      }
+
+      str = i_str->asString();
+      len = i_len->forceInteger();
    }
+
+   if ( len <= 0 || str->length() == 0 )
+   {
+      ctx->returnFrame( FALCON_GC_HANDLE(new String) );
+   }
+   else if ( ((length_t) len) >= str->length() ) {
+      ctx->returnFrame( FALCON_GC_HANDLE(new String( *str )) );
+   }
+   else {
+      ctx->returnFrame( FALCON_GC_HANDLE(new String( *str, 0, len )) );
+   }
+}
+
+/*#
+   @method back String
+   @brief Returns the last characters in a string.
+   @param count Number of characters to be returned.
+   @return The last elements or an empty string if the string is empty
+
+   This method returns a string containing characters from the end of the string.
+
+   @note when used statically, it takes a the target string as first parameter.
+*/
+FALCON_DECLARE_FUNCTION( back, "back:S,count:N" );
+FALCON_DEFINE_FUNCTION_P1(back)
+{
+   String *str;
+   Item* i_len;
+   int64 len;
+
+   if( ctx->isMethodic() )
+   {
+      str = ctx->self().asString();
+      i_len = ctx->param(0);
+      if( ! i_len->isOrdinal() ) throw paramError( __LINE__, SRC, true );
+      len = i_len->forceInteger();
+   }
+   else {
+      Item* i_str = ctx->param(0);
+      i_len = ctx->param(1);
+
+      if( ! i_str->isString() || ! i_len->isOrdinal() ) {
+         throw paramError( __LINE__, SRC, true );
+      }
+
+      str = i_str->asString();
+      len = i_len->forceInteger();
+   }
+
+   if ( len <= 0 || str->length() == 0 )
+   {
+      ctx->returnFrame( FALCON_GC_HANDLE(new String) );
+   }
+   else if ( ((length_t) len) >= str->length() ) {
+      ctx->returnFrame( FALCON_GC_HANDLE(new String( *str )) );
+   }
+   else {
+      ctx->returnFrame( FALCON_GC_HANDLE(new String( *str, str->length()-len )) );
+   }
+}
+
+
+
+/*#
+   @method splittr String
+   @brief Subdivides a string in an array of substrings given a token substring.
+   @optparam token The token by which the string should be split.
+   @optparam count Optional maximum split count.
+   @return An array of strings containing the split string.
+
+   This function returns an array of strings extracted from the given parameter.
+   The array is filled with strings extracted from the first parameter, by dividing
+   it based on the occurrences of the token substring. A count parameter may be
+   provided to limit the splitting, so to take into consideration only the first
+   relevant  tokens.  Adjacent matching tokens will be ignored.
+   If no matches are possible, the returned array contains
+   at worst a single element containing a copy of the whole string passed as a
+   parameter.
+
+   Contrarily to @a String.split, this function will "eat up" adjacent tokens. While
+   @a strSplit is more adequate to parse field-oriented strings (as i.e.
+   colon separated fields in configuration files) this function is best employed
+   in word extraction.
+
+   @note See @a Tokenizer for a more adequate function to scan extensively
+   wide strings.
+
+   @note when used statically, it takes a the target string as first parameter.
+*/
+FALCON_DECLARE_FUNCTION( splittr, "token:[S],count:[N]" );
+FALCON_DEFINE_FUNCTION_P1(splittr)
+{
+   Item *target;
+   Item *splitstr;
+   Item *count;
+
+   // Parameter checking;
+   if( ctx->isMethodic() )
+   {
+      target = &ctx->self();
+      splitstr = ctx->param(0);
+      count = ctx->param(1);
+   }
+   else
+   {
+      target = ctx->param(0);
+      splitstr = ctx->param(1);
+      count = ctx->param(2);
+   }
+
+   uint32 limit;
+
+   if ( target == 0 || ! target->isString()
+        || (splitstr != 0 && ! (splitstr->isString() || splitstr->isNil()))
+        || ( count != 0 && ! count->isOrdinal() ) )
+   {
+      throw paramError(__LINE__, SRC, ctx->isMethodic() );
+   }
+
+   limit = count == 0 ? 0xffffffff: (uint32) count->forceInteger();
+
+   // Parameter extraction.
+   String *tg_str = target->asString();
+   uint32 tg_len = target->asString()->length();
+
+   // split in chars?
+   if( splitstr == 0 || splitstr->isNil() || splitstr->asString()->size() == 0 )
+   {
+      // split the string in an array.
+      if( limit > tg_len )
+         limit = tg_len;
+
+      ItemArray* ca = new ItemArray( limit );
+      for( uint32 i = 0; i < limit - 1; ++i )
+      {
+         String* elem = new String(1);
+         elem->append( tg_str->getCharAt(i) );
+         ca->append( FALCON_GC_HANDLE(elem) );
+      }
+      // add remains if there are any
+      if(limit <= tg_len)
+         ca->append(tg_str->subString(limit - 1));
+
+      ctx->returnFrame(FALCON_GC_HANDLE(ca));
+      return;
+   }
+
+   String *sp_str = splitstr->asString();
+   uint32 sp_len = splitstr->asString()->length();
+
+   // return item.
+   ItemArray *retarr = new ItemArray;
+
+   // if the split string is empty, return empty string
+   if ( sp_len == 0 )
+   {
+      retarr->append( FALCON_GC_HANDLE(new String()) );
+      ctx->returnFrame(FALCON_GC_HANDLE(retarr));
+      return;
+   }
+
+   // if the token is wider than the string, just return the string
+   if ( tg_len < sp_len )
+   {
+      retarr->append( FALCON_GC_HANDLE(new String( *tg_str )) );
+      ctx->returnFrame(FALCON_GC_HANDLE(retarr));
+      return;
+   }
+
+   uint32 pos = 0;
+   uint32 last_pos = 0;
+   bool lastIsEmpty = false;
+   // scan the string
+   while( limit > 1 && pos <= tg_len - sp_len  )
+   {
+      uint32 sp_pos = 0;
+      // skip matching pattern-
+      while ( tg_str->getCharAt( pos ) == sp_str->getCharAt( sp_pos ) &&
+              sp_pos < sp_len && pos <= tg_len - sp_len ) {
+         sp_pos++;
+         pos++;
+      }
+
+      // a match?
+      if ( sp_pos == sp_len ) {
+         // put the item in the array.
+         uint32 splitend = pos - sp_len;
+         retarr->append( FALCON_GC_HANDLE(new String( String( *tg_str, last_pos, splitend ) ) ) );
+
+         lastIsEmpty = (last_pos >= splitend);
+
+         last_pos = pos;
+         limit--;
+         // skip matching pattern
+         while( sp_pos == sp_len && pos <= tg_len - sp_len ) {
+            sp_pos = 0;
+            last_pos = pos;
+            while ( tg_str->getCharAt( pos ) == sp_str->getCharAt( sp_pos )
+                    && sp_pos < sp_len && pos <= tg_len - sp_len ) {
+               sp_pos++;
+               pos++;
+            }
+         }
+         pos = last_pos;
+
+      }
+      else
+         pos++;
+   }
+
+   // Residual element?
+   // -- but only if we didn't already put a "" in the array
+   if ( limit >= 1 && ! lastIsEmpty ) {
+      retarr->append( FALCON_GC_HANDLE(new String( String( *tg_str, last_pos, (uint32) tg_len ) ) ) );
+   }
+
+   ctx->returnFrame(FALCON_GC_HANDLE(retarr));
+}
+
+
+/*#
+   @method split String
+   @brief Subdivides a string in an array of substrings given a token substring.
+   @optparam token The token by which the string should be split.
+   @optparam count Optional maximum split count.
+   @return An array of strings containing the split string.
+
+   This function returns an array of strings extracted from the given parameter.
+   The array is filled with strings extracted from the first parameter, by dividing
+   it based on the occurrences of the token substring. A count parameter may be
+   provided to limit the splitting, so to take into consideration only the first
+   relevant  tokens.  Adjacent matching tokens will cause the returned array to
+   contains empty strings. If no matches are possible, the returned array contains
+   at worst a single element containing a copy of the whole string passed as a
+   parameter.
+
+   For example, the following may be useful to parse a INI file where keys are
+   separated from values by "=" signs:
+
+   @code
+   key, value = strSplit( string, "=", 2 )
+   @endcode
+
+   This code would return an array of 2 items at maximum; if no "=" signs are found
+   in string, the above code would throw an error because of unpacking size, a
+   thing that may be desirable in a parsing code. If there are more than one "=" in
+   the string, only the first starting from left is considered, while the others
+   are returned in the second item, unparsed.
+
+   If the @b token is empty or not given, the string is returned as a sequence of
+   1-character strings in an array.
+
+
+   @note when used statically, it takes a the target string as first parameter.
+*/
+
+FALCON_DECLARE_FUNCTION( split, "token:[S],count:[N]" );
+FALCON_DEFINE_FUNCTION_P1(split)
+
+{
+   Item *target;
+   Item *splitstr;
+   Item *count;
+
+   // Parameter checking;
+   if( ctx->isMethodic() )
+   {
+      target = &ctx->self();
+      splitstr = ctx->param(0);
+      count = ctx->param(1);
+   }
+   else
+   {
+      target = ctx->param(0);
+      splitstr = ctx->param(1);
+      count = ctx->param(2);
+   }
+
+
+   if ( (target == 0 || ! target->isString())
+        || (splitstr != 0 && ! (splitstr->isString() || splitstr->isNil()))
+        || ( count != 0 && ! count->isOrdinal() ) )
+   {
+      throw paramError(__LINE__, SRC, ctx->isMethodic() );
+   }
+
+   // Parameter extraction.
+   String *tg_str = target->asString();
+   uint32 tg_len = target->asString()->length();
+   uint32 limit = count == 0 ? 0xffffffff: (uint32) count->forceInteger();
+
+   // split in chars?
+   if( splitstr == 0 || splitstr->isNil() || splitstr->asString()->size() == 0)
+   {
+      // split the string in an array.
+      if( limit > tg_len )
+         limit = tg_len;
+
+      ItemArray* ca = new ItemArray( limit );
+      for( uint32 i = 0; i < limit - 1; ++i )
+      {
+         String* elem = new String(1);
+         elem->append( tg_str->getCharAt(i) );
+         ca->append( FALCON_GC_HANDLE(elem) );
+      }
+      // add remains if there are any
+      if(limit <= tg_len)
+         ca->append(tg_str->subString(limit - 1));
+
+      ctx->returnFrame( FALCON_GC_HANDLE(ca) );
+      return;
+   }
+
+   String *sp_str = splitstr->asString();
+   uint32 sp_len = sp_str->length();
+
+
+   // return item.
+   ItemArray *retarr = new ItemArray;
+
+   // if the split string is empty, return empty string
+   if ( sp_len == 0 )
+   {
+      retarr->append( FALCON_GC_HANDLE(new String()) );
+      ctx->returnFrame( FALCON_GC_HANDLE(retarr) );
+      return;
+   }
+
+   // if the token is wider than the string, just return the string
+   if ( tg_len < sp_len )
+   {
+      retarr->append( FALCON_GC_HANDLE(new String( *tg_str ) ) );
+      ctx->returnFrame( FALCON_GC_HANDLE(retarr) );
+      return;
+   }
+
+   uint32 pos = 0;
+   uint32 last_pos = 0;
+   // scan the string
+   while( limit > 1 && pos <= tg_len - sp_len  )
+   {
+      uint32 sp_pos = 0;
+      // skip matching pattern-
+      while ( tg_str->getCharAt( pos ) == sp_str->getCharAt( sp_pos ) &&
+              sp_pos < sp_len && pos <= tg_len - sp_len ) {
+         sp_pos++;
+         pos++;
+      }
+
+      // a match?
+      if ( sp_pos == sp_len ) {
+         // put the item in the array.
+         uint32 splitend = pos - sp_len;
+         retarr->append( FALCON_GC_HANDLE(new String( *tg_str, last_pos, splitend )) );
+         last_pos = pos;
+         limit--;
+
+      }
+      else
+         pos++;
+   }
+
+   // Residual element?
+   if ( limit >= 1 || last_pos < tg_len ) {
+      uint32 splitend = tg_len;
+      retarr->append( FALCON_GC_HANDLE(new String( *tg_str, last_pos, splitend )) );
+   }
+
+   ctx->returnFrame( FALCON_GC_HANDLE(retarr) );
+}
+
 }
 
 //
@@ -125,20 +542,29 @@ ClassString::ClassString():
    init();
 }
 
+
 ClassString::ClassString( const String& subname ):
          Class( subname, FLC_CLASS_ID_STRING )
 {
    init();
 }
 
+
 void ClassString::init()
 {
    m_initNext = new PStepInitNext;
    m_nextOp = new PStepNextOp(this);
 
-   addProperty( "isText", &get_isText, &set_isText );
+   addProperty( "isText", &get_isText );
    addProperty( "len", &get_len );
+   addProperty( "charSize", &get_charSize );
+
+   addMethod( new _classString::Function_front, true );
+   addMethod( new _classString::Function_back, true );
+   addMethod( new _classString::Function_split, true );
+   addMethod( new _classString::Function_splittr, true );
 }
+
 
 ClassString::~ClassString()
 {

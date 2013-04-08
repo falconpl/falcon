@@ -1,0 +1,33 @@
+/*
+@name MString operator test
+@category datatype
+
+@output
+MString operator test
+abc123
+abc456
+abcabc
+abcA
+Done
+@endoutput
+*/
+
+> "MString operator test"
+
+x = m"abc"
+x += "123"
+> x
+
+x = m"abc"
+x += 456
+> x
+
+x = m"abc"
+x *= 2
+> x
+
+x = m"abc"
+x /= 65
+> x
+
+> "Done"
