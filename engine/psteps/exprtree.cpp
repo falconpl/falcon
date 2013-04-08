@@ -155,7 +155,7 @@ void ExprTree::render( TextWriter* tw, int32 depth ) const
          tw->write(" ");
       }
 
-      m_child->render( tw, relativeDepth(depth) );
+      m_child->render( tw, depth+1 );
       if ( m_child->category() != TreeStep::e_cat_expression )
       {
          tw->write("\n");

@@ -188,7 +188,7 @@ void ExprLit::render( TextWriter* tw, int depth ) const
          // non-tree literals are "real literals"...
          tw->write(renderPrefix(depth));
          tw->write("{[] ");
-         m_child->render( tw, relativeDepth(depth) );
+         m_child->render( tw, depth+1 );
          tw->write("}");
          if( depth >= 0 )
          {
