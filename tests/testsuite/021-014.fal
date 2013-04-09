@@ -1,0 +1,44 @@
+/*
+@name String methods - aftrim
+@category Core-string
+
+@output
+String methods - aftrim
+Test as a method:
+m"": m""
+m"\t\n \r": m""
+m"  hello   ": m"hello   "
+m"  hello...", ".": m"  hello..."
+m"  hello...", " .": m"hello..."
+Check changes in places:
+m""
+m""
+m"hello   "
+m"  hello..."
+m"hello..."
+Done
+@endoutput
+*/
+
+> "String methods - aftrim"
+
+tests = .[ 
+   .[m""]
+   .[m"\t\n \r"]
+   .[m"  hello   "]
+   .[m"  hello..." "."]
+   .[m"  hello..." " ."]
+]
+
+function test( code, x )
+   >> ", ".merge(^[x] {(v) ^+ v.describe() } =>[]), ": "
+   > code(x).describe()
+end
+
+> "Test as a method:"
+^[ tests ] .[test {(x) x.len > 1 ? call(x[0].aftrim, x[1:]) : call(x[0].aftrim) }]
+
+> "Check changes in places:"
+^[ tests ] {(x) printl(x[0].describe()) }
+
+> "Done"

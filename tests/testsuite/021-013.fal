@@ -1,0 +1,45 @@
+/*
+@name String methods - ftrim
+@category Core-string
+
+
+@output
+String methods - ftrim
+Test as a method:
+"": m""
+"\t\n \r": m""
+"  hello   ": m"hello   "
+"  hello...", ".": m"  hello..."
+"  hello...", " .": m"hello..."
+Test as a static function:
+"": m""
+"\t\n \r": m""
+"  hello   ": m"hello   "
+"  hello...", ".": m"  hello..."
+"  hello...", " .": m"hello..."
+Done
+@endoutput
+*/
+
+> "String methods - ftrim"
+
+tests = .[ 
+   .[""]
+   .["\t\n \r"]
+   .["  hello   "]
+   .["  hello..." "."]
+   .["  hello..." " ."]
+]
+
+function test( code, x )
+   >> ", ".merge(^[x] {(v) ^+ v.describe() } =>[]), ": "
+   > code(x).describe()
+end
+
+> "Test as a method:"
+^[ tests ] .[test {(x) x.len > 1 ? call(x[0].ftrim, x[1:]) : call(x[0].ftrim) }]
+
+> "Test as a static function:"
+^[ tests ] .[test {(x) call( String.ftrim, x) }]
+
+> "Done"

@@ -1982,7 +1982,7 @@ public:
    TrimCheckerWS() {};
    bool operator()( uint32 chr ) const
    {
-      return (chr == ' ' && chr == '\n' && chr == '\r' && chr == '\t');
+      return (chr == ' ' || chr == '\n' || chr == '\r' || chr == '\t');
    }
 };
 

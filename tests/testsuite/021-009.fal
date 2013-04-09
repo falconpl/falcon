@@ -1,0 +1,44 @@
+/*
+@name String methods - trim
+@category Core-string
+
+@output
+String methods - trim
+Test as a method:
+"": m""
+"\t\n \r": m""
+"  hello   ": m"hello"
+"  hello...", ".": m"  hello"
+"  hello...", " .": m"hello"
+Test as a static function:
+"": m""
+"\t\n \r": m""
+"  hello   ": m"hello"
+"  hello...", ".": m"  hello"
+"  hello...", " .": m"hello"
+Done
+@endoutput
+*/
+
+> "String methods - trim"
+
+tests = .[ 
+   .[""]
+   .["\t\n \r"]
+   .["  hello   "]
+   .["  hello..." "."]
+   .["  hello..." " ."]
+]
+
+function test( code, x )
+   >> ", ".merge(^[x] {(v) ^+ v.describe() } =>[]), ": "
+   > code(x).describe()
+end
+
+> "Test as a method:"
+^[ tests ] .[test {(x) x.len > 1 ? call(x[0].trim, x[1:]) : call(x[0].trim) }]
+
+> "Test as a static function:"
+^[ tests ] .[test {(x) call( String.trim, x) }]
+
+> "Done"

@@ -1,9 +1,9 @@
 /*
-@name String methods - find
+@name String methods - rfind
 @category Core-string
 
 @output
-String methods - find
+String methods - rfind
 Test as a method:
 "", "": -1
 "", "", 10, 20: -1
@@ -30,19 +30,19 @@ Done
 @endoutput
 */
 
-> "String methods - find"
+> "String methods - rfind"
 
 tests = .[ 
    .["" ""]
    .["" "" 10 20]
    .["alpha" "beta" 10 20]
    .["The string is here." "he"]
-   .["The string is here." "he" 14 1]
-   .["The string is here." "he" 8 4]
-   .["The string is here." "he", -1, 4]
-   .["The string is here." "he" 100 4] 
-   .["The string is here." "he" 1]
-   .["The string is here." "he" 2]
+   .["The string is here." "he" 1 14]
+   .["The string is here." "he" 4 8]
+   .["The string is here." "he" 4, -1]
+   .["The string is here." "he" 4 100]
+   .["The string is here." "he" 14]
+   .["The string is here." "he" 15]
 ]
 
 function test( code, x )
