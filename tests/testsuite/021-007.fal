@@ -1,0 +1,64 @@
+/*
+@name String methods - find
+@category Core-string
+
+@output
+String methods - join
+String methods - find
+Test as a method:
+"", "": -1
+"", "", 10, 20: -1
+"alpha", "beta", 10, 20: -1
+"The string is here.", "he": 1
+"The string is here.", "he", 4: 14
+"The string is here.", "he", 4, 8: -1
+"The string is here.", "he", 4, -1: 14
+"The string is here.", "he", 4, 100: 14
+"The string is here.", "he", 1: 1
+"The string is here.", "he", 14: 14
+"The string is here.", "he", 15: -1
+Test as a static function:
+"", "": -1
+"", "", 10, 20: -1
+"alpha", "beta", 10, 20: -1
+"The string is here.", "he": 1
+"The string is here.", "he", 4: 14
+"The string is here.", "he", 4, 8: -1
+"The string is here.", "he", 4, -1: 14
+"The string is here.", "he", 4, 100: 14
+"The string is here.", "he", 1: 1
+"The string is here.", "he", 14: 14
+"The string is here.", "he", 15: -1
+Done
+@endoutput
+*/
+
+> "String methods - find"
+
+tests = .[ 
+   .["" ""]
+   .["" "" 10 20]
+   .["alpha" "beta" 10 20]
+   .["The string is here." "he"]
+   .["The string is here." "he" 4]
+   .["The string is here." "he" 4 8]
+   .["The string is here." "he" 4, -1]
+   .["The string is here." "he" 4 100]
+   .["The string is here." "he" 1]
+   .["The string is here." "he" 14]
+   .["The string is here." "he" 15]
+]
+
+function test( code, x )
+   y = ^[x] {(v) ^+ v.describe() } =>[]   
+   >> ", ".merge(y), ": "
+   > code(x).describe()
+end
+
+> "Test as a method:"
+^[ tests ] .[test {(x) call(x[0].find, x[1:]) }]
+
+> "Test as a static function:"
+^[ tests ] .[test {(x) call( String.find, x) }]
+
+> "Done"

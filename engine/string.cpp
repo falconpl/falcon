@@ -846,14 +846,16 @@ String::String( const char *data ):
    m_class( &csh::handler_static ),
    m_allocated( 0 ),
    m_storage( (byte*) const_cast< char *>(data) ),
-   m_lastMark(0)
+   m_lastMark(0),
+   m_bImmutable(false)
 {
    m_size = strlen( data );
 }
 
 String::String( const char *data, length_t len ):
    m_class( &csh::handler_buffer ),
-   m_lastMark(0)
+   m_lastMark(0),
+   m_bImmutable(false)
 {
    m_size = len != String::npos ? len : strlen( data );
    m_allocated = (( m_size / FALCON_STRING_ALLOCATION_BLOCK ) + 1 ) * FALCON_STRING_ALLOCATION_BLOCK;
@@ -865,7 +867,8 @@ String::String( const char *data, length_t len ):
 String::String( const wchar_t *data ):
    m_allocated( 0 ),
    m_storage( (byte*) const_cast< wchar_t *>(data) ),
-   m_lastMark(0)
+   m_lastMark(0),
+   m_bImmutable(false)
 {
    if ( sizeof( wchar_t ) == 2 )
       m_class = &csh::handler_static16;
@@ -882,7 +885,8 @@ String::String( const wchar_t *data ):
 String::String( const wchar_t *data, length_t len ):
    m_allocated( 0 ),
    m_storage( (byte *) const_cast< wchar_t *>( data ) ),
-   m_lastMark(0)
+   m_lastMark(0),
+   m_bImmutable(false)
 {
    if ( sizeof( wchar_t ) == 2 )
       m_class = &csh::handler_buffer16;
@@ -911,7 +915,8 @@ String::String( const String &other, length_t begin, length_t end ):
    m_allocated( 0 ),
    m_size( 0 ),
    m_storage( 0 ),
-   m_lastMark( other.m_lastMark )
+   m_lastMark( other.m_lastMark ),
+   m_bImmutable(false)
 {
    // by default, copy manipulator
    m_class = other.m_class;
@@ -1962,19 +1967,50 @@ String &String::toMemBuf()
 }
 
 
-void String::trim( int mode )
+
+class String::TrimCheckerSet {
+   const String& m_set;
+public:
+   TrimCheckerSet( const String& set ): m_set(set){}
+   bool operator() ( uint32 chr ) const {
+      return m_set.find( chr ) != String::npos;
+   }
+};
+
+class String::TrimCheckerWS {
+public:
+   TrimCheckerWS() {};
+   bool operator()( uint32 chr ) const
+   {
+      return (chr == ' ' && chr == '\n' && chr == '\r' && chr == '\t');
+   }
+};
+
+
+void String::trim( String::t_trimmode mode )
+{
+   trimInternal(mode, TrimCheckerWS());
+}
+
+
+void String::trimFromSet( String::t_trimmode mode, const String& set )
+{
+   trimInternal(mode, TrimCheckerSet(set) );
+}
+
+
+template<class __Checker>
+void String::trimInternal( String::t_trimmode mode, const __Checker& checker )
 {
    length_t front = 0;
    length_t len = length();
 
-   // modes: 0 = all, 1 = front, 2 = back
-
    // first, trim from behind.
-   if ( mode == 0 || mode == 2 ) {
+   if ( mode == e_tm_all || mode == e_tm_back ) {
       while( len > 0 )
       {
          char_t chr = getCharAt( len - 1 );
-         if( chr != ' ' && chr != '\n' && chr != '\r' && chr != '\t' )
+         if( ! checker(chr) )
          {
             break;
          }
@@ -1991,11 +2027,11 @@ void String::trim( int mode )
    }
 
    // front trim
-   if ( mode == 0 || mode == 1 ) {
+   if ( mode == e_tm_all || mode == e_tm_front ) {
       while( front < len )
       {
          char_t chr = getCharAt( front );
-         if( chr != ' ' && chr != '\n' && chr != '\r' && chr != '\t' )
+         if( ! checker(chr) )
          {
             break;
          }
@@ -2499,11 +2535,11 @@ length_t inl_rfind_chr( const String* str, char_t chr, length_t start, length_t 
    const _t* startptr = ptr + start;
    const _t* endptr = ptr + end;
    
-   while( endptr < startptr  )
+   while( endptr >= startptr  )
    {
-      --startptr;
-      if ( *startptr == chr ) {
-         return( startptr - ptr );
+      --endptr;
+      if ( *endptr == chr ) {
+         return( endptr - ptr );
       }
    }   
    
@@ -2557,10 +2593,10 @@ length_t String::rfind( const String &element, length_t start, length_t end ) co
    if ( size() == 0 || element.size() == 0 )
       return npos;
 
-   if ( start > this->length() )  // npos is defined to be greater than any size
+   if ( end > this->length() )  // npos is defined to be greater than any size
       end = this->length();
 
-   if ( end > start ) {
+   if ( end < start ) {
       length_t temp = end;
       end = start;
       start = temp;
@@ -2568,16 +2604,17 @@ length_t String::rfind( const String &element, length_t start, length_t end ) co
 
    char_t keyStart = element.getCharAt( 0 );
    length_t elemLen = element.length();
-   if ( elemLen > (start - end) )
+   if ( elemLen + start >= end )
    {
       // can't possibly be found
       return npos;
    }
 
-   length_t pos = start - elemLen;
+   length_t pos = end - elemLen + 1;
 
-   while( pos >= end )
+   do
    {
+      pos--;
       if ( this->getCharAt( pos ) == keyStart ) {
          length_t len = 1;
          while( pos + len < end && len < elemLen && element.getCharAt(len) == this->getCharAt( pos + len ) )
@@ -2585,9 +2622,8 @@ length_t String::rfind( const String &element, length_t start, length_t end ) co
          if ( len == elemLen )
             return pos;
       }
-      if ( pos == 0 ) break;
-      pos--;
    }
+   while( pos > 0 );
 
    // not found.
    return npos;
@@ -2628,15 +2664,15 @@ length_t String::find( char_t keyStart, length_t start, length_t end ) const
 length_t String::rfind( char_t keyStart, length_t start, length_t end ) const
 {
    register length_t len = length();
-   if ( end >= len )
+   if ( start >= len )
    {
       return npos;
    }
 
-   if ( start > len ) {
-      start = len;
+   if ( end > len ) {
+      end = len;
    }
-   else if ( end > start ) 
+   else if ( end < start )
    {
       length_t temp = end;
       end = start;

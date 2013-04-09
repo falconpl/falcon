@@ -60,19 +60,19 @@ ExprRange::ExprRange( const ExprRange& other ):
 {
    apply = apply_;
    
-   if ( other.m_estart == 0 )
+   if ( other.m_estart != 0 )
    {
       m_estart = other.m_estart->clone();
       m_estart->setParent(this);
    }
 
-   if ( other.m_eend == 0 )
+   if ( other.m_eend != 0 )
    {
       m_eend = other.m_eend->clone();
       m_eend->setParent(this);
    }
 
-   if ( other.m_estep == 0 )
+   if ( other.m_estep != 0 )
    {
       m_estep = other.m_estep->clone();
       m_estep->setParent(this);

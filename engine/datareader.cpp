@@ -252,7 +252,7 @@ bool DataReader::read( String& tgt )
       if( ! read(nIsText) ) return false;
       if( ! read(nCharCount) ) return false;
       
-      if( nIsText ) {
+      if( (nIsText & 1) == 1) {
          switch( nCharCount )
          {
             case 1: tgt.manipulator(&csh::handler_buffer); break;
@@ -280,6 +280,8 @@ bool DataReader::read( String& tgt )
                return false;
          }
       }
+
+      tgt.setImmutable( (nIsText &2) == 2);
 
       if( !read(size) ) return false;
       if( size % nCharCount != 0 )

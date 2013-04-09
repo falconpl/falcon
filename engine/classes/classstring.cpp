@@ -103,6 +103,24 @@ static void get_isText( const Class*, const String&, void* instance, Item& value
    value.setBoolean( static_cast<String*>( instance )->isText() );
 }
 
+static void set_isText( const Class*, const String&, void* instance, const Item& value )
+{
+   String* str = static_cast<String*>( instance );
+   if( str->isImmutable() )
+   {
+      throw new OperandError( ErrorParam( e_prop_ro, __LINE__, SRC ).extra("Immutable string") );
+   }
+
+   if( value.isTrue() ) {
+      if( ! str->isText() ) {
+         str->manipulator( str->manipulator()->bufferedManipulator() );
+      }
+   }
+   else {
+      str->toMemBuf();
+   }
+}
+
 /*#
    @property charSize String
    @brief Returns or changes the size in bytes in this string.
@@ -110,10 +128,29 @@ static void get_isText( const Class*, const String&, void* instance, Item& value
    This properties control the count bytes per character (1, 2 or 4) used to store
    each character in this string.
 */
+
+
 static void get_charSize( const Class*, const String&, void* instance, Item& value )
 {
    String* str = static_cast<String*>(instance);
    value.setInteger( str->manipulator()->charSize() );
+}
+
+static void set_charSize( const Class*, const String&, void* instance, const Item& value )
+{
+   String* str = static_cast<String*>(instance);
+
+   if( ! value.isOrdinal() )
+   {
+      throw new OperandError( ErrorParam( e_inv_params, __LINE__, SRC )
+         .extra( "N" ) );
+   }
+
+   uint32 bpc = (uint32) value.isOrdinal();
+   if ( ! str->setCharSize( bpc ) )
+   {
+      throw new  OperandError( ErrorParam( e_param_range, __LINE__, SRC ) );
+   }
 }
 
 
@@ -132,7 +169,7 @@ namespace _classString
 
    This method returns a string containing characters from the beginning of the string.
 
-   @note when used statically, it takes a the target string as first parameter.
+   @note When used statically, it takes a the target string as first parameter.
 */
 FALCON_DECLARE_FUNCTION( front, "string:S,count:N" );
 FALCON_DEFINE_FUNCTION_P1(front)
@@ -180,7 +217,7 @@ FALCON_DEFINE_FUNCTION_P1(front)
 
    This method returns a string containing characters from the end of the string.
 
-   @note when used statically, it takes a the target string as first parameter.
+   @note When used statically, it takes a the target string as first parameter.
 */
 FALCON_DECLARE_FUNCTION( back, "back:S,count:N" );
 FALCON_DEFINE_FUNCTION_P1(back)
@@ -238,7 +275,7 @@ FALCON_DEFINE_FUNCTION_P1(back)
    at worst a single element containing a copy of the whole string passed as a
    parameter.
 
-   Contrarily to @a String.split, this function will "eat up" adjacent tokens. While
+   Differently to @a String.split, this function will "eat up" adjacent tokens. While
    @a strSplit is more adequate to parse field-oriented strings (as i.e.
    colon separated fields in configuration files) this function is best employed
    in word extraction.
@@ -246,7 +283,7 @@ FALCON_DEFINE_FUNCTION_P1(back)
    @note See @a Tokenizer for a more adequate function to scan extensively
    wide strings.
 
-   @note when used statically, it takes a the target string as first parameter.
+   @note When used statically, it takes a the target string as first parameter.
 */
 FALCON_DECLARE_FUNCTION( splittr, "token:[S],count:[N]" );
 FALCON_DEFINE_FUNCTION_P1(splittr)
@@ -412,7 +449,7 @@ FALCON_DEFINE_FUNCTION_P1(splittr)
    1-character strings in an array.
 
 
-   @note when used statically, it takes a the target string as first parameter.
+   @note When used statically, it takes a the target string as first parameter.
 */
 
 FALCON_DECLARE_FUNCTION( split, "token:[S],count:[N]" );
@@ -560,6 +597,8 @@ FALCON_DEFINE_FUNCTION_P1(split)
    @endcode
 
    If an element of the array is not a string, an error is raised.
+
+   @note When used statically, it takes a the target string as first parameter.
 */
 
 FALCON_DECLARE_FUNCTION( merge, "separator:[S],array:[S],count:[N]" );
@@ -637,6 +676,8 @@ FALCON_DEFINE_FUNCTION_P1(merge)
    @endcode
 
    If the parameters are not string, a standard @a toString conversion is tried.
+
+   @note When used statically, it takes a the target string as first parameter.
 */
 
 FALCON_DECLARE_FUNCTION( join, "separator:S,..." );
@@ -691,6 +732,387 @@ FALCON_DEFINE_FUNCTION_P1(join)
    ctx->returnFrame( FALCON_GC_HANDLE(ts) );
 }
 
+static void internal_find( VMContext* ctx, Function* func, bool mode )
+{
+   // Parameter checking;
+   Item *target;
+   Item *needle;
+   Item *start_item;
+   Item *end_item;
+
+   if ( ctx->isMethodic() )
+   {
+      target = &ctx->self();
+      needle = ctx->param(0);
+      start_item = ctx->param(1);
+      end_item = ctx->param(2);
+   }
+   else
+   {
+      target = ctx->param(0);
+      needle = ctx->param(1);
+      start_item = ctx->param(2);
+      end_item = ctx->param(3);
+   }
+
+   if ( target == 0 || ! target->isString()
+        || needle == 0 || ! needle->isString()
+        || (start_item != 0 && ! start_item->isOrdinal())
+        || (end_item != 0 && ! end_item->isOrdinal())
+        )
+   {
+      throw func->paramError(__LINE__, SRC, ctx->isMethodic());
+   }
+
+   int64 start = start_item == 0 ? 0 : start_item->forceInteger();
+   int64 end = end_item == 0 ? -1 : end_item->forceInteger();
+   String *sTarget = target->asString();
+
+   int64 len = sTarget->length();
+   // negative? -- fix
+   if ( start < 0 ) end = len + start + 1;
+
+   // out of range?
+   if ( start < 0 || start >= len )
+   {
+      ctx->returnFrame( -1 );
+      return;
+   }
+
+   if ( end < 0 ) end = len + end+1;
+   // again < than 0? -- it's out of range.
+   if ( end < 0 )
+   {
+      ctx->returnFrame( -1 );
+      return;
+   }
+
+   if( end > len ) end = len;
+
+   uint32 pos = mode ?
+            target->asString()->rfind( *needle->asString(), (uint32) start, (uint32) end ) :
+            target->asString()->find( *needle->asString(), (uint32) start, (uint32) end );
+
+   if ( pos != csh::npos )
+      ctx->returnFrame( (int64)pos );
+   else
+      ctx->returnFrame( -1 );
+
+}
+
+/*#
+   @method find String
+   @brief Finds a substring.
+   @param needle Substring to search for.
+   @optparam start Optional position from which to start the search in string.
+   @optparam end Optional position at which to end the search in string.
+   @return The position where the substring is found, or -1.
+
+   Returns the index in string were needle begins, or -1 if not present. Giving a
+   start parameter will cause the search to start from the given position up to the
+   end of the string; if a match can be made at start position, then the the
+   returned value will be the same as start, so when repeating searches in a string
+   for all the possible matches, repeat until the result is -1 by adding one to the
+   returned value and using it as start position for the next search.
+
+   If an end position is given, it is used as upper limit for the search, so that
+   the search is in the interval [start, end-1].
+
+   @note When used statically, it takes a the target string as first parameter.
+*/
+FALCON_DECLARE_FUNCTION( find, "string:S,needle:S,start:[N],end:[N]" );
+FALCON_DEFINE_FUNCTION_P1(find)
+{
+   internal_find( ctx, this, false );
+}
+
+/*#
+   @method rfind String
+   @brief Finds a substring backwards.
+   @param needle Substring to search for.
+   @optparam start Optional position from which to start the search in string.
+   @optparam end Optional position at which to end the search in string.
+   @return The position where the substring is found, or -1.
+
+   Works exactly as @a String.find, except for the fact that the last match
+   in the string (or in the specified interval) is returned.
+
+   @note When used statically, it takes a the target string as first parameter.
+*/
+FALCON_DECLARE_FUNCTION( rfind, "string:S,needle:S,start:[N],end:[N]" );
+FALCON_DEFINE_FUNCTION_P1(rfind)
+
+{
+   internal_find( ctx, this, true );
+}
+
+
+static void internal_trim( String::t_trimmode mode, Function* func, VMContext* ctx, bool inPlace )
+{
+   String *self;
+   Item *trimChars;
+
+   if ( ctx->isMethodic() )
+   {
+      self = ctx->self().asString();
+      trimChars = ctx->param(0);
+   }
+   else
+   {
+      Item *i_str = ctx->param( 0 );
+      if ( i_str == 0 || ! i_str->isString() )
+      {
+         throw func->paramError(__LINE__, SRC, ctx->isMethodic());
+      }
+
+      self = i_str->asString();
+      trimChars = ctx->param(1);
+   }
+
+   if ( trimChars != 0 && trimChars->isArray() && ! trimChars->isString() )
+   {
+      throw func->paramError(__LINE__, SRC, ctx->isMethodic());
+   }
+
+   ClassString* cstring = static_cast<ClassString*>(func->methodOf());
+
+   InstanceLock::Token* tk;
+   String *cs;
+   if( inPlace )
+   {
+      if( self->isImmutable() )
+      {
+         throw FALCON_SIGN_XERROR( ParamError, e_param_type, .extra("Immutable string") );
+      }
+      tk = cstring->lockInstance( self );
+      cs = self;
+   }
+   else {
+      tk = cstring->lockInstance( self );
+      cs = new String( *self );
+      FALCON_GC_HANDLE( cs );
+      cstring->unlockInstance( tk );
+      tk = 0;
+   }
+
+   if ( trimChars == 0 || trimChars->isNil() ) {
+      cs->trim( mode );
+   }
+   else
+   {
+      cs->trimFromSet( mode, *trimChars->asString() );
+   }
+
+   if( tk != 0 )
+   {
+      cstring->unlockInstance( tk );
+   }
+
+   ctx->returnFrame( Item(cs->handler(), cs) );
+
+}
+
+
+/*#
+   @method trim String
+   @brief Trims whitespaces from both ends of a string.
+   @optparam trimSet A set of characters that must be removed.
+   @return The trimmed version of the string.
+
+   A new string, which is a copy of the original one with all characters in @b trimSet
+   at both ends of the string removed, is returned. If @b trimSet is not supplied, it
+   defaults to space, tabulation characters, new lines and carriage returns. The
+   original string is unmodified.
+
+   @note When used statically, it takes a the target string as first parameter.
+*/
+FALCON_DECLARE_FUNCTION( trim, "trimSet:[S]" );
+FALCON_DEFINE_FUNCTION_P1(trim)
+{
+   internal_trim( String::e_tm_all, this, ctx, false);
+}
+
+/*#
+   @method ftrim String
+   @brief Trims front whitespaces in a string.
+   @optparam trimSet A set of characters that must be removed.
+   @return The trimmed version of the string.
+
+   A new string, which is a copy of the original one with all characters in @b trimSet
+   at the beginning of the string removed, is returned. If @b trimSet is not supplied, it
+   defaults to space, tabulation characters, new lines and carriage returns. The
+   original string is unmodified.
+
+   @note When used statically, it takes a the target string as first parameter.
+*/
+
+FALCON_DECLARE_FUNCTION( ftrim, "trimSet:[S]" );
+FALCON_DEFINE_FUNCTION_P1( ftrim )
+{
+   internal_trim(String::e_tm_front, this, ctx, false);
+}
+
+/*#
+   @method rtrim String
+   @brief Trims trailing whitespaces in a string.
+   @optparam trimSet A set of characters that must be removed.
+   @return The trimmed version of the string.
+
+   A new string, which is a copy of the original one with all characters in @b trimSet
+   at the end of the string removed, is returned. If @b trimSet is not supplied, it
+   defaults to space, tabulation characters, new lines and carriage returns. The
+   original string is unmodified.
+
+   @note When used statically, it takes a the target string as first parameter.
+*/
+
+FALCON_DECLARE_FUNCTION( rtrim, "trimSet:[S]" );
+FALCON_DEFINE_FUNCTION_P1( rtrim )
+{
+   internal_trim(String::e_tm_back, this, ctx, false);
+}
+
+
+//=======================================================================================
+// Mutable Strings
+//
+
+
+/*#
+   @method atrim String
+   @brief Trims whitespaces from both ends of a string in place.
+   @optparam trimSet A set of characters that must be removed.
+   @return The same string.
+
+   This method removes all characters in @b trimSet at the beginning and
+   at the end of the string.
+   If @b trimSet is not supplied, it defaults to space, tabulation characters,
+   new lines and carriage returns.
+
+   @note When used statically, it takes a the target string as first parameter.
+*/
+FALCON_DECLARE_FUNCTION( atrim, "trimSet:[S]" );
+FALCON_DEFINE_FUNCTION_P1(atrim)
+{
+   internal_trim( String::e_tm_all, this, ctx, true);
+}
+
+/*#
+   @method aftrim String
+   @brief Trims front whitespaces in a string in place.
+   @optparam trimSet A set of characters that must be removed.
+   @return This string.
+
+   This method removes all characters in @b trimSet at the beginning of the string.
+   If @b trimSet is not supplied, it
+   defaults to space, tabulation characters, new lines and carriage returns.
+
+   @note When used statically, it takes a the target string as first parameter.
+*/
+
+FALCON_DECLARE_FUNCTION( aftrim, "trimSet:[S]" );
+FALCON_DEFINE_FUNCTION_P1( aftrim )
+{
+   internal_trim(String::e_tm_front, this, ctx, true);
+}
+
+/*#
+   @method rtrim String
+   @brief Trims trailing whitespaces in a string.
+   @optparam trimSet A set of characters that must be removed.
+   @return The trimmed version of the string.
+
+   This method removes all characters in @b trimSet at the end of the string.
+   If @b trimSet is not supplied, it
+   defaults to space, tabulation characters, new lines and carriage returns.
+
+   @note When used statically, it takes a the target string as first parameter.
+*/
+
+FALCON_DECLARE_FUNCTION( artrim, "trimSet:[S]" );
+FALCON_DEFINE_FUNCTION_P1( artrim )
+{
+   internal_trim(String::e_tm_back, this, ctx, true);
+}
+
+
+/*#
+   @method fill String
+   @brief Fills a string with a given character or substring.
+   @Prime chr The character (unicode value) or substring used to refill this string.
+   @return The string itself.
+
+   This method fills the physical storage of the given string with a single
+   character or a repeated substring. This can be useful to clean a string used repeatedly
+   as input buffer.
+
+   @note When used statically as a class method, the first parameter can be a mutable string.
+*/
+
+FALCON_DECLARE_FUNCTION( fill, "target:MString,chr:N|S" );
+FALCON_DEFINE_FUNCTION_P1(fill)
+{
+   Item *i_string;
+   Item *i_chr;
+
+   // Parameter checking;
+   if ( ctx->isMethodic() )
+   {
+      i_string = &ctx->self();
+      i_chr = ctx->param(0);
+   }
+   else
+   {
+      i_string = ctx->param(0);
+      i_chr = ctx->param(1);
+   }
+
+   if( i_string == 0 || ! i_string->asClass()->isDerivedFrom( methodOf() )
+      || i_chr == 0 || ( ! i_chr->isOrdinal() && !i_chr->isString())
+      )
+   {
+      throw paramError(__LINE__,SRC, ctx->isMethodic() );
+   }
+
+   String *string = i_string->asString();
+
+   if( string->isImmutable() )
+   {
+      throw new OperandError( ErrorParam( e_prop_ro, __LINE__, SRC ).extra("Immutable string") );
+   }
+
+   if ( i_chr->isOrdinal() )
+   {
+      uint32 chr = (uint32) i_chr->forceInteger();
+      for( uint32 i = 0; i < string->length(); i ++ )
+      {
+         string->setCharAt( i, chr );
+      }
+   }
+   else
+   {
+      String* rep = i_chr->asString();
+
+      if ( rep->length() == 0 )
+      {
+          throw new ParamError( ErrorParam( e_param_range, __LINE__ )
+            .extra( "Empty fill character" ) );
+      }
+
+      uint32 pos = 0;
+      uint32 pos2 = 0;
+      while( pos < string->length() )
+      {
+         string->setCharAt( pos++, rep->getCharAt( pos2++ ) );
+         if ( pos2 >= rep->length() )
+         {
+            pos2 = 0;
+         }
+      }
+   }
+
+   ctx->returnFrame( Item(methodOf(), string) );
+}
 }
 
 //
@@ -716,9 +1138,9 @@ void ClassString::init()
    m_initNext = new PStepInitNext;
    m_nextOp = new PStepNextOp(this);
 
-   addProperty( "isText", &get_isText );
+   addProperty( "isText", &get_isText, &set_isText );
    addProperty( "len", &get_len );
-   addProperty( "charSize", &get_charSize );
+   addProperty( "charSize", &get_charSize, &set_charSize );
 
    addMethod( new _classString::Function_front, true );
    addMethod( new _classString::Function_back, true );
@@ -726,6 +1148,18 @@ void ClassString::init()
    addMethod( new _classString::Function_splittr, true );
    addMethod( new _classString::Function_merge, true );
    addMethod( new _classString::Function_join, true );
+
+   addMethod( new _classString::Function_find, true );
+   addMethod( new _classString::Function_rfind, true );
+
+   addMethod( new _classString::Function_trim, true );
+   addMethod( new _classString::Function_atrim, true );
+   addMethod( new _classString::Function_ftrim, true );
+   addMethod( new _classString::Function_aftrim, true );
+   addMethod( new _classString::Function_rtrim, true );
+   addMethod( new _classString::Function_artrim, true );
+
+   addMethod( new _classString::Function_fill, true );
 }
 
 
@@ -772,8 +1206,10 @@ void ClassString::store( VMContext*, DataWriter* dw, void* data ) const
    String& value = *static_cast<String*>( data );
    TRACE2( "ClassString::store -- (unsafe) \"%s\"", value.c_ize() );
 #else
+   String* orig = static_cast<String*>( data );
    InstanceLock::Token* tk = m_lock.lock(data);
-   String value(*static_cast<String*>( data ));
+   String value(*orig);
+   value.setImmutable(orig->isImmutable());
    m_lock.unlock(tk);
 
    TRACE2( "ClassString::store -- \"%s\"", value.c_ize() );
@@ -819,6 +1255,10 @@ void ClassString::describe( void* instance, String& target, int, int maxlen ) co
    {
       String escaped;
       self->escape(escaped);
+
+      if ( ! static_cast<String*>( instance )->isImmutable() ){
+         target.append("m");
+      }
 
       target.append( '"' );
       if ( (int) self->length() > maxlen && maxlen > 0 )
@@ -1291,8 +1731,225 @@ void ClassString::op_next( VMContext* ctx, void* instance ) const
    if( ! isLast ) ctx->topData().setDoubt();
 }
 
+//========================================================================================
+// Mutable operators
+//
+
+void ClassString::op_aadd( VMContext* ctx, void* self ) const
+{
+   String* str = static_cast<String*>( self );
+   if( str->isImmutable() )
+   {
+      throw new OperandError( ErrorParam( e_prop_ro, __LINE__, SRC ).extra("Immutable string") );
+   }
+
+   Item* op1, *op2;
+   ctx->operands( op1, op2 );
+
+   Class* cls=0;
+   void* inst=0;
+
+   if ( op2->isString() )
+   {
+#ifdef FALCON_MT_UNSAFE
+         op1->asString()->append( *op2->asString() );
+#else
+         InstanceLock::Token* tk = m_lock.lock(op2->asString());
+         String copy( *op2->asString() );
+         m_lock.unlock(tk);
+
+         tk = m_lock.lock(op1->asString());
+         op1->asString()->append(copy);
+         m_lock.unlock(tk);
+#endif
+      ctx->popData();
+      return;
+   }
+   else if ( ! op2->asClassInst( cls, inst ) )
+   {
+      InstanceLock::Token* tk = m_lock.lock(op1->asString());
+      op1->asString()->append( op2->describe() );
+      m_lock.unlock(tk);
+      ctx->popData();
+      return;
+   }
+
+   // else we surrender, and we let the virtual system to find a way.
+   ctx->pushCode( m_nextOp );
+   long depth = ctx->codeDepth();
+
+   // this will transform op2 slot into its string representation.
+   cls->op_toString( ctx, inst );
+
+   if( ctx->codeDepth() == depth )
+   {
+      ctx->popCode();
+
+      // op2 has been transformed (and is ours)
+      String* deep = (String*) op2->asInst();
+
+      InstanceLock::Token* tk = m_lock.lock(str);
+      deep->prepend( *str );
+      m_lock.unlock(tk);
+   }
+}
+
+void ClassString::op_amul( VMContext* ctx, void* instance ) const
+{
+   String* self = static_cast<String*>(instance);
+   if( self->isImmutable() )
+   {
+      throw new OperandError( ErrorParam( e_prop_ro, __LINE__, SRC ).extra("Immutable string") );
+   }
+
+   // self count => self
+   Item& i_count = ctx->topData();
+   if( ! i_count.isOrdinal() )
+   {
+      throw new OperandError( ErrorParam( e_op_params, __LINE__ ).extra( "N" ) );
+   }
+
+   int64 count = i_count.forceInteger();
+   ctx->popData();
+
+   String* target;
+   InstanceLock::Token* tk = m_lock.lock(self);
+
+   String copy(*self);
+   target = self;
+
+   if( count == 0 )
+   {
+      target->size(0);
+   }
+   else
+   {
+      target->reserve( target->size() * count);
+      // start from 1: we have already 1 copy in place
+      for( int64 i = 1; i < count; ++i )
+      {
+         target->append(copy);
+      }
+   }
+
+   if( tk != 0 )
+   {
+      m_lock.unlock(tk);
+   }
+}
 
 
+void ClassString::op_adiv( VMContext* ctx, void* instance ) const
+{
+   String* self = static_cast<String*>(instance);
+   if( self->isImmutable() )
+   {
+      throw new OperandError( ErrorParam( e_prop_ro, __LINE__, SRC ).extra("Immutable string") );
+   }
+
+   // self count => new
+   Item& i_count = ctx->topData();
+   if( ! i_count.isOrdinal() )
+   {
+      throw new OperandError( ErrorParam( e_op_params, __LINE__ ).extra( "N" ) );
+   }
+
+   int64 count = i_count.forceInteger();
+   ctx->popData();
+
+   if ( count < 0 || count >= 0xFFFFFFFFLL )
+   {
+      throw new OperandError( ErrorParam( e_op_params, __LINE__ ).extra( "out of range" ) );
+   }
+
+   InstanceLock::Token* tk = m_lock.lock(self);
+   self->append((char_t) count);
+   m_lock.unlock(tk);
+}
+
+
+void ClassString::op_setIndex( VMContext* ctx, void* self ) const
+{
+   String& str = *static_cast<String*>( self );
+   if( str.isImmutable() )
+   {
+      throw new OperandError( ErrorParam( e_prop_ro, __LINE__, SRC ).extra("Immutable string") );
+   }
+
+   Item* value, *arritem, *index;
+   ctx->operands( value, arritem, index );
+
+   if ( ! value->isString() && ! value->isOrdinal())
+   {
+      throw new OperandError( ErrorParam( e_op_params, __LINE__ ).extra( "S" ) );
+   }
+
+   if ( index->isOrdinal() )
+   {
+      // simple index assignment: a[x] = value
+      {
+         InstanceLock::Locker( &m_lock, &str );
+
+         int64 v = index->forceInteger();
+
+         if ( v < 0 ) v = str.length() + v;
+
+         if ( v >= str.length() )
+         {
+            throw new AccessError( ErrorParam( e_arracc, __LINE__ ).extra("index out of range") );
+         }
+
+         if( value->isOrdinal() ) {
+            str.setCharAt( (length_t) v, (char_t) value->forceInteger() );
+         }
+         else {
+            str.setCharAt( (length_t) v, (char_t) value->asString()->getCharAt( 0 ) );
+         }
+      }
+
+      ctx->stackResult( 3, *value );
+   }
+   else if ( index->isRange() )
+   {
+      Range& rng = *static_cast<Range*>( index->asInst() );
+
+      {
+         InstanceLock::Locker( &m_lock, &str );
+
+         int64 strLen = str.length();
+         int64 start = rng.start();
+         int64 end = ( rng.isOpen() ) ? strLen : rng.end();
+
+         // handle negative indexes
+         if ( start < 0 ) start = strLen + start;
+         if ( end < 0 ) end = strLen + end;
+
+         // do some validation checks before proceeding
+         if ( start >= strLen  || end > strLen )
+         {
+            throw new AccessError( ErrorParam( e_arracc, __LINE__ ).extra("index out of range") );
+         }
+
+         if ( value->isString() )  // should be a string
+         {
+            String& strVal = *value->asString();
+            str.change( (Falcon::length_t)start, (Falcon::length_t)end, strVal );
+         }
+         else
+         {
+            String temp;
+            temp.append((char_t)value->forceInteger());
+            str.change((Falcon::length_t)start, (Falcon::length_t)end, temp );
+         }
+      }
+
+      ctx->stackResult( 3, *value );
+   }
+   else
+   {
+      throw new OperandError( ErrorParam( e_op_params, __LINE__ ).extra( "I|R" ) );
+   }
+}
 
 }
 

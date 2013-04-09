@@ -328,6 +328,7 @@ protected:
    length_t m_size;
    byte *m_storage;
    uint32 m_lastMark;
+   bool m_bImmutable;
 
    /**
     * Creates the string.
@@ -335,7 +336,8 @@ protected:
     * This method is protected. It can be accessed only by subclasses.
     */
    explicit String( csh::Base *cl ) :
-      m_class( cl )
+      m_class( cl ),
+      m_bImmutable(false)
    {}
 
    void internal_escape( String &strout, bool full ) const;
@@ -358,7 +360,8 @@ public:
       m_allocated( 0 ),
       m_size( 0 ),
       m_storage( 0 ),
-      m_lastMark( 0 )
+      m_lastMark( 0 ),
+      m_bImmutable(false)
    {
    }
 
@@ -466,7 +469,8 @@ public:
    */
    String( const String &other ):
       m_allocated( 0 ),
-      m_lastMark( other.m_lastMark )
+      m_lastMark( other.m_lastMark ),
+      m_bImmutable(false)
    {
       copy( other );
    }
@@ -781,9 +785,9 @@ public:
    void prepend( const String &source ) { m_class->insert( this, 0, 0, &source ); }
 
    length_t find( const String &element, length_t start=0, length_t end=csh::npos) const;
-   length_t rfind( const String &element, length_t start=csh::npos, length_t end=0) const;
+   length_t rfind( const String &element, length_t start=0, length_t end=csh::npos) const;
    length_t find( char_t element, length_t start=0, length_t end=csh::npos) const;
-   length_t rfind( char_t element, length_t start=csh::npos, length_t end=0) const;
+   length_t rfind( char_t element, length_t start=0, length_t end=csh::npos) const;
 
    /** Compares a string to another.
       Optimized to match against C strings.
@@ -1207,6 +1211,13 @@ public:
    */
    void reserve( length_t size );
    
+   typedef enum  {
+      e_tm_all,
+      e_tm_front,
+      e_tm_back
+   }
+   t_trimmode;
+
    /** Remove efficiently whitespaces at beginning and end of the string.
       If whitespaces are only at the end of the string, the lenght of the string
       is simply reduced; this means that static strings may stay static after
@@ -1216,10 +1227,16 @@ public:
       \param mode 0 = all, 1 = front, 2 = back
 
    */
-   void trim( int mode );
+   void trim( t_trimmode mode );
+
+   /** Remove efficiently characters from a given set at beginning and end of the string.
+      \param mode 0 = all, 1 = front, 2 = back
+      \param set A string containing the characters to be removed.
+   */
+   void trimFromSet( t_trimmode mode, const String& set );
    
    /** Trims whitespaces from all the parts of the string. */
-   void trim() { trim( 0 ); }
+   void trim() { trim( e_tm_all ); }
 
    /** Returns a string replicating the first one. 
     \param times Count of replicates of this string
@@ -1235,8 +1252,24 @@ public:
     *
     * If what is empty, whitespaces are removed.
     */
-   void frontTrim() { trim( 1 ); }
-   void backTrim() { trim( 2 ); }
+   void frontTrim() { trim( e_tm_front ); }
+
+   /**
+    * Remove efficiently 'what' at the end of the string.
+    *
+    * If what is empty, whitespaces are removed.
+    */
+   void backTrim() { trim( e_tm_back ); }
+
+   void frontTrimFromSet( const String& set )
+   {
+      trimFromSet( e_tm_front, set );
+   }
+
+   void backTrimFromSet( const String& set )
+   {
+      trimFromSet( e_tm_back, set );
+   }
 
    /**
     * Convert the string to all lower case.
@@ -1356,6 +1389,15 @@ public:
    String* clone() const { return new String(*this); }
 
    static Class* m_class_handler;
+
+   bool isImmutable() const { return m_bImmutable; }
+   void setImmutable( bool i ) {  m_bImmutable = i; }
+
+private:
+   class TrimCheckerSet;
+   class TrimCheckerWS;
+
+   template<class __Checker> void trimInternal( String::t_trimmode mode, const __Checker& checker );
 };
 
 

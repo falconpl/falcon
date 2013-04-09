@@ -202,6 +202,7 @@ void ExprCall::apply_( const PStep* v, VMContext* ctx )
             top.forceClassInst( cls, inst );
             cls->op_call( ctx, pcount, inst );
          }
+         break;
    }
 }
 

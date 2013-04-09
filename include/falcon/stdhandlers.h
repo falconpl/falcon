@@ -254,17 +254,6 @@ public:
     */
    Class* reClass() const { return m_reClass; }
 
-   /** Returns the global instance of the ClassMString class.
-   \return the Engine instance of the ClassMString handler.
-
-    Method init() must have been called before.
-
-    @note This method will assert and terminate the program if compiled in debug mode
-    in case the engine has not been initialized. In release, it will just
-    return a null pointer.
-    */
-   Class* mstringClass() const { return m_mstringClass; }
-
    /** Returns the global instance of the ClassRestorer class.
    \return the Engine instance of the ClassRestorer handler.
 
@@ -411,7 +400,6 @@ private:
    //
    Class* m_functionClass;
    Class* m_stringClass;
-   Class* m_mstringClass;
    Class* m_rangeClass;
    Class* m_arrayClass;
    Class* m_dictClass;

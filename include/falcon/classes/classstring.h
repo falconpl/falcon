@@ -36,6 +36,10 @@ public:
    ClassString();
    virtual ~ClassString();
 
+   // exposing the instance lock
+   InstanceLock::Token* lockInstance( void* instance ) const { return m_lock.lock(instance); }
+   void unlockInstance( InstanceLock::Token* tk ) const { m_lock.unlock(tk); }
+
    virtual int64 occupiedMemory( void* instance ) const;
    virtual void dispose( void* self ) const;
    virtual void* clone( void* source ) const;
@@ -50,6 +54,8 @@ public:
    virtual bool gcCheckInstance( void* instance, uint32 mark ) const;
 
    //=============================================================
+   // Immutable operators
+   //
    virtual bool op_init( VMContext* ctx, void*, int32 pcount ) const;
 
    virtual void op_add( VMContext* ctx, void* self ) const;
@@ -67,6 +73,15 @@ public:
 
    virtual void op_iter( VMContext* ctx, void* self ) const;
    virtual void op_next( VMContext* ctx, void* self ) const;
+
+   //=============================================================
+   // Mutable operators
+   //
+   virtual void op_aadd( VMContext* ctx, void* self ) const;
+   virtual void op_amul( VMContext* ctx, void* self ) const;
+   virtual void op_adiv( VMContext* ctx, void* self ) const;
+
+   virtual void op_setIndex( VMContext* ctx, void* self ) const;
 
 protected:
    ClassString( const String& subclassName );

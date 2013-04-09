@@ -216,7 +216,6 @@ bool DataWriter::write( double value )
       locBuf[0] = addr[7];
       return Writer::writeRaw( locBuf, 8 );
    }
-
 }
 
 
@@ -229,7 +228,7 @@ bool DataWriter::write( const Date& date )
 bool DataWriter::write( const String& tgt )
 {
    byte nCharCount=(byte) tgt.manipulator()->charSize();
-   byte nIsText = (byte) tgt.isText() ? 1:0;
+   byte nIsText = (byte) (( tgt.isText() ? 1:0) | (tgt.isImmutable()?2:0));
    length_t size = tgt.size();
 
    write( nIsText );
