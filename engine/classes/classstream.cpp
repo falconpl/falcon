@@ -235,9 +235,14 @@ FALCON_DECLARE_FUNCTION( read, "data:S, count:[N], start:[N]" );
 void Function_read::invoke( ::Falcon::VMContext* ctx, ::Falcon::int32 )
 {
    Item* i_data = ctx->param(0);
-   if( i_data == 0 || !(i_data->isString()||i_data->isMemBuf()) )
+   if( i_data == 0 || ! i_data->isString() )
    {
       throw paramError();
+   }
+   String* data = i_data->asString();
+   if( data->isImmutable() )
+   {
+      throw new ParamError( ErrorParam(e_param_type, __LINE__, SRC).extra("Immutable string") );
    }
    
    Item* i_count = ctx->param(1);

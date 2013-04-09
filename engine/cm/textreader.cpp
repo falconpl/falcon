@@ -111,7 +111,13 @@ void Function_read::invoke(VMContext* ctx, int32 )
    }
            
    TextReader* sc = static_cast<TextReader*>(ctx->self().asInst());
-   bool value = sc->read( *i_data->asString(), (length_t) i_count->forceInteger() );
+   String* data = i_data->asString();
+   if( data->isImmutable() )
+   {
+      throw new ParamError( ErrorParam(e_param_type, __LINE__, SRC).extra("Immutable string") );
+   }
+
+   bool value = sc->read( *data, (length_t) i_count->forceInteger() );
    ctx->returnFrame( value );   
 }
 
@@ -166,8 +172,13 @@ void Function_readLine::invoke(VMContext* ctx, int32 )
    
    if( count > 0 )
    {
+      String* data = i_data->asString();
+      if( data->isImmutable() )
+      {
+         throw new ParamError( ErrorParam(e_param_type, __LINE__, SRC).extra("Immutable string") );
+      }
       TextReader* sc = static_cast<TextReader*>(ctx->self().asInst());
-      bool value = sc->readLine( *i_data->asString(), count );
+      bool value = sc->readLine( *data, count );
       ctx->returnFrame( value );   
    }
    else {
@@ -220,8 +231,14 @@ void Function_readEof::invoke(VMContext* ctx, int32 )
       return;
    }      
    
+   String* data = i_data->asString();
+   if( data->isImmutable() )
+   {
+      throw new ParamError( ErrorParam(e_param_type, __LINE__, SRC).extra("Immutable string") );
+   }
+
    TextReader* sc = static_cast<TextReader*>(ctx->self().asInst());
-   bool value = sc->readEof( *i_data->asString() );
+   bool value = sc->readEof( *data );
    ctx->returnFrame( value );   
 }
 
@@ -261,10 +278,16 @@ void Function_readRecord::invoke(VMContext* ctx, int32 )
    length_t count =  i_count == 0 ? 4096 : 
          static_cast<length_t>(i_count->forceInteger());
    
+   String* data = i_data->asString();
+   if( data->isImmutable() )
+   {
+      throw new ParamError( ErrorParam(e_param_type, __LINE__, SRC).extra("Immutable string") );
+   }
+
    if( count > 0 )
    {
       TextReader* sc = static_cast<TextReader*>(ctx->self().asInst());
-      bool value = sc->readRecord( *i_data->asString(), *i_sep->asString(), count );
+      bool value = sc->readRecord( *data, *i_sep->asString(), count );
       ctx->returnFrame( value );
    }
    else {
@@ -314,6 +337,11 @@ static bool internal_readToken( VMContext* ctx, String& target, ItemArray* iarr,
    length_t count =  i_count == 0 ? 4096 : 
          static_cast<length_t>(i_count->forceInteger());
    
+   if( target.isImmutable() )
+   {
+      throw new ParamError( ErrorParam(e_param_type, __LINE__, SRC).extra("Immutable string") );
+   }
+
    if( count > 0 )
    {
       String tokens[32];
