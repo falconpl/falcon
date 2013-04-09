@@ -1,0 +1,58 @@
+/*
+@name String methods - startsWith
+@category Core-string
+
+@output
+Test as a method:
+"", "": true
+"", "longer": false
+"sho", "short": false
+"some string", "": true
+"some string", "so": true
+"some string", "os": false
+"some string", "SOme", false: false
+"some string", "OS", false: false
+"some string", "SOme ", true: true
+"some string", "SomE ", true: true
+Test as a static function:
+"", "": true
+"", "longer": false
+"sho", "short": false
+"some string", "": true
+"some string", "so": true
+"some string", "os": false
+"some string", "SOme", false: false
+"some string", "OS", false: false
+"some string", "SOme ", true: true
+"some string", "SomE ", true: true
+Done
+@endoutput
+*/
+
+> "String methods - startsWith"
+
+tests = .[ 
+   .["" ""]
+   .["" "longer"]
+   .["sho" "short"]
+   .["some string" ""]
+   .["some string" "so"]
+   .["some string" "os"]
+   .["some string" "SOme" false]
+   .["some string" "OS" false]
+   .["some string" "SOme " true]
+   .["some string" "SomE " true]
+]
+
+function test( code, x )
+   >> ", ".merge(^[x] {(v) ^+ v.describe() } =>[]), ": "
+   > code(x).describe()
+end
+
+> "Test as a method:"
+^[ tests ] .[test {(x) x.len > 1 ? call(x[0].startsWith, x[1:]) : call(x[0].startsWith) }]
+
+> "Test as a static function:"
+^[ tests ] .[test {(x) call( String.startsWith, x) }]
+
+> "Done"

@@ -1091,6 +1091,158 @@ FALCON_DEFINE_FUNCTION_P1( lower )
 }
 
 
+static void internal_start_end_with( VMContext* ctx, Function* func, bool isEnd  )
+{
+   Item* source;
+   Item* i_token;
+   Item* i_icase;
+
+   // Parameter checking;
+   if ( ctx->isMethodic() )
+   {
+      source = &ctx->self();
+      i_token = ctx->param(0);
+      i_icase = ctx->param(1);
+   }
+   else
+   {
+      source = ctx->param(0);
+      i_token = ctx->param(1);
+      i_icase = ctx->param(2);
+   }
+
+   if ( source == 0 || ! source->isString() ||
+        i_token == 0 || ! i_token->isString() )
+   {
+      throw func->paramError(__LINE__, SRC, ctx->isMethodic() );
+   }
+
+   String *src = source->asString();
+   bool iCase = i_icase ? i_icase->isTrue() : false;
+
+   ClassString* cstring = static_cast<ClassString*>(func->methodOf());
+
+   InstanceLock::Token* tk = cstring->lockInstance(src);
+
+   bool res = isEnd ?
+            src->endsWith( *i_token->asString(), iCase ) :
+            src->startsWith( *i_token->asString(), iCase );
+
+   cstring->unlockInstance(tk);
+
+   ctx->returnFrame( Item().setBoolean(res) );
+}
+
+/*#
+   @method startsWith String
+   @brief Check if a strings starts with a substring.
+   @param token The substring that will be compared with this string.
+   @optparam icase If true, performs a case neutral check
+   @return True if @b token matches the beginning of this string, false otherwise.
+
+   This method performs a comparison check at the beginning of the string.
+   If this string starts with @b token, the function returns true. If @b token
+   is larger than the string, the method will always return false, and
+   if @b token is an empty string, it will always match.
+
+   The optional parameter @b icase can be provided as true to have this
+   method to perform a case insensitive match.
+
+   @note When used statically, it takes a the target string as first parameter.
+*/
+FALCON_DECLARE_FUNCTION( startsWith, "string:S,token:S,icase:[B]" );
+FALCON_DEFINE_FUNCTION_P1( startsWith )
+{
+   internal_start_end_with( ctx, this, false );
+}
+
+
+/*#
+   @method endsWith String
+   @brief Check if a strings ends with a substring.
+   @param token The substring that will be compared with this string.
+   @optparam icase If true, performs a case neutral check
+   @return True if @b token matches the end of this string, false otherwise.
+
+   This method performs a comparison check at the end of the string.
+   If this string ends with @b token, the function returns true. If @b token
+   is larger than the string, the method will always return false, and
+   if @b token is an empty string, it will always match.
+
+   The optional parameter @b icase can be provided as true to have this
+   method to perform a case insensitive match.
+
+   @note When used statically, it takes a the target string as first parameter.
+*/
+FALCON_DECLARE_FUNCTION( endsWith, "string:S,token:S,icase:[B]" );
+FALCON_DEFINE_FUNCTION_P1( endsWith )
+{
+   internal_start_end_with( ctx, this, true );
+}
+
+
+/*#
+   @method cmpi String
+   @brief Performs a lexicographic comparation of two strings, ignoring character case.
+   @param string Second string to be compared with this one.
+   @return <0, 0 or >0, respectively if this string is less, equal or greater than
+      the @b string parameter.
+
+   The two strings are compared ignoring the case of latin characters contained in
+   the strings.
+
+   If the first string is greater than the second, the function returns a number
+   less than 0. If it's
+   smaller, it returns a positive number. If the two strings are the same,
+   ignoring the case of the characters, 0 is returned.
+
+   @note When used statically, it takes a the target string as first parameter.
+*/
+FALCON_DECLARE_FUNCTION( cmpi, "this:S,string:S" );
+FALCON_DEFINE_FUNCTION_P1( cmpi )
+{
+   Item *s1_itm, *s2_itm;
+
+   // Parameter checking;
+   if( ctx->isMethodic() )
+   {
+      s1_itm = &ctx->self();
+      s2_itm = ctx->param(0);
+   }
+   else
+   {
+      s1_itm = ctx->param(0);
+      s2_itm = ctx->param(1);
+   }
+
+   if ( s1_itm == 0 || ! s1_itm->isString() || s2_itm == 0 || !s2_itm->isString() )
+   {
+      throw paramError(__LINE__, SRC, ctx->isMethodic() );
+   }
+
+
+   String* str1 = s1_itm->asString();
+   String* str2 = s2_itm->asString();
+   // avoid double lock of the same item.
+   if( str1 == str2 )
+   {
+      ctx->returnFrame((int64)0);
+      return;
+   }
+
+   ClassString* cstring = static_cast<ClassString*>(methodOf());
+   InstanceLock::Token* tk1 = cstring->lockInstance(str1);
+   InstanceLock::Token* tk2 = cstring->lockInstance(str2);
+
+   int32 result = str1->compareIgnoreCase(*str2);
+
+   cstring->unlockInstance(tk2);
+   cstring->unlockInstance(tk1);
+
+   ctx->returnFrame((int64) result );
+}
+
+
 //=======================================================================================
 // Mutable Strings
 //
@@ -1315,6 +1467,10 @@ void ClassString::init()
    addMethod( new _classString::Function_lower, true );
    addMethod( new _classString::Function_aupper, true );
    addMethod( new _classString::Function_alower, true );
+
+   addMethod( new _classString::Function_startsWith, true );
+   addMethod( new _classString::Function_endsWith, true );
+   addMethod( new _classString::Function_cmpi, true );
 
    addMethod( new _classString::Function_fill, true );
 

@@ -1,0 +1,47 @@
+/*
+@name String methods - cmpi
+@category Core-string
+
+@output
+String methods - cmpi
+Test as a method:
+"", "": 0
+"short", "longer": 1
+"STRING", "string": 0
+"strING", "StrIng": 0
+"smAllEr", "Larger": 1
+"Larger", "smAllEr": -1
+Test as a static function:
+"", "": 0
+"short", "longer": 1
+"STRING", "string": 0
+"strING", "StrIng": 0
+"smAllEr", "Larger": 1
+"Larger", "smAllEr": -1
+Done
+@endoutput
+*/
+
+> "String methods - cmpi"
+
+tests = .[ 
+   .["" ""]
+   .["short" "longer"]
+   .["STRING" "string"]
+   .["strING" "StrIng"]
+   .["smAllEr" "Larger"]
+   .["Larger" "smAllEr"]
+]
+
+function test( code, x )
+   >> ", ".merge(^[x] {(v) ^+ v.describe() } =>[]), ": "
+   > code(x).describe()
+end
+
+> "Test as a method:"
+^[ tests ] .[test {(x) call(x[0].cmpi, x[1:]) }]
+
+> "Test as a static function:"
+^[ tests ] .[test {(x) call( String.cmpi, x) }]
+
+> "Done"

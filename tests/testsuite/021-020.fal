@@ -1,0 +1,59 @@
+/*
+@name String methods - endsWith
+@category Core-string
+
+@output
+String methods - endsWith
+Test as a method:
+"", "": true
+"", "longer": false
+"sho", "short": false
+"some string", "": true
+"some string", "ing": true
+"some string", "ing ": false
+"some string", "Ing", false: false
+"some string", "ING", false: false
+"some string", " String", true: true
+"some string", " StRING", true: true
+Test as a static function:
+"", "": true
+"", "longer": false
+"sho", "short": false
+"some string", "": true
+"some string", "ing": true
+"some string", "ing ": false
+"some string", "Ing", false: false
+"some string", "ING", false: false
+"some string", " String", true: true
+"some string", " StRING", true: true
+Done
+@endoutput
+*/
+
+> "String methods - endsWith"
+
+tests = .[ 
+   .["" ""]
+   .["" "longer"]
+   .["sho" "short"]
+   .["some string" ""]
+   .["some string" "ing"]
+   .["some string" "ing "]
+   .["some string" "Ing" false]
+   .["some string" "ING" false]
+   .["some string" " String" true]
+   .["some string" " StRING" true]
+]
+
+function test( code, x )
+   >> ", ".merge(^[x] {(v) ^+ v.describe() } =>[]), ": "
+   > code(x).describe()
+end
+
+> "Test as a method:"
+^[ tests ] .[test {(x) x.len > 1 ? call(x[0].endsWith, x[1:]) : call(x[0].endsWith) }]
+
+> "Test as a static function:"
+^[ tests ] .[test {(x) call( String.endsWith, x) }]
+
+> "Done"
