@@ -926,7 +926,7 @@ static void internal_trim( String::t_trimmode mode, Function* func, VMContext* c
 
    @note When used statically, it takes a the target string as first parameter.
 */
-FALCON_DECLARE_FUNCTION( trim, "trimSet:[S]" );
+FALCON_DECLARE_FUNCTION( trim, "string:S,trimSet:[S]" );
 FALCON_DEFINE_FUNCTION_P1(trim)
 {
    internal_trim( String::e_tm_all, this, ctx, false);
@@ -946,7 +946,7 @@ FALCON_DEFINE_FUNCTION_P1(trim)
    @note When used statically, it takes a the target string as first parameter.
 */
 
-FALCON_DECLARE_FUNCTION( ftrim, "trimSet:[S]" );
+FALCON_DECLARE_FUNCTION( ftrim, "string:S,trimSet:[S]" );
 FALCON_DEFINE_FUNCTION_P1( ftrim )
 {
    internal_trim(String::e_tm_front, this, ctx, false);
@@ -966,10 +966,128 @@ FALCON_DEFINE_FUNCTION_P1( ftrim )
    @note When used statically, it takes a the target string as first parameter.
 */
 
-FALCON_DECLARE_FUNCTION( rtrim, "trimSet:[S]" );
+FALCON_DECLARE_FUNCTION( rtrim, "string:S,trimSet:[S]" );
 FALCON_DEFINE_FUNCTION_P1( rtrim )
 {
    internal_trim(String::e_tm_back, this, ctx, false);
+}
+
+
+
+/*#
+   @method buffer String
+   @brief (static) Pre-allocates a mutable empty string.
+   @param size Size of the pre-allocated string.
+   @return The new string.
+
+   The returned string is an empty string, and equals to "". However, the required
+   size is pre-allocated, and addition to this string (i.e. += operators)
+   takes place in a fraction of the time otherwise required, up tho the filling
+   of the pre-allocated buffer. Also, this string can be fed into file functions,
+   the pre-allocation size being used as the input read size.
+*/
+FALCON_DECLARE_FUNCTION( buffer, "size:N" );
+FALCON_DEFINE_FUNCTION_P1( buffer )
+{
+   // Parameter checking;
+   Item *qty = ctx->param(0);
+   if ( qty == 0 || ! qty->isOrdinal() ) {
+      throw paramError(__LINE__, SRC );
+   }
+
+   int32 size = (int32) qty->forceInteger();
+   if ( size <= 0 ) {
+      throw new ParamError( ErrorParam( e_param_range, __LINE__ ) );
+   }
+
+   ctx->returnFrame( FALCON_GC_HANDLE( new String( size ) ) );
+}
+
+
+static void internal_upper_lower( VMContext* ctx, Function* func, bool isUpper, bool inPlace )
+{
+   Item *source;
+
+   // Parameter checking;
+   if ( ctx->isMethodic() )
+   {
+      source = &ctx->self();
+   }
+   else
+   {
+      source = ctx->param(0);
+      if ( source == 0 || ! source->isString() ) {
+         throw func->paramError(__LINE__, SRC, false);
+      }
+   }
+
+   ClassString* clstr = static_cast<ClassString*>(func->methodOf());
+   String *src = source->asString();
+
+   String* target;
+
+   if( inPlace )
+   {
+      if( src->isImmutable() )
+      {
+         throw new ParamError( ErrorParam( e_inv_params, __LINE__, SRC ). extra( "Immutable string ") );
+      }
+
+      InstanceLock::Token* tk = clstr->lockInstance(src);
+      target = src;
+      if( isUpper )
+         target->upper();
+      else
+         target->lower();
+      clstr->unlockInstance(tk);
+   }
+   else
+   {
+      InstanceLock::Token* tk = clstr->lockInstance(src);
+      target = new String(*src);
+      clstr->unlockInstance(tk);
+
+      FALCON_GC_HANDLE(target);
+
+      if( isUpper )
+         target->upper();
+      else
+         target->lower();
+   }
+
+   ctx->returnFrame( Item(target->handler(), target) );
+}
+
+/*#
+   @method upper String
+   @brief Returns an upper case version of this string.
+   @return The uppercased string.
+
+   All the Latin characters in the string are turned uppercase. Other characters
+   are left untouched.
+
+   @note When used statically, it takes a the target string as first parameter.
+*/
+FALCON_DECLARE_FUNCTION( upper, "string:S" );
+FALCON_DEFINE_FUNCTION_P1( upper )
+{
+   internal_upper_lower(ctx, this, true, false );
+}
+
+/*#
+   @method lower String
+   @brief Returns a lowercase version of this string.
+   @return The lowercased string.
+
+   All the Latin characters in the string are turned lowercase. Other characters
+   are left untouched.
+
+   @note When used statically, it takes a the target string as first parameter.
+*/
+FALCON_DECLARE_FUNCTION( lower, "string:S" );
+FALCON_DEFINE_FUNCTION_P1( lower )
+{
+   internal_upper_lower(ctx, this, false, false );
 }
 
 
@@ -1037,6 +1155,40 @@ FALCON_DEFINE_FUNCTION_P1( artrim )
 
 
 /*#
+   @method aupper String
+   @brief Transforms this mutable string in uppercase.
+   @return This same string
+
+   All the Latin characters in the string are turned uppercase. Other characters
+   are left untouched.
+
+   @note When used statically, it takes a the target string as first parameter.
+*/
+FALCON_DECLARE_FUNCTION( aupper, "string:S" );
+FALCON_DEFINE_FUNCTION_P1( aupper )
+{
+   internal_upper_lower(ctx, this, true, true );
+}
+
+
+/*#
+   @method alower String
+   @brief Transforms this mutable string in lowercase.
+   @return This same string
+
+   All the Latin characters in the string are turned lowercase. Other characters
+   are left untouched.
+
+   @note When used statically, it takes a the target string as first parameter.
+*/
+FALCON_DECLARE_FUNCTION( alower, "string:S" );
+FALCON_DEFINE_FUNCTION_P1( alower )
+{
+   internal_upper_lower(ctx, this, false, true );
+}
+
+
+/*#
    @method fill String
    @brief Fills a string with a given character or substring.
    @Prime chr The character (unicode value) or substring used to refill this string.
@@ -1050,7 +1202,7 @@ FALCON_DEFINE_FUNCTION_P1( artrim )
 */
 
 FALCON_DECLARE_FUNCTION( fill, "target:MString,chr:N|S" );
-FALCON_DEFINE_FUNCTION_P1(fill)
+FALCON_DEFINE_FUNCTION_P1( fill )
 {
    Item *i_string;
    Item *i_chr;
@@ -1159,7 +1311,14 @@ void ClassString::init()
    addMethod( new _classString::Function_rtrim, true );
    addMethod( new _classString::Function_artrim, true );
 
+   addMethod( new _classString::Function_upper, true );
+   addMethod( new _classString::Function_lower, true );
+   addMethod( new _classString::Function_aupper, true );
+   addMethod( new _classString::Function_alower, true );
+
    addMethod( new _classString::Function_fill, true );
+
+   addMethod( new _classString::Function_buffer, true );
 }
 
 

@@ -1,0 +1,45 @@
+/*
+@name String methods - upper
+@category Core-string
+
+
+@output
+String methods - upper
+Test as a method:
+"": m""
+"  hello...": m"  HELLO..."
+"  hello   ": m"  HELLO   "
+"  ULLAM   ": m"  ULLAM   "
+"//123YALLA": m"//123YALLA"
+Test as a static function:
+"": m""
+"  hello...": m"  HELLO..."
+"  hello   ": m"  HELLO   "
+"  ULLAM   ": m"  ULLAM   "
+"//123YALLA": m"//123YALLA"
+Done
+@endoutput
+*/
+
+> "String methods - upper"
+
+tests = .[ 
+   .[""]
+   .["  hello..."]
+   .["  hello   "]
+   .["  ULLAM   "]
+   .["//123YALLA"]
+]
+
+function test( code, x )
+   >> ", ".merge(^[x] {(v) ^+ v.describe() } =>[]), ": "
+   > code(x).describe()
+end
+
+> "Test as a method:"
+^[ tests ] .[test {(x) call(x[0].upper) }]
+
+> "Test as a static function:"
+^[ tests ] .[test {(x) call( String.upper, x) }]
+
+> "Done"

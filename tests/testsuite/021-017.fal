@@ -1,0 +1,45 @@
+/*
+@name String methods - lower
+@category Core-string
+
+
+@output
+String methods - lower
+Test as a method:
+"": m""
+"  hello...": m"  hello..."
+"  hello   ": m"  hello   "
+"  ULLAM   ": m"  ullam   "
+"//123YALLA": m"//123yalla"
+Test as a static function:
+"": m""
+"  hello...": m"  hello..."
+"  hello   ": m"  hello   "
+"  ULLAM   ": m"  ullam   "
+"//123YALLA": m"//123yalla"
+Done
+@endoutput
+*/
+
+> "String methods - lower"
+
+tests = .[ 
+   .[""]
+   .["  hello..."]
+   .["  hello   "]
+   .["  ULLAM   "]
+   .["//123YALLA"]
+]
+
+function test( code, x )
+   >> ", ".merge(^[x] {(v) ^+ v.describe() } =>[]), ": "
+   > code(x).describe()
+end
+
+> "Test as a method:"
+^[ tests ] .[test {(x) call(x[0].lower) }]
+
+> "Test as a static function:"
+^[ tests ] .[test {(x) call( String.lower, x) }]
+
+> "Done"

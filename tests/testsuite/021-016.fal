@@ -1,0 +1,45 @@
+/*
+@name String methods - aupper
+@category Core-string
+
+
+@output
+String methods - aupper
+Test as a method:
+m"": m""
+m"  hello...": m"  HELLO..."
+m"  hello   ": m"  HELLO   "
+m"  ULLAM   ": m"  ULLAM   "
+m"//123YALLA": m"//123YALLA"
+Check changes in places:
+m""
+m"  HELLO..."
+m"  HELLO   "
+m"  ULLAM   "
+m"//123YALLA"
+Done
+@endoutput
+*/
+
+> "String methods - aupper"
+
+tests = .[ 
+   .[m""]
+   .[m"  hello..."]
+   .[m"  hello   "]
+   .[m"  ULLAM   "]
+   .[m"//123YALLA"]
+]
+
+function test( code, x )
+   >> ", ".merge(^[x] {(v) ^+ v.describe() } =>[]), ": "
+   > code(x).describe()
+end
+
+> "Test as a method:"
+^[ tests ] .[test {(x) call(x[0].aupper) }]
+
+> "Check changes in places:"
+^[ tests ] {(x) printl(x[0].describe()) }
+
+> "Done"
