@@ -179,14 +179,17 @@ static void get_isText( const Class*, const String&, void* instance, Item& value
    value.setBoolean( static_cast<String*>( instance )->isText() );
 }
 
-static void set_isText( const Class*, const String&, void* instance, const Item& value )
+static void set_isText( const Class* cls, const String&, void* instance, const Item& value )
 {
    String* str = static_cast<String*>( instance );
+   const ClassString* cstring = static_cast<const ClassString*>(cls);
+
    if( str->isImmutable() )
    {
       throw new OperandError( ErrorParam( e_prop_ro, __LINE__, SRC ).extra("Immutable string") );
    }
 
+   InstanceLock::Token* tk = cstring->lockInstance(str);
    if( value.isTrue() ) {
       if( ! str->isText() ) {
          str->manipulator( str->manipulator()->bufferedManipulator() );
@@ -195,6 +198,7 @@ static void set_isText( const Class*, const String&, void* instance, const Item&
    else {
       str->toMemBuf();
    }
+   cstring->unlockInstance(tk);
 }
 
 /*#
@@ -212,7 +216,7 @@ static void get_charSize( const Class*, const String&, void* instance, Item& val
    value.setInteger( str->manipulator()->charSize() );
 }
 
-static void set_charSize( const Class*, const String&, void* instance, const Item& value )
+static void set_charSize( const Class* cls, const String&, void* instance, const Item& value )
 {
    String* str = static_cast<String*>(instance);
 
@@ -223,10 +227,13 @@ static void set_charSize( const Class*, const String&, void* instance, const Ite
    }
 
    uint32 bpc = (uint32) value.isOrdinal();
+   const ClassString* cstring = static_cast<const ClassString*>(cls);
+   InstanceLock::Token* tk = cstring->lockInstance(str);
    if ( ! str->setCharSize( bpc ) )
    {
       throw new  OperandError( ErrorParam( e_param_range, __LINE__, SRC ) );
    }
+   cstring->unlockInstance(tk);
 }
 
 
@@ -309,16 +316,22 @@ FALCON_DEFINE_FUNCTION_P1(front)
       len = i_len->forceInteger();
    }
 
+   ClassString* cstring = static_cast<ClassString*>(methodOf());
+   Item result;
+   InstanceLock::Token* tk = cstring->lockInstance(str);
    if ( len <= 0 || str->length() == 0 )
    {
-      ctx->returnFrame( FALCON_GC_HANDLE(new String) );
+      result = FALCON_GC_HANDLE(new String);
    }
    else if ( ((length_t) len) >= str->length() ) {
-      ctx->returnFrame( FALCON_GC_HANDLE(new String( *str )) );
+      result = FALCON_GC_HANDLE(new String( *str ));
    }
    else {
-      ctx->returnFrame( FALCON_GC_HANDLE(new String( *str, 0, len )) );
+      result = FALCON_GC_HANDLE(new String( *str, 0, len ));
    }
+   cstring->unlockInstance(tk);
+
+   ctx->returnFrame( result );
 }
 
 /*#
@@ -357,16 +370,22 @@ FALCON_DEFINE_FUNCTION_P1(back)
       len = i_len->forceInteger();
    }
 
+   ClassString* cstring = static_cast<ClassString*>(methodOf());
+   Item result;
+   InstanceLock::Token* tk = cstring->lockInstance(str);
    if ( len <= 0 || str->length() == 0 )
    {
-      ctx->returnFrame( FALCON_GC_HANDLE(new String) );
+      result = FALCON_GC_HANDLE(new String);
    }
    else if ( ((length_t) len) >= str->length() ) {
-      ctx->returnFrame( FALCON_GC_HANDLE(new String( *str )) );
+      result = FALCON_GC_HANDLE(new String( *str ));
    }
    else {
-      ctx->returnFrame( FALCON_GC_HANDLE(new String( *str, str->length()-len )) );
+      result = FALCON_GC_HANDLE(new String( *str, str->length()-len ));
    }
+   cstring->unlockInstance(tk);
+
+   ctx->returnFrame( result );
 }
 
 
@@ -427,10 +446,12 @@ FALCON_DEFINE_FUNCTION_P1(splittr)
       throw paramError(__LINE__, SRC, ctx->isMethodic() );
    }
 
+   // Parameter extraction.
    limit = count == 0 ? 0xffffffff: (uint32) count->forceInteger();
 
-   // Parameter extraction.
    String *tg_str = target->asString();
+   ClassString* cstring = static_cast<ClassString*>(methodOf());
+   InstanceLock::Token* tk_str = cstring->lockInstance(tg_str);
    uint32 tg_len = target->asString()->length();
 
    // split in chars?
@@ -451,12 +472,18 @@ FALCON_DEFINE_FUNCTION_P1(splittr)
       if(limit <= tg_len)
          ca->append(tg_str->subString(limit - 1));
 
+      cstring->unlockInstance(tk_str);
+
       ctx->returnFrame(FALCON_GC_HANDLE(ca));
       return;
    }
 
-   String *sp_str = splitstr->asString();
-   uint32 sp_len = splitstr->asString()->length();
+   String* mstr = splitstr->asString();
+   InstanceLock::Token* tk1 = cstring->lockInstance(mstr);
+   String sp_str( *mstr );
+   cstring->unlockInstance(tk1);
+
+   uint32 sp_len = sp_str.length();
 
    // return item.
    ItemArray *retarr = new ItemArray;
@@ -465,6 +492,7 @@ FALCON_DEFINE_FUNCTION_P1(splittr)
    if ( sp_len == 0 )
    {
       retarr->append( FALCON_GC_HANDLE(new String()) );
+      cstring->unlockInstance(tk_str);
       ctx->returnFrame(FALCON_GC_HANDLE(retarr));
       return;
    }
@@ -473,6 +501,7 @@ FALCON_DEFINE_FUNCTION_P1(splittr)
    if ( tg_len < sp_len )
    {
       retarr->append( FALCON_GC_HANDLE(new String( *tg_str )) );
+      cstring->unlockInstance(tk_str);
       ctx->returnFrame(FALCON_GC_HANDLE(retarr));
       return;
    }
@@ -485,7 +514,7 @@ FALCON_DEFINE_FUNCTION_P1(splittr)
    {
       uint32 sp_pos = 0;
       // skip matching pattern-
-      while ( tg_str->getCharAt( pos ) == sp_str->getCharAt( sp_pos ) &&
+      while ( tg_str->getCharAt( pos ) == sp_str.getCharAt( sp_pos ) &&
               sp_pos < sp_len && pos <= tg_len - sp_len ) {
          sp_pos++;
          pos++;
@@ -505,7 +534,7 @@ FALCON_DEFINE_FUNCTION_P1(splittr)
          while( sp_pos == sp_len && pos <= tg_len - sp_len ) {
             sp_pos = 0;
             last_pos = pos;
-            while ( tg_str->getCharAt( pos ) == sp_str->getCharAt( sp_pos )
+            while ( tg_str->getCharAt( pos ) == sp_str.getCharAt( sp_pos )
                     && sp_pos < sp_len && pos <= tg_len - sp_len ) {
                sp_pos++;
                pos++;
@@ -524,6 +553,7 @@ FALCON_DEFINE_FUNCTION_P1(splittr)
       retarr->append( FALCON_GC_HANDLE(new String( String( *tg_str, last_pos, (uint32) tg_len ) ) ) );
    }
 
+   cstring->unlockInstance(tk_str);
    ctx->returnFrame(FALCON_GC_HANDLE(retarr));
 }
 
@@ -564,7 +594,7 @@ FALCON_DEFINE_FUNCTION_P1(splittr)
    @note When used statically, this method takes a target string as first parameter.
 */
 
-FALCON_DECLARE_FUNCTION( split, "token:[S],count:[N]" );
+FALCON_DECLARE_FUNCTION( split, "string:S,token:[S],count:[N]" );
 FALCON_DEFINE_FUNCTION_P1(split)
 
 {
@@ -595,9 +625,12 @@ FALCON_DEFINE_FUNCTION_P1(split)
    }
 
    // Parameter extraction.
-   String *tg_str = target->asString();
-   uint32 tg_len = target->asString()->length();
    uint32 limit = count == 0 ? 0xffffffff: (uint32) count->forceInteger();
+
+   String *tg_str = target->asString();
+   ClassString* cstring = static_cast<ClassString*>(methodOf());
+   InstanceLock::Token* tk_str = cstring->lockInstance(tg_str);
+   uint32 tg_len = target->asString()->length();
 
    // split in chars?
    if( splitstr == 0 || splitstr->isNil() || splitstr->asString()->size() == 0)
@@ -617,12 +650,18 @@ FALCON_DEFINE_FUNCTION_P1(split)
       if(limit <= tg_len)
          ca->append(tg_str->subString(limit - 1));
 
+      cstring->unlockInstance(tk_str);
+
       ctx->returnFrame( FALCON_GC_HANDLE(ca) );
       return;
    }
 
-   String *sp_str = splitstr->asString();
-   uint32 sp_len = sp_str->length();
+   String* mstr = splitstr->asString();
+   InstanceLock::Token* tk1 = cstring->lockInstance(mstr);
+   String sp_str( *mstr );
+   cstring->unlockInstance(tk1);
+
+   uint32 sp_len = sp_str.length();
 
    // return item.
    ItemArray *retarr = new ItemArray;
@@ -630,6 +669,8 @@ FALCON_DEFINE_FUNCTION_P1(split)
    // if the split string is empty, return empty string
    if ( sp_len == 0 )
    {
+      cstring->unlockInstance(tk_str);
+
       retarr->append( FALCON_GC_HANDLE(new String()) );
       ctx->returnFrame( FALCON_GC_HANDLE(retarr) );
       return;
@@ -639,6 +680,8 @@ FALCON_DEFINE_FUNCTION_P1(split)
    if ( tg_len < sp_len )
    {
       retarr->append( FALCON_GC_HANDLE(new String( *tg_str ) ) );
+      cstring->unlockInstance(tk_str);
+
       ctx->returnFrame( FALCON_GC_HANDLE(retarr) );
       return;
    }
@@ -650,7 +693,7 @@ FALCON_DEFINE_FUNCTION_P1(split)
    {
       uint32 sp_pos = 0;
       // skip matching pattern-
-      while ( tg_str->getCharAt( pos ) == sp_str->getCharAt( sp_pos ) &&
+      while ( tg_str->getCharAt( pos ) == sp_str.getCharAt( sp_pos ) &&
               sp_pos < sp_len && pos <= tg_len - sp_len ) {
          sp_pos++;
          pos++;
@@ -675,6 +718,7 @@ FALCON_DEFINE_FUNCTION_P1(split)
       retarr->append( FALCON_GC_HANDLE(new String( *tg_str, last_pos, splitend )) );
    }
 
+   cstring->unlockInstance(tk_str);
    ctx->returnFrame( FALCON_GC_HANDLE(retarr) );
 }
 
@@ -742,11 +786,18 @@ FALCON_DEFINE_FUNCTION_P1(merge)
    // Parameter estraction.
    limit = count == 0 || count->isNil() ? 0xffffffff: count->forceInteger();
 
-   String* mr_str = mergestr->asString();
+   String* mstr = mergestr->asString();
+   ClassString* cstring = static_cast<ClassString*>(methodOf());
+   InstanceLock::Token* tk1 = cstring->lockInstance(mstr);
+   String mr_str( *mstr );
+   cstring->unlockInstance(tk1);
+
    ItemArray *elements = source->asArray();
    uint32 len = elements->length();
    if ( limit < len )
+   {
       len = (uint32) limit;
+   }
 
    String *ts = new String;
 
@@ -756,15 +807,21 @@ FALCON_DEFINE_FUNCTION_P1(merge)
       Item* item = &elements->at(i-1);
 
       if ( item->isString() )
-         *ts += *item->asString();
+      {
+         String* str = item->asString();
+         ClassString* cstring = static_cast<ClassString*>(methodOf());
+         InstanceLock::Token* tk1 = cstring->lockInstance(str);
+         *ts += *str;
+         cstring->unlockInstance(tk1);
+      }
       else
       {
          delete ts;
          throw FALCON_SIGN_XERROR( ParamError, e_param_type, .extra("Need to be string") );
       }
 
-      if ( mr_str != 0 && i < len )
-         ts->append( *mr_str );
+      if ( i < len )
+         ts->append( mr_str );
 
       ts->reserve( len/i * ts->size() );
    }
@@ -814,7 +871,12 @@ FALCON_DEFINE_FUNCTION_P1(join)
       throw paramError(__LINE__, SRC, ctx->isMethodic());
    }
 
-   String* mr_str = mergestr->asString();
+   String* mstr = mergestr->asString();
+   ClassString* cstring = static_cast<ClassString*>(methodOf());
+   InstanceLock::Token* tk1 = cstring->lockInstance(mstr);
+   String mr_str( *mstr );
+   cstring->unlockInstance(tk1);
+
    int32 len = ctx->paramCount();
    String *ts = new String;
 
@@ -825,7 +887,10 @@ FALCON_DEFINE_FUNCTION_P1(join)
 
       if ( item->isString() )
       {
-         *ts += *item->asString();
+         String* src = item->asString();
+         InstanceLock::Token* tk1 = cstring->lockInstance(src);
+         *ts += *src;
+         cstring->unlockInstance(tk1);
       }
       else
       {
@@ -835,7 +900,7 @@ FALCON_DEFINE_FUNCTION_P1(join)
 
       if ( i < len )
       {
-         ts->append( *mr_str );
+         ts->append( mr_str );
       }
 
       ts->reserve( len/i * ts->size() );
@@ -901,9 +966,16 @@ static void internal_find( VMContext* ctx, Function* func, bool mode )
 
    if( end > len ) end = len;
 
+   ClassString* cstring = static_cast<ClassString*>(func->methodOf());
+   InstanceLock::Token* tk1 = cstring->lockInstance(target);
+   InstanceLock::Token* tk2 = cstring->lockInstance(needle);
+
    uint32 pos = mode ?
             target->asString()->rfind( *needle->asString(), (uint32) start, (uint32) end ) :
             target->asString()->find( *needle->asString(), (uint32) start, (uint32) end );
+
+   cstring->unlockInstance(tk2);
+   cstring->unlockInstance(tk1);
 
    if ( pos != csh::npos )
       ctx->returnFrame( (int64)pos );
@@ -1332,7 +1404,6 @@ FALCON_DEFINE_FUNCTION_P1( cmpi )
       throw paramError(__LINE__, SRC, ctx->isMethodic() );
    }
 
-
    String* str1 = s1_itm->asString();
    String* str2 = s2_itm->asString();
    // avoid double lock of the same item.
@@ -1588,7 +1659,16 @@ FALCON_DEFINE_FUNCTION_P1( replace )
 
    String* str = new String;
 
+   ClassString* cstring = static_cast<ClassString*>(methodOf());
+   InstanceLock::Token* tk1 = cstring->lockInstance(tg_str);
+   InstanceLock::Token* tk2 = cstring->lockInstance(ned_str);
+   InstanceLock::Token* tk3 = cstring->lockInstance(rep_str);
+
    tg_str->replace( *ned_str, *rep_str, *str, count );
+
+   cstring->unlockInstance(tk3);
+   cstring->unlockInstance(tk2);
+   cstring->unlockInstance(tk1);
 
    ctx->returnFrame( FALCON_GC_HANDLE(str) );
 }
@@ -1650,8 +1730,76 @@ FALCON_DEFINE_FUNCTION_P1( substr )
       }
    }
 
+   ClassString* cstring = static_cast<ClassString*>(methodOf());
+   InstanceLock::Token* tk1 = cstring->lockInstance(str);
    String* ret = new String(str->subString(start, start + length ));
+   cstring->unlockInstance(tk1);
+
    ctx->returnFrame(FALCON_GC_HANDLE(ret));
+}
+
+
+/*#
+   @method wmatch String
+   @brief Perform an old-style file-like jolly-based wildcard match.
+   @param wildcard A wildcard, possibly but not necessarily including a jolly character.
+   @optparam ignoreCase If true, the latin 26 base letters case is ignored in matches.
+   @return True if the string matches, false otherwise.
+
+   This function matches a wildcard that may contain jolly "*" or "?" characters against a
+   string, eventually ignoring the case of the characters. This is a practical function
+   to match file names against given patterns. A "?" in the wildcard represents any
+   single character, while a "*" represents an arbitrary sequence of characters.
+
+   The wildcard must match completely the given string for the function to return true.
+
+   For example:
+   - "*" matches everything
+   - "a?b" matches "aab", "adb" and so on
+   - "a*b" matches "ab", "annnb" and so on
+
+   @note When used statically, this method takes a target string as first parameter.
+*/
+FALCON_DECLARE_FUNCTION( wmatch, "string:S,wildcard:S,ignoreCase:[B]" );
+FALCON_DEFINE_FUNCTION_P1( wmatch )
+{
+   // Parameter checking;
+   Item *s1_itm, *s2_itm, *i_bIcase;
+
+   if ( ctx->isMethodic() )
+   {
+      s1_itm = &ctx->self();
+      s2_itm = ctx->param(0);
+      i_bIcase = ctx->param(1);
+   }
+   else
+   {
+      s1_itm = ctx->param(0);
+      s2_itm = ctx->param(1);
+      i_bIcase = ctx->param(2);
+   }
+
+   if ( s1_itm == 0 || ! s1_itm->isString() || s2_itm == 0 || !s2_itm->isString() ) {
+      throw paramError(__LINE__, SRC, ctx->isMethodic() );
+   }
+
+   // Ignore case?
+   bool bIcase = i_bIcase == 0 ? false : i_bIcase->isTrue();
+
+   // The first is the wildcard, the second is the matched thing.
+   String *cfr = s1_itm->asString();
+   String *wcard = s2_itm->asString();
+
+   ClassString* cstring = static_cast<ClassString*>(methodOf());
+   InstanceLock::Token* tk1 = cstring->lockInstance(cfr);
+   InstanceLock::Token* tk2 = cstring->lockInstance(wcard);
+
+   bool bResult = cfr->wildcardMatch( *wcard, bIcase );
+
+   cstring->unlockInstance(tk2);
+   cstring->unlockInstance(tk1);
+
+   ctx->returnFrame( Item().setBoolean( bResult ) );
 }
 
 
@@ -2127,6 +2275,7 @@ void ClassString::init()
 
    addMethod( new _classString::Function_find, true );
    addMethod( new _classString::Function_rfind, true );
+   addMethod( new _classString::Function_wmatch, true );
 
    addMethod( new _classString::Function_trim, true );
    addMethod( new _classString::Function_ftrim, true );
