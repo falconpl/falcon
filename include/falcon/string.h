@@ -958,25 +958,13 @@ public:
    void escapeFull( String &target ) const;
 
    /** Unescape this string.
-      Unescaping string is always an operation that leaves the string
-      unchanged or shortened, so it can be done in place. Static
-      strings are converted into buffered strings only if some
-      actual unescape takes place.
+      \param target The target string where to perform the unescape.
 
       String unescaping understands special codes \\", \\\\, \\\\r, \\\\n, \\\\t and \\\\b,
       octal numbers \\0nnnn and hexadecimal numbers as \\xnnnnn, up to 32 bit
       precision.
    */
-   void unescape();
-
-   /** Unescape this string placing the result in another one.
-      \see unescape()
-   */
-   void unescape( String &other ) const
-   {
-      other = *this;
-      other.unescape();
-   }
+   void unescape(String& target);
 
    /** Minimal numerical conversion.
       If this string represents a valid integer, the integer is returned.

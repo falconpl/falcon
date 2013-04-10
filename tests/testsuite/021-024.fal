@@ -1,0 +1,32 @@
+/*
+@name String methods - un-escapes
+@category Core-string
+
+@output
+
+@endoutput
+*/
+
+> "String methods - un-escapes"
+
+tests = .[ 
+   ""
+   'String with nothing to escape'
+   "\"\tStr\n\"here\" 'to' \\escape.\""
+   "UNICODE: \\xC3\\xA0\\xC3\\xAC\\xC3\\xB9\\xC3\\xA8\\xC3\\xB2"
+]
+
+function test( code, x )
+   >> x.describe(), ":"
+   > code(x).describe()
+end
+
+> "Test unesq:"
+^[ tests ] .[test {(x) x.unesq() }]
+> "Test unescape:"
+^[ tests ] .[test {(x) x.unescape() }]
+
+> "Test Just String.unescape as a method:"
+^[ tests ] .[test {(x) String.unescape(x) }]
+
+> "Done"

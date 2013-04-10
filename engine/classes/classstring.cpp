@@ -1243,6 +1243,191 @@ FALCON_DEFINE_FUNCTION_P1( cmpi )
 }
 
 
+
+inline void internal_escape( VMContext* ctx, Function* func, int mode )
+{
+   Item *i_string;
+
+   // Parameter checking;
+   if( ctx->isMethodic() )
+   {
+      i_string = &ctx->self();
+   }
+   else
+   {
+      i_string = ctx->param(0);
+      if ( i_string == 0 || ! i_string->isString() )
+      {
+         throw func->paramError(__LINE__, SRC, false );
+      }
+   }
+
+   String* source = i_string->asString();
+   ClassString* cstring = static_cast<ClassString*>(func->methodOf());
+   InstanceLock::Token* tk;
+
+   String* str;
+
+   if( mode >= 2 )
+   {
+      str = new String;
+      FALCON_GC_HANDLE(str);
+      tk = cstring->lockInstance(source);
+   }
+   else {
+      tk = cstring->lockInstance(source);
+      str = new String(*source);
+      cstring->unlockInstance(tk);
+      tk = 0;
+      FALCON_GC_HANDLE(str);
+   }
+
+   switch( mode )
+   {
+   case 0: //esq
+      str->escapeQuotes();
+      break;
+
+   case 1: //unesq
+      str->unescapeQuotes();
+      break;
+
+   case 2: //escape-full
+      source->escape( *str );
+      break;
+
+   case 3: // escape
+      source->escapeFull( *str );
+      break;
+
+   case 4: //unescape
+      source->unescape( *str );
+      break;
+   }
+
+   if( tk != 0 ) cstring->unlockInstance(tk);
+
+   ctx->returnFrame( Item(str->handler(), str) );
+}
+
+/*#
+   @method esq String
+   @brief Escapes the double quotes in this string.
+   @return A new string with the quotes escaped.
+
+   This method returns a new string where all the quotes ('),
+   double quotes (") and backslashes (\\) are preceded by a single
+   backslash (\\). This makes the string parsable by the vast
+   majority of string parsing languages, including Falcon itself.
+
+   @note When used statically, it takes a the target string as first parameter.
+
+   @see String.unesq
+*/
+
+FALCON_DECLARE_FUNCTION( esq, "string:S" );
+FALCON_DEFINE_FUNCTION_P1( esq )
+{
+   internal_escape( ctx, this, 0 );
+}
+
+/*#
+   @method unesq String
+   @brief Unescapes backslash-based escape quote sequences.
+   @return A new string with backslash sequences unescaped.
+
+   This method unescapes backslash-quote sequences only;
+   backslash sequences having a special meaning in many
+   contexts as i.e. '\\r' are not expanded.
+
+   The @a String.unescape method escapes also other sequences
+   as the Falcon parser would.
+
+   @note When used statically, it takes a the target string as first parameter.
+
+   @see String.esq
+
+*/
+
+FALCON_DECLARE_FUNCTION( unesq, "string:S" );
+FALCON_DEFINE_FUNCTION_P1( unesq )
+{
+   internal_escape( ctx, this, 1 );
+}
+
+
+/*#
+   @method escape String
+   @brief Escapes all the special characters in the string up to UNICODE 127.
+   @return A new string with escaped contents.
+
+   This method escapes special characters in the string
+   up to UNICODE 127.
+   Characters as the new-line are translated into common
+   sequences that are understood by the falcon interpreter as '\\n'.
+
+   The @a String.escapeFull method escapes also characters above
+   UNICODE 127, encoding them in a \\xNNNN hexadecimal unicode
+   value sequence.
+
+   @note When used statically, it takes a the target string as first parameter.
+
+   @see String.esq
+   @see strEsq
+   @see strUnescape
+*/
+
+FALCON_DECLARE_FUNCTION( escape, "string:S" );
+FALCON_DEFINE_FUNCTION_P1( escape )
+{
+   internal_escape( ctx, this, 2 );
+}
+
+
+/*#
+   @method escapeFull String
+   @brief Escapes all the special characters in the string.
+   @return A new string with escaped contents.
+
+   This method escapes special characters in the string.
+   Characters as the new-line are translated into common
+   sequences that are understood by the falcon interpreter as '\\n'.
+
+   This method escapes also characters above
+   UNICODE 127, encoding them in a \\xNNNN hexadecimal UNICODE
+   value sequence.
+
+   @note When used statically, it takes a the target string as first parameter.
+
+   @see String.esq
+   @see String.escape
+*/
+
+FALCON_DECLARE_FUNCTION( escapeFull, "string:S" );
+FALCON_DEFINE_FUNCTION_P1( escapeFull )
+{
+   internal_escape( ctx, this, 3 );
+}
+
+
+/*#
+   @method unescape String
+   @brief Unescapes all the special characters in the string.
+   @return A new strings with the special backslash sequences unescaped.
+
+   @note When used statically, it takes a the target string as first parameter.
+
+   @see String.esq
+   @see String.escape
+*/
+
+FALCON_DECLARE_FUNCTION( unescape, "string:S" );
+FALCON_DEFINE_FUNCTION_P1( unescape )
+{
+   internal_escape( ctx, this, 4 );
+}
+
+
 //=======================================================================================
 // Mutable Strings
 //
@@ -1457,21 +1642,28 @@ void ClassString::init()
    addMethod( new _classString::Function_rfind, true );
 
    addMethod( new _classString::Function_trim, true );
-   addMethod( new _classString::Function_atrim, true );
    addMethod( new _classString::Function_ftrim, true );
-   addMethod( new _classString::Function_aftrim, true );
    addMethod( new _classString::Function_rtrim, true );
-   addMethod( new _classString::Function_artrim, true );
 
    addMethod( new _classString::Function_upper, true );
    addMethod( new _classString::Function_lower, true );
-   addMethod( new _classString::Function_aupper, true );
-   addMethod( new _classString::Function_alower, true );
 
    addMethod( new _classString::Function_startsWith, true );
    addMethod( new _classString::Function_endsWith, true );
    addMethod( new _classString::Function_cmpi, true );
 
+   addMethod( new _classString::Function_escape, true );
+   addMethod( new _classString::Function_escapeFull, true );
+   addMethod( new _classString::Function_unescape, true );
+   addMethod( new _classString::Function_esq, true );
+   addMethod( new _classString::Function_unesq, true );
+
+   addMethod( new _classString::Function_atrim, true );
+   addMethod( new _classString::Function_aftrim, true );
+   addMethod( new _classString::Function_artrim, true );
+
+   addMethod( new _classString::Function_aupper, true );
+   addMethod( new _classString::Function_alower, true );
    addMethod( new _classString::Function_fill, true );
 
    addMethod( new _classString::Function_buffer, true );

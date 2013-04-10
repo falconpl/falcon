@@ -437,9 +437,6 @@ void Static::setCharAt( String *str, length_t pos, char_t chr ) const
       str->manipulator( &handler_buffer32 );
    }
 
-   uint32 oldSize = str->allocated();
-   if( oldSize != 0 )
-free( str->getRawStorage() );
    str->setRawStorage( buffer, size );
 }
 
@@ -456,6 +453,7 @@ void Static16::setCharAt( String *str, length_t pos, char_t chr ) const
       memcpy( buf16, str->getRawStorage(), size );
       buf16[ pos ] = (uint16) chr;
       buffer = (byte *) buf16;
+      str->manipulator()->destroy(str);
       str->manipulator( &handler_buffer16 );
    }
    else
@@ -471,10 +469,7 @@ void Static16::setCharAt( String *str, length_t pos, char_t chr ) const
       str->manipulator( &handler_buffer32 );
    }
 
-   uint32 oldSize = str->allocated();
    str->setRawStorage( buffer, size );
-   if( oldSize != 0 )
-free( str->getRawStorage() );
 }
 
 void Static32::setCharAt( String *str, length_t pos, char_t chr ) const
@@ -488,10 +483,7 @@ void Static32::setCharAt( String *str, length_t pos, char_t chr ) const
    buf32[ pos ] = chr;
    buffer = (byte *) buf32;
    str->manipulator( &handler_buffer32 );
-   uint32 oldSize = str->allocated();
    str->setRawStorage( buffer, size );
-   if( oldSize != 0 )
-free( str->getRawStorage() );
 }
 
 void Buffer::setCharAt( String *str, length_t pos, char_t chr ) const
@@ -512,9 +504,8 @@ void Buffer::setCharAt( String *str, length_t pos, char_t chr ) const
 
       buf16[ pos ] = (uint16) chr;
       size *= 2;
+      str->manipulator()->destroy(str);
       str->manipulator( &handler_buffer16 );
-      if( str->allocated() > 0 )
-free( buffer );
       str->setRawStorage( (byte *) buf16, size );
    }
    else
@@ -526,9 +517,8 @@ free( buffer );
 
       buf32[ pos ] = chr;
       size *= 4;
+      str->manipulator()->destroy(str);
       str->manipulator( &handler_buffer32 );
-      if( str->allocated() > 0 )
-free( buffer );
       str->setRawStorage( (byte *) buf32, size );
    }
 }
@@ -544,16 +534,15 @@ void Buffer16::setCharAt( String *str, length_t pos, char_t chr ) const
    else
    {
       int32 size = str->size();
-      uint32 *buf32 =  (uint32 *) malloc( size * 2 );
+      uint32 *buf32 =  (uint32 *) malloc( size * 4 );
       uint16 *buf16 = (uint16 *) str->getRawStorage();
       for ( int i = 0; i < size; i ++ )
          buf32[ i ] = (uint32) buf16[ i ];
 
       buf32[ pos ] = chr;
       size *= 2;
+      str->manipulator()->destroy(str);
       str->manipulator( &handler_buffer32 );
-      if( str->allocated() > 0 )
-free( buf16 );
       str->setRawStorage( (byte *) buf32, size );
    }
 
@@ -1453,7 +1442,7 @@ void String::internal_escape( String &strout, bool full ) const
       switch( chat )
       {
          case '"':strout += "\\\""; break;
-         case '\'':strout += "\\\'"; break;
+         case '\'':strout += "\\'"; break;
          case '\r': strout += "\\r"; break;
          case '\n': strout += "\\n"; break;
          case '\t': strout += "\\t"; break;
@@ -1461,6 +1450,7 @@ void String::internal_escape( String &strout, bool full ) const
          case '\\': strout += "\\\\"; break;
          default:
             if ( chat < 32 || (chat >= 128 && full) ) {
+               strout += '\\';
                strout += 'x';
                strout.writeNumberHex(chat, true );
             }
@@ -1473,56 +1463,63 @@ void String::internal_escape( String &strout, bool full ) const
    }
 }
 
-void String::unescape()
+void String::unescape( String& target )
 {
    length_t len = length();
    length_t pos = 0;
+   target.size(0);
+   target.reserve(len);
 
    while( pos < len )
    {
-      char_t chat = getCharAt( pos );
+      char_t chat = getCharAt( pos++ );
       if ( chat == (char_t) '\\' )
       {
-         // an escape must take place
-         length_t endSub = pos + 1;
-         if( endSub == len - 1 )
+         // out of chars
+         if( pos == len )
+         {
+            target.append('\\');
             return;
+         }
 
-         char_t chnext = getCharAt( endSub );
-         char_t chsub=0;
+         char_t chnext = getCharAt( pos++ );
 
          switch( chnext )
          {
-            case '"':  chsub = (uint32) '"'; break;
-            case '\r': chsub = (uint32) '\r'; break;
-            case '\n': chsub = (uint32) '\n'; break;
-            case '\t': chsub = (uint32) '\t'; break;
-            case '\b': chsub = (uint32) '\b'; break;
-            case '\\': chsub = (uint32) '\\'; break;
+            case '"':  target.append('"'); break;
+            case '\r': target.append('\r'); break;
+            case '\n': target.append('\n'); break;
+            case '\t': target.append('\t'); break;
+            case '\b': target.append('\b'); break;
+            case '\\': target.append('\\'); break;
             case '0':
-               // parse octal number
-               endSub ++;
-               chsub = 0;
-               // max lenght of octals = 11 chars, + 2 for stubs
-               while( endSub < len && endSub - pos < 13 )
+            {
+               length_t start = pos;
+               // max length of octals = 11 chars
+               uint32 chsub = 0;
+               while( pos < len && (pos - start) < 11 )
                {
-                  chnext = getCharAt( endSub );
+                  chnext = getCharAt( pos++ );
                   if ( chnext < 0x30 || chnext > 0x37 )
+                  {
+                     pos--;
                      break;
+                  }
                   chsub <<= 3; //*8
                   chsub |= (0x7) & (chnext - 0x30);
-                  endSub ++;
                }
+               target.append(chsub);
+            }
             break;
 
             case 'x':
-               // parse exadecimal number
-               endSub ++;
-               chsub = 0;
-               // max lenght of octals = 11 chars, + 2 for stubs
-               while( endSub < len && endSub - pos < 13 )
+            {
+               length_t start = pos;
+               // max length of hex = 8
+               uint32 chsub = 0;
+               while( pos < len && (pos - start) < 8 )
                {
-                  chnext = getCharAt( endSub );
+                  chnext = getCharAt( pos++ );
                   if ( chnext >= 0x30 && chnext <= 0x39 ) // 0 - 9
                   {
                      chsub <<= 4; //*16
@@ -1538,17 +1535,25 @@ void String::unescape()
                      chsub <<= 4; //*16
                      chsub |=  chnext - 0x61 + 10;
                   }
-                  endSub ++;
+                  else {
+                     pos--;
+                     break;
+                  }
                }
+               target.append(chsub);
+            }
             break;
-         }
-         // substitute the char
-         setCharAt( pos, chsub );
-         // remove the rest
-         remove( pos + 1, endSub - pos );
-      }
 
-      pos++;
+            default:
+               target.append('\\');
+               target.append(chnext);
+               break;
+         }
+      }
+      else
+      {
+         target.append(chat);
+      }
    }
 }
 
@@ -2429,7 +2434,7 @@ void String::escapeQuotes()
       register char_t chr =  getCharAt(i);
       switch( chr )
       {
-      case '\'': case '\"':
+      case '\'': case '\"': case '\\':
          insert( i, 0, "\\" );
          i+=2;
          ++len;
@@ -2458,12 +2463,25 @@ void String::unescapeQuotes()
          {
             remove( i-1, 1 );
             --len;
+            state = false;
+         }
+         else
+         {
+            i++;
          }
          break;
 
       case '\\':
-         state = true;
-         ++i;
+         if( state )
+         {
+            remove( i-1, 1 );
+            --len;
+            state = false;
+         }
+         else {
+            state = true;
+            ++i;
+         }
          break;
 
       default:

@@ -1,0 +1,55 @@
+/*
+@name String methods - escapes
+@category Core-string
+
+@output
+String methods - escapes
+Test esq:
+"":m""
+"String with nothing to escape":m"String with nothing to escape"
+"\"\tStr\n\"here\" \'to\' escape.\"":m"\\\"\tStr\n\\\"here\\\" \\\'to\\\' escape.\\\""
+"UNICODE: àìùèò":m"UNICODE: àìùèò"
+Test escape:
+"":m""
+"String with nothing to escape":m"String with nothing to escape"
+"\"\tStr\n\"here\" \'to\' escape.\"":m"\\\"\\tStr\\n\\\"here\\\" \\\'to\\\' escape.\\\""
+"UNICODE: àìùèò":m"UNICODE: àìùèò"
+Test escapeFull:
+"":m""
+"String with nothing to escape":m"String with nothing to escape"
+"\"\tStr\n\"here\" \'to\' escape.\"":m"\\\"\\tStr\\n\\\"here\\\" \\\'to\\\' escape.\\\""
+"UNICODE: àìùèò":m"UNICODE: \\xC3\\xA0\\xC3\\xAC\\xC3\\xB9\\xC3\\xA8\\xC3\\xB2"
+Test Just String.escapeFull as a method:
+"":m""
+"String with nothing to escape":m"String with nothing to escape"
+"\"\tStr\n\"here\" \'to\' escape.\"":m"\\\"\\tStr\\n\\\"here\\\" \\\'to\\\' escape.\\\""
+"UNICODE: àìùèò":m"UNICODE: \\xC3\\xA0\\xC3\\xAC\\xC3\\xB9\\xC3\\xA8\\xC3\\xB2"
+Done
+@endoutput
+*/
+
+> "String methods - escapes"
+
+tests = .[ 
+   ""
+   'String with nothing to escape'
+   "\"\tStr\n\"here\" 'to' escape.\""
+   "UNICODE: àìùèò"
+]
+
+function test( code, x )
+   >> x.describe(), ":"
+   > code(x).describe()
+end
+
+> "Test esq:"
+^[ tests ] .[test {(x) x.esq() }]
+> "Test escape:"
+^[ tests ] .[test {(x) x.escape() }]
+> "Test escapeFull:"
+^[ tests ] .[test {(x) x.escapeFull() }]
+
+> "Test Just String.escapeFull as a method:"
+^[ tests ] .[test {(x) String.escapeFull(x) }]
+
+> "Done"
