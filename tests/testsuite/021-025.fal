@@ -1,0 +1,56 @@
+/*
+@name String methods - replace
+@category Core-string
+
+@output
+Test as a method:
+"", "", "": m""
+"Hello world", "", "": m"Hello world"
+"Hello world", "l", "k": m"Hekko workd"
+"Hello world", "l", "k", 2: m"Hekko world"
+"Hello world", "l", "-larger-", 2: m"He-larger--larger-o world"
+"Hello world", "Hello", "": m" world"
+"Hello world", "world", "": m"Hello "
+"Hello world", "o w", "o-w": m"Hello-world"
+"Hello world", "Hello world", "Full change": m"Full change"
+Test as a static function:
+"", "", "": m""
+"Hello world", "", "": m"Hello world"
+"Hello world", "l", "k": m"Hekko workd"
+"Hello world", "l", "k", 2: m"Hekko world"
+"Hello world", "l", "-larger-", 2: m"He-larger--larger-o world"
+"Hello world", "Hello", "": m" world"
+"Hello world", "world", "": m"Hello "
+"Hello world", "o w", "o-w": m"Hello-world"
+"Hello world", "Hello world", "Full change": m"Full change"
+Done
+@endoutput
+*/
+
+> "String methods - replace"
+
+tests = .[ 
+   .[ "" "" "" ]
+   .[ "Hello world" "" "" ]
+   .[ "Hello world" "l" "k" ]
+   .[ "Hello world" "l" "k" 2 ]   
+   .[ "Hello world" "l" "-larger-" 2 ]   
+   .[ "Hello world" "Hello" ""]   
+   .[ "Hello world" "world" ""]   
+   .[ "Hello world" "o w" "o-w"]   
+   .[ "Hello world" "Hello world" "Full change" ]
+]
+
+
+function test( code, x )
+   >> ", ".merge(^[x] {(v) ^+ v.describe() } =>[]), ": "
+   > code(x).describe()
+end
+
+> "Test as a method:"
+^[ tests ] .[test {(x) call(x[0].replace, x[1:]) }]
+
+> "Test as a static function:"
+^[ tests ] .[test {(x) call( String.replace, x) }]
+
+> "Done"

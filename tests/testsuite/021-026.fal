@@ -1,0 +1,24 @@
+/*
+@name String methods - buffer
+@category Core-string
+
+There is a part in this test that is used just for
+manual testing.
+
+@result 256
+*/
+
+> "String methods - buffer"
+
+str = String.buffer(256)
+> "Allocated: ", str.describe(), " Len: ",str.len, " Alloc: ", str.allocated
+// record the size, we'll need it later
+size = str.len <<1024 + str.allocated
+
+// the rest is just for info and manual testing.
+str += "a"*255
+> "After 255 inserts Len: ",str.len, " Alloc: ", str.allocated
+str+= "a"*16
+> "After more 16 inserts Len: ",str.len, " Alloc: ", str.allocated
+
+return ""+size

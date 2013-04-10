@@ -1,0 +1,63 @@
+/*
+@name String methods - substr
+@category Core-string
+
+@output
+String methods - substr
+Test as a method:
+"", 0: m""
+"", 10: m""
+"Hello world", 5: m" world"
+"Hello world", 20: m""
+"Hello world", 0, -1: m"Hello world"
+"Hello world", 5, -1: m" world"
+"Hello world", 20, -1: m""
+"Hello world", 0, 5: m"Hello"
+"Hello world", 5, 5: m" worl"
+"Hello world", 10, 5: m"d"
+"Hello world", 0, 0: m""
+Test as a static function:
+"", 0: m""
+"", 10: m""
+"Hello world", 5: m" world"
+"Hello world", 20: m""
+"Hello world", 0, -1: m"Hello world"
+"Hello world", 5, -1: m" world"
+"Hello world", 20, -1: m""
+"Hello world", 0, 5: m"Hello"
+"Hello world", 5, 5: m" worl"
+"Hello world", 10, 5: m"d"
+"Hello world", 0, 0: m""
+Done
+@endoutput
+*/
+
+> "String methods - substr"
+
+tests = .[ 
+   .[ "" 0 ]
+   .[ "" 10 ]
+   .[ "Hello world" 5 ]
+   .[ "Hello world" 20 ]
+   .[ "Hello world" 0, -1 ]
+   .[ "Hello world" 5, -1 ]
+   .[ "Hello world" 20, -1 ]
+   .[ "Hello world" 0, 5 ]
+   .[ "Hello world" 5, 5 ]
+   .[ "Hello world" 10, 5 ]
+   .[ "Hello world" 0, 0 ]
+]
+
+
+function test( code, x )
+   >> ", ".merge(^[x] {(v) ^+ v.describe() } =>[]), ": "
+   > code(x).describe()
+end
+
+> "Test as a method:"
+^[ tests ] .[test {(x) call(x[0].substr, x[1:]) }]
+
+> "Test as a static function:"
+^[ tests ] .[test {(x) call( String.substr, x) }]
+
+> "Done"
