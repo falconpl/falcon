@@ -2493,6 +2493,46 @@ void String::unescapeQuotes()
 }
 
 
+void String::replace( const String& needle, const String& repl, String& target, int32 count) const
+{
+   length_t nedlen = needle.length();
+   if( nedlen == 0  )
+   {
+      target = *this;
+      return;
+   }
+
+   if( count <= 0 )
+   {
+      count = 0x7FFFFFFF;
+   }
+
+   target.size(0);
+   target.reserve( this->size() );
+   length_t pos0 = 0;
+   length_t pos = this->find(needle);
+   while( pos != String::npos )
+   {
+      if( pos > 0 )
+      {
+         target.append( this->subString(pos0, pos) );
+      }
+
+      target.append(repl);
+      pos0 = pos+nedlen;
+
+      if( --count <= 0 )
+      {
+         break;
+      }
+      pos = this->find( needle, pos0 );
+   }
+
+   // copy the last part
+   target.append( this->subString(pos0) );
+}
+
+
 void String::reserve( length_t size )
 {
    size *= m_class->charSize();

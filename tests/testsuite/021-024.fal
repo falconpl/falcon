@@ -3,7 +3,23 @@
 @category Core-string
 
 @output
-
+String methods - un-escapes
+Test unesq:
+"":m""
+"String with nothing to escape":m"String with nothing to escape"
+"\"\tStr\n\"here\" \'to\' \\escape.\"":m"\"\tStr\n\"here\" \'to\' \\escape.\""
+"UNICODE: \\xC3\\xA0\\xC3\\xAC\\xC3\\xB9\\xC3\\xA8\\xC3\\xB2":m"UNICODE: \\xC3\\xA0\\xC3\\xAC\\xC3\\xB9\\xC3\\xA8\\xC3\\xB2"
+Test unescape:
+"":m""
+"String with nothing to escape":m"String with nothing to escape"
+"\"\tStr\n\"here\" \'to\' \\escape.\"":m"\"\tStr\n\"here\" \'to\' \\escape.\""
+"UNICODE: \\xC3\\xA0\\xC3\\xAC\\xC3\\xB9\\xC3\\xA8\\xC3\\xB2":m"UNICODE: àìùèò"
+Test Just String.unescape as a method:
+"":m""
+"String with nothing to escape":m"String with nothing to escape"
+"\"\tStr\n\"here\" \'to\' \\escape.\"":m"\"\tStr\n\"here\" \'to\' \\escape.\""
+"UNICODE: \\xC3\\xA0\\xC3\\xAC\\xC3\\xB9\\xC3\\xA8\\xC3\\xB2":m"UNICODE: àìùèò"
+Done
 @endoutput
 */
 

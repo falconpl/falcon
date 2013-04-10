@@ -1351,6 +1351,9 @@ public:
    /** Removes all the slashes before quotes. */
    void unescapeQuotes();
 
+   /** Replaces all the occurences of a substring with the given needle */
+   void replace( const String& needle, const String& repl, String& target, int32 count = -1) const;
+
    /** Alters the character size of this string.
 
        Changes the number of bytes used to represent a single

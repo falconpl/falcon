@@ -33,6 +33,22 @@
 
 namespace Falcon {
 
+/**
+ @class String
+
+ @section string_mutable Mutable strings
+
+ @section string_re Regular expression strings
+
+ @section string_i International strings
+
+ @section string_ops Standard operators
+
+ @prop len Length of the string (in characters)
+ @prop allocated Size of the memory occupied by the strings
+ @prop isText If true, the string is text-oriented, otherwise it's a memory buffer.
+ @prop mutable True if he string is mutable.
+ */
 //===============================================================================
 // Opcodes
 //
@@ -96,6 +112,17 @@ void ClassString::PStepNextOp::apply_( const PStep* ps, VMContext* ctx )
 static void get_len( const Class*, const String&, void* instance, Item& value )
 {
    value = (int64) static_cast<String*>( instance )->length();
+}
+
+static void get_mutable( const Class*, const String&, void* instance, Item& value )
+{
+   value.setBoolean(! static_cast<String*>( instance )->isImmutable() );
+}
+
+
+static void get_allocated( const Class*, const String&, void* instance, Item& value )
+{
+   value = (int64) static_cast<String*>( instance )->allocated();
 }
 
 static void get_isText( const Class*, const String&, void* instance, Item& value )
@@ -1428,6 +1455,120 @@ FALCON_DEFINE_FUNCTION_P1( unescape )
 }
 
 
+/*#
+   @method replace String
+   @brief Replaces the all the occurrences of a substring with another one.
+   @param substr The substring that will be replaced.
+   @param repstr The string that will take the place of substr.
+   @optparam count Maximum number of substitutions.
+   @return A copy of the string with the occurrences of the searched substring replaced.
+
+   @note When used statically, it takes a the target string as first parameter.
+ */
+FALCON_DECLARE_FUNCTION( replace, "string:S,substr:S,repstr:S,count:N" );
+FALCON_DEFINE_FUNCTION_P1( replace )
+{
+   // Parameter checking;
+   Item *i_target, *i_needle, *i_replacer, *i_count;
+
+   if( ctx->isMethodic() )
+   {
+      i_target = &ctx->self();
+      i_needle = ctx->param(0);
+      i_replacer = ctx->param(1);
+      i_count = ctx->param(2);
+   }
+   else
+   {
+      i_target = ctx->param(0);
+      i_needle = ctx->param(1);
+      i_replacer = ctx->param(2);
+      i_count = ctx->param(3);
+   }
+
+   if ( i_target == 0 || ! i_target->isString()
+        || i_needle == 0 || ! i_needle->isString()
+        || i_replacer == 0 || ! i_replacer->isString()
+        || (i_count != 0 && ! i_count->isOrdinal())
+        )
+   {
+      throw paramError(__LINE__, SRC, ctx->isMethodic() );
+   }
+
+   // Parameter estraction.
+   String *tg_str = i_target->asString();
+   String *ned_str = i_needle->asString();
+   String *rep_str = i_replacer->asString();
+   int32 count = i_count == 0 ? 0 : (int32) i_count->forceInteger();
+
+   String* str = new String;
+
+   tg_str->replace( *ned_str, *rep_str, *str, count );
+
+   ctx->returnFrame( FALCON_GC_HANDLE(str) );
+}
+
+/*#
+   @method substr String
+   @brief Replaces the all the occurrences of a substring with another one.
+   @param start The substring that will be replaced.
+   @optparam length The substring that will be replaced.
+   @return A copy of the string with the occurrences of the searched substring replaced.
+
+   @note When used statically, it takes a the target string as first parameter.
+ */
+FALCON_DECLARE_FUNCTION( substr, "string:S,start:N,length:[N]" );
+FALCON_DEFINE_FUNCTION_P1( substr )
+{
+   // Parameter checking;
+   Item *i_string, *i_start, *i_length;
+
+   if( ctx->isMethodic() )
+   {
+      i_string = &ctx->self();
+      i_start = ctx->param(0);
+      i_length = ctx->param(1);
+   }
+   else
+   {
+      i_string = ctx->param(0);
+      i_start = ctx->param(1);
+      i_length = ctx->param(2);
+   }
+
+   if ( i_string == 0 || ! i_string->isString()
+          || i_start == 0 || ! i_start->isOrdinal()
+          || (i_length != 0 && ! i_length->isOrdinal())
+          )
+   {
+      throw paramError(__LINE__, SRC, ctx->isMethodic() );
+   }
+
+   String* str = i_string->asString();
+   int64 start = i_start == 0 ? 0 : i_start->forceInteger();
+   if( start < 0 )
+   {
+      start = 0;
+   }
+
+   int64 length = 0;
+   if( i_length == 0 )
+   {
+      length = str->length()-start;
+   }
+   else
+   {
+      length = i_length->forceInteger();
+      if( length < 0 )
+      {
+         length = str->length();
+      }
+   }
+
+   String* ret = new String(str->subString(start, start + length ));
+   ctx->returnFrame(FALCON_GC_HANDLE(ret));
+}
+
 //=======================================================================================
 // Mutable Strings
 //
@@ -1629,10 +1770,13 @@ void ClassString::init()
 
    addProperty( "isText", &get_isText, &set_isText );
    addProperty( "len", &get_len );
+   addProperty( "mutable", &get_mutable );
+   addProperty( "allocated", &get_allocated );
    addProperty( "charSize", &get_charSize, &set_charSize );
 
    addMethod( new _classString::Function_front, true );
    addMethod( new _classString::Function_back, true );
+   addMethod( new _classString::Function_substr, true );
    addMethod( new _classString::Function_split, true );
    addMethod( new _classString::Function_splittr, true );
    addMethod( new _classString::Function_merge, true );
@@ -1657,6 +1801,8 @@ void ClassString::init()
    addMethod( new _classString::Function_unescape, true );
    addMethod( new _classString::Function_esq, true );
    addMethod( new _classString::Function_unesq, true );
+
+   addMethod( new _classString::Function_replace, true );
 
    addMethod( new _classString::Function_atrim, true );
    addMethod( new _classString::Function_aftrim, true );

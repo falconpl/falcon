@@ -33,7 +33,6 @@ class ClassTreeStep: public Class
 public:
    ClassTreeStep();
    virtual ~ClassTreeStep();         
-  
 
    virtual void describe( void* instance, String& target, int depth = 3, int maxlen = 60 ) const;
    virtual void dispose( void* instance ) const;
