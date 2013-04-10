@@ -4,13 +4,13 @@
 
 @output
 Testing RE.consume
-R'a(.)c'.consume('abcabc'): ["b"]: "abc"
-R'a(.)c'.consume('aaaabc'): ["b"]: ""
+R'a(.)c'.consume('abcabc'): [m"b"]: "abc"
+R'a(.)c'.consume('aaaabc'): [m"b"]: ""
 R'a(.)c'.consume('bbb'): false: "bbb"
-R'a(.)c'.consume('xxaccxaacx'): ["c"]: "xaacx"
+R'a(.)c'.consume('xxaccxaacx'): [m"c"]: "xaacx"
 R'a(.)c'.consume('AAA'): false: "AAA"
-R'a(.)c'.consume('ABC'): ["B"]: ""
-R'a(.)c'.consume('xxABCxxABC'): ["B"]: "xxABC"
+R'a(.)c'.consume('ABC'): [m"B"]: ""
+R'a(.)c'.consume('xxABCxxABC'): [m"B"]: "xxABC"
 @endoutput
 */
 

@@ -1,0 +1,154 @@
+/*
+@name String methods - type checking
+@category Core-string
+
+@output
+String methods - type checking
+========================
+Results for ""
+isAlpha      : true
+isDigit      : true
+isAlphaNum   : true
+isPunct      : true
+isUpper      : true
+isLower      : true
+isWhitespace : true
+isPrintable  : true
+isASCII      : true
+isISO        : true
+========================
+Results for "..!;:"
+isAlpha      : false
+isDigit      : false
+isAlphaNum   : false
+isPunct      : true
+isUpper      : false
+isLower      : false
+isWhitespace : false
+isPrintable  : true
+isASCII      : true
+isISO        : true
+========================
+Results for "Hello"
+isAlpha      : true
+isDigit      : false
+isAlphaNum   : true
+isPunct      : false
+isUpper      : false
+isLower      : false
+isWhitespace : false
+isPrintable  : true
+isASCII      : true
+isISO        : true
+========================
+Results for "HELLO"
+isAlpha      : true
+isDigit      : false
+isAlphaNum   : true
+isPunct      : false
+isUpper      : true
+isLower      : false
+isWhitespace : false
+isPrintable  : true
+isASCII      : true
+isISO        : true
+========================
+Results for "hello"
+isAlpha      : true
+isDigit      : false
+isAlphaNum   : true
+isPunct      : false
+isUpper      : false
+isLower      : true
+isWhitespace : false
+isPrintable  : true
+isASCII      : true
+isISO        : true
+========================
+Results for "Hello123"
+isAlpha      : false
+isDigit      : false
+isAlphaNum   : true
+isPunct      : false
+isUpper      : false
+isLower      : false
+isWhitespace : false
+isPrintable  : true
+isASCII      : true
+isISO        : true
+========================
+Results for "123"
+isAlpha      : false
+isDigit      : true
+isAlphaNum   : true
+isPunct      : false
+isUpper      : false
+isLower      : false
+isWhitespace : false
+isPrintable  : true
+isASCII      : true
+isISO        : true
+========================
+Results for " \r\n\t"
+isAlpha      : false
+isDigit      : false
+isAlphaNum   : false
+isPunct      : false
+isUpper      : false
+isLower      : false
+isWhitespace : true
+isPrintable  : false
+isASCII      : true
+isISO        : true
+========================
+Results for "Hi! èìùò"
+isAlpha      : false
+isDigit      : false
+isAlphaNum   : false
+isPunct      : false
+isUpper      : false
+isLower      : false
+isWhitespace : false
+isPrintable  : true
+isASCII      : false
+isISO        : true
+Done
+@endoutput
+*/
+
+> "String methods - type checking"
+
+tests = .[ 
+   ""
+   "..!;:"
+   "Hello"
+   "HELLO"
+   "hello"
+   "Hello123"
+   "123"
+   " \r\n\t"
+   "Hi! èìùò"
+]
+
+funcs = .[
+   String.isAlpha
+   String.isDigit
+   String.isAlphaNum
+   String.isPunct
+   String.isUpper
+   String.isLower
+   String.isWhitespace
+   String.isPrintable
+   String.isASCII
+   String.isISO
+]
+
+function test( x )
+   > "========================"
+   > @"Results for ${x.describe()}"
+   ^[ funcs ] {(f) > @"$({f.name}13): ", f(x) }
+end
+
+^[ tests ] test
+
+> "Done"

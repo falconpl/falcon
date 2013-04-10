@@ -1,0 +1,35 @@
+/*
+@name String methods - template strings
+@category Core-string
+
+@output
+String methods - template strings
+ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz
+ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789
+0123456789
+.,;:!?
+ABCDEFGHIJKLMNOPQRSTUVWXYZ
+abcdefghijklmnopqrstuvwxyz
+Done
+@endoutput
+*/
+
+> "String methods - template strings"
+
+tests = .[ 
+   String.allAlpha
+   String.allAlphaNum
+   String.allDigit
+   String.allPunct
+   String.allUpper
+   String.allLower
+]
+
+
+function test( x )
+   > x
+end
+
+^[ tests ] test
+
+> "Done"

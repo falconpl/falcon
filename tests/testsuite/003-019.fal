@@ -4,13 +4,13 @@
 
 @output
 Testing RE.consume with grab all
-R'a(.)c'.consume('abcabc', true): ["abc", "b"]: "abc"
-R'a(.)c'.consume('aaaabc', true): ["abc", "b"]: ""
+R'a(.)c'.consume('abcabc', true): [m"abc", m"b"]: "abc"
+R'a(.)c'.consume('aaaabc', true): [m"abc", m"b"]: ""
 R'a(.)c'.consume('bbb', true): false: "bbb"
-R'a(.)c'.consume('xxaccxaacx', true): ["acc", "c"]: "xaacx"
+R'a(.)c'.consume('xxaccxaacx', true): [m"acc", m"c"]: "xaacx"
 R'a(.)c'.consume('AAA', true): false: "AAA"
-R'a(.)c'.consume('ABC', true): ["ABC", "B"]: ""
-R'a(.)c'.consume('xxABCxxABC', true): ["ABC", "B"]: "xxABC"
+R'a(.)c'.consume('ABC', true): [m"ABC", m"B"]: ""
+R'a(.)c'.consume('xxABCxxABC', true): [m"ABC", m"B"]: "xxABC"
 @endoutput
 */
 

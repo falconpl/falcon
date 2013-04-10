@@ -10,22 +10,22 @@ Test as a method:
 "alpha", "beta", 10, 20: -1
 "The string is here.", "he": 14
 "The string is here.", "he", 1, 14: 1
-"The string is here.", "he", 4, 8: -1
+"The string is here.", "he", 4, 8: 1
 "The string is here.", "he", 4, -1: 14
 "The string is here.", "he", 4, 100: 14
 "The string is here.", "he", 14: 14
-"The string is here.", "he", 15: -1
+"The string is here.", "he", 15: 14
 Test as a static function:
 "", "": -1
 "", "", 10, 20: -1
 "alpha", "beta", 10, 20: -1
 "The string is here.", "he": 14
 "The string is here.", "he", 1, 14: 1
-"The string is here.", "he", 4, 8: -1
+"The string is here.", "he", 4, 8: 1
 "The string is here.", "he", 4, -1: 14
 "The string is here.", "he", 4, 100: 14
 "The string is here.", "he", 14: 14
-"The string is here.", "he", 15: -1
+"The string is here.", "he", 15: 14
 Done
 @endoutput
 */

@@ -3,7 +3,6 @@
 @category Core-string
 
 @output
-String methods - join
 String methods - find
 Test as a method:
 "", "": -1

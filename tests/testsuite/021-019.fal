@@ -3,6 +3,7 @@
 @category Core-string
 
 @output
+String methods - startsWith
 Test as a method:
 "", "": true
 "", "longer": false

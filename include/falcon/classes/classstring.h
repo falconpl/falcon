@@ -62,6 +62,7 @@ public:
 
    virtual void op_mul( VMContext* ctx, void* self ) const;
    virtual void op_div( VMContext* ctx, void* self ) const;
+   virtual void op_mod( VMContext* ctx, void* self ) const;
 
    virtual void op_getIndex( VMContext* ctx, void* self ) const;
 
@@ -79,9 +80,19 @@ public:
    //
    virtual void op_aadd( VMContext* ctx, void* self ) const;
    virtual void op_amul( VMContext* ctx, void* self ) const;
-   virtual void op_adiv( VMContext* ctx, void* self ) const;
+   virtual void op_amod( VMContext* ctx, void* self ) const;
 
    virtual void op_setIndex( VMContext* ctx, void* self ) const;
+
+   //=============================================================
+   // Model strings
+   //
+   String* m_modelAllAlpha;
+   String* m_modelAllAlphaNum;
+   String* m_modelAllDigit;
+   String* m_modelAllUpper;
+   String* m_modelAllLower;
+   String* m_modelAllPunct;
 
 protected:
    ClassString( const String& subclassName );

@@ -4,13 +4,13 @@
 
 @output
 Testing RE.capture with full grab
-R'a(.)c'.find('abc'): ["abc", "b"]
+R'a(.)c'.find('abc'): [m"abc", m"b"]
 R'a(.)c'.find('aaa'): Nil
 R'a(.)c'.find('bbb'): Nil
-R'a(.)c'.find('xxaccxx'): ["acc", "c"]
+R'a(.)c'.find('xxaccxx'): [m"acc", m"c"]
 R'a(.)c'.find('AAA'): Nil
-R'a(.)c'.find('ABC'): ["ABC", "B"]
-R'a(.)c'.find('xxABCxx'): ["ABC", "B"]
+R'a(.)c'.find('ABC'): [m"ABC", m"B"]
+R'a(.)c'.find('xxABCxx'): [m"ABC", m"B"]
 @endoutput
 */
 

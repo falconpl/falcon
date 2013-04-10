@@ -7,6 +7,8 @@ String operator test
 abc123
 abc456
 abcabc
+C
+A
 abcA
 Done
 @endoutput
@@ -21,6 +23,9 @@ x = "abc"
 x = "abc"
 > x * 2
 
+> "A" / 2
+> "C" / -2
+
 x = "abc"
-> x / 65
+> x % 65
 > "Done"

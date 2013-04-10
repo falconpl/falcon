@@ -824,7 +824,8 @@ const Base *MemBuf32::bufferedManipulator() const
 
 String::String( length_t size ):
    m_class( &csh::handler_buffer ),
-   m_lastMark(0)
+   m_lastMark(0),
+   m_bImmutable(false)
 {
    m_storage = (byte *) malloc( size );
    m_allocated = size;
@@ -2056,6 +2057,7 @@ void String::trimInternal( String::t_trimmode mode, const __Checker& checker )
 }
 
 
+
 String String::replicate( int times )
 {
    if( times == 0 ) return "";
@@ -2796,6 +2798,223 @@ Class* String::handler()
       m_class_handler = Engine::handlers()->stringClass();
    }
    return m_class_handler;
+}
+
+//=====================================================================
+// String character type checking
+//
+
+class String::CC_Alpha
+{
+public:
+   bool operator()( uint32 chr ) const
+   {
+      return (chr >= 'A' && chr <= 'Z') || (chr >= 'a' && chr <= 'z');
+   }
+};
+
+class String::CC_Digit
+{
+public:
+   bool operator()( uint32 chr ) const
+   {
+      return (chr >= '0' && chr <= '9');
+   }
+};
+
+class String::CC_AlphaNum
+{
+public:
+   bool operator()( uint32 chr ) const
+   {
+      return (chr >= '0' && chr <= '9') || (chr >= 'A' && chr <= 'Z') || (chr >= 'a' && chr <= 'z');
+   }
+};
+
+class String::CC_Punct
+{
+public:
+   bool operator()( uint32 chr ) const
+   {
+      return
+            chr == '.'
+         || chr == ','
+         || chr == '?'
+         || chr == '!'
+         || chr == ';'
+         || chr == ':'
+         ;
+   }
+};
+
+
+class String::CC_Whitespace
+{
+public:
+   bool operator()( uint32 chr ) const
+   {
+      return chr == ' ' || chr == '\n' || chr == '\r' || chr == '\t';
+   }
+};
+
+class String::CC_Upper
+{
+public:
+   bool operator()( uint32 chr ) const
+   {
+      return (chr >= 'A' && chr <= 'Z');
+   }
+};
+
+class String::CC_Lower
+{
+public:
+   bool operator()( uint32 chr ) const
+   {
+      return (chr >= 'a' && chr <= 'z');
+   }
+};
+
+class String::CC_Printable
+{
+public:
+   bool operator()( uint32 chr ) const
+   {
+      return chr >= ' ' || chr == '\n' || chr == '\t';
+   }
+};
+
+class String::CC_ASCII
+{
+public:
+   bool operator()( uint32 chr ) const
+   {
+      return chr < 128;
+   }
+};
+
+class String::CC_ISO
+{
+public:
+   bool operator()( uint32 chr ) const
+   {
+      return chr < 256;
+   }
+};
+
+template<class __Checker> bool String::checkTypeInternal( const __Checker& checker ) const
+{
+   length_t len = length();
+   for( length_t pos = 0; pos < len; ++pos )
+   {
+      if( ! checker(getCharAt(pos)) )
+      {
+         return false;
+      }
+   }
+
+   return true;
+}
+
+bool String::isAlpha() const
+{
+   return checkTypeInternal(CC_Alpha());
+}
+
+bool String::isDigit() const
+{
+   return checkTypeInternal(CC_Digit());
+}
+
+bool String::isAlphaNum() const
+{
+   return checkTypeInternal(CC_AlphaNum());
+}
+
+bool String::isPunct() const
+{
+   return checkTypeInternal(CC_Punct());
+}
+
+
+bool String::isUpper() const
+{
+   return checkTypeInternal(CC_Upper());
+}
+
+bool String::isLower() const
+{
+   return checkTypeInternal(CC_Lower());
+}
+
+bool String::isWhitespace() const
+{
+   return checkTypeInternal(CC_Whitespace());
+}
+
+bool String::isPrintable() const
+{
+   return checkTypeInternal(CC_Printable());
+}
+
+bool String::isASCII() const
+{
+   return checkTypeInternal(CC_ASCII());
+}
+
+bool String::isISO() const
+{
+   return checkTypeInternal(CC_ISO());
+}
+
+bool String::isAlpha( uint32 chr )
+{
+   return CC_Alpha()(chr);
+}
+
+bool String::isDigit( uint32 chr )
+{
+   return CC_Digit()(chr);
+}
+
+bool String::isAlphaNum( uint32 chr )
+{
+   return CC_AlphaNum()(chr);
+}
+
+bool String::isPunct( uint32 chr )
+{
+   return CC_Punct()(chr);
+}
+
+bool String::isUpper( uint32 chr )
+{
+   return CC_Upper()(chr);
+}
+
+bool String::isLower( uint32 chr )
+{
+   return CC_Lower()(chr);
+}
+
+bool String::isWhitespace( uint32 chr )
+{
+   return CC_Whitespace()(chr);
+}
+
+bool String::isPrintable( uint32 chr )
+{
+   return CC_Printable()(chr);
+}
+
+bool String::isASCII( uint32 chr )
+{
+   return CC_ASCII()(chr);
+}
+
+bool String::isISO( uint32 chr )
+{
+   return CC_ISO()(chr);
 }
 
 }

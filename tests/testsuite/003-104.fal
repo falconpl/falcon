@@ -6,7 +6,7 @@
 Literal evaluation with complex unquote
 A=OK
 B=Nil
-Check value:"OK"
+Check value:m"OK"
 @endoutput
 */
 

@@ -4,13 +4,13 @@
 
 @output
 Testing RE.capture
-R'a(.)c'.find('abc'): ["b"]
+R'a(.)c'.find('abc'): [m"b"]
 R'a(.)c'.find('aaa'): Nil
 R'a(.)c'.find('bbb'): Nil
-R'a(.)c'.find('xxaccxx'): ["c"]
+R'a(.)c'.find('xxaccxx'): [m"c"]
 R'a(.)c'.find('AAA'): Nil
-R'a(.)c'.find('ABC'): ["B"]
-R'a(.)c'.find('xxABCxx'): ["B"]
+R'a(.)c'.find('ABC'): [m"B"]
+R'a(.)c'.find('xxABCxx'): [m"B"]
 @endoutput
 */
 

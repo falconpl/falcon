@@ -5,19 +5,19 @@
 @output
 String methods - join
 Test as a method:
-"",[]=>""
-",",[]=>""
-",",["one"]=>"one"
-",",["one", "two"]=>"one,two"
-",",["one", "two", "three"]=>"one,two,three"
-"",["one", "two", "three"]=>"onetwothree"
+"",[]=>m""
+",",[]=>m""
+",",["one"]=>m"one"
+",",["one", "two"]=>m"one,two"
+",",["one", "two", "three"]=>m"one,two,three"
+"",["one", "two", "three"]=>m"onetwothree"
 Test as a static function:
-"",[]=>""
-",",[]=>""
-",",["one"]=>"one"
-",",["one", "two"]=>"one,two"
-",",["one", "two", "three"]=>"one,two,three"
-"",["one", "two", "three"]=>"onetwothree"
+"",[]=>m""
+",",[]=>m""
+",",["one"]=>m"one"
+",",["one", "two"]=>m"one,two"
+",",["one", "two", "three"]=>m"one,two,three"
+"",["one", "two", "three"]=>m"onetwothree"
 Done
 @endoutput
 */

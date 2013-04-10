@@ -1124,9 +1124,9 @@ public:
     }
 
     /** Cumulative version of writeHex */
-    inline String& H( uint64 number, bool ucase, int ciphers = 0 )
+    inline String& H( uint64 number, bool ucase, int digits = 0 )
     {
-       writeNumberHex( number, ucase, ciphers );
+       writeNumberHex( number, ucase, digits );
        return *this;
     }
 
@@ -1384,11 +1384,130 @@ public:
    bool isImmutable() const { return m_bImmutable; }
    void setImmutable( bool i ) {  m_bImmutable = i; }
 
+   //===========================================================
+   // Type checking
+   //
+
+   /** Check if this string is entirely composed of alphabet characters.
+       \return true if this string is entirely composed of alphabet characters.
+   */
+   bool isAlpha() const;
+
+   /** Check if this string is entirely composed of 0-9 Arabic digits.
+       \return true if this string is entirely composed of 0-9 Arabic digits.
+   */
+   bool isDigit() const;
+
+   /** Check if this string is entirely composed of alphabet characters or 0-9 digits.
+       \return true if this string is entirely composed of alphabet characters or 0-9 digits.
+   */
+   bool isAlphaNum() const;
+
+   /** Check if this string is entirely composed of punctation characters.
+       \return true if this string is entirely composed of punctation characters.
+   */
+   bool isPunct() const;
+
+   /** Check if this string is entirely composed of upper case Latin alphabet characters.
+       \return true if this string is entirely composed of alphabet characters.
+   */
+   bool isUpper() const;
+
+
+   /** Check if this string is entirely composed of lower case Latin alphabet characters.
+       \return true if this string is entirely composed of alphabet characters.
+   */
+   bool isLower() const;
+
+   /** Check if this string is entirely composed of space, tabulation, newline or return.
+       \return true if this string is entirely composed of space, tabulation, newline or return.
+   */
+   bool isWhitespace() const;
+
+   /** Check if this string is in the printable range.
+       \return true if his string is in the printable range.
+   */
+   bool isPrintable() const;
+
+   /** Check if this string is entirely composed of characters in the range 0-127.
+       \return true if this string is entirely composed of characters in the range 0-127.
+   */
+   bool isASCII() const;
+
+   /** Check if this string is entirely composed of characters in the range 0-255.
+       \return true if this string is entirely composed of characters in the range 0-255.
+   */
+   bool isISO() const;
+
+   /** Check if the given character is an alphabet character.
+       \return true if the given character is an alphabet character.
+   */
+   static bool isAlpha( uint32 chr );
+
+   /** Check if the given character is one of the 0-9 Arabic digits.
+       \return true the given character is one of the 0-9 Arabic digit.
+   */
+   static bool isDigit( uint32 chr );
+
+   /** Check if the given character is an alphabet character or a digit.
+       \return true if the given character is an alphabet character or a digit.
+   */
+   static bool isAlphaNum( uint32 chr );
+
+   /** Check if the given character is an alphabet character.
+       \return true if the given character is an alphabet character.
+   */
+   static bool isPunct( uint32 chr );
+
+   /** Check if the given character is an upper case Latin alphabet character.
+       \return true if the given character is an upper case Latin alphabet character.
+   */
+   static bool isUpper( uint32 chr );
+
+
+   /** Check if the given character is a lower case Latin alphabet character.
+       \return true if the given character is a lower case Latin alphabet character.
+   */
+   static bool isLower( uint32 chr );
+
+   /** Check if the given character is one of space, tabulation, newline or return.
+       \return true if the given character is one of space, tabulation, newline or return.
+   */
+   static bool isWhitespace( uint32 chr );
+
+   /** Check if the given character is in the printable range.
+       \return true if the given character is in the printable range.
+   */
+   static bool isPrintable( uint32 chr );
+
+   /** Check if the given character is in the range 0-1const27.
+       \return true if the given character is in the range 0-127.
+   */
+   static bool isASCII( uint32 chr );
+
+   /** Check if the given character is in the range 0-255.
+       \return true if the given character is in the range 0-255.
+   */
+   static bool isISO( uint32 chr );
+
 private:
    class TrimCheckerSet;
    class TrimCheckerWS;
 
+   class CC_Alpha;
+   class CC_Digit;
+   class CC_AlphaNum;
+   class CC_Punct;
+   class CC_Whitespace;
+   class CC_Upper;
+   class CC_Lower;
+   class CC_Printable;
+   class CC_ASCII;
+   class CC_ISO;
+
    template<class __Checker> void trimInternal( String::t_trimmode mode, const __Checker& checker );
+
+   template<class __Checker> bool checkTypeInternal( const __Checker& checker ) const;
 };
 
 

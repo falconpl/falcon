@@ -4,20 +4,20 @@
 
 @output
 Testing RE.substitute
-R'a(.)c'.substitute('abcabc', '-\0-'): "-abc-"
-R'a(.)c'.substitute('abcabc', '-\1-'): "-b-"
-R'a(.)c'.substitute('aaaabc', '-\0-'): "-abc-"
-R'a(.)c'.substitute('aaaabc', '-\1-'): "-b-"
+R'a(.)c'.substitute('abcabc', '-\0-'): m"-abc-"
+R'a(.)c'.substitute('abcabc', '-\1-'): m"-b-"
+R'a(.)c'.substitute('aaaabc', '-\0-'): m"-abc-"
+R'a(.)c'.substitute('aaaabc', '-\1-'): m"-b-"
 R'a(.)c'.substitute('bbb', '-\0-'): Nil
 R'a(.)c'.substitute('bbb', '-\1-'): Nil
-R'a(.)c'.substitute('xxaccxaacx', '-\0-'): "-acc-"
-R'a(.)c'.substitute('xxaccxaacx', '-\1-'): "-c-"
+R'a(.)c'.substitute('xxaccxaacx', '-\0-'): m"-acc-"
+R'a(.)c'.substitute('xxaccxaacx', '-\1-'): m"-c-"
 R'a(.)c'.substitute('AAA', '-\0-'): Nil
 R'a(.)c'.substitute('AAA', '-\1-'): Nil
-R'a(.)c'.substitute('ABC', '-\0-'): "-ABC-"
-R'a(.)c'.substitute('ABC', '-\1-'): "-B-"
-R'a(.)c'.substitute('xxABCxxABC', '-\0-'): "-ABC-"
-R'a(.)c'.substitute('xxABCxxABC', '-\1-'): "-B-"
+R'a(.)c'.substitute('ABC', '-\0-'): m"-ABC-"
+R'a(.)c'.substitute('ABC', '-\1-'): m"-B-"
+R'a(.)c'.substitute('xxABCxxABC', '-\0-'): m"-ABC-"
+R'a(.)c'.substitute('xxABCxxABC', '-\1-'): m"-B-"
 @endoutput
 */
 

@@ -3,6 +3,7 @@
 @category Core-string
 
 @output
+String methods - replace
 Test as a method:
 "", "", "": m""
 "Hello world", "", "": m"Hello world"

@@ -4,13 +4,13 @@
 
 @output
 Testing RE.consumeMatch
-R'a(.)c'.consumeMatch('abcabc'): "abc": "abc"
-R'a(.)c'.consumeMatch('aaaabc'): "abc": ""
+R'a(.)c'.consumeMatch('abcabc'): m"abc": "abc"
+R'a(.)c'.consumeMatch('aaaabc'): m"abc": ""
 R'a(.)c'.consumeMatch('bbb'): Nil: "bbb"
-R'a(.)c'.consumeMatch('xxaccxaacx'): "acc": "xaacx"
+R'a(.)c'.consumeMatch('xxaccxaacx'): m"acc": "xaacx"
 R'a(.)c'.consumeMatch('AAA'): Nil: "AAA"
-R'a(.)c'.consumeMatch('ABC'): "ABC": ""
-R'a(.)c'.consumeMatch('xxABCxxABC'): "ABC": "xxABC"
+R'a(.)c'.consumeMatch('ABC'): m"ABC": ""
+R'a(.)c'.consumeMatch('xxABCxxABC'): m"ABC": "xxABC"
 @endoutput
 */
 

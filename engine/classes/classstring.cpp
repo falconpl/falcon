@@ -35,6 +35,20 @@ namespace Falcon {
 
 /**
  @class String
+ @optparam item
+
+ @prop len Length of the string (in characters)
+ @prop allocated Size of the memory occupied by the strings
+ @prop isText If true, the string is text-oriented, otherwise it's a memory buffer.
+ @prop mutable True if he string is mutable.
+ @prop allAlpha (static) Returns an immutable string containing all the upper and lower case latin letters.
+ @prop allAlphaNum (static) Returns an immutable string containing all the upper and lower case latin letters and digits.
+ @prop allDigit (static) Returns an immutable string containing all the digits.
+ @prop allUpper (static) Returns an immutable string containing all the upper case latin letters.
+ @prop allLower (static) Returns an immutable string containing all the lower case latin letters.
+ @prop allPunct (static) Returns an immutable string containing all the common puntaction characters.
+
+ @brief Language level class handling string data type.
 
  @section string_mutable Mutable strings
 
@@ -43,11 +57,46 @@ namespace Falcon {
  @section string_i International strings
 
  @section string_ops Standard operators
+ - add (+): String + <anything> => concatenates this item and the string
+             representation of the other item
+ - aadd (+=): String += <anything> => concatenates this item in place;
+             the original string is changed and lengthened (only if mutable).
+ - mul (*): String * <number> => Creates a new string containing <number> copies of
+              the original string.
+ - amul (*=): String *= <number> => Takes the string and concatenaes the given number
+              of copies to it (only if mutable).
+ - div (/): String / <number> => Generates a character having the UNICODE value of the
+           last character in the string plus the numeric value. For instance, "B"/1 gives "C",
+           and "B"/-1 gives "A".
+ - mod (%): String / <number> => Concatenates the given string with the UNICODE character
+           represented by the number. Equivalent to "..." + "\x<number>"
+ - amod (%=): String /= <number> => Concatenates the given string with the UNICODE character
+           represented by the number, appending it directly in place after the string.
+           Equivalent to "..." += "\x<number>" (only if mutable)
 
- @prop len Length of the string (in characters)
- @prop allocated Size of the memory occupied by the strings
- @prop isText If true, the string is text-oriented, otherwise it's a memory buffer.
- @prop mutable True if he string is mutable.
+ - index ([]): The operator gives access to the nth character in the string, or to a substring
+    range in case the index is a range. Setting new values as single characters or ranges
+    is possible if the string is mutable only.
+ - star-index ([*n]): Returns the UNICODE value of the nth character, or if the string is non-text,
+    it's byte value.
+
+  - in: String1 in String2: true if string1 is a substring (is found in) string2
+     Equivalent to string2.find(string1) >= 0.
+
+  @section string_iter Iteration over strings
+
+  Strings are iterable; this means they can be used as expressions in for-in
+  loops, as terms for the accumulator expression ^[], and the @a BOM.foreach
+  method can iterate over them.
+
+  Each iteration results in a mutable string containing exactly one character,
+  so that
+
+  @code
+  "hello".foreach(printl)
+  @endcode
+
+  prints each character of hello on a single line.
  */
 //===============================================================================
 // Opcodes
@@ -181,6 +230,42 @@ static void set_charSize( const Class*, const String&, void* instance, const Ite
 }
 
 
+static void get_allAlpha( const Class* cls, const String&, void*, Item& value )
+{
+   const ClassString* scls = static_cast<const ClassString*>(cls);
+   value.setUser(scls, scls->m_modelAllAlpha );
+}
+
+static void get_allAlphaNum( const Class* cls, const String&, void*, Item& value )
+{
+   const ClassString* scls = static_cast<const ClassString*>(cls);
+   value.setUser(scls, scls->m_modelAllAlphaNum );
+}
+
+static void get_allDigit( const Class* cls, const String&, void*, Item& value )
+{
+   const ClassString* scls = static_cast<const ClassString*>(cls);
+   value.setUser(scls, scls->m_modelAllDigit );
+}
+
+static void get_allUpper( const Class* cls, const String&, void*, Item& value )
+{
+   const ClassString* scls = static_cast<const ClassString*>(cls);
+   value.setUser(scls, scls->m_modelAllUpper );
+}
+
+static void get_allLower( const Class* cls, const String&, void*, Item& value )
+{
+   const ClassString* scls = static_cast<const ClassString*>(cls);
+   value.setUser(scls, scls->m_modelAllLower );
+}
+
+static void get_allPunct( const Class* cls, const String&, void*, Item& value )
+{
+   const ClassString* scls = static_cast<const ClassString*>(cls);
+   value.setUser(scls, scls->m_modelAllPunct );
+}
+
 //=========================================================================
 //
 //
@@ -196,7 +281,7 @@ namespace _classString
 
    This method returns a string containing characters from the beginning of the string.
 
-   @note When used statically, it takes a the target string as first parameter.
+   @note When used statically, this method takes a target string as first parameter.
 */
 FALCON_DECLARE_FUNCTION( front, "string:S,count:N" );
 FALCON_DEFINE_FUNCTION_P1(front)
@@ -244,7 +329,7 @@ FALCON_DEFINE_FUNCTION_P1(front)
 
    This method returns a string containing characters from the end of the string.
 
-   @note When used statically, it takes a the target string as first parameter.
+   @note When used statically, this method takes a target string as first parameter.
 */
 FALCON_DECLARE_FUNCTION( back, "back:S,count:N" );
 FALCON_DEFINE_FUNCTION_P1(back)
@@ -310,7 +395,7 @@ FALCON_DEFINE_FUNCTION_P1(back)
    @note See @a Tokenizer for a more adequate function to scan extensively
    wide strings.
 
-   @note When used statically, it takes a the target string as first parameter.
+   @note When used statically, this method takes a target string as first parameter.
 */
 FALCON_DECLARE_FUNCTION( splittr, "token:[S],count:[N]" );
 FALCON_DEFINE_FUNCTION_P1(splittr)
@@ -476,7 +561,7 @@ FALCON_DEFINE_FUNCTION_P1(splittr)
    1-character strings in an array.
 
 
-   @note When used statically, it takes a the target string as first parameter.
+   @note When used statically, this method takes a target string as first parameter.
 */
 
 FALCON_DECLARE_FUNCTION( split, "token:[S],count:[N]" );
@@ -625,7 +710,7 @@ FALCON_DEFINE_FUNCTION_P1(split)
 
    If an element of the array is not a string, an error is raised.
 
-   @note When used statically, it takes a the target string as first parameter.
+   @note When used statically, this method takes a target string as first parameter.
 */
 
 FALCON_DECLARE_FUNCTION( merge, "separator:[S],array:[S],count:[N]" );
@@ -704,7 +789,7 @@ FALCON_DEFINE_FUNCTION_P1(merge)
 
    If the parameters are not string, a standard @a toString conversion is tried.
 
-   @note When used statically, it takes a the target string as first parameter.
+   @note When used statically, this method takes a target string as first parameter.
 */
 
 FALCON_DECLARE_FUNCTION( join, "separator:S,..." );
@@ -845,7 +930,7 @@ static void internal_find( VMContext* ctx, Function* func, bool mode )
    If an end position is given, it is used as upper limit for the search, so that
    the search is in the interval [start, end-1].
 
-   @note When used statically, it takes a the target string as first parameter.
+   @note When used statically, this method takes a target string as first parameter.
 */
 FALCON_DECLARE_FUNCTION( find, "string:S,needle:S,start:[N],end:[N]" );
 FALCON_DEFINE_FUNCTION_P1(find)
@@ -864,7 +949,7 @@ FALCON_DEFINE_FUNCTION_P1(find)
    Works exactly as @a String.find, except for the fact that the last match
    in the string (or in the specified interval) is returned.
 
-   @note When used statically, it takes a the target string as first parameter.
+   @note When used statically, this method takes a target string as first parameter.
 */
 FALCON_DECLARE_FUNCTION( rfind, "string:S,needle:S,start:[N],end:[N]" );
 FALCON_DEFINE_FUNCTION_P1(rfind)
@@ -951,7 +1036,7 @@ static void internal_trim( String::t_trimmode mode, Function* func, VMContext* c
    defaults to space, tabulation characters, new lines and carriage returns. The
    original string is unmodified.
 
-   @note When used statically, it takes a the target string as first parameter.
+   @note When used statically, this method takes a target string as first parameter.
 */
 FALCON_DECLARE_FUNCTION( trim, "string:S,trimSet:[S]" );
 FALCON_DEFINE_FUNCTION_P1(trim)
@@ -970,7 +1055,7 @@ FALCON_DEFINE_FUNCTION_P1(trim)
    defaults to space, tabulation characters, new lines and carriage returns. The
    original string is unmodified.
 
-   @note When used statically, it takes a the target string as first parameter.
+   @note When used statically, this method takes a target string as first parameter.
 */
 
 FALCON_DECLARE_FUNCTION( ftrim, "string:S,trimSet:[S]" );
@@ -990,7 +1075,7 @@ FALCON_DEFINE_FUNCTION_P1( ftrim )
    defaults to space, tabulation characters, new lines and carriage returns. The
    original string is unmodified.
 
-   @note When used statically, it takes a the target string as first parameter.
+   @note When used statically, this method takes a target string as first parameter.
 */
 
 FALCON_DECLARE_FUNCTION( rtrim, "string:S,trimSet:[S]" );
@@ -1093,7 +1178,7 @@ static void internal_upper_lower( VMContext* ctx, Function* func, bool isUpper, 
    All the Latin characters in the string are turned uppercase. Other characters
    are left untouched.
 
-   @note When used statically, it takes a the target string as first parameter.
+   @note When used statically, this method takes a target string as first parameter.
 */
 FALCON_DECLARE_FUNCTION( upper, "string:S" );
 FALCON_DEFINE_FUNCTION_P1( upper )
@@ -1109,7 +1194,7 @@ FALCON_DEFINE_FUNCTION_P1( upper )
    All the Latin characters in the string are turned lowercase. Other characters
    are left untouched.
 
-   @note When used statically, it takes a the target string as first parameter.
+   @note When used statically, this method takes a target string as first parameter.
 */
 FALCON_DECLARE_FUNCTION( lower, "string:S" );
 FALCON_DEFINE_FUNCTION_P1( lower )
@@ -1175,7 +1260,7 @@ static void internal_start_end_with( VMContext* ctx, Function* func, bool isEnd 
    The optional parameter @b icase can be provided as true to have this
    method to perform a case insensitive match.
 
-   @note When used statically, it takes a the target string as first parameter.
+   @note When used statically, this method takes a target string as first parameter.
 */
 FALCON_DECLARE_FUNCTION( startsWith, "string:S,token:S,icase:[B]" );
 FALCON_DEFINE_FUNCTION_P1( startsWith )
@@ -1199,7 +1284,7 @@ FALCON_DEFINE_FUNCTION_P1( startsWith )
    The optional parameter @b icase can be provided as true to have this
    method to perform a case insensitive match.
 
-   @note When used statically, it takes a the target string as first parameter.
+   @note When used statically, this method takes a target string as first parameter.
 */
 FALCON_DECLARE_FUNCTION( endsWith, "string:S,token:S,icase:[B]" );
 FALCON_DEFINE_FUNCTION_P1( endsWith )
@@ -1223,7 +1308,7 @@ FALCON_DEFINE_FUNCTION_P1( endsWith )
    smaller, it returns a positive number. If the two strings are the same,
    ignoring the case of the characters, 0 is returned.
 
-   @note When used statically, it takes a the target string as first parameter.
+   @note When used statically, this method takes a target string as first parameter.
 */
 FALCON_DECLARE_FUNCTION( cmpi, "this:S,string:S" );
 FALCON_DEFINE_FUNCTION_P1( cmpi )
@@ -1347,7 +1432,7 @@ inline void internal_escape( VMContext* ctx, Function* func, int mode )
    backslash (\\). This makes the string parsable by the vast
    majority of string parsing languages, including Falcon itself.
 
-   @note When used statically, it takes a the target string as first parameter.
+   @note When used statically, this method takes a target string as first parameter.
 
    @see String.unesq
 */
@@ -1370,7 +1455,7 @@ FALCON_DEFINE_FUNCTION_P1( esq )
    The @a String.unescape method escapes also other sequences
    as the Falcon parser would.
 
-   @note When used statically, it takes a the target string as first parameter.
+   @note When used statically, this method takes a target string as first parameter.
 
    @see String.esq
 
@@ -1397,7 +1482,7 @@ FALCON_DEFINE_FUNCTION_P1( unesq )
    UNICODE 127, encoding them in a \\xNNNN hexadecimal unicode
    value sequence.
 
-   @note When used statically, it takes a the target string as first parameter.
+   @note When used statically, this method takes a target string as first parameter.
 
    @see String.esq
    @see strEsq
@@ -1424,7 +1509,7 @@ FALCON_DEFINE_FUNCTION_P1( escape )
    UNICODE 127, encoding them in a \\xNNNN hexadecimal UNICODE
    value sequence.
 
-   @note When used statically, it takes a the target string as first parameter.
+   @note When used statically, this method takes a target string as first parameter.
 
    @see String.esq
    @see String.escape
@@ -1442,7 +1527,7 @@ FALCON_DEFINE_FUNCTION_P1( escapeFull )
    @brief Unescapes all the special characters in the string.
    @return A new strings with the special backslash sequences unescaped.
 
-   @note When used statically, it takes a the target string as first parameter.
+   @note When used statically, this method takes a target string as first parameter.
 
    @see String.esq
    @see String.escape
@@ -1463,7 +1548,7 @@ FALCON_DEFINE_FUNCTION_P1( unescape )
    @optparam count Maximum number of substitutions.
    @return A copy of the string with the occurrences of the searched substring replaced.
 
-   @note When used statically, it takes a the target string as first parameter.
+   @note When used statically, this method takes a target string as first parameter.
  */
 FALCON_DECLARE_FUNCTION( replace, "string:S,substr:S,repstr:S,count:N" );
 FALCON_DEFINE_FUNCTION_P1( replace )
@@ -1515,7 +1600,7 @@ FALCON_DEFINE_FUNCTION_P1( replace )
    @optparam length The substring that will be replaced.
    @return A copy of the string with the occurrences of the searched substring replaced.
 
-   @note When used statically, it takes a the target string as first parameter.
+   @note When used statically, this method takes a target string as first parameter.
  */
 FALCON_DECLARE_FUNCTION( substr, "string:S,start:N,length:[N]" );
 FALCON_DEFINE_FUNCTION_P1( substr )
@@ -1569,6 +1654,257 @@ FALCON_DEFINE_FUNCTION_P1( substr )
    ctx->returnFrame(FALCON_GC_HANDLE(ret));
 }
 
+
+template< class __Checker>
+void internal_checkType( VMContext* ctx, Function* func, const __Checker& checker )
+{
+   // Parameter checking;
+   Item *i_string;
+
+   if( ctx->isMethodic() )
+   {
+      i_string = &ctx->self();
+   }
+   else
+   {
+      i_string = ctx->param(0);
+      if ( i_string == 0 )
+      {
+         throw func->paramError(__LINE__, SRC );
+      }
+   }
+
+   bool retval;
+
+   if( i_string->isString() )
+   {
+      ClassString* scls = static_cast<ClassString*>( func->methodOf() );
+      String* string = i_string->asString();
+
+      InstanceLock::Token* tk = scls->lockInstance( string );
+      retval = checker(string);
+      scls->unlockInstance(tk);
+   }
+   else if( i_string->isOrdinal() )
+   {
+      retval = checker( i_string->forceInteger() );
+   }
+   else
+   {
+      // can't be methodic if we're here.
+      throw func->paramError(__LINE__, SRC );
+   }
+
+   ctx->returnFrame( Item().setBoolean( retval ) );
+}
+
+class AlphaChecker {
+public:
+   bool operator()( String* str ) const { return str->isAlpha(); }
+   bool operator()( int64 num ) const { return String::isAlpha( num ); }
+};
+
+class DigitChecker {
+public:
+   bool operator()( String* str ) const { return str->isDigit(); }
+   bool operator()( int64 num ) const { return String::isDigit( num ); }
+};
+
+class isAlphaNumChecker {
+public:
+   bool operator()( String* str ) const { return str->isAlphaNum(); }
+   bool operator()( int64 num ) const { return String::isAlphaNum( num ); }
+};
+
+class PunctChecker {
+public:
+   bool operator()( String* str ) const { return str->isPunct(); }
+   bool operator()( int64 num ) const { return String::isPunct( num ); }
+};
+
+class UpperChecker {
+public:
+   bool operator()( String* str ) const { return str->isUpper(); }
+   bool operator()( int64 num ) const { return String::isUpper( num ); }
+};
+
+class isLowerChecker {
+public:
+   bool operator()( String* str ) const { return str->isLower(); }
+   bool operator()( int64 num ) const { return String::isLower( num ); }
+};
+
+class isWhitespaceChecker {
+public:
+   bool operator()( String* str ) const { return str->isWhitespace(); }
+   bool operator()( int64 num ) const { return String::isWhitespace( num ); }
+};
+
+class isPrintableChecker {
+public:
+   bool operator()( String* str ) const { return str->isPrintable(); }
+   bool operator()( int64 num ) const { return String::isPrintable( num ); }
+};
+
+class isASCIIChecker {
+public:
+   bool operator()( String* str ) const { return str->isASCII(); }
+   bool operator()( int64 num ) const { return String::isASCII( num ); }
+};
+
+class isISOChecker {
+public:
+   bool operator()( String* str ) const { return str->isISO(); }
+   bool operator()( int64 num ) const { return String::isISO( num ); }
+};
+
+/*#
+   @method isAlpha String
+   @brief Checks if the string is composed of Latin alphabet characters only
+   @return True if the check succeeds.
+
+   @note When used statically, this method takes a target string as first parameter, or
+   a UNICODE number representing a single character.
+ */
+FALCON_DECLARE_FUNCTION( isAlpha, "string:S|N" );
+FALCON_DEFINE_FUNCTION_P1( isAlpha )
+{
+   internal_checkType<AlphaChecker>( ctx, this, AlphaChecker() );
+}
+
+/*#
+   @method isDigit String
+   @brief Checks if the string is composed of Arabic ciphers only
+   @return True if the check succeeds.
+
+   @note When used statically, this method takes a target string as first parameter, or
+   a UNICODE number representing a single character.
+ */
+FALCON_DECLARE_FUNCTION( isDigit, "string:S|N" );
+FALCON_DEFINE_FUNCTION_P1( isDigit )
+{
+   internal_checkType( ctx, this, DigitChecker() );
+}
+
+/*#
+   @method isAlphaNum String
+   @brief Checks if the string is composed of Latin letters or Arabic ciphers only.
+   @return True if the check succeeds.
+
+   @note When used statically, this method takes a target string as first parameter, or
+   a UNICODE number representing a single character.
+ */
+FALCON_DECLARE_FUNCTION( isAlphaNum, "string:S|N" );
+FALCON_DEFINE_FUNCTION_P1( isAlphaNum )
+{
+   internal_checkType( ctx, this, isAlphaNumChecker() );
+}
+
+/*#
+   @method isPunct String
+   @brief Checks if the string is composed of puntaction characters.
+   @return True if the check succeeds.
+
+   Characters known are '.', ',', ':', ';', '?', '!'.
+
+   @note When used statically, this method takes a target string as first parameter, or
+   a UNICODE number representing a single character.
+ */
+FALCON_DECLARE_FUNCTION( isPunct, "string:S|N" );
+FALCON_DEFINE_FUNCTION_P1( isPunct )
+{
+   internal_checkType( ctx, this, PunctChecker() );
+}
+
+/*#
+   @method isUpper String
+   @brief Checks if the string is composed of upper case Latin letters only.
+   @return True if the check succeeds.
+
+   @note When used statically, this method takes a target string as first parameter, or
+   a UNICODE number representing a single character.
+ */
+FALCON_DECLARE_FUNCTION( isUpper, "string:S|N" );
+FALCON_DEFINE_FUNCTION_P1( isUpper )
+{
+   internal_checkType( ctx, this, UpperChecker() );
+}
+
+
+/*#
+   @method isLower String
+   @brief Checks if the string is composed of lower case Latin letters only.
+   @return True if the check succeeds.
+
+   @note When used statically, this method takes a target string as first parameter, or
+   a UNICODE number representing a single character.
+ */
+FALCON_DECLARE_FUNCTION( isLower, "string:S|N" );
+FALCON_DEFINE_FUNCTION_P1( isLower )
+{
+   internal_checkType( ctx, this, isLowerChecker() );
+}
+
+/*#
+   @method isWhitespace String
+   @brief Checks if the string is composed of space, tabulation, newline and return characters.
+   @return True if the check succeeds.
+
+   @note When used statically, this method takes a target string as first parameter, or
+   a UNICODE number representing a single character.
+ */
+FALCON_DECLARE_FUNCTION( isWhitespace, "string:S|N" );
+FALCON_DEFINE_FUNCTION_P1( isWhitespace )
+{
+   internal_checkType( ctx, this, isWhitespaceChecker() );
+}
+
+/*#
+   @method isPrintable String
+   @brief Checks if the string is composed of characters in the printable range.
+   @return True if the check succeeds.
+
+   This includes all the characters between the blank character (UNICODE 32) and
+   the ASCII 127 character (UNICODE 127), plus tabulation and new line.
+
+   @note When used statically, this method takes a target string as first parameter, or
+   a UNICODE number representing a single character.
+ */
+FALCON_DECLARE_FUNCTION( isPrintable, "string:S|N" );
+FALCON_DEFINE_FUNCTION_P1( isPrintable )
+{
+   internal_checkType( ctx, this, isPrintableChecker() );
+}
+
+/*#
+   @method isASCII String
+   @brief Checks if the string is composed of characters between UNICODE 0 and 127 included.
+   @return True if the check succeeds.
+
+   @note When used statically, this method takes a target string as first parameter, or
+   a UNICODE number representing a single character.
+ */
+FALCON_DECLARE_FUNCTION( isASCII, "string:S|N" );
+FALCON_DEFINE_FUNCTION_P1( isASCII )
+{
+   internal_checkType( ctx, this, isASCIIChecker() );
+}
+
+/*#
+   @method isISO String
+   @brief Checks if the string is composed of characters between UNICODE 0 and 255 included.
+   @return True if the check succeeds.
+
+   @note When used statically, this method takes a target string as first parameter, or
+   a UNICODE number representing a single character.
+ */
+FALCON_DECLARE_FUNCTION( isISO, "string:S|N" );
+FALCON_DEFINE_FUNCTION_P1( isISO )
+{
+   internal_checkType( ctx, this, isISOChecker() );
+}
+
+
 //=======================================================================================
 // Mutable Strings
 //
@@ -1585,7 +1921,7 @@ FALCON_DEFINE_FUNCTION_P1( substr )
    If @b trimSet is not supplied, it defaults to space, tabulation characters,
    new lines and carriage returns.
 
-   @note When used statically, it takes a the target string as first parameter.
+   @note When used statically, this method takes a target string as first parameter.
 */
 FALCON_DECLARE_FUNCTION( atrim, "trimSet:[S]" );
 FALCON_DEFINE_FUNCTION_P1(atrim)
@@ -1603,7 +1939,7 @@ FALCON_DEFINE_FUNCTION_P1(atrim)
    If @b trimSet is not supplied, it
    defaults to space, tabulation characters, new lines and carriage returns.
 
-   @note When used statically, it takes a the target string as first parameter.
+   @note When used statically, this method takes a target string as first parameter.
 */
 
 FALCON_DECLARE_FUNCTION( aftrim, "trimSet:[S]" );
@@ -1622,7 +1958,7 @@ FALCON_DEFINE_FUNCTION_P1( aftrim )
    If @b trimSet is not supplied, it
    defaults to space, tabulation characters, new lines and carriage returns.
 
-   @note When used statically, it takes a the target string as first parameter.
+   @note When used statically, this method takes a target string as first parameter.
 */
 
 FALCON_DECLARE_FUNCTION( artrim, "trimSet:[S]" );
@@ -1640,7 +1976,7 @@ FALCON_DEFINE_FUNCTION_P1( artrim )
    All the Latin characters in the string are turned uppercase. Other characters
    are left untouched.
 
-   @note When used statically, it takes a the target string as first parameter.
+   @note When used statically, this method takes a target string as first parameter.
 */
 FALCON_DECLARE_FUNCTION( aupper, "string:S" );
 FALCON_DEFINE_FUNCTION_P1( aupper )
@@ -1657,7 +1993,7 @@ FALCON_DEFINE_FUNCTION_P1( aupper )
    All the Latin characters in the string are turned lowercase. Other characters
    are left untouched.
 
-   @note When used statically, it takes a the target string as first parameter.
+   @note When used statically, this method takes a target string as first parameter.
 */
 FALCON_DECLARE_FUNCTION( alower, "string:S" );
 FALCON_DEFINE_FUNCTION_P1( alower )
@@ -1774,6 +2110,13 @@ void ClassString::init()
    addProperty( "allocated", &get_allocated );
    addProperty( "charSize", &get_charSize, &set_charSize );
 
+   addProperty( "allAlpha", &get_allAlpha, 0, true, true );
+   addProperty( "allAlphaNum", &get_allAlphaNum, 0, true, true );
+   addProperty( "allDigit", &get_allDigit, 0, true, true );
+   addProperty( "allUpper", &get_allUpper, 0, true, true );
+   addProperty( "allLower", &get_allLower, 0, true, true );
+   addProperty( "allPunct", &get_allPunct, 0, true, true );
+
    addMethod( new _classString::Function_front, true );
    addMethod( new _classString::Function_back, true );
    addMethod( new _classString::Function_substr, true );
@@ -1804,6 +2147,18 @@ void ClassString::init()
 
    addMethod( new _classString::Function_replace, true );
 
+   addMethod( new _classString::Function_isAlpha, true );
+   addMethod( new _classString::Function_isDigit, true );
+   addMethod( new _classString::Function_isAlphaNum, true );
+   addMethod( new _classString::Function_isPunct, true );
+   addMethod( new _classString::Function_isUpper, true );
+   addMethod( new _classString::Function_isLower, true );
+   addMethod( new _classString::Function_isWhitespace, true );
+   addMethod( new _classString::Function_isPrintable, true );
+   addMethod( new _classString::Function_isASCII, true );
+   addMethod( new _classString::Function_isISO, true );
+   //====================================================
+
    addMethod( new _classString::Function_atrim, true );
    addMethod( new _classString::Function_aftrim, true );
    addMethod( new _classString::Function_artrim, true );
@@ -1813,6 +2168,24 @@ void ClassString::init()
    addMethod( new _classString::Function_fill, true );
 
    addMethod( new _classString::Function_buffer, true );
+
+   m_modelAllAlpha = new String( "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz");
+   m_modelAllAlpha->setImmutable(true);
+
+   m_modelAllAlphaNum = new String( "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789");
+   m_modelAllAlphaNum->setImmutable(true);
+
+   m_modelAllDigit = new String( "0123456789");
+   m_modelAllDigit->setImmutable(true);
+
+   m_modelAllUpper = new String( "ABCDEFGHIJKLMNOPQRSTUVWXYZ");
+   m_modelAllUpper->setImmutable(true);
+
+   m_modelAllLower = new String( "abcdefghijklmnopqrstuvwxyz");
+   m_modelAllLower->setImmutable(true);
+
+   m_modelAllPunct = new String( ".,;:!?");
+   m_modelAllPunct->setImmutable(true);
 }
 
 
@@ -2124,6 +2497,36 @@ void ClassString::op_mul( VMContext* ctx, void* instance ) const
 
 
 void ClassString::op_div( VMContext* ctx, void* instance ) const
+{
+   // self count => new
+   Item& i_count = ctx->topData();
+   if( ! i_count.isOrdinal() )
+   {
+      throw new OperandError( ErrorParam( e_op_params, __LINE__ ).extra( "N" ) );
+   }
+
+   int64 count = i_count.forceInteger();
+   ctx->popData();
+
+
+
+   String* self = static_cast<String*>(instance);
+   InstanceLock::Token* tk = m_lock.lock(self);
+   uint32 chr = self->empty() ? 0 : self->getCharAt(self->length()-1);
+   m_lock.unlock(tk);
+
+   count = chr + count;
+   if ( count < 0 || count >= 0xFFFFFFFFLL )
+   {
+      throw new OperandError( ErrorParam( e_op_params, __LINE__ ).extra( "Operator / out of range" ) );
+   }
+   String* target = new String(1);
+   target->append((uint32) count);
+   ctx->topData() = FALCON_GC_HANDLE( target );
+}
+
+
+void ClassString::op_mod( VMContext* ctx, void* instance ) const
 {
    // self count => new
    Item& i_count = ctx->topData();
@@ -2492,7 +2895,7 @@ void ClassString::op_amul( VMContext* ctx, void* instance ) const
 }
 
 
-void ClassString::op_adiv( VMContext* ctx, void* instance ) const
+void ClassString::op_amod( VMContext* ctx, void* instance ) const
 {
    String* self = static_cast<String*>(instance);
    if( self->isImmutable() )

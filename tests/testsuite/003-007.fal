@@ -7,14 +7,14 @@ Testing r% operator
 'a.c' % abc: []
 'a.c' % ac: []
 'a(.?)c' % bbbc: Nil
-'a(.*?)?c' % aabc: ["ab"]
-'(.b.)(.b.)(...)?' % abcabcab: ["abc", "abc", ""]
-'(.b.)(.b.)(...)?' % abcabcabc: ["abc", "abc", "abc"]
+'a(.*?)?c' % aabc: [m"ab"]
+'(.b.)(.b.)(...)?' % abcabcab: [m"abc", m"abc", m""]
+'(.b.)(.b.)(...)?' % abcabcabc: [m"abc", m"abc", m"abc"]
 'a(.?)c' % AAC: Nil
-'A(B)?C' % AAC: [""]
-'A(B?)C' % AAC: [""]
-'a(.?)c'i % AAC: ["A"]
-'a(.)?c'i % AAC: ["A"]
+'A(B)?C' % AAC: [m""]
+'A(B?)C' % AAC: [m""]
+'a(.?)c'i % AAC: [m"A"]
+'a(.)?c'i % AAC: [m"A"]
 @endoutput
 */
 

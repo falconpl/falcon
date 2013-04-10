@@ -4,20 +4,20 @@
 
 @output
 Testing RE.replace
-R'a(.)c'.replace('abcabc', '-\0-'): "-abc--abc-"
-R'a(.)c'.replace('abcabc', '-\1-'): "-b--b-"
-R'a(.)c'.replace('aaaabc', '-\0-'): "aaa-abc-"
-R'a(.)c'.replace('aaaabc', '-\1-'): "aaa-b-"
+R'a(.)c'.replace('abcabc', '-\0-'): m"-abc--abc-"
+R'a(.)c'.replace('abcabc', '-\1-'): m"-b--b-"
+R'a(.)c'.replace('aaaabc', '-\0-'): m"aaa-abc-"
+R'a(.)c'.replace('aaaabc', '-\1-'): m"aaa-b-"
 R'a(.)c'.replace('bbb', '-\0-'): Nil
 R'a(.)c'.replace('bbb', '-\1-'): Nil
-R'a(.)c'.replace('xxaccxaacx', '-\0-'): "xx-acc-x-aac-x"
-R'a(.)c'.replace('xxaccxaacx', '-\1-'): "xx-c-x-a-x"
+R'a(.)c'.replace('xxaccxaacx', '-\0-'): m"xx-acc-x-aac-x"
+R'a(.)c'.replace('xxaccxaacx', '-\1-'): m"xx-c-x-a-x"
 R'a(.)c'.replace('AAA', '-\0-'): Nil
 R'a(.)c'.replace('AAA', '-\1-'): Nil
-R'a(.)c'.replace('ABC', '-\0-'): "-ABC-"
-R'a(.)c'.replace('ABC', '-\1-'): "-B-"
-R'a(.)c'.replace('xxABCxxABC', '-\0-'): "xx-ABC-xx-ABC-"
-R'a(.)c'.replace('xxABCxxABC', '-\1-'): "xx-B-xx-B-"
+R'a(.)c'.replace('ABC', '-\0-'): m"-ABC-"
+R'a(.)c'.replace('ABC', '-\1-'): m"-B-"
+R'a(.)c'.replace('xxABCxxABC', '-\0-'): m"xx-ABC-xx-ABC-"
+R'a(.)c'.replace('xxABCxxABC', '-\1-'): m"xx-B-xx-B-"
 @endoutput
 */
 

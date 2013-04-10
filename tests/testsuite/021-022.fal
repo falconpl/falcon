@@ -3,29 +3,21 @@
 @category Core-string
 
 @output
-String methods - endsWith
+String methods - cmpi
 Test as a method:
-"", "": true
-"", "longer": false
-"sho", "short": false
-"some string", "": true
-"some string", "ing": true
-"some string", "ing ": false
-"some string", "Ing", false: false
-"some string", "ING", false: false
-"some string", " String", true: true
-"some string", " StRING", true: true
+"", "": 0
+"short", "longer": 1
+"STRING", "string": 0
+"strING", "StrIng": 0
+"smAllEr", "Larger": 1
+"Larger", "smAllEr": -1
 Test as a static function:
-"", "": true
-"", "longer": false
-"sho", "short": false
-"some string", "": true
-"some string", "ing": true
-"some string", "ing ": false
-"some string", "Ing", false: false
-"some string", "ING", false: false
-"some string", " String", true: true
-"some string", " StRING", true: true
+"", "": 0
+"short", "longer": 1
+"STRING", "string": 0
+"strING", "StrIng": 0
+"smAllEr", "Larger": 1
+"Larger", "smAllEr": -1
 Done
 @endoutput
 */

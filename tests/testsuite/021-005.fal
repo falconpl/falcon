@@ -5,23 +5,23 @@
 @output
 String methods - merge
 Test as a method:
-"",[],0 =>""
-",",[],0 =>""
-",",[],1 =>""
-",",["one"],0 =>""
-",",["one"],Nil =>"one"
-",",["one", "two"],Nil =>"one,two"
-",",["one", "two", "three"],Nil =>"one,two,three"
-"",["one", "two", "three"],Nil =>"onetwothree"
+"",[],0 =>m""
+",",[],0 =>m""
+",",[],1 =>m""
+",",["one"],0 =>m""
+",",["one"],Nil =>m"one"
+",",["one", "two"],Nil =>m"one,two"
+",",["one", "two", "three"],Nil =>m"one,two,three"
+"",["one", "two", "three"],Nil =>m"onetwothree"
 Test as a static function:
-"",[],0 =>""
-",",[],0 =>""
-",",[],1 =>""
-",",["one"],0 =>""
-",",["one"],Nil =>"one"
-",",["one", "two"],Nil =>"one,two"
-",",["one", "two", "three"],Nil =>"one,two,three"
-"",["one", "two", "three"],Nil =>"onetwothree"
+"",[],0 =>m""
+",",[],0 =>m""
+",",[],1 =>m""
+",",["one"],0 =>m""
+",",["one"],Nil =>m"one"
+",",["one", "two"],Nil =>m"one,two"
+",",["one", "two", "three"],Nil =>m"one,two,three"
+"",["one", "two", "three"],Nil =>m"onetwothree"
 Done
 @endoutput
 */
