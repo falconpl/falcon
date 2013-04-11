@@ -723,7 +723,6 @@ FALCON_DEFINE_FUNCTION_P1(split)
 }
 
 
-
 /*#
    @method merge String
    @brief Merges an array of strings into one.
@@ -968,13 +967,13 @@ static void internal_find( VMContext* ctx, Function* func, bool mode )
 
    ClassString* cstring = static_cast<ClassString*>(func->methodOf());
    InstanceLock::Token* tk1 = cstring->lockInstance(target);
-   InstanceLock::Token* tk2 = cstring->lockInstance(needle);
+   InstanceLock::Token* tk2 = target != needle ? cstring->lockInstance(needle) : 0;
 
    uint32 pos = mode ?
             target->asString()->rfind( *needle->asString(), (uint32) start, (uint32) end ) :
             target->asString()->find( *needle->asString(), (uint32) start, (uint32) end );
 
-   cstring->unlockInstance(tk2);
+   if ( tk2 !=0 ) cstring->unlockInstance(tk2);
    cstring->unlockInstance(tk1);
 
    if ( pos != csh::npos )
@@ -1214,7 +1213,7 @@ static void internal_upper_lower( VMContext* ctx, Function* func, bool isUpper, 
    {
       if( src->isImmutable() )
       {
-         throw new ParamError( ErrorParam( e_inv_params, __LINE__, SRC ). extra( "Immutable string ") );
+         throw new ParamError( ErrorParam( e_acc_forbidden, __LINE__, SRC ). extra( "Immutable string ") );
       }
 
       InstanceLock::Token* tk = clstr->lockInstance(src);
@@ -1415,11 +1414,11 @@ FALCON_DEFINE_FUNCTION_P1( cmpi )
 
    ClassString* cstring = static_cast<ClassString*>(methodOf());
    InstanceLock::Token* tk1 = cstring->lockInstance(str1);
-   InstanceLock::Token* tk2 = cstring->lockInstance(str2);
+   InstanceLock::Token* tk2 = str1 != str2 ? cstring->lockInstance(str2) : 0;
 
    int32 result = str1->compareIgnoreCase(*str2);
 
-   cstring->unlockInstance(tk2);
+   if( tk2 != 0 ) cstring->unlockInstance(tk2);
    cstring->unlockInstance(tk1);
 
    ctx->returnFrame((int64) result );
@@ -1661,13 +1660,13 @@ FALCON_DEFINE_FUNCTION_P1( replace )
 
    ClassString* cstring = static_cast<ClassString*>(methodOf());
    InstanceLock::Token* tk1 = cstring->lockInstance(tg_str);
-   InstanceLock::Token* tk2 = cstring->lockInstance(ned_str);
-   InstanceLock::Token* tk3 = cstring->lockInstance(rep_str);
+   InstanceLock::Token* tk2 = tg_str != ned_str ? cstring->lockInstance(ned_str) : 0;
+   InstanceLock::Token* tk3 = rep_str != tg_str && rep_str != ned_str ? cstring->lockInstance(rep_str) : 0;
 
    tg_str->replace( *ned_str, *rep_str, *str, count );
 
-   cstring->unlockInstance(tk3);
-   cstring->unlockInstance(tk2);
+   if( tk3 != 0 ) cstring->unlockInstance(tk3);
+   if( tk2 != 0 ) cstring->unlockInstance(tk2);
    cstring->unlockInstance(tk1);
 
    ctx->returnFrame( FALCON_GC_HANDLE(str) );
@@ -1792,11 +1791,11 @@ FALCON_DEFINE_FUNCTION_P1( wmatch )
 
    ClassString* cstring = static_cast<ClassString*>(methodOf());
    InstanceLock::Token* tk1 = cstring->lockInstance(cfr);
-   InstanceLock::Token* tk2 = cstring->lockInstance(wcard);
+   InstanceLock::Token* tk2 = cfr != wcard ? cstring->lockInstance(wcard) : 0;
 
    bool bResult = cfr->wildcardMatch( *wcard, bIcase );
 
-   cstring->unlockInstance(tk2);
+   if( tk2 != 0 ) cstring->unlockInstance(tk2);
    cstring->unlockInstance(tk1);
 
    ctx->returnFrame( Item().setBoolean( bResult ) );
@@ -2181,7 +2180,7 @@ FALCON_DEFINE_FUNCTION_P1( fill )
       i_chr = ctx->param(1);
    }
 
-   if( i_string == 0 || ! i_string->asClass()->isDerivedFrom( methodOf() )
+   if( i_string == 0 || ! i_string->isString()
       || i_chr == 0 || ( ! i_chr->isOrdinal() && !i_chr->isString())
       )
    {
@@ -2192,7 +2191,7 @@ FALCON_DEFINE_FUNCTION_P1( fill )
 
    if( string->isImmutable() )
    {
-      throw new OperandError( ErrorParam( e_prop_ro, __LINE__, SRC ).extra("Immutable string") );
+      throw new OperandError( ErrorParam( e_acc_forbidden, __LINE__, SRC ).extra("Immutable string") );
    }
 
    if ( i_chr->isOrdinal() )
@@ -2227,9 +2226,150 @@ FALCON_DEFINE_FUNCTION_P1( fill )
 
    ctx->returnFrame( Item(methodOf(), string) );
 }
+
+/*#
+   @method insert String
+   @brief Inserts a string into an an existing string in place.
+   @param pos Position where to insert the string
+   @param needle String to be inserted
+   @return This same string.
+
+   This method inserts a @b needle string at a given position in
+   the target string (before the character currently being in that position).
+   The original string is modified in place; this
+   means that the original string must be mutable.
+
+   If @b pos is negative, the position is considered relative to the end of the
+   string, and the insertion will be done @b after the given position. So,
+   if pos is -1, the string will be actually appended to the original one, if it's
+   -2, it will be inserted before the last character, and if it's -(string.len+1), it
+   will be placed in front of the first character.
+
+   If @b pos is out of range, a ParamError will be raised.
+
+   @note When used statically, this method takes a target string as first parameter.
+*/
+FALCON_DECLARE_FUNCTION( insert, "pos:N,needle:S" );
+FALCON_DEFINE_FUNCTION_P1(insert)
+{
+   Item *i_string, *i_pos, *i_needle;
+
+   // Parameter checking;
+   ctx->getMethodicParams( i_string, i_pos, i_needle );
+
+   if( i_string == 0 || ! i_string->isString()
+      || i_pos == 0 || ! i_pos->isOrdinal()
+      || i_needle == 0 || ! i_needle->isString()
+      )
+   {
+      throw paramError(__LINE__,SRC, ctx->isMethodic() );
+   }
+
+   String *string = i_string->asString();
+
+   if( string->isImmutable() )
+   {
+      throw new OperandError( ErrorParam( e_acc_forbidden, __LINE__, SRC ).extra("Immutable string") );
+   }
+
+   String* needle = i_needle->asString();
+   int64 pos = i_pos->forceInteger();
+
+   ClassString* cstr = static_cast<ClassString*>(methodOf());
+   InstanceLock::Token* tk1 = cstr->lockInstance(string);
+   if( pos < 0 )
+   {
+      pos = string->length() + pos +1;
+   }
+   if( pos < 0 || pos > string->length() )
+   {
+      cstr->unlockInstance(tk1);
+      throw FALCON_SIGN_XERROR(ParamError, e_param_range, .extra("Invalid insert position"));
+   }
+
+   InstanceLock::Token* tk2 = needle != string ? cstr->lockInstance(needle) : 0;
+   string->insert(pos,0,*needle);
+   if( tk2 != 0 ) cstr->unlockInstance(tk2);
+   cstr->unlockInstance(tk1);
+
+   ctx->returnFrame( Item(string->handler(), string) );
 }
 
-//
+
+/*#
+   @method remove String
+   @brief Remove some characters from the string in place.
+   @param pos Position where to remove the characters
+   @param count Number of characters to be removed.
+   @return This same string.
+
+   This method removes a given count of characters string at a given position in
+   the target string.
+   The original string is modified in place; this
+   means that the original string must be mutable.
+
+   If @b pos is negative, the position is considered relative to the end of the
+   string. So, if pos is -1, the last character will be removed.
+
+   If @b pos is out of range, a ParamError will be raised.
+
+   If count is negative, everything will be removed up to the end of the string;
+   if it's 0, nothing will be removed.
+
+   @note When used statically, this method takes a target string as first parameter.
+*/
+FALCON_DECLARE_FUNCTION( remove, "pos:N,count:S" );
+FALCON_DEFINE_FUNCTION_P1(remove)
+{
+   Item *i_string, *i_pos, *i_count;
+
+   // Parameter checking;
+   ctx->getMethodicParams( i_string, i_pos, i_count );
+
+   if( i_string == 0 || ! i_string->isString()
+      || i_pos == 0 || ! i_pos->isOrdinal()
+      || i_count == 0 || ! i_count->isOrdinal()
+      )
+   {
+      throw paramError(__LINE__,SRC, ctx->isMethodic() );
+   }
+
+   String *string = i_string->asString();
+
+   if( string->isImmutable() )
+   {
+      throw new OperandError( ErrorParam( e_acc_forbidden, __LINE__, SRC ).extra("Immutable string") );
+   }
+
+   int64 pos = i_pos->forceInteger();
+   int64 count = i_count->forceInteger();
+
+   ClassString* cstr = static_cast<ClassString*>(methodOf());
+   InstanceLock::Token* tk1 = cstr->lockInstance(string);
+
+   if( pos < 0 )
+   {
+      pos = string->length() + pos +1;
+   }
+   if( pos < 0 || pos > string->length() )
+   {
+      cstr->unlockInstance(tk1);
+      throw FALCON_SIGN_XERROR(ParamError, e_param_range, .extra("Invalid insert position"));
+   }
+   if( count < 0 )
+   {
+      count = string->length();
+   }
+
+   string->remove(pos, count);
+   cstr->unlockInstance(tk1);
+
+   ctx->returnFrame( Item(string->handler(), string) );
+}
+
+}
+
+//==============================================================================
 // Class properties used for enumeration
 //
 
@@ -2315,6 +2455,9 @@ void ClassString::init()
    addMethod( new _classString::Function_aupper, true );
    addMethod( new _classString::Function_alower, true );
    addMethod( new _classString::Function_fill, true );
+
+   addMethod( new _classString::Function_insert, true );
+   addMethod( new _classString::Function_remove, true );
 
    addMethod( new _classString::Function_buffer, true );
 

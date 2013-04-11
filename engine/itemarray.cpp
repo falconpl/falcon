@@ -140,7 +140,6 @@ ItemArray::~ItemArray()
 void ItemArray::append( const Item &ndata )
 {
    // create enough space to hold the data
-   m_mtx.lock();
    if ( m_alloc <= m_size )
    {
       m_alloc = m_size + m_growth;
@@ -160,25 +159,22 @@ void ItemArray::append( const Item &ndata )
    }
 
    m_size++;
-   m_mtx.unlock();
 }
 
 
 void ItemArray::copyFromData( const Item* data, length_t size, length_t startPos )
 {
-   m_mtx.lock();
    if( startPos > m_size )
    {
       startPos = m_size;
    }
 
-   reserve_unlocked(startPos + size);
+   reserve(startPos + size);
    memcpy(m_data+startPos, data, esize(size) );
    if( startPos + size > m_size )
    {
       m_size = startPos + size;
    }
-   m_mtx.unlock();
 }
 
 
@@ -339,7 +335,7 @@ int32 ItemArray::find( const Item &itm ) const
 {
    for( uint32 i = 0; i < m_size; i ++ )
    {
-      if ( itm == m_data[ i ] )
+      if ( itm.compare(m_data[ i ]) == 0 )
          return (int32) i;
    }
 
@@ -492,18 +488,6 @@ void ItemArray::compact()
 }
 
 void ItemArray::reserve( length_t size )
-{
-   m_mtx.lock();
-   if ( size > m_alloc )
-   {
-      m_alloc = size;
-      Item* newData = Helper(this).reallocate( size );
-      m_data = newData;
-   }
-   m_mtx.unlock();
-}
-
-void ItemArray::reserve_unlocked(length_t size )
 {
    if ( size > m_alloc )
    {

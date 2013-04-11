@@ -190,6 +190,15 @@ public:
     */
    void terminate();
 
+   /** Terminates the process by asking termination of all the contexts.
+    *
+    * This will cause the process to exit as soon as possible. External
+    * entities waiting on the process termination will not be waken up
+    * until the process really exits the virtual machine, unless
+    * interrupt() is also called.
+    */
+   void terminateWithError( Error* error );
+
    /** Returns true if this process has been terminated.
 
       This is used by the virtual machine to interrupt

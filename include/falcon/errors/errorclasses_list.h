@@ -76,6 +76,11 @@ FALCON_DECLARE_ERROR_CLASS( UnsupportedError )
  */
 FALCON_DECLARE_ERROR_CLASS( EncodingError )
 
+/** Class handler for ConcurrencyError exceptions.
+ */
+FALCON_DECLARE_ERROR_CLASS( ConcurrencyError )
+
+
 
 /** Class handler for SyntaxError exceptions. 
  */

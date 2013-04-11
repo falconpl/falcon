@@ -768,6 +768,71 @@ public:
       return &topData() - count + 1;
    }
 
+   inline void getMethodicParams( Item*& p0 )
+   {
+      if ( isMethodic() ) {
+         p0 = &self();
+      } else {
+         p0 = param(0);
+      }
+   }
+
+   inline void getMethodicParams( Item*& p0, Item*& p1 )
+   {
+      if ( isMethodic() ) {
+         p0 = &self();
+         p1 = param(0);
+      } else {
+         p0 = param(0);
+         p1 = param(1);
+      }
+   }
+
+   inline void getMethodicParams( Item*& p0, Item*& p1, Item*& p2 )
+   {
+      if ( isMethodic() ) {
+         p0 = &self();
+         p1 = param(0);
+         p2 = param(1);
+      } else {
+         p0 = param(0);
+         p1 = param(1);
+         p2 = param(2);
+      }
+   }
+
+   inline void getMethodicParams( Item*& p0, Item*& p1, Item*& p2, Item*& p3 )
+   {
+      if ( isMethodic() ) {
+         p0 = &self();
+         p1 = param(0);
+         p2 = param(1);
+         p3 = param(2);
+      } else {
+         p0 = param(0);
+         p1 = param(1);
+         p2 = param(2);
+         p3 = param(3);
+      }
+   }
+
+   inline void getMethodicParams( Item*& p0, Item*& p1, Item*& p2, Item*& p3, Item*& p4 )
+   {
+      if ( isMethodic() ) {
+         p0 = &self();
+         p1 = param(0);
+         p2 = param(1);
+         p3 = param(2);
+         p4 = param(3);
+      } else {
+         p0 = param(0);
+         p1 = param(1);
+         p2 = param(2);
+         p3 = param(3);
+         p4 = param(4);
+      }
+   }
+
    //=========================================================
    // Deep call protocol
    //=========================================================

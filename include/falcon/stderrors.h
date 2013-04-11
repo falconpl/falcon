@@ -60,6 +60,10 @@ public:
     */
    Class* generic() const { return m_generic; }
 
+   /** Returns the global instance of the ConcurrencyError handler Class.
+    */
+   Class* concurrency() const { return m_concurrency; }
+
    /** Returns the global instance of the OperandError handler Class.
     */
    Class* operand() const { return m_operand; }
@@ -124,6 +128,7 @@ private:
    Class* m_error;
    Class* m_code;
    Class* m_generic;
+   Class* m_concurrency;
    Class* m_operand;
    Class* m_unsupported;
    Class* m_io;

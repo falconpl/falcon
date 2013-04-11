@@ -25,6 +25,7 @@
 #include <falcon/errors/accesstypeerror.h>
 #include <falcon/errors/codeerror.h>
 #include <falcon/errors/genericerror.h>
+#include <falcon/errors/concurrencyerror.h>
 #include <falcon/errors/interruptederror.h>
 #include <falcon/errors/ioerror.h>
 #include <falcon/errors/operanderror.h>

@@ -666,6 +666,10 @@ static bool internal_change( VMContext* ctx, int mode )
 
    re2::RE2* re = static_cast<re2::RE2*>(ctx->self().asInst());
    String* target = i_target->asString();
+   if( mode >= 3 &&  target->isImmutable() )
+   {
+      throw FALCON_SIGN_XERROR(ParamError, e_acc_forbidden, .extra("Immutable string"));
+   }
    String* replacer = i_replacer->asString();
 
    String* ret = 0;
@@ -794,6 +798,10 @@ void Function_consume::invoke( VMContext* ctx, int32 )
 
    re2::RE2* re = static_cast<re2::RE2*>(ctx->self().asInst());
    String* target = i_target->asString();
+   if( target->isImmutable() )
+   {
+      throw FALCON_SIGN_XERROR(ParamError, e_acc_forbidden, .extra("Immutable string"));
+   }
 
    re2::StringPiece captured[MAX_CAPTURE_COUNT];
    int cc = re->NumberOfCapturingGroups() + 1;
@@ -849,6 +857,11 @@ void Function_consumeMatch::invoke( VMContext* ctx, int32 )
 
    re2::RE2* re = static_cast<re2::RE2*>(ctx->self().asInst());
    String* target = i_target->asString();
+
+   if( target->isImmutable() )
+   {
+      throw FALCON_SIGN_XERROR(ParamError, e_acc_forbidden, .extra("Immutable string"));
+   }
 
    re2::StringPiece captured;
 

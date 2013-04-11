@@ -70,6 +70,8 @@ public:
    virtual void op_iter( VMContext* ctx, void* instance ) const;
    virtual void op_next( VMContext* ctx, void* instance ) const;
   
+   PStep* m_stepScanInvoke;
+   PStep* m_stepScanCheck;
 };
 
 }

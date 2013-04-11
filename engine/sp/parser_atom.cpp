@@ -242,7 +242,6 @@ void apply_Atom_IString ( const Rule&, Parser& p )
 
    // get the string and it's class, to generate a static UserValue
    String* s = ti->detachString();
-   s->setImmutable(true);
    // The exprvalue is made so that it will gc lock the string.
    Expression* res = new ExprIString(*s, ti->line(), ti->chr() );
    ParserContext* ctx = static_cast<ParserContext*>(sp.context());

@@ -31,6 +31,7 @@ StdErrors::StdErrors()
    m_code = new ClassCodeError;
    m_generic = new ClassGenericError;
    m_operand = new ClassOperandError;
+   m_concurrency = new ClassConcurrencyError;
    m_unsupported = new ClassUnsupportedError;
    m_io = new ClassIOError;
    m_interrupted = new ClassInterruptedError;

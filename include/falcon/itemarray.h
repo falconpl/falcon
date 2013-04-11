@@ -19,8 +19,7 @@
 #include <falcon/setup.h>
 #include <falcon/types.h>
 #include <falcon/item.h>
-#include <falcon/mt.h>
-
+#include <falcon/concurrencyguard.h>
 
 namespace Falcon
 {
@@ -225,13 +224,18 @@ public:
     */
    void copyFromData( const Item* data, length_t size, length_t startPos = 0 );
 
+   /** Concurrency guard for this.
+    *
+    */
+   ConcurrencyGuard& guard() const { return m_guard; }
+
 private:
    length_t m_alloc;
    length_t m_size;
    Item *m_data;
    length_t m_growth;
    uint32 m_mark;
-   mutable Mutex m_mtx;
+   mutable ConcurrencyGuard m_guard;
 
 
    static Class* m_handler;
@@ -252,7 +256,6 @@ private:
    };
 
    int compare( const ItemArray& other, Parentship* parent ) const;
-   void reserve_unlocked( length_t size );
 
    class Helper;
    friend class Helper;

@@ -283,6 +283,7 @@ FAL_ERRORDECL( e_call_loop, 524, "Calling a sequence having itself as callable e
 FAL_ERRORDECL( e_not_a_class, 525, "Imported symbol is not a class" );
 FAL_ERRORDECL( e_abstract_init, 526, "Trying to instance an abstract class" );
 FAL_ERRORDECL( e_ctx_ownership, 600, "This object cannot be accessed from this context" );
+FAL_ERRORDECL( e_concurrence, 601, "Unauthorized concurrent access to object" );
 
 FAL_ERRORDECL( e_inv_params, 900, "Invalid parameters" );
 FAL_ERRORDECL( e_missing_params, 901, "Mandatory parameter missing" );

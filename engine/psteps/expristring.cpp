@@ -52,6 +52,7 @@ ExprIString::ExprIString( const String& orig, int line, int chr ):
    apply = apply_;
 
    m_original = orig;
+   m_original.setImmutable(true);
    m_lock = 0;
    m_resolved = 0;
 }
@@ -62,6 +63,7 @@ ExprIString::ExprIString( const ExprIString& other ):
    m_tlgen(0),
    m_original( m_original )
 {
+   m_original.setImmutable(true);
    m_lock = 0;
    m_resolved = 0;
 }
@@ -130,6 +132,7 @@ String* ExprIString::resolve( VMContext* ctx ) const
    {
       // changed!
       String* changed =  new String( temp );
+      changed->setImmutable(true);
       GCLock* lock = FALCON_GC_STORELOCKED_SRCLINE(changed->handler(), changed, SRC, __LINE__ );
       m_mtx.lock();
       if( m_lock != 0 )
@@ -156,6 +159,7 @@ String* ExprIString::resolve( VMContext* ctx ) const
 void ExprIString::original( const String& orig )
 {
    m_original = orig;
+   m_original.setImmutable(true);
    m_tlgen = 0;
 }
 

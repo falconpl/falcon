@@ -242,6 +242,9 @@ int Item::compare( const Item& other ) const
             return 0;
          }
 
+      case FLC_CLASS_ID_STRING:
+         return i1->asString()->compare(*i2->asString());
+
       default:
          return (int64) (static_cast<byte*>(i1->asInst()) - static_cast<byte*>(i2->asInst()));
       }

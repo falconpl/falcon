@@ -175,6 +175,16 @@ void Process::terminate()
    }
 }
 
+void Process::terminateWithError( Error* error )
+{
+   if( m_error !=0 ) {
+      m_error->decref();
+   }
+   m_error = error;
+   error->incref();
+
+   terminate();
+}
 
 void Process::adoptModSpace( ModSpace* hostSpace )
 {

@@ -318,6 +318,7 @@ add_library(falcon_engine SHARED
   errors/accesserror.cpp
   errors/accesstypeerror.cpp
   errors/codeerror.cpp
+  errors/concurrencyerror.cpp
   errors/encodingerror.cpp
   errors/errorclasses.cpp
   errors/genericerror.cpp
@@ -350,6 +351,7 @@ add_library(falcon_engine SHARED
   collector.cpp  
   collector_history.cpp
   collectoralgorithm.cpp
+  concurrencyguard.cpp
   contextgroup.cpp
   contextmanager.cpp
   datareader.cpp
