@@ -32,41 +32,93 @@
 
 namespace Falcon {
 
+static void get_len( const Class*, const String&, void* instance, Item& value )
+{
+   value = (int64) static_cast<ItemArray*>( instance )->length();
+}
+
+static void get_empty( const Class*, const String&, void* instance, Item& value )
+{
+   value.setBoolean(static_cast<ItemArray*>( instance )->length() == 0);
+}
+
 namespace _classArray {
 /**
  @class Array
  @brief Class of Falcon language array []
  @param size Initial size of the array.
  */
-FALCON_DECLARE_FUNCTION(init,"size:[N>=0]");
-void Function_init::invoke(VMContext* ctx, int32 )
+FALCON_DECLARE_FUNCTION(init,"...");
+void Function_init::invoke(VMContext* ctx, int32 pCount)
+{
+
+   ItemArray* array = new ItemArray;
+   if( pCount > 0 )
+   {
+      array->reserve(pCount);
+
+      for(int32 p = 0; p < pCount; ++p ) {
+         array->append(*ctx->param(p));
+      }
+   }
+
+   ctx->returnFrame(FALCON_GC_HANDLE(array));
+}
+
+/**
+ @method buffer Array
+ @brief (static) Creates an array of a given size, optionally filled with a given element.
+ @param size Initial size of the array.
+ @optparam dflt Initializer
+ @retrun A new array, eventually filled with copies of the given item.
+
+ If the @b dflt item is not given, all the elements in the returned array are
+ set to @b nil. If it's given, each element is a clone'd entity of the given item.
+
+ */
+FALCON_DECLARE_FUNCTION(buffer,"size:N>=0,dflt:[X]");
+void Function_buffer::invoke(VMContext* ctx, int32 )
 {
    Item* i_size = ctx->param(0);
+   Item* i_dflt = ctx->param(1);
 
-   if( i_size != 0 && ! i_size->isOrdinal() )
+   int64 len;
+   if( i_size == 0 || ! i_size->isOrdinal() || (len = i_size->asInteger()) < 0 )
    {
       throw paramError(__LINE__, SRC );
    }
 
-   if( i_size == 0 )
+   ItemArray* array = new ItemArray;
+   // pass it to the GC now, because we might throw
+   FALCON_GC_HANDLE(array);
+
+   if( len > 0 )
    {
-      ItemArray* array = new ItemArray;
-      ctx->returnFrame(FALCON_GC_HANDLE(array));
-   }
-   else {
-      if( i_size->forceInteger() < 0 )
+      array->resize(len);
+
+      if( i_dflt != 0 )
       {
-         throw paramError(__LINE__, SRC );
-      }
-      else
-      {
-         ItemArray* array = new ItemArray;
-         array->resize((length_t)i_size->forceInteger());
-         ctx->returnFrame(FALCON_GC_HANDLE(array));
+         Class* cls = 0;
+         void* data = 0;
+         if( i_dflt->asClassInst(cls, data) )
+         {
+            for( length_t pos = 0; pos < (length_t) len; ++pos )
+            {
+               void* clone = cls->clone(data);
+
+               if( clone == 0 )
+               {
+                  throw FALCON_SIGN_XERROR(ParamError, e_param_type,
+                           .extra("Default item not cloneable"));
+               }
+
+               (*array)[pos] = FALCON_GC_STORE(cls, clone);
+            }
+         }
       }
    }
 
-   ctx->returnFrame();
+   ctx->returnFrame( Item(array->handler(), array) );
 }
 
 
@@ -623,6 +675,95 @@ public:
    }
 };
 
+
+/*#
+   @method compact Array
+   @brief Reduces the memory used by an array.
+   @return Itself
+
+   Normally, array operations, as insertions, additions and so on
+   cause the array to grow to accommodate items that may come in the future.
+   Also, reducing the size of an array doesn't automatically dispose of the
+   memory held by the array to store its elements.
+
+   This method grants that the memory used by the array is strictly the
+   memory needed to store its data.
+*/
+FALCON_DECLARE_FUNCTION(compact,"array:A");
+void Function_compact::invoke(VMContext* ctx, int32 )
+{
+   Item *array_x;
+   ctx->getMethodicParams(array_x);
+   if ( array_x == 0 || !array_x->isArray() )
+   {
+      throw paramError(__LINE__,SRC, ctx->isMethodic());
+   }
+
+   {
+      ConcurrencyGuard::Writer gr( ctx, array_x->asArray()->guard() );
+      array_x->asArray()->compact();
+   }
+   ctx->returnFrame( *array_x );
+}
+
+/*#
+   @method merge Array
+   @brief Merges the given array into this one.
+   @param insertPos Position of array 1 at which to place array2
+   @param source Array containing the second half of the merge, read-only
+   @optparam start First element of array to merge in this array
+   @optparam end Last element of array2 to merge in this array
+
+   @see arrayMerge
+*/
+
+FALCON_DECLARE_FUNCTION(merge,"array:A,insertPos:N,source:A,start:[N],end:[N]");
+void Function_merge::invoke(VMContext* ctx, int32 )
+{
+   Item *first_i, *from_i, *second_i, *start_i, *end_i;
+   ctx->getMethodicParams(first_i, from_i, second_i, start_i, end_i);
+
+   if ( first_i == 0 || ! first_i->isArray()
+       || from_i == 0 || ! from_i->isOrdinal()
+       || second_i == 0 || ! second_i->isArray()
+       ||( start_i != 0 && ! start_i->isOrdinal() )
+       ||( end_i != 0 && ! end_i->isOrdinal() )
+       )
+   {
+      throw paramError(__LINE__, SRC, ctx->isMethodic());
+   }
+
+   ItemArray *first = first_i->asArray();
+   ItemArray *second = second_i->asArray();
+   if( first == second )
+   {
+      throw new AccessError( ErrorParam( e_arracc, __LINE__, SRC ).extra("Same source & target arrays") );
+   }
+
+   int64 from = from_i->forceInteger();
+   ConcurrencyGuard::Writer gw(ctx,first->guard());
+
+   if( from < 0 )
+   {
+      from = first->length()+from+1;
+   }
+
+   if( from < 0 || from > first->length() )
+   {
+      throw paramError(__LINE__, SRC, ctx->isMethodic());
+   }
+
+   {
+      ConcurrencyGuard::Reader gr(ctx,second->guard());
+      int64 start = start_i == 0 ? 0 : start_i->forceInteger();
+      int64 end = end_i == 0 ? second->length() : end_i->forceInteger();
+      first->copyOnto(from,*second,start,end);
+   }
+
+   ctx->returnFrame();
+}
+
+
 }
 
 //==========================================================================================
@@ -632,8 +773,14 @@ ClassArray::ClassArray():
    Class("Array", FLC_CLASS_ID_ARRAY )
 {
    setConstuctor( new _classArray::Function_init);
-   addMethod( new _classArray::Function_alloc, true );
+   addProperty( "len", &get_len );
+   addProperty( "empty", &get_empty );
 
+   // pure static functions
+   addMethod( new _classArray::Function_alloc, true );
+   addMethod( new _classArray::Function_buffer, true );
+
+   // Methodic functions
    addMethod( new _classArray::Function_insert, true );
    addMethod( new _classArray::Function_remove, true );
    addMethod( new _classArray::Function_erase, true );
@@ -647,6 +794,10 @@ ClassArray::ClassArray():
    addMethod( new _classArray::Function_find, true );
    addMethod( new _classArray::Function_scan, true );
 
+   addMethod( new _classArray::Function_compact, true );
+   addMethod( new _classArray::Function_merge, true );
+
+   // Non-methodic functions
    addMethod( new _classArray::Function_reserve );
 
    m_stepScanInvoke = new _classArray::PStepScanInvoke;

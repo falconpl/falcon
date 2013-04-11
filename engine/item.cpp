@@ -195,6 +195,7 @@ void Item::describe( String &target, int maxDepth, int maxLength ) const
          asClassInst( cls, inst );
          cls->describe( inst, target, maxDepth, maxLength );
       }
+      break;
    }
 }
 
