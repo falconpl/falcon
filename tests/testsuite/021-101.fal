@@ -26,8 +26,8 @@ AAA
 > m"...".fill(65)
 
 > "As static method"
-> MString.fill( m"", 65)
-> MString.fill( m".", 65)
-> MString.fill( m"..", 65)
-> MString.fill( m"...", 65)
+> String.fill( m"", 65)
+> String.fill( m".", 65)
+> String.fill( m"..", 65)
+> String.fill( m"...", 65)
 
