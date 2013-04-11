@@ -58,8 +58,19 @@ public:
    //=============================================================
 
    virtual bool op_init( VMContext* ctx, void* instance, int32 pcount ) const;
+
    virtual void op_add( VMContext* ctx, void* self ) const;
    virtual void op_aadd( VMContext* ctx, void* self ) const;
+
+   virtual void op_sub( VMContext* ctx, void* self ) const;
+   virtual void op_asub( VMContext* ctx, void* self ) const;
+
+   virtual void op_shl( VMContext* ctx, void* self ) const;
+   virtual void op_ashl( VMContext* ctx, void* self ) const;
+
+   virtual void op_shr( VMContext* ctx, void* self ) const;
+   virtual void op_ashr( VMContext* ctx, void* self ) const;
+
    virtual void op_isTrue( VMContext* ctx, void* self ) const;
    virtual void op_toString( VMContext* ctx, void* self ) const;
    virtual void op_call( VMContext* ctx, int32 paramCount, void* instance ) const;

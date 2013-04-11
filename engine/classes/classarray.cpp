@@ -28,6 +28,7 @@
 
 #include <falcon/errors/accesserror.h>
 #include <falcon/errors/codeerror.h>
+#include <falcon/errors/operanderror.h>
 #include <falcon/errors/paramerror.h>
 
 namespace Falcon {
@@ -37,16 +38,26 @@ static void get_len( const Class*, const String&, void* instance, Item& value )
    value = (int64) static_cast<ItemArray*>( instance )->length();
 }
 
+static void get_allocated( const Class*, const String&, void* instance, Item& value )
+{
+   value = (int64) static_cast<ItemArray*>( instance )->allocated();
+}
+
 static void get_empty( const Class*, const String&, void* instance, Item& value )
 {
    value.setBoolean(static_cast<ItemArray*>( instance )->length() == 0);
 }
 
 namespace _classArray {
+
 /**
  @class Array
  @brief Class of Falcon language array []
  @param size Initial size of the array.
+
+ @prop len Length of the array
+ @prop allocated Number of items that can be stored in this array before new memory is required.
+ @prop empty true if there isn't any element in the array
  */
 FALCON_DECLARE_FUNCTION(init,"...");
 void Function_init::invoke(VMContext* ctx, int32 pCount)
@@ -392,6 +403,119 @@ void Function_remove::invoke(VMContext* ctx, int32 )
    array->remove( (length_t) pos, (length_t) len);
 
    ctx->returnFrame();
+}
+
+
+/*#
+   @method slice Array
+   @brief Cuts the array in two parts.
+   @param pos Item to be deleted
+   @return A new array containing the element from pos to the end of this array.
+
+   This method modifies the original array moving all the element from
+   @b pos included to the end of the array to a new array, that is then
+   returned.
+
+   If @b pos is 0, all the elements are moved in the new array, and
+   the source array is cleared.
+
+   If @b pos is equal to the source array length, the newly returned
+   array is empty and the source is unmodified.
+*/
+FALCON_DECLARE_FUNCTION(slice,"array:A,pos:N");
+void Function_slice::invoke(VMContext* ctx, int32 )
+{
+   Item *i_array, *i_pos, *i_len;
+   ctx->getMethodicParams(i_array, i_pos, i_len);
+
+   if ( i_array == 0 || ! i_array->isArray()
+        || i_pos == 0 || ! i_pos->isOrdinal()
+        || (i_len == 0 && ! i_len->isOrdinal() )
+        )
+   {
+      throw paramError(__LINE__, SRC, ctx->isMethodic() );
+   }
+
+   ItemArray *array = i_array->asArray();
+   ConcurrencyGuard::Writer gw(ctx, array->guard());
+
+   int64 pos = i_pos->forceInteger();
+   int64 len = i_len != 0 ? i_len->forceInteger() : 0;
+   if( len <= 0 )
+   {
+      len = 1;
+   }
+
+   if( pos < 0 )
+   {
+      pos = array->length() + pos;
+   }
+
+   if( pos < 0 || pos >array->length() )
+   {
+      throw FALCON_SIGN_ERROR(AccessError, e_arracc );
+   }
+
+   ItemArray* retarr = new ItemArray;
+   if ( pos < array->length() )
+   {
+      retarr->copyOnto(0, *array, pos, len );
+      array->remove(pos,len);
+   }
+
+   ctx->returnFrame( FALCON_GC_HANDLE(retarr) );
+}
+
+/*#
+   @method copy Array
+   @brief Copy a part of the array in a new array.
+   @param pos The first item to be copied.
+   @optparam count Count of items to be delete starting at pos.
+   @return A new array containing a flat copy of the specified
+           elements.
+
+   If @b pos is less than zero, it will be considered relative
+   to the last element in the array.
+
+   If @b count is not given, the
+*/
+FALCON_DECLARE_FUNCTION(copy,"array:A,pos:N,count:[N]");
+void Function_copy::invoke(VMContext* ctx, int32 )
+{
+   Item *i_array, *i_pos, *i_len;
+   ctx->getMethodicParams(i_array, i_pos, i_len);
+
+   if ( i_array == 0 || ! i_array->isArray()
+        || i_pos == 0 || ! i_pos->isOrdinal()
+        || (i_len == 0 && ! i_len->isOrdinal() )
+        )
+   {
+      throw paramError(__LINE__, SRC, ctx->isMethodic() );
+   }
+
+   ItemArray *array = i_array->asArray();
+   ConcurrencyGuard::Writer gw(ctx, array->guard());
+
+   int64 pos = i_pos->forceInteger();
+   int64 len = i_len != 0 ? i_len->forceInteger() : 0;
+   if( len <= 0 )
+   {
+      len = 1;
+   }
+
+   if( pos < 0 )
+   {
+      pos = array->length() + pos;
+   }
+
+   if( pos < 0 || pos >array->length() )
+   {
+      throw FALCON_SIGN_ERROR(AccessError, e_arracc );
+   }
+
+   ItemArray* retarr = new ItemArray;
+   retarr->copyOnto(0, *array, pos, len  );
+   ctx->returnFrame( FALCON_GC_HANDLE(retarr) );
 }
 
 /*#
@@ -775,6 +899,7 @@ ClassArray::ClassArray():
    setConstuctor( new _classArray::Function_init);
    addProperty( "len", &get_len );
    addProperty( "empty", &get_empty );
+   addProperty( "allocated", &get_allocated );
 
    // pure static functions
    addMethod( new _classArray::Function_alloc, true );
@@ -794,6 +919,8 @@ ClassArray::ClassArray():
    addMethod( new _classArray::Function_find, true );
    addMethod( new _classArray::Function_scan, true );
 
+   addMethod( new _classArray::Function_copy, true );
+   addMethod( new _classArray::Function_slice, true );
    addMethod( new _classArray::Function_compact, true );
    addMethod( new _classArray::Function_merge, true );
 
@@ -1163,43 +1290,215 @@ void ClassArray::enumeratePV( void*, Class::PVEnumerator& ) const
 
 void ClassArray::op_add( VMContext* ctx, void* self ) const
 {
-   static Class* arrayClass = Engine::handlers()->arrayClass();
-
    ItemArray* array = static_cast<ItemArray*>( self );
-   Item* op1, *op2;
-   ctx->operands( op1, op2 );
-
-   Class* cls;
-   void* inst;
+   Item *op2 = &ctx->topData();
 
    ItemArray *result = new ItemArray;
-
-   // a basic type?
-   if( ! op2->asClassInst( cls, inst ) || cls->typeID() != typeID() )
+   // we might throw
+   FALCON_GC_HANDLE( result );
+   result->reserve( array->length() + 1 );
    {
-      result->reserve( array->length() + 1 );
+      ConcurrencyGuard::Reader gr(ctx,array->guard());
       result->merge( *array );
-      result->append( *op2 );
-   }
-   else {
-      // it's an array!
-      ItemArray* other = static_cast<ItemArray*>( inst );
-
-      result->reserve( array->length() + other->length() );
-      result->merge( *array );
-      result->merge( *other );
    }
 
-   ctx->stackResult( 2, Item( FALCON_GC_STORE( arrayClass, result ) ) );
+   result->append( *op2 );
+   ctx->stackResult( 2, Item( result->handler(), result ) );
 }
 
 
 void ClassArray::op_aadd( VMContext* ctx, void* self ) const
 {
    ItemArray* array = static_cast<ItemArray*>( self );
-   array->append( ctx->topData() );
+
+   {
+      ConcurrencyGuard::Writer gr(ctx,array->guard());
+      array->append( ctx->topData() );
+   }
 
    // just remove the topmost item,
+   ctx->popData();
+}
+
+
+void ClassArray::op_sub( VMContext* ctx, void* self ) const
+{
+   ItemArray* array = static_cast<ItemArray*>( self );
+   Item *op2 = &ctx->topData();
+
+   ItemArray *result = new ItemArray;
+   // we might throw
+   FALCON_GC_HANDLE( result );
+   result->reserve( array->length() + 1 );
+   {
+      ConcurrencyGuard::Reader gr(ctx,array->guard());
+      result->merge( *array );
+   }
+
+   int32 pos = result->find(*op2);
+   if( pos >= 0 )
+   {
+      result->remove(pos);
+   }
+
+   ctx->stackResult( 2, Item( result->handler(), result ) );
+}
+
+
+void ClassArray::op_asub( VMContext* ctx, void* self ) const
+{
+   ItemArray* array = static_cast<ItemArray*>( self );
+
+   {
+      ConcurrencyGuard::Writer gr(ctx,array->guard());
+      int32 pos = array->find(ctx->topData());
+      if( pos >= 0 )
+      {
+         array->remove(pos);
+      }
+   }
+
+   // just remove the topmost item,
+   ctx->popData();
+}
+
+void ClassArray::op_shl( VMContext* ctx, void* self ) const
+{
+   ItemArray* array = static_cast<ItemArray*>( self );
+   Item& top = ctx->topData();
+
+   // a basic type?
+   Class* cls;
+   void* inst;
+   if( ! top.asClassInst( cls, inst ) || ! cls->isDerivedFrom(this) )
+   {
+      throw new OperandError( ErrorParam(e_op_params, __LINE__, SRC ).extra("A") );
+   }
+
+   // it's an array!
+   ItemArray *result = new ItemArray;
+   // we might throw...
+   FALCON_GC_HANDLE(result);
+   ItemArray* other = static_cast<ItemArray*>( cls->getParentData(this,inst) );
+
+   {
+      ConcurrencyGuard::Reader gr1(ctx,array->guard());
+      ConcurrencyGuard::Reader gr2(ctx,other->guard());
+      result->reserve( array->length() + other->length() );
+      result->merge( *array );
+      result->merge( *other );
+   }
+
+   ctx->popData();
+   ctx->topData().setUser(result->handler(), result);
+
+}
+
+void ClassArray::op_ashl( VMContext* ctx, void* self ) const
+{
+   ItemArray* array = static_cast<ItemArray*>( self );
+   Item& top = ctx->topData();
+
+   // a basic type?
+   Class* cls;
+   void* inst;
+   if( ! top.asClassInst( cls, inst ) || ! cls->isDerivedFrom(this) )
+   {
+      throw new OperandError( ErrorParam(e_op_params, __LINE__, SRC ).extra("A") );
+   }
+
+   // it's an array!
+   ItemArray* other = static_cast<ItemArray*>( cls->getParentData(this,inst) );
+   if( other == array )
+   {
+      throw new OperandError( ErrorParam(e_op_params, __LINE__, SRC ).extra("Auto-op on itself") );
+   }
+
+   {
+      ConcurrencyGuard::Writer gr1(ctx,array->guard());
+      ConcurrencyGuard::Reader gr2(ctx,other->guard());
+      array->merge( *other );
+   }
+
+   ctx->popData();
+}
+
+
+void ClassArray::op_shr( VMContext* ctx, void* self ) const
+{
+   ItemArray* array = static_cast<ItemArray*>( self );
+   Item& top = ctx->topData();
+
+   // a basic type?
+   Class* cls;
+   void* inst;
+   if( ! top.asClassInst( cls, inst ) || ! cls->isDerivedFrom(this) )
+   {
+      throw new OperandError( ErrorParam(e_op_params, __LINE__, SRC ).extra("A") );
+   }
+
+   // it's an array!
+   ItemArray *result = new ItemArray;
+   // we might throw below
+   FALCON_GC_HANDLE( result );
+   ItemArray* other = static_cast<ItemArray*>( cls->getParentData(this,inst) );
+
+   {
+      ConcurrencyGuard::Reader gr1(ctx,array->guard());
+      result->merge( *array );
+   }
+
+   {
+      ConcurrencyGuard::Reader gr2(ctx,other->guard());
+      for( length_t pos = 0; pos < other->length(); ++pos )
+      {
+         Item& elem = (*other)[pos];
+         int32 pos = result->find(elem);
+         if( pos >= 0 )
+         {
+            result->remove(pos);
+         }
+      }
+   }
+
+   ctx->popData();
+   ctx->topData().setUser(result->handler(), result);
+}
+
+void ClassArray::op_ashr( VMContext* ctx, void* self ) const
+{
+   ItemArray* array = static_cast<ItemArray*>( self );
+   Item& top = ctx->topData();
+
+   // a basic type?
+   Class* cls;
+   void* inst;
+   if( ! top.asClassInst( cls, inst ) || ! cls->isDerivedFrom(this) )
+   {
+      throw new OperandError( ErrorParam(e_op_params, __LINE__, SRC ).extra("A") );
+   }
+
+   // it's an array!
+   ItemArray* other = static_cast<ItemArray*>( cls->getParentData(this,inst) );
+   if( other == array )
+   {
+      throw new OperandError( ErrorParam(e_op_params, __LINE__, SRC ).extra("Auto-op on itself") );
+   }
+
+   {
+      ConcurrencyGuard::Writer gr1(ctx,array->guard());
+      ConcurrencyGuard::Reader gr2(ctx,other->guard());
+      for( length_t pos = 0; pos < other->length(); ++pos )
+      {
+         Item& elem = (*other)[pos];
+         int32 pos = array->find(elem);
+         if( pos >= 0 )
+         {
+            array->remove(pos);
+         }
+      }
+   }
+
    ctx->popData();
 }
 
