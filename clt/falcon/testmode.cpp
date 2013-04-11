@@ -245,6 +245,7 @@ TestMode::ScriptData* TestMode::parse(const String& scriptName )
       input->shouldThrow(true);
       LocalRef<TextReader> tr( new TextReader(input));
       String line;
+      input->decref();
 
       while( ! tr->eof() )
       {
