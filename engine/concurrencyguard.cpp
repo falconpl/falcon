@@ -32,7 +32,7 @@ ConcurrencyGuard::ConcurrencyGuard():
 ConcurrencyGuard::Token ConcurrencyGuard::write( VMContext* ctx )
 {
    // we first set the write count;
-   if( atomicInc(m_writeCount) > 0 || atomicFetch(m_readCount) > 0 )
+   if( atomicInc(m_writeCount) > 1 || atomicFetch(m_readCount) > 0 )
    {
       // set another writer count to prevent any other try to succeed.
       atomicInc(m_writeCount);

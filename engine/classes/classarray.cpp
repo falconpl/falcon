@@ -27,6 +27,7 @@
 #include <falcon/function.h>
 
 #include <falcon/errors/accesserror.h>
+#include <falcon/errors/concurrencyerror.h>
 #include <falcon/errors/codeerror.h>
 #include <falcon/errors/operanderror.h>
 #include <falcon/errors/paramerror.h>
@@ -888,6 +889,274 @@ void Function_merge::invoke(VMContext* ctx, int32 )
 }
 
 
+
+//==========================================================================
+// Sort
+//
+
+/*#
+   @method sort Array
+   @brief Sorts the given array in place.
+   @optparam less Method to determine the ordering criteria
+   @return this same array.
+
+   If @b less is not given, the items are ordered according to the
+   standard Falcon comparison operator. Strings are sorted lexicographically
+   depending on the UNICODE value of their characters, items are sorted
+   based on their position in memory.
+
+   If @b less is given, it's a code that is evaluated passing two parameters,
+   and it should return a boolean value indicating if the first parameter is
+   "less than" the second, like the following code:
+
+   @code
+      {(a,b) a<b}
+   @endcode
+
+   @see arrayMerge
+*/
+
+static void internal_quicksort( ItemArray& array, int32 first, int32 last)
+{
+   int32 i = first;
+   int32 j = last;
+   Item& pivot = array[(first + last) / 2];
+
+   while (i <= j) {
+      while ( array[i] < pivot) { i++; }
+      while ( array[j] > pivot) { j--; }
+
+      if (i <= j) {
+            array[i].swap(array[j]);
+            i++;
+            j--;
+      }
+   };
+
+   /* recursion */
+   if (first < j)
+      internal_quicksort(array, first, j);
+
+   if (i < last)
+      internal_quicksort(array, i, last);
+}
+
+FALCON_DECLARE_FUNCTION(sort,"array:A,less:C");
+void Function_sort::invoke(VMContext* ctx, int32 )
+{
+   Item *array_x, *i_less;
+   ctx->getMethodicParams(array_x, i_less);
+   if ( array_x == 0 || !array_x->isArray() )
+   {
+      throw paramError(__LINE__,SRC, ctx->isMethodic());
+   }
+
+   {
+      ItemArray* array = array_x->asArray();
+      int32 len = static_cast<int32>(array->length());
+      ConcurrencyGuard::Writer gr( ctx, array->guard() );
+      if( i_less == 0 )
+      {
+         internal_quicksort( *array, 0, len-1);
+         ctx->returnFrame(*array_x);
+         return;
+      }
+
+      ctx->pushData(0);  // first
+      ctx->pushData( len - 1 );  // last
+      // initialize the counters.
+      ctx->pushData(0);  // first
+      ctx->pushData( len - 1 );  // last
+   }
+
+   ClassArray* cla = static_cast<ClassArray*>(methodOf());
+   ctx->pushCode( cla->m_stepQSort );
+   // don't abandon the function frame.
+}
+
+
+class PStepQSort: public PStep
+{
+public:
+   PStepQSort( ClassArray* ca ): m_ca(ca) {apply=apply_;}
+   virtual ~PStepQSort() {}
+   void describeTo(String& tgt) {tgt = "PStepQSort";}
+
+   static void apply_(const PStep* ps, VMContext* ctx )
+   {
+      const PStepQSort* self = static_cast<const PStepQSort*>(ps);
+
+      int32 j = (int32) ctx->opcodeParam(0).asInteger();
+      int32 i = (int32) ctx->opcodeParam(1).asInteger();
+      int32 last = (int32) ctx->opcodeParam(2).asInteger();
+      int32 first = (int32) ctx->opcodeParam(3).asInteger();
+
+      Item *array_x, *i_less;
+      ctx->getMethodicParams(array_x, i_less);
+      ItemArray* array = array_x->asArray();
+      ConcurrencyGuard::Writer gr( ctx, array->guard() );
+
+      if( i <= j )
+      {
+         // concurrency broken in the meanwhile ?
+         if ( j >= (int32) array->length() )
+         {
+            throw FALCON_SIGN_XERROR( ConcurrencyError, e_concurrence, .extra("During Array.sort") );
+         }
+
+         ctx->pushCode(self->m_ca->m_stepQSortPartHigh);
+         ctx->pushCode(self->m_ca->m_stepQSortPartLow);
+
+         // initialize the dance
+         Item params[2];
+         params[0] = array->at(i);
+         params[1] = array->at( (first+last)/2 );
+         ctx->callItem(*i_less, 2, params );
+         return;
+      }
+
+      ctx->popCode();
+      ctx->popData(4);
+
+      bool more = false;
+      if (first < j)
+      {
+         ctx->pushData( first );  // first
+         ctx->pushData( j );  // last
+         ctx->pushData( first );  // first
+         ctx->pushData( j );  // last
+         ctx->pushCode(self);
+         more = true;
+      }
+
+      if( i < last )
+      {
+         ctx->pushData( i );  // first
+         ctx->pushData( last );  // last
+         ctx->pushData( i );  // first
+         ctx->pushData( last );  // last
+         ctx->pushCode(self);
+         more = true;
+      }
+
+      // are we done for good?
+      if ( ! more ) {
+         ctx->returnFrame(Item(array->handler(),array));
+      }
+   }
+
+private:
+   ClassArray* m_ca;
+};
+
+
+class PStepQSortLow: public PStep
+{
+public:
+   PStepQSortLow() {apply=apply_;}
+   virtual ~PStepQSortLow() {}
+   void describeTo(String& tgt) {tgt = "PStepQSortLow";}
+
+   static void apply_(const PStep*, VMContext* ctx )
+   {
+      // we receive the result in top-data
+      bool isLess = ctx->topData().isTrue();
+      ctx->popData();
+
+      int32 j = (int32) ctx->opcodeParam(0).asInteger();
+      int32 i = (int32) ctx->opcodeParam(1).asInteger();
+      int32 last = (int32) ctx->opcodeParam(2).asInteger();
+      int32 first = (int32) ctx->opcodeParam(3).asInteger();
+
+      Item *array_x, *i_less;
+      ctx->getMethodicParams(array_x, i_less);
+      ItemArray* array = array_x->asArray();
+
+      ConcurrencyGuard::Writer gr( ctx, array->guard() );
+      int32 pivot = (first+last)/2;
+      // concurrency broken in the meanwhile ?
+      if ( pivot >= (int32) array->length() )
+      {
+         throw FALCON_SIGN_XERROR( ConcurrencyError, e_concurrence, .extra("During Array.sort") );
+      }
+
+      Item params[2];
+      if( ! isLess )
+      {
+         // we're done
+         ctx->popCode();
+         // work for the High loop:
+         params[0] = array->at(pivot);
+         params[1] = array->at(j);
+      }
+      // else, increment the pointer and retry
+      else {
+         i++;
+         ctx->opcodeParam(1).setInteger(i);
+         params[0] = array->at(i);
+         params[1] = array->at(pivot);
+      }
+
+      ctx->callItem(*i_less, 2, params );
+   }
+};
+
+class PStepQSortPartHigh: public PStep
+{
+public:
+   PStepQSortPartHigh() {apply=apply_;}
+   virtual ~PStepQSortPartHigh() {}
+   void describeTo(String& tgt) {tgt = "PStepQSortPartHigh";}
+
+   static void apply_(const PStep*, VMContext* ctx )
+   {
+      // we receive the result in top-data
+      bool isLess = ctx->topData().isTrue();
+      ctx->popData();
+
+      int32 j = (int32) ctx->opcodeParam(0).asInteger();
+      int32 i = (int32) ctx->opcodeParam(1).asInteger();
+      int32 last = (int32) ctx->opcodeParam(2).asInteger();
+      int32 first = (int32) ctx->opcodeParam(3).asInteger();
+
+      Item *array_x, *i_less;
+      ctx->getMethodicParams(array_x, i_less);
+      ItemArray* array = array_x->asArray();
+
+      ConcurrencyGuard::Writer gr( ctx, array->guard() );
+      int32 pivot = (first+last)/2;
+      // concurrency broken in the meanwhile ?
+      if ( j >= (int32) array->length() )
+      {
+         throw FALCON_SIGN_XERROR( ConcurrencyError, e_concurrence, .extra("During Array.sort") );
+      }
+
+      if( ! isLess )
+      {
+         // we're done -- let the main loop do the rest
+         ctx->popCode();
+         // prepare for next loop in base step
+         if (i <= j) {
+            array->at(i).swap(array->at(j));
+            i++;
+            j--;
+            ctx->opcodeParam(0).setInteger(j);
+            ctx->opcodeParam(1).setInteger(i);
+         }
+      }
+      // else, increment the pointer and retry
+      else {
+         Item params[2];
+         j--;
+         ctx->opcodeParam(0).setInteger(j);
+         params[0] = array->at(pivot);
+         params[1] = array->at(j);
+         ctx->callItem(*i_less, 2, params );
+      }
+
+   }
+};
+
 }
 
 //==========================================================================================
@@ -923,17 +1192,28 @@ ClassArray::ClassArray():
    addMethod( new _classArray::Function_slice, true );
    addMethod( new _classArray::Function_compact, true );
    addMethod( new _classArray::Function_merge, true );
+   addMethod( new _classArray::Function_sort, true );
 
    // Non-methodic functions
    addMethod( new _classArray::Function_reserve );
 
    m_stepScanInvoke = new _classArray::PStepScanInvoke;
    m_stepScanCheck = new _classArray::PStepScanCheck;
+
+   m_stepQSort = new _classArray::PStepQSort(this);
+   m_stepQSortPartLow = new _classArray::PStepQSortLow;
+   m_stepQSortPartHigh = new _classArray::PStepQSortPartHigh;
 }
 
 
 ClassArray::~ClassArray()
 {
+   delete m_stepScanInvoke;
+   delete m_stepScanCheck;
+
+   delete m_stepQSort;
+   delete m_stepQSortPartLow;
+   delete m_stepQSortPartHigh;
 }
 
 int64 ClassArray::occupiedMemory( void* instance ) const

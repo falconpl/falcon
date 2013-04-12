@@ -83,6 +83,10 @@ public:
   
    PStep* m_stepScanInvoke;
    PStep* m_stepScanCheck;
+
+   PStep* m_stepQSort;
+   PStep* m_stepQSortPartLow;
+   PStep* m_stepQSortPartHigh;
 };
 
 }
