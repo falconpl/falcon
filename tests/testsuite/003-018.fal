@@ -4,19 +4,19 @@
 
 @output
 Testing RE.consume
-R'a(.)c'.consume('abcabc'): [m"b"]: "abc"
-R'a(.)c'.consume('aaaabc'): [m"b"]: ""
-R'a(.)c'.consume('bbb'): false: "bbb"
-R'a(.)c'.consume('xxaccxaacx'): [m"c"]: "xaacx"
-R'a(.)c'.consume('AAA'): false: "AAA"
-R'a(.)c'.consume('ABC'): [m"B"]: ""
-R'a(.)c'.consume('xxABCxxABC'): [m"B"]: "xxABC"
+R'a(.)c'.consume('abcabc'): [m"b"]: m"abc"
+R'a(.)c'.consume('aaaabc'): [m"b"]: m""
+R'a(.)c'.consume('bbb'): false: m"bbb"
+R'a(.)c'.consume('xxaccxaacx'): [m"c"]: m"xaacx"
+R'a(.)c'.consume('AAA'): false: m"AAA"
+R'a(.)c'.consume('ABC'): [m"B"]: m""
+R'a(.)c'.consume('xxABCxxABC'): [m"B"]: m"xxABC"
 @endoutput
 */
 
 > "Testing RE.consume"
 regex = r'a(.)c'i
 
-for expr in .[ "abcabc" "aaaabc" "bbb" "xxaccxaacx" "AAA" "ABC" "xxABCxxABC" ]
+for expr in .[ m"abcabc" m"aaaabc" m"bbb" m"xxaccxaacx" m"AAA" m"ABC" m"xxABCxxABC" ]
    > regex,".consume('",expr,"'): ", regex.consume(expr).describe(), ": ", expr.describe()
 end

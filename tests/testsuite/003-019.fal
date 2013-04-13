@@ -4,19 +4,19 @@
 
 @output
 Testing RE.consume with grab all
-R'a(.)c'.consume('abcabc', true): [m"abc", m"b"]: "abc"
-R'a(.)c'.consume('aaaabc', true): [m"abc", m"b"]: ""
-R'a(.)c'.consume('bbb', true): false: "bbb"
-R'a(.)c'.consume('xxaccxaacx', true): [m"acc", m"c"]: "xaacx"
-R'a(.)c'.consume('AAA', true): false: "AAA"
-R'a(.)c'.consume('ABC', true): [m"ABC", m"B"]: ""
-R'a(.)c'.consume('xxABCxxABC', true): [m"ABC", m"B"]: "xxABC"
+R'a(.)c'.consume('abcabc', true): [m"abc", m"b"]: m"abc"
+R'a(.)c'.consume('aaaabc', true): [m"abc", m"b"]: m""
+R'a(.)c'.consume('bbb', true): false: m"bbb"
+R'a(.)c'.consume('xxaccxaacx', true): [m"acc", m"c"]: m"xaacx"
+R'a(.)c'.consume('AAA', true): false: m"AAA"
+R'a(.)c'.consume('ABC', true): [m"ABC", m"B"]: m""
+R'a(.)c'.consume('xxABCxxABC', true): [m"ABC", m"B"]: m"xxABC"
 @endoutput
 */
 
 > "Testing RE.consume with grab all"
 regex = r'a(.)c'i
 
-for expr in .[ "abcabc" "aaaabc" "bbb" "xxaccxaacx" "AAA" "ABC" "xxABCxxABC" ]
+for expr in .[ m"abcabc" m"aaaabc" m"bbb" m"xxaccxaacx" m"AAA" m"ABC" m"xxABCxxABC" ]
    > regex,".consume('",expr,"', true): ", regex.consume(expr, true).describe(), ": ", expr.describe()
 end

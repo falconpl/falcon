@@ -4,19 +4,19 @@
 
 @output
 Testing RE.consumeMatch
-R'a(.)c'.consumeMatch('abcabc'): m"abc": "abc"
-R'a(.)c'.consumeMatch('aaaabc'): m"abc": ""
-R'a(.)c'.consumeMatch('bbb'): Nil: "bbb"
-R'a(.)c'.consumeMatch('xxaccxaacx'): m"acc": "xaacx"
-R'a(.)c'.consumeMatch('AAA'): Nil: "AAA"
-R'a(.)c'.consumeMatch('ABC'): m"ABC": ""
-R'a(.)c'.consumeMatch('xxABCxxABC'): m"ABC": "xxABC"
+R'a(.)c'.consumeMatch('abcabc'): m"abc": m"abc"
+R'a(.)c'.consumeMatch('aaaabc'): m"abc": m""
+R'a(.)c'.consumeMatch('bbb'): Nil: m"bbb"
+R'a(.)c'.consumeMatch('xxaccxaacx'): m"acc": m"xaacx"
+R'a(.)c'.consumeMatch('AAA'): Nil: m"AAA"
+R'a(.)c'.consumeMatch('ABC'): m"ABC": m""
+R'a(.)c'.consumeMatch('xxABCxxABC'): m"ABC": m"xxABC"
 @endoutput
 */
 
 > "Testing RE.consumeMatch"
 regex = r'a(.)c'i
 
-for expr in .[ "abcabc" "aaaabc" "bbb" "xxaccxaacx" "AAA" "ABC" "xxABCxxABC" ]
+for expr in .[ m"abcabc" m"aaaabc" m"bbb" m"xxaccxaacx" m"AAA" m"ABC" m"xxABCxxABC" ]
    > regex,".consumeMatch('",expr,"'): ", regex.consumeMatch(expr).describe(), ": ", expr.describe()
 end

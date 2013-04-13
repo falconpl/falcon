@@ -17,6 +17,6 @@ R'a(.)c'.change('xxABCxxABC', '-\0-'): true: xx-ABC-xx-ABC-
 > "Testing RE.change"
 regex = r'a(.)c'i
 
-for expr in .[ "abcabc" "aaaabc" "bbb" "xxaccxaacx" "AAA" "ABC" "xxABCxxABC" ]
+for expr in .[ m"abcabc" m"aaaabc" m"bbb" m"xxaccxaacx" m"AAA" m"ABC" m"xxABCxxABC" ]
    > regex,".change('",expr,"', '-\\0-'): ", regex.change(expr, '-\0-'), ": ", expr
 end
