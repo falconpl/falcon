@@ -1,0 +1,26 @@
+/*
+@name Array operator test <<=
+@category datatype
+
+@output
+Array operator test <<=
+[1, 2, 3, "a", "b", "c"]
+[1, 2, 3, "a", "b", "c"]
+Done.
+@endoutput
+*/
+
+> "Array operator test <<="
+
+function show(array)
+   > array.describe()
+end
+
+v = .['a' 'b' 'c' ]
+x = .[ 1 2 3 ]
+show(x << v)
+x <<= v
+show(x)
+
+> "Done."
+

@@ -49,6 +49,27 @@ static void get_empty( const Class*, const String&, void* instance, Item& value 
    value.setBoolean(static_cast<ItemArray*>( instance )->length() == 0);
 }
 
+static void get_growth( const Class*, const String&, void* instance, Item& value )
+{
+   value = (int64) static_cast<ItemArray*>( instance )->growth();
+}
+
+static void set_growth( const Class*, const String&, void* instance, const Item& value )
+{
+   if(! value.isOrdinal() )
+   {
+      throw FALCON_SIGN_XERROR(ParamError, e_inv_params, .extra("N"));
+   }
+
+   int64 growth =  value.forceInteger();
+   if( growth < 0 )
+   {
+      growth = 0;
+   }
+
+   static_cast<ItemArray*>( instance )->growth((length_t)growth);
+}
+
 namespace _classArray {
 
 /**
@@ -59,6 +80,43 @@ namespace _classArray {
  @prop len Length of the array
  @prop allocated Number of items that can be stored in this array before new memory is required.
  @prop empty true if there isn't any element in the array
+*/
+ /*
+    @property growth Array
+    @brief Allocation growth size control.
+
+    This property is used when there is the need to allocate new memory
+    to store items inserted in the array.
+
+    Growth allocation can be discrete (if this property is greater than zero)
+    or exponential (if this property is zero).
+
+    If @b growth is nonzero, each time new memory is needed, a number of
+    items multiple of @b growth greater or equal to the required size
+    are allocated. For instance, if @b growth is 32, and 50 items must be
+    stored, the array pre-allocates 64 items. As the 65th item is added,
+    96 items are pre-allocated. If 1025 items are to be stored, 1024+32=1056
+    items are pre-allocated.
+
+    If @b growth is zero, when new space is needed, Falcon allocates the nearest
+    power of 2 in excess that could hold the required data. For instance, if the
+    array needs to store 65 items, then 128 items are preallocated. If it needs
+    to store 1025 items, 2048 items are preallocated.
+
+    The first method is more suitable when allocations are performed in small
+    increments, and the size of the array rarely changes. The second method is
+    more efficient when inserting a great number of items one at a time, as it
+    requires less reallocations, but it can eat up a lot of memory.
+
+    @note, the @a Array.compact method can be used to cut down the memory to the
+    required size once inserted a great number of items.
+
+    When creating a big array by inserting one item at a time, the ideal policy would be
+    that of setting growth to zero, inserting the needed item, then setting growth
+    back to a reasonable size, as 16 or 32, and calling  @a Array.compact to
+    reduce memory usage.
+
+    @note By default @b growth is set to 16 on newly created arrays.
  */
 FALCON_DECLARE_FUNCTION(init,"...");
 void Function_init::invoke(VMContext* ctx, int32 pCount)
@@ -75,6 +133,38 @@ void Function_init::invoke(VMContext* ctx, int32 pCount)
    }
 
    ctx->returnFrame(FALCON_GC_HANDLE(array));
+}
+
+
+static void internal_fill( ItemArray* array, Item* i_item, length_t start, length_t count )
+{
+   if( ! i_item->isUser() || (i_item->isString() && i_item->asString()->isImmutable()) )
+   {
+      // is flat, do a flat copy
+      for( length_t pos = start; pos < start+count; ++pos )
+      {
+         (*array)[pos] = *i_item;
+      }
+   }
+   else
+   {
+      Class* cls = 0;
+      void* data = 0;
+      i_item->asClassInst(cls, data);
+
+      for( length_t pos = start; pos < start+count; ++pos )
+      {
+         void* clone = cls->clone(data);
+
+         if( clone == 0 )
+         {
+            throw FALCON_SIGN_XERROR(ParamError, e_param_type,
+                     .extra("Default item not cloneable"));
+         }
+
+         (*array)[pos] = FALCON_GC_STORE(cls, clone);
+      }
+   }
 }
 
 /**
@@ -110,23 +200,7 @@ void Function_buffer::invoke(VMContext* ctx, int32 )
 
       if( i_dflt != 0 )
       {
-         Class* cls = 0;
-         void* data = 0;
-         if( i_dflt->asClassInst(cls, data) )
-         {
-            for( length_t pos = 0; pos < (length_t) len; ++pos )
-            {
-               void* clone = cls->clone(data);
-
-               if( clone == 0 )
-               {
-                  throw FALCON_SIGN_XERROR(ParamError, e_param_type,
-                           .extra("Default item not cloneable"));
-               }
-
-               (*array)[pos] = FALCON_GC_STORE(cls, clone);
-            }
-         }
+         internal_fill(array, i_dflt, 0, len );
       }
    }
 
@@ -177,20 +251,21 @@ void Function_alloc::invoke(VMContext* ctx, int32 )
          ctx->returnFrame(FALCON_GC_HANDLE(array));
       }
    }
-
-   ctx->returnFrame();
 }
 
 /**
  @method reserve Array
  @brief Allocates more memory to store new data without resizing the array.
  @param size The size that must be preallocated.
+ @return The same array.
 
  The memory occupied by this array is enlarged to the required size
  so that the array that is guaranteed not to be reallocated up to at least
  @b size items are added to it.
 
  If the size is smaller than the current array size, nothing is done.
+
+ @note When used statically, this method takes a target array as first parameter.
 
  It's equivalent to
  @code
@@ -212,7 +287,27 @@ void Function_reserve::invoke(VMContext* ctx, int32 )
    ItemArray* array = static_cast<ItemArray*>(ctx->self().asInst());
    ConcurrencyGuard::Writer rg(ctx, array->guard());
    array->reserve((length_t)size);
-   ctx->returnFrame();
+   ctx->returnFrame(ctx->self());
+}
+
+/**
+ @method clone Array
+ @brief Performs a flat copy of the whole array.
+ @return a new copy of the array.
+
+ Overriding @a BOM.clone() to account for Parallel guard.
+
+ */
+FALCON_DECLARE_FUNCTION(clone,"");
+void Function_clone::invoke(VMContext* ctx, int32 )
+{
+   Class* cls = 0;
+   void* data = 0;
+   ctx->self().asClassInst( cls, data );
+   ItemArray* array = static_cast<ItemArray*>(data);
+   ConcurrencyGuard::Writer rg(ctx, array->guard());
+   void* cl = cls->clone(array);
+   ctx->returnFrame( FALCON_GC_STORE(cls,cl) );
 }
 
 
@@ -222,6 +317,7 @@ void Function_reserve::invoke(VMContext* ctx, int32 )
    @param pos  The position where the item should be placed.
    @param item The item to be inserted.
    @optparam ... more items to be inserted
+   @return this same item.
 
    The item is inserted before the given position. If pos is 0, the item is
    inserted in the very first position, while if it's equal to the array length, it
@@ -229,6 +325,8 @@ void Function_reserve::invoke(VMContext* ctx, int32 )
 
    If pos is negative, the position is relative to the last item, and items
    are inserted @b after the given item.
+
+   @note When used statically, this method takes a target array as first parameter.
 */
 
 FALCON_DECLARE_FUNCTION(insert,"array:A,pos:N,item:X,...");
@@ -264,7 +362,7 @@ void Function_insert::invoke(VMContext* ctx, int32 pCount )
       }
    }
 
-   ctx->returnFrame();
+   ctx->returnFrame(*i_array);
 }
 
 
@@ -280,6 +378,8 @@ void Function_insert::invoke(VMContext* ctx, int32 pCount )
    the function returns true. If the item cannot be found, false is returned.
 
    This method will delete the first item matching the given one only.
+
+   @note When used statically, this method takes a target array as first parameter.
 */
 FALCON_DECLARE_FUNCTION(erase,"array:A,item:X,...");
 void Function_erase::invoke(VMContext* ctx, int32 pCount )
@@ -325,6 +425,8 @@ void Function_erase::invoke(VMContext* ctx, int32 pCount )
    the function returns true. If the item cannot be found, false is returned.
 
    This method will delete all the items matching the given ones in the array.
+
+   @note When used statically, this method takes a target array as first parameter.
 */
 FALCON_DECLARE_FUNCTION(eraseAll,"array:A,item:X,...");
 void Function_eraseAll::invoke(VMContext* ctx, int32 pCount )
@@ -368,6 +470,8 @@ void Function_eraseAll::invoke(VMContext* ctx, int32 pCount )
 
    If pos is less than zero, it will be considered relative
    to the last element in the array.
+
+   @note When used statically, this method takes a target array as first parameter.
 */
 FALCON_DECLARE_FUNCTION(remove,"array:A,pos:N,count:[N]");
 void Function_remove::invoke(VMContext* ctx, int32 )
@@ -377,7 +481,7 @@ void Function_remove::invoke(VMContext* ctx, int32 )
 
    if ( i_array == 0 || ! i_array->isArray()
         || i_pos == 0 || ! i_pos->isOrdinal()
-        || (i_len == 0 && ! i_len->isOrdinal() )
+        || (i_len != 0 && ! i_len->isOrdinal() )
         )
    {
       throw paramError(__LINE__, SRC, ctx->isMethodic() );
@@ -411,6 +515,7 @@ void Function_remove::invoke(VMContext* ctx, int32 )
    @method slice Array
    @brief Cuts the array in two parts.
    @param pos Item to be deleted
+   @optparam count Number of items to be deleted
    @return A new array containing the element from pos to the end of this array.
 
    This method modifies the original array moving all the element from
@@ -422,8 +527,15 @@ void Function_remove::invoke(VMContext* ctx, int32 )
 
    If @b pos is equal to the source array length, the newly returned
    array is empty and the source is unmodified.
+
+   If @b count is given, this method will extract a part of the array,
+   moving the items from @b pos to @b pos + @b count in the new array.
+   If @b pos + @b count is past the end of the original array, this
+   method works as if @b count was not given.
+
+   @note When used statically, this method takes a target array as first parameter.
 */
-FALCON_DECLARE_FUNCTION(slice,"array:A,pos:N");
+FALCON_DECLARE_FUNCTION(slice,"array:A,pos:N,count:[N]");
 void Function_slice::invoke(VMContext* ctx, int32 )
 {
    Item *i_array, *i_pos, *i_len;
@@ -431,7 +543,7 @@ void Function_slice::invoke(VMContext* ctx, int32 )
 
    if ( i_array == 0 || ! i_array->isArray()
         || i_pos == 0 || ! i_pos->isOrdinal()
-        || (i_len == 0 && ! i_len->isOrdinal() )
+        || (i_len != 0 && ! i_len->isOrdinal() )
         )
    {
       throw paramError(__LINE__, SRC, ctx->isMethodic() );
@@ -444,7 +556,7 @@ void Function_slice::invoke(VMContext* ctx, int32 )
    int64 len = i_len != 0 ? i_len->forceInteger() : 0;
    if( len <= 0 )
    {
-      len = 1;
+      len = array->length();
    }
 
    if( pos < 0 )
@@ -478,7 +590,12 @@ void Function_slice::invoke(VMContext* ctx, int32 )
    If @b pos is less than zero, it will be considered relative
    to the last element in the array.
 
-   If @b count is not given, the
+   If @b count is not given, all the array from @b pos to the end
+   is copied.
+
+   @note For a complete flat copy of all elements, use @a BOM.clone
+
+   @note When used statically, this method takes a target array as first parameter.
 */
 FALCON_DECLARE_FUNCTION(copy,"array:A,pos:N,count:[N]");
 void Function_copy::invoke(VMContext* ctx, int32 )
@@ -488,7 +605,7 @@ void Function_copy::invoke(VMContext* ctx, int32 )
 
    if ( i_array == 0 || ! i_array->isArray()
         || i_pos == 0 || ! i_pos->isOrdinal()
-        || (i_len == 0 && ! i_len->isOrdinal() )
+        || (i_len != 0 && ! i_len->isOrdinal() )
         )
    {
       throw paramError(__LINE__, SRC, ctx->isMethodic() );
@@ -524,6 +641,8 @@ void Function_copy::invoke(VMContext* ctx, int32 )
    @brief Pushes one or more items at the end of the array.
    @param item the item to be pushed.
    @optparam ... other items to be pushed.
+
+   @note When used statically, this method takes a target array as first parameter.
 */
 FALCON_DECLARE_FUNCTION(push,"array:A,item:X,...");
 void Function_push::invoke(VMContext* ctx, int32 pCount )
@@ -560,6 +679,8 @@ void Function_push::invoke(VMContext* ctx, int32 pCount )
    @note If more than one item to be pushed is given,
    they are pushed in reverse order, as if calling the
    unshift() method multiple times.
+
+   @note When used statically, this method takes a target array as first parameter.
 */
 FALCON_DECLARE_FUNCTION(unshift,"array:A,item:X,...");
 void Function_unshift::invoke(VMContext* ctx, int32 pCount )
@@ -595,6 +716,8 @@ void Function_unshift::invoke(VMContext* ctx, int32 pCount )
    @return The removed item, if it's just one, or an array containing all the
          removed items.
    @raise AccessError if the array is empty
+
+   @note When used statically, this method takes a target array as first parameter.
 */
 FALCON_DECLARE_FUNCTION(pop,"array:A,count:[N]");
 void Function_pop::invoke(VMContext* ctx, int32 )
@@ -611,7 +734,7 @@ void Function_pop::invoke(VMContext* ctx, int32 )
    ItemArray *array = i_array->asArray();
    ConcurrencyGuard::Writer gw(ctx, array->guard());
 
-   int64 count = i_count->forceInteger();
+   int64 count = i_count != 0 ? i_count->forceInteger() : 0;
    length_t len = array->length();
    if( len == 0 )
    {
@@ -625,7 +748,7 @@ void Function_pop::invoke(VMContext* ctx, int32 )
    else {
       if ( count > (int64) len )
       {
-         count = len;
+         throw FALCON_SIGN_XERROR(AccessError, e_arracc, .extra("Not enough elements for pop") );
       }
 
       ItemArray* toReturn = new ItemArray;
@@ -644,6 +767,8 @@ void Function_pop::invoke(VMContext* ctx, int32 )
    @return The removed item, if it's just one, or an array containing all the
          removed items.
    @raise AccessError if the array is empty
+
+   @note When used statically, this method takes a target array as first parameter.
 */
 FALCON_DECLARE_FUNCTION(shift,"array:A,count:[N]");
 void Function_shift::invoke(VMContext* ctx, int32 )
@@ -660,7 +785,7 @@ void Function_shift::invoke(VMContext* ctx, int32 )
    ItemArray *array = i_array->asArray();
    ConcurrencyGuard::Writer gw(ctx, array->guard());
 
-   int64 count = i_count->forceInteger();
+   int64 count = i_count != 0 ? i_count->forceInteger() : 0;
    length_t len = array->length();
    if( len == 0 )
    {
@@ -674,7 +799,7 @@ void Function_shift::invoke(VMContext* ctx, int32 )
    else {
       if ( count > (int64) len )
       {
-         count = len;
+         throw FALCON_SIGN_XERROR(AccessError, e_arracc, .extra("Not enough elements for shift") );
       }
 
       ItemArray* toReturn = new ItemArray;
@@ -693,8 +818,10 @@ void Function_shift::invoke(VMContext* ctx, int32 )
    @param item The item to be searched.
    @return The position where the item is found, or -1 if not found.
 
+   @note When used statically, this method takes a target array as first parameter.
+
 */
-FALCON_DECLARE_FUNCTION(find,"array:A,item:[N]");
+FALCON_DECLARE_FUNCTION(find,"array:A,item:X");
 void Function_find::invoke(VMContext* ctx, int32 )
 {
    Item *i_array, *i_item;
@@ -725,8 +852,10 @@ void Function_find::invoke(VMContext* ctx, int32 )
    paramter. When (if) it returns true, the position of the element
    that was passed to it is returned.
 
+   @note When used statically, this method takes a target array as first parameter.
+
 */
-FALCON_DECLARE_FUNCTION(scan,"array:A,item:[N]");
+FALCON_DECLARE_FUNCTION(scan,"array:A,checker:X");
 void Function_scan::invoke(VMContext* ctx, int32 )
 {
    Item *i_array, *i_code;
@@ -738,11 +867,18 @@ void Function_scan::invoke(VMContext* ctx, int32 )
    }
 
    ItemArray *array = i_array->asArray();
-   ctx->addLocals(2);
-   ctx->local(0)->setInteger(0);
-   ctx->local(1)->setInteger(array->length());
-   ClassArray* carr = static_cast<ClassArray*>(array->handler());
-   ctx->stepIn(carr->m_stepScanInvoke);
+   ConcurrencyGuard::Reader gr( ctx, array->guard());
+   if( array->length() == 0 )
+   {
+      ctx->returnFrame(-1);
+      return;
+   }
+
+   ctx->addLocals(1);
+   ctx->local(0)->setInteger(1); // we'll start from 1
+   ClassArray* carr = static_cast<ClassArray*>(methodOf());
+   ctx->pushCode(carr->m_stepScanInvoke);
+   ctx->callItem(*i_code, 1, &array->at(0));
 }
 
 class PStepScanInvoke: public PStep
@@ -754,49 +890,33 @@ public:
 
    static void apply_(const PStep*, VMContext* ctx )
    {
+      // found?
+      bool isTrue = ctx->topData().isTrue();
+      if( isTrue )
+      {
+         ctx->returnFrame(*ctx->local(0));
+         return;
+      }
+
+      // no, better luck next time.
+      ctx->popData();
+      int64 id = ctx->local(0)->asInteger();
       Item *i_array, *i_code;
       ctx->getMethodicParams(i_array, i_code);
       ItemArray *array = i_array->asArray();
 
-      Item item;
+      // guard from now on.
+      ConcurrencyGuard::Reader gr( ctx, array->guard());
+      if( id >= array->length() )
       {
-         ConcurrencyGuard::Reader gr( ctx, array->guard());
-         item = (*array)[ctx->local(0)->asInteger()];
+         // failed.
+         ctx->returnFrame(-1);
+         return;
       }
 
-      ClassArray* carr = static_cast<ClassArray*>(array->handler());
-      ctx->pushCode(carr->m_stepScanCheck);
-
-      ctx->callItem( *i_code, 1, &item );
-   }
-};
-
-class PStepScanCheck: public PStep
-{
-public:
-   PStepScanCheck() {apply=apply_;}
-   virtual ~PStepScanCheck() {}
-   void describeTo(String& tgt) {tgt = "PStepScanCheck";}
-
-   static void apply_(const PStep*, VMContext* ctx )
-   {
-      int64 pos = ctx->local(0)->asInteger();
-
-      if( ctx->topData().isBoolean() && ctx->topData().asBoolean() )
-      {
-         ctx->returnFrame(pos);
-      }
-      else {
-         if( ++pos == ctx->local(1)->asInteger() )
-         {
-            // failed...
-            ctx->returnFrame((int64)-1);
-            return;
-         }
-         // we can try again
-         ctx->local(0)->setInteger(pos);
-         ctx->popCode();
-      }
+      // trying with next
+      ctx->local(0)->setInteger(id+1);
+      ctx->callItem( *i_code, 1, &array->at(id) );
    }
 };
 
@@ -813,6 +933,11 @@ public:
 
    This method grants that the memory used by the array is strictly the
    memory needed to store its data.
+
+   @note This will also reset the growth factor to the default minimum
+   (usually 16).
+
+   @note When used statically, this method takes a target array as first parameter.
 */
 FALCON_DECLARE_FUNCTION(compact,"array:A");
 void Function_compact::invoke(VMContext* ctx, int32 )
@@ -827,6 +952,7 @@ void Function_compact::invoke(VMContext* ctx, int32 )
    {
       ConcurrencyGuard::Writer gr( ctx, array_x->asArray()->guard() );
       array_x->asArray()->compact();
+      array_x->asArray()->growth(16);
    }
    ctx->returnFrame( *array_x );
 }
@@ -837,12 +963,13 @@ void Function_compact::invoke(VMContext* ctx, int32 )
    @param insertPos Position of array 1 at which to place array2
    @param source Array containing the second half of the merge, read-only
    @optparam start First element of array to merge in this array
-   @optparam end Last element of array2 to merge in this array
+   @optparam count Count of elements of array2 to merge in this array
+   @return This same array
 
-   @see arrayMerge
+   @note When used statically, this method takes a target array as first parameter.
 */
 
-FALCON_DECLARE_FUNCTION(merge,"array:A,insertPos:N,source:A,start:[N],end:[N]");
+FALCON_DECLARE_FUNCTION(merge,"array:A,insertPos:N,source:A,start:[N],count:[N]");
 void Function_merge::invoke(VMContext* ctx, int32 )
 {
    Item *first_i, *from_i, *second_i, *start_i, *end_i;
@@ -882,10 +1009,10 @@ void Function_merge::invoke(VMContext* ctx, int32 )
       ConcurrencyGuard::Reader gr(ctx,second->guard());
       int64 start = start_i == 0 ? 0 : start_i->forceInteger();
       int64 end = end_i == 0 ? second->length() : end_i->forceInteger();
-      first->copyOnto(from,*second,start,end);
+      first->merge(from,*second,start,end);
    }
 
-   ctx->returnFrame();
+   ctx->returnFrame(*first_i);
 }
 
 
@@ -913,18 +1040,18 @@ void Function_merge::invoke(VMContext* ctx, int32 )
       {(a,b) a<b}
    @endcode
 
-   @see arrayMerge
+   @note When used statically, this method takes a target array as first parameter.
 */
 
 static void internal_quicksort( ItemArray& array, int32 first, int32 last)
 {
    int32 i = first;
    int32 j = last;
-   Item& pivot = array[(first + last) / 2];
+   Item pivot = array[(first + last) / 2];
 
    while (i <= j) {
-      while ( array[i] < pivot) { i++; }
-      while ( array[j] > pivot) { j--; }
+      while ( array[i] < pivot    ) { i++; }
+      while ( pivot    < array[j] ) { j--; }
 
       if (i <= j) {
             array[i].swap(array[j]);
@@ -953,7 +1080,14 @@ void Function_sort::invoke(VMContext* ctx, int32 )
 
    {
       ItemArray* array = array_x->asArray();
+
       int32 len = static_cast<int32>(array->length());
+      if( len == 0 )
+      {
+         ctx->returnFrame(*array_x);
+         return;
+      }
+
       ConcurrencyGuard::Writer gr( ctx, array->guard() );
       if( i_less == 0 )
       {
@@ -962,6 +1096,7 @@ void Function_sort::invoke(VMContext* ctx, int32 )
          return;
       }
 
+      ctx->pushData(array->at(len/2));
       ctx->pushData(0);  // first
       ctx->pushData( len - 1 );  // last
       // initialize the counters.
@@ -990,6 +1125,7 @@ public:
       int32 i = (int32) ctx->opcodeParam(1).asInteger();
       int32 last = (int32) ctx->opcodeParam(2).asInteger();
       int32 first = (int32) ctx->opcodeParam(3).asInteger();
+      Item& pivot = ctx->opcodeParam(4);
 
       Item *array_x, *i_less;
       ctx->getMethodicParams(array_x, i_less);
@@ -1010,17 +1146,18 @@ public:
          // initialize the dance
          Item params[2];
          params[0] = array->at(i);
-         params[1] = array->at( (first+last)/2 );
+         params[1] = pivot;
          ctx->callItem(*i_less, 2, params );
          return;
       }
 
       ctx->popCode();
-      ctx->popData(4);
+      ctx->popData(5);
 
       bool more = false;
       if (first < j)
       {
+         ctx->pushData( array->at( (first+j)/2) );
          ctx->pushData( first );  // first
          ctx->pushData( j );  // last
          ctx->pushData( first );  // first
@@ -1031,6 +1168,7 @@ public:
 
       if( i < last )
       {
+         ctx->pushData( array->at( (i+last)/2) );
          ctx->pushData( i );  // first
          ctx->pushData( last );  // last
          ctx->pushData( i );  // first
@@ -1065,36 +1203,36 @@ public:
 
       int32 j = (int32) ctx->opcodeParam(0).asInteger();
       int32 i = (int32) ctx->opcodeParam(1).asInteger();
-      int32 last = (int32) ctx->opcodeParam(2).asInteger();
-      int32 first = (int32) ctx->opcodeParam(3).asInteger();
+      Item& pivot = ctx->opcodeParam(4);
 
       Item *array_x, *i_less;
       ctx->getMethodicParams(array_x, i_less);
       ItemArray* array = array_x->asArray();
 
       ConcurrencyGuard::Writer gr( ctx, array->guard() );
-      int32 pivot = (first+last)/2;
+
       // concurrency broken in the meanwhile ?
-      if ( pivot >= (int32) array->length() )
+      if ( j >= (int32) array->length() )
       {
          throw FALCON_SIGN_XERROR( ConcurrencyError, e_concurrence, .extra("During Array.sort") );
       }
 
       Item params[2];
-      if( ! isLess )
+      if( isLess )
+      // increment the pointer and retry
+      {
+         i++;
+         ctx->opcodeParam(1).setInteger(i);
+         params[0] = array->at(i);
+         params[1] = pivot;
+      }
+      else
       {
          // we're done
          ctx->popCode();
          // work for the High loop:
-         params[0] = array->at(pivot);
+         params[0] = pivot;
          params[1] = array->at(j);
-      }
-      // else, increment the pointer and retry
-      else {
-         i++;
-         ctx->opcodeParam(1).setInteger(i);
-         params[0] = array->at(i);
-         params[1] = array->at(pivot);
       }
 
       ctx->callItem(*i_less, 2, params );
@@ -1116,22 +1254,31 @@ public:
 
       int32 j = (int32) ctx->opcodeParam(0).asInteger();
       int32 i = (int32) ctx->opcodeParam(1).asInteger();
-      int32 last = (int32) ctx->opcodeParam(2).asInteger();
-      int32 first = (int32) ctx->opcodeParam(3).asInteger();
+      Item& pivot = ctx->opcodeParam(4);
 
       Item *array_x, *i_less;
       ctx->getMethodicParams(array_x, i_less);
       ItemArray* array = array_x->asArray();
 
       ConcurrencyGuard::Writer gr( ctx, array->guard() );
-      int32 pivot = (first+last)/2;
       // concurrency broken in the meanwhile ?
       if ( j >= (int32) array->length() )
       {
          throw FALCON_SIGN_XERROR( ConcurrencyError, e_concurrence, .extra("During Array.sort") );
       }
 
-      if( ! isLess )
+      if( isLess )
+         // else, increment the pointer and retry
+      {
+         j--;
+         ctx->opcodeParam(0).setInteger(j);
+         Item params[2];
+         params[0] = pivot;
+         params[1] = array->at(j);
+
+         ctx->callItem(*i_less, 2, params );
+      }
+      else
       {
          // we're done -- let the main loop do the rest
          ctx->popCode();
@@ -1144,18 +1291,149 @@ public:
             ctx->opcodeParam(1).setInteger(i);
          }
       }
-      // else, increment the pointer and retry
-      else {
-         Item params[2];
-         j--;
-         ctx->opcodeParam(0).setInteger(j);
-         params[0] = array->at(pivot);
-         params[1] = array->at(j);
-         ctx->callItem(*i_less, 2, params );
-      }
-
    }
 };
+
+
+/**
+ @method fill Array
+ @brief Changes all or some of the items in an array to a specified value
+ @param item The item that will be replicated.
+ @optparam start The first item in the array to be overwritten
+ @optparam count Number of items to be overwritten
+
+ If the @b item item is not given, all the elements in the returned array are
+ set to @b nil. If it's given, each element is a clone'd entity of the given item.
+
+@note When used statically, this method takes a target array as first parameter.
+ */
+FALCON_DECLARE_FUNCTION(fill,"array:A,item:X,start:[N],count:[N]");
+void Function_fill::invoke(VMContext* ctx, int32 )
+{
+   Item *array_x, *i_item, *i_start, *i_count;
+   ctx->getMethodicParams(array_x, i_item, i_start, i_count);
+   if ( array_x == 0 || !array_x->isArray()
+      || i_item == 0
+      || (i_start != 0 && ! i_start->isOrdinal() )
+      || (i_count != 0 && ! i_count->isOrdinal() )
+   )
+   {
+      throw paramError(__LINE__,SRC, ctx->isMethodic());
+   }
+
+   ItemArray* array = array_x->asArray();
+   ConcurrencyGuard::Writer gr( ctx, array->guard() );
+
+   int32 len = static_cast<int32>(array->length());
+   if( len == 0 )
+   {
+      ctx->returnFrame(*array_x);
+      return;
+   }
+
+   int64 start = i_start == 0 ? 0 : i_start->forceInteger();
+   int64 count = i_count == 0 ? len : i_count->forceInteger() ;
+   if( start < 0 )
+   {
+      start = len - start;
+   }
+
+   if( start < 0 || start >= len )
+   {
+      throw FALCON_SIGN_XERROR( AccessError, e_arracc, .extra("start out of range") );
+   }
+
+   if( count < 0 || (start + count > len) )
+   {
+      count = len - start;
+   }
+
+   internal_fill( array, i_item, start, count );
+
+   ctx->returnFrame(*array_x);
+}
+
+/**
+ @method resize Array
+ @brief Resize the array to the given size.
+ @param size The item that will be replicated.
+ @optparam dflt Default value to be used to fill new items in the array.
+ @return This same array.
+
+ This method enlarges, eventually reallocating, or shrink an existing array.
+
+ If @b size is zero, then all the items are removed from the array.
+
+ If @b size is less than zero, then the size of the array is reduced of
+ the absolute value of that size. For instance, if it's -3, then the
+ size of the array is reduced by 3.
+
+ If @b size is greater than the current size, the array is enlarged. If the
+ @b item is not given, all the new elements in array are
+ set to @b nil. If it's given, each new element is a clone'd
+ entity of the given item.
+
+ @note When used statically, this method takes a target array as first parameter.
+ */
+FALCON_DECLARE_FUNCTION(resize,"array:A,size:[N],dflt:[X]");
+void Function_resize::invoke(VMContext* ctx, int32 )
+{
+   Item *array_x, *i_size, *i_dflt;
+   ctx->getMethodicParams(array_x, i_size, i_dflt);
+   if ( array_x == 0 || !array_x->isArray()
+      || i_size == 0 || ! i_size->isOrdinal()
+   )
+   {
+      throw paramError(__LINE__,SRC, ctx->isMethodic());
+   }
+
+   ItemArray* array = array_x->asArray();
+   ConcurrencyGuard::Writer gr( ctx, array->guard() );
+
+   int32 len = static_cast<int32>(array->length());
+   int64 size = i_size->asInteger();
+   if( size != len )
+   {
+      if( size < 0 )
+      {
+         size = len + size;
+      }
+      if( size < 0 ) size = 0;
+
+      array->resize(size);
+
+      if( size > len && i_dflt != 0 )
+      {
+         internal_fill(array, i_dflt, len, size-len);
+      }
+   }
+
+   ctx->returnFrame(*array_x);
+}
+
+
+/**
+ @method clear Array
+ @brief Removes all the items from this array
+ @return This same array.
+ @note When used statically, this method takes a target array as first parameter.
+ */
+FALCON_DECLARE_FUNCTION(clear,"array:A");
+void Function_clear::invoke(VMContext* ctx, int32 )
+{
+   Item *array_x;
+   ctx->getMethodicParams(array_x);
+   if ( array_x == 0 || !array_x->isArray())
+   {
+      throw paramError(__LINE__,SRC, ctx->isMethodic());
+   }
+
+   ItemArray* array = array_x->asArray();
+   ConcurrencyGuard::Writer gr( ctx, array->guard() );
+   array->resize(0);
+   ctx->returnFrame(*array_x);
+}
+
 
 }
 
@@ -1169,12 +1447,15 @@ ClassArray::ClassArray():
    addProperty( "len", &get_len );
    addProperty( "empty", &get_empty );
    addProperty( "allocated", &get_allocated );
+   addProperty( "growth", &get_growth, &set_growth );
 
    // pure static functions
    addMethod( new _classArray::Function_alloc, true );
    addMethod( new _classArray::Function_buffer, true );
 
    // Methodic functions
+   addMethod( new _classArray::Function_compact, true );
+
    addMethod( new _classArray::Function_insert, true );
    addMethod( new _classArray::Function_remove, true );
    addMethod( new _classArray::Function_erase, true );
@@ -1190,15 +1471,18 @@ ClassArray::ClassArray():
 
    addMethod( new _classArray::Function_copy, true );
    addMethod( new _classArray::Function_slice, true );
-   addMethod( new _classArray::Function_compact, true );
    addMethod( new _classArray::Function_merge, true );
    addMethod( new _classArray::Function_sort, true );
 
+   addMethod( new _classArray::Function_fill, true );
+   addMethod( new _classArray::Function_resize, true );
+   addMethod( new _classArray::Function_clear, true );
+
    // Non-methodic functions
    addMethod( new _classArray::Function_reserve );
+   addMethod( new _classArray::Function_clone );
 
    m_stepScanInvoke = new _classArray::PStepScanInvoke;
-   m_stepScanCheck = new _classArray::PStepScanCheck;
 
    m_stepQSort = new _classArray::PStepQSort(this);
    m_stepQSortPartLow = new _classArray::PStepQSortLow;
@@ -1209,7 +1493,6 @@ ClassArray::ClassArray():
 ClassArray::~ClassArray()
 {
    delete m_stepScanInvoke;
-   delete m_stepScanCheck;
 
    delete m_stepQSort;
    delete m_stepQSortPartLow;

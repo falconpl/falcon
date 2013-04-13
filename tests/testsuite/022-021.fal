@@ -1,0 +1,75 @@
+/*
+@name Array methods - resize
+@category Core-array
+
+@output
+Array methods - resize
+Test as a method:
+[], 0: []
+[], 3: [Nil, Nil, Nil]
+[], 3, "a": ["a", "a", "a"]
+[1, 2, 3], 2: [1, 2]
+[1, 2, 3], 2, "a": [1, 2]
+[1, 2, 3], 5: [1, 2, 3, Nil, Nil]
+[1, 2, 3], 5, "a": [1, 2, 3, "a", "a"]
+[1, 2, 3], 0: []
+[1, 2, 3], 0, "a": []
+[1, 2, 3], -2: [1]
+[1, 2, 3], -2, "a": [1]
+[1, 2, 3], -3: []
+[1, 2, 3], -3, "a": []
+Test as a static function:
+[], 0: []
+[], 3: [Nil, Nil, Nil]
+[], 3, "a": ["a", "a", "a"]
+[1, 2, 3], 2: [1, 2]
+[1, 2, 3], 2, "a": [1, 2]
+[1, 2, 3], 5: [1, 2, 3, Nil, Nil]
+[1, 2, 3], 5, "a": [1, 2, 3, "a", "a"]
+[1, 2, 3], 0: []
+[1, 2, 3], 0, "a": []
+[1, 2, 3], -2: [1]
+[1, 2, 3], -2, "a": [1]
+[1, 2, 3], -3: []
+[1, 2, 3], -3, "a": []
+Done
+@endoutput
+*/
+
+> "Array methods - resize"
+
+tests = .[ 
+   .[ .[] 0 ]
+   .[ .[] 3 ]
+   .[ .[] 3 "a"]
+   .[ .[1 2 3] 2  ]
+   .[ .[1 2 3] 2 "a" ]
+   .[ .[1 2 3] 5 ]
+   .[ .[1 2 3] 5 "a" ]
+   .[ .[1 2 3] 0 ]
+   .[ .[1 2 3] 0 "a" ]
+   .[ .[1 2 3], -2  ]
+   .[ .[1 2 3], -2 "a"]   
+   .[ .[1 2 3], -3  ]
+   .[ .[1 2 3], -3 "a"]   
+]
+
+function test( code, x )
+   >> ", ".merge(^[x] {(v) ^+ v.describe() } =>[]), ": "
+   > code(x).describe()
+end
+
+tests1 = [] 
+for arr in tests
+   arr1 = arr.clone()
+   arr1[0] = arr[0].clone()
+   tests1 += arr1
+end
+
+> "Test as a method:"
+^[ tests ] .[test {(x) x.len > 1 ? call(x[0].resize, x[1:]) : call(x[0].resize) }]
+
+> "Test as a static function:"
+^[ tests1 ] .[test {(x) call( Array.resize, x) }]
+
+> "Done"

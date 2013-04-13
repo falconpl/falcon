@@ -1,0 +1,38 @@
+/*
+@name Array methods - alloc
+@category Core-array
+
+@output
+Array methods - alloc
+Array.alloc(0)
+[]
+Len      : 0
+Allocated: 0
+========================================
+Array.alloc(10)
+[]
+Len      : 0
+Allocated: 10
+========================================
+Done
+@endoutput
+*/
+
+> "Array methods - alloc"
+function show(x)
+   > x.describe()
+   > "Len      : ", x.len
+   > "Allocated: ", x.allocated
+end
+
+x = Array.alloc(0)
+> 'Array.alloc(0)'
+show(x)
+> "="*40
+
+x = Array.alloc(10)
+> 'Array.alloc(10)'
+show(x)
+> "="*40
+
+> "Done"

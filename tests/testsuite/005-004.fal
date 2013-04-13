@@ -1,0 +1,33 @@
+/*
+@name Array operator test +=
+@category datatype
+
+@output
+Array operator test +=
+[1, 2, 3, "added"]
+[1, 2, 3, ["a", "b", "c"]]
+[1, 2, 3, "added"]
+[1, 2, 3, "added", ["a", "b", "c"]]
+Done.
+@endoutput
+*/
+
+> "Array operator test +="
+
+function show(array)
+   > array.describe()
+end
+
+
+x = .[ 1 2 3 ]
+show(x + 'added')
+show(x + .['a' 'b' 'c' ] )
+
+x += 'added'
+show(x)
+v = .['a' 'b' 'c' ]
+x += v
+show(x)
+
+> "Done."
+

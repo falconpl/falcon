@@ -1,0 +1,54 @@
+/*
+@name Array methods - fill
+@category Core-array
+
+@output
+Array methods - fill
+Test as a method:
+[], "a": []
+[1, 2, 3], "a": ["a", "a", "a"]
+[3, 2, 1], "a", 1, 0: [3, 2, 1]
+[3, 2, 1], "a", 1, 5: [3, "a", "a"]
+[3, 2, 1], "a", 2, 5: [3, 2, "a"]
+[3, 2, 1], Nil: [Nil, Nil, Nil]
+Test as a static function:
+[], "a": []
+[1, 2, 3], "a": ["a", "a", "a"]
+[3, 2, 1], "a", 1, 0: [3, 2, 1]
+[3, 2, 1], "a", 1, 5: [3, "a", "a"]
+[3, 2, 1], "a", 2, 5: [3, 2, "a"]
+[3, 2, 1], Nil: [Nil, Nil, Nil]
+Done
+@endoutput
+*/
+
+> "Array methods - fill"
+
+tests = .[ 
+   .[ .[] "a" ]
+   .[ .[1 2 3] "a" ]
+   .[ .[3 2 1] "a" 1 0 ]
+   .[ .[3 2 1] "a" 1 5 ]
+   .[ .[3 2 1] "a" 2 5 ]
+   .[ .[3 2 1] nil ]
+]
+
+function test( code, x )
+   >> ", ".merge(^[x] {(v) ^+ v.describe() } =>[]), ": "
+   > code(x).describe()
+end
+
+tests1 = [] 
+for arr in tests
+   arr1 = arr.clone()
+   arr1[0] = arr[0].clone()
+   tests1 += arr1
+end
+
+> "Test as a method:"
+^[ tests ] .[test {(x) x.len > 1 ? call(x[0].fill, x[1:]) : call(x[0].fill) }]
+
+> "Test as a static function:"
+^[ tests1 ] .[test {(x) call( Array.fill, x) }]
+
+> "Done"

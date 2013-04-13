@@ -1,0 +1,37 @@
+/*
+@name Array operator test >>=
+@category datatype
+
+@output
+Array operator test >>=
+[1, 2, 3]
+[1, 2, 3]
+[2, 3]
+[1, 2, 3]
+[1, 2]
+[]
+Done.
+@endoutput
+*/
+
+> "Array operator test >>="
+
+function show(array)
+   > array.describe()
+end
+
+v = .['a' 'b' 'c' ]
+x = .[ 1 2 3 ]
+show(x >> v)
+show(x >> [])
+show(x >> [1])
+
+x >>= v
+show(x)
+x >>= .[3]
+show(x)
+x >>= .[1 2]
+show(x)
+
+> "Done."
+

@@ -1,0 +1,72 @@
+/*
+@name Array methods - Basic properties
+@category Core-array
+
+@output
+Array methods - Basic properties
+A simple array
+x = .["A" "B" "C"]
+["A", "B", "C"]
+Len      : 3
+Empty    : false
+Allocated: 3
+Growth   : 16
+Array( 1, 2, "A", "b" )
+[1, 2, "A", "b"]
+Len      : 4
+Empty    : false
+Allocated: 16
+Growth   : 16
+========================================
+[]
+[]
+Len      : 0
+Empty    : true
+Allocated: 0
+Growth   : 16
+========================================
+Setting growth to 32
+x <<= .["A" "B" "C"]
+["A", "B", "C"]
+Len      : 3
+Empty    : false
+Allocated: 3
+Growth   : 32
+========================================
+Done
+@endoutput
+*/
+
+> "Array methods - Basic properties"
+function show(x)
+   > x.describe()
+   > "Len      : ", x.len
+   > "Empty    : ", x.empty
+   > "Allocated: ", x.allocated
+   > "Growth   : ", x.growth
+end
+
+> "A simple array"
+x = .["A" "B" "C"]
+> 'x = .["A" "B" "C"]'
+show(x)
+
+x = Array( 1, 2, "A", "b" )
+> 'Array( 1, 2, "A", "b" )'
+show(x)
+
+> "="*40
+x = []
+> '[]'
+show(x)
+
+> "="*40
+> "Setting growth to 32"
+x.growth = 32
+x <<= .["A" "B" "C"]
+> 'x <<= .["A" "B" "C"]'
+show(x)
+> "="*40
+
+
+> "Done"

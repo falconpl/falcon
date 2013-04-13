@@ -1,0 +1,45 @@
+/*
+@name Array methods - clear
+@category Core-array
+
+@output
+Array methods - clear
+Test as a method:
+[]: []
+["a"]: []
+["a", "b", "c"]: []
+Test as a static function:
+[]: []
+["a"]: []
+["a", "b", "c"]: []
+Done
+@endoutput
+*/
+
+> "Array methods - clear"
+
+tests = .[ 
+   .[ .[] ]
+   .[ .['a'] ]
+   .[ .['a' 'b' 'c'] ]
+]
+
+function test( code, x )
+   >> ", ".merge(^[x] {(v) ^+ v.describe() } =>[]), ": "
+   > code(x).describe()
+end
+
+tests1 = [] 
+for arr in tests
+   arr1 = arr.clone()
+   arr1[0] = arr[0].clone()
+   tests1 += arr1
+end
+
+> "Test as a method:"
+^[ tests ] .[test {(x) x.len > 1 ? call(x[0].clear, x[1:]) : call(x[0].clear) }]
+
+> "Test as a static function:"
+^[ tests1 ] .[test {(x) call( Array.clear, x) }]
+
+> "Done"

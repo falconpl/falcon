@@ -1,0 +1,49 @@
+/*
+@name Array methods - remove
+@category Core-array
+
+@output
+Array methods - remove
+Test as a method:
+["a"], 0: []
+["a"], -1: []
+["a", "b", "c"], 0, 1: ["b", "c"]
+["a", "b", "c"], 0, 3: []
+Test as a static function:
+["a"], 0: []
+["a"], -1: []
+["a", "b", "c"], 0, 1: ["b", "c"]
+["a", "b", "c"], 0, 3: []
+Done
+@endoutput
+*/
+
+> "Array methods - remove"
+
+tests = .[ 
+   .[ .['a'] 0 ]
+   .[ .['a'], -1 ]
+   .[ .['a' 'b' 'c'] 0 1 ]
+   .[ .['a' 'b' 'c'] 0 3 ]
+]
+
+function test( code, x )
+   >> ", ".merge(^[x] {(v) ^+ v.describe() } =>[]), ": "
+   code(x)
+   > x[0].describe()
+end
+
+tests1 = [] 
+for arr in tests
+   arr1 = arr.clone()
+   arr1[0] = arr[0].clone()
+   tests1 += arr1
+end
+
+> "Test as a method:"
+^[ tests ] .[test {(x) x.len > 1 ? call(x[0].remove, x[1:]) : call(x[0].remove) }]
+
+> "Test as a static function:"
+^[ tests1 ] .[test {(x) call( Array.remove, x) }]
+
+> "Done"

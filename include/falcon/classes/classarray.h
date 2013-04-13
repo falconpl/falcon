@@ -82,7 +82,6 @@ public:
    virtual void op_next( VMContext* ctx, void* instance ) const;
   
    PStep* m_stepScanInvoke;
-   PStep* m_stepScanCheck;
 
    PStep* m_stepQSort;
    PStep* m_stepQSortPartLow;

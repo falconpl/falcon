@@ -156,7 +156,7 @@ void ClassString::PStepNextOp::apply_( const PStep* ps, VMContext* ctx )
 
 //=====================================================================
 // Properties
-//
+//@b count
 
 static void get_len( const Class*, const String&, void* instance, Item& value )
 {

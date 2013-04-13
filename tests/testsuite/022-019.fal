@@ -1,0 +1,60 @@
+/*
+@name Array methods - sort
+@category Core-array
+
+@output
+Array methods - sort
+Test as a method:
+[]: []
+[1, 2, 3]: [1, 2, 3]
+[3, 2, 1]: [1, 2, 3]
+[3, 1, 2, "b", "c", "a"]: [1, 2, 3, "a", "b", "c"]
+["a", 3, 1, 2, "b", "c", "a", 2]: [1, 2, 2, 3, "a", "a", "b", "c"]
+[3, 1, 2, "b", "c", "a"], {(a, b)   ( a > b )}: ["c", "b", "a", 3, 2, 1]
+["a", "x", "y", "b", "c", "z"], {(a, b)   ( a > b )}: ["z", "x", "y", "c", "b", "a"]
+["a", "x", "b", "y", "b", "c", "x", "z", "a"], {(a, b)   ( a > b )}: ["z", "x", "x", "y", "c", "b", "b", "a", "a"]
+Test as a static function:
+[]: []
+[1, 2, 3]: [1, 2, 3]
+[3, 2, 1]: [1, 2, 3]
+[3, 1, 2, "b", "c", "a"]: [1, 2, 3, "a", "b", "c"]
+["a", 3, 1, 2, "b", "c", "a", 2]: [1, 2, 2, 3, "a", "a", "b", "c"]
+[3, 1, 2, "b", "c", "a"], {(a, b)   ( a > b )}: ["c", "b", "a", 3, 2, 1]
+["a", "x", "y", "b", "c", "z"], {(a, b)   ( a > b )}: ["z", "x", "y", "c", "b", "a"]
+["a", "x", "b", "y", "b", "c", "x", "z", "a"], {(a, b)   ( a > b )}: ["z", "x", "x", "y", "c", "b", "b", "a", "a"]
+Done
+@endoutput
+*/
+
+> "Array methods - sort"
+
+tests = .[ 
+   .[ .[] ]
+   .[ .[1 2 3] ]
+   .[ .[3 2 1] ]
+   .[ .[3 1 2 'b' 'c' 'a'] ]
+   .[ .['a' 3 1 2 'b' 'c' 'a' 2] ]
+   .[ .[3 1 2 'b' 'c' 'a'] {(a,b) a > b } ]
+   .[ .['a' 'x' 'y' 'b' 'c' 'z'] {(a,b) a > b } ]   
+   .[ .['a' 'x' 'b' 'y' 'b' 'c' 'x' 'z' 'a'] {(a,b) a > b } ]   
+]
+
+function test( code, x )
+   >> ", ".merge(^[x] {(v) ^+ v.render().replace("\n","") } =>[]), ": "
+   > code(x).describe()
+end
+
+tests1 = [] 
+for arr in tests
+   arr1 = arr.clone()
+   arr1[0] = arr[0].clone()
+   tests1 += arr1
+end
+
+> "Test as a method:"
+^[ tests ] .[test {(x) x.len > 1 ? call(x[0].sort, x[1:]) : call(x[0].sort) }]
+
+> "Test as a static function:"
+^[ tests1 ] .[test {(x) call( Array.sort, x) }]
+
+> "Done"

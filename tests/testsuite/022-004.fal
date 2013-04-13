@@ -1,0 +1,93 @@
+/*
+@name Array methods - alloc tests/w growth
+@category Core-array
+
+@output
+Array methods - alloc tests/w growth
+[]
+Len      : 0
+Allocated: 0
+Growth   : 16
+========================================
+[].reserve(3)
+[]
+Len      : 0
+Allocated: 3
+Growth   : 16
+========================================
+Inserting 4 items
+[1, 2, 3, 4]
+Len      : 4
+Allocated: 16
+Growth   : 16
+========================================
+Compacting
+[1, 2, 3, 4]
+Len      : 4
+Allocated: 4
+Growth   : 16
+========================================
+Growing again
+[1, 2, 3, 4, "new"]
+Len      : 5
+Allocated: 16
+Growth   : 16
+========================================
+Inserting 12 items
+[1, 2, 3, 4, "new", 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
+Len      : 17
+Allocated: 32
+Growth   : 16
+========================================
+Inserting 16 items
+Len      : 33
+Allocated: 48
+========================================
+Done
+@endoutput
+*/
+
+> "Array methods - alloc tests/w growth"
+function show(x)
+   > x.describe()
+   > "Len      : ", x.len
+   > "Allocated: ", x.allocated
+   > "Growth   : ", x.growth
+end
+
+x = []
+show(x)
+> "="*40
+
+> '[].reserve(3)'
+x.reserve(3)
+show(x)
+> "="*40
+
+> "Inserting 4 items"
+^[4] => x
+show(x)
+> "="*40
+
+> "Compacting"
+x.compact()
+show(x)
+> "="*40
+
+> "Growing again"
+x+='new'
+show(x)
+> "="*40
+
+> "Inserting 12 items"
+^[12] => x
+show(x)
+> "="*40
+
+> "Inserting 16 items"
+^[16] => x
+> "Len      : ", x.len
+> "Allocated: ", x.allocated
+> "="*40
+
+> "Done"

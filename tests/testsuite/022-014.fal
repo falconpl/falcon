@@ -1,0 +1,43 @@
+/*
+@name Array methods - find
+@category Core-array
+
+@output
+Array methods - find
+Test as a method:
+[], "x": -1
+["a", "b", "c"], "x": -1
+[1, "b", 2, "c"], 2: 2
+[1, "b", 2, "c"], "b": 1
+Test as a static function:
+[], "x": -1
+["a", "b", "c"], "x": -1
+[1, "b", 2, "c"], 2: 2
+[1, "b", 2, "c"], "b": 1
+Done
+@endoutput
+*/
+
+> "Array methods - find"
+
+tests = .[ 
+   .[ .[] 'x' ]
+   .[ .['a' 'b' 'c' ] 'x' ]
+   
+   .[ .[1 'b' 2 'c' ] 2 ]
+   .[ .[1 'b' 2 'c' ] 'b' ]
+]
+
+function test( code, x )
+   >> ", ".merge(^[x] {(v) ^+ v.describe() } =>[]), ": "
+   > code(x)
+end
+
+> "Test as a method:"
+^[ tests ] .[test {(x) x.len > 1 ? call(x[0].find, x[1:]) : call(x[0].find ) }]
+
+> "Test as a static function:"
+^[ tests ] .[test {(x) call( Array.find, x) }]
+
+
+> "Done"

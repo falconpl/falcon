@@ -1,0 +1,42 @@
+/*
+@name Array methods - copy
+@category Core-array
+
+@output
+Array methods - copy
+Test as a method:
+["a"], 0, 1: ["a"]
+["a", "b", "c"], 1: ["b"]
+["a", "b", "c"], 1, 2: ["b", "c"]
+["a", "b", "c"], -1, 1: ["c"]
+Test as a static function:
+["a"], 0, 1: ["a"]
+["a", "b", "c"], 1: ["b"]
+["a", "b", "c"], 1, 2: ["b", "c"]
+["a", "b", "c"], -1, 1: ["c"]
+Done
+@endoutput
+*/
+
+> "Array methods - copy"
+
+tests = .[ 
+   .[ .['a'] 0, 1 ]
+   .[ .['a' 'b' 'c' ] 1 ]
+   .[ .['a' 'b' 'c' ] 1,2 ]
+   .[ .['a' 'b' 'c' ],-1,1 ]
+]
+
+function test( code, x )
+   >> ", ".merge(^[x] {(v) ^+ v.describe() } =>[]), ": "
+   > code(x).describe()
+end
+
+> "Test as a method:"
+^[ tests ] .[test {(x) x.len > 1 ? call(x[0].copy, x[1:]) : call(x[0].copy ) }]
+
+> "Test as a static function:"
+^[ tests ] .[test {(x) call( Array.copy, x) }]
+
+
+> "Done"

@@ -1,0 +1,74 @@
+/*
+@name Array methods - alloc tests w/o growth
+@category Core-array
+
+@output
+Array methods - alloc tests w/o growth
+[].reserve(3)
+[]
+Len      : 0
+Allocated: 3
+Growth   : 0
+========================================
+Inserting 3 items
+[1, 2, 3]
+Len      : 3
+Allocated: 3
+Growth   : 0
+========================================
+Inserting 3 more items
+[1, 2, 3, 1, 2, 3]
+Len      : 6
+Allocated: 8
+Growth   : 0
+========================================
+Inserting 16 items
+Len      : 22
+Allocated: 32
+========================================
+Inserting 50 items
+Len      : 72
+Allocated: 128
+========================================
+Done
+@endoutput
+*/
+
+> "Array methods - alloc tests w/o growth"
+function show(x)
+   > x.describe()
+   > "Len      : ", x.len
+   > "Allocated: ", x.allocated
+   > "Growth   : ", x.growth
+end
+
+x = []
+x.growth = 0
+> '[].reserve(3)'
+x.reserve(3)
+show(x)
+> "="*40
+
+> "Inserting 3 items"
+^[3] => x
+show(x)
+> "="*40
+
+> "Inserting 3 more items"
+^[3] => x
+show(x)
+> "="*40
+
+> "Inserting 16 items"
+^[16] => x
+> "Len      : ", x.len
+> "Allocated: ", x.allocated
+> "="*40
+
+> "Inserting 50 items"
+^[50] => x
+> "Len      : ", x.len
+> "Allocated: ", x.allocated
+> "="*40
+
+> "Done"

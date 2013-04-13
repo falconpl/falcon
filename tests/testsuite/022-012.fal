@@ -1,0 +1,74 @@
+/*
+@name Array methods - pop
+@category Core-array
+
+@output
+Array methods - pop
+Test as a method:
+["a"]: "a" left []
+["a"], 1: "a" left []
+["a", "b", "c"]: "c" left ["a", "b"]
+["a", "b", "c"], 1: "c" left ["a", "b"]
+["a", "b", "c"], 2: ["b", "c"] left ["a"]
+Test as a static function:
+["a"]: "a" left []
+["a"], 1: "a" left []
+["a", "b", "c"]: "c" left ["a", "b"]
+["a", "b", "c"], 1: "c" left ["a", "b"]
+["a", "b", "c"], 2: ["b", "c"] left ["a"]
+Catching errors
+Detect pop from empty: Success
+Catching errors
+Detect too many pops: Success
+Done
+@endoutput
+*/
+
+> "Array methods - pop"
+
+tests = .[ 
+   .[ .['a']  ]
+   .[ .['a'] 1 ]
+   
+   .[ .['a' 'b' 'c'] ]
+   .[ .['a' 'b' 'c'] 1 ]
+   .[ .['a' 'b' 'c'] 2 ]
+]
+
+function test( code, x )
+   >> ", ".merge(^[x] {(v) ^+ v.describe() } =>[]), ": "
+   > code(x).describe() , " left ", x[0].describe()
+end
+
+tests1 = [] 
+for arr in tests
+   arr1 = arr.clone()
+   arr1[0] = arr[0].clone()
+   tests1 += arr1
+end
+
+> "Test as a method:"
+^[ tests ] .[test {(x) x.len > 1 ? call(x[0].pop, x[1:]) : call(x[0].pop ) }]
+
+> "Test as a static function:"
+^[ tests1 ] .[test {(x) call( Array.pop, x) }]
+
+> "Catching errors"
+try
+   >> "Detect pop from empty: "
+   [].pop()
+   > "Failed"
+catch AccessError
+   > "Success"
+end
+
+> "Catching errors"
+try
+   >> "Detect too many pops: "
+   .['a' 'b'].pop(3)
+   > "Failed"
+catch AccessError
+   > "Success"
+end
+
+> "Done"

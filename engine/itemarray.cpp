@@ -26,7 +26,7 @@
 #include <string.h>
 #include <stdio.h>
 
-#define flc_ARRAY_GROWTH 64
+#define flc_ARRAY_GROWTH 16
 
 namespace Falcon
 {
@@ -112,14 +112,19 @@ Class* ItemArray::handler()
 }
 
 
-ItemArray::ItemArray( length_t prealloc ):
-   m_growth( prealloc == 0 ? flc_ARRAY_GROWTH  : prealloc )
+ItemArray::ItemArray( length_t prealloc )
 {
-   if( m_growth < 4 )
-      m_growth = 4;
+   m_growth = flc_ARRAY_GROWTH;
 
-   m_data = allocate( m_growth );
-   m_alloc = m_growth;
+   if( prealloc > 0 )
+   {
+      m_data = allocate( prealloc );
+      m_alloc = prealloc;
+   }
+   else {
+      m_data = 0;
+      m_alloc = 0;
+   }
    m_size = 0;
 }
 
@@ -142,7 +147,8 @@ void ItemArray::append( const Item &ndata )
    // create enough space to hold the data
    if ( m_alloc <= m_size )
    {
-      m_alloc = m_size + m_growth;
+      accomodate(m_size+1);
+
       Item* newData = Helper(this).reallocate( m_alloc );
 
       // ndata may come from m_data; delete it AFTER having assigned it.
@@ -245,7 +251,8 @@ bool ItemArray::insert( const Item &ndata, length_t pos )
 
    if ( m_alloc <= m_size )
    {
-      m_alloc = m_size + flc_ARRAY_GROWTH;
+      accomodate(m_size+1);
+
       Item *mem = allocate(m_alloc);
       if ( pos > 0 )
          memcpy( mem , m_data, esize( pos ) );
@@ -254,7 +261,7 @@ bool ItemArray::insert( const Item &ndata, length_t pos )
 
       mem[ pos ] = ndata;
       m_size++;
-free( m_data );
+      free( m_data );
       m_data = mem;
    }
    else {
@@ -307,12 +314,12 @@ bool ItemArray::remove( length_t first, length_t rsize )
       return true;
    }
    
-   if ( first + rsize > m_size )
-      return false;
-
    length_t last = first + rsize;
    if ( last < m_size )
       memmove( m_data + first, m_data + last, esize(m_size - last ) );
+   else {
+      rsize = m_size - first;
+   }
    m_size -= rsize;
       
    return true;
@@ -388,7 +395,8 @@ bool ItemArray::insertSpace( length_t pos, length_t size )
       return false;
 
    if ( m_alloc < m_size + size ) {
-      m_alloc = ((m_size + size)/m_growth+1)*m_growth;
+      accomodate(m_size + size);
+
       Item *mem = allocate( m_alloc );
       if ( pos > 0 )
          memcpy( mem , m_data, esize( pos ) );
@@ -450,7 +458,7 @@ void ItemArray::resize( length_t size )
    // use this request also to force size in shape with alloc.
    if ( size > m_alloc )
    {
-      m_alloc = (size/m_growth + 1) *m_growth;
+      accomodate( size );
       Item* newData = allocate(m_alloc);
       memcpy( newData, m_data, esize( m_size ) );
 
@@ -517,6 +525,38 @@ bool ItemArray::copyOnto( length_t from, const ItemArray& src, length_t first, l
    return true;
 }
 
+bool ItemArray::merge( length_t from, const ItemArray &src, length_t first, length_t amount )
+{
+   if( first > src.length() )
+      return false;
+   if ( from > m_size )
+      return false;
+
+   // nothing to insert
+   if( amount == 0 )
+   {
+      return true;
+   }
+
+   if ( first + amount > src.length() )
+   {
+      amount = src.length() - first;
+   }
+
+   reserve( m_size + amount );
+
+   if( from < m_size )
+   {
+      memmove(m_data + from +amount, m_data+from, esize(m_size-from) );
+   }
+
+   memcpy( m_data + from, src.m_data + first, esize( amount ) );
+
+   m_size += amount;
+
+   return true;
+}
+
 
 void ItemArray::replicate( const ItemArray& src )
 {
@@ -525,6 +565,25 @@ void ItemArray::replicate( const ItemArray& src )
    memcpy( m_data, src.m_data, esize( amount ) );
 }
 
+void ItemArray::accomodate( length_t size )
+{
+   fassert( size > m_alloc );
+   if( m_growth != 0 )
+   {
+      m_alloc = ((size/m_growth)+1)*m_growth;
+   }
+   else
+   {
+      // round to the nearest power of 2 of size
+      length_t npow = 1;
+      while ( npow < size )
+      {
+         npow <<= 1;
+      }
+
+      m_alloc = npow;
+   }
+}
 
 int ItemArray::compare( const ItemArray& other, ItemArray::Parentship* parent ) const
 {

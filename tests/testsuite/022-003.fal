@@ -1,0 +1,40 @@
+/*
+@name Array methods - reserve
+@category Core-array
+
+@output
+Array methods - reserve
+[].reserve(5)
+[]
+Len      : 0
+Allocated: 5
+========================================
+^[5] => x; x.reserve(3)
+[1, 2, 3, 4, 5]
+Len      : 5
+Allocated: 5
+========================================
+Done
+@endoutput
+*/
+
+> "Array methods - reserve"
+function show(x)
+   > x.describe()
+   > "Len      : ", x.len
+   > "Allocated: ", x.allocated
+end
+
+x = []
+x.reserve(5)
+> '[].reserve(5)'
+show(x)
+> "="*40
+
+^[5] => x
+x.reserve(3)
+> '^[5] => x; x.reserve(3)'
+show(x)
+> "="*40
+
+> "Done"

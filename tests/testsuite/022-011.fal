@@ -1,0 +1,46 @@
+/*
+@name Array methods - unshift
+@category Core-array
+
+@output
+Array methods - unshift
+Test as a method:
+[], "z": ["z"]
+[], "b", "c", "d": ["d", "c", "b"]
+["a"], "b", "c": ["c", "b", "a"]
+Test as a static function:
+[], "z": ["z"]
+[], "b", "c", "d": ["d", "c", "b"]
+["a"], "b", "c": ["c", "b", "a"]
+Done
+@endoutput
+*/
+
+> "Array methods - unshift"
+
+tests = .[ 
+   .[ .[] 'z' ]
+   .[ .[] 'b' 'c' 'd' ]
+   .[ .['a'] 'b' 'c' ]
+]
+
+function test( code, x )
+   >> ", ".merge(^[x] {(v) ^+ v.describe() } =>[]), ": "
+   code(x)
+   > x[0].describe()
+end
+
+tests1 = [] 
+for arr in tests
+   arr1 = arr.clone()
+   arr1[0] = arr[0].clone()
+   tests1 += arr1
+end
+
+> "Test as a method:"
+^[ tests ] .[test {(x) x.len > 1 ? call(x[0].unshift, x[1:]) : call(x[0].unshift) }]
+
+> "Test as a static function:"
+^[ tests1 ] .[test {(x) call( Array.unshift, x) }]
+
+> "Done"

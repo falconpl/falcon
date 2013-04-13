@@ -56,21 +56,28 @@ public:
 
    /** Prepends an item to the array.
       \param ndata The item to be added.
-      \note The item in ndata will not have the Item::copied() bit set.
     */
    void prepend( const Item &ndata );
 
-   /** Apeends all the items in an array to this array.
+   /** Appends all the items in an array to this array.
       \param source Array from where the merge data is coming. 
-      \note All the merged items will have the Item::copied() bit set.
+
     */
    void merge( const ItemArray &source );
 
    /** Prepends all the items from an array to this array.
       \param other The other array.
-      \note All the merged items will have the Item::copied() bit set.
+
     */
    void merge_front( const ItemArray &other );
+
+   /** Inserts one or more items from the source array into this array,.
+      \param source Array from where the merge data is coming.
+
+      Similar to copyOnto, but copyOnto overwrites the items instead of
+      inserting them.
+    */
+   bool merge( length_t startPos, const ItemArray &source, length_t firstItem=0, length_t count=0xFFFFFFFF );
 
    /** Inserts an item into the array.
       \param ndata The item to be added.
@@ -229,6 +236,9 @@ public:
     */
    ConcurrencyGuard& guard() const { return m_guard; }
 
+   length_t growth() const { return m_growth; }
+   void growth( length_t g ) { m_growth = g; }
+
 private:
    length_t m_alloc;
    length_t m_size;
@@ -256,6 +266,9 @@ private:
    };
 
    int compare( const ItemArray& other, Parentship* parent ) const;
+
+   // Fix alloc and growth to accomodate the required size.
+   void accomodate( length_t size );
 
    class Helper;
    friend class Helper;
