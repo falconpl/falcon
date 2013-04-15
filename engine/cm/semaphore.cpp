@@ -62,7 +62,7 @@ void Function_post::invoke(VMContext* ctx, int32 pCount)
 
    SharedSemaphore* sm = static_cast<SharedSemaphore*>(ctx->self().asInst());
    // The semaphore can't be the acquired resource, as it's not acquireable.
-   sm->signal( count );
+   sm->signal( (int) count );
    ctx->returnFrame();
 }
 
@@ -121,7 +121,7 @@ bool ClassSemaphore::op_init( VMContext* ctx, void*, int pcount ) const
       }
    }
 
-   SharedSemaphore* sm = new SharedSemaphore( &ctx->vm()->contextManager(), this, count);
+   SharedSemaphore* sm = new SharedSemaphore( &ctx->vm()->contextManager(), this, (int) count);
    ctx->stackResult(pcount+1, FALCON_GC_STORE(this, sm));
    return true;
 }
