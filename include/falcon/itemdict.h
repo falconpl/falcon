@@ -13,12 +13,13 @@
    See LICENSE file for licensing details.
 */
 #ifndef _FALCON_ITEMDICT_H
-#define	_FALCON_ITEMDICT_H
+#define _FALCON_ITEMDICT_H
 
 #include <falcon/setup.h>
 #include <falcon/string.h>
 #include <falcon/overridableclass.h>
 #include <falcon/genericdata.h>
+#include <falcon/concurrencyguard.h>
 
 
 namespace Falcon
@@ -62,6 +63,9 @@ public:
    void enumerate( Enumerator& rator );   
    uint32 version() const { return m_version; }
    
+   void merge( const ItemDict& other );
+   void clear();
+
    static Class* handler();
 
    /** Iterator used by ClassDict to iterate with op_first/op_next. */
@@ -78,6 +82,8 @@ public:
 
       /** Prepare the next pair on the target item. */
       bool next( Item& target );
+
+      ItemDict* dict() const { return m_dict; }
             
    private:
       class Private;
@@ -107,6 +113,8 @@ public:
       
       state m_state;
    };
+
+   ConcurrencyGuard& guard() const { return m_guard; }
    
 private:
    class Private;
@@ -115,6 +123,8 @@ private:
    uint32 m_flags;
    uint32 m_currentMark;
    uint32 m_version;
+
+   mutable ConcurrencyGuard m_guard;
 
    friend class Iterator;
    friend class ClassDict;

@@ -75,7 +75,7 @@ namespace _classArray {
 /**
  @class Array
  @brief Class of Falcon language array []
- @param size Initial size of the array.
+ @param ... The elements to be initially stored in the array.
 
  @prop len Length of the array
  @prop allocated Number of items that can be stored in this array before new memory is required.
@@ -2069,6 +2069,23 @@ void ClassArray::op_ashr( VMContext* ctx, void* self ) const
 void ClassArray::op_isTrue( VMContext* ctx, void* self ) const
 {
    ctx->stackResult( 1, static_cast<ItemArray*>( self )->length() != 0 );
+}
+
+
+void ClassArray::op_in( VMContext* ctx, void* instance ) const
+{
+   Item *item, *index;
+   ctx->operands( item, index );
+
+   bool res;
+   ItemArray& array = *static_cast<ItemArray*>(instance);
+   {
+      ConcurrencyGuard::Reader rg( ctx, array.guard());
+      res = array.find( *index ) >= 0;
+   }
+
+   ctx->popData();
+   ctx->topData().setBoolean(res);
 }
 
 

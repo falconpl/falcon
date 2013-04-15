@@ -235,7 +235,83 @@ void ItemDict::insert( const Item& key, const Item& value )
                break;
          }
       }
+      break;
    }
+}
+
+
+
+void ItemDict::merge( const ItemDict& other )
+{
+   Private* op = other._p;
+   if( op->m_bHasNil )
+   {
+      _p->m_bHasNil = true;
+      _p->m_itemNil = op->m_itemNil;
+   }
+
+   if( op->m_bHasTrue )
+   {
+      _p->m_bHasTrue = true;
+      _p->m_itemTrue = op->m_itemTrue;
+   }
+
+   if( op->m_bHasFalse )
+   {
+      _p->m_bHasFalse = true;
+      _p->m_itemFalse = op->m_itemFalse;
+   }
+
+   {
+      Private::IntegerMap::iterator iter = op->m_intMap.begin();
+      while( iter != op->m_intMap.end() )
+      {
+         _p->m_intMap[iter->first] = iter->second;
+         ++iter;
+      }
+   }
+
+   {
+      Private::RangeMap::iterator iter = op->m_rangeMap.begin();
+      while( iter != op->m_rangeMap.end() )
+      {
+         _p->m_rangeMap[iter->first] = iter->second;
+         ++iter;
+      }
+   }
+
+   {
+      Private::StringMap::iterator iter = op->m_stringMap.begin();
+      while( iter != op->m_stringMap.end() )
+      {
+         _p->m_stringMap[iter->first] = iter->second;
+         ++iter;
+      }
+   }
+
+   {
+      Private::InstanceMap::iterator iter = op->m_instMap.begin();
+      while( iter != op->m_instMap.end() )
+      {
+         _p->m_instMap[iter->first] = iter->second;
+         ++iter;
+      }
+   }
+}
+
+
+void ItemDict::clear()
+{
+   _p->m_bHasNil = false;
+   _p->m_itemNil.setNil();
+   _p->m_bHasTrue = false;
+   _p->m_itemTrue.setNil();
+   _p->m_bHasFalse = false;
+   _p->m_itemFalse.setNil();
+   _p->m_intMap.clear();
+   _p->m_rangeMap.clear();
+   _p->m_stringMap.clear();
+   _p->m_instMap.clear();
 }
 
 
