@@ -49,15 +49,22 @@ public:
    virtual void describe( void* instance, String& target, int maxDepth = 3, int maxLength = 60 ) const;
 
    virtual void gcMarkInstance( void* self, uint32 mark ) const;
-   virtual void enumerateProperties( void* self, PropertyEnumerator& cb ) const;
-   virtual void enumeratePV( void* self, PVEnumerator& cb ) const;
-   //virtual int compare( void* self, const Item& value ) const;
 
    //=============================================================
 
    virtual bool op_init( VMContext* ctx, void* inst, int32 pcount ) const;
+
    virtual void op_add( VMContext* ctx, void* self ) const;
+   virtual void op_aadd( VMContext* ctx, void* self ) const;
+   virtual void op_sub( VMContext* ctx, void* self ) const;
+   virtual void op_asub( VMContext* ctx, void* self ) const;
+   virtual void op_shl( VMContext* ctx, void* self ) const;
+   virtual void op_ashl( VMContext* ctx, void* self ) const;
+   virtual void op_shr( VMContext* ctx, void* self ) const;
+   virtual void op_ashr( VMContext* ctx, void* self ) const;
+
    virtual void op_isTrue( VMContext* ctx, void* self ) const;
+   virtual void op_in( VMContext* ctx, void* instance ) const;
    virtual void op_toString( VMContext* ctx, void* self ) const;
 
    virtual void op_getProperty( VMContext* ctx, void* self, const String& prop) const;

@@ -72,6 +72,7 @@ public:
    virtual void op_ashr( VMContext* ctx, void* self ) const;
 
    virtual void op_isTrue( VMContext* ctx, void* self ) const;
+   virtual void op_in( VMContext* ctx, void* instance ) const;
    virtual void op_toString( VMContext* ctx, void* self ) const;
    virtual void op_call( VMContext* ctx, int32 paramCount, void* instance ) const;
 

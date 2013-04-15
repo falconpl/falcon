@@ -1,0 +1,32 @@
+/*
+@name Array operator test 'in'
+@category datatype
+
+@output
+Array operator test 'in'
+1: success
+2: success
+3: success
+Done.
+@endoutput
+*/
+
+> "Array operator test 'in'"
+
+tests = .[
+   .[ '1' .[] false ]
+   .[ '2'  .['a' 'b' 'c'] false ]
+   .[ '3'  .['a' '3' 'c'] true ]
+]
+
+
+for key, array, result in tests
+   if (key in array) == result
+      > key,": success"
+   else
+      > "Test failed at step ", key
+   end
+end
+
+> "Done."
+
