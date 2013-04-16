@@ -1146,7 +1146,7 @@ int16 TimeStamp::adjust_iso8601_2000( int64 year, int16 month, int64 day )
       if( day < 4 )
       {
          // 0 is monday...
-         int32 dw = static_cast<int32>(dayOfWeek(year, month, day));
+         int32 dw = static_cast<int32>(dayOfWeek(year, (int16)month, (int16)day));
          // so, if current day
          if( (day - dw) < 0 )
          {
