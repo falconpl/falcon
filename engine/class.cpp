@@ -27,9 +27,11 @@
 #include <falcon/errors/unserializableerror.h>
 #include <falcon/errors/accesserror.h>
 #include <falcon/errors/accesstypeerror.h>
+#include <falcon/errors/paramerror.h>
 #include <falcon/stdhandlers.h>
 #include <falcon/extfunc.h>
 #include <falcon/textwriter.h>
+#include <falcon/symbol.h>
 
 #include <falcon/function.h>
 #include <falcon/extfunc.h>
@@ -374,6 +376,15 @@ bool Class::hasProperty( void*, const String& prop ) const
    return iter != _p->m_props.end();
 }
 
+bool Class::respondsTo( void* inst, const String& prop ) const
+{
+   return hasProperty( inst, prop );
+}
+
+void Class::enumerateSummonings( void* instance, PropertyEnumerator& cb ) const
+{
+   enumerateProperties( instance, cb );
+}
 
 //==========================================================
 // Property management
@@ -750,6 +761,86 @@ void Class::op_setProperty( VMContext* ctx, void* data, const String& prop ) con
    }
    FALCON_RESIGN_XERROR( AccessError, e_prop_acc, ctx,
                    .extra(prop) );
+}
+
+
+void Class::op_summon( VMContext* ctx, void* instance, const String& message, int32 pCount ) const
+{
+   static BOM* bom = Engine::instance()->getBom();
+
+   if( message == "summon" )
+   {
+      // indirect summon.
+      if ( pCount > 0 )
+      {
+         pCount--;
+         Item& summoned = ctx->opcodeParam(pCount);
+         if( summoned.isString() )
+         {
+            ctx->removeData(pCount,1);
+            this->op_summon( ctx, instance, *summoned.asString(), pCount );
+            return;
+         }
+         else if( summoned.isSymbol() )
+         {
+            ctx->removeData(pCount,1);
+            this->op_summon( ctx, instance, summoned.asSymbol()->name(), pCount );
+            return;
+         }
+      }
+      FALCON_RESIGN_XERROR( ParamError, e_inv_params, ctx,
+             .extra("S|Symbol,...") );
+      return;
+   }
+   else if ( message == "respondsTo" )
+   {
+      ctx->stackResult(pCount+1,Item().setBoolean( this->respondsTo(instance, message)));
+      return;
+   }
+   else if ( message == "delegate" ) {
+   }
+
+   Private::PropertyMap::iterator iter = _p->m_props.find( message );
+   if( iter != _p->m_props.end() )
+   {
+      Property& prop = iter->second;
+      ctx->popData();
+      if( prop.method != 0 )
+      {
+         ctx->callInternal(prop.method, pCount, ctx->opcodeParam(pCount));
+         return;
+      }
+      else {
+         if( pCount > 0 ) {
+            
+            if( ! prop.bConst )
+            {
+               ctx->popData( pCount-1 );
+               Item temp = ctx->topData();
+               ctx->popData();
+               prop.setFunc(this, message, instance, temp );
+               ctx->topData() = temp;
+               return;
+            }
+            //else, fallback to the op_summon function end.
+         }
+         else {
+            prop.getFunc( this, message, instance, ctx->topData() );
+            return;
+         }
+      }
+   }
+
+   BOM::handler handler = bom->get( message );
+   if ( handler != 0  )
+   {
+      handler( ctx, this, instance );
+   }
+   else
+   {
+      FALCON_RESIGN_XERROR( AccessError, e_prop_acc, ctx,
+                   .extra(message) );
+   }
 }
 
 
