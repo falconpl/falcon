@@ -149,7 +149,7 @@ namespace Falcon {
            @return A dictionary containing all the environment strings and
            their value.
          */
-        void Function_environ::invoke( VMContext* ctx, int32 )
+        void Function_falcon_environ__::invoke( VMContext* ctx, int32 )
         {
            ItemDict* result = new ItemDict;
            ::Falcon::Sys::_enumerateEnvironment( &env_callback, result);

@@ -395,7 +395,7 @@ public:
 
    static int16 getDaysOfMonth( int16 month, int64 year );
 
-   int16 year() const { computeDateFields(); return m_year; }
+   int64 year() const { computeDateFields(); return m_year; }
    int16 month() const { computeDateFields(); return m_month; }
    int16 day() const { computeDateFields(); return m_day; }
    int16 hour() const { computeDateFields(); return m_hour; }
@@ -526,7 +526,7 @@ public:
     * If December 29th, 30th, or 31st is a Monday, it and any following days are part of week 1 of the following year.
     *
     */
-   static int16 adjust_iso8601_2000( int16 year, int16 month, int64 day );
+   static int16 adjust_iso8601_2000( int64 year, int16 month, int64 day );
 
 
    void gcMark(uint32 mark ) { m_gcMark = mark; }

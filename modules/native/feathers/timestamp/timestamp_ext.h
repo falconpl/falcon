@@ -37,7 +37,7 @@
 namespace Falcon { 
 namespace Ext {
 
-class FALCON_DYN_CLASS ClassTimeStamp: public Class
+class ClassTimeStamp: public Class
 {
 public:
    ClassTimeStamp();
@@ -56,7 +56,7 @@ public:
    virtual void restore( VMContext* ctx, DataReader* stream ) const;
 };
 
-class FALCON_DYN_CLASS ClassTimeZone: public Class
+class ClassTimeZone: public Class
 {
 public:
    ClassTimeZone();

@@ -37,7 +37,7 @@ class DataReader;
  * has support to convert this entity into a gregorian calendar date.
  *
  */
-class Date
+class FALCON_DYN_CLASS Date
 {
 public:
    static const int64 MAX_FEMTOSECOND      =  999999999999999LL;
@@ -185,17 +185,17 @@ public:
 
    void fromSeconds( numeric ts )
    {
-      m_seconds = ts / 1000.0;
+      m_seconds = static_cast<int64>(ts / 1000.0);
       numeric intpart = 0.0;
-      m_femtoseconds = modf(ts, &intpart);
-      m_femtoseconds *= 1e12;
+      m_femtoseconds = static_cast<int64>(modf(ts, &intpart));
+      m_femtoseconds = static_cast<int64>(m_femtoseconds*1e12);
    }
 
 
    int64 toMilliseconds() const
    {
       int64 res = m_seconds * 1000LL;
-      res += (int64) m_femtoseconds / 1000000000000LL;
+      res += static_cast<int64>(m_femtoseconds / 1000000000000LL);
       return res;
    }
 

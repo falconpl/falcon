@@ -474,20 +474,9 @@ bool VFSFile::readStats( const URI& uri, FileStat &sts, bool )
    else
       sts.type(FileStat::_normal);
 
-   FILETIME local_timing;
-   SYSTEMTIME timing;
-
-   FileTimeToLocalFileTime( &info.ftCreationTime, &local_timing );
-   FileTimeToSystemTime( &local_timing, &timing );
-   sts.ctime().fromSystemTime( &timing );
-
-   FileTimeToLocalFileTime( &info.ftLastAccessTime, &local_timing );
-   FileTimeToSystemTime( &local_timing, &timing );
-   sts.atime().fromSystemTime( &timing );
-
-   FileTimeToLocalFileTime( &info.ftLastWriteTime, &local_timing );
-   FileTimeToSystemTime( &local_timing, &timing );
-   sts.mtime().fromSystemTime( &timing );
+   sts.ctime( Sys::_win_fileTimeToEpochMS(info.ftCreationTime) );
+   sts.atime( Sys::_win_fileTimeToEpochMS(info.ftLastAccessTime) );
+   sts.mtime( Sys::_win_fileTimeToEpochMS(info.ftLastWriteTime) );
 
    int64 size = info.nFileSizeHigh;
    size <<= 32;

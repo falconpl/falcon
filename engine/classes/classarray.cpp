@@ -196,11 +196,11 @@ void Function_buffer::invoke(VMContext* ctx, int32 )
 
    if( len > 0 )
    {
-      array->resize(len);
+      array->resize(static_cast<length_t>(len));
 
       if( i_dflt != 0 )
       {
-         internal_fill(array, i_dflt, 0, len );
+         internal_fill(array, i_dflt, 0, static_cast<length_t>(len) );
       }
    }
 
@@ -356,7 +356,7 @@ void Function_insert::invoke(VMContext* ctx, int32 pCount )
 
    for( int i = base; i < pCount; ++i )
    {
-      if ( ! array->insert( *ctx->param(i), pos++ ) )
+      if ( ! array->insert( *ctx->param(i), static_cast<length_t>(pos++) ) )
       {
          throw new AccessError( ErrorParam( e_arracc, __LINE__, SRC ) );
       }
@@ -2016,10 +2016,10 @@ void ClassArray::op_shr( VMContext* ctx, void* self ) const
       for( length_t pos = 0; pos < other->length(); ++pos )
       {
          Item& elem = (*other)[pos];
-         int32 pos = result->find(elem);
-         if( pos >= 0 )
+         int32 posl = result->find(elem);
+         if( posl >= 0 )
          {
-            result->remove(pos);
+            result->remove(posl);
          }
       }
    }
@@ -2054,10 +2054,10 @@ void ClassArray::op_ashr( VMContext* ctx, void* self ) const
       for( length_t pos = 0; pos < other->length(); ++pos )
       {
          Item& elem = (*other)[pos];
-         int32 pos = array->find(elem);
-         if( pos >= 0 )
+         int32 posl = array->find(elem);
+         if( posl >= 0 )
          {
-            array->remove(pos);
+            array->remove(posl);
          }
       }
    }

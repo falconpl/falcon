@@ -32,7 +32,7 @@ namespace Ext {
  @brief Interface to abstract virtual file system.
 
  */
-class FALCON_DYN_CLASS ClassVFS: public Class
+class ClassVFS: public Class
 {
 public:
    ClassVFS();

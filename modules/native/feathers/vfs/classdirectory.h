@@ -26,7 +26,7 @@ namespace Falcon {
 namespace Ext {
 
 
-class FALCON_DYN_CLASS ClassDirectory: public Class
+class ClassDirectory: public Class
 {
 public:
    ClassDirectory();

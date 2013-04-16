@@ -30,7 +30,7 @@ namespace Ext {
  @brief Structure holding detailed information on files on Virtual File Systems.
 
  */
-class FALCON_DYN_CLASS ClassFileStat: public Class
+class ClassFileStat: public Class
 {
 public:
    ClassFileStat();

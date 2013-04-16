@@ -40,13 +40,19 @@ public:
    SysModule():
       Module("sys")
    {
+       // As Windows and some UNIX flavor declare "environ" as a macro,
+       // we are forced to give the function a special name, and re-define
+       // its function-name in the module, after it's created.
+      Falcon::Function *ef = new Falcon::Ext::Function_falcon_environ__;
+      ef->name("environ");
+
       *this
        << new Falcon::Ext::Function_stdIn
        << new Falcon::Ext::Function_stdOut
        << new Falcon::Ext::Function_stdErr
        << new Falcon::Ext::Function_getEnv
        << new Falcon::Ext::Function_setEnv
-       << new Falcon::Ext::Function_environ
+       << ef
        << new Falcon::Ext::Function_edesc
 
        << new Falcon::Ext::Function_cores

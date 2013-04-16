@@ -30,6 +30,7 @@
 #include <falcon/sys.h>
 #include <falcon/string.h>
 #include <falcon/path.h>
+#include <falcon/date.h>
 #include <errno.h>
 #include <time.h>
 
@@ -195,8 +196,8 @@ void _getCurrentDate( Date& date )
 {
    SYSTEMTIME st;
    GetSystemTime( &st );
-   int64 ms = SYSTEMTIME_TO_SECONDS( st );
-   date.fromMilliseconds(ms);
+   numeric ms = SYSTEMTIME_TO_SECONDS( st );
+   date.fromMilliseconds(static_cast<int64>(ms));
 }
 
 
@@ -472,6 +473,17 @@ bool _getCWD( String& name )
    Path::winToUri( name );
 
    return true;
+}
+
+int64 _win_fileTimeToEpochMS( const FILETIME& local_timing )
+{
+   int64 res = local_timing.dwHighDateTime;
+   res <<=32;
+   res |= local_timing.dwLowDateTime;
+   // Filesystem times are in tenth of ms from epoch!
+   res /= 10; 
+
+   return res;
 }
 
 }

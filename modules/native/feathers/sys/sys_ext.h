@@ -28,12 +28,16 @@ namespace Falcon {
        FALCON_DECLARE_FUNCTION(stdErr,"");
        FALCON_DECLARE_FUNCTION(getEnv,"variable:S");
        FALCON_DECLARE_FUNCTION(setEnv,"variable:S,value:S");
-       FALCON_DECLARE_FUNCTION(environ,"");
        FALCON_DECLARE_FUNCTION(edesc,"code:N");
 
        FALCON_DECLARE_FUNCTION(cores,"");
        FALCON_DECLARE_FUNCTION(epoch,"");
        FALCON_DECLARE_FUNCTION(systemType,"");
+
+       // As Windows and some UNIX flavor declare "environ" as a macro,
+       // we are forced to give the function a special name, and re-define
+       // its function-name in the module, after it's created.
+       FALCON_DECLARE_FUNCTION(falcon_environ__,"");
 
        // todo UID, PID, GID etc.
     }

@@ -327,7 +327,7 @@ FALCON_DEFINE_FUNCTION_P1(front)
       result = FALCON_GC_HANDLE(new String( *str ));
    }
    else {
-      result = FALCON_GC_HANDLE(new String( *str, 0, len ));
+      result = FALCON_GC_HANDLE(new String( *str, 0, static_cast<length_t>(len) ));
    }
    cstring->unlockInstance(tk);
 
@@ -381,7 +381,7 @@ FALCON_DEFINE_FUNCTION_P1(back)
       result = FALCON_GC_HANDLE(new String( *str ));
    }
    else {
-      result = FALCON_GC_HANDLE(new String( *str, str->length()-len ));
+      result = FALCON_GC_HANDLE(new String( *str, static_cast<length_t>(str->length()-len) ));
    }
    cstring->unlockInstance(tk);
 
@@ -1731,7 +1731,7 @@ FALCON_DEFINE_FUNCTION_P1( substr )
 
    ClassString* cstring = static_cast<ClassString*>(methodOf());
    InstanceLock::Token* tk1 = cstring->lockInstance(str);
-   String* ret = new String(str->subString(start, start + length ));
+   String* ret = new String(str->subString(static_cast<int32>(start), static_cast<int32>(start + length) ));
    cstring->unlockInstance(tk1);
 
    ctx->returnFrame(FALCON_GC_HANDLE(ret));
@@ -1848,61 +1848,61 @@ void internal_checkType( VMContext* ctx, Function* func, const __Checker& checke
 class AlphaChecker {
 public:
    bool operator()( String* str ) const { return str->isAlpha(); }
-   bool operator()( int64 num ) const { return String::isAlpha( num ); }
+   bool operator()( int64 num ) const { return String::isAlpha( static_cast<char_t>(num) ); }
 };
 
 class DigitChecker {
 public:
    bool operator()( String* str ) const { return str->isDigit(); }
-   bool operator()( int64 num ) const { return String::isDigit( num ); }
+   bool operator()( int64 num ) const { return String::isDigit( static_cast<char_t>(num) ); }
 };
 
 class isAlphaNumChecker {
 public:
    bool operator()( String* str ) const { return str->isAlphaNum(); }
-   bool operator()( int64 num ) const { return String::isAlphaNum( num ); }
+   bool operator()( int64 num ) const { return String::isAlphaNum( static_cast<char_t>(num) ); }
 };
 
 class PunctChecker {
 public:
    bool operator()( String* str ) const { return str->isPunct(); }
-   bool operator()( int64 num ) const { return String::isPunct( num ); }
+   bool operator()( int64 num ) const { return String::isPunct( static_cast<char_t>(num) ); }
 };
 
 class UpperChecker {
 public:
    bool operator()( String* str ) const { return str->isUpper(); }
-   bool operator()( int64 num ) const { return String::isUpper( num ); }
+   bool operator()( int64 num ) const { return String::isUpper( static_cast<char_t>(num) ); }
 };
 
 class isLowerChecker {
 public:
    bool operator()( String* str ) const { return str->isLower(); }
-   bool operator()( int64 num ) const { return String::isLower( num ); }
+   bool operator()( int64 num ) const { return String::isLower( static_cast<char_t>(num) ); }
 };
 
 class isWhitespaceChecker {
 public:
    bool operator()( String* str ) const { return str->isWhitespace(); }
-   bool operator()( int64 num ) const { return String::isWhitespace( num ); }
+   bool operator()( int64 num ) const { return String::isWhitespace( static_cast<char_t>(num) ); }
 };
 
 class isPrintableChecker {
 public:
    bool operator()( String* str ) const { return str->isPrintable(); }
-   bool operator()( int64 num ) const { return String::isPrintable( num ); }
+   bool operator()( int64 num ) const { return String::isPrintable( static_cast<char_t>(num) ); }
 };
 
 class isASCIIChecker {
 public:
    bool operator()( String* str ) const { return str->isASCII(); }
-   bool operator()( int64 num ) const { return String::isASCII( num ); }
+   bool operator()( int64 num ) const { return String::isASCII( static_cast<char_t>(num) ); }
 };
 
 class isISOChecker {
 public:
    bool operator()( String* str ) const { return str->isISO(); }
-   bool operator()( int64 num ) const { return String::isISO( num ); }
+   bool operator()( int64 num ) const { return String::isISO( static_cast<char_t>(num) ); }
 };
 
 /*#
@@ -2288,7 +2288,7 @@ FALCON_DEFINE_FUNCTION_P1(insert)
    }
 
    InstanceLock::Token* tk2 = needle != string ? cstr->lockInstance(needle) : 0;
-   string->insert(pos,0,*needle);
+   string->insert(static_cast<length_t>(pos),0,*needle);
    if( tk2 != 0 ) cstr->unlockInstance(tk2);
    cstr->unlockInstance(tk1);
 
@@ -2361,7 +2361,7 @@ FALCON_DEFINE_FUNCTION_P1(remove)
       count = string->length();
    }
 
-   string->remove(pos, count);
+   string->remove(static_cast<length_t>(pos), static_cast<length_t>(count));
    cstr->unlockInstance(tk1);
 
    ctx->returnFrame( Item(string->handler(), string) );
@@ -2778,7 +2778,7 @@ void ClassString::op_mul( VMContext* ctx, void* instance ) const
    m_lock.unlock(tk);
 
    String* result = new String;
-   result->reserve(copy.size() * count);
+   result->reserve(static_cast<length_t>(copy.size() * count));
    for( int64 i = 0; i < count; ++i )
    {
       result->append(copy);
@@ -3172,7 +3172,7 @@ void ClassString::op_amul( VMContext* ctx, void* instance ) const
    }
    else
    {
-      target->reserve( target->size() * count);
+      target->reserve( static_cast<length_t>(target->size() * count));
       // start from 1: we have already 1 copy in place
       for( int64 i = 1; i < count; ++i )
       {

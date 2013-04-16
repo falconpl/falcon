@@ -97,15 +97,15 @@ void TimeStamp::computeDateFields() const
          ++month;
       }
 
-      m_day = days_since_epoch + 1;
+      m_day = static_cast<int16>(days_since_epoch + 1);
       m_month = month + 1;
       m_year = year;
 
-      m_msec = m_date.femtoseconds()/1000000000000LL;
+      m_msec = static_cast<int16>(m_date.femtoseconds()/1000000000000LL);
    }
    else
    {
-      m_msec = ((Date::FEMTOSECONDS + m_date.femtoseconds())/Date::MILLISECOND_DIVIDER);
+      m_msec = static_cast<int16>((Date::FEMTOSECONDS + m_date.femtoseconds())/Date::MILLISECOND_DIVIDER);
       secs = SECOND_PER_DAY-1 + secs;
       // roll over milliseconds?
       if ( m_msec == 1000 )
@@ -140,16 +140,16 @@ void TimeStamp::computeDateFields() const
          --month;
       }
 
-      m_day = month_days[month] + days_since_epoch;
+      m_day = static_cast<int16>(month_days[month] + days_since_epoch);
       m_month = month + 1;
       m_year = year;
    }
 
-   m_hour = secs/(60*60);
+   m_hour = static_cast<int16>(secs/(60*60));
    secs %= (60*60);
-   m_minute = secs / 60;
+   m_minute = static_cast<int16>(secs / 60);
    secs %= 60;
-   m_second = secs;
+   m_second = static_cast<int16>(secs);
 
 }
 
@@ -548,7 +548,7 @@ int16 TimeStamp::dayOfWeek(int64 year, int16 month, int16 day)
       return -1;
 
    // compute days since epoch.
-   int32 nyears = year - 1700;
+   int32 nyears = static_cast<int32>(year - 1700);
    int32 nday = nyears * 365;
 
    // add leap years (up to the previous year. This year is  computed in dayOfYear()
@@ -574,7 +574,7 @@ int16 TimeStamp::weekOfYear(int64 year, int16 month, int16 day, bool iso8601_200
    if( iso8601_2000 )
    {
       week = (doy / 7)+1;
-      week += adjust_iso8601_2000(year, month, day);
+      week += static_cast<int16>(adjust_iso8601_2000(year, month, day));
       if( week == 0 )
       {
          week = 53;
@@ -926,7 +926,7 @@ bool TimeStamp::strftimeChar( int32 chr, String &target ) const
    case 'g':
    case 'G':
       {
-         int64 year = adjust_iso8601_2000(m_year, m_month, m_day) + m_year;
+         int64 year = static_cast<int64>(adjust_iso8601_2000(m_year, m_month, m_day) + m_year);
 
          if( chr == 'g' )
          {
@@ -1139,14 +1139,14 @@ bool TimeStamp::strftimeChar( int32 chr, String &target ) const
 }
 
 
-int16 TimeStamp::adjust_iso8601_2000( int16 year, int16 month, int64 day )
+int16 TimeStamp::adjust_iso8601_2000( int64 year, int16 month, int64 day )
 {
    if ( month == 1 )
    {
       if( day < 4 )
       {
          // 0 is monday...
-         int32 dw = dayOfWeek(year, month, day);
+         int32 dw = static_cast<int32>(dayOfWeek(year, month, day));
          // so, if current day
          if( (day - dw) < 0 )
          {
@@ -1158,7 +1158,7 @@ int16 TimeStamp::adjust_iso8601_2000( int16 year, int16 month, int64 day )
    {
       if( day > 28 )
       {
-         int32 dw = dayOfWeek(year, month, day);
+         int32 dw = static_cast<int32>(dayOfWeek(year, month, day));
          if ( (31-dw) > 28 )
          {
             return +1;

@@ -113,16 +113,20 @@ FALCON_DYN_SYM void _dummy_ctrl_c_handler();
 /** Get the system page size. */
 FALCON_DYN_SYM long _getPageSize();
 
-/** Gets the current working directory. */
 FALCON_DYN_SYM bool _getCWD( String& name );
 
 #ifdef FALCON_SYSTEM_WIN
+
+
 }
 }
    #include <windows.h>
    #include <falcon/string.h>
 namespace Falcon {
 namespace Sys {
+   /** Returns milliseconds since epoch expressessed by a local timing. */
+   FALCON_DYN_SYM int64 _win_fileTimeToEpochMS( const FILETIME& local_timing );
+
    FALCON_DYN_SYM numeric SYSTEMTIME_TO_SECONDS( const SYSTEMTIME &st );
 #endif
 
