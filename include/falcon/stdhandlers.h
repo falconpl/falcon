@@ -100,6 +100,17 @@ public:
     */
    Class* dictClass() const { return m_dictClass; }
 
+   /** Returns the global instance of the PseudoDictionary class.
+   \return the Engine instance of the Dictionary Class (handler).
+
+    Method init() must have been called before.
+
+    @note This method will assert and terminate the program if compiled in debug mode
+    in case the engine has not been initialized. In release, it will just
+    return a null pointer.
+    */
+   Class* pseudoDictClass() const { return m_pseudoDictClass; }
+
    /** Returns the global instance of the Prototype class.
    \return the Engine instance of the Prototype Class (handler).
 
@@ -403,6 +414,7 @@ private:
    Class* m_rangeClass;
    Class* m_arrayClass;
    Class* m_dictClass;
+   Class* m_pseudoDictClass;
    Class* m_protoClass;
    Class* m_metaClass;
    Class* m_metaFalconClass;

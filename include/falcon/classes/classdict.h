@@ -67,13 +67,17 @@ public:
    virtual void op_in( VMContext* ctx, void* instance ) const;
    virtual void op_toString( VMContext* ctx, void* self ) const;
 
-   virtual void op_getProperty( VMContext* ctx, void* self, const String& prop) const;
    virtual void op_getIndex( VMContext* ctx, void* self ) const;
    virtual void op_setIndex( VMContext* ctx, void* self ) const;
 
    virtual void op_iter( VMContext* ctx, void* instance ) const;
    virtual void op_next( VMContext* ctx, void* instance ) const;
-   
+
+protected:
+   ClassDict( const String& subclsName );
+
+private:
+   void init();
 };
 
 }

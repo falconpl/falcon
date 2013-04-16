@@ -1,0 +1,78 @@
+/*
+@name Dictionary basic operators
+@category datatype
+
+@output
+Dictionary basic operators
+Old-fashion dicts
+Nil:0
+true:Ok
+A:1
+B:2
+C:3
+Array:array
+Dot-dicts
+Nil:0
+true:Ok
+A:1
+B:2
+C:3
+Array:array
+Class instances dicts
+Nil:0
+true:Ok
+A:1
+B:2
+C:3
+Array:array
+Done.
+@endoutput
+*/
+
+> "Dictionary basic operators"
+
+function testDict( dict, array )	
+	> 'Nil:', dict[nil]
+	> 'true:', dict[true]
+	> 'A:', dict['a']
+	> 'B:', dict['b']
+	> 'C:', dict['c']
+	> 'Array:', dict[array]
+end
+
+// try standard dict
+> "Old-fashion dicts"
+array = []
+dict = [
+    nil => 0,
+	true => "Ok",
+	'a' => 1,
+	'b' => 2,
+	'c' => 3,
+	array => 'array']
+testDict(dict, array)
+	
+> "Dot-dicts"
+array = []
+dict = .[
+    nil => 0
+	true => "Ok"
+	'a' => 1
+	'b' => 2
+	'c' => 3
+	array => 'array']
+testDict(dict, array)	
+
+> "Class instances dicts"
+array = []
+dict = Dictionary(
+    nil, 0,
+	true, "Ok",
+	'a', 1,
+	'b', 2,
+	'c', 3,
+	array, 'array'
+	)
+testDict(dict,array)
+
+> "Done."

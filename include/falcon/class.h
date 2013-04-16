@@ -805,7 +805,13 @@ public:
      \param instance the instance (or 0 on flat items)
     \param prop The property to be accessed.
 
-    \note The operand is binary -- requires OpToken with 2 parameters.
+    This operator gets the following parameters in the stack:
+       - TOP: self item
+       - TOP-1 (VMContext::opcodeParam(1)): value to be stored
+    
+    It is supposed to remove this two items and leave the evalution of the expression
+    a.x = b (usually b, the value) on the top of the stack. Thus, just removing the self
+    item is usually what you're required to do.
    */
    virtual void op_setProperty( VMContext* ctx, void* instance, const String& prop ) const;
 
@@ -813,7 +819,11 @@ public:
      \param vm the virtual machine that will receive the result.
     \param prop The property to be accessed.
 
-    \note The operand is unary -- requires OpToken with 1 parameter.
+    This operator gets the following parameters in the stack:
+       - TOP: self item
+
+    It is required to remove this item and put the value stroed in self.prop on top
+    of the stack.
    */
    virtual void op_getClassProperty( VMContext* ctx, const String& prop) const;
 
