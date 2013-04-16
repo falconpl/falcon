@@ -393,7 +393,6 @@ void _enumerateEnvironment( EnvStringCallback cb, void* cbData )
          String key, value;
          key.adopt( envstr + pos, poseq-pos, 0 );
          value.adopt( envstr + poseq+1, posn-poseq-1, 0 );
-
          key.bufferize();
          value.bufferize();
 

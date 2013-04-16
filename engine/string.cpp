@@ -976,7 +976,15 @@ String &String::adoptMemBuf( byte *buffer, length_t size, length_t allocated )
    if ( m_allocated != 0 )
       m_class->destroy( this );
 
-   m_class = &csh::handler_membuf;
+   if( allocated == 0 )
+   {
+      m_class = &csh::handler_static;
+   }
+   else
+   {
+      m_class = &csh::handler_membuf;
+   }
+
    m_size = size;
    m_allocated = allocated;
    m_storage = (byte *) buffer;
@@ -989,10 +997,20 @@ String &String::adopt( wchar_t *buffer, length_t size, length_t allocated )
    if ( m_allocated != 0 )
       m_class->destroy( this );
 
-   if ( sizeof( wchar_t ) == 2 )
-      m_class = &csh::handler_buffer16;
+   if( allocated == 0 )
+   {
+      if ( sizeof( wchar_t ) == 2 )
+         m_class = &csh::handler_static16;
+      else
+         m_class = &csh::handler_static32;
+   }
    else
-      m_class = &csh::handler_buffer32;
+   {
+      if ( sizeof( wchar_t ) == 2 )
+         m_class = &csh::handler_buffer16;
+      else
+         m_class = &csh::handler_buffer32;
+   }
 
    m_size = size * sizeof( wchar_t );
    m_allocated = allocated;
