@@ -42,6 +42,15 @@ static void get_empty( const Class*, const String&, void* instance, Item& value 
    value.setBoolean( static_cast<ItemDict*>( instance )->size() == 0 );
 }
 
+static void get_pseudo( const Class*, const String&, void* instance, Item& value )
+{
+   static Class* cls = Engine::instance()->stdHandlers()->pseudoDictClass();
+   ItemDict* dict = static_cast<ItemDict*>( instance );
+
+   value.setUser(cls,dict);
+}
+
+
 
 namespace _classDictionary {
 
@@ -53,6 +62,12 @@ namespace _classDictionary {
  The items passed to the constructor must be in pair number; odd elements
  are the key for the subsequent even element (the first if the key to the
  second, the third to the fourth and so on).
+
+ @note At the moment, lexicographic ordering is granted only for numeric, range
+ and string values, other than the @b nil, @b true and @b false predefined values. 
+ Other objects are not inserted as keys in the dictionary checking them against
+ their compare() method, but thrugh the exactly equal operator ===. This might
+ change in a future release.
 
  @section dict_ops Overloaded operators.
 
@@ -70,8 +85,6 @@ namespace _classDictionary {
            of the operators.
  - ashr(>>=): Removes all the keys found in the array on the right of the operator from this array.
  - in: Checks if a key is present in this dictionary.
-
-
 
  @prop len Count of key/value pairs in the dictionary
  @prop empty true if there isn't any element in the dictionary
@@ -186,20 +199,122 @@ void Function_clear::invoke(VMContext* ctx, int32)
    ctx->returnFrame( Item( dict->handler(), dict ) );
 }
 
+/**
+ @method find Dictionary
+ @brief Searches for an entity in the dictionary.
+ @param key The key item to be found.
+ @optparam dflt The value returned if the item is not found.
+ @return The value associated with the found key, or @b dflt if not found.
+ @raise AccessError if the key is not found and dflt is not given.
+ 
+*/
+FALCON_DECLARE_FUNCTION(find,"key:X,dflt:[X]");
+void Function_find::invoke(VMContext* ctx, int32)
+{
+   Item* i_key = ctx->param(0);
+   if( i_key == 0 )
+   {
+      throw paramError();
+   }
+   Item* i_dflt = ctx->param(1);
+
+   ItemDict* dict = static_cast<ItemDict*>(ctx->self().asInst());
+   ConcurrencyGuard::Reader rg( ctx, dict->guard() );
+   
+   Item* found = dict->find(*i_key);
+   if( found == 0 )
+   {
+      if( i_dflt == 0 )
+      {
+         throw FALCON_SIGN_ERROR(AccessError, e_arracc ); 
+      }
+      ctx->returnFrame( *i_dflt );
+   }
+   else {
+      ctx->returnFrame( *found );
+   }
+}
+
+
+/**
+ @method remove Dictionary
+ @brief Removes an entity from the dictionary
+ @param key The key item to be removed. 
+
+ If the key is not found, this method does nothing.
+*/
+FALCON_DECLARE_FUNCTION(remove,"key:X");
+void Function_remove::invoke(VMContext* ctx, int32)
+{
+   Item* i_key = ctx->param(0);
+   if( i_key == 0 )
+   {
+      throw paramError();
+   }  
+
+   ItemDict* dict = static_cast<ItemDict*>(ctx->self().asInst());
+   ConcurrencyGuard::Writer wg( ctx, dict->guard() );
+   dict->remove(*i_key);
+   ctx->returnFrame();
+}
+
+/**
+ @method insert Dictionary
+ @brief Inserts an entity from the dictionary
+ @param key The key item to be removed. 
+ @param value The key item to be removed. 
+
+ Adds a new key-value pair to the dictionary, or overwrites
+ it if the pair was already existing.
+*/
+FALCON_DECLARE_FUNCTION(insert,"key:X,value:X");
+void Function_insert::invoke(VMContext* ctx, int32)
+{
+   Item* i_key = ctx->param(0);
+   Item* i_value = ctx->param(1);
+   if( i_key == 0 || i_value == 0 )
+   {
+      throw paramError();
+   }  
+
+   ItemDict* dict = static_cast<ItemDict*>(ctx->self().asInst());
+   ConcurrencyGuard::Writer wg( ctx, dict->guard() );
+   dict->insert(*i_key, *i_value);
+   ctx->returnFrame();
+}
+
 }
 
 
 ClassDict::ClassDict():
    Class("Dictionary", FLC_CLASS_ID_DICT )
 {
+   init();
+}
+
+
+ClassDict::ClassDict( const String& subclsName ):
+   Class( subclsName, FLC_CLASS_ID_DICT )
+{
+   init();
+}
+
+
+void ClassDict::init()
+{
    addProperty( "len", &get_len );
    addProperty( "empty", &get_empty );
+   addProperty( "pseudo", &get_pseudo );
 
    // pure static functions
-   addMethod( new _classDictionary::Function_keys, true );
-   addMethod( new _classDictionary::Function_values, true );
-   addMethod( new _classDictionary::Function_clone, true );
-   addMethod( new _classDictionary::Function_clear, true );
+   addMethod( new _classDictionary::Function_keys );
+   addMethod( new _classDictionary::Function_values );
+   addMethod( new _classDictionary::Function_clone );
+   addMethod( new _classDictionary::Function_clear );
+
+   addMethod( new _classDictionary::Function_find );
+   addMethod( new _classDictionary::Function_remove );
+   addMethod( new _classDictionary::Function_insert );
 }
 
 
@@ -545,11 +660,6 @@ void ClassDict::op_toString( VMContext* ctx, void* self ) const
 }
 
 
-void ClassDict::op_getProperty( VMContext* ctx, void* self, const String& property ) const
-{
-   Class::op_getProperty( ctx, self, property );
-}
-
 void ClassDict::op_getIndex( VMContext* ctx, void* self ) const
 {
    Item *item, *index;
@@ -601,7 +711,6 @@ void ClassDict::op_next( VMContext* ctx, void*  ) const
    ConcurrencyGuard::Reader rd( ctx, iter->dict()->guard() );
    iter->next( ctx->topData() );
 }
-
 }
 
 /* end of classdict.cpp */

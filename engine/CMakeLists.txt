@@ -293,6 +293,7 @@ add_library(falcon_engine SHARED
   classes/classnumber.cpp
   classes/classnumeric.cpp
   classes/classnil.cpp
+  classes/classpseudodict.cpp
   classes/classrange.cpp
   classes/classrawmem.cpp
   classes/classre.cpp

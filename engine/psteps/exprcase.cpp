@@ -1045,7 +1045,7 @@ TreeStep* ExprCase::nth( int32 n ) const
       break;
 
    case CaseEntry::e_t_bool: result = new ExprValue( Item().setBoolean(ce->m_data.tof)); break;
-   case CaseEntry::e_t_int: result = new ExprValue( Item().setBoolean(ce->m_data.ints.int1)); break;
+   case CaseEntry::e_t_int: result = new ExprValue( Item().setBoolean(ce->m_data.ints.int1 != 0)); break;
    case CaseEntry::e_t_int_range: result = new ExprValue( FALCON_GC_STORE( clsRange, new Range(ce->m_data.ints.int1, ce->m_data.ints.int2) ) ); break;
    case CaseEntry::e_t_string: result = new ExprValue( FALCON_GC_HANDLE(new String( *ce->m_data.strings.string1) ) ); break;
    case CaseEntry::e_t_regex: result = new ExprValue( Item( clsRegex, ce->m_data.regex ) ); break;

@@ -29,6 +29,7 @@
 #include <falcon/classes/classrange.h>
 #include <falcon/classes/classarray.h>
 #include <falcon/classes/classdict.h>
+#include <falcon/classes/classpseudodict.h>
 #include <falcon/classes/classgeneric.h>
 #include <falcon/classes/classformat.h>
 #include <falcon/prototypeclass.h>
@@ -78,6 +79,7 @@ void StdHandlers::subscribe(Engine* engine)
    m_rangeClass = new ClassRange;
    m_arrayClass = new ClassArray;
    m_dictClass = new ClassDict;
+   m_pseudoDictClass = new ClassPseudoDict;
    m_protoClass = new PrototypeClass;
    m_metaFalconClass = new MetaFalconClass;
    m_metaHyperClass = new MetaHyperClass;
