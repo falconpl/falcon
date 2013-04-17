@@ -1,0 +1,15 @@
+/*
+@name String interpolation parser
+@category Str-ipol
+
+@output
+Iterpol not needed
+Hello world
+Hello world
+@endoutput
+*/
+
+>@"Iterpol not needed"
+string = "Hello world"
+>@"$string"
+>@"$(string)"

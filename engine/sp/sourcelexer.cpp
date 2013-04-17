@@ -437,7 +437,7 @@ Parsing::TokenInstance* SourceLexer::nextToken()
                      m_text.append(chr);
                      m_state = state_integer;
                   }
-                  else if (!isTokenLimit(chr))
+                  else if ( isNameCharacter(chr) )
                   {
                      m_text.append(chr);
                      m_state = state_name;
@@ -734,7 +734,7 @@ Parsing::TokenInstance* SourceLexer::nextToken()
                   {
                      resetState();
 
-                     if ( isTokenLimit(chr) )
+                     if ( ! isNameCharacter(chr) )
                      {
                         unget( chr );
                         return m_parser->T_Int.makeInstance(m_sline, m_schr, 0);
@@ -978,7 +978,7 @@ Parsing::TokenInstance* SourceLexer::nextToken()
          //---- language tokens or symbols
 
          case state_name:
-            if (isTokenLimit(chr))
+            if (!isNameCharacter(chr))
             {
                // special cases
                if( m_text == "p" && chr == '{' )
@@ -1053,10 +1053,7 @@ Parsing::TokenInstance* SourceLexer::nextToken()
             break;
 
          case state_operator:
-            if( String::isWhiteSpace( chr ) ||
-               isParenthesis(chr)
-               || chr == '\'' || chr == '"' || chr == ';' || chr =='^' || chr == ','
-               || !isTokenLimit( chr ) )
+            if( isTokenLimit( chr ) )
             {
                // special case -- dot/square
                if( m_text == ".")

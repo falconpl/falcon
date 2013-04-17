@@ -55,7 +55,7 @@ bool errhand_if(const NonTerminal&, Parser& p)
       // put in a fake if statement (else, subsequent else/elif/end would also cause errors).
       SynTree* stIf = new SynTree;
       stIf->selector(new ExprValue(1));
-      StmtIf* fakeIf = new StmtIf( stIf, 0, ti->line(), ti->chr() );
+      StmtIf* fakeIf = new StmtIf( stIf, ti->line(), ti->chr() );
       ParserContext* st = static_cast<ParserContext*>(p.context());
       st->openBlock( fakeIf, stIf );
    }

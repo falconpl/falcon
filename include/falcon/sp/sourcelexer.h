@@ -115,13 +115,13 @@ private:
 
    String m_text;
 
-   inline bool isTokenLimit(char_t chr)
+   inline bool isNameCharacter(char_t chr)
    {
-      return chr != '_' &&
-             (  chr < '0' ||
-                (chr > '9' && chr < 'A' ) ||
-                (chr > 'Z' && chr < 'a' ) ||
-                (chr > 'z' && chr < 128 ) );
+      return chr == '_'
+             || ( chr >= '0' && chr <= '9')
+             || ( chr >= 'A' && chr <= 'Z' )
+             || ( chr >= 'a' && chr <= 'z')
+             || chr >= 128;
    }
 
    inline bool isParenthesis(char_t chr)
@@ -129,6 +129,21 @@ private:
       return chr == '(' || chr == ')' ||
              chr == '[' || chr == ']' ||
              chr == '{' || chr == '}';
+   }
+
+   inline bool isTokenLimit( char_t chr )
+   {
+      return String::isWhiteSpace( chr )
+            || isParenthesis(chr)
+            || isTokenStarter(chr)
+            || isNameCharacter( chr )
+            ;
+   }
+
+   inline bool isTokenStarter( char_t chr )
+   {
+      return chr == '\'' || chr == '"' || chr == ';' || chr =='^' || chr == ','
+          || chr == '@' || chr == '#';
    }
 
    inline bool isCipher(char_t chr)
