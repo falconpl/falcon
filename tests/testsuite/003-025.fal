@@ -2,12 +2,14 @@
 @name String interpolation smoke test
 @category Str-ipol
 
-@output   
+@output
+Iterpol not needed
 Hello world
 Hello world
 @endoutput
 */
 
+> @ "Iterpol not needed"
 string = "Hello world"
 > @ "$string"
 > @ "$(string)"

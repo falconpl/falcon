@@ -154,6 +154,8 @@ void ExprStrIPol::handleStaticInterpolated( const String &str, VMContext *ctx ) 
    {
       MESSAGE1( "ExprStrIPol::handleStaticInterpolated Detected not needed.");
       delete sipol; // don't need
+      // push the value as-is
+      ctx->pushData( static_cast<ExprValue*>(this->first())->item() );
       ctx->popCode();
       return;
    }
