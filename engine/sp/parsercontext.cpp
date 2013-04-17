@@ -528,18 +528,9 @@ void ParserContext::openBlock( TreeStep* parent, SynTree* branch, bool bAutoClos
 
    //bool result = parent->discardable() ? true : checkSymbols();
 
-   // if the pareser is not interactive, append the statement even after undefined errors.
-   if( ! m_parser->hasErrors() || ! m_parser->interactive() )
-   {
-      _p->m_frames.push_back( CCFrame(parent, bAutoClose, bAutoAdd ) );
-      m_cstatement = parent;
-      m_st = branch;
-   }
-   else
-   {
-      // when interactive, we don't want to have useless statements.
-      delete parent;
-   }
+   _p->m_frames.push_back( CCFrame(parent, bAutoClose, bAutoAdd ) );
+   m_cstatement = parent;
+   m_st = branch;
 }
 
 void ParserContext::openTempBlock( SynTree* oldBranch, SynTree* newBranch )

@@ -68,6 +68,7 @@ bool expr_errhand(const NonTerminal&, Parser& p)
    
    // remove the whole expression.
    p.simplify( p.tokenCount() );
+
    return true;
 }
 
