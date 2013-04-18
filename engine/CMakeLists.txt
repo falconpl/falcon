@@ -197,6 +197,7 @@ add_library(falcon_engine SHARED
   sp/parser_namespace.cpp
   sp/parser_proto.cpp
   sp/parser_rule.cpp
+  sp/parser_summon.cpp
   sp/parser_switch.cpp
   sp/parser_ternaryif.cpp
   sp/parser_try.cpp
@@ -247,6 +248,7 @@ add_library(falcon_engine SHARED
   psteps/exprstripol.cpp  
   psteps/exprself.cpp
   psteps/exprstarindex.cpp
+  psteps/exprsummon.cpp
   psteps/exprsym.cpp
   psteps/exprtree.cpp
   psteps/exprunpack.cpp

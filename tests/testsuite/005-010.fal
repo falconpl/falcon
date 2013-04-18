@@ -1,0 +1,38 @@
+/*
+@name Dictionary iteration
+@category datatype
+
+@output
+Dictionary iteration
+Empty:
+1 element:
+values: a=1.
+2 elements:
+values: a=1, b=2.
+3 elements:
+values: a=2, b=3, c=1.
+Done.
+@endoutput
+*/
+
+> "Dictionary iteration"
+
+function testDict( dict ) 
+   for a, b in dict
+      forfirst: >> "values: "      
+      >> a, "=", b
+      formiddle: >> ", "
+      forlast: >"."
+   end
+end
+
+> "Empty:"
+testDict( [=>] ) 
+> "1 element:"
+testDict( ['a'=> 1] ) 
+> "2 elements:"
+testDict( ['a'=>1, 'b'=>2] ) 
+> "3 elements:"
+testDict( ['c'=>1, 'a'=>2, 'b'=>3] ) 
+
+> "Done."

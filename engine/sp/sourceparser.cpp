@@ -47,6 +47,7 @@
 #include <falcon/sp/parser_proto.h>
 #include <falcon/sp/parser_rule.h>
 #include <falcon/sp/parser_switch.h>
+#include <falcon/sp/parser_summon.h>
 #include <falcon/sp/parser_ternaryif.h>
 #include <falcon/sp/parser_try.h>
 #include <falcon/sp/parser_while.h>
@@ -206,8 +207,10 @@ SourceParser::SourceParser():
    T_RString("R-String"),
    T_IString("I-String"),
    T_MString("M-String"),
-   T_provides("provides")
+   T_provides("provides"),
    
+   T_DoubleColon("::"),
+   T_ColonQMark(":?")
 {
    S_Attribute << "Attribute" << errhand_attribute;
    S_Attribute << (r_attribute << "Attribute" << apply_attribute << T_Colon << T_Name <<  T_Arrow << Expr << T_EOL);
@@ -456,6 +459,9 @@ SourceParser::SourceParser():
    Expr<< (r_Expr_notin << "Expr notin" << apply_expr_notin << Expr << T_notin << Expr);
 
    Expr<< (r_Expr_call << "Expr_call" << apply_expr_call << Expr << T_Openpar << ListExpr << T_Closepar );
+   Expr<< (r_Expr_summon << "Expr_summon" << apply_expr_summon << Expr << T_DoubleColon << T_Name << T_OpenSquare << ListExpr << T_CloseSquare );
+   Expr<< (r_Expr_opt_summon << "Expr_opt_summon" << apply_expr_opt_summon << Expr << T_ColonQMark << T_Name << T_OpenSquare <<  ListExpr << T_CloseSquare );
+
    Expr<< (r_Expr_index << "Expr_index" << apply_expr_index << Expr << T_OpenSquare << Expr << T_CloseSquare );
    Expr<< (r_Expr_star_index << "Expr_star_index" << apply_expr_star_index << Expr << T_OpenSquare << T_Times << Expr << T_CloseSquare );
    Expr<< (r_Expr_range_index3 << "Expr_Expr_range_index3" << apply_expr_range_index3
@@ -573,6 +579,7 @@ SourceParser::SourceParser():
    ListExpr<< (r_ListExpr_nextd << "ListExpr_nextd" << apply_ListExpr_next2 << ListExpr << T_EOL );
 
    ListExpr<< (r_ListExpr_next << "ListExpr_next" << apply_ListExpr_next << ListExpr << T_Comma << Expr );
+   ListExpr<< (r_ListExpr_next_no_comma << "ListExpr_next_no_comma" << apply_ListExpr_next_no_comma << ListExpr << Expr );
    ListExpr<< (r_ListExpr_first << "ListExpr_first" << apply_ListExpr_first << Expr );
    ListExpr<< (r_ListExpr_empty << "ListExpr_empty" << apply_ListExpr_empty );
 

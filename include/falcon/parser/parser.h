@@ -514,6 +514,7 @@ public:
    Terminal T_Int;
    Terminal T_Name;
    Terminal T_String;
+   Terminal T_DummyTerminal;
 
    void consumeUpTo( const Token& token ) { m_consumeToken = &token; }
    

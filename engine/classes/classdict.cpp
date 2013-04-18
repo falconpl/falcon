@@ -709,7 +709,10 @@ void ClassDict::op_next( VMContext* ctx, void*  ) const
    ItemDict::Iterator* iter = static_cast<ItemDict::Iterator*>(user.asInst());
    ctx->addSpace(1);
    ConcurrencyGuard::Reader rd( ctx, iter->dict()->guard() );
-   iter->next( ctx->topData() );
+   if( ! iter->next( ctx->topData() ) )
+   {
+      throw new AccessError(  ErrorParam(e_async_seq_modify, __LINE__, SRC) );
+   }
 }
 }
 

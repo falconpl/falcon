@@ -4,7 +4,6 @@
 
    Syntactic tree item definitions -- expression elements -- symbol.
 
-   Pure virtual class base for the various symbol types.
    -------------------------------------------------------------------
    Author: Giancarlo Niccolai
    Begin: Mon, 03 Jan 2011 12:23:30 +0100

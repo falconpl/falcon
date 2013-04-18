@@ -244,6 +244,7 @@ FAL_ERRORDECL( e_mod_unsupported_fam, 268, "Unsupported FAM version" );
 FAL_ERRORDECL( e_directive_not_allowed, 269, "Directive not allowed in dynamic compilation" );
 FAL_ERRORDECL( e_attrib_already, 270, "Attribute already declared" );
 FAL_ERRORDECL( e_marshall_not_found, 271, "Message event handler not found" );
+FAL_ERRORDECL( e_not_responding, 272, "Summoned entity isn't responding to a mandatory summon");
    
 FAL_ERRORDECL( e_unknown_encoding, 300, "Unknown encoding name" );
 FAL_ERRORDECL( e_enc_fail, 301, "Encoding failed or data not encodable" );
@@ -257,7 +258,7 @@ FAL_ERRORDECL( e_underflow, 401, "Generic underflow in code flow" );
 FAL_ERRORDECL( e_setup, 402, "Required prerequisite steps were not performed" );
 
 FAL_ERRORDECL( e_fmt_convert, 500, "Format not applicable to object" );
-FAL_ERRORDECL( e_interrupted, 501, "Asynchronous wait interruption" );
+FAL_ERRORDECL( e_async_seq_modify, 501, "Underlying object modified while performing a sequential operation" );
 FAL_ERRORDECL( e_priv_access, 502, "Access to private member not through 'self'" );
 FAL_ERRORDECL( e_noninst_cls, 503, "Target class cannot be instantiated" );
 FAL_ERRORDECL( e_unserializable, 504, "Object cannot be serialized (because of inner native data)" );
@@ -282,6 +283,7 @@ FAL_ERRORDECL( e_parse_format, 523, "Input data is not in expected format" );
 FAL_ERRORDECL( e_call_loop, 524, "Calling a sequence having itself as callable element" );
 FAL_ERRORDECL( e_not_a_class, 525, "Imported symbol is not a class" );
 FAL_ERRORDECL( e_abstract_init, 526, "Trying to instance an abstract class" );
+
 FAL_ERRORDECL( e_ctx_ownership, 600, "This object cannot be accessed from this context" );
 FAL_ERRORDECL( e_concurrence, 601, "Unauthorized concurrent access to object" );
 

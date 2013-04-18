@@ -118,6 +118,8 @@ Parser::Parser():
    T_Int("Int"),
    T_Name("Name"),
    T_String("String"),
+   T_DummyTerminal("*-.-*"),
+
    m_ctx(0),
    m_bIsDone(false),
    m_bInteractive(false),
@@ -125,6 +127,7 @@ Parser::Parser():
    m_lastLine(0)
 {
    _p = new Private;
+   T_DummyTerminal.id(0);
 }
 
 

@@ -756,6 +756,12 @@ bool ItemDict::Iterator::next( Item& target )
       m_dict = 0;
       return false;
    }
+
+   if( m_dict->size() == 0 )
+   {
+      target.setBreak();
+      return true;
+   }
       
    if( m_complete )
    {

@@ -376,10 +376,6 @@ bool Class::hasProperty( void*, const String& prop ) const
    return iter != _p->m_props.end();
 }
 
-bool Class::respondsTo( void* inst, const String& prop ) const
-{
-   return hasProperty( inst, prop );
-}
 
 void Class::enumerateSummonings( void* instance, PropertyEnumerator& cb ) const
 {
@@ -841,6 +837,12 @@ void Class::op_summon( VMContext* ctx, void* instance, const String& message, in
       FALCON_RESIGN_XERROR( AccessError, e_prop_acc, ctx,
                    .extra(message) );
    }
+}
+
+
+void Class::op_respondTo( VMContext* ctx, void* instance, const String& message ) const
+{
+   ctx->pushData(Item().setBoolean(hasProperty(instance, message)));
 }
 
 

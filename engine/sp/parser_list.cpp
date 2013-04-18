@@ -76,6 +76,23 @@ void apply_ListExpr_next( const Rule&, Parser& p )
    p.trimFromBase(1,2);
 }
 
+void apply_ListExpr_next_no_comma( const Rule&, Parser& p )
+{
+   // << (r_ListExpr_next << "ListExpr_next" << apply_ListExpr_next << ListExpr << Expr )
+   SourceParser& sp = static_cast<SourceParser&>(p);
+
+   TokenInstance* tlist = p.getNextToken();
+   TokenInstance* texpr = p.getNextToken();
+
+   Expression* expr = static_cast<Expression*>(texpr->detachValue());
+
+   List* list = static_cast<List*>(tlist->asData());
+   list->push_back(expr);
+   tlist->token(sp.ListExpr);
+   p.trimFromBase(1,1);
+}
+
+
 void apply_ListExpr_next2( const Rule&, Parser& p )
 {
    // << ListExpr << T_EOL

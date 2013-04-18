@@ -385,7 +385,19 @@ Parsing::TokenInstance* SourceLexer::nextToken()
                   Parsing::TokenInstance* ti = m_parser->T_EOL.makeInstance(m_line, -1);
                   return ti;
                }
-               case ':': m_hadOperator = true; return parser->T_Colon.makeInstance(m_line, m_chr++);
+
+               case ':':
+                  chr = m_reader->getChar();
+                  if( chr == '?' || chr == ':' )
+                  {
+                     m_text = ":";
+                     m_text.append(chr);
+                     return checkOperator();
+                  }
+                  unget(chr);
+                  m_hadOperator = true;
+                  return parser->T_Colon.makeInstance(m_line, m_chr++);
+
                case '\\': m_hadOperator = true; break;
                case ',': m_hadOperator = true; return parser->T_Comma.makeInstance(m_line, m_chr++);
                case '"':  m_string_type = e_st_normal; m_stringML = false; m_stringStart = true; m_state = state_double_string; break;
@@ -1390,6 +1402,9 @@ Parsing::TokenInstance* SourceLexer::checkOperator()
          if( m_text == "^=" ) return parser->T_EVALRET.makeInstance(m_sline, m_schr);
          if( m_text == "^*" ) return parser->T_EVALRET_EXEC.makeInstance(m_sline, m_schr);
          if( m_text == "^?" ) return parser->T_EVALRET_DOUBT.makeInstance(m_sline, m_schr);
+
+         if( m_text == "::" ) return parser->T_DoubleColon.makeInstance(m_sline, m_schr);
+         if( m_text == ":?" ) return parser->T_ColonQMark.makeInstance(m_sline, m_schr);
 
          // outscaping?
          if( m_bParsingFtd && m_text == "?>" ) {

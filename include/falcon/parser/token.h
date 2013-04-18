@@ -43,6 +43,7 @@ public:
    typedef void(*deletor)(void*);
    virtual ~Token();
 
+   void id(uint32 i) {m_nID = i; }
    uint32 id() const { return m_nID; }
    const String& name() const { return m_name; }
 

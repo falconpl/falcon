@@ -14,7 +14,7 @@
 */
 
 #undef SRC
-#define SRC "engine/sp/parser_class.cpp"
+#define SRC "engine/sp/parser_call.cpp"
 
 #include <falcon/setup.h>
 #include <falcon/pseudofunc.h>

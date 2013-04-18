@@ -166,6 +166,8 @@ public:
    Parsing::Terminal T_MString;
 
    Parsing::Terminal T_provides;
+   Parsing::Terminal T_DoubleColon;
+   Parsing::Terminal T_ColonQMark;
    //================================================
    // Statements
    //
@@ -362,6 +364,8 @@ public:
    Parsing::Rule r_Expr_notin;
 
    Parsing::Rule r_Expr_call;
+   Parsing::Rule r_Expr_summon;
+   Parsing::Rule r_Expr_opt_summon;
    Parsing::Rule r_Expr_index;
    Parsing::Rule r_Expr_star_index;
    Parsing::Rule r_Expr_range_index3;
@@ -512,6 +516,7 @@ public:
    //
    Parsing::NonTerminal ListExpr;
    Parsing::Rule r_ListExpr_next;
+   Parsing::Rule r_ListExpr_next_no_comma;
    Parsing::Rule r_ListExpr_nextd;
    Parsing::Rule r_ListExpr_first;
    Parsing::Rule r_ListExpr_eol;
