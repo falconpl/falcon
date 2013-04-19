@@ -65,6 +65,7 @@
 #include <falcon/psteps/exprinit.h>
 #include <falcon/psteps/exprstarindex.h>
 #include <falcon/psteps/exprstripol.h>
+#include <falcon/psteps/exprsummon.h>
 #include <falcon/psteps/exprsym.h>
 #include <falcon/psteps/exprtree.h>
 #include <falcon/psteps/exprunpack.h>
@@ -505,6 +506,16 @@ void SynClasses::ClassDotAccess::restore( VMContext* ctx, DataReader*dr ) const
       delete dot;
       throw;
    }
+}
+void SynClasses::ClassDotAccess::op_getProperty( VMContext* ctx, void* instance, const String& property )const
+{
+   if( property == "property" )
+   {
+      ExprDot* dot = static_cast<ExprDot*>( instance );
+      ctx->topData() = FALCON_GC_HANDLE(new String(dot->property()));
+      return;
+   }
+   m_parent->op_getProperty(ctx, instance, property);
 }
 
 void* SynClasses::ClassGenProto::createInstance() const
@@ -1357,7 +1368,101 @@ void SynClasses::ClassCase::unflatten( VMContext*, ItemArray& arr, void* instanc
    expr->unflatten(arr);
 }
 
+//=========================================
+// Class Summon e OptSummon
+//
 
+void* SynClasses::ClassSummon::createInstance() const
+{
+   // lit cannot be invoked by constructor.
+   return new ExprSummon;
+}
+bool SynClasses::ClassSummon::op_init( VMContext* , void* instance, int ) const
+{
+   ExprSummon* expr = static_cast<ExprSummon*>(instance);
+   expr->setInGC();
+   // TODO
+   return true;
+}
+void SynClasses::ClassSummon::store( VMContext* ctx, DataWriter* dw, void* instance ) const
+{
+   ExprSummon* expr = static_cast<ExprSummon*>( instance );
+   m_parent->store( ctx, dw, instance );
+   dw->write( expr->message() );
+}
+void SynClasses::ClassSummon::op_getProperty( VMContext* ctx, void* instance, const String& property )const
+{
+   if( property == "message" )
+   {
+      ExprSummon* dot = static_cast<ExprSummon*>( instance );
+      ctx->topData() = FALCON_GC_HANDLE(new String(dot->message()));
+      return;
+   }
+   m_parent->op_getProperty(ctx, instance, property);
+}
+void SynClasses::ClassSummon::restore( VMContext* ctx, DataReader* dr ) const
+{
+   String message;
+   dr->read(message);
+
+   ExprSummon* expr = new ExprSummon;
+   expr->message(message);
+   try {
+      ctx->pushData( Item( this, expr ) );
+      m_parent->restore( ctx, dr );
+   }
+   catch(...) {
+      ctx->popData();
+      delete expr;
+      throw;
+   }
+}
+
+void* SynClasses::ClassOptSummon::createInstance() const
+{
+   // lit cannot be invoked by constructor.
+   return new ExprOptSummon;
+}
+bool SynClasses::ClassOptSummon::op_init( VMContext* , void* instance, int ) const
+{
+   ExprOptSummon* expr = static_cast<ExprOptSummon*>(instance);
+   expr->setInGC();
+   // TODO
+   return true;
+}
+void SynClasses::ClassOptSummon::store( VMContext* ctx, DataWriter* dw, void* instance ) const
+{
+   ExprOptSummon* expr = static_cast<ExprOptSummon*>( instance );
+   m_parent->store( ctx, dw, instance );
+   dw->write( expr->message() );
+}
+void SynClasses::ClassOptSummon::op_getProperty( VMContext* ctx, void* instance, const String& property )const
+{
+   if( property == "message" )
+   {
+      ExprOptSummon* dot = static_cast<ExprOptSummon*>( instance );
+      ctx->topData() = FALCON_GC_HANDLE(new String(dot->message()));
+      return;
+   }
+   m_parent->op_getProperty(ctx, instance, property);
+}
+void SynClasses::ClassOptSummon::restore( VMContext* ctx, DataReader* dr ) const
+{
+   String message;
+   dr->read(message);
+
+   ExprSummon* expr = new ExprSummon;
+   expr->message(message);
+   try {
+      ctx->pushData( Item( this, expr ) );
+      m_parent->restore( ctx, dr );
+   }
+   catch(...) {
+      ctx->popData();
+      delete expr;
+      throw;
+   }
+}
 
 //=================================================================
 // Statements

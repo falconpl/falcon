@@ -83,6 +83,7 @@ FALCON_SYNCLASS_DECLARATOR(m_expr_ne, NE, Expression)
 FALCON_SYNCLASS_DECLARATOR(m_expr_gendict, GenDict, Expression)
 FALCON_SYNCLASS_DECLARATOR_EX(m_expr_dot, DotAccess, Expression, \
       virtual void store( VMContext*, DataWriter* dw, void* instance ) const; \
+      virtual void op_getProperty( VMContext*, void* instance, const String& property ) const; \
       )
 
 FALCON_SYNCLASS_DECLARATOR(m_expr_iif, IIF, Expression)
@@ -177,6 +178,15 @@ FALCON_SYNCLASS_DECLARATOR(m_expr_unquote, Unquote, Expression)
 FALCON_SYNCLASS_DECLARATOR(m_expr_evalret, EvalRet, Expression)
 FALCON_SYNCLASS_DECLARATOR(m_expr_evalretexec, EvalRetExec, Expression)
 FALCON_SYNCLASS_DECLARATOR(m_expr_evalretdoubt, EvalRetDoubt, Expression)
+
+FALCON_SYNCLASS_DECLARATOR_EX(m_expr_summon, Summon, Expression, \
+         virtual void store( VMContext*, DataWriter* dw, void* instance ) const; \
+         virtual void op_getProperty( VMContext*, void* instance, const String& property ) const; \
+         )
+FALCON_SYNCLASS_DECLARATOR_EX(m_expr_optsummon, OptSummon, Expression, \
+         virtual void store( VMContext*, DataWriter* dw, void* instance ) const; \
+         virtual void op_getProperty( VMContext*, void* instance, const String& property ) const; \
+         )
 
 
 FALCON_SYNCLASS_DECLARATOR_EX(m_expr_sym, GenSym, Expression, \

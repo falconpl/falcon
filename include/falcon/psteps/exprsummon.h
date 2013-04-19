@@ -17,7 +17,7 @@
 #define FALCON_EXPRSUMMON_H
 
 #include <falcon/setup.h>
-#include <falcon/expression.h>
+#include <falcon/psteps/exprvector.h>
 #include <falcon/gclock.h>
 
 namespace Falcon {
@@ -30,7 +30,7 @@ class FALCON_DYN_CLASS ExprSummonBase: public ExprVector
 public:
    ExprSummonBase( int line, int chr, bool isOptional );
    ExprSummonBase( const String& name,  int line, int chr, bool isOptional);
-   ExprSummonBase( const ExprSummon& other );
+   ExprSummonBase( const ExprSummonBase& other );
    virtual ~ExprSummonBase();
 
    virtual void render( TextWriter* tw, int32 depth ) const;
@@ -39,7 +39,7 @@ public:
    inline virtual bool simplify( Item& ) const { return false; }
 
    const String& message() const { return m_message; }
-   void message( const String& msg ) const { m_message = msg; }
+   void message( const String& msg ) { m_message = msg; }
 
    virtual TreeStep* selector() const;
    virtual bool selector( TreeStep* ts );
@@ -50,6 +50,9 @@ protected:
    bool m_bIsOptional;
 
    static void apply_( const PStep* ps, VMContext* ctx );
+
+   FALCON_DECLARE_INTERNAL_PSTEP(Responded);
+   FALCON_DECLARE_INTERNAL_PSTEP_OWNED(Summoned, ExprSummonBase);
 };
 
 /** Summon expression.

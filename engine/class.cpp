@@ -764,36 +764,7 @@ void Class::op_summon( VMContext* ctx, void* instance, const String& message, in
 {
    static BOM* bom = Engine::instance()->getBom();
 
-   if( message == "summon" )
-   {
-      // indirect summon.
-      if ( pCount > 0 )
-      {
-         pCount--;
-         Item& summoned = ctx->opcodeParam(pCount);
-         if( summoned.isString() )
-         {
-            ctx->removeData(pCount,1);
-            this->op_summon( ctx, instance, *summoned.asString(), pCount );
-            return;
-         }
-         else if( summoned.isSymbol() )
-         {
-            ctx->removeData(pCount,1);
-            this->op_summon( ctx, instance, summoned.asSymbol()->name(), pCount );
-            return;
-         }
-      }
-      FALCON_RESIGN_XERROR( ParamError, e_inv_params, ctx,
-             .extra("S|Symbol,...") );
-      return;
-   }
-   else if ( message == "respondsTo" )
-   {
-      ctx->stackResult(pCount+1,Item().setBoolean( this->respondsTo(instance, message)));
-      return;
-   }
-   else if ( message == "delegate" ) {
+   if ( message == "delegate" ) {
    }
 
    Private::PropertyMap::iterator iter = _p->m_props.find( message );
