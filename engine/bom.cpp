@@ -65,8 +65,6 @@ BOM::BOM():
    hm["render"] = &BOMH::render;
 
    hm["foreach"] = &BOMH::foreach;
-   //hm["render"] = &BOMH::render;
-
 }
 
 BOM::~BOM()

@@ -36,6 +36,8 @@
 #include <falcon/stdhandlers.h>
 #include <falcon/textwriter.h>
 
+#include <falcon/delegatemap.h>
+
 #include <falcon/psteps/stmtreturn.h>
 #include <falcon/psteps/exprself.h>
 #include <falcon/psteps/exprparentship.h>
@@ -56,6 +58,7 @@ namespace Falcon
 class FalconClass::Private
 {
 public:
+   DelegateMap m_delegates;
 
    typedef std::map<String, Property*> MemberMap;
    MemberMap m_origMembers;
@@ -1138,7 +1141,39 @@ void FalconClass::unflattenSelf( ItemArray& flatArray )
 
    attributes().unflatten(flatArray, count);
 }
-   
+
+
+void FalconClass::op_summon( VMContext* ctx, void* instance, const String& message, int32 pCount, bool bOptional ) const
+{
+   FalconInstance* mantra = static_cast<FalconInstance*>(instance);
+   Item delegated;
+
+   if( message != "delegate" && mantra->m_delegates.getDelegate(message, delegated) )
+   {
+      ctx->opcodeParam(pCount) = delegated;
+      Class* cls;
+      void* inst;
+      delegated.forceClassInst(cls, inst);
+      cls->op_summon(ctx, inst, message, pCount, bOptional);
+      return;
+   }
+
+   Class::op_summon(ctx, instance, message, pCount, bOptional);
+}
+
+void FalconClass::delegate( void* instance, Item* target, const String& message ) const
+{
+   FalconInstance* mantra = static_cast<FalconInstance*>(instance);
+   if( target == 0 )
+   {
+      mantra->m_delegates.clear();
+   }
+   else {
+      mantra->m_delegates.setDelegate(message, *target);
+   }
+}
+
+
 //=========================================================
 // Operators.
 //

@@ -262,6 +262,35 @@ void ClassMantra::op_getProperty( VMContext* ctx, void* instance, const String& 
 }
 
 
+void ClassMantra::op_summon( VMContext* ctx, void* instance, const String& message, int32 pCount, bool bOptional ) const
+{
+   Mantra* mantra = static_cast<Mantra*>(instance);
+   Item delegated;
+
+   if( message != "delegate" && mantra->delegates().getDelegate(message, delegated) )
+   {
+      ctx->opcodeParam(pCount) = delegated;
+      Class* cls;
+      void* inst;
+      delegated.forceClassInst(cls, inst);
+      cls->op_summon(ctx, inst, message, pCount, bOptional);
+      return;
+   }
+
+   Class::op_summon(ctx, instance, message, pCount, bOptional);
+}
+
+void ClassMantra::delegate( void* instance, Item* target, const String& message ) const
+{
+   Mantra* mantra = static_cast<Mantra*>(instance);
+   if( target == 0 )
+   {
+      mantra->delegates().clear();
+   }
+   else {
+      mantra->delegates().setDelegate(message, *target);
+   }
+}
 
 //===============================================================
 // getAttribute method

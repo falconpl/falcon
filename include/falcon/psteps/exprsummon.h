@@ -50,9 +50,6 @@ protected:
    bool m_bIsOptional;
 
    static void apply_( const PStep* ps, VMContext* ctx );
-
-   FALCON_DECLARE_INTERNAL_PSTEP(Responded);
-   FALCON_DECLARE_INTERNAL_PSTEP_OWNED(Summoned, ExprSummonBase);
 };
 
 /** Summon expression.

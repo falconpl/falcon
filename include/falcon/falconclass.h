@@ -404,6 +404,9 @@ public:
     */
    bool registerAttributes( VMContext* ctx );
 
+   void op_summon( VMContext* ctx, void* instance, const String& message, int32 pCount, bool bOptional ) const;
+   void delegate( void* instance, Item* target, const String& message ) const;
+
    //=========================================================
    // Storer helpers
    //

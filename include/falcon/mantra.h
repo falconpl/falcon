@@ -18,6 +18,7 @@
 #include <falcon/string.h>
 #include <falcon/sourceref.h>
 #include <falcon/attributemap.h>
+#include <falcon/delegatemap.h>
 
 namespace Falcon 
 {
@@ -195,12 +196,17 @@ public:
    bool addAttribute( const String& name, TreeStep* generator );
 
    virtual void render( TextWriter* tw, int32 depth ) const = 0;
+
+   const DelegateMap& delegates() const { return m_delegates; }
+   DelegateMap& delegates() { return m_delegates; }
+
 protected:
    t_category m_category;
    String m_name;
    Module* m_module;
    SourceRef m_sr;
    AttributeMap m_attributes;
+   DelegateMap m_delegates;
    
    uint32 m_mark;
 };

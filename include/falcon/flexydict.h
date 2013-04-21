@@ -19,8 +19,11 @@
 #include <falcon/setup.h>
 #include <falcon/types.h>
 #include <falcon/itemarray.h>
+#include <falcon/delegatemap.h>
 
 namespace Falcon {
+
+class FlexyClass;
 
 /** Standard item type for flexy dictionaries of property-items.
 
@@ -97,6 +100,8 @@ private:
    bool m_bOwnMeta;
 
    ItemArray m_base;
+   DelegateMap m_delegates;
+   friend class FlexyClass;
 };
 
 }

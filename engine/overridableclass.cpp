@@ -50,6 +50,26 @@ OverridableClass::~OverridableClass()
       delete[] m_overrides;
 }
 
+void OverridableClass::op_summon_failing( VMContext* ctx, void* instance, const String& message, int32 pCount ) const
+{
+   if ( m_overrides[OVERRIDE_OP_UNKMSG_ID] != 0 )
+   {
+      if( pCount == 0 )
+      {
+         ctx->pushData(FALCON_GC_HANDLE(new String(message)));
+      }
+      else
+      {
+         Item i_msg = FALCON_GC_HANDLE(new String(message));
+         ctx->insertData(pCount, &i_msg, 1, 0);
+      }
+      ctx->callInternal( m_overrides[OVERRIDE_OP_UNKMSG_ID], pCount+1 );
+   }
+   else {
+      Class::op_summon_failing(ctx, instance, message, pCount);
+   }
+}
+
 
 inline void OverridableClass::override_unary( VMContext* ctx, void* self, int op, const String& opName ) const
 {
@@ -130,10 +150,11 @@ void OverridableClass::overrideAddMethod( const String& name, Function* mth )
    else if( name == OVERRIDE_OP_IN ) m_overrides[OVERRIDE_OP_IN_ID] = mth;
    else if( name == OVERRIDE_OP_PROVIDES ) m_overrides[OVERRIDE_OP_PROVIDES_ID] = mth;
    else if( name == OVERRIDE_OP_TOSTRING ) m_overrides[OVERRIDE_OP_TOSTRING_ID] = mth;
-   else if( name == OVERRIDE_OP_ITER ) m_overrides[OVERRIDE_OP_NEXT_ID] = mth;
+   else if( name == OVERRIDE_OP_ITER ) m_overrides[OVERRIDE_OP_ITER_ID] = mth;
    else if( name == OVERRIDE_OP_NEXT ) m_overrides[OVERRIDE_OP_NEXT_ID] = mth;
+   else if( name == OVERRIDE_OP_UNKMSG ) m_overrides[OVERRIDE_OP_UNKMSG_ID] = mth;
 
-#if OVERRIDE_OP_NEXT_ID + 1 != OVERRIDE_OP_COUNT
+#if OVERRIDE_OP_UNKMSG_ID + 1 != OVERRIDE_OP_COUNT
 #error "You forgot to update the operator overrides in OverridableClass::overrideAddMethod"
 #endif
 }
@@ -179,15 +200,15 @@ void OverridableClass::overrideRemoveMethod( const String& name )
    else if( name == OVERRIDE_OP_IN ) m_overrides[OVERRIDE_OP_IN_ID] = 0;
    else if( name == OVERRIDE_OP_PROVIDES ) m_overrides[OVERRIDE_OP_PROVIDES_ID] = 0;
    else if( name == OVERRIDE_OP_TOSTRING ) m_overrides[OVERRIDE_OP_TOSTRING_ID] = 0;
-   else if( name == OVERRIDE_OP_ITER ) m_overrides[OVERRIDE_OP_NEXT_ID] = 0;
+   else if( name == OVERRIDE_OP_ITER ) m_overrides[OVERRIDE_OP_ITER_ID] = 0;
    else if( name == OVERRIDE_OP_NEXT ) m_overrides[OVERRIDE_OP_NEXT_ID] = 0;
+   else if( name == OVERRIDE_OP_UNKMSG ) m_overrides[OVERRIDE_OP_UNKMSG_ID] = 0;
 
-#if OVERRIDE_OP_NEXT_ID + 1 != OVERRIDE_OP_COUNT
+#if OVERRIDE_OP_UNKMSG_ID + 1 != OVERRIDE_OP_COUNT
 #error "You forgot to update the operator overrides in OverridableClass::overrideRemoveMethod"
 #endif
 
 }
-
 
 void OverridableClass::op_neg( VMContext* ctx, void* self ) const
 {

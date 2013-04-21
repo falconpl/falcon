@@ -1,0 +1,30 @@
+class Cls
+   function __unknownSummon(msg,p0,p1)
+      > "From CLS!"
+      > "Message: ", msg
+      > "P0: ", p0
+      > "P1: ", p1
+   end
+end
+
+x=Cls()
+x::hello[]
+
+class Cls1
+   function __unknownSummon(msg,p0,p1)
+      > "From CLS -- 1!"
+      > "Message: ", msg
+      > "P0: ", p0
+      > "P1: ", p1
+   end
+end
+
+y=Cls1()
+x::delegate[y]
+x::hello["first" "second"]
+
+x::delegate[]
+x::delegate[y, 'msg0']
+x::msg0['hi']
+x::msg1['hi']
+

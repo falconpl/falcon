@@ -89,6 +89,12 @@ void set(VMContext* ctx, const Class* cls, void* data);
 void has(VMContext* ctx, const Class* cls, void* data);
 void properties(VMContext* ctx, const Class* cls, void* data);
 
+void respondsTo(VMContext* ctx, const Class* cls, void* data);
+void summon(VMContext* ctx, const Class* cls, void* data);
+void vsummon(VMContext* ctx, const Class* cls, void* data);
+void delegate(VMContext* ctx, const Class* cls, void* data);
+
+
 }
 
 }

@@ -18,6 +18,7 @@
 
 #include <falcon/setup.h>
 #include <falcon/itemarray.h>
+#include <falcon/delegatemap.h>
 
 namespace Falcon
 {
@@ -138,6 +139,7 @@ private:
    ItemArray m_data;
    const FalconClass* m_origin;
    uint32 m_mark;
+   DelegateMap m_delegates;
    
    friend class FalconClass;
 };

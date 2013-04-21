@@ -92,8 +92,9 @@ void ClassMulti::checkAddOverride( const String& name, Property* p )
    else if( name == OVERRIDE_OP_TOSTRING ) m_overrides[OVERRIDE_OP_TOSTRING_ID] = p;
    else if( name == OVERRIDE_OP_ITER ) m_overrides[OVERRIDE_OP_ITER_ID] = p;
    else if( name == OVERRIDE_OP_NEXT ) m_overrides[OVERRIDE_OP_NEXT_ID] = p;
+   else if( name == OVERRIDE_OP_UNKMSG ) m_overrides[OVERRIDE_OP_UNKMSG_ID] = p;
 
-#if OVERRIDE_OP_NEXT_ID + 1 != OVERRIDE_OP_COUNT
+#if OVERRIDE_OP_UNKMSG_ID + 1 != OVERRIDE_OP_COUNT
 #error "You forgot to update the operator overrides in MultiClass::checkAddOverride"
 #endif
 
@@ -139,9 +140,9 @@ void ClassMulti::checkRemoveOverride( const String& name )
    else if( name == OVERRIDE_OP_IN ) m_overrides[OVERRIDE_OP_IN_ID] = 0;
    else if( name == OVERRIDE_OP_TOSTRING ) m_overrides[OVERRIDE_OP_TOSTRING_ID] = 0;
    else if( name == OVERRIDE_OP_ITER ) m_overrides[OVERRIDE_OP_ITER_ID] = 0;
-   else if( name == OVERRIDE_OP_NEXT ) m_overrides[OVERRIDE_OP_NEXT_ID] = 0;
+   else if( name == OVERRIDE_OP_UNKMSG ) m_overrides[OVERRIDE_OP_UNKMSG_ID] = 0;
 
-#if OVERRIDE_OP_NEXT_ID + 1 != OVERRIDE_OP_COUNT
+#if OVERRIDE_OP_UNKMSG_ID + 1 != OVERRIDE_OP_COUNT
 #error "You forgot to update the operator overrides in MultiClass::checkRemoveOverride"
 #endif
 }

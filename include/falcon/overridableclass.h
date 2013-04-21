@@ -42,6 +42,8 @@ public:
    OverridableClass( const String& name, int64 tid );
    virtual ~OverridableClass();
 
+   virtual void op_summon_failing( VMContext* ctx, void* instance, const String& message, int32 pCount ) const;
+
    virtual void op_neg( VMContext* ctx, void* self ) const;
    virtual void op_add( VMContext* ctx, void* self ) const;
    virtual void op_sub( VMContext* ctx, void* self ) const;

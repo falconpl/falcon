@@ -351,6 +351,38 @@ inline bool FlexyClass::operand( int opCount, const String& name, VMContext* ctx
 }
 
 
+void FlexyClass::op_summon( VMContext* ctx, void* instance, const String& message, int32 pCount, bool bOptional ) const
+{
+   FlexyDict* mantra = static_cast<FlexyDict*>(instance);
+   Item delegated;
+
+   if( message != "delegate" && mantra->m_delegates.getDelegate(message, delegated) )
+   {
+      ctx->opcodeParam(pCount) = delegated;
+      Class* cls;
+      void* inst;
+      delegated.forceClassInst(cls, inst);
+      cls->op_summon(ctx, inst, message, pCount, bOptional);
+      return;
+   }
+
+   Class::op_summon(ctx, instance, message, pCount, bOptional);
+}
+
+
+void FlexyClass::delegate( void* instance, Item* target, const String& message ) const
+{
+   FlexyDict* mantra = static_cast<FlexyDict*>(instance);
+   if( target == 0 )
+   {
+      mantra->m_delegates.clear();
+   }
+   else {
+      mantra->m_delegates.setDelegate(message, *target);
+   }
+}
+
+
 void FlexyClass::op_neg( VMContext* ctx, void* self ) const
 {
    operand( 1, OVERRIDE_OP_NEG, ctx, self );

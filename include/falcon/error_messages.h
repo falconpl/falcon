@@ -245,6 +245,7 @@ FAL_ERRORDECL( e_directive_not_allowed, 269, "Directive not allowed in dynamic c
 FAL_ERRORDECL( e_attrib_already, 270, "Attribute already declared" );
 FAL_ERRORDECL( e_marshall_not_found, 271, "Message event handler not found" );
 FAL_ERRORDECL( e_not_responding, 272, "Summoned entity isn't responding to a mandatory summon");
+FAL_ERRORDECL( e_non_delegable, 273, "The target item doesn't support delegation");
    
 FAL_ERRORDECL( e_unknown_encoding, 300, "Unknown encoding name" );
 FAL_ERRORDECL( e_enc_fail, 301, "Encoding failed or data not encodable" );

@@ -20,6 +20,7 @@
 #include <falcon/module.h>
 #include <falcon/class.h>
 #include <falcon/itemid.h>
+#include <falcon/itemarray.h>
 #include <falcon/vmcontext.h>
 #include <falcon/bom.h>
 #include <falcon/error.h>
@@ -525,6 +526,11 @@ void Class::onInheritanceResolved( ExprInherit* )
    // do nothing
 }
 
+void Class::delegate( void*, Item*, const String& ) const
+{
+   throw FALCON_SIGN_ERROR( AccessError, e_non_delegable );
+}
+
 //=====================================================================
 // VM Operator override.
 //
@@ -760,12 +766,9 @@ void Class::op_setProperty( VMContext* ctx, void* data, const String& prop ) con
 }
 
 
-void Class::op_summon( VMContext* ctx, void* instance, const String& message, int32 pCount ) const
+void Class::op_summon( VMContext* ctx, void* instance, const String& message, int32 pCount, bool isOptional ) const
 {
    static BOM* bom = Engine::instance()->getBom();
-
-   if ( message == "delegate" ) {
-   }
 
    Private::PropertyMap::iterator iter = _p->m_props.find( message );
    if( iter != _p->m_props.end() )
@@ -779,7 +782,7 @@ void Class::op_summon( VMContext* ctx, void* instance, const String& message, in
       }
       else {
          if( pCount > 0 ) {
-            
+
             if( ! prop.bConst )
             {
                ctx->popData( pCount-1 );
@@ -789,7 +792,11 @@ void Class::op_summon( VMContext* ctx, void* instance, const String& message, in
                ctx->topData() = temp;
                return;
             }
-            //else, fallback to the op_summon function end.
+            else {
+               FALCON_RESIGN_XERROR( AccessError, e_prop_acc, ctx,
+                                  .extra(message) );
+               return;
+            }
          }
          else {
             prop.getFunc( this, message, instance, ctx->topData() );
@@ -798,22 +805,105 @@ void Class::op_summon( VMContext* ctx, void* instance, const String& message, in
       }
    }
 
+   if ( message == "respondsTo" ) {
+      Item* msg;
+      if( pCount < 1 || ! (( msg = &ctx->opcodeParam(pCount-1) )->isString() || msg->isSymbol()) ) {
+         FALCON_RESIGN_XERROR( ParamError, e_inv_params, ctx, .extra("S|Symbol") );
+         return;
+      }
+
+      bool res = hasProperty(instance, msg->isString() ? *msg->asString() : msg->asSymbol()->name() );
+      ctx->stackResult(pCount+1, Item().setBoolean(res) );
+      return;
+   }
+
+   if( message == "summon" )
+   {
+      Item* msg;
+      if( pCount < 1 || ! (( msg = &ctx->opcodeParam(pCount-1) )->isString() || msg->isSymbol()) ) {
+         FALCON_RESIGN_XERROR( ParamError, e_inv_params, ctx, .extra("S|Symbol") );
+         return;
+      }
+      pCount--;
+      String msgName = msg->isString() ? *msg->asString() : msg->asSymbol()->name();
+      ctx->removeData(pCount,1);
+      op_summon( ctx, instance, msgName, pCount, isOptional );
+      return;
+   }
+
+   if( message == "vsummon" )
+   {
+      Item* i_msg, *i_params;
+      if( pCount < 2
+               || ! (( i_msg = &ctx->opcodeParam(pCount-1) )->isString() || i_msg->isSymbol())
+               || ! ( i_params = &ctx->opcodeParam(pCount-2) )->isArray() ) {
+         FALCON_RESIGN_XERROR( ParamError, e_inv_params, ctx, .extra("S,A") );
+         return;
+      }
+      String msgName = i_msg->isString() ? *i_msg->asString() : i_msg->asSymbol()->name();
+      ItemArray* params = i_params->asArray();
+      ctx->removeData(pCount-1,pCount);
+      for( length_t i = 0; i < params->length(); i++ )
+      {
+         ctx->pushData(params->at(i));
+      }
+
+      op_summon( ctx, instance, msgName, params->length(), isOptional );
+      return;
+   }
+
+   if ( message == "delegate" ) {
+      if( pCount == 0 ) {
+         delegate( instance, 0, "*" );
+      }
+      else if( pCount == 1 ) {
+         delegate( instance, &ctx->opcodeParam(0), "*" );
+      }
+      else {
+         Item* delegated = &ctx->opcodeParam(pCount-1);
+         Item* msgs = &ctx->opcodeParam(pCount-2);
+         for( int32 i = 1; i < pCount; ++i )
+         {
+            Item& msg = *msgs;
+            ++msgs;
+            if ( msg.isString() ) {
+               delegate( instance, delegated, *msg.asString() );
+            }
+            else if (msg.isSymbol()) {
+               delegate( instance, delegated, msg.asSymbol()->name() );
+            }
+            else {
+               FALCON_RESIGN_XERROR( ParamError, e_inv_params, ctx,
+                        .extra("Each delegated message must be a string or a symbol") );
+               return;
+            }
+         }
+      }
+
+      ctx->popData(pCount);
+      return;
+   }
+
    BOM::handler handler = bom->get( message );
    if ( handler != 0  )
    {
       handler( ctx, this, instance );
    }
+   else if( isOptional )
+   {
+      ctx->stackResult(pCount+1, Item());
+   }
    else
    {
-      FALCON_RESIGN_XERROR( AccessError, e_prop_acc, ctx,
-                   .extra(message) );
+      op_summon_failing( ctx, instance, message, pCount );
    }
 }
 
 
-void Class::op_respondTo( VMContext* ctx, void* instance, const String& message ) const
+void Class::op_summon_failing( VMContext* ctx, void*, const String& message, int32 ) const
 {
-   ctx->pushData(Item().setBoolean(hasProperty(instance, message)));
+   FALCON_RESIGN_XERROR( AccessError, e_prop_acc, ctx,
+                      .extra(message) );
 }
 
 

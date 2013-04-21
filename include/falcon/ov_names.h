@@ -55,8 +55,9 @@
 #define OVERRIDE_OP_TOSTRING  "toString"
 #define OVERRIDE_OP_ITER      "__iter"
 #define OVERRIDE_OP_NEXT      "__next"
+#define OVERRIDE_OP_UNKMSG    "__unknownSummon"
 
-#define OVERRIDE_OP_COUNT 33
+#define OVERRIDE_OP_COUNT 34
 
 
 #define FALCON_PROTOTYPE_PROPERTY_OVERRIDE_INIT          "_init"
@@ -105,8 +106,9 @@
 #define OVERRIDE_OP_TOSTRING_ID  30
 #define OVERRIDE_OP_ITER_ID      31
 #define OVERRIDE_OP_NEXT_ID      32
+#define OVERRIDE_OP_UNKMSG_ID    33
 
-#define OVERRIDE_OP_COUNT_ID  33
+#define OVERRIDE_OP_COUNT_ID  34
 
 
 #if OVERRIDE_OP_COUNT_ID != OVERRIDE_OP_COUNT

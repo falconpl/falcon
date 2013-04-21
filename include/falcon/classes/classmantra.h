@@ -52,12 +52,14 @@ public:
    virtual void restore( VMContext* ctx, DataReader* stream) const;
    // mantras have no flattening.
    
+   virtual void delegate( void* instance, Item* target, const String& message ) const;
    //=============================================================
 
    virtual void op_isTrue( VMContext* ctx, void* self ) const;
    virtual void op_toString( VMContext* ctx, void* self ) const;
 
    virtual void op_getProperty( VMContext* ctx, void* instance, const String& prop) const;
+   virtual void op_summon( VMContext* ctx, void* instance, const String& message, int32 pCount, bool bOptional ) const;
 
 protected:
    ClassMantra( const String& name, int64 type );

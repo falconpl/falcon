@@ -62,7 +62,9 @@ public:
    //=========================================================
    // Operators.
    //
-      
+   void op_summon( VMContext* ctx, void* instance, const String& message, int32 pCount, bool bOptional ) const;
+   void delegate( void* instance, Item* target, const String& message ) const;
+
    virtual void op_neg( VMContext* ctx, void* self ) const;
    virtual void op_add( VMContext* ctx, void* self ) const;
    virtual void op_sub( VMContext* ctx, void* self ) const;
