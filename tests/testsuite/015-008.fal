@@ -1,0 +1,25 @@
+/*
+@name Summoning -- rspondsTo
+@category Summoning
+
+@output
+Summoning respondsTo
+p::respondsTo['prop']:true
+p::respondsTo['check']:true
+p::respondsTo['notFound']:false
+Done.
+@endoutput
+*/
+
+entity = p{
+   prop = nil
+   check = function (a,b,c)
+      > self.prop, ", ", a, ", ", b, ", ",c
+   end
+}
+
+> "Summoning respondsTo"
+> "p::respondsTo['prop']:", entity::respondsTo['prop']
+> "p::respondsTo['check']:", entity::respondsTo['check']
+> "p::respondsTo['notFound']:", entity::respondsTo['notFound']
+> "Done."

@@ -786,10 +786,7 @@ void Class::op_summon( VMContext* ctx, void* instance, const String& message, in
             if( ! prop.bConst )
             {
                ctx->popData( pCount-1 );
-               Item temp = ctx->topData();
-               ctx->popData();
-               prop.setFunc(this, message, instance, temp );
-               ctx->topData() = temp;
+               prop.setFunc(this, message, instance, ctx->topData() );
                return;
             }
             else {
@@ -799,7 +796,7 @@ void Class::op_summon( VMContext* ctx, void* instance, const String& message, in
             }
          }
          else {
-            prop.getFunc( this, message, instance, ctx->topData() );
+            prop.getFunc( this, message, instance, ctx->addDataSlot() );
             return;
          }
       }
@@ -887,7 +884,8 @@ void Class::op_summon( VMContext* ctx, void* instance, const String& message, in
    BOM::handler handler = bom->get( message );
    if ( handler != 0  )
    {
-      handler( ctx, this, instance );
+      Function* func = static_cast<Function*>(Engine::instance()->getMantra(message));
+      ctx->callInternal(func,pCount,ctx->opcodeParam(pCount));
    }
    else if( isOptional )
    {

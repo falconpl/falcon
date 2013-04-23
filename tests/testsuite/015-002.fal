@@ -1,0 +1,40 @@
+/*
+@name Summoning with parameters
+@category Summoning
+
+@output
+Summoning with parameters
+Summon 4::foreach[printl]
+1
+2
+3
+4
+Summon 4:?foreach[printl]
+1
+2
+3
+4
+Done.
+@endoutput
+*/
+
+> "Summoning with parameters"
+depth = VMContext.dataDepth
+> "Summon 4::foreach[printl]"
+4::foreach[printl]
+depth1 = VMContext.dataDepth
+if depth != depth1
+   raise "Data stack corrupted"
+end
+
+> "Summon 4:?foreach[printl]"
+4:?foreach[printl]
+depth1 = VMContext.dataDepth
+if depth != depth1
+   raise "Data stack corrupted"
+end
+
+> "Done."
+
+
+

@@ -209,8 +209,8 @@ SourceParser::SourceParser():
    T_MString("M-String"),
    T_provides("provides"),
    
-   T_DoubleColon("::"),
-   T_ColonQMark(":?")
+   T_DoubleColon("::",16),
+   T_ColonQMark(":?",16)
 {
    S_Attribute << "Attribute" << errhand_attribute;
    S_Attribute << (r_attribute << "Attribute" << apply_attribute << T_Colon << T_Name <<  T_Arrow << Expr << T_EOL);

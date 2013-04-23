@@ -1,0 +1,60 @@
+/*
+@name Summoning delegate
+@category Summoning
+
+@output
+Summoning on classes
+Summoned set: prompt
+Summoned get: prompt
+Summoned method with 2 params: 
+prompt, a, b, Nil
+Summoned method with 4 params: 
+prompt, a, b, c
+Done.>>> entity.prop = "Changed"
+"Changed"
+>>> e1.prop
+"Changed"
+
+@endoutput
+*/
+
+class Test( id )
+   id = id
+   
+   function check1()
+      > self.id, ": check 1"
+   end
+   
+   function check2()
+      > self.id, ": check 2"
+   end
+end
+
+> "Summoning delegate"
+depth = VMContext.dataDepth
+
+e1 = Test('master')
+e2 = Test('delegate')
+e1::delegate[ e2 "check1" ]
+
+> "Partial delegate"
+> "Direct call: "
+e1::check2[]
+
+> "Delegated call: "
+e1::check1[]
+
+> "="*60
+
+> "Full delegate"
+e1 = Test('master')
+e2 = Test('delegate')
+e1::delegate[ e2 ]
+e1::check1[]
+e1::check2[]
+
+> "="*60
+
+
+
+> "Done."

@@ -1,0 +1,39 @@
+/*
+@name Summoning on prototypes
+@category Summoning
+
+@output
+Summoning on prototypes
+Summoned set: prompt
+Summoned get: prompt
+Summoned method with 2 params: 
+prompt, a, b, Nil
+Summoned method with 4 params: 
+prompt, a, b, c
+Done.
+@endoutput
+*/
+
+entity = p{
+   prop = nil
+   check = function (a,b,c)
+      > self.prop, ", ", a, ", ", b, ", ",c
+   end
+}
+
+> "Summoning on prototypes"
+depth = VMContext.dataDepth
+entity::prop['prompt' 'multiple' 'data']
+depth1 = VMContext.dataDepth
+if depth != depth1
+   raise "Data stack corrupted"
+end
+
+> "Summoned set: ", entity.prop
+> "Summoned get: ", entity::prop[]
+> "Summoned method with 2 params: "
+entity::check['a' 'b']
+> "Summoned method with 4 params: "
+entity::check['a' 'b' 'c' 'd']
+
+> "Done."

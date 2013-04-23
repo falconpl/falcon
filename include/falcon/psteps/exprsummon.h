@@ -37,6 +37,7 @@ public:
 
    /** Symbols cannot be simplified. */
    inline virtual bool simplify( Item& ) const { return false; }
+   inline virtual bool isStandAlone() const { return true; }
 
    const String& message() const { return m_message; }
    void message( const String& msg ) { m_message = msg; }

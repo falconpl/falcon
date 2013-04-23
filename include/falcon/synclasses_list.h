@@ -188,7 +188,6 @@ FALCON_SYNCLASS_DECLARATOR_EX(m_expr_optsummon, OptSummon, Expression, \
          virtual void op_getProperty( VMContext*, void* instance, const String& property ) const; \
          )
 
-
 FALCON_SYNCLASS_DECLARATOR_EX(m_expr_sym, GenSym, Expression, \
       virtual void store( VMContext*, DataWriter* dw, void* instance ) const; \
       virtual void op_call(VMContext* ctx, int pcount, void* instance) const; \

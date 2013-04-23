@@ -1145,16 +1145,41 @@ void FalconClass::unflattenSelf( ItemArray& flatArray )
 
 void FalconClass::op_summon( VMContext* ctx, void* instance, const String& message, int32 pCount, bool bOptional ) const
 {
-   FalconInstance* mantra = static_cast<FalconInstance*>(instance);
+   FalconInstance* inst = static_cast<FalconInstance*>(instance);
    Item delegated;
 
-   if( message != "delegate" && mantra->m_delegates.getDelegate(message, delegated) )
+   if( message != "delegate" && inst->m_delegates.getDelegate(message, delegated) )
    {
       ctx->opcodeParam(pCount) = delegated;
       Class* cls;
       void* inst;
       delegated.forceClassInst(cls, inst);
       cls->op_summon(ctx, inst, message, pCount, bOptional);
+      return;
+   }
+
+   Private::MemberMap::iterator iter = _p->m_members->find( message );
+   if( iter != _p->m_members->end() )
+   {
+      Property& prop = *iter->second;
+      if( prop.m_type == Property::t_func )
+      {
+         ctx->callInternal(prop.m_value.func, pCount, ctx->opcodeParam(pCount));
+      }
+      else if( prop.m_type == Property::t_prop ) {
+         if( pCount > 0 ) {
+            ctx->popData( pCount-1 );
+            Item temp = ctx->topData();
+            inst->data()[ prop.m_value.id ].copyFromLocal( temp );
+            ctx->popData();
+            ctx->topData() = temp;
+         }
+         else {
+            ctx->addDataSlot();
+            ctx->topData().copyFromRemote(inst->data()[ prop.m_value.id ]);
+         }
+
+      }
       return;
    }
 

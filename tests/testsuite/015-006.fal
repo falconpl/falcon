@@ -1,0 +1,39 @@
+/*
+@name Summoning -- indirect
+@category Summoning
+
+@output
+Summoning indirect
+Summoned set: prompt
+Summoned get: prompt
+Summoned method with 2 params: 
+prompt, a, b, Nil
+Summoned method with 4 params: 
+prompt, a, b, c
+Done.
+@endoutput
+*/
+
+entity = p{
+   prop = nil
+   check = function (a,b,c)
+      > self.prop, ", ", a, ", ", b, ", ",c
+   end
+}
+
+> "Summoning indirect"
+depth = VMContext.dataDepth
+entity::summon ['prop' 'prompt' 'multiple' 'data']
+depth1 = VMContext.dataDepth
+if depth != depth1
+   raise "Data stack corrupted"
+end
+
+> "Summoned set: ", entity.prop
+> "Summoned get: ", entity::summon['prop']
+> "Summoned method with 2 params: "
+entity::summon['check' 'a' 'b']
+> "Summoned method with 4 params: "
+entity::summon['check' 'a' 'b' 'c' 'd']
+
+> "Done."

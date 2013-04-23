@@ -1,0 +1,31 @@
+/*
+@name Summoning smoke test
+@category Summoning
+
+@output
+Summoning smoke test
+Lenght of 'abc': 3
+Lenght of 'abc' (optional): 3
+Done.
+@endoutput
+*/
+
+> "Summoning smoke test"
+depth = VMContext.dataDepth
+> "Lenght of 'abc': ", 'abc'::len[]
+depth1 = VMContext.dataDepth
+if depth != depth1
+   raise "Data stack corrupted"
+end
+
+
+> "Lenght of 'abc' (optional): ", 'abc'::len[]
+depth1 = VMContext.dataDepth
+if depth != depth1
+   raise "Data stack corrupted"
+end
+
+> "Done."
+
+
+

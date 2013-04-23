@@ -1,0 +1,30 @@
+/*
+@name Summoning unknown messages
+@category Summoning
+
+@output
+Summoning unknown messages
+Summon 4:?test[]
+Summon 4:?test[1,2,3]
+Summon 4:?test[1 2 5]
+Done.
+@endoutput
+*/
+
+> "Summoning unknown messages"
+depth = VMContext.dataDepth
+
+> "Summon 4:?test[]"
+4:?test[]
+> "Summon 4:?test[1,2,3]"
+4:?test[1,2,3]
+
+> "Summon 4:?test[1 2 5]"
+4:?test[1 2 3]
+
+depth1 = VMContext.dataDepth
+if depth != depth1
+   raise "Data stack corrupted"
+end
+
+> "Done."

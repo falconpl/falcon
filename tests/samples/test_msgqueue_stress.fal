@@ -3,7 +3,7 @@
  
  Marshaling a message means automatically sending it
  to an handler as it is received by its processor.
- */
+*/
 
 // A generic mutex to do pretty output
 outputMutex = Mutex()

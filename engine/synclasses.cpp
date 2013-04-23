@@ -1387,8 +1387,8 @@ bool SynClasses::ClassSummon::op_init( VMContext* , void* instance, int ) const
 void SynClasses::ClassSummon::store( VMContext* ctx, DataWriter* dw, void* instance ) const
 {
    ExprSummon* expr = static_cast<ExprSummon*>( instance );
-   m_parent->store( ctx, dw, instance );
    dw->write( expr->message() );
+   m_parent->store( ctx, dw, instance );
 }
 void SynClasses::ClassSummon::op_getProperty( VMContext* ctx, void* instance, const String& property )const
 {
@@ -1433,8 +1433,8 @@ bool SynClasses::ClassOptSummon::op_init( VMContext* , void* instance, int ) con
 void SynClasses::ClassOptSummon::store( VMContext* ctx, DataWriter* dw, void* instance ) const
 {
    ExprOptSummon* expr = static_cast<ExprOptSummon*>( instance );
-   m_parent->store( ctx, dw, instance );
    dw->write( expr->message() );
+   m_parent->store( ctx, dw, instance );
 }
 void SynClasses::ClassOptSummon::op_getProperty( VMContext* ctx, void* instance, const String& property )const
 {
