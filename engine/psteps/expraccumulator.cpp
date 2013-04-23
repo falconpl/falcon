@@ -563,7 +563,7 @@ void ExprAccumulator::PStepAfterFilter::apply_( const PStep* ps, VMContext* ctx 
          ctx->pushCode(&self->m_stepAfterAddTarget);
 
          // invoke the target aadd
-         Item& target = *ctx->opcodeParams( arity* 2 + 2 );
+         Item target = *ctx->opcodeParams( arity* 2 + 2 );
          Class* cls = 0;
          void* data = 0;
          target.forceClassInst(cls, data);
@@ -592,6 +592,13 @@ void ExprAccumulator::PStepAfterAddTarget::apply_( const PStep* ps, VMContext* c
    const ExprAccumulator* self = nself->m_owner;
 
    ctx->popCode();
+   // flat data?
+   if( ! ctx->topData().isUser() )
+   {
+      // we need to save it
+      int32 arity = self->m_vector->arity();
+      ctx->opcodeParam( arity * 2 + 2 ) = ctx->topData();
+   }
    ctx->popData(); // pop the self left by the target += x
    self->regress(ctx);
 }

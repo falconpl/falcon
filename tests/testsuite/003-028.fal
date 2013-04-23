@@ -3,13 +3,13 @@
 @category Str-ipol
 
 @output
-Iterpol not needed
+Interpol not needed
 Hello world
 Hello world
 @endoutput
 */
 
->@"Iterpol not needed"
+>@"Interpol not needed"
 string = "Hello world"
 >@"$string"
 >@"$(string)"

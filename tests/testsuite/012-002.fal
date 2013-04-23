@@ -3,6 +3,7 @@
 @category accumulator
 
 @output
+Sum of first 10 numbers:55
 Accumulator target
 1
 2
@@ -22,6 +23,8 @@ Double target
 Done
 @endoutput
 */
+
+> "Sum of first 10 numbers:", ^[10]=>0
 
 > "Accumulator target"
 tg = ^[5] => []
