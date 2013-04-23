@@ -1,0 +1,44 @@
+/*
+@name Dictionary operator add
+@category datatype
+
+@output
+Dictionary operators add
+Empty + Empty
+Empty + Filled:
+values: a=2, b=3, c=1.
+Filled + Empty:
+values: a=2, b=3, c=1.
+Filled + Filled:
+values: a=2, b=3, c=1, d=4.
+Filled + Overwrite:
+values: a=overwritten, b=3, c=1.
+Done.
+@endoutput
+*/
+
+> "Dictionary operators add"
+
+function testDict( dict ) 
+   for a, b in dict
+      forfirst: >> "values: "      
+      >> a, "=", b
+      formiddle: >> ", "
+      forlast: >"."
+   end
+end
+
+> "Empty + Empty"
+testDict( [=>] + [=>] ) 
+> "Empty + Filled:"
+testDict( [=>] + ['c'=>1, 'a'=>2, 'b'=>3] ) 
+> "Filled + Empty:"
+testDict( ['c'=>1, 'a'=>2, 'b'=>3] + [=>]  ) 
+
+> "Filled + Filled:"
+testDict( ['c'=>1, 'a'=>2] + ['b'=>3,'d'=>4]  ) 
+
+> "Filled + Overwrite:"
+testDict( ['c'=>1, 'a'=>2] + ['b'=>3,'a'=>'overwritten']  ) 
+
+> "Done."

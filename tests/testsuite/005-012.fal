@@ -1,0 +1,52 @@
+/*
+@name Dictionary operator aadd (+=)
+@category datatype
+
+@output
+Dictionary operators aadd
+Empty += Empty
+Empty += Filled:
+values: a=2, b=3, c=1.
+Filled += Empty:
+values: a=2, b=3, c=1.
+Filled += Filled:
+values: a=2, b=3, c=1, d=4.
+Filled += Overwrite:
+values: a=overwritten, b=3, c=1.
+Done.
+@endoutput
+*/
+
+> "Dictionary operators aadd"
+
+function testDict( dict ) 
+   for a, b in dict
+      forfirst: >> "values: "      
+      >> a, "=", b
+      formiddle: >> ", "
+      forlast: >"."
+   end
+end
+
+> "Empty += Empty"
+x = [=>]
+x += [=>]
+testDict( x ) 
+> "Empty += Filled:"
+x+= ['c'=>1, 'a'=>2, 'b'=>3] 
+testDict( x ) 
+> "Filled += Empty:"
+x+= [=>]
+testDict( x ) 
+
+> "Filled += Filled:"
+x = ['c'=>1, 'a'=>2]
+x += ['b'=>3,'d'=>4] 
+testDict( x ) 
+
+> "Filled += Overwrite:"
+x = ['c'=>1, 'a'=>2]
+x += ['b'=>3,'a'=>'overwritten'] 
+testDict( x ) 
+
+> "Done."

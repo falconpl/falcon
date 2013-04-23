@@ -599,7 +599,7 @@ void ClassDict::op_shr( VMContext* ctx, void* inst ) const
       }
    }
    else {
-      throw FALCON_SIGN_XERROR(ParamError, e_op_params, .extra("Need to be an Array of Dictionary"));
+      throw FALCON_SIGN_XERROR(ParamError, e_op_params, .extra("Need to be an Array"));
    }
 
    ctx->popData();

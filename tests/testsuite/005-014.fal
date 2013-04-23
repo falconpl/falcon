@@ -1,0 +1,41 @@
+/*
+@name Dictionary operator asub
+@category datatype
+
+@output
+Dictionary operators asub
+Empty - item
+Filled - not found:
+values: a=1, b=2, c=3.
+Filled - found:
+values: b=2, c=3.
+Done.
+@endoutput
+*/
+
+> "Dictionary operators asub"
+
+function testDict( dict ) 
+   for a, b in dict
+      forfirst: >> "values: "      
+      >> a, "=", b
+      formiddle: >> ", "
+      forlast: >"."
+   end
+end
+
+> "Empty - item"
+x = [=>]
+x -= 'a'
+testDict( x ) 
+
+> "Filled - not found:"
+x = ['a'=>1, 'b'=>2, 'c'=>3]
+x -= 'd'
+testDict( x )
+
+> "Filled - found:"
+x -= 'a'
+testDict( x ) 
+
+> "Done."

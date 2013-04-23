@@ -1,0 +1,53 @@
+/*
+@name Dictionary operator ashr
+@category datatype
+
+@output
+Dictionary operators ashr
+Empty - Empty
+Empty - Filled:
+Filled - Empty:
+values: a=2, b=3, c=1.
+Filled - Filled:
+values: a=2, c=1.
+Filled - Overwrite:
+values: c=1.
+Done.
+@endoutput
+*/
+
+> "Dictionary operators ashr"
+
+function testDict( dict ) 
+   for a, b in dict
+      forfirst: >> "values: "      
+      >> a, "=", b
+      formiddle: >> ", "
+      forlast: >"."
+   end
+end
+
+> "Empty - Empty"
+x = [=>] 
+x >>= []
+testDict( x ) 
+
+> "Empty - Filled:"
+x >>= .['c' 'a' 'b']
+testDict( x )
+
+> "Filled - Empty:"
+x = ['c'=>1, 'a'=>2, 'b'=>3]
+x >>= []
+testDict( x ) 
+
+> "Filled - Filled:"
+x = ['c'=>1, 'a'=>2]
+x >>= .['b' 'd']
+testDict( x )
+
+> "Filled - Overwrite:"
+x >>= .['b' 'a']
+testDict( x ) 
+
+> "Done."
