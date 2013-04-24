@@ -80,6 +80,10 @@ CoreModule::CoreModule():
       << new Ext::Function_passvp
       << new Ext::Function_call
       
+      << new Ext::Function_map
+      << new Ext::Function_filter
+      << new Ext::Function_reduce
+
       // Standard classes
       << new Ext::ClassBarrier
       << new Ext::ClassEvent

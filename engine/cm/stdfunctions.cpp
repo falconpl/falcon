@@ -453,6 +453,417 @@ void Function_call::invoke( VMContext* ctx, int32 )
 }
 
 
+inline static void genNext( VMContext* ctx )
+{
+   Class* cls = 0;
+   void* data = 0;
+   ctx->param(1)->forceClassInst(cls, data);
+   cls->op_next(ctx,data);
+}
+
+/*#
+   @function map
+   @inset functional_support
+   @brief Changes all the items in the source data according to a mapping function.
+   @param mapper Function or code receiving the source data items.
+   @param data A sequence (array, generator, range etc.).
+   @return An array containing the mapped data.
+   @raise AccessError if @b data is not iterable.
+
+   The @b mapper is called iteratively for every item in the @b data; its return value is added to
+   an array that is then returned.
+
+   The following code generates the squares between 1-3.
+   @code
+   x = map( {(v) v**2}, [1,2,3] )
+   > x.describe()                // [1,4,9]
+   @endcode
+
+   This function is equivalent to the following accumulator operator:
+   @code
+   ^[ data ] mapper => []
+   @endcode
+
+   but, it is slightly more efficient.
+
+   @note If the mapper invokes a @b return @b break statement, the mapping is interrupted.
+*/
+
+FALCON_DEFINE_FUNCTION_P1(map)
+{
+   // This is called after op_next generates the next item.
+   class PStepGetNext: public PStep {
+   public:
+      PStepGetNext(){ apply = apply_;}
+      virtual ~PStepGetNext() {}
+      virtual void describeTo(String& tgt) { tgt = "Function_map::PStepGetNext"; }
+
+      static void apply_(const PStep*, VMContext* ctx )
+      {
+         // are we done?
+         if( ctx->topData().isBreak() )
+         {
+            ctx->returnFrame(*ctx->local(0));
+            return;
+         }
+
+         ctx->popCode();
+         // if not, add the item to the array.
+         // below us, we have the check filter code.
+         ctx->local(0)->asArray()->append(ctx->topData());
+         ctx->popData();
+
+         // call the next operator again
+         genNext(ctx);
+      }
+   };
+   static PStepGetNext s_stepGetNext;
+
+   class PStepProcessNext: public PStep {
+   public:
+      PStepProcessNext(){ apply = apply_;}
+      virtual ~PStepProcessNext() {}
+      virtual void describeTo(String& tgt) { tgt = "Function_map::PStepProcessNext"; }
+
+      static void apply_(const PStep*, VMContext* ctx )
+      {
+         // are we done?
+         if( ctx->topData().isBreak() )
+         {
+            ctx->returnFrame(*ctx->local(0));
+            return;
+         }
+
+         // if not, call the mapper function
+         ctx->pushCode( &s_stepGetNext );
+         Item temp = ctx->topData();
+         ctx->popData();
+         ctx->callItem(*ctx->param(0), 1, &temp);
+      }
+   };
+   static PStepProcessNext s_stepProcessNext;
+
+
+   // This is invoked after op_iter is called.
+   class PStepBeginIter: public PStep {
+   public:
+      PStepBeginIter(){ apply = apply_;}
+      virtual ~PStepBeginIter() {}
+      virtual void describeTo(String& tgt) { tgt = "Function_map::PStepBeginIter"; }
+
+      static void apply_(const PStep*, VMContext* ctx )
+      {
+         // if op_iter returns break, we throw
+         if( ctx->topData().isBreak() ) {
+            throw FALCON_SIGN_ERROR( AccessError, e_invalid_iter );
+         }
+
+         // prepare the return array.
+         *ctx->local(0) = FALCON_GC_HANDLE(new ItemArray());
+
+         // step into getting the next item.
+         ctx->resetCode( &s_stepProcessNext );
+         genNext(ctx);
+      }
+   };
+   static PStepBeginIter s_stepBeginIter;
+
+   // add a  local space, we'll need it
+   ctx->addLocals(1);
+
+   Item* iItem = ctx->param(0);
+   Item* iParams = ctx->param(1);
+   if( iItem == 0 || iParams == 0 )
+   {
+      throw paramError(__LINE__, SRC);
+   }
+
+   // prepare the code that will interpret op_iter result
+   ctx->pushCode( &s_stepBeginIter );
+
+   // prepare the op_iter framework
+   ctx->pushData( *iParams );
+   Class* cls = 0;
+   void* data = 0;
+   iParams->forceClassInst(cls, data);
+   cls->op_iter(ctx,data);
+}
+
+/*#
+   @function reduce
+   @inset functional_support
+   @brief Uses the values in a given sequence and iteratively calls a reductor function to extract a single result.
+   @param reducer A function or Sigma to reduce the array.
+   @param data A sequence of arbitrary items.
+   @optparam initial Optional startup value for the reduction.
+   @return The reduced result.
+
+   The reductor is a function receiving two values as parameters. The first value is the
+   previous value returned by the reductor, while the second one is an item iteratively
+   taken from the origin array. If a startup value is given, the first time the reductor
+   is called that value is provided as its first parameter, otherwise the first two items
+   from the array are used in the first call. If the collection is empty, the initial_value
+   is returned instead, and if is not given, nil is returned. If a startup value is not given
+   and the collection contains only one element, that element is returned.
+
+   Some examples:
+   @code
+   > reduce( {a,b=> a+b}, [1,2,3,4])       // sums 1 + 2 + 3 + 4 = 10
+   > reduce( {a,b=> a+b}, [1,2,3,4], -1 )  // sums -1 + 1 + 2 + 3 + 4 = 9
+   > reduce( {a,b=> a+b}, [1] )            // never calls lambda, returns 1
+   > reduce( {a,b=> a+b}, [], 0 )          // throws
+   > reduce( {a,b=> a+b}, [] )             // throws
+   @endcode
+
+   Items in the collection are treated literally (not evaluated).
+*/
+FALCON_DEFINE_FUNCTION_P1(reduce)
+{
+   // This is called after op_next generates the next item.
+   class PStepGetNext: public PStep {
+   public:
+      PStepGetNext(){ apply = apply_;}
+      virtual ~PStepGetNext() {}
+      virtual void describeTo(String& tgt) { tgt = "Function_reduce::PStepGetNext"; }
+
+      static void apply_(const PStep*, VMContext* ctx )
+      {
+         // are we done?
+         if( ctx->topData().isBreak() )
+         {
+            ctx->returnFrame(*ctx->local(0));
+            return;
+         }
+
+         ctx->popCode();
+         *ctx->local(0) = ctx->topData();
+         ctx->popData();
+         // call the next operator again
+         genNext(ctx);
+      }
+   };
+   static PStepGetNext s_stepGetNext;
+
+   class PStepInvokeReduce: public PStep {
+   public:
+      PStepInvokeReduce(){ apply = apply_;}
+      virtual ~PStepInvokeReduce() {}
+      virtual void describeTo(String& tgt) { tgt = "Function_reduce::PStepInvokeReduce"; }
+
+      static void apply_(const PStep*, VMContext* ctx )
+      {
+         // are we done?
+         if( ctx->topData().isBreak() )
+         {
+            ctx->returnFrame(*ctx->local(0));
+            return;
+         }
+
+         // if not, call the mapper function
+         ctx->pushCode( &s_stepGetNext );
+         Item params[2];
+         params[0] = *ctx->local(0);
+         params[1] = ctx->topData();
+         ctx->popData();
+         // we need to keep the top data.
+         ctx->callItem(*ctx->param(0), 2, params);
+      }
+   };
+   static PStepInvokeReduce s_stepInvokeReduce;
+
+   // This is invoked after op_iter is called.
+   class PStepGenSecond: public PStep {
+   public:
+      PStepGenSecond(){ apply = apply_;}
+      virtual ~PStepGenSecond() {}
+      virtual void describeTo(String& tgt) { tgt = "Function_reduce::PStepGenSecond"; }
+
+      static void apply_(const PStep*, VMContext* ctx )
+      {
+         // if op_iter returns break, we throw
+         if( ctx->topData().isBreak() ) {
+            throw FALCON_SIGN_XERROR( AccessError, e_invalid_iter, .extra("The series din't have enough items to be reduced") );
+         }
+         *ctx->local(0) = ctx->topData();
+         ctx->popData();
+         // step into getting the next item.
+         ctx->resetCode( &s_stepInvokeReduce );
+         genNext(ctx);
+      }
+   };
+   static PStepGenSecond s_stepGenSecond;
+
+   // This is invoked after op_iter is called.
+   class PStepGenFirst: public PStep {
+   public:
+      PStepGenFirst(){ apply = apply_;}
+      virtual ~PStepGenFirst() {}
+      virtual void describeTo(String& tgt) { tgt = "Function_reduce::PStepGenFirst"; }
+
+      static void apply_(const PStep*, VMContext* ctx )
+      {
+         // if op_iter returns break, we throw
+         if( ctx->topData().isBreak() ) {
+            throw FALCON_SIGN_ERROR( AccessError, e_invalid_iter );
+         }
+
+         if( ctx->paramCount() < 3 )
+         {
+            // step into getting the next item.
+            ctx->resetCode( &s_stepGenSecond );
+         }
+         else
+         {
+            *ctx->local(0) = *ctx->param(2);
+            ctx->resetCode( &s_stepInvokeReduce );
+         }
+
+         // step into getting the next item.
+         genNext(ctx);
+      }
+   };
+   static PStepGenFirst s_stepGenFirst;
+
+   // add a  local space, we'll need it
+   ctx->addLocals(1);
+
+   Item* iItem = ctx->param(0);
+   Item* iParams = ctx->param(1);
+   if( iItem == 0 || iParams == 0 )
+   {
+      throw paramError(__LINE__, SRC);
+   }
+
+   // prepare the op_iter framework
+   ctx->pushCode( &s_stepGenFirst );
+   ctx->pushData( *iParams );
+   Class* cls = 0;
+   void* data = 0;
+   iParams->forceClassInst(cls, data);
+   cls->op_iter(ctx,data);
+}
+
+
+/*#
+   @function filter
+   @inset functional_support
+   @brief Filters sequence using a filter function.
+   @param ffunc A callable item used to filter the array.
+   @param sequence A sequence of arbitrary items.
+   @return The filtered sequence.
+
+   ffunc is called iteratively for every item in the collection, which is passed as a parameter to it.
+   If the call returns true, the item is added to the returned array; if it returns false,
+   the item is not added.
+
+   Items in the collection are treated literally (not evaluated).
+*/
+FALCON_DEFINE_FUNCTION_P1(filter)
+{
+   // This is called after op_next generates the next item.
+   class PStepGetNext: public PStep {
+   public:
+      PStepGetNext(){ apply = apply_;}
+      virtual ~PStepGetNext() {}
+      virtual void describeTo(String& tgt) { tgt = "Function_filter::PStepGetNext"; }
+
+      static void apply_(const PStep*, VMContext* ctx )
+      {
+         // are we done?
+         if( ctx->topData().isBreak() )
+         {
+            ctx->returnFrame(*ctx->local(0));
+            return;
+         }
+
+         ctx->popCode();
+
+         bool toGet = ctx->topData().isTrue();
+         ctx->popData();
+         if( toGet )
+         {
+            // if not, add the item to the array.
+            // below us, we have the check filter code.
+            ctx->local(0)->asArray()->append(ctx->topData());
+         }
+
+         ctx->popData();
+         // call the next operator again
+         genNext(ctx);
+      }
+   };
+   static PStepGetNext s_stepGetNext;
+
+   class PStepProcessNext: public PStep {
+   public:
+      PStepProcessNext(){ apply = apply_;}
+      virtual ~PStepProcessNext() {}
+      virtual void describeTo(String& tgt) { tgt = "Function_filter::PStepProcessNext"; }
+
+      static void apply_(const PStep*, VMContext* ctx )
+      {
+         // are we done?
+         if( ctx->topData().isBreak() )
+         {
+            ctx->returnFrame(*ctx->local(0));
+            return;
+         }
+
+         // if not, call the mapper function
+         ctx->pushCode( &s_stepGetNext );
+         Item temp = ctx->topData();
+         // we need to keep the top data.
+         ctx->callItem(*ctx->param(0), 1, &temp);
+      }
+   };
+   static PStepProcessNext s_stepProcessNext;
+
+
+   // This is invoked after op_iter is called.
+   class PStepBeginIter: public PStep {
+   public:
+      PStepBeginIter(){ apply = apply_;}
+      virtual ~PStepBeginIter() {}
+      virtual void describeTo(String& tgt) { tgt = "Function_filter::PStepBeginIter"; }
+
+      static void apply_(const PStep*, VMContext* ctx )
+      {
+         // if op_iter returns break, we throw
+         if( ctx->topData().isBreak() ) {
+            throw FALCON_SIGN_ERROR( AccessError, e_invalid_iter );
+         }
+
+         // prepare the return array.
+         *ctx->local(0) = FALCON_GC_HANDLE(new ItemArray());
+
+         // step into getting the next item.
+         ctx->resetCode( &s_stepProcessNext );
+         genNext(ctx);
+      }
+   };
+   static PStepBeginIter s_stepBeginIter;
+
+   // add a  local space, we'll need it
+   ctx->addLocals(1);
+
+   Item* iItem = ctx->param(0);
+   Item* iParams = ctx->param(1);
+   if( iItem == 0 || iParams == 0 )
+   {
+      throw paramError(__LINE__, SRC);
+   }
+
+   // prepare the code that will interpret op_iter result
+   ctx->pushCode( &s_stepBeginIter );
+
+   // prepare the op_iter framework
+   ctx->pushData( *iParams );
+   Class* cls = 0;
+   void* data = 0;
+   iParams->forceClassInst(cls, data);
+   cls->op_iter(ctx,data);
+}
+
 }
 }
 

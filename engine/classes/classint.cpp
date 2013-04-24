@@ -621,19 +621,30 @@ void ClassInt::op_next( VMContext* ctx, void* self ) const
 
    int64 current = ctx->topData().asInteger();
    ctx->pushData(Item(current));
+   if ( current < 0 )
+   {
+      if( current < limit ) {
+         ctx->topData().setBreak();
+      }
+      else {
+         ctx->opcodeParam(1).setInteger(current-1);
+      }
+   }
+   else
+   {
+      if( current > limit ) {
+         ctx->topData().setBreak();
+      }
+      else {
+         ctx->opcodeParam(1).setInteger(current+1);
+      }
+   }
+
    if( current != limit )
    {
       // ask another loop
       ctx->topData().setDoubt();
       // prepare for next loop
-      if ( current < 0 )
-      {
-         ctx->opcodeParam(1).setInteger(current-1);
-      }
-      else
-      {
-         ctx->opcodeParam(1).setInteger(current+1);
-      }
    }
 }
 
