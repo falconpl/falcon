@@ -3,18 +3,18 @@
 @category Summoning
 
 @output
-Summoning on classes
-Summoned set: prompt
-Summoned get: prompt
-Summoned method with 2 params: 
-prompt, a, b, Nil
-Summoned method with 4 params: 
-prompt, a, b, c
-Done.>>> entity.prop = "Changed"
-"Changed"
->>> e1.prop
-"Changed"
-
+Summoning delegate
+Partial delegate
+Direct call: 
+master: check 2
+Delegated call: 
+delegate: check 1
+============================================================
+Full delegate
+delegate: check 1
+delegate: check 2
+============================================================
+Done.
 @endoutput
 */
 

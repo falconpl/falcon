@@ -34,6 +34,8 @@
 #include <falcon/textwriter.h>
 #include <falcon/symbol.h>
 
+#include <falcon/ov_names.h>
+
 #include <falcon/function.h>
 #include <falcon/extfunc.h>
 
@@ -766,6 +768,36 @@ void Class::op_setProperty( VMContext* ctx, void* data, const String& prop ) con
 }
 
 
+static void internal_callprop( const Class* cls, VMContext* ctx, void* instance, const String& message, int32 pCount, Property& prop )
+{
+   ctx->popData();
+   if( prop.method != 0 )
+   {
+      ctx->callInternal(prop.method, pCount, ctx->opcodeParam(pCount));
+      return;
+   }
+   else {
+      if( pCount > 0 ) {
+
+         if( ! prop.bConst )
+         {
+            ctx->popData( pCount-1 );
+            prop.setFunc(cls, message, instance, ctx->topData() );
+            return;
+         }
+         else {
+            FALCON_RESIGN_XERROR( AccessError, e_prop_acc, ctx,
+                               .extra(message) );
+            return;
+         }
+      }
+      else {
+         prop.getFunc( cls, message, instance, ctx->addDataSlot() );
+         return;
+      }
+   }
+}
+
 void Class::op_summon( VMContext* ctx, void* instance, const String& message, int32 pCount, bool isOptional ) const
 {
    static BOM* bom = Engine::instance()->getBom();
@@ -774,32 +806,8 @@ void Class::op_summon( VMContext* ctx, void* instance, const String& message, in
    if( iter != _p->m_props.end() )
    {
       Property& prop = iter->second;
-      ctx->popData();
-      if( prop.method != 0 )
-      {
-         ctx->callInternal(prop.method, pCount, ctx->opcodeParam(pCount));
-         return;
-      }
-      else {
-         if( pCount > 0 ) {
-
-            if( ! prop.bConst )
-            {
-               ctx->popData( pCount-1 );
-               prop.setFunc(this, message, instance, ctx->topData() );
-               return;
-            }
-            else {
-               FALCON_RESIGN_XERROR( AccessError, e_prop_acc, ctx,
-                                  .extra(message) );
-               return;
-            }
-         }
-         else {
-            prop.getFunc( this, message, instance, ctx->addDataSlot() );
-            return;
-         }
-      }
+      internal_callprop( this, ctx, instance, message, pCount, prop );
+      return;
    }
 
    if ( message == "respondsTo" ) {
@@ -898,8 +906,21 @@ void Class::op_summon( VMContext* ctx, void* instance, const String& message, in
 }
 
 
-void Class::op_summon_failing( VMContext* ctx, void*, const String& message, int32 ) const
+void Class::op_summon_failing( VMContext* ctx, void* instance, const String& message, int32 pCount ) const
 {
+   static const String message1 = OVERRIDE_OP_UNKMSG;
+
+   Private::PropertyMap::iterator iter = _p->m_props.find( message1 );
+   if( iter != _p->m_props.end() )
+   {
+      Property& prop = iter->second;
+      Item temp = FALCON_GC_HANDLE( new String( message ) );
+      // ok, even if pCount == 0
+      ctx->insertData( pCount-1, &temp, 1, 0 );
+      internal_callprop( this, ctx, instance, message1, pCount+1, prop );
+      return;
+   }
+
    FALCON_RESIGN_XERROR( AccessError, e_prop_acc, ctx,
                       .extra(message) );
 }

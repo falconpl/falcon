@@ -1143,6 +1143,29 @@ void FalconClass::unflattenSelf( ItemArray& flatArray )
 }
 
 
+static void internal_callprop( VMContext* ctx, void* instance, FalconClass::Property& prop, int32 pCount )
+{
+   FalconInstance* inst = static_cast<FalconInstance*>(instance);
+
+   if( prop.m_type == FalconClass::Property::t_func )
+   {
+      ctx->callInternal(prop.m_value.func, pCount, ctx->opcodeParam(pCount));
+   }
+   else if( prop.m_type == FalconClass::Property::t_prop ) {
+      if( pCount > 0 ) {
+         ctx->popData( pCount-1 );
+         Item temp = ctx->topData();
+         inst->data()[ prop.m_value.id ].copyFromLocal( temp );
+         ctx->popData();
+         ctx->topData() = temp;
+      }
+      else {
+         ctx->addDataSlot();
+         ctx->topData().copyFromRemote(inst->data()[ prop.m_value.id ]);
+      }
+   }
+}
+
 void FalconClass::op_summon( VMContext* ctx, void* instance, const String& message, int32 pCount, bool bOptional ) const
 {
    FalconInstance* inst = static_cast<FalconInstance*>(instance);
@@ -1162,29 +1185,13 @@ void FalconClass::op_summon( VMContext* ctx, void* instance, const String& messa
    if( iter != _p->m_members->end() )
    {
       Property& prop = *iter->second;
-      if( prop.m_type == Property::t_func )
-      {
-         ctx->callInternal(prop.m_value.func, pCount, ctx->opcodeParam(pCount));
-      }
-      else if( prop.m_type == Property::t_prop ) {
-         if( pCount > 0 ) {
-            ctx->popData( pCount-1 );
-            Item temp = ctx->topData();
-            inst->data()[ prop.m_value.id ].copyFromLocal( temp );
-            ctx->popData();
-            ctx->topData() = temp;
-         }
-         else {
-            ctx->addDataSlot();
-            ctx->topData().copyFromRemote(inst->data()[ prop.m_value.id ]);
-         }
-
-      }
+      internal_callprop( ctx, instance, prop, pCount );
       return;
    }
 
    Class::op_summon(ctx, instance, message, pCount, bOptional);
 }
+
 
 void FalconClass::delegate( void* instance, Item* target, const String& message ) const
 {

@@ -1,0 +1,45 @@
+/*
+@name Handler for unknown summoning
+@category Summoning
+
+@output
+@endoutput
+*/
+
+class Test( id )
+   id = id
+   
+   function check1()
+      > self.id, ": check 1"
+   end
+   
+   function __unknownSummon(msg)
+      > @"Called \"$(msg)\" with: ", passvp().describe()
+   end
+end
+
+depth = VMContext.dataDepth
+> "Handler for unknown summoning"
+depth = VMContext.dataDepth
+
+e1 = Test('master')
+
+> "Message found:"
+e1::check1[]
+
+> "Message not found (0 param): "
+e1::unknown0[]
+
+> "Message not found (1 param): "
+e1::unknown1['first']
+
+> "Message not found (2 params): "
+e1::unknown2['first' 'second']
+
+depth1 = VMContext.dataDepth
+
+if depth != depth1
+   raise "Data stack corrupted"
+end
+
+> "Done."

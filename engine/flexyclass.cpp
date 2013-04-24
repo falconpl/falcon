@@ -351,6 +351,38 @@ inline bool FlexyClass::operand( int opCount, const String& name, VMContext* ctx
 }
 
 
+static void internal_callprop( VMContext* ctx, FlexyDict* flexy, const String& message, Item* value, int32 pCount )
+{
+   if( value->isFunction() )
+   {
+      Function* func = value->asFunction();
+      ctx->callInternal(func, pCount, ctx->opcodeParam(pCount) );
+   }
+   else if( value->isCallable() )
+   {
+      Class* cls;
+      void* data;
+      value->asClassInst(cls, data);
+      ctx->opcodeParam(pCount).copyFromRemote(*value);
+      cls->op_call(ctx, pCount, data);
+   }
+   else {
+      if( pCount > 0 ) {
+         ctx->popData( pCount-1 );
+
+         Item temp = ctx->topData();
+         flexy->insert(message, temp);
+         ctx->popData();
+         ctx->topData() = temp;
+      }
+      else {
+         ctx->addDataSlot();
+         ctx->topData().copyFromRemote(*value);
+      }
+
+   }
+}
+
 void FlexyClass::op_summon( VMContext* ctx, void* instance, const String& message, int32 pCount, bool bOptional ) const
 {
    FlexyDict* flexy = static_cast<FlexyDict*>(instance);
@@ -369,34 +401,7 @@ void FlexyClass::op_summon( VMContext* ctx, void* instance, const String& messag
    Item* value = flexy->find( message );
    if( value != 0 )
    {
-      if( value->isFunction() )
-      {
-         Function* func = value->asFunction();
-         ctx->callInternal(func, pCount, ctx->opcodeParam(pCount) );
-      }
-      else if( value->isCallable() )
-      {
-         Class* cls;
-         void* data;
-         value->asClassInst(cls, data);
-         ctx->opcodeParam(pCount).copyFromRemote(*value);
-         cls->op_call(ctx, pCount, data);
-      }
-      else {
-         if( pCount > 0 ) {
-            ctx->popData( pCount-1 );
-
-            Item temp = ctx->topData();
-            flexy->insert(message, temp);
-            ctx->popData();
-            ctx->topData() = temp;
-         }
-         else {
-            ctx->addDataSlot();
-            ctx->topData().copyFromRemote(*value);
-         }
-
-      }
+      internal_callprop( ctx, flexy, message, value,  pCount );
       return;
    }
 
