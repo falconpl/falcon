@@ -1,0 +1,116 @@
+/*
+@name Summoning sample
+@category Book
+
+@output
+0
+Method called
+Direct: new value
+Summoned: new value
+Method called
+Called "other" with: ["first", "second"]
+Indirect summon: 
+Method called
+Called "other" with: ["first", "second"]
+============================================================
+Delegated methods:
+Delegate method called
+Special method called
+Delegated Called "other" with: []
+Delegated Called "what" with: []
+Checking original: Method called
+============================================================
+Undelegating: 
+Method called
+Done.
+@endoutput
+*/
+
+// Falcon summoning is aspect-oriented programming merged with
+// traditional OOP.
+
+class Handler
+   property = 0
+   
+   function method()
+      > "Method called"
+   end
+   
+   function __unknownSummon(msg)
+      > @"Called \"$(msg)\" with: ", passvp().describe()
+   end
+end
+
+
+// The handler can be seen as a normal falcon class:
+hinst = Handler()
+> hinst.property   // 0
+mth = hinst.method
+mth()              // "Method called"
+
+// But its property and methods can be summoned:
+hinst::property['new value']
+> "Direct: ", hinst.property       // 'new value'
+> "Summoned: ", hinst::property[]  // 'new value'
+hinst::method[]                    // method called
+
+// if a summoned property is not found, __unknownSummon is invoked:
+hinst::other['first', 'second']    // Called "other" with: ...
+
+// summoning can also be indirect:
+> "Indirect summon: "
+hinst::summon[ 'method' ]
+hinst::summon[ 'other' 'first' 'second' ]  // note: comma optional
+
+> "=" * 60
+//===============================================================
+// Summoning also supports delegation. 
+// An object can delegate another one to receive one or more
+// (eventually all) the summon requests it is summoned with.
+
+class Delegate
+   function method()
+      > "Delegate method called"
+   end
+
+   function special()
+      > "Special method called"
+   end
+
+   function __unknownSummon(msg)
+      > @"Delegated Called \"$(msg)\" with: ", passvp().describe()
+   end
+end
+
+dlg = Delegate()
+
+hinst::delegate[ dlg, 'method']
+
+> "Delegated methods:" 
+hinst::method[]      // "Delegate method called"
+
+// you can delegate also non-existing handlers (in the source class)
+hinst::delegate[ dlg, 'special' ]
+hinst::special[]       // "Special method called"
+
+// or even unhandled things:
+hinst::delegate[ dlg, 'other' ]
+hinst::other[]        // "Delegated Called "other"...
+
+// or even 'everything'
+hinst::delegate[ dlg ]
+hinst::what[]        // "Delegated Called "what"...
+
+// Notice that the original method is still there:
+>> "Checking original: "
+hinst.method()        // "Method called"
+
+> "=" * 60
+
+// Finally, you can un-delegate
+> "Undelegating: "
+hinst::delegate[]
+hinst::method[]        // "Method called"
+
+> "Done."
+
