@@ -1,0 +1,40 @@
+/*
+@name Basic floating point math expressions
+@category Math-expr
+
+@output
+A=3.3 B=2.2
+5.5
+1.1
+7.26
+1.5
+1
+13.827086118044
+A=3.3 B=0.1
+3.4
+3.2
+0.33
+33
+1.1268118199992
+Done.
+@endoutput
+*/
+
+a=3.3
+b=2.2
+> "A=",a," B=",b
+> a+b
+> a-b
+> a*b
+> a/b
+> a%b
+> a**b
+
+b=0.1
+> "A=",a," B=",b
+> a+b
+> a-b
+> a*b
+> a/b
+> a**b
+> "Done."
