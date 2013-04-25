@@ -100,7 +100,7 @@ public:
    static int64 operate( int64 a, int64 b ) { return a / b; }
    static void operate( VMContext* ctx, Class* cls, void* inst ) { cls->op_div(ctx, inst); }
    static numeric operaten( numeric a, numeric b ) { return a / b; }
-   static bool zeroCheck( const Item& n ) { return n.isOrdinal() && n.forceInteger() == 0; }
+   static bool zeroCheck( const Item& n ) { return (n.isInteger() && n.asInteger() == 0) || (n.isNumeric() && n.asNumeric() == 0.0); }
    static void swapper( Item&, Item& op1) { 
       if( op1.isInteger() ) {op1.setNumeric( (numeric) op1.asInteger());} 
    }   
