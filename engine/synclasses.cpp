@@ -1451,7 +1451,7 @@ void SynClasses::ClassOptSummon::restore( VMContext* ctx, DataReader* dr ) const
    String message;
    dr->read(message);
 
-   ExprSummon* expr = new ExprSummon;
+   ExprOptSummon* expr = new ExprOptSummon;
    expr->message(message);
    try {
       ctx->pushData( Item( this, expr ) );
