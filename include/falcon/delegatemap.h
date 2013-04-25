@@ -44,12 +44,26 @@ public:
    void setDelegate( const String& msg, const Item& target );
 
    /** Sets the delegate for a given message.
-    \param msg the delegate for that message.
+    \param msg The message to be delegated.
+    \param item The delegated entity for that message.
     \return The delegated item or 0 if none.
+
+    If \b msg is '*', the target is set as delegate for any
+    message.
     */
    bool getDelegate( const String& msg, Item& target ) const;
 
+   /** Removes the delegation to the given message.
+    \param msg The delegated message to be cleared.
+
+    If the message is '*', this clears the general delegate
+    and all the message delegates.
+    */
+   void clearDelegate( const String& msg );
+
    /** Remove all the delegations.
+
+    This removes the general delegation and clears the message map
     */
    void clear();
 

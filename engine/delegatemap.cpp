@@ -60,6 +60,21 @@ void DelegateMap::setDelegate( const String& msg, const Item& target )
    m_mtx.unlock();
 }
 
+void DelegateMap::clearDelegate( const String& msg )
+{
+   m_mtx.lock();
+   if( msg == "*" )
+   {
+      m_bHasGeneral = false;
+      _p->m_dmap.clear();
+   }
+   else {
+      _p->m_dmap.erase(msg);
+   }
+   m_mtx.unlock();
+}
+
+
 bool DelegateMap::getDelegate( const String& msg, Item& target ) const
 {
    bool result = false;

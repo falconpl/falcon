@@ -1,0 +1,79 @@
+/*
+@name Summoning un-delegate
+@category Summoning
+
+@output
+Summoning un-delegate
+Partial delegate
+delegate: check 1
+Un-delegated partial call: 
+master: check 1
+============================================================
+Full delegate / undelegate
+delegate: check 1
+delegate: check 2
+Full un-delegate
+master: check 1
+master: check 2
+============================================================
+Partial delegate / full un-delegate
+Delegated call: 
+delegate: check 1
+Undelegate partial via full un-delegate
+master: check 1
+============================================================
+Done.
+@endoutput
+*/
+
+class Test( id )
+   id = id
+   
+   function check1()
+      > self.id, ": check 1"
+   end
+   
+   function check2()
+      > self.id, ": check 2"
+   end
+end
+
+> "Summoning un-delegate"
+depth = VMContext.dataDepth
+
+e1 = Test('master')
+e2 = Test('delegate')
+e1::delegate[ e2 "check1" ]
+
+> "Partial delegate"
+e1::check1[]
+
+> "Un-delegated partial call: "
+e1::delegate[e1 "check1" ]
+e1::check1[]
+
+> "="*60
+
+> "Full delegate / undelegate"
+e1::delegate[ e2 ]
+e1::check1[]
+e1::check2[]
+
+> "Full un-delegate"
+e1::delegate[ e1 ]
+e1::check1[]
+e1::check2[]
+
+> "="*60
+
+> "Partial delegate / full un-delegate"
+> "Delegated call: "
+e1::delegate[ e2 "check1" ]
+e1::check1[]
+> "Undelegate partial via full un-delegate"
+e1::delegate[]
+e1::check1[]
+
+> "="*60
+
+> "Done."

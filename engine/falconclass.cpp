@@ -1200,6 +1200,10 @@ void FalconClass::delegate( void* instance, Item* target, const String& message 
    {
       mantra->m_delegates.clear();
    }
+   else if( target->isUser() && target->asInst() == instance )
+   {
+      mantra->m_delegates.clearDelegate(message);
+   }
    else {
       mantra->m_delegates.setDelegate(message, *target);
    }
