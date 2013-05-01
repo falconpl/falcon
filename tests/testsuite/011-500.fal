@@ -1,0 +1,25 @@
+/*
+@name Dynamic code change smoke test
+@category Dyncode
+
+@output
+Homoiconic For/in complex
+Values: 1,a,2,b,3,c.
+Done.
+@endoutput
+*/
+
+> "Creating a dynamic loop:"
+
+// Testing if a dynamic code change works.
+x = {[] while 0; end }
+
+x.selector = {[] a < 5 }
+x.append( {[] print(++a) } )
+x.append( {[] if a < 4; print(","); else; print(".")} )
+
+a = 0
+x()
+print()
+printl( "Done.")
+

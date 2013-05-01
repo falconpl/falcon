@@ -225,16 +225,19 @@ void ClassTreeStep::op_setProperty( VMContext* ctx, void* instance, const String
 {
    TreeStep* stmt = static_cast<TreeStep*>(instance);
 
+   // the value to be stored.
+   Item& value = ctx->opcodeParam(1);
+
    if( prop == "selector" )
    {
       bool bCreate = true;
-      if( ctx->opcodeParam(2).isNil() )
+      if( value.isNil() )
       {
          // set it and ingore the result, we don't care.
          stmt->selector(0);
       }
       else {
-         Expression* expr = TreeStep::checkExpr( ctx->topData(), bCreate );
+         Expression* expr = TreeStep::checkExpr( value, bCreate );
          if( expr == 0 )
          {
             throw new AccessError( ErrorParam( e_inv_params, __LINE__, SRC )
@@ -257,7 +260,7 @@ void ClassTreeStep::op_setProperty( VMContext* ctx, void* instance, const String
          }
       }
 
-      ctx->stackResult(3, ctx->topData());
+      ctx->popData();
    }
    else if( hasProperty( instance, prop) )
    {
@@ -630,24 +633,18 @@ void ClassTreeStep::AppendMethod::invoke( VMContext* ctx, int32 )
    fassert( self.isUser() );
 
    Item* i_treestep = ctx->param(0);
-   Class* cls;
-   void* inst;
-
-   ClassTreeStep* owner = static_cast<ClassTreeStep*>(methodOf());
-   if( i_treestep == 0
-       ||  !( i_treestep->asClassInst(cls, inst) && cls->isDerivedFrom(owner) )
-     )
+   if( i_treestep == 0 || i_treestep->type() != FLC_CLASS_ID_TREESTEP )
    {
-     ctx->raiseError(paramError(__LINE__, SRC ));
-     return;
+      ctx->raiseError(paramError(__LINE__, SRC ));
+      return;
    }
 
-   TreeStep* ts = static_cast<TreeStep*>( inst );
+   TreeStep* ts = static_cast<TreeStep*>( i_treestep->asInst() );
    if( ts->parent() !=  0 )
    {
      ctx->raiseError( new CodeError( ErrorParam(e_invalid_op, __LINE__, SRC)
-     .origin( ErrorParam::e_orig_runtime)
-     .extra( "Parented syntree cannot be inserted" ) ) );
+        .origin( ErrorParam::e_orig_runtime)
+        .extra( "Parented syntree cannot be inserted" ) ) );
      return;
    }
 
