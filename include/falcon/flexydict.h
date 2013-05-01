@@ -88,6 +88,7 @@ public:
    bool ownMeta() const { return m_bOwnMeta; }
 
    uint32 size() const;
+   bool empty() const {return size() == 0;}
 
 private:
    class Private;

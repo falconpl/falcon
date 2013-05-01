@@ -52,6 +52,7 @@ public:
    Item* find( const Item& key );
 
    length_t size() const;
+   bool empty() const { return size() == 0; }
 
    void describe( String& target, int depth = 3, int maxlen = 60 ) const;
 
