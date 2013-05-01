@@ -135,6 +135,7 @@ void StmtWhile::render( TextWriter* tw, int32 depth ) const
    {
       tw->write( "while " );
       m_expr->render( tw, relativeDepth(depth) );
+      tw->write( "\n" );
       if( m_child != 0 )
       {
          m_child->render(tw, depth < 0 ? -depth : depth + 1 );
