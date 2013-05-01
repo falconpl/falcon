@@ -72,14 +72,15 @@ static void internal_inspect( TextWriter* tw, const Item& itm, int32 depth, int3
       {
          tw->write("[\n");
 
-         for( length_t len = 0; ia->length(); ++len )
+         for( length_t pos = 0; pos < ia->length(); ++pos )
          {
-            Item& item = ia->at(len);
+            Item& item = ia->at(pos);
             internal_inspect(tw, item, depth+1, maxdepth, maxsize );
-            if( len+1 < ia->length() )
+            if( pos+1 < ia->length() )
             {
                tw->write(",");
             }
+            tw->write("\n");
          }
 
          tw->write( PStep::renderPrefix(depth ) );
@@ -103,18 +104,25 @@ static void internal_inspect( TextWriter* tw, const Item& itm, int32 depth, int3
          {
          public:
             Rator(TextWriter* tw, int32 depth, int32 maxdepth, int32 maxsize ):
+               m_count(0),
                m_tw(tw), m_depth(depth), m_maxdepth(maxdepth), m_maxsize(maxsize)
                {}
             virtual ~Rator() {}
 
             virtual void operator()( const Item& key, Item& value )
             {
+               if( m_count != 0 )
+               {
+                  m_tw->write(",\n");
+               }
+               m_count++;
                internal_inspect( m_tw, key, m_depth, m_maxdepth, m_maxsize );
                m_tw->write( " => ");
                internal_inspect( m_tw, value, m_depth, m_maxdepth, m_maxsize );
             }
 
          private:
+            int32 m_count;
             TextWriter* m_tw;
             int32 m_depth;
             int32 m_maxdepth;
@@ -124,7 +132,7 @@ static void internal_inspect( TextWriter* tw, const Item& itm, int32 depth, int3
          Rator rator(tw, depth+1, maxdepth, maxsize);
          id->enumerate(rator);
          tw->write( PStep::renderPrefix(depth ) );
-         tw->write("]");
+         tw->write("\n]");
       }
    }
    break;
@@ -152,8 +160,9 @@ static void internal_inspect( TextWriter* tw, const Item& itm, int32 depth, int3
             virtual void operator()( const String& property, Item& value )
             {
                m_tw->write( property );
-               m_tw->write( " => ");
+               m_tw->write( " = ");
                internal_inspect( m_tw, value, m_depth, m_maxdepth, m_maxsize );
+               m_tw->write("\n");
             }
 
          private:
@@ -212,6 +221,7 @@ void Inspect::invoke( VMContext* ctx, int32 )
    int64 maxsize = i_maxsize == 0 ? -1 : i_maxsize->forceInteger();
 
    internal_inspect( ctx->vm()->textOut(), *i_item, 0, maxdepth, maxsize );
+   ctx->returnFrame();
 }
 
 }
