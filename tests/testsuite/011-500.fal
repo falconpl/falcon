@@ -3,8 +3,8 @@
 @category Dyncode
 
 @output
-Homoiconic For/in complex
-Values: 1,a,2,b,3,c.
+Creating a dynamic loop:
+1,2,3,4.5.
 Done.
 @endoutput
 */
@@ -16,10 +16,9 @@ x = {[] while 0; end }
 
 x.selector = {[] a < 5 }
 x.append( {[] print(++a) } )
-x.append( {[] if a < 4; print(","); else; print(".")} )
+x.append( {[] if a < 4; print(","); else; print("."); end} )
 
 a = 0
 x()
-print()
+printl()
 printl( "Done.")
-
