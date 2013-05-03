@@ -25,6 +25,7 @@
 #include <falcon/itemdict.h>
 #include <falcon/flexydict.h>
 #include <falcon/falconinstance.h>
+#include <falcon/falconclass.h>
 #include <falcon/textwriter.h>
 
 namespace Falcon {
@@ -49,7 +50,13 @@ static void internal_inspect( TextWriter* tw, const Item& itm, int32 depth, int3
    Class* cls = 0;
    void* data = 0;
 
-   tw->write( PStep::renderPrefix(depth ) );
+   if( depth > 0 )
+   {
+      tw->write( PStep::renderPrefix(depth) );
+   }
+   else {
+      depth = -depth;
+   }
 
    if( maxdepth > 0 && depth == maxdepth )
    {
@@ -161,7 +168,7 @@ static void internal_inspect( TextWriter* tw, const Item& itm, int32 depth, int3
             {
                m_tw->write( property );
                m_tw->write( " = ");
-               internal_inspect( m_tw, value, m_depth, m_maxdepth, m_maxsize );
+               internal_inspect( m_tw, value, -m_depth, m_maxdepth, m_maxsize );
                m_tw->write("\n");
             }
 
@@ -184,10 +191,64 @@ static void internal_inspect( TextWriter* tw, const Item& itm, int32 depth, int3
       itm.forceClassInst(cls, data);
       if( cls->isFalconClass() )
       {
-         /*FalconInstance* fi = static_cast<FalconInstance*>( data );
+         class Rator: public Class::PropertyEnumerator {
+         public:
+            Rator(TextWriter* tw, int32 depth, int32 maxdepth, int32 maxsize, FalconInstance* fi, FalconClass* fcls ):
+               m_tw(tw), m_depth(depth), m_maxdepth(maxdepth), m_maxsize(maxsize),
+               m_fi(fi), m_fcls(fcls) {}
+
+            virtual ~Rator() {}
+
+            virtual bool operator()( const String& propName ) {
+               Item item;
+               m_tw->write( PStep::renderPrefix(m_depth) );
+               const FalconClass::Property* prop = m_fcls->getProperty(propName);
+               switch( prop->m_type )
+               {
+               case FalconClass::Property::t_prop:
+                  m_fi->getMember( propName, item );
+                  m_tw->write( propName );
+                  m_tw->write( " = " );
+                  internal_inspect(m_tw, item, -(m_depth+1), m_maxdepth, m_maxsize );
+                  m_tw->write( "\n" );
+                  break;
+
+               case FalconClass::Property::t_inh:
+                  m_tw->write( "from " );
+                  m_fi->getMember( propName, item );
+                  internal_inspect(m_tw, item, -(m_depth+1), m_maxdepth, m_maxsize );
+                  break;
+
+               case FalconClass::Property::t_state:
+                  m_tw->write( "[" );
+                  m_tw->write( propName );
+                  m_tw->write( "]\n" );
+                  break;
+
+               case FalconClass::Property::t_func:
+                  m_tw->write( propName );
+                  m_tw->write( "()\n" );
+                  break;
+               }
+               return true;
+            }
+
+         public:
+            TextWriter* m_tw; int32 m_depth; int32 m_maxdepth; int32 m_maxsize;
+            FalconInstance* m_fi;
+            FalconClass* m_fcls;
+         };
+
+         FalconInstance* fi = static_cast<FalconInstance*>( data );
          FalconClass* fcls = static_cast<FalconClass*>(cls);
-         fcls->enumerateProperties()
-         */
+
+         tw->write("Class ");
+         tw->write( fcls->name() );
+         tw->write("{\n");
+         Rator rator( tw, depth+1, maxdepth, maxsize, fi, fcls );
+         fcls->enumerateProperties(data, rator);
+         tw->write( PStep::renderPrefix(depth) );
+         tw->write("}");
       }
       else {
          cls->describe(data, temp, depth, maxsize );

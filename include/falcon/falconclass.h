@@ -131,7 +131,6 @@ public:
       Property( ExprInherit* value );
       Property( FalconState* value );
 
-
       ~Property();
 
       /** Returns associated expression (if this property holds an expression).
