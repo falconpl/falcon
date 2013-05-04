@@ -1033,6 +1033,8 @@ public:
     */
    void callInternal( Closure* closure, int nparams );
 
+   void callInternal( const Item& item, int np );
+
    /** Calls an item without parameters.
     \see callItem( const Item&, ... )
     */

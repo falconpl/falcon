@@ -41,6 +41,7 @@ FALCON_DECLARE_FUNCTION(map, "mapper:C, data:X")
 FALCON_DECLARE_FUNCTION(filter, "flt:C, data:X")
 FALCON_DECLARE_FUNCTION(reduce, "reducer:C, data:X, initial:[X]")
 
+FALCON_DECLARE_FUNCTION(cascade, "callList:A, ...")
 }
 }
 

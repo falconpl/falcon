@@ -83,6 +83,7 @@ CoreModule::CoreModule():
       << new Ext::Function_map
       << new Ext::Function_filter
       << new Ext::Function_reduce
+      << new Ext::Function_cascade
 
       // Standard classes
       << new Ext::ClassBarrier

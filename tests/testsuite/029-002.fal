@@ -1,0 +1,66 @@
+/*
+@name Cascade test (as array) 
+@category Core-funcs
+
+@output
+Cascade test (as array)
+Empty cascade (should be nil)
+Nil
+--------------------------------------------------
+Cascade without parameters (should be 12)
+12
+--------------------------------------------------
+Cascade with 1 parameter (should be 12)
+12
+--------------------------------------------------
+Cascade with several parameters parameters (should be 12 again)
+1: 1,2,3
+2: 6
+12
+--------------------------------------------------
+Done.
+@endoutput
+*/
+
+depth = VMContext.dataDepth
+
+> "Cascade test (as array)"
+
+> "Empty cascade (should be nil)"
+> .[ cascade .[]]()
+> "-" * 50
+> "Cascade without parameters (should be 12)"
+> .[cascade
+   .[
+      {=> return 6 }
+      {(a) a*2 }      
+   ]
+]()
+
+> "-" * 50
+> "Cascade with 1 parameter (should be 12)"
+> .[cascade
+   .[
+      { a => return a * 2 }
+      {(a) a*2 }      
+   ]
+   3
+]()
+
+> "-" * 50
+> "Cascade with several parameters parameters (should be 12 again)"
+> .[cascade
+   .[
+      {a,b,c => > @"1: $a,$b,$c"; return a+b+c }
+      {a => > @"2: $a"; return a*2 }      
+   ]
+   1 2 3
+]()
+
+> "-" * 50
+
+depth1 = VMContext.dataDepth
+if depth1 != depth
+   raise "Data stack corruption detected " + depth1 + " vs " + depth
+end
+> "Done."

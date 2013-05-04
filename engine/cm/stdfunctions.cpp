@@ -864,6 +864,211 @@ FALCON_DEFINE_FUNCTION_P1(filter)
    cls->op_iter(ctx,data);
 }
 
+
+/*#
+   @function cascade
+   @inset functional_support
+   @brief Concatenate a set of callable items so to form a single execution unit.
+   @param callList Sequence of callable items.
+   @optparam ... Optional parameters to be passed to the first callable item.
+   @return The return value of the last callable item.
+
+   This function executes a set of callable items passing the parameters it receives
+   beyond the first one to the first  item in the list; from there on, the return value
+   of the previous call is fed as the sole parameter of the next call. In other words,
+   @code
+      cascade( [F1, F2, ..., FN], p1, p2, ..., pn )
+   @endcode
+   is equivalent to
+   @code
+      FN( ... F2( F1( p1, p2, ..., pn ) ) ... )
+   @endcode
+
+   A function may declare itself "uninterested" to insert its value in the cascade
+   by returning an out-of-band item. In that case, the return value is ignored and the same parameter
+   it received is passed on to the next calls and eventually returned.
+
+   Notice that the call list is not evaluated in functional context; it is just a list
+   of callable items. To evaluate the list, or part of it, in functional context, use
+   the eval() function.
+
+   A simple example usage is the following:
+   @code
+      function square( a )
+         return a * a
+      end
+
+      function sqrt( a )
+         return a ** 0.5
+      end
+
+      cascade_abs = [cascade, [square, sqrt] ]
+      > cascade_abs( 2 )      // 2
+      > cascade_abs( -4 )     // 4
+   @endcode
+
+   Thanks to the possibility to prevent insertion of the return value in the function call sequence,
+   it is possible to program "interceptors" that will catch the progress of the sequence without
+   interfering:
+
+   @code
+      function showprog( v )
+         > "Result currently ", v
+        return oob(nil)
+      end
+
+      // define sqrt and square as before...
+      cascade_abs = [cascade, [square, showprog, sqrt, showprog] ]
+      > "First process: ", cascade_abs( 2 )
+      > "Second process: ", cascade_abs( -4 )
+   @endcode
+
+   If the first function of the list declines processing by returning an oob item, the initial parameters
+   are all passed to the second function, and so on till the last call.
+
+   For example:
+
+   @code
+      function whichparams( a, b )
+         > "Called with ", a, " and ", b
+         return oob(nil)
+      end
+
+      csq = [cascade, [ whichparams, {a,b=> a*b} ]
+      > csq( 3, 4 )
+   @endcode
+
+   Here, the first function in the list intercepts the parameters but, as it doesn't
+   accepts them, they are both passed to the second in the list.
+
+   @see oob
+*/
+FALCON_DEFINE_FUNCTION_P1(cascade)
+{
+   // This is called after op_next generates the next item.
+   class PStepGetNext: public PStep {
+   public:
+      PStepGetNext(){ apply = apply_;}
+      virtual ~PStepGetNext() {}
+      virtual void describeTo(String& tgt) { tgt = "Function_filter::PStepGetNext"; }
+
+      static void apply_(const PStep*, VMContext* ctx )
+      {
+         // are we done?
+         if( ctx->topData().isBreak() )
+         {
+            ctx->returnFrame(*ctx->local(0));
+            return;
+         }
+
+         // remove this code, PStepFuncResult is now in charge.
+         ctx->popCode();
+
+         Item func = ctx->topData();
+         ctx->pushData( *ctx->local(0) );
+         ctx->callInternal(func, 1);
+      }
+   };
+   static PStepGetNext s_stepGetNext;
+
+   class PStepFuncResult: public PStep {
+   public:
+      PStepFuncResult(){ apply = apply_;}
+      virtual ~PStepFuncResult() {}
+      virtual void describeTo(String& tgt) { tgt = "Function_cascade::PStepFuncResult"; }
+
+      static void apply_(const PStep*, VMContext* ctx )
+      {
+         // save the result and ask for the next operator
+         *ctx->local(0) = ctx->topData();
+         ctx->popData();
+
+         ctx->pushCode( &s_stepGetNext );
+         Class* cls = 0;
+         void* data = 0;
+         ctx->param(0)->forceClassInst(cls, data);
+         cls->op_next(ctx, data);
+      }
+   };
+   static PStepFuncResult s_stepFuncResult;
+
+
+   // processes the first result of the iteration (use all the parameters)
+   class PStepProcessFirst: public PStep {
+   public:
+      PStepProcessFirst(){ apply = apply_;}
+      virtual ~PStepProcessFirst() {}
+      virtual void describeTo(String& tgt) { tgt = "Function_cascade::PStepProcessFirst"; }
+
+      static void apply_(const PStep*, VMContext* ctx )
+      {
+         // Empty sequence? -- return nil
+         if( ctx->topData().isBreak() )
+         {
+            ctx->returnFrame();
+            return;
+         }
+
+         // if not, call the mapper function
+         ctx->resetCode( &s_stepFuncResult );
+         Item func = ctx->topData();
+
+         // we need to keep the top data.
+         for( int32 i = 1; i < ctx->paramCount(); ++i )
+         {
+            ctx->pushData( *ctx->param(i) );
+         }
+         ctx->callInternal(func, ctx->paramCount()-1 );
+      }
+   };
+   static PStepProcessFirst s_stepProcessFirst;
+
+
+   // This is invoked after op_iter is called.
+   class PStepBeginIter: public PStep {
+   public:
+      PStepBeginIter(){ apply = apply_;}
+      virtual ~PStepBeginIter() {}
+      virtual void describeTo(String& tgt) { tgt = "Function_cascade::PStepBeginIter"; }
+
+      static void apply_(const PStep*, VMContext* ctx )
+      {
+         // if op_iter returns break, we throw
+         if( ctx->topData().isBreak() ) {
+            throw FALCON_SIGN_ERROR( AccessError, e_invalid_iter );
+         }
+
+         // step into getting the next item.
+         ctx->resetCode( &s_stepProcessFirst );
+
+         Class* cls = 0;
+         void* data = 0;
+         ctx->param(0)->forceClassInst(cls, data);
+         cls->op_next(ctx,data);
+      }
+   };
+   static PStepBeginIter s_stepBeginIter;
+
+   // add a  local space, we'll need it to store function results
+   ctx->addLocals(1);
+
+   Item* iItem = ctx->param(0);
+   if( iItem == 0 )
+   {
+      throw paramError(__LINE__, SRC);
+   }
+
+   // prepare the code that will interpret op_iter result
+   ctx->pushCode( &s_stepBeginIter );
+
+   // prepare the op_iter framework
+   Class* cls = 0;
+   void* data = 0;
+   iItem->forceClassInst(cls, data);
+   ctx->pushData(*iItem);
+   cls->op_iter(ctx,data);
+}
+
 }
 }
 

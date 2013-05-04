@@ -1323,6 +1323,18 @@ void VMContext::pushBreak()
 }
 
 
+void VMContext::callInternal( const Item& item, int nparams )
+{
+   TRACE( "Calling item %s -- call frame code:%p, data:%p, call:%p",
+         item.describe().c_ize(),
+         m_codeStack.m_top, m_dataStack.m_top, m_callStack.m_top  );
+
+   Class* cls = 0;
+   void* data = 0;
+   item.forceClassInst(cls,data);
+   cls->op_call(this, nparams, data );
+}
+
 void VMContext::callInternal( Function* function, int nparams, const Item& self )
 {
    TRACE( "Calling method %s.%s -- call frame code:%p, data:%p, call:%p",
