@@ -1,0 +1,30 @@
+/*
+@name Dictionary methods - clear
+@category Core-dict
+
+@output
+Dictionary methods - clear
+Empty clear: [=>]
+1 Item clear: [=>]
+2 Items clear:  [=>]
+Done
+@endoutput
+*/
+
+> "Dictionary methods - clear"
+
+x = [=>]
+y = x.clear()
+> "Empty clear: ", y.describe()
+
+x = ['a'=>1]
+y = x.clear()
+
+> "1 Item clear: ", y.describe()
+
+x = ['a'=>1,'b'=>1]
+y = x.clear()
+
+> "2 Items clear:  ", y.describe()
+
+> "Done"

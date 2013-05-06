@@ -1069,6 +1069,89 @@ FALCON_DEFINE_FUNCTION_P1(cascade)
    cls->op_iter(ctx,data);
 }
 
+
+FALCON_DEFINE_FUNCTION_P(ffor)
+{
+   class PStepCheckLimit: public PStep {
+   public:
+      PStepCheckLimit(){ apply = apply_;}
+      virtual ~PStepCheckLimit() {}
+      virtual void describeTo(String& tgt) { tgt = "Function_ffor::PStepCheckLimit"; }
+
+      static void apply_(const PStep*, VMContext* ctx )
+      {
+         // save the result and ask for the next operator
+         if( ! ctx->topData().isTrue() )
+         {
+            ctx->returnFrame();
+            return;
+         }
+
+         ctx->popCode();
+         ctx->popData();
+         // below us there's s_stepIncrement
+      }
+   };
+   static PStepCheckLimit s_stepCheckLimit;
+
+
+   // processes the first result of the iteration (use all the parameters)
+   class PStepCheckResult: public PStep {
+   public:
+      PStepCheckResult(){ apply = apply_;}
+      virtual ~PStepCheckResult() {}
+      virtual void describeTo(String& tgt) { tgt = "Function_ffor::PStepCheckResult"; }
+
+      static void apply_(const PStep*, VMContext* ctx )
+      {
+         // Empty sequence? -- return nil
+         if( ctx->topData().isBreak() )
+         {
+            ctx->returnFrame();
+            return;
+         }
+         ctx->popCode();
+
+         // check
+         ctx->pushCode( &s_stepCheckLimit );
+
+         // Well push twice, no problem with that.
+         ctx->pushCode( static_cast<PStep*>(ctx->param(2)->asInst()) );
+         ctx->pushCode( static_cast<PStep*>(ctx->param(1)->asInst()) );
+      }
+   };
+   static PStepCheckResult s_stepAdvance;
+
+
+   // This is invoked after op_iter is called.
+   class PStepIncrement: public PStep {
+   public:
+      PStepIncrement(){ apply = apply_;}
+      virtual ~PStepIncrement() {}
+      virtual void describeTo(String& tgt) { tgt = "Function_ffor::PStepIncrement"; }
+
+      static void apply_(const PStep*, VMContext* ctx )
+      {
+         ctx->popData();
+         // step into checking the result
+         ctx->pushCode( &s_stepAdvance );
+         ctx->pushCode( static_cast<PStep*>(ctx->param(3)->asInst()) );
+      }
+   };
+   static PStepIncrement s_stepIncrement;
+
+   if( pCount < 4 )
+   {
+      throw paramError(__LINE__, SRC);
+   }
+
+   // prepare the code that will do the code
+   ctx->pushCode( &s_stepIncrement );
+
+   // this is an ETA functions, parameters are always expressions.
+   ctx->pushCode( static_cast<PStep*>(ctx->param(0)->asInst()) );
+}
+
 }
 }
 

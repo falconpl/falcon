@@ -315,40 +315,63 @@ void ItemDict::clear()
 }
 
 
-void ItemDict::remove( const Item& key )
-{   
+bool ItemDict::remove( const Item& key )
+{
+   bool result;
+
    switch( key.type() )
    {      
       case FLC_ITEM_NIL:
-         _p->m_bHasNil = false;
-         _p->m_itemNil.lock();
-         _p->m_itemNil.setNil();
-         _p->m_itemNil.unlock();
+         if( _p->m_bHasNil )
+         {
+            result = true;
+            _p->m_bHasNil = false;
+            _p->m_itemNil.lock();
+            _p->m_itemNil.setNil();
+            _p->m_itemNil.unlock();
+         }
+         else {
+            result = false;
+         }
          break;
          
       case FLC_ITEM_BOOL:
          if( key.asBoolean() )
          {
-            _p->m_bHasTrue = false;
-            _p->m_itemTrue.lock();
-            _p->m_itemTrue.setNil();
-            _p->m_itemTrue.unlock();
+            if( _p->m_bHasTrue )
+            {
+               result = true;
+               _p->m_bHasTrue = false;
+               _p->m_itemTrue.lock();
+               _p->m_itemTrue.setNil();
+               _p->m_itemTrue.unlock();
+            }
+            else {
+               result = false;
+            }
          }
          else
          {
-            _p->m_bHasFalse = false;
-            _p->m_itemFalse.lock();
-            _p->m_itemFalse.setNil();
-            _p->m_itemFalse.unlock();
+            if( _p->m_bHasFalse )
+            {
+               result = true;
+               _p->m_bHasFalse = false;
+               _p->m_itemFalse.lock();
+               _p->m_itemFalse.setNil();
+               _p->m_itemFalse.unlock();
+            }
+            else {
+               result = false;
+            }
          }
          break;
          
       case FLC_ITEM_INT:
-         _p->m_intMap.erase(key.asInteger());
+         result = _p->m_intMap.erase(key.asInteger()) != 0;
          break;
          
       case FLC_ITEM_NUM:
-         _p->m_intMap.erase( (int64) key.asNumeric() );
+         result = _p->m_intMap.erase( (int64) key.asNumeric() ) != 0;
          break;
          
       default:
@@ -360,21 +383,24 @@ void ItemDict::remove( const Item& key )
          switch( cls->typeID() )
          {
             case FLC_CLASS_ID_STRING:
-               _p->m_stringMap.erase( *static_cast<String*>(data) );
+               result = _p->m_stringMap.erase( *static_cast<String*>(data) ) != 0;
                break;
                
             case FLC_CLASS_ID_RANGE:
-               _p->m_rangeMap.erase( *static_cast<Range*>(data) );
+               result = _p->m_rangeMap.erase( *static_cast<Range*>(data) ) != 0;
                break;
                
             default:
-               _p->m_instMap.erase( 
-                  Private::class_data_pair( cls, data ) );
+               result = _p->m_instMap.erase(
+                  Private::class_data_pair( cls, data ) ) != 0;
                break;
          }
       }
+      break;
       
    }
+
+   return result;
 }
 
 

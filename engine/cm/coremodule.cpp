@@ -60,6 +60,9 @@ CoreModule::CoreModule():
    static ClassStream* classStream = static_cast<ClassStream*>(
             Engine::handlers()->streamClass());
    
+   Function* ffor = new Ext::Function_ffor;
+   ffor->setEta(true);
+
    *this
       // Standard functions
       << new Ext::Compile
@@ -84,6 +87,7 @@ CoreModule::CoreModule():
       << new Ext::Function_filter
       << new Ext::Function_reduce
       << new Ext::Function_cascade
+      << ffor
 
       // Standard classes
       << new Ext::ClassBarrier

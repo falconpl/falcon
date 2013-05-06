@@ -1,0 +1,64 @@
+/*
+@name Dictionary methods - find
+@category Core-dict
+
+@output
+Dictionary methods - find
+Calling [=>].find(["a", "defalut"])
+Success
+Calling ["a" => 1].find(["a", "defalut"])
+Success
+Calling ["b" => 2].find(["a", "defalut"])
+Success
+Calling ["a" => 1, "b" => 2].find(["a", "defalut"])
+Success
+Calling ["b" => 2, "c" => 3].find(["a", "defalut"])
+Success
+Catching errors
+Detect not found from empty: Success
+Detect not found from non-empty: Success
+Done
+@endoutput
+*/
+
+> "Dictionary methods - find"
+
+tests = .[ 
+   .[ .[=>]  .['a' 'defalut'] 'defalut' ]
+   .[ .['a' => 1] .['a' 'defalut'] 1 ]
+   .[ .['b' => 2] .['a' 'defalut'] 'defalut' ]
+   
+   .[ .['b' => 2  'a' => 1 ] .['a' 'defalut'] 1 ]
+   .[ .['b' => 2  'c' => 3 ] .['a' 'defalut'] 'defalut' ]
+]
+
+
+
+for dict, params, result in tests
+   > "Calling ", dict.describe(), ".find(", params.describe() ")"
+   r1 = call( dict.find, params )
+   if r1 != result
+      > "Failed"
+   else
+      > "Success"
+   end
+end
+
+> "Catching errors"
+try
+   >> "Detect not found from empty: "
+   [=>].find('b')
+   > "Failed"
+catch AccessError
+   > "Success"
+end
+
+try
+   >> "Detect not found from non-empty: "
+   .['a' => 0  'b' => 1 ].find('c')
+   > "Failed"
+catch AccessError
+   > "Success"
+end
+
+> "Done"

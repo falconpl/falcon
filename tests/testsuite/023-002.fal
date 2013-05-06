@@ -1,0 +1,20 @@
+/*
+@name Dictionary methods - keys
+@category Core-dict
+
+@output
+Dictionary methods - keys
+Empty keys: []
+1 element len: [m"a"]
+2 elements len: [m"a", m"b"]
+Done
+@endoutput
+*/
+
+> "Dictionary methods - keys"
+
+> "Empty keys: ", [=>].keys().describe()
+> "1 element len: ", ['a'=>1].keys().describe()
+> "2 elements len: ", ['a'=>1, 'b'=>2].keys().describe()
+
+> "Done"

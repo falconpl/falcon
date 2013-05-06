@@ -1,0 +1,31 @@
+/*
+@name Dictionary properties
+@category Core-dict
+
+@output
+Dictionary properties
+Empty len: 0
+1 element len: 1
+2 elements len: 2
+Empty empty: true
+1 element empty: false
+2 elements empty: false
+Pseudo a property: Value of A
+Done
+@endoutput
+*/
+
+> "Dictionary properties"
+
+> "Empty len: ", [=>].len
+> "1 element len: ", ['a'=>1].len
+> "2 elements len: ", ['a'=>1, 'b'=>2].len
+
+> "Empty empty: ", [=>].empty
+> "1 element empty: ", ['a'=>1].empty
+> "2 elements empty: ", ['a'=>1, 'b'=>2].empty
+
+p = ['a'=> 'Value of A'].pseudo
+> "Pseudo a property: ", p.a
+
+> "Done"

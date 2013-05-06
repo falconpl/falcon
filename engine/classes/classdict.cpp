@@ -238,8 +238,9 @@ void Function_find::invoke(VMContext* ctx, int32)
 
 /**
  @method remove Dictionary
- @brief Removes an entity from the dictionary
+ @brief Removes an entity from the dictionary.
  @param key The key item to be removed. 
+ @return true if the item was removed, false otherwise.
 
  If the key is not found, this method does nothing.
 */
@@ -254,8 +255,8 @@ void Function_remove::invoke(VMContext* ctx, int32)
 
    ItemDict* dict = static_cast<ItemDict*>(ctx->self().asInst());
    ConcurrencyGuard::Writer wg( ctx, dict->guard() );
-   dict->remove(*i_key);
-   ctx->returnFrame();
+   bool b = dict->remove(*i_key);
+   ctx->returnFrame(Item().setBoolean(b));
 }
 
 /**

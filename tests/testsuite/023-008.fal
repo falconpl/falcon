@@ -1,0 +1,40 @@
+/*
+@name Dictionary methods - insert
+@category Core-dict
+
+@output
+Dictionary methods - insert
+Calling [=>].insert(["a", "inserted"])
+Resulting data: ["a" => "inserted"]
+Calling ["a" => 1].insert(["a", "inserted"])
+Resulting data: ["a" => "inserted"]
+Calling ["b" => 2].insert(["a", "inserted"])
+Resulting data: ["a" => "inserted", "b" => 2]
+Calling ["a" => 1, "b" => 2].insert(["a", "inserted"])
+Resulting data: ["a" => "inserted", "b" => 2]
+Calling ["b" => 2, "c" => 3].insert(["a", "inserted"])
+Resulting data: ["a" => "inserted", "b" => 2, "c" => 3]
+Done
+@endoutput
+*/
+
+> "Dictionary methods - insert"
+
+tests = .[ 
+   .[ .[=>]  .['a' 'inserted'] ]
+   .[ .['a' => 1] .['a' 'inserted'] ]
+   .[ .['b' => 2] .['a' 'inserted'] ]
+   
+   .[ .['b' => 2  'a' => 1 ] .['a' 'inserted'] ]
+   .[ .['b' => 2  'c' => 3 ] .['a' 'inserted'] ]
+]
+
+
+
+for dict, params in tests
+   > "Calling ", dict.describe(), ".insert(", params.describe() ")"
+   dict.insert(params[0], params[1])
+   > "Resulting data: ", dict.describe()   
+end
+
+> "Done"

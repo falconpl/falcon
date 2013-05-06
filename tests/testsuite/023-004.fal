@@ -1,0 +1,39 @@
+/*
+@name Dictionary methods - clone
+@category Core-dict
+
+@output
+Dictionary methods - clone
+Empty clone: original [=>] clone: [=>]
+After change: original [=>] clone: ["a" => "New value"]
+1 Item clone: original ["a" => 1] clone: ["a" => 1]
+After change: original ["a" => 1] clone: ["a" => "New value"]
+2 Items clone: original ["a" => 1, "b" => 1] clone: ["a" => 1, "b" => 1]
+After change: original ["a" => 1, "b" => 1] clone: ["a" => "New value", "b" => 1]
+Done
+@endoutput
+*/
+
+> "Dictionary methods - clone"
+
+x = [=>]
+y = x.clone()
+> "Empty clone: original ", x.describe(), " clone: ", y.describe()
+y['a'] = "New value"
+> "After change: original ", x.describe(), " clone: ", y.describe()
+
+x = ['a'=>1]
+y = x.clone()
+
+> "1 Item clone: original ", x.describe(), " clone: ", y.describe()
+y['a'] = "New value"
+> "After change: original ", x.describe(), " clone: ", y.describe()
+
+x = ['a'=>1,'b'=>1]
+y = x.clone()
+
+> "2 Items clone: original ", x.describe(), " clone: ", y.describe()
+y['a'] = "New value"
+> "After change: original ", x.describe(), " clone: ", y.describe()
+
+> "Done"

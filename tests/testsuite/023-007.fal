@@ -1,0 +1,50 @@
+/*
+@name Dictionary methods - remove
+@category Core-dict
+
+@output
+Dictionary methods - remove
+Calling [=>].remove("a")
+Success
+Resulting data: [=>]
+Calling ["a" => 1].remove("a")
+Success
+Resulting data: [=>]
+Calling ["b" => 2].remove("a")
+Success
+Resulting data: ["b" => 2]
+Calling ["a" => 1, "b" => 2].remove("a")
+Success
+Resulting data: ["b" => 2]
+Calling ["b" => 2, "c" => 3].remove("a")
+Success
+Resulting data: ["b" => 2, "c" => 3]
+Done
+@endoutput
+*/
+
+> "Dictionary methods - remove"
+
+tests = .[ 
+   .[ .[=>]  'a' false ]
+   .[ .['a' => 1] 'a' true ]
+   .[ .['b' => 2] 'a' false ]
+   
+   .[ .['b' => 2  'a' => 1 ] 'a' true ]
+   .[ .['b' => 2  'c' => 3 ] 'a' false ]
+]
+
+
+
+for dict, params, result in tests
+   > "Calling ", dict.describe(), ".remove(", params.describe() ")"
+   r1 = dict.remove(params)
+   if r1 != result
+      > "Failed"
+   else
+      > "Success"
+      > "Resulting data: ", dict.describe()
+   end
+end
+
+> "Done"

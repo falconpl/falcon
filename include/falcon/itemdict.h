@@ -48,7 +48,7 @@ public:
    void flags( uint32 v ) { m_flags = v; }
 
    void insert( const Item& key, const Item& value );
-   void remove( const Item& key );
+   bool remove( const Item& key );
    Item* find( const Item& key );
 
    length_t size() const;

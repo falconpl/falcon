@@ -1,0 +1,20 @@
+/*
+@name Dictionary methods - values
+@category Core-dict
+
+@output
+Dictionary methods - values
+Empty values: []
+1 element values: [1]
+2 elements values: [1, 2]
+Done
+@endoutput
+*/
+
+> "Dictionary methods - values"
+
+> "Empty values: ", [=>].values().describe()
+> "1 element values: ", ['a'=>1].values().describe()
+> "2 elements values: ", ['a'=>1, 'b'=>2].values().describe()
+
+> "Done"
