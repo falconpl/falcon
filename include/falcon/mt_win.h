@@ -107,7 +107,7 @@ public:
    }
 
    ThreadSpecific( void (*destructor)(void*) );
-   
+
    virtual ~ThreadSpecific()
    {
       #ifndef NDEBUG
@@ -127,20 +127,6 @@ public:
       return TlsGetValue( m_key );
    }
 };
-
-/** Performs an atomic thread safe increment. */
-inline int32 atomicInc( volatile int32 &data )
-{
-   volatile LONG* dp = (volatile LONG*) &data;
-   return InterlockedIncrement( dp );
-}
-
-/** Performs an atomic thread safe decrement. */
-inline int32 atomicDec( volatile int32 &data )
-{
-   volatile LONG* dp = (volatile LONG*) &data;
-   return InterlockedDecrement( dp );
-}
 
 /**
    Generic event class.
@@ -218,7 +204,7 @@ struct SYSTH_DATA {
    unsigned nThreadID;
    HANDLE hEvtDetach;
    void *retval;
-   
+
    /** Mutex controlling detachment and termination. */
    CRITICAL_SECTION m_csT;
 
