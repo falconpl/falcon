@@ -1825,7 +1825,7 @@ Item* VMContext::resolveSymbol( const Symbol* dyns, bool forAssign )
       DynsData* newSlot = m_dynsStack.addSlot();
       newSlot->m_sym = dyns;
 
-      if( currentFrame().m_function->name() == "__main__" )
+      if( currentFrame().m_function->isMain() )
       {
          TRACE2( "VMContext::resolveSymbol -- \"%s\" went down to global context, searching global.", dyns->name().c_ize() );
          newSlot->m_value = resolveGlobal(dyns->name(), true);

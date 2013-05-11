@@ -223,11 +223,17 @@ public:
 
    virtual void renderFunctionBody( TextWriter* tgt, int32 depth ) const;
 
+   /** True if this function is used as main (global scope) for a module. */
+   bool isMain() const { return m_bMain; }
+   /** True if this function is used as main (global scope) for a module. */
+   void setMain( bool m ) { m_bMain = m; }
+
 protected:
    VarMap m_vars;
    String m_signature;
    Class* m_methodOf;
    bool m_bEta;
+   bool m_bMain;
    
    Function() {}
    friend class ClassFunction;

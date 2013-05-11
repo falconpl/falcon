@@ -935,6 +935,7 @@ Function* Module::getMainFunction()
 void Module::setMainFunction( Function* mf )
 {
    m_mainFunc = mf;
+   mf->setMain(true);
    mf->module(this);
    mf->name("__main__");
    addMantra( mf, false );

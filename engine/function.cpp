@@ -39,7 +39,8 @@ Function::EtaSetter Function::eta;
 Function::Function( const String& name, Module* module, int32 line ):
    Mantra( name, module, line ),
    m_methodOf( 0 ),
-   m_bEta(false)
+   m_bEta(false),
+   m_bMain(false)
 {
    m_category = e_c_function;
 }

@@ -653,11 +653,12 @@ void ClassModule::unflatten( VMContext* ctx, ItemArray& subItems, void* instance
    while( ! current->isNil() && pos < subItems.length()-2 )
    {
       Mantra* mantra = static_cast<Mantra*>(current->asInst());  
-      TRACE1( "ClassModule::unflatten -- storing mantra %s ", mantra->name().c_ize() );
+      TRACE1( "ClassModule::unflatten -- restoring mantra %s ", mantra->name().c_ize() );
 
       if( mantra->name() == "__main__" )
       {
          mod->m_mainFunc = static_cast<Function*>(mantra);
+         mod->m_mainFunc->setMain(true);
       }
 
       mp->m_mantras[mantra->name()] = mantra;
