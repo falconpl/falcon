@@ -400,6 +400,7 @@ void VarDataMap::restore( DataReader* dr )
       VarData* vd = new VarData( name,
                Variable( (Variable::type_t) type, id, declaredAt, isConst ),
                0, exported );
+
       _p->m_variables[&vd->m_name] = vd;
       _p->m_varsByID.push_back( vd );
 
@@ -444,6 +445,7 @@ void VarDataMap::unflatten( VMContext*, ItemArray& subItems, uint32 start, uint3
          vd->m_data = &vd->m_storage;
          ++c;
       }
+
       ++iter;
    }
 

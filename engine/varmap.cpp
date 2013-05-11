@@ -19,6 +19,7 @@
 #include <falcon/string.h>
 #include <falcon/varmap.h>
 #include <falcon/variable.h>
+#include <falcon/symbol.h>
 
 #include <falcon/datareader.h>
 #include <falcon/datawriter.h>
@@ -34,9 +35,11 @@ public:
 
    typedef std::map<String, Variable> VariableMap;
    typedef std::vector<const String*> NameList;
+   typedef std::vector<Symbol*> SymbolList;
 
    VariableMap m_variables;
    NameList m_paramNames;
+   SymbolList m_paramSymbols;
    NameList m_localNames;
    NameList m_closedNames;
    NameList m_globalNames;
@@ -84,6 +87,9 @@ VarMap::VarMap( const VarMap& other ):
 
 VarMap::~VarMap()
 {
+   for( size_t i = 0; i < _p->m_paramSymbols.size(); ++i ) {
+      _p->m_paramSymbols[i]->decref();
+   }
    delete _p;
 }
 
@@ -98,6 +104,7 @@ Variable* VarMap::addParam( const String& name )
 
    pos = _p->m_variables.insert( std::make_pair(name, Variable( Variable::e_nt_param, id )) ).first;
    _p->m_paramNames.push_back(&pos->first);
+   _p->m_paramSymbols.push_back( Engine::getSymbol(name) );
 
    return &pos->second;
 
@@ -177,6 +184,12 @@ const String& VarMap::getParamName( uint32 id ) const
 {
    return *_p->m_paramNames[id];
 }
+
+Symbol* VarMap::getParamSymbol( uint32 id ) const
+{
+   return _p->m_paramSymbols[id];
+}
+
 
 const String& VarMap::getLoacalName( uint32 id ) const
 {
@@ -279,6 +292,7 @@ void VarMap::restore( DataReader* dr )
    uint32 size;
    dr->read(size);
    _p->m_paramNames.resize( size, 0 );
+   _p->m_paramSymbols.resize( size, 0 );
    dr->read(size);
    _p->m_localNames.resize( size, 0 );
    dr->read(size);
@@ -306,16 +320,18 @@ void VarMap::restore( DataReader* dr )
       dr->read( isConst );
       Variable::type_t tt = (Variable::type_t) type;
 
-      const String* sval = &(_p->m_variables.insert( std::make_pair( name,
+      Private::VariableMap::iterator pos = _p->m_variables.insert( std::make_pair( name,
                Variable( tt, id, declaredAt, isConst)
-               ) ).first)->first;
+               ) ).first;
+
+      const String* varName = &pos->first;
 
       switch( tt ) {
-      case Variable::e_nt_local: _p->m_localNames[id] = sval; break;
-      case Variable::e_nt_param: _p->m_paramNames[id] = sval; break;
-      case Variable::e_nt_global: _p->m_globalNames[id] = sval; break;
-      case Variable::e_nt_closed: _p->m_closedNames[id] = sval; break;
-      case Variable::e_nt_extern: _p->m_externNames[id] = sval; break;
+      case Variable::e_nt_local: _p->m_localNames[id] = varName; break;
+      case Variable::e_nt_param: _p->m_paramNames[id] = varName; _p->m_paramSymbols[id] = Engine::getSymbol(*varName);  break;
+      case Variable::e_nt_global: _p->m_globalNames[id] = varName; break;
+      case Variable::e_nt_closed: _p->m_closedNames[id] = varName; break;
+      case Variable::e_nt_extern: _p->m_externNames[id] = varName; break;
       case Variable::e_nt_undefined: break;
       }
    }

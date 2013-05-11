@@ -25,6 +25,7 @@
 #include <falcon/refcounter.h>
 #include <falcon/stdhandlers.h>
 #include <falcon/vmcontext.h>
+#include <falcon/symbol.h>
 
 #include <map>
 #include <vector>
@@ -413,7 +414,9 @@ void ClosedData::defineSymbols( VMContext* ctx )
    {
       const String& name = pos->first;
       Item* value = pos->second;
-      ctx->defineSymbol( Engine::getSymbol(name), value );
+      Symbol* symbol = Engine::getSymbol(name);
+      ctx->defineSymbol( symbol , value );
+      symbol->decref();
       ++pos;
    }
    _p->m_mtx.unlock();

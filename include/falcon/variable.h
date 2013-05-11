@@ -86,7 +86,8 @@ public:
       m_isResolved( false )
    {}
 
-   ~Variable() {}
+   ~Variable() {
+   }
 
    type_t type() const { return m_type; }
    void type( type_t t ) { m_type = t; }

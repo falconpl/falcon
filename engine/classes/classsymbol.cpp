@@ -76,11 +76,8 @@ bool ClassSymbol::op_init( VMContext* ctx, void*, int32 pcount ) const
    if( pcount > 0 || item->isString() )
    {
       String& name = *item->asString();
-      bool isFirst = false;
-      Symbol* sym = Engine::getSymbol(name, isFirst );
-      if( isFirst ) {
-         FALCON_GC_STORE( this, sym );
-      }
+      Symbol* sym = Engine::getSymbol( name );
+      FALCON_GC_STORE( this, sym );
       ctx->opcodeParam(pcount).setUser( this, sym );
    }
    else {

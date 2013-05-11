@@ -118,70 +118,68 @@ class SymbolPool
 {
 public:
 
-   inline Symbol* get(const String& name, int poolId ) {
-      bool isFirst = false;
-      return get( name, poolId, isFirst );
-   }
-
-   inline Symbol* get(const String& name, int poolId, bool& isFirst )
+   inline Symbol* get(const String& name)
    {
       Symbol *s;
-      m_mtx[poolId].lock();
-      SymbolSet::iterator iter = m_symbols[poolId].find(&name);
-      if( iter == m_symbols[poolId].end() ) {
+      m_mtx.lock();
+      SymbolSet::iterator iter = m_symbols.find(&name);
+      if( iter == m_symbols.end() ) {
          s = new Symbol( name );
-         m_symbols[poolId][&s->name()] = s;
-         isFirst = true;
+         m_symbols[&s->name()] = s;
       }
       else {
          s = iter->second;
          s->m_counter++;
-         isFirst = false;
       }
-      m_mtx[poolId].unlock();
+      m_mtx.unlock();
 
       return s;
    }
 
-   inline void release( Symbol* s, int poolId ) {
-     m_mtx[poolId].lock();
+   inline void release( Symbol* s ) {
+     m_mtx.lock();
      if( --s->m_counter == 0 ) {
-        m_symbols[poolId].erase(&s->name());
+        m_symbols.erase(&s->name());
+        m_mtx.unlock();
+
         delete s;
      }
-     m_mtx[poolId].unlock();
+     else {
+        m_mtx.unlock();
+     }
+
    }
 
-   inline void ref( Symbol* s, int poolId ) {
-     m_mtx[poolId].lock();
+   inline void ref( Symbol* s ) {
+     m_mtx.lock();
      s->m_counter++;
-     m_mtx[poolId].unlock();
+     m_mtx.unlock();
    }
 
    ~ SymbolPool() {
-      for( int i = 0; i < 2; ++i ) {
-         SymbolSet::iterator iter = m_symbols[i].begin();
-         SymbolSet::iterator end = m_symbols[i].end();
+      SymbolSet::iterator iter = m_symbols.begin();
+      SymbolSet::iterator end = m_symbols.end();
 
-         while( iter != end ) {
-            delete iter->second;
-            ++iter;
+      while( iter != end ) {
+         Symbol *sym = iter->second;
+         if( --sym->m_counter == 0 )
+         {
+            delete sym;
          }
+         ++iter;
       }
    }
 
 private:
    class StringPtrCheck {
    public:
-      inline bool operator ()( const String *s1, const String *s2 ) const
-      {
-         return *s1 < *s2;
-      }
+      inline bool operator ()( const String *s1, const String *s2 ) const { return *s1 < *s2; }
    };
 
    typedef std::map<const String*, Symbol*, StringPtrCheck> SymbolSet;
-   SymbolSet m_symbols[2];
-   Mutex m_mtx[2];
+
+   SymbolSet m_symbols;
+   Mutex m_mtx;
 };
 
 //=======================================================
@@ -229,8 +227,8 @@ Engine::Engine()
    // Initialization of standard deep types.
    //
    m_symbols = new SymbolPool;
-   m_baseSymbol = m_symbols->get("$base",0);
-   m_ruleBaseSymbol = m_symbols->get("$rulebase",0);
+   m_baseSymbol = m_symbols->get("$base");
+   m_ruleBaseSymbol = m_symbols->get("$rulebase");
 
    // Initialization of the class vector.
    m_classes[FLC_ITEM_NIL] = new ClassNil;
@@ -348,12 +346,11 @@ Engine::~Engine()
 
    /** Bye bye core... */
    m_core->decref();
-
+   
    // ===============================
    // DO NOT Delete standard item classes -- they are mantras
    //
-   delete m_symbols;
-   
+
    // ===============================
    // delete registered transcoders
    //
@@ -413,6 +410,10 @@ Engine::~Engine()
       
       delete m_pools;
    }
+
+
+   // Delete symbols for last
+   delete m_symbols;
 
    delete m_log;
    MESSAGE( "Engine destroyed" );
@@ -696,25 +697,20 @@ Symbol* Engine::ruleBaseSymbol() const
 Symbol* Engine::getSymbol( const String& name )
 {
    fassert( m_instance != 0 );
-   return m_instance->m_symbols->get(name, 0);
+   return m_instance->m_symbols->get(name);
 }
 
-Symbol* Engine::getSymbol( const String& name, bool& isFirst )
-{
-   fassert( m_instance != 0 );
-   return m_instance->m_symbols->get(name, 0, isFirst);
-}
 
 void Engine::refSymbol( Symbol* sym )
 {
    fassert( m_instance != 0 );
-   m_instance->m_symbols->ref(sym, 0);
+   m_instance->m_symbols->ref(sym );
 }
 
 void Engine::releaseSymbol( Symbol* sym )
 {
    fassert( m_instance != 0 );
-   m_instance->m_symbols->release(sym, 0);
+   m_instance->m_symbols->release(sym);
 }
 
 }

@@ -120,16 +120,21 @@ void SynFunc::invoke( VMContext* ctx, int32 nparams )
    // fill the named parameters if not enough
    int32 filledParams = paramCount < nparams ? paramCount : nparams;
    int32 i = 0;
+   Symbol* paramSym;
+
    while( i < filledParams )
    {
-      ctx->defineSymbol( Engine::getSymbol(this->variables().getParamName(i)), base );
+      paramSym = this->variables().getParamSymbol(i);
+      fassert( paramSym != 0 );
+      ctx->defineSymbol( paramSym, base );
       ++i;
       ++base;
    }
 
    while( i < paramCount )
    {
-      ctx->defineSymbol( Engine::getSymbol(this->variables().getParamName(i)) );
+      paramSym = this->variables().getParamSymbol(i);
+      ctx->defineSymbol( paramSym );
       ++i;
    }
 

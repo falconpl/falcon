@@ -19,6 +19,7 @@
 #include <falcon/dyncompiler.h>
 #include <falcon/syntree.h>
 #include <falcon/transcoder.h>
+#include <falcon/symbol.h>
 
 #include <falcon/sp/sourceparser.h>
 #include <falcon/sp/sourcelexer.h>
@@ -111,7 +112,9 @@ public:
    }
 
    virtual Item* getVariableValue( const String& name, Variable* ) {
-      Item* value = m_ctx->resolveSymbol(Engine::getSymbol(name), false);
+      Symbol* sym = Engine::getSymbol(name);
+      Item* value = m_ctx->resolveSymbol( sym, false);
+      sym->decref();
       return value;
    }
 

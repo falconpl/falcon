@@ -38,6 +38,7 @@ Symbol::Symbol( const String& name ):
    m_name(name),
    m_counter(1)
 {
+   m_name.bufferize();
 }
    
 
@@ -46,6 +47,7 @@ Symbol::Symbol( const Symbol& other ):
    m_name(other.m_name),
    m_counter(1)
 {
+   m_name.bufferize();
 }
 
 

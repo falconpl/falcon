@@ -23,6 +23,7 @@ namespace Falcon {
 
 class String;
 class Variable;
+class Symbol;
 
 /** Map holding local and global variable tables.
  *
@@ -69,6 +70,7 @@ public:
    Variable* find( const String& name ) const;
 
    const String& getParamName( uint32 id ) const;
+   Symbol* getParamSymbol( uint32 id ) const;
    const String& getLoacalName( uint32 id ) const;
    const String& getClosedName( uint32 id ) const;
 
