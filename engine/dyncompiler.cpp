@@ -111,7 +111,7 @@ public:
    }
 
    virtual Item* getVariableValue( const String& name, Variable* ) {
-      Item* value = m_ctx->findLocal(name);
+      Item* value = m_ctx->resolveSymbol(Engine::getSymbol(name), false);
       return value;
    }
 

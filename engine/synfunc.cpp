@@ -75,6 +75,8 @@ void SynFunc::setConstructor()
    m_retStep = &s_ctorReturn;
 }
 
+
+#if 0
 void SynFunc::invoke( VMContext* ctx, int32 nparams )
 {  
    // nothing to do?
@@ -94,7 +96,7 @@ void SynFunc::invoke( VMContext* ctx, int32 nparams )
       nparams = paramCount;
    }
 
-   ctx->addLocals( localCount );
+   //ctx->addLocals( localCount );
    // Structure in data stack is:
    // [np0] [np1] [..] [..] [l0] [l1] [..]
    
@@ -102,7 +104,40 @@ void SynFunc::invoke( VMContext* ctx, int32 nparams )
    ctx->pushCode( m_retStep );
    ctx->pushCode( &this->syntree() );
 }
+#endif
 
+void SynFunc::invoke( VMContext* ctx, int32 nparams )
+{
+   // nothing to do?
+   register int paramCount = (int) this->paramCount();
+
+   // fill the parameters
+   TRACE1( "-- filing parameters: %d/%d", nparams, paramCount );
+
+   // ok even if nparams = 0; we won't use base
+   Item* base = ctx->opcodeParams(nparams);
+
+   // fill the named parameters if not enough
+   int32 filledParams = paramCount < nparams ? paramCount : nparams;
+   int32 i = 0;
+   while( i < filledParams )
+   {
+      ctx->defineSymbol( Engine::getSymbol(this->variables().getParamName(i)), base );
+      ++i;
+      ++base;
+   }
+
+   while( i < paramCount )
+   {
+      ctx->defineSymbol( Engine::getSymbol(this->variables().getParamName(i)) );
+      ++i;
+   }
+
+
+   // push a static return in case of problems.
+   ctx->pushCode( m_retStep );
+   ctx->pushCode( &this->syntree() );
+}
 
 void SynFunc::renderFunctionBody( TextWriter* tgt, int32 depth ) const
 {

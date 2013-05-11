@@ -49,6 +49,8 @@ public:
 
    Class* handler() const;
 
+   void defineSymbols( VMContext* ctx );
+
 private:
    class Private;
    ClosedData::Private* _p;

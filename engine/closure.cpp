@@ -152,7 +152,7 @@ void Closure::close( VMContext* ctx )
    for( uint32 i = 0; i < closedCount; ++i )
    {
       const String& name = vars.getClosedName(i);
-      Item* data = ctx->findLocal( name );
+      Item* data = ctx->resolveSymbol( Engine::getSymbol(name), false );
 
       if( data != 0 )
       {

@@ -1381,6 +1381,10 @@ void VMContext::callInternal( Closure* closure, int32 nparams )
       m_callStack.m_top->m_dataBase );
 
    makeCallFrame( closure, nparams );
+   // define all the closed parameters.
+   ClosedData* cd = closure->data();
+   cd->defineSymbols( this );
+
    TRACE3( "-- codebase:%d, dynsBase:%d, stackBase:%d",
       m_callStack.m_top->m_codeBase,
       m_callStack.m_top->m_dynsBase,
@@ -1776,14 +1780,27 @@ Item* VMContext::resolveSymbol( const Symbol* dyns, bool forAssign )
    {
       // found?
       if ( dyns == dd->m_sym ) {
-         TRACE2( "VMContext::resolveSymbol -- \"%s\" already resolved as %p", dyns->name().c_ize(), dd->m_value );
+         TRACE2( "VMContext::resolveSymbol -- \"%s\" already resolved as %p%s", dyns->name().c_ize(), dd->m_value, (isRule? " (in rule)": "") );
+
+         // did we cross a rule frame?
+         if( isRule )
+         {
+            // -- in this case, we want a copy of the thing we found below.
+            DynsData* newSlot = m_dynsStack.addSlot();
+            newSlot->m_sym = dyns;
+            newSlot->m_value = m_itemStack->push(m_dynsStack.depth(),*dd->m_value);
+            return newSlot->m_value;
+         }
+
          return dd->m_value;
       }
+
       // arrived at a local base?
       if ( baseSym == dd->m_sym )
       {
          if( forAssign )
          {
+
             // in the end, we must create a new assignable slot.
             // notice that evaluation parameters are above the base symbol.
             DynsData* newSlot = m_dynsStack.addSlot();
@@ -1803,91 +1820,81 @@ Item* VMContext::resolveSymbol( const Symbol* dyns, bool forAssign )
       --dd;
    }
 
-   // if we're here, we didn't find it -- it might be an unresolved local variable...
-   const String& name = dyns->name();
-   //while( cf >= m_callStack.m_base )
+   if( forAssign )
    {
-      Variable* lvar = cf->m_function->variables().find(name);
-      if( lvar != 0 )
+      DynsData* newSlot = m_dynsStack.addSlot();
+      newSlot->m_sym = dyns;
+
+      if( currentFrame().m_function->name() == "__main__" )
       {
-         Item* resolved = 0;
-         switch( lvar->type() ) {
-         case Variable::e_nt_closed:
-            if( cf->m_closure != 0 )
-            {
-               resolved = cf->m_closure->get(name);
-            }
-            break;
-
-         case Variable::e_nt_local:
-            if( forAssign )
-            {
-               resolved = &m_dataStack.m_base[ lvar->id() + cf->m_dataBase +cf->m_paramCount ];
-            }
-            break;
-
-         case Variable::e_nt_param:
-            // get the parameter even if not given (will be nil)
-            resolved = &m_dataStack.m_base[ lvar->id() + cf->m_dataBase ];
-            break;
-
-         default:
-            fassert2( false, "Shouldn't have this in a function" );
-            break;
-         }
-
-         if( resolved != 0 )
+         TRACE2( "VMContext::resolveSymbol -- \"%s\" went down to global context, searching global.", dyns->name().c_ize() );
+         newSlot->m_value = resolveGlobal(dyns->name(), true);
+         if( newSlot->m_value == 0 )
          {
+            TRACE2( "VMContext::resolveSymbol -- \"%s\" NOT found global.", dyns->name().c_ize() );
+            m_itemStack->push(m_dynsStack.depth());
+            newSlot->m_value->setNil();
+         }
+      }
+      else {
+         // in the end, we must create a new assignable slot.
+         newSlot->m_value = m_itemStack->push(m_dynsStack.depth());
+         newSlot->m_value->setNil();
+         TRACE2( "VMContext::resolveSymbol -- \"%s\" went down to function base, creating new.", dyns->name().c_ize() );
+      }
+      return newSlot->m_value;
+   }
+
+   // now we go deep down, but the logic changes.
+   dbase = m_dynsStack.m_base;
+   while( dd >= dbase )
+   {
+      if ( dyns == dd->m_sym ) {
+         TRACE2( "VMContext::resolveSymbol -- \"%s\" found in previous frames as %p%s", dyns->name().c_ize(), dd->m_value, (isRule? " (in rule)": "") );
+         if( isRule )
+         {
+            // -- in this case, we want a copy of the thing we found below.
             DynsData* newSlot = m_dynsStack.addSlot();
             newSlot->m_sym = dyns;
-            if( isRule )
-            {
-               newSlot->m_value = m_itemStack->push(m_dynsStack.depth(),*resolved);
-            }
-            else {
-               newSlot->m_value = resolved;
-            }
-            TRACE2( "VMContext::resolveSymbol -- \"%s\" Found in locals as %p (%s)",
-                     dyns->name().c_ize(), resolved, resolved->describe().c_ize() );
-            return resolved;
+            newSlot->m_value = m_itemStack->push(m_dynsStack.depth(),*dd->m_value);
+            return newSlot->m_value;
          }
+
+         return dd->m_value;
       }
-      //cf--;
+
+      --dd;
    }
 
-   // No luck at all; try to resolve the variable in the global arena
-   Item* var = resolveVariable( dyns->name(), true, forAssign );
+   // not a local symbol. Try to see if it's global.
+   Item* var = resolveGlobal( dyns->name(), forAssign );
 
-   DynsData* newSlot;
-
+   // global arena failed as well. We're doomed
    if( var == 0 )
    {
-      if( ! forAssign )
-      {
-         Function* func = cf->m_function;
-         fassert( func != 0 );
-         Module* mod = func->module();
-         throw new CodeError( ErrorParam(e_undef_sym, __LINE__, SRC )
-                  .line(currentCode().m_step->sr().line())
-                  .module( mod != 0 ? mod->name() : "" )
-                  .symbol( func->name() )
-                  .extra(dyns->name())
-                  );
-      }
 
-      // not found? -- it's an unbound symbol.
-      newSlot = m_dynsStack.addSlot();
-      var = m_itemStack->push(m_dynsStack.depth());
-      var->setNil();
-      TRACE2( "VMContext::resolveSymbol -- \"%s\" Not found, creating new.",
-               dyns->name().c_ize() );
-   }
-   else {
-      newSlot = m_dynsStack.addSlot();
+      Function* func = cf->m_function;
+      fassert( func != 0 );
+      Module* mod = func->module();
+      throw new CodeError( ErrorParam(e_undef_sym, __LINE__, SRC )
+               .line(currentCode().m_step->sr().line())
+               .module( mod != 0 ? mod->name() : "" )
+               .symbol( func->name() )
+               .extra(dyns->name())
+               );
    }
 
+   DynsData* newSlot = m_dynsStack.addSlot();
    newSlot->m_sym = dyns;
-   newSlot->m_value = var;
+
+   if( isRule )
+   {
+      newSlot->m_value = m_itemStack->push(m_dynsStack.depth(),*var);
+   }
+   else
+   {
+      newSlot->m_value = var;
+   }
 
    TRACE2( "VMContext::resolveSymbol -- \"%s\" Resolved as new/global/extern %p (%s)%s",
             dyns->name().c_ize(), var, var->describe().c_ize(),
@@ -1897,36 +1904,11 @@ Item* VMContext::resolveSymbol( const Symbol* dyns, bool forAssign )
 }
 
 
-Item* VMContext::resolveVariable( const String& name, bool isGlobal, bool forAssign )
+Item* VMContext::resolveGlobal( const String& name, bool forAssign )
 {
-   TRACE1( "VMContext::resolveVariable -- resolving %s%s", name.c_ize(), isGlobal ? " (global)": "")
+   TRACE1( "VMContext::resolveGlobal -- resolving %s%s", name.c_ize(), (forAssign? " (for assign)": "" ) )
    CallFrame& cf = currentFrame();
    Function* func = cf.m_function;
-
-   if( ! isGlobal )
-   {
-      Variable* var = func->variables().find( name );
-      if( var != 0 ) {
-         switch( var->type() ) {
-         case Variable::e_nt_closed:
-            if( cf.m_closure == 0 ) return 0;
-            return cf.m_closure->get(name);
-
-         case Variable::e_nt_local:
-            return local(var->id());
-
-         case Variable::e_nt_param:
-            return param(var->id());
-
-         default:
-            fassert2( false, "Shouldn't have this in a function" );
-            break;
-         }
-      }
-      else if( forAssign ) {
-         return 0;
-      }
-    }
 
    // didn't find it locally, try globally
    Module* mod = 0;
@@ -1990,38 +1972,6 @@ ClosedData* VMContext::getTopClosedData() const
       if( cf->m_closingData != 0 ) {
          return cf->m_closingData;
       }
-      --cf;
-   }
-
-   return 0;
-}
-
-
-Item* VMContext::findLocal( const String& name ) const
-{
-   CallFrame *cf = m_callStack.m_top;
-   while( cf >= m_callStack.m_base ) {
-
-      Variable* var = cf->m_function->variables().find(name);
-      if( var != 0 ) {
-         switch( var->type() ) {
-         case Variable::e_nt_local:
-            return &m_dataStack.m_base[ var->id() + cf->m_dataBase + cf->m_paramCount ];
-
-         case Variable::e_nt_param:
-            return &m_dataStack.m_base[ var->id() + cf->m_dataBase ];
-
-         case Variable::e_nt_closed:
-            if( cf->m_closure != 0 ) {
-               return cf->m_closure->get(name);
-            }
-            break;
-
-         default:
-            break;
-         }
-      }
-
       --cf;
    }
 

@@ -627,7 +627,7 @@ public:
    }
 
    /** Prepares a new methodic call frame. */
-   inline CallFrame* makeCallFrame( Function* function, int nparams, const Item& self )
+   inline CallFrame* makeCallFrame( Function* function, int nparams, const Item& self, bool bMethodic=true )
    {
       register CallFrame* topCall = m_callStack.addSlot();
       topCall->m_function = function;
@@ -640,7 +640,7 @@ public:
       topCall->m_dynsBase = m_dynsStack.depth();
       topCall->m_paramCount = nparams;
       topCall->m_self = self;
-      topCall->m_bMethodic = true;
+      topCall->m_bMethodic = bMethodic;
 
       return topCall;
    }
@@ -648,49 +648,21 @@ public:
    /** Prepares a new non-methodic call frame. */
    inline CallFrame* makeCallFrame( Function* function, int nparams )
    {
-      register CallFrame* topCall = m_callStack.addSlot();
-      topCall->m_function = function;
-      topCall->m_closingData = topCall->m_closure = 0;
-      topCall->m_codeBase = codeDepth();
-      topCall->m_caller = m_caller;
-      // initialize also initBase, as stackBase may move
-      topCall->m_dataBase = dataSize()-nparams;
-      // TODO: enable rule application with dynsymbols?
-      topCall->m_dynsBase = m_dynsStack.depth();
-
-      topCall->m_paramCount = nparams;
-      topCall->m_self.setNil();
-      topCall->m_bMethodic = false;
-
-      return topCall;
+      return makeCallFrame( function, nparams, Item(), false );
    }
 
    /** Prepares a new non-methodic closure call frame. */
    inline CallFrame* makeCallFrame( Closure* cd, int nparams )
    {
       fassert( cd->closed() );
-      register CallFrame* topCall = m_callStack.addSlot();
-      topCall->m_function = cd->closed();
+      CallFrame* topCall = makeCallFrame( cd->closed(), nparams, Item(), false );
       topCall->m_closure = cd->data();
-      topCall->m_closingData = 0;
-      topCall->m_codeBase = codeDepth();
-      topCall->m_caller = m_caller;
-      // initialize also initBase, as stackBase may move
-      topCall->m_dataBase = dataSize()-nparams;
-      // TODO: enable rule application with dynsymbols?
-
-      topCall->m_dynsBase = m_dynsStack.depth();
-      topCall->m_paramCount = nparams;
-      topCall->m_self.setNil();
-      topCall->m_bMethodic = false;
-
       return topCall;
    }
 
    bool isMethodic() const { return currentFrame().m_bMethodic; }
 
    ClosedData* getTopClosedData() const;
-   Item* findLocal( const String& name ) const;
 
 //========================================================
 //
@@ -1425,7 +1397,7 @@ public:
     \note Symbols marked as constant are returned by value; they aren't referenced.
     */
    Item* resolveSymbol( const Symbol* dyns, bool forAssign );
-   Item* resolveVariable( const String& name, bool isGlobal, bool forAssign );
+   Item* resolveGlobal( const String& name, bool forAssign );
 
    /** Force the symbol to be defined as required.
     * \param sym The symbol to be defined.

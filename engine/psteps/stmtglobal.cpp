@@ -211,7 +211,7 @@ void StmtGlobal::apply_( const PStep* ps, VMContext* ctx )
    {
       Symbol* sym = *viter;
       // Ignore the fact that the symbol is (probably) local and resolve it global.
-      Item* data = ctx->resolveVariable( sym->name(), true, false );
+      Item* data = ctx->resolveGlobal( sym->name(), false );
 
       if( data == 0 )
       {

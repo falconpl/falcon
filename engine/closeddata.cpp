@@ -24,6 +24,7 @@
 #include <falcon/engine.h>
 #include <falcon/refcounter.h>
 #include <falcon/stdhandlers.h>
+#include <falcon/vmcontext.h>
 
 #include <map>
 #include <vector>
@@ -400,6 +401,22 @@ void ClosedData::unflatten( VMContext*, ItemArray& subItems, uint32 pos )
       ir->copy(valueItem);
       _p->m_data[name] = ir;
    }
+}
+
+
+void ClosedData::defineSymbols( VMContext* ctx )
+{
+   _p->m_mtx.lock();
+   Private::EntryMap::iterator pos = _p->m_data.begin();
+   Private::EntryMap::iterator end = _p->m_data.end();
+   while( pos != end )
+   {
+      const String& name = pos->first;
+      Item* value = pos->second;
+      ctx->defineSymbol( Engine::getSymbol(name), value );
+      ++pos;
+   }
+   _p->m_mtx.unlock();
 }
 
 Class* ClosedData::handler() const

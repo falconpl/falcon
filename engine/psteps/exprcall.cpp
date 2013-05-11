@@ -124,6 +124,13 @@ void ExprCall::apply_( const PStep* v, VMContext* ctx )
                }
                break;
                
+               case FLC_CLASS_ID_CLOSURE:
+               {
+                  Closure* cl = static_cast<Closure*>(top.asInst());
+                  bHaveEta = cl->closed()->isEta();
+               }
+               break;
+
                case FLC_CLASS_ID_TREESTEP:
                {
                   if( cls->userFlags() == FALCON_SYNCLASS_ID_TREE) {
@@ -182,6 +189,14 @@ void ExprCall::apply_( const PStep* v, VMContext* ctx )
          {
             // this is just a shortcut for a very common case.
             Function* f = top.asFunction();
+            ctx->callInternal( f, pcount );
+         }
+         break;
+
+      case FLC_CLASS_ID_CLOSURE:
+         {
+            // this is just a shortcut for a very common case.
+            Closure* f = static_cast<Closure*>(top.asInst());
             ctx->callInternal( f, pcount );
          }
          break;
