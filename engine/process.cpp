@@ -35,6 +35,7 @@
 #include <falcon/gclock.h>
 #include <falcon/modspace.h>
 #include <falcon/itemdict.h>
+#include <falcon/pool.h>
 
 #include <set>
 #include <map>
@@ -78,6 +79,7 @@ Process::Process( VMachine* owner, ModSpace* ms ):
    m_mark(0),
    m_tlgen(1)
 {
+   m_itemPagePool = new Pool;
    _p = new Private;
 
    // get an ID for this process.
@@ -120,6 +122,7 @@ Process::Process( VMachine* owner, bool bAdded ):
 
    m_modspace = new ModSpace(this);
    inheritStreams();
+   m_itemPagePool = new Pool;
 }
 
 
@@ -156,6 +159,7 @@ Process::~Process() {
    delete m_entry;
 
    delete _p;
+   delete m_itemPagePool;
 }
 
 

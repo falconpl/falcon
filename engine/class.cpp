@@ -420,11 +420,12 @@ void Class::addMethod( Function* func, bool isStatic )
 }
 
 
-void Class::addMethod( const String& name, ext_func_t func, const String& prototype, bool isStatic )
+Function* Class::addMethod( const String& name, ext_func_t func, const String& prototype, bool isStatic )
 {
    Function* f = new ExtFunc(name, func, 0, 0);
    f->parseDescription( prototype );
    addMethod( f, isStatic );
+   return f;
 }
 
 void Class::setConstuctor( Function* func )

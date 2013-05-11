@@ -48,6 +48,7 @@ ExprAutoClone::ExprAutoClone( Class* cls, void* data, int line, int chr ):
       m_data(data)
 {
    FALCON_DECLARE_SYN_CLASS( expr_autoclone )
+   //m_handler = Engine::instance()->synclasses()->m_expr_autoclone;
    apply = apply_;
 }
 

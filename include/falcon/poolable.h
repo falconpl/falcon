@@ -29,10 +29,10 @@ public:
    
 protected:
    virtual ~Poolable() {};
+   Pool* m_pool;
    
 private:
    Poolable* m_next;
-   Pool* m_pool;
    
    friend class Pool;
 };

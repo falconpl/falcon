@@ -197,15 +197,14 @@ FALCON_SYNCLASS_DECLARATOR_EX(m_expr_value, Value, Expression, \
       virtual void flatten( VMContext* ctx, ItemArray& subItems, void* instance ) const;\
       virtual void unflatten( VMContext* ctx, ItemArray& subItems, void* instance ) const; )
 
-FALCON_SYNCLASS_DECLARATOR_EX(m_expr_autoclone, AutoClone, Expression, \
-            virtual void flatten( VMContext* ctx, ItemArray& subItems, void* instance ) const;\
-            virtual void unflatten( VMContext* ctx, ItemArray& subItems, void* instance ) const; )
-
 FALCON_SYNCLASS_DECLARATOR_EX(m_expr_istring, IString, Expression, \
          virtual void store( VMContext*, DataWriter* dw, void* instance ) const;\
              )
    
-   
+ FALCON_SYNCLASS_DECLARATOR_EX(m_expr_autoclone, AutoClone, Expression, \
+             virtual void flatten( VMContext* ctx, ItemArray& subItems, void* instance ) const;\
+             virtual void unflatten( VMContext* ctx, ItemArray& subItems, void* instance ) const; )
+
    
    /** The normal behavior is that to unflatten all via nth.
    */

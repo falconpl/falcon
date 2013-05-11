@@ -48,6 +48,7 @@ class Process;
 class VarMap;
 class TreeStep;
 class GCToken;
+class ItemStack;
 
 /**
  * Structure needed to store VM data.
@@ -609,10 +610,14 @@ public:
    const CallFrame& currentFrame() const { return *m_callStack.m_top; }
    CallFrame& currentFrame() { return *m_callStack.m_top; }
 
-   /** Deprecated Kept for historic reasons */
+   /** Deprecated: Kept for historic reasons */
    const Item& regA() const { return topData(); }
-   /** Kept for historic reasons */
+   /** Deprecated: Kept for historic reasons */
    Item& regA() { return topData(); }
+   /** Deprecated: Kept for historic reasons */
+   void retval( const Item& i ) { regA() = i; }
+   /** Deprecated: Kept for historic reasons */
+   void retval() {}
 
    inline long callDepth() const { return (long)m_callStack.depth(); }
    inline CallFrame& callerFrame( uint32 n ) const { return *(m_callStack.m_top - n); }
@@ -1693,7 +1698,6 @@ protected:
    public:
       const Symbol* m_sym;
       Item* m_value;
-      Item m_internal;
 
       DynsData():
          m_sym(0),
@@ -1879,6 +1883,7 @@ protected:
 
 private:
    GCToken* m_newTokens;
+   ItemStack *m_itemStack;
 
    virtual ~VMContext();
    FALCON_REFERENCECOUNT_DECLARE_INCDEC(VMContext)

@@ -153,8 +153,9 @@ public:
     */
    void setEta( bool mode ) { m_bEta = mode; }
 
-   inline void addParam( const String& name ) {
+   inline Function* addParam( const String& name ) {
       m_vars.addParam( name );
+      return this;
    }
 
    /** Candy grammar to declare parameters.

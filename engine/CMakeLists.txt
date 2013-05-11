@@ -390,6 +390,7 @@ add_library(falcon_engine SHARED
   item_util.cpp
   itemarray.cpp
   itemdict.cpp
+  itemstack.cpp
   log.cpp
   mantra.cpp
   messagequeue.cpp

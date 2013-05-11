@@ -37,6 +37,7 @@ class SynFunc;
 class Error;
 class GCLock;
 class ModSpace;
+class ItemPagePool;
 
 /** Process Entity.
 
@@ -394,6 +395,9 @@ public:
     */
    uint32 getTranslationGeneration() const;
 
+   /** Pool for item pages */
+   Pool* itemPagePool() const { return m_itemPagePool; }
+
 protected:
    Process( VMachine* owner, bool added );
    virtual ~Process();
@@ -436,6 +440,7 @@ protected:
    uint32 m_tlgen;
 
 
+   Pool* m_itemPagePool;
    void inheritStreams();
 
    FALCON_REFERENCECOUNT_DECLARE_INCDEC(Process)

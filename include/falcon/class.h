@@ -1098,7 +1098,7 @@ public:
          code.
       \note Existing properties having the same name will be overwritten.
    */
-   void addMethod( const String& name, ext_func_t func, const String& prototype, bool isStatic = false );
+   Function* addMethod( const String& name, ext_func_t func, const String& prototype, bool isStatic = false );
 
    /** Sets a function to be the constructor code (invoked at init).    
       \param Function the constructor function.
