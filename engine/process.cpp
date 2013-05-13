@@ -113,6 +113,7 @@ Process::Process( VMachine* owner, bool bAdded ):
    m_mark(0),
    m_tlgen(1)
 {
+   m_itemPagePool = new Pool;
    _p = new Private;
 
    // get an ID for this process.
@@ -122,7 +123,6 @@ Process::Process( VMachine* owner, bool bAdded ):
 
    m_modspace = new ModSpace(this);
    inheritStreams();
-   m_itemPagePool = new Pool;
 }
 
 
@@ -156,6 +156,14 @@ Process::~Process() {
    if( m_resultLock !=0 ) {
       m_resultLock->dispose();
    }
+
+   m_stdIn->decref();
+   m_stdOut->decref();
+   m_stdErr->decref();
+   m_textIn->decref();
+   m_textOut->decref();
+   m_textErr->decref();
+
    delete m_entry;
 
    delete _p;

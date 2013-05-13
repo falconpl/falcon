@@ -66,6 +66,7 @@ void FAMLoader::load( VMContext* ctx, Stream* ins , const String& path, const St
    Restorer* restorer = new Restorer;
    // bufferize the fam loading
    StreamBuffer* sc = new StreamBuffer( ins, false );
+   ins->decref();
 
    ctx->pushData( FALCON_GC_STORE(restClass, restorer) );
    ctx->pushData( FALCON_GC_HANDLE( sc ) );
