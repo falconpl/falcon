@@ -150,8 +150,16 @@ void ClassSymbol::op_setProperty( VMContext* ctx, void* instance, const String& 
 void ClassSymbol::op_call( VMContext* ctx, int pcount, void* instance ) const
 {
    Symbol* sym = static_cast<Symbol*>( instance );
-   ctx->popData(pcount);
-   ctx->topData() = *ctx->resolveSymbol(sym, false);
+   if( pcount > 0 )
+   {
+      ctx->opcodeParam(pcount) = ctx->opcodeParam(pcount-1);
+      ctx->popData(pcount);
+      *ctx->resolveSymbol(sym, true) = ctx->topData();
+   }
+   else {
+      ctx->popData(pcount);
+      ctx->topData() = *ctx->resolveSymbol(sym, false);
+   }
 }
 
 
