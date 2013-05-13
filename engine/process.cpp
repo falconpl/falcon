@@ -131,12 +131,12 @@ void Process::inheritStreams()
    // inherit the streams
    m_stdCoder = m_vm->getStdEncoding();
 
-   m_stdIn = m_vm->stdIn();
-   m_stdOut = m_vm->stdOut();
-   m_stdErr = m_vm->stdErr();
-   m_textIn = m_vm->textIn();
-   m_textOut = m_vm->textOut();
-   m_textErr = m_vm->textErr();
+   if( m_stdIn != 0 ) m_stdIn = m_vm->stdIn();
+   if( m_stdOut != 0 ) m_stdOut = m_vm->stdOut();
+   if( m_stdErr != 0 ) m_stdErr = m_vm->stdErr();
+   if( m_textIn != 0 ) m_textIn = m_vm->textIn();
+   if( m_textOut != 0 ) m_textOut = m_vm->textOut();
+   if( m_textErr != 0 ) m_textErr = m_vm->textErr();
 
    m_stdIn->incref();
    m_stdOut->incref();
