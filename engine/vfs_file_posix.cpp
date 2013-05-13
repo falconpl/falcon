@@ -253,11 +253,13 @@ bool VFSFile::readStats( const URI& uri, FileStat &sts, bool )
    sts.m_group = fs.st_gid;
    */
 
-   sts.atime( fs.st_atime *1000 );    /* time of last access */
-   sts.ctime( fs.st_ctime *1000 );     /* time of last change */
+   sts.atime( fs.st_atime );    /* time of last access */
+   sts.atime( sts.atime() * static_cast<int64>(1000) );    /* Multiply separate to fix type difference */
+   sts.ctime( fs.st_ctime );     /* time of last change */
+   sts.atime( sts.ctime() * static_cast<int64>(1000) );    /* Multiply separate to fix type difference */
 
    // copy last change time to last modify time
-   sts.mtime( fs.st_ctime * 1000 );     /* time of last change */
+   sts.mtime( sts.ctime() );     /* time of last change */
 
    return true;
 }
