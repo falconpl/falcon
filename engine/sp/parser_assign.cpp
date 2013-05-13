@@ -49,6 +49,11 @@ void apply_expr_assign( const Rule&, Parser& p )
    TokenInstance* v2 = p.getNextToken();
 
    Expression* firstPart = static_cast<Expression*>(v1->detachValue());
+   if( firstPart->lvalueStep() == 0 )
+   {
+      p.addError( e_assign_sym, p.currentSource(), v1->line(), v1->chr() );
+   }
+
    Expression* secondPart = static_cast<Expression*>(v2->detachValue());
    TokenInstance* ti = TokenInstance::alloc(v1->line(), v1->chr(), sp.Expr);
    
