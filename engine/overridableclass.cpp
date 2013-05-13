@@ -428,19 +428,7 @@ void OverridableClass::op_compare( VMContext* ctx, void* self ) const
    else
    {
       // we don't need the self object.
-      ctx->popData();
-      const Item& crand = ctx->topData();
-      if( crand.type() == typeID() )
-      {
-         // we're all object. Order by ptr.
-         ctx->topData() = (int64)
-            (self > crand.asInst() ? 1 : (self < crand.asInst() ? -1 : 0));
-      }
-      else
-      {
-         // order by type
-         ctx->topData() = (int64)( typeID() - crand.type() );
-      }
+      Class::op_compare(ctx, self);
    }
 }
 

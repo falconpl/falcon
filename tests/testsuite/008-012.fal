@@ -1,0 +1,38 @@
+/*
+@name Instance equality
+@category Objects
+
+@output
+t == t: true
+t != t: false
+t == t1: false
+t != t1: true
+t == 0: false
+t != 0: true
+t == nil: false
+t != nil: true
+Done.
+@endoutput
+*/
+
+class Test
+end
+t = Test()
+t1 = Test()
+
+tests =  .[
+   "t == t"
+   "t != t"
+   "t == t1"
+   "t != t1"
+   "t == 0"
+   "t != 0"
+   "t == nil"
+   "t != nil"
+]
+
+for test in tests
+   > test, ": ", compile(test)()
+end
+
+> "Done."
