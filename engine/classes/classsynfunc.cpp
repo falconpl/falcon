@@ -52,7 +52,7 @@ bool ClassSynFunc::isDerivedFrom( const Class* parent ) const
 {
    static Class* cls = Engine::handlers()->functionClass();
    
-   return parent == cls || parent == this;
+   return parent == this || cls->isDerivedFrom(parent);
 }
 
 void ClassSynFunc::enumerateParents( ClassEnumerator& cb ) const
