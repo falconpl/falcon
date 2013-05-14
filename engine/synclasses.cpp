@@ -226,9 +226,15 @@ void SynClasses::naryExprSet( VMContext* ctx, int pcount, TreeStep* step, int32 
          delete step;
          if ( bCreate ) delete ts;
          
-         throw new ParamError( ErrorParam( e_param_type, __LINE__, SRC )
-            .origin( ErrorParam::e_orig_runtime)
-            .extra( String("Already parented entity at ").N(count+1) ) );
+         if( ts->parent() )
+            throw new ParamError( ErrorParam( e_param_type, __LINE__, SRC )
+               .origin( ErrorParam::e_orig_runtime)
+               .extra( String("Already parented entity at ").N(count+1) ) );
+         else
+            throw new ParamError( ErrorParam( e_param_range, __LINE__, SRC )
+                           .origin( ErrorParam::e_orig_runtime)
+                           .extra( String("Index out of range") ) );
+
       }
       ++count;
    }

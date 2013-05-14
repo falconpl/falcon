@@ -104,6 +104,33 @@ bool StmtReturn::selector( TreeStep* e )
    return true;
 }
 
+
+int32 StmtReturn::arity() const
+{
+   return 0;
+}
+
+TreeStep* StmtReturn::nth( int32 n ) const
+{
+   if( n == 0 || n == -1) {
+      return m_expr;
+   }
+   return 0;
+}
+
+
+
+bool StmtReturn::setNth( int32 n, TreeStep* ts )
+{
+   if( n == 0 || n == -1 )
+   {
+      return selector(ts);
+   }
+
+   return false;
+}
+
+
 void StmtReturn::hasDoubt( bool b )
 {
    m_bHasDoubt = b; 

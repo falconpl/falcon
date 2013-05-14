@@ -41,6 +41,10 @@ public:
    bool hasDoubt() const { return m_bHasDoubt; }
    void hasDoubt( bool b );
    
+   int32 arity() const;
+   TreeStep* nth( int32 n ) const;
+   bool setNth( int32 n, TreeStep* ts );
+
    virtual TreeStep* selector() const;
    virtual bool selector( TreeStep* e );
    
