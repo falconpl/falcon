@@ -131,12 +131,12 @@ void Process::inheritStreams()
    // inherit the streams
    m_stdCoder = m_vm->getStdEncoding();
 
-   if( m_stdIn != 0 ) m_stdIn = m_vm->stdIn();
-   if( m_stdOut != 0 ) m_stdOut = m_vm->stdOut();
-   if( m_stdErr != 0 ) m_stdErr = m_vm->stdErr();
-   if( m_textIn != 0 ) m_textIn = m_vm->textIn();
-   if( m_textOut != 0 ) m_textOut = m_vm->textOut();
-   if( m_textErr != 0 ) m_textErr = m_vm->textErr();
+   m_stdIn = m_vm->stdIn();
+   m_stdOut = m_vm->stdOut();
+   m_stdErr = m_vm->stdErr();
+   m_textIn = m_vm->textIn();
+   m_textOut = m_vm->textOut();
+   m_textErr = m_vm->textErr();
 
    m_stdIn->incref();
    m_stdOut->incref();
@@ -157,12 +157,12 @@ Process::~Process() {
       m_resultLock->dispose();
    }
 
-   m_stdIn->decref();
-   m_stdOut->decref();
-   m_stdErr->decref();
-   m_textIn->decref();
-   m_textOut->decref();
-   m_textErr->decref();
+   if( m_stdIn != 0 ) m_stdIn->decref();
+   if( m_stdOut != 0 ) m_stdOut->decref();
+   if( m_stdErr != 0 ) m_stdErr->decref();
+   if( m_textIn != 0 ) m_textIn->decref();
+   if( m_textOut != 0 ) m_textOut->decref();
+   if( m_textErr != 0 ) m_textErr->decref();
 
    delete m_entry;
 
