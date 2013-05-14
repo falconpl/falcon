@@ -88,8 +88,6 @@ namespace _classFileStat {
 FALCON_DECLARE_FUNCTION( read ,"uri:S|URI,deref:[B]" )
 void Function_read::invoke( Falcon::VMContext* ctx, int )
 {
-   static Class* statCls = methodOf()->module()->getClass("FileStat");
-   fassert( statCls != 0 );
 
    Item* i_uri   = ctx->param(0);
    URI tmpUri;
