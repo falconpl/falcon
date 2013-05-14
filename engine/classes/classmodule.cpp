@@ -48,6 +48,7 @@ ClassModule::ClassModule():
 {
    m_getAttributeMethod.methodOf(this);
    m_setAttributeMethod.methodOf(this);
+   m_addMethod.methodOf(this);
    m_clearPriority = 3;
 }
 
@@ -67,7 +68,7 @@ void* ClassModule::clone( void* source ) const
 {
    Module* mod = static_cast<Module*>(source);
    TRACE( "Cloning module %p (%s - %s)", mod, mod->name().c_ize(), mod->uri().c_ize() );
-   
+
    Module* modcopy = new Module(*mod);
    return modcopy;
 }
@@ -107,34 +108,35 @@ bool ClassModule::hasProperty( void*, const String& prop ) const
          || prop == "name"
          || prop == "setAttribute"
          || prop == "uri"
+         || prop == "add"
          ;
 }
 
-   
+
 void ClassModule::store( VMContext*, DataWriter* stream, void* instance ) const
 {
    Module* mod = static_cast<Module*>(instance);
-   TRACE( "ClassModule::store -- Storing module %p %s (%s - %s)", 
+   TRACE( "ClassModule::store -- Storing module %p %s (%s - %s)",
       mod, (mod->isNative()?"native" : "syntactic" ),
       mod->name().c_ize(), mod->uri().c_ize() );
-   
+
    stream->write( mod->isNative() );
    stream->write(mod->name());
-   
+
    if( mod->isNative() )
    {
       stream->write( mod->uri() );
       return;
    }
-   
+
    // otherwise, we don't have to save the URI, as it will be rewritten.
    // First, prepare to save the module ids.
    Module::Private* mp = mod->_p;
    int32 progID;
-   
+
    // first, save symbols
    mod->globals().store(stream);
-   
+
    // Now store the module requests
    {
       // first, number the module requests.
@@ -192,7 +194,7 @@ void ClassModule::store( VMContext*, DataWriter* stream, void* instance ) const
          ++mri;
       }
    }
-   
+
    // namespace imports.
    {
       Module::Private::NSImportList& nsilist = mp->m_nsimports;
@@ -244,7 +246,7 @@ void ClassModule::store( VMContext*, DataWriter* stream, void* instance ) const
          }
          else {
             stream->write( (int32)-1 );
-         }            
+         }
 
          ++depi;
       }
@@ -253,7 +255,7 @@ void ClassModule::store( VMContext*, DataWriter* stream, void* instance ) const
 
    // store the attributes
    mod->attributes().store(stream);
-   
+
    MESSAGE1( "Module store international strings." );
    {
       Module::Private::StringSet& sset = mod->_p->m_istrings;
@@ -275,30 +277,30 @@ void ClassModule::restore( VMContext* ctx, DataReader* stream ) const
 {
    static Class* mcls = Engine::handlers()->moduleClass();
    MESSAGE( "Restoring module..." );
-   
+
    bool bIsNative;
    String name;
    stream->read( bIsNative );
    stream->read( name );
-   
-   TRACE1( "Module being restored: %s (%s)", 
+
+   TRACE1( "Module being restored: %s (%s)",
       (bIsNative?"native" : "syntactic" ),
       name.c_ize() );
-   
+
    if( bIsNative )
    {
       String origUri;
       stream->read( origUri );
-      
+
       Module* mod = new Module( name, true );
       mod->uri( origUri );
       ctx->pushData( FALCON_GC_STORE( mcls, mod ) );
       return;
    }
-   
-   // 
+
+   //
    Module* mod = new Module(name, false);
-   
+
    try {
       restoreModule( mod, stream );
    }
@@ -307,7 +309,7 @@ void ClassModule::restore( VMContext* ctx, DataReader* stream ) const
       delete mod;
       throw;
    }
- 
+
    ctx->pushData( Item( mcls, mod ) );
 }
 
@@ -315,14 +317,14 @@ void ClassModule::restore( VMContext* ctx, DataReader* stream ) const
 void ClassModule::restoreModule( Module* mod, DataReader* stream ) const
 {
    TRACE( "ClassModule::restoreModule %s", mod->name().c_ize() );
-    
+
    int32 progID, count;
    // First, prepare to save the module ids.
    Module::Private* mp = mod->_p;
-      
+
    // first, write the symbols.
    mod->globals().restore(stream);
-   
+
    // Now restore the module requests
    Module::Private::ReqList& mrlist = mp->m_mrlist;
    Module::Private::ReqMap& mrmap = mp->m_mrmap;
@@ -341,7 +343,7 @@ void ClassModule::restoreModule( Module* mod, DataReader* stream ) const
             req->name().c_ize(),
             (req->isUri() ? " by uri" : "by name" ),
             (req->isLoad() ? "load" : "import" ) );
-      }  
+      }
       catch( ... )
       {
          delete req;
@@ -360,7 +362,7 @@ void ClassModule::restoreModule( Module* mod, DataReader* stream ) const
    TRACE1( "ClassModule::restoreModule -- reading %d import defs", count );
    //idlist.reserve( count );
    progID = 0;
-   while( progID < count ) 
+   while( progID < count )
    {
       ImportDef* def = new ImportDef;
       try {
@@ -376,21 +378,21 @@ void ClassModule::restoreModule( Module* mod, DataReader* stream ) const
                   .extra(String("Module request ID out of range on ImportDef ").N(progID) )
                   );
             }
-            
+
             def->modReq( mrlist[modreq] );
             def->id(progID);
          }
-         
+
          idlist.push_back(def);
       }
       catch( ... ) {
          delete def;
          throw;
       }
-      
+
       ++progID;
    }
-   
+
    // finally, we can load the modRequest->import deps.
    {
       Module::Private::ReqList::iterator mri = mrlist.begin();
@@ -430,16 +432,16 @@ void ClassModule::restoreModule( Module* mod, DataReader* stream ) const
    stream->read( count );
    TRACE1( "ClassModule::restoreModule -- reading %d namespaces", count );
    progID = 0;
-   while( progID < count ) 
+   while( progID < count )
    {
       String sFrom, sTo;
       int32 defID;
-      
+
       stream->read( sFrom );
       stream->read( sTo );
       stream->read( defID );
       ImportDef* idef = 0;
-      
+
       if( defID >= 0 )
       {
          if( defID >= (int32) idlist.size() )
@@ -451,7 +453,7 @@ void ClassModule::restoreModule( Module* mod, DataReader* stream ) const
          }
          idef = idlist[defID];
       }
-      
+
       Module::Private::NSImport* nsi = new Module::Private::NSImport(idef, sFrom, sTo );
       nsi->m_bPerformed = false;
       nsilist.push_back( nsi );
@@ -462,21 +464,21 @@ void ClassModule::restoreModule( Module* mod, DataReader* stream ) const
    // and finally, dependencies.
    Module::Private::DepList& deplist = mp->m_deplist;
    stream->read( count );
-   TRACE1( "ClassModule::restoreModule -- reading %d dependencies", count );   
+   TRACE1( "ClassModule::restoreModule -- reading %d dependencies", count );
    progID = 0;
-   while( progID < count ) 
+   while( progID < count )
    {
       String sSourceName, sName;
       int32 idSymbol, idDef;
-      
+
       stream->read( sSourceName );
       stream->read( sName );
       stream->read( idSymbol );
       stream->read( idDef );
-      
+
 
       ImportDef* idef = 0;
-      
+
       if( idDef >= 0 )
       {
          if( idDef >= (int32) idlist.size() )
@@ -488,7 +490,7 @@ void ClassModule::restoreModule( Module* mod, DataReader* stream ) const
          }
          idef = idlist[idDef];
       }
-      
+
       if( idSymbol >= 0 )
       {
          if( idSymbol >= (int32) mod->globals().size() )
@@ -497,9 +499,9 @@ void ClassModule::restoreModule( Module* mod, DataReader* stream ) const
                .origin( ErrorParam::e_orig_loader )
                .extra(String("Symbol out of range dependency ").N(progID) )
                );
-         }         
+         }
       }
-      
+
       Module::Private::Dependency* dep = new Module::Private::Dependency( sName );
       dep->m_idef = idef;
       dep->m_sourceName = sSourceName;
@@ -514,7 +516,7 @@ void ClassModule::restoreModule( Module* mod, DataReader* stream ) const
       }
       dep->m_id = progID;
 
-      deplist.push_back( dep );      
+      deplist.push_back( dep );
       mp->m_depsByName[sName] = dep;
 
       TRACE2( "ClassModule::restoreModule -- restored dependency %d: %s (var:%s, idef:%d)",
@@ -522,7 +524,7 @@ void ClassModule::restoreModule( Module* mod, DataReader* stream ) const
 
       ++progID;
    }
-   
+
    MESSAGE1( "Module restore -- attributes" );
 
    // restore the attributes
@@ -547,36 +549,36 @@ void ClassModule::restoreModule( Module* mod, DataReader* stream ) const
 void ClassModule::flatten( VMContext* ctx, ItemArray& subItems, void* instance ) const
 {
    Module* mod = static_cast<Module*>(instance);
-   TRACE( "Flattening module %p %s (%s - %s)", 
+   TRACE( "Flattening module %p %s (%s - %s)",
       mod,  (mod->isNative()?"native" : "syntactic" ),
       mod->name().c_ize(), mod->uri().c_ize() );
-   
+
    if( mod->isNative() )
    {
       // nothing to do,
       return;
    }
-      
+
    // First, get enough lenght
    Module::Private* mp = mod->_p;
-   
-   subItems.reserve( 
+
+   subItems.reserve(
       mod->globals().size() +
       mp->m_mantras.size()+
       mp->m_reqslist.size() +
       mod->attributes().size() * 2 +
       4
    );
-   
+
    // save all the global variables
    mod->globals().flatten(ctx, subItems);
    TRACE( "ClassModule::flatten -- stored %d variables", (uint32) subItems.length() );
-   
+
    // save mantras
    {
       Module::Private::MantraMap& mantras = mp->m_mantras;
       Module::Private::MantraMap::iterator fi = mantras.begin();
-      while( fi != mantras.end() ) 
+      while( fi != mantras.end() )
       {
          TRACE1("Flattening mantra %s", fi->first.c_ize() );
          Mantra* mantra = fi->second;
@@ -589,10 +591,10 @@ void ClassModule::flatten( VMContext* ctx, ItemArray& subItems, void* instance )
          }
          ++fi;
       }
-   }   
+   }
    // Push a nil as a separator
    subItems.append( Item() );
-   
+
    {
       Module::Private::RequirementList& reqs = mp->m_reqslist;
       Module::Private::RequirementList::iterator reqi = reqs.begin();
@@ -605,7 +607,7 @@ void ClassModule::flatten( VMContext* ctx, ItemArray& subItems, void* instance )
 
    // Push a nil as a separator
    subItems.append( Item() );
-   
+
    // finally push the classes in need of init
    {
       Module::Private::InitList& initList = mp->m_initList;
@@ -635,16 +637,16 @@ void ClassModule::unflatten( VMContext* ctx, ItemArray& subItems, void* instance
    TRACE( "ClassModule::unflatten -- module %p %s (%s - %s)",
       mod,  (mod->isNative()?"native" : "syntactic" ),
       mod->name().c_ize(), mod->uri().c_ize() );
-   
+
    if( mod->isNative() )
    {
       // nothing to do,
       return;
    }
-      
+
    Module::Private* mp = mod->_p;
    uint32 pos = 0;
-      
+
    // First, restore the global variables.
    mod->globals().unflatten( ctx, subItems, 0, pos);
    TRACE( "ClassModule::unflatten -- restored %d globals", pos );
@@ -652,7 +654,7 @@ void ClassModule::unflatten( VMContext* ctx, ItemArray& subItems, void* instance
    const Item* current = &subItems[pos];
    while( ! current->isNil() && pos < subItems.length()-2 )
    {
-      Mantra* mantra = static_cast<Mantra*>(current->asInst());  
+      Mantra* mantra = static_cast<Mantra*>(current->asInst());
       TRACE1( "ClassModule::unflatten -- restoring mantra %s ", mantra->name().c_ize() );
 
       if( mantra->name() == "__main__" )
@@ -665,17 +667,17 @@ void ClassModule::unflatten( VMContext* ctx, ItemArray& subItems, void* instance
       mantra->module( mod );
       // no need to store the mantra in globals:
       // the globals already unflattened and mantras are in place.
-      
+
       ++pos;
       current = &subItems[pos];
    }
-   
+
    TRACE( "ClassModule::unflatten -- restored mantras, at position %d", pos );
-   
+
    Module::Private::RequirementList& reqs = mp->m_reqslist;
    current = &subItems[++pos];
    while( ! current->isNil() && pos < subItems.length()-1 )
-   {      
+   {
       Requirement* req = static_cast<Requirement*>(current->asInst());
       TRACE1( "ClassModule::unflatten -- restored requirement for %s", req->name().c_ize() );
       reqs.push_back( req );
@@ -688,7 +690,7 @@ void ClassModule::unflatten( VMContext* ctx, ItemArray& subItems, void* instance
       ++pos;
       current = &subItems[pos];
    }
-   
+
    // recover init classes
    Module::Private::InitList& inits = mp->m_initList;
    current = &subItems[++pos];
@@ -708,7 +710,7 @@ void ClassModule::unflatten( VMContext* ctx, ItemArray& subItems, void* instance
    TRACE( "ClassModule::unflatten -- restored attributes, at position %d", pos );
 }
 
-   
+
 void ClassModule::describe( void* instance, String& target, int , int ) const
 {
    Module* mod = static_cast<Module*>(instance);
@@ -730,24 +732,24 @@ bool ClassModule::op_init( VMContext* ctx, void* instance, int32 pcount ) const
    // NAME - URI
    Item& i_name = ctx->opcodeParam(0);
    Item& i_uri = ctx->opcodeParam(1);
-   
-   if( pcount < 1 
-      || ! i_name.isString() 
-      || (pcount > 1 && ! i_uri.isString()) 
+
+   if( pcount < 1
+      || ! i_name.isString()
+      || (pcount > 1 && ! i_uri.isString())
       )
    {
       throw new ParamError( ErrorParam(e_inv_params, __LINE__, SRC )
          .origin(ErrorParam::e_orig_vm)
          .extra( "S,[S]") );
    }
-   
+
    Module* module =  static_cast<Module*>(instance);
    module->name( *i_name.asString() );
    if( pcount > 1 )
    {
       module->uri( *i_uri.asString() );
    }
-   
+
    return false;
 }
 
@@ -781,6 +783,10 @@ void ClassModule::op_getProperty( VMContext* ctx, void* instance, const String& 
    else if( prop == "uri" )
    {
       ctx->stackResult(1, FALCON_GC_HANDLE( new String(mod->uri())) );
+   }
+   else if( prop == "add" )
+   {
+      ctx->topData().methodize(&m_addMethod);
    }
    else {
       Class::op_getProperty(ctx, instance, prop );
@@ -848,7 +854,7 @@ void ClassModule::SetAttributeMethod::invoke( VMContext* ctx, int32 )
 
    Item* i_name = ctx->param(0);
    Item* i_value = ctx->param(1);
-   if( ! i_name->isString() )
+   if( i_name == NULL || ! i_name->isString() )
    {
       ctx->raiseError(paramError());
       return;
@@ -870,6 +876,56 @@ void ClassModule::SetAttributeMethod::invoke( VMContext* ctx, int32 )
 
       attr->value().copyInterlocked( *i_value );
    }
+
+   ctx->returnFrame();
+}
+
+ClassModule::AddMethod::AddMethod():
+   Function("add")
+{
+   signature("Mantra,[B]");
+   addParam("mantra");
+   addParam("export");
+}
+
+ClassModule::AddMethod::~AddMethod()
+{}
+
+
+void ClassModule::AddMethod::invoke( VMContext* ctx, int32 )
+{
+   Item& self = ctx->self();
+   fassert( self.isUser() );
+
+   static Class* clsMantra = Engine::instance()->handlers()->mantraClass();
+
+   Item* i_mantra = ctx->param(0);
+   Item* i_export = ctx->param(1);
+   if( i_mantra == NULL || ! i_mantra->asClass()->isDerivedFrom(clsMantra) )
+   {
+      ctx->raiseError(paramError());
+      return;
+   }
+
+   bool bExport = true;
+   if ( i_export != NULL )
+   {
+      if ( ! i_export->isBoolean() )
+      {
+         ctx->raiseError(paramError());
+         return;
+      }
+      bExport = i_export->asBoolean();
+   }
+
+   void* inst;
+   Class* cls;
+   i_mantra->forceClassInst(cls, inst);
+
+   Mantra* mantra = static_cast<Mantra*>(inst);
+   Module* module = static_cast<Module*>(self.asInst());
+
+   module->addMantra(mantra, bExport);
 
    ctx->returnFrame();
 }
