@@ -1183,7 +1183,7 @@ Parsing::TokenInstance* SourceLexer::nextToken()
 
 bool SourceLexer::eatingEOL()
 {
-   return m_stringML || m_hadOperator;
+   return m_stringML || (m_hadOperator && ! m_hadImport) ;
 }
 
 void SourceLexer::resetState()
