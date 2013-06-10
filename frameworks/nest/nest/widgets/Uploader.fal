@@ -284,7 +284,7 @@ class Uploader( id, receiverFunc, extra, isDirect, finput ) from Widget( id )
          <iframe name=\"$(id).iframe\" id=\"$(id).iframe\" style=\"display:none\" width=0 height=0></iframe>
          <form style=\"display:inline\" id=\"$(id).form\" target=\"$(id).iframe\" action=\"$(link)\" method=\"POST\" enctype=\"multipart/form-data\" accept-charset=\"utf-8\">
          "
-      res +="<input type=\"hidden\" name=\"id\" value\=" + self.getFullID() +"\"/>\n"
+      res +="<input type=\"hidden\" name=\"id\" value=\"" + self.getFullID() +"\"/>\n"
 
       if self.extra
          // the value is filled by js.
