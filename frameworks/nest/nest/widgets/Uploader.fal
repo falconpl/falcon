@@ -232,7 +232,7 @@ class Uploader( id, receiverFunc, extra, isDirect, finput ) from Widget( id )
       @see msg
    */
    function setOnStart( jsFunc )
-      self.jsMethds.props["onStart"] = jsFunc
+      self.jsMethods.props["onStart"] = jsFunc
       return self
    end
    
