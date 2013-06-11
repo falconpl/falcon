@@ -989,7 +989,7 @@ void Function_compact::invoke(VMContext* ctx, int32 )
    @note When used statically, this method takes a target array as first parameter.
 */
 
-FALCON_DECLARE_FUNCTION(merge,"array:A,source:A,insertPos:N,start:[N],count:[N]");
+FALCON_DECLARE_FUNCTION(merge,"array:A,source:A,insertPos:[N],start:[N],count:[N]");
 void Function_merge::invoke(VMContext* ctx, int32 )
 {
    Item *first_i, *from_i, *second_i, *start_i, *end_i;
@@ -997,7 +997,7 @@ void Function_merge::invoke(VMContext* ctx, int32 )
 
    if ( first_i == 0 || ! first_i->isArray()
        || second_i == 0 || ! second_i->isArray()
-       || from_i == 0 || ! from_i->isOrdinal()
+       || ( from_i != 0 && ! from_i->isOrdinal() )
        ||( start_i != 0 && ! start_i->isOrdinal() )
        ||( end_i != 0 && ! end_i->isOrdinal() )
        )
@@ -1012,7 +1012,7 @@ void Function_merge::invoke(VMContext* ctx, int32 )
       throw new AccessError( ErrorParam( e_arracc, __LINE__, SRC ).extra("Same source & target arrays") );
    }
 
-   int64 from = from_i->forceInteger();
+   int64 from = from_i == 0 ? from = first->length() : from_i->forceInteger();
    ConcurrencyGuard::Writer gw(ctx,first->guard());
 
    if( from < 0 )
