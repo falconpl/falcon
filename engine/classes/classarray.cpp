@@ -980,8 +980,8 @@ void Function_compact::invoke(VMContext* ctx, int32 )
 /*#
    @method merge Array
    @brief Merges the given array into this one.
-   @param insertPos Position of array 1 at which to place array2
    @param source Array containing the second half of the merge, read-only
+   @optparam insertPos Position of array 1 at which to place array2
    @optparam start First element of array to merge in this array
    @optparam count Count of elements of array2 to merge in this array
    @return This same array
