@@ -636,25 +636,17 @@ void Function_copy::invoke(VMContext* ctx, int32 )
    ctx->returnFrame( FALCON_GC_HANDLE(retarr) );
 }
 
-/*#
-   @method push Array
-   @brief Pushes one or more items at the end of the array.
-   @param item the item to be pushed.
-   @optparam ... other items to be pushed.
 
-   @note When used statically, this method takes a target array as first parameter.
-*/
-FALCON_DECLARE_FUNCTION(push,"array:A,item:X,...");
-void Function_push::invoke(VMContext* ctx, int32 pCount )
+static void internal_push( Function* func, VMContext* ctx, int32 pCount )
 {
    Item *i_array;
-   ctx->getMethodicParams(i_array );
+   ctx->getMethodicParams(i_array);
 
    int base = ctx->isMethodic() ? 0 : 1;
    if ( i_array == 0 || ! i_array->isArray()
         || pCount <= base )
    {
-      throw paramError(__LINE__, SRC, ctx->isMethodic() );
+      throw func->paramError(__LINE__, SRC, ctx->isMethodic() );
    }
 
    ItemArray *array = i_array->asArray();
@@ -668,6 +660,34 @@ void Function_push::invoke(VMContext* ctx, int32 pCount )
    }
 
    ctx->returnFrame();
+}
+
+/*#
+   @method push Array
+   @brief Pushes one or more items at the end of the array.
+   @param item the item to be pushed.
+   @optparam ... other items to be pushed.
+
+   @note When used statically, this method takes a target array as first parameter.
+*/
+FALCON_DECLARE_FUNCTION(push,"array:A,item:X,...");
+void Function_push::invoke(VMContext* ctx, int32 pCount )
+{
+   internal_push( this, ctx, pCount );
+}
+
+/*#
+   @method append Array
+   @brief (Alias to @a Array.push) Pushes one or more items at the end of the array.
+   @param item the item to be pushed.
+   @optparam ... other items to be pushed.
+
+   @note When used statically, this method takes a target array as first parameter.
+*/
+FALCON_DECLARE_FUNCTION(append,"array:A,item:X,...");
+void Function_append::invoke(VMContext* ctx, int32 pCount )
+{
+   internal_push( this, ctx, pCount );
 }
 
 /*#
@@ -969,15 +989,15 @@ void Function_compact::invoke(VMContext* ctx, int32 )
    @note When used statically, this method takes a target array as first parameter.
 */
 
-FALCON_DECLARE_FUNCTION(merge,"array:A,insertPos:N,source:A,start:[N],count:[N]");
+FALCON_DECLARE_FUNCTION(merge,"array:A,source:A,insertPos:N,start:[N],count:[N]");
 void Function_merge::invoke(VMContext* ctx, int32 )
 {
    Item *first_i, *from_i, *second_i, *start_i, *end_i;
-   ctx->getMethodicParams(first_i, from_i, second_i, start_i, end_i);
+   ctx->getMethodicParams(first_i, second_i, from_i, start_i, end_i);
 
    if ( first_i == 0 || ! first_i->isArray()
-       || from_i == 0 || ! from_i->isOrdinal()
        || second_i == 0 || ! second_i->isArray()
+       || from_i == 0 || ! from_i->isOrdinal()
        ||( start_i != 0 && ! start_i->isOrdinal() )
        ||( end_i != 0 && ! end_i->isOrdinal() )
        )
@@ -1462,6 +1482,7 @@ ClassArray::ClassArray():
    addMethod( new _classArray::Function_eraseAll, true );
 
    addMethod( new _classArray::Function_push, true );
+   addMethod( new _classArray::Function_append, true );
    addMethod( new _classArray::Function_pop, true );
    addMethod( new _classArray::Function_shift, true );
    addMethod( new _classArray::Function_unshift, true );
@@ -1838,15 +1859,6 @@ void ClassArray::gcMarkInstance( void* self, uint32 mark ) const
 }
 
 
-void ClassArray::enumerateProperties( void*, Class::PropertyEnumerator& ) const
-{
-   // TODO array bindings?
-}
-
-void ClassArray::enumeratePV( void*, Class::PVEnumerator& ) const
-{
-   // TODO array bindings?
-}
 
 //=======================================================================
 //
