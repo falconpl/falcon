@@ -20,7 +20,6 @@
 #include <falcon/string.h>
 #include <falcon/pstep.h>
 #include <falcon/sourceref.h>
-#include <falcon/requirement.h>
 #include <falcon/psteps/exprvector.h>
 
 namespace Falcon

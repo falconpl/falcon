@@ -324,49 +324,45 @@ void ModCompiler::Context::onDirective(const String&, const String& )
 void ModCompiler::Context::onGlobal( const String& name )
 {
    // global defines the global variable if not already there.
-   Variable* var = m_owner->m_module->getGlobal( name );
+   GlobalsMap::Data* var = m_owner->m_module->globals().get( name );
 
    if( var == 0 )
    {
-      var = m_owner->m_module->addGlobal( name, Item(), false );
-      var->declaredAt( m_owner->m_sp.currentLine() );
+      var = m_owner->m_module->globals().add( name, Item(), false );
    }
 }
 
 
-Variable* ModCompiler::Context::onGlobalDefined( const String& name, bool& bAlreadyDef )
+void ModCompiler::Context::onGlobalDefined( const String& name, bool& bAlreadyDef )
 {
-   Variable* var = m_owner->m_module->getGlobal( name );
+   GlobalsMap::Data* var = m_owner->m_module->globals().get( name );
    if( var == 0 )
    {
       bAlreadyDef = false;
-      var = m_owner->m_module->addGlobal( name, Item(), false );
-      var->declaredAt( m_owner->m_sp.currentLine() );
+      m_owner->m_module->globals().add( name, Item(), false );
    }
    else {
       bAlreadyDef = true;
    }
-
-   return var;
 }
 
 
-Variable* ModCompiler::Context::onGlobalAccessed( const String& name )
+bool ModCompiler::Context::onGlobalAccessed( const String& name )
 {
-   Variable* var = m_owner->m_module->getGlobal( name );
+   GlobalsMap::Data* var = m_owner->m_module->globals().get( name );
    if( var == 0 )
    {
       var = m_owner->m_module->addImplicitImport( name, m_owner->m_sp.currentLine() );
-      var->declaredAt( m_owner->m_sp.currentLine() );
+      return false;
    }
 
-   return var;
+   return true;
 }
 
 
-Item* ModCompiler::Context::getVariableValue( const String&, Variable* var )
+Item* ModCompiler::Context::getVariableValue( const String& name )
 {
-   return m_owner->m_module->getGlobalValue( var->id() );
+   return m_owner->m_module->globals().getValue( name );
 }
 
 void ModCompiler::Context::onRequirement( Requirement* rec )

@@ -26,6 +26,7 @@ namespace Falcon {
 
 class Class;
 class ItemArray;
+class Symbol;
 
 /** Data for closures. */
 class FALCON_DYN_CLASS ClosedData
@@ -40,7 +41,9 @@ public:
    uint32 gcMark() const { return m_mark; }
 
    void add( const String& name, const Item& value );
+   void add( Symbol* sym, const Item& value );
    Item* get( const String& name ) const;
+   Item* get( Symbol* sym ) const;
    ClosedData* clone() const { return new ClosedData(*this); }
    uint32 size() const;
 

@@ -34,7 +34,7 @@ class FalconClass;
 class Requirement;
 class ImportDef;
 class ExprLit;
-class VarMap;
+class SymbolMap;
 
 /** Compilation context for Falcon source file compiler (ABC).
 
@@ -212,7 +212,6 @@ public:
    /** Notifies the creation request for a global symbol.
     \param The name of the symbol that is defined.
     \param alreadyDef Set to true if the symbol was already defined.
-    \return A new variable that can be used to form the sequence.
 
     This method is called back when the parser sees a symbol being defined,
     but doesn't have a local symbol table where to create it as a local symbol.
@@ -221,11 +220,11 @@ public:
     be inserted in its own symbol table, or return an already existing symbol
     from its table.
     */
-   virtual Variable* onGlobalDefined( const String& name, bool &alreadyDef ) = 0;
+   virtual void onGlobalDefined( const String& name, bool &alreadyDef ) = 0;
 
    /** Notifies the access request for a global symbol.
        \param The name of the symbol that is defined.
-       \return A new variable that can be used to form the sequence.
+       \return true if the variable is local, false if it's extern.
 
        This method is called back when the parser sees a symbol being accessed,
        but doesn't have a local variable table where to create it as a local variable.
@@ -237,23 +236,10 @@ public:
 
        \note in case an error is added, the method can return 0.
        */
-   virtual Variable* onGlobalAccessed( const String& name ) = 0;
+   virtual bool onGlobalAccessed( const String& name ) = 0;
    
-   virtual Item* getVariableValue( const String& name, Variable* var ) = 0;
-
-   /** Adds a requirement for a foreign class.
-    RequiredClass is a particular import structure that statically specifies 
-    the fact that the imported entity must be a class.
-    
-    The modules have support to generate link errors when a symbol speciried 
-    in a RequiredClass is not found (in the specified source namespaces or in 
-    the global namespace) or, if found, if the symbol is not referencing a
-    Class entity.
-    
-    This is similar to onInheritance(), but in this case inheritance completion
-    and subclass creation is not involved in the resolution process.
-    */
-   virtual void onRequirement( Requirement* rec ) = 0;
+   virtual Item* getValue( const String& name );
+   virtual Item* getValue( Symbol* name ) = 0;
 
    /** Called back when an international string is found in the code.
     *
@@ -281,9 +267,12 @@ public:
     This might create a new variable or access an already existing variable
     in the current context.
     */
-   Variable* defineSymbol( const String& variable );
+   void defineSymbol( const String& variable );
    
-   Variable* accessSymbol( const String& variable );
+   /**
+    * \return true if the symbol is local, false if it's extern.
+    */
+   bool accessSymbol( const String& variable );
 
    /** Defines the symbols that are declared in expressions as locally defined.
     \param expr The branch of the expressions where symbols are defined.
@@ -398,8 +387,7 @@ public:
 
    /** Finds a symbol in one of the existing symbol table.
       \param name The name of a symbol to be searched.
-      \return A symbol that can be inserted in existing expressions, or
-            0 if not found.
+      \return true if the symbol is local.
     The returned symbol is either a local symbol of the topmost symbol table,
     a closed symbol of intermediate symbol tables or a global symbol in the
     lowest symbol table.
@@ -410,7 +398,7 @@ public:
     to the topmost table before being returned.
 
     */
-   Variable* findLocalSymbol( const String& name );
+   bool isLocalSymbol( const String& name );
 
    bool isParentLocal( const String& name );
 
@@ -474,7 +462,7 @@ private:
    FalconClass * m_cclass;
 
    // Current symbol table, precached for performance.
-   VarMap* m_varmap;
+   SymbolMap* m_varmap;
 
    void saveStatus( CCFrame& cf ) const;
    void restoreStatus( const CCFrame& cf );

@@ -23,7 +23,7 @@
 #include <falcon/vmcontext.h>
 #include <falcon/symbol.h>
 #include <falcon/closure.h>
-#include <falcon/varmap.h>
+#include <falcon/symbolmap.h>
 #include <falcon/stdsteps.h>
 #include <falcon/syntree.h>
 #include <falcon/textwriter.h>
@@ -37,7 +37,8 @@ namespace Falcon {
 ExprTree::ExprTree( int line, int chr ):
    Expression( line, chr ),
    m_child(0),
-   m_varmap(0)
+   m_symbols(0),
+   m_bIsEta(false)
 {
    FALCON_DECLARE_SYN_CLASS( expr_tree );
    apply = apply_;
@@ -48,7 +49,8 @@ ExprTree::ExprTree( int line, int chr ):
 ExprTree::ExprTree( TreeStep* st, int line, int chr ):
    Expression( line, chr ),
    m_child(st),
-   m_varmap(0)
+   m_symbols(0),
+   m_bIsEta(false)
 {
    FALCON_DECLARE_SYN_CLASS( expr_tree );
    apply = apply_;
@@ -59,7 +61,8 @@ ExprTree::ExprTree( TreeStep* st, int line, int chr ):
 ExprTree::ExprTree( const ExprTree& other ):
    Expression( other ),
    m_child(0),
-   m_varmap(0)
+   m_symbols(0),
+   m_bIsEta(other.m_bIsEta)
 {
    apply = apply_;
    m_trait = e_trait_tree;
@@ -69,41 +72,32 @@ ExprTree::ExprTree( const ExprTree& other ):
       m_child->setParent(this);
    }
 
-   if( other.m_varmap != 0 ) {
-      m_varmap = new VarMap(*other.m_varmap);
+   if( other.m_symbols != 0 ) {
+      m_symbols = new SymbolMap(*other.m_symbols);
    }
 }
 
 ExprTree::~ExprTree()
 {
-   delete m_varmap;
+   delete m_symbols;
    dispose( m_child );
 }
 
 
-Variable* ExprTree::addParam( const String& name )
+bool ExprTree::addParam( const String& name )
 {
-   if( varmap() == 0 ) {
-      m_varmap = new VarMap;
+   if( m_symbols == 0 ) {
+      m_symbols = new SymbolMap;
    }
 
-   return varmap()->addParam(name);
-}
-
-Variable* ExprTree::addLocal( const String& name )
-{
-   if( varmap() == 0 ) {
-      m_varmap = new VarMap;
-   }
-
-   return varmap()->addLocal(name);
+   return m_symbols->insert(name);
 }
 
 
 int ExprTree::paramCount() const
 {
-   if( varmap() == 0 ) return 0;
-   return varmap()->paramCount();
+   if( m_symbols == 0 ) return 0;
+   return m_symbols->size();
 }
 
 
@@ -111,11 +105,11 @@ const String& ExprTree::param( int n )
 {
    static String none;
 
-   if( varmap() == 0 ){
+   if( m_symbols == 0 ){
       return none;
    }
 
-   return varmap()->getParamName(n);
+   return m_symbols->getById(n)->name();
 }
 
 
@@ -128,17 +122,17 @@ void ExprTree::render( TextWriter* tw, int32 depth ) const
    }
    else
    {
-      bool isEta = varmap() != 0 && varmap()->isEta();
+      bool isEta = m_bIsEta;
 
       const char* etaOpen = isEta ? "[" : "(";
       const char* etaClose = isEta ? "]" : ")";
       tw->write("{");
       tw->write( etaOpen );
 
-      if( varmap() != 0 && varmap()->paramCount() > 0 )
+      if( m_symbols != 0 && m_symbols->size() > 0 )
       {
-         for( uint32 i = 0; i < varmap()->paramCount(); ++i ) {
-            const String& paramName = varmap()->getParamName(i);
+         for( uint32 i = 0; i < m_symbols->size(); ++i ) {
+            const String& paramName = m_symbols->getById(i)->name();
             if( i > 0 ) {
                tw->write( ", " );
             }
@@ -214,10 +208,10 @@ bool ExprTree::setNth( int32 n, TreeStep* ts )
    return false;
 }
 
-void ExprTree::setVarMap( VarMap* vm )
+void ExprTree::setParameters( SymbolMap* vm )
 {
-   delete m_varmap;
-   m_varmap = vm;
+   delete m_symbols;
+   m_symbols = vm;
 }
 
 void ExprTree::apply_( const PStep* ps, VMContext* ctx )

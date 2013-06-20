@@ -25,7 +25,7 @@ class Expression;
 class Statement;
 class SynTree;
 class Item;
-class VarMap;
+class SymbolMap;
 class TextWriter;
 
 /** PStep extension that can be insereted in an exposable syntactic tree.

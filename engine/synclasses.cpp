@@ -1221,7 +1221,7 @@ void SynClasses::ClassTree::op_call(VMContext* ctx, int pcount, void* instance) 
 
    // TODO: really need to check for childhood?
    if( child != 0 ) {
-      VarMap* st = tree->varmap();
+      NameMap* st = tree->varmap();
       // We must always push a local frame, also with st == 0
       ctx->addLocalFrame( st, pcount );
       ctx->pushCode( child );
@@ -1266,10 +1266,11 @@ bool SynClasses::ClassTree::op_init( VMContext* ctx, void* instance, int pcount 
 void SynClasses::ClassTree::store( VMContext* ctx, DataWriter* wr, void* instance ) const
 {
    ExprTree* tree = static_cast<ExprTree*>(instance);
-   bool vmap = tree->varmap() != 0;
 
    m_parent->store( ctx, wr, tree );
 
+   wr->write( tree->isEta() );
+   bool vmap = tree->varmap() != 0;
    wr->write( vmap );
    if( vmap ) {
       tree->varmap()->store( wr );
@@ -1277,15 +1278,18 @@ void SynClasses::ClassTree::store( VMContext* ctx, DataWriter* wr, void* instanc
 }
 void SynClasses::ClassTree::restore( VMContext* ctx, DataReader* dr ) const
 {
+   bool isEta = false;
    ExprTree* expr = new ExprTree;
    try {
       ctx->pushData( Item( this, expr ) );
       m_parent->restore( ctx, dr );
-      bool hasVmap;
+      bool hasVmap = false, isEta = false;
+      dr->read( isEta );
       dr->read( hasVmap );
 
+      expr->setEta(isEta);
       if( hasVmap ) {
-         expr->setVarMap( new VarMap );
+         expr->setVarMap( new NameMap );
          expr->varmap()->restore( dr );
       }
    }

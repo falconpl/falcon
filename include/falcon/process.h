@@ -38,6 +38,7 @@ class Error;
 class GCLock;
 class ModSpace;
 class ItemPagePool;
+class ItemStack;
 
 /** Process Entity.
 
@@ -398,6 +399,43 @@ public:
    /** Pool for item pages */
    Pool* itemPagePool() const { return m_itemPagePool; }
 
+   /** Adds an export to the process superglobals table.
+    * \param name The name of the exported symbol.
+    * \param value The value at which the exported symbol must be initialized.
+    * \return the pointer to the exported item if the export was added,
+    *       0 if the exported symbol name was already defined.
+    *
+    * The exported item is also garbage-locked, keeping the inner value
+    * safe as long as the process exists.
+    *
+    * The item itself is stored in a non-relocable table which is actually
+    * never deleted.
+    *
+    * Once an export is declared, it cannot be re-declared; however, the
+    * value in the exported item can be changed at will.
+    */
+   Item* addExport( const String& name, const Item& value );
+
+   /** Removes an export from the process superglobals table.
+    * \param name The name of the exported symbol to be removed.
+    * \return true if the name was found and removed, false otherwise.
+    */
+   bool removeExport( const String& name );
+
+   /** Retrieves the value of an exported name.
+    * \param name The name of the exported symbol to be found in the superglobals.
+    * \return a valid Item* on success, 0 otherwise.
+    */
+   Item* getExport( const String& name ) const;
+
+   /** Atomically alters an exported value, or create it if not previously exported.
+    * \param name The name of the exported symbol to be found in the superglobals.
+    * \param value The new value for the item.
+    * \param existing will be set to true if the item was already in the exported table.
+    * \return a valid Item* to the exported value.
+    */
+   Item* updateExport( const String& name, const Item& value, bool &existing ) const;
+
 protected:
    Process( VMachine* owner, bool added );
    virtual ~Process();
@@ -441,6 +479,8 @@ protected:
 
 
    Pool* m_itemPagePool;
+   ItemStack* m_superglobals;
+
    void inheritStreams();
 
    FALCON_REFERENCECOUNT_DECLARE_INCDEC(Process)

@@ -308,7 +308,6 @@ add_library(falcon_engine SHARED
   classes/classsymbol.cpp
   classes/classsynfunc.cpp
   classes/classtreestep.cpp
-  classes/classrequirement.cpp
   classes/metaclass.cpp
   classes/metafalconclass.cpp
   classes/metahyperclass.cpp
@@ -411,7 +410,6 @@ add_library(falcon_engine SHARED
   pstep.cpp
   reader.cpp
   restorer.cpp
-  requirement.cpp
   rootsyntree.cpp
   rulesyntree.cpp
   scheduler.cpp
@@ -442,9 +440,7 @@ add_library(falcon_engine SHARED
   tracestep.cpp
   treestep.cpp
   uri.cpp
-  vardatamap.cpp
-  variable.cpp
-  varmap.cpp
+  symbolmap.cpp
   vfsiface.cpp
   vfsprovider.cpp
   vm.cpp

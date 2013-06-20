@@ -167,7 +167,7 @@ void Function::render( TextWriter* tgt, int32 depth ) const
    // write the parameters
    int32 pcount = paramCount();
    for( int32 i = 0; i < pcount; ++i ) {
-      const String& param = variables().getParamName(i);
+      const String& param = parameters().getById(i)->name();
       if( i > 0 )
       {
          tgt->write(", ");

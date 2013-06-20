@@ -21,6 +21,7 @@
 #include <malloc.h>
 
 #include <falcon/mt.h>
+#include <falcon/atomic.h>
 
 namespace Falcon
 {
@@ -35,24 +36,6 @@ ThreadSpecific::ThreadSpecific( void (*destructor)(void*) )
    #else
    pthread_key_create( &m_key, destructor );
    #endif
-}
-
-/** Performs an atomic thread safe increment. */
-int32 atomicInc( volatile int32 &data )
-{
-   s_cs.lock();
-   register int32 res = ++data;
-   s_cs.unlock();
-   return res;
-}
-
-/** Performs an atomic thread safe decrement. */
-int32 atomicDec( volatile int32 &data )
-{
-   s_cs.lock();
-   register int32 res = --data;
-   s_cs.unlock();
-   return res;
 }
 
 

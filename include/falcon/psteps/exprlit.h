@@ -18,7 +18,6 @@
 
 #include <falcon/setup.h>
 #include <falcon/expression.h>
-#include <falcon/varmap.h>
 
 namespace Falcon {
 

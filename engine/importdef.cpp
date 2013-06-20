@@ -89,7 +89,7 @@ void ImportDef::setImportModule( const String& src, bool bIsPath )
 {
    m_bIsLoad = false;
    m_bIsUri = bIsPath;
-   m_source = src;
+   m_module = src;
 }
 
 
@@ -97,7 +97,7 @@ void ImportDef::setLoad( const String& src, bool bIsPath )
 {
    m_bIsLoad = true;
    m_bIsUri = bIsPath;
-   m_source = src;
+   m_module = src;
 }
 
 
@@ -113,7 +113,7 @@ bool ImportDef::setImportFrom( const String& path, bool isFsPath, const String& 
    m_bIsUri = isFsPath;
    m_bIsNS = bIsNS;
    
-   m_source = path;
+   m_module = path;
    if( m_symList == 0 )
    {
       m_symList = new SymbolList;
@@ -210,7 +210,7 @@ void ImportDef::setDirect( const String& symName, const String& modName, bool bI
    }
      
    m_symList->push_back( symName );
-   m_source = modName;
+   m_module = modName;
    m_bIsUri = bIsURI;
 } 
    
@@ -224,7 +224,7 @@ void ImportDef::setDirect( const String& symName )
 bool ImportDef::isValid() const
 {
    if( m_bIsLoad ) {
-      return m_source.size() != 0;
+      return m_module.size() != 0;
    }
    else
    {
@@ -245,12 +245,12 @@ void ImportDef::describe( String& tgt ) const
       if( m_bIsUri )
       {
          tgt += '"';
-         tgt += m_source;
+         tgt += m_module;
          tgt += '"';
       }
       else
       {
-         tgt += m_source;
+         tgt += m_module;
       }
    }
    else
@@ -268,8 +268,8 @@ void ImportDef::describe( String& tgt ) const
          }
       }
       
-      if( m_source.size() != 0 ) {
-         tgt += " from " + m_source;
+      if( m_module.size() != 0 ) {
+         tgt += " from " + m_module;
       }
       
       if( m_tgNameSpace.size() != 0 )
@@ -288,7 +288,7 @@ void ImportDef::store(DataWriter* wr) const
    wr->write( m_bIsNS );
    wr->write( m_bIsDirect );
 
-   wr->write( m_source );
+   wr->write( m_module );
    wr->write( m_tgNameSpace );
    m_sr.serialize(wr);
 
@@ -311,7 +311,7 @@ void ImportDef::restore( DataReader* rd )
    rd->read( m_bIsNS );
    rd->read( m_bIsDirect );
 
-   rd->read( m_source );
+   rd->read( m_module );
    rd->read( m_tgNameSpace );
    
    m_sr.deserialize(rd);

@@ -1250,10 +1250,10 @@ void Collector::markLocked( uint32 mark )
       }
       else
       {
-         const Item& item = lock->item();
+         const Item* item = lock->itemPtr();
          Class* cls;
          void* data;
-         if( item.asClassInst(cls, data ) ){
+         if( item->asClassInst(cls, data ) ){
 #if FALCON_TRACE_GC
             onMark(data);
 #endif
@@ -1318,6 +1318,42 @@ GCLock* Collector::lock( const Item& item )
    {
       m_mtx_recycle_locks.unlock();
       l = new GCLock( item );
+   }
+   l->m_ptrItem = &l->m_item;
+
+   // save the item.
+   m_mtx_lockitem.lock();
+   m_lockRoot->m_next->m_prev = l;
+   l->m_next = m_lockRoot->m_next;
+   m_lockRoot->m_next = l;
+   l->m_prev = m_lockRoot;
+   m_mtx_lockitem.unlock();
+
+   return l;
+}
+
+
+GCLock* Collector::lockPtr( Item* ptr )
+{
+   GCLock* l = 0;
+
+   m_mtx_recycle_locks.lock();
+   // do we have a free token?
+   if( m_recycleLock != 0 )
+   {
+      l = m_recycleLock;
+      m_recycleLock = l->m_next;
+      m_recycleLockCount--;
+      m_mtx_recycle_locks.unlock();
+
+      l->m_bDisposed = false;
+      l->m_ptrItem = ptr;
+   }
+   else
+   {
+      m_mtx_recycle_locks.unlock();
+      l = new GCLock( Item() );
+      l->m_ptrItem = ptr;
    }
 
    // save the item.

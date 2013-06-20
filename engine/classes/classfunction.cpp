@@ -100,7 +100,7 @@ static void get_pdict( const Class*, const String&, void*, Item& value )
 
    for( int i = 0; i < size; ++i )
    {
-      String* name = new String( func->variables().getParamName(i) );
+      String* name = new String( func->parameters().getNameById(i) );
       Item* param = ctx->param(i);
       dict->insert( FALCON_GC_HANDLE(name), *param );
    }
@@ -170,9 +170,9 @@ static void get_paramlist( const Class*, const String&, void* instance, Item& va
    Function* func = static_cast<Function*>(instance);
 
    ItemArray* params = new ItemArray;
-   const VarMap& vars = func->variables();
-   for( uint32 i = 0; i < vars.paramCount(); ++i ) {
-      params->append( FALCON_GC_HANDLE(new String(vars.getParamName(i) ) ) );
+   const SymbolMap& vars = func->parameters();
+   for( uint32 i = 0; i < vars.size(); ++i ) {
+      params->append( FALCON_GC_HANDLE(new String(vars.getNameById(i) ) ) );
    }
 
    value = FALCON_GC_HANDLE(params);
@@ -213,16 +213,16 @@ void Function_parameter::invoke( VMContext* ctx, int32 pCount )
    else if( iParam.isString() )
    {
       const String& name = *iParam.asString();
-      VarMap& vars = frame.m_function->variables();
-      Variable* var = vars.find(name);
-      if( var == 0 || var->type() != Variable::e_nt_param )
+      SymbolMap& vars = frame.m_function->parameters();
+      int32 paramId = vars.find(name);
+      if( paramId < 0 )
       {
          throw FALCON_SIGN_XERROR( ParamError, e_param_range, .extra(String("Unknown parameter ") + name ));
       }
 
-      if( var->id() < frame.m_paramCount )
+      if( paramId < (int32) frame.m_paramCount )
       {
-         ctx->topData() = *ctx->param(var->id());
+         ctx->topData() = *ctx->param(paramId);
       }
       // else, the nil created at previous return frame is ok
    }

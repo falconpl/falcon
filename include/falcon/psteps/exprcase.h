@@ -17,7 +17,6 @@
 #define FALCON_EXPRCASE_H
 
 #include <falcon/expression.h>
-#include <falcon/requirement.h>
 
 namespace re2 {
    class RE2;
@@ -29,6 +28,7 @@ class DataReader;
 class DataWriter;
 class CaseRequirement;
 class Engine;
+class ItemArray;
 
 /** Case (switch branch selector) */
 class FALCON_DYN_CLASS ExprCase: public Expression
@@ -57,8 +57,6 @@ public:
    void addEntry( Symbol* symbol );
    void addEntry( Class* cls );
    bool addEntry( const Item& value );
-
-   Requirement* addForwardClass( const String& name );
 
    virtual int32 arity() const;
    virtual TreeStep* nth( int32 n ) const;
@@ -107,40 +105,6 @@ private:
    class Private;
    Private* _p;
 
-   friend class CaseRequirement;
-};
-
-
-/** Requirement for forward class declarations in select statements. */
-class CaseRequirement: public Requirement
-{
-public:
-   CaseRequirement( int32 id, int32 line, const String& name, ExprCase* owner ):
-      Requirement( name ),
-      m_owner( owner ),
-      m_id( id ),
-      m_line( line )
-   {}
-
-   virtual ~CaseRequirement() {}
-
-   virtual void onResolved( const Module* sourceModule, const String& sourceName, Module* targetModule, const Item& value, const Variable* targetVar );
-
-   virtual Class* handler() const;
-
-   virtual void store( DataWriter* stream ) const;
-   virtual void restore( DataReader* stream );
-
-   static void registerMantra( Engine* target );
-private:
-   ExprCase* m_owner;
-   int32 m_id;
-   int32 m_line;
-
-   class ClassCaseRequirement;
-   friend class ClassCaseRequirement;
-
-   static Class* m_mantraClass;
 };
 
 }

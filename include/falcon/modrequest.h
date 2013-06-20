@@ -32,15 +32,15 @@ class DataReader;
  This class is used by modules to keep track of the other modules they need
  to load or find.
  
- The structure also carries the modules once they are found; it doesn't own
- nor reference them; they are GC Marked by the host module on need.
+ The structure also carries the modules once they are found. As they are found,
+ they are referenced by this structure (incref on the module).
  
  Notice that it is possible that multiple ModRequest filed under the same module
  can refer to the same target module. This happens if multiple names initially
- thought to be different actually resolve into the same phisical module entity 
+ thought to be different actually resolve into the same physical module entity
  during the load step. For instance, a module loaded by a relative URI can
  be found to be the same module as another one invoked by absolute URI; their
- phisical name differs until, at runtime, it is possible to determine their
+ physical name differs until, at runtime, it is possible to determine their
  real complete URI. 
  Again, the engine may override load requests and provide the same module for for
  different module names. 
@@ -64,9 +64,7 @@ public:
    inline bool isUri() const { return m_bIsURI; }
    
    inline void isUri(bool v) { m_bIsURI = v ; }
-   
    inline void promoteLoad() { m_isLoad = true; }
-   inline void resolved( Module* mod ) { m_module = mod; }
       
    /** Position of this entity in the module data.
    Used for simpler serialization, so that it is possible to reference this
@@ -80,13 +78,18 @@ public:
    */
    inline void id( int32 n ) { m_id = n; }
    
-   
+   /** Adds an import definition which refers to this module request */
    void addImportDef( ImportDef* id );
+   /** Removes an import definition which refers to this module request */
    void removeImportDef( ImportDef* id );
+   /** Gets an import definition which refers to this module request */
    ImportDef* importDefAt( int n ) const;
+   /** Returns the count of import definitions which refer to this module request */
    int importDefCount() const;
    
+   /** Store on a data writer (serialize) this request. */
    void store( DataWriter* wr ) const;
+   /** Store from a data reader (deserialize) this request. */
    void restore( DataReader* rd );
    
 private:

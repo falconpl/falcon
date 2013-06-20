@@ -140,11 +140,11 @@ void ClassModule::store( VMContext*, DataWriter* stream, void* instance ) const
    // Now store the module requests
    {
       // first, number the module requests.
-      Module::Private::ReqList& mrlist = mp->m_mrlist;
+      Module::Private::ModReqList& mrlist = mp->m_mrlist;
       progID = (int32) mrlist.size();
       TRACE1( "ClassModule::store -- storing %d mod requests", progID );
       stream->write( progID );
-      Module::Private::ReqList::iterator mri = mrlist.begin();
+      Module::Private::ModReqList::iterator mri = mrlist.begin();
       progID = 0;
       while( mri != mrlist.end() ) {
          ModRequest* req = *mri;
@@ -195,62 +195,48 @@ void ClassModule::store( VMContext*, DataWriter* stream, void* instance ) const
       }
    }
 
-   // namespace imports.
+
+   // Import definition
+   MESSAGE1( "Module store import definition." );
    {
-      Module::Private::NSImportList& nsilist = mp->m_nsimports;
-      progID = (int32) nsilist.size();
+      Module::Private::Externals& exts = mp->m_externals;
+      progID = (int32) exts.size();
       stream->write( progID );
-      TRACE1( "ClassModule::store -- storing %d namespace imports", progID );
-      Module::Private::NSImportList::iterator nsi = nsilist.begin();
+      TRACE1( "ClassModule::store -- storing %d externals", progID );
+      Module::Private::Externals::iterator depi = exts.begin();
       progID = 0;
-      while( nsi != nsilist.end() ) {
-         Module::Private::NSImport* ipt = *nsi;
-         stream->write( ipt->m_from );
-         stream->write( ipt->m_to );
-         if( ipt->m_def != 0 )
-         {
-            stream->write( (int32) ipt->m_def->id() );
-         }
-         else {
-            stream->write( (int32) -1 );
-         }
+      while( depi != exts.end() ) {
+         Symbol* sym = depi->first;
 
-         ++nsi;
-      }
-   }
-
-   // and finally, dependencies.
-   {
-      Module::Private::DepList& deplist = mp->m_deplist;
-      progID = (int32) deplist.size();
-      stream->write( progID );
-      TRACE1( "ClassModule::store -- storing %d dependencies", progID );
-      Module::Private::DepList::iterator depi = deplist.begin();
-      progID = 0;
-      while( depi != deplist.end() ) {
-         Module::Private::Dependency* dep = *depi;
-         dep->m_id = progID++;
-         stream->write( dep->m_sourceName );
-         stream->write( dep->m_targetName );
-         if( dep->m_variable != 0 )
-         {
-            stream->write( (int32) dep->m_variable->id() );
-         }
-         else {
-            stream->write( (int32)-1 );
-         }
-
-         if( dep->m_idef != 0 )
-         {
-            stream->write( (int32) dep->m_idef->id() );
-         }
-         else {
-            stream->write( (int32)-1 );
-         }
+         stream->write( sym->name() );
+         // line
+         stream->write( depi->second.first );
+         ImportDef* def = depi->second.second;
+         stream->write( def == 0 ? -1 : def->id() );
 
          ++depi;
       }
    }
+
+   MESSAGE1( "Module store namespace translations." );
+   {
+      Module::Private::NSTransMap& nstm = mp->m_nsTransMap;
+      progID = (int32) nstm.size();
+      stream->write( progID );
+      TRACE1( "ClassModule::store -- storing %d namespace translations", progID );
+      Module::Private::NSTransMap::iterator depi = nstm.begin();
+      progID = 0;
+      while( depi != nstm.end() ) {
+         const String& name = depi->first;
+         stream->write( name );
+         ImportDef* def = depi->second;
+         fassert( def != 0 );
+         stream->write( def->id() );
+
+         ++depi;
+      }
+   }
+
    MESSAGE1( "Module store attributes." );
 
    // store the attributes
@@ -326,8 +312,8 @@ void ClassModule::restoreModule( Module* mod, DataReader* stream ) const
    mod->globals().restore(stream);
 
    // Now restore the module requests
-   Module::Private::ReqList& mrlist = mp->m_mrlist;
-   Module::Private::ReqMap& mrmap = mp->m_mrmap;
+   Module::Private::ModReqList& mrlist = mp->m_mrlist;
+   Module::Private::ModReqMap& mrmap = mp->m_mrmap;
 
    stream->read( count );
    TRACE1( "ClassModule::restoreModule -- reading %d mod requests", count );
@@ -395,14 +381,14 @@ void ClassModule::restoreModule( Module* mod, DataReader* stream ) const
 
    // finally, we can load the modRequest->import deps.
    {
-      Module::Private::ReqList::iterator mri = mrlist.begin();
+      Module::Private::ModReqList::iterator mri = mrlist.begin();
       while( mri != mrlist.end() )
       {
          ModRequest* req = *mri;
          uint32 count;
          stream->read( count );
          TRACE1( "ClassModule::restoreModule -- Request %d has %d imports", req->id(), count );
-         bool general = false;
+
          for( uint32 i = 0; i < count; ++i ) {
             uint32 id;
             stream->read(id);
@@ -414,68 +400,24 @@ void ClassModule::restoreModule( Module* mod, DataReader* stream ) const
             }
             ImportDef* idef = idlist[id];
             req->addImportDef(idef);
-
-            // eventually, save the module as a generic provider.
-            if( idef->isGeneric() && ! general )
-            {
-               TRACE1( "ClassModule::restoreModule -- Module %s is declared generic", req->name().c_ize() );
-               general = true;
-               mp->m_genericMods.push_back( req );
-            }
          }
          ++mri;
       }
    }
 
-   // namespace imports.
-   Module::Private::NSImportList& nsilist = mp->m_nsimports;
-   stream->read( count );
-   TRACE1( "ClassModule::restoreModule -- reading %d namespaces", count );
-   progID = 0;
-   while( progID < count )
-   {
-      String sFrom, sTo;
-      int32 defID;
-
-      stream->read( sFrom );
-      stream->read( sTo );
-      stream->read( defID );
-      ImportDef* idef = 0;
-
-      if( defID >= 0 )
-      {
-         if( defID >= (int32) idlist.size() )
-         {
-            throw new IOError( ErrorParam( e_deser, __LINE__, SRC )
-               .origin( ErrorParam::e_orig_loader )
-               .extra(String("Import ID out of range on Namespace import ").N(progID) )
-               );
-         }
-         idef = idlist[defID];
-      }
-
-      Module::Private::NSImport* nsi = new Module::Private::NSImport(idef, sFrom, sTo );
-      nsi->m_bPerformed = false;
-      nsilist.push_back( nsi );
-
-      ++progID;
-   }
-
-   // and finally, dependencies.
-   Module::Private::DepList& deplist = mp->m_deplist;
+   // dependencies.
+   Module::Private::Externals& exts = mp->m_externals;
    stream->read( count );
    TRACE1( "ClassModule::restoreModule -- reading %d dependencies", count );
    progID = 0;
    while( progID < count )
    {
-      String sSourceName, sName;
-      int32 idSymbol, idDef;
+      String sName;
+      int32 line, idDef;
 
-      stream->read( sSourceName );
       stream->read( sName );
-      stream->read( idSymbol );
+      stream->read( line );
       stream->read( idDef );
-
 
       ImportDef* idef = 0;
 
@@ -491,39 +433,46 @@ void ClassModule::restoreModule( Module* mod, DataReader* stream ) const
          idef = idlist[idDef];
       }
 
-      if( idSymbol >= 0 )
-      {
-         if( idSymbol >= (int32) mod->globals().size() )
-         {
-            throw new IOError( ErrorParam( e_deser, __LINE__, SRC )
-               .origin( ErrorParam::e_orig_loader )
-               .extra(String("Symbol out of range dependency ").N(progID) )
-               );
-         }
-      }
+      exts[Engine::getSymbol(sName)] = std::make_pair(line,idef);
 
-      Module::Private::Dependency* dep = new Module::Private::Dependency( sName );
-      dep->m_idef = idef;
-      dep->m_sourceName = sSourceName;
-      dep->m_targetName = sName;
-      VarDataMap::VarData* vd = 0;
-      if( idSymbol >= 0 ) {
-         vd = mod->globals().getGlobal(idSymbol);
-         dep->m_variable = &vd->m_var;
-      }
-      else {
-         dep->m_variable = 0;
-      }
-      dep->m_id = progID;
-
-      deplist.push_back( dep );
-      mp->m_depsByName[sName] = dep;
-
-      TRACE2( "ClassModule::restoreModule -- restored dependency %d: %s (var:%s, idef:%d)",
-               progID, sName.c_ize(), (vd == 0? "<undef>": vd->m_name.c_ize()), idDef );
+      TRACE2( "ClassModule::restoreModule -- restored dependency %d: %s idef:%d",
+               progID, sName.c_ize(), idDef );
 
       ++progID;
    }
+
+   // translations.
+   Module::Private::NSTransMap& nstm = mp->m_nsTransMap;
+   stream->read( count );
+   TRACE1( "ClassModule::restoreModule -- reading %d namespace translations", count );
+   progID = 0;
+   while( progID < count )
+   {
+      String sName;
+      int32 idDef;
+
+      stream->read( sName );
+      stream->read( idDef );
+
+      ImportDef* idef = 0;
+
+      if( idDef < 0 || idDef >= (int32) idlist.size() )
+      {
+         throw new IOError( ErrorParam( e_deser, __LINE__, SRC )
+            .origin( ErrorParam::e_orig_loader )
+            .extra(String("ImportDef out of range dependency ").N(progID) )
+            );
+      }
+
+      idef = idlist[idDef];
+      nstm.insert(std::make_pair(sName,idef));
+
+      TRACE2( "ClassModule::restoreModule -- restored translation %d: %s idef:%d",
+               progID, sName.c_ize(), idDef );
+
+      ++progID;
+   }
+
 
    MESSAGE1( "Module restore -- attributes" );
 
@@ -565,7 +514,6 @@ void ClassModule::flatten( VMContext* ctx, ItemArray& subItems, void* instance )
    subItems.reserve(
       mod->globals().size() +
       mp->m_mantras.size()+
-      mp->m_reqslist.size() +
       mod->attributes().size() * 2 +
       4
    );
@@ -592,19 +540,6 @@ void ClassModule::flatten( VMContext* ctx, ItemArray& subItems, void* instance )
          ++fi;
       }
    }
-   // Push a nil as a separator
-   subItems.append( Item() );
-
-   {
-      Module::Private::RequirementList& reqs = mp->m_reqslist;
-      Module::Private::RequirementList::iterator reqi = reqs.begin();
-      while( reqi != reqs.end() ) {
-         Requirement* req = *reqi;
-         subItems.append( Item(req->handler(), req) );
-         ++reqi;
-      }
-   }
-
    // Push a nil as a separator
    subItems.append( Item() );
 
@@ -673,23 +608,6 @@ void ClassModule::unflatten( VMContext* ctx, ItemArray& subItems, void* instance
    }
 
    TRACE( "ClassModule::unflatten -- restored mantras, at position %d", pos );
-
-   Module::Private::RequirementList& reqs = mp->m_reqslist;
-   current = &subItems[++pos];
-   while( ! current->isNil() && pos < subItems.length()-1 )
-   {
-      Requirement* req = static_cast<Requirement*>(current->asInst());
-      TRACE1( "ClassModule::unflatten -- restored requirement for %s", req->name().c_ize() );
-      reqs.push_back( req );
-      // find the dependency to which this requirement belongs to
-      Module::Private::DepMap::iterator depi = mp->m_depsByName.find( req->name() );
-      if( depi != mp->m_depsByName.end() ) {
-         TRACE2( "ClassModule::unflatten -- found dependency for requirement %s", req->name().c_ize() );
-         depi->second->m_waitings.push_back( req );
-      }
-      ++pos;
-      current = &subItems[pos];
-   }
 
    // recover init classes
    Module::Private::InitList& inits = mp->m_initList;

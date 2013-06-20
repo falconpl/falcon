@@ -33,8 +33,14 @@ class Collector;
  * While a GCLock for an item exists, the item gets marked at each loop (and thus,
  * deep items have their components marked as well).
  *
+ * The GCLock has an internal Item that can be shared across multiple holders, but
+ * it can also keep a reference to an item that is separately allocated in
+ * the heap, provided the holder of that space can separately account for the storage
+ * where the item is allocated.
+ *
  * The lock can only be created via Collector::lock(). Constructors and destructors
  * are reserved to the Collector class.
+ *
  */
 
 class GCLock
@@ -46,6 +52,9 @@ public:
      * as the GC may be scanning right now.
      */
     inline const Item& item() const { return m_item; }
+    inline Item& item() { return m_item; }
+
+    inline Item* itemPtr() const { return m_ptrItem; }
 
     /** Marks this garbage lock as disposeable.
      *
@@ -67,9 +76,11 @@ protected:
     ~GCLock() {}
     
 private:
-    Item m_item;
+    Item* m_ptrItem;
     GCLock* m_next;
     GCLock* m_prev;
+
+    Item m_item;
     volatile bool m_bDisposed;
 
     friend class Collector;

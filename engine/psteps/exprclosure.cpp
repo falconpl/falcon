@@ -79,7 +79,7 @@ void ExprClosure::apply_( const PStep* ps, VMContext* ctx )
    // Around just once
    ctx->popCode();
    
-   if( self->m_function->variables().closedCount() > 0 ) {
+   if( self->m_function->hasClosure() ) {
       // Create the closure and close it.
       register Function* func = self->m_function;
       Closure* cls = new Closure( func );

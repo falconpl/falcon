@@ -1468,14 +1468,13 @@ void VMContext::call( Closure* cls, int pcount, Item const* params )
 }
 
 
-void VMContext::addLocalFrame( VarMap* st, int pcount )
+void VMContext::addLocalFrame( SymbolMap* st, int pcount )
 {
    static StdSteps* stdSteps = Engine::instance()->stdSteps();
    static Symbol* base = Engine::instance()->baseSymbol();
 
    if( st != 0 ) {
-      TRACE("Add local frame PCOUNT: %d/%d, Symbol table locals: %d, closed: %d",
-               pcount, st->paramCount(), st->localCount(), st->closedCount() );
+      TRACE("Add local frame PCOUNT: %d/%d", pcount, st->size() );
    }
    else {
       TRACE("Add local frame PCOUNT: %d (no table)", pcount );
@@ -1500,24 +1499,24 @@ void VMContext::addLocalFrame( VarMap* st, int pcount )
    // Assign the parameters
    Item* top = &topData() - pcount+1;
    int32 p = 0;
-   if( pcount > (int32)st->paramCount() )
+   if( pcount > (int32)st->size() )
    {
-      pcount = st->paramCount();
+      pcount = st->size();
    }
    while( p < pcount )
    {
       DynsData* dd = m_dynsStack.addSlot();
-      dd->m_sym = Engine::getSymbol(st->getParamName(p));
+      dd->m_sym = st->getById(p);
       dd->m_value = top;
       ++top;
       ++p;
    }
 
    // blank unused parameters
-   pcount = st->paramCount();
+   pcount = st->size();
    while( p < pcount ) {
       DynsData* dd = m_dynsStack.addSlot();
-      dd->m_sym = Engine::getSymbol(st->getParamName(p));
+      dd->m_sym = st->getById(p);
       dd->m_value = m_itemStack->push(m_dynsStack.depth());
       dd->m_value->setNil();
       ++p;
@@ -1820,6 +1819,7 @@ Item* VMContext::resolveSymbol( const Symbol* dyns, bool forAssign )
       --dd;
    }
 
+   // we didn't find it in the local frame. If forassign is true, we must create a new local.
    if( forAssign )
    {
       DynsData* newSlot = m_dynsStack.addSlot();
@@ -1845,7 +1845,8 @@ Item* VMContext::resolveSymbol( const Symbol* dyns, bool forAssign )
       return newSlot->m_value;
    }
 
-   // now we go deep down, but the logic changes.
+   // not found and not for assign; we now must go deep and search it in the call stack,
+   // but the logic changes.
    dbase = m_dynsStack.m_base;
    while( dd >= dbase )
    {
@@ -1907,10 +1908,11 @@ Item* VMContext::resolveSymbol( const Symbol* dyns, bool forAssign )
 Item* VMContext::resolveGlobal( const String& name, bool forAssign )
 {
    TRACE1( "VMContext::resolveGlobal -- resolving %s%s", name.c_ize(), (forAssign? " (for assign)": "" ) )
+
+   // Get the topmost function having a module.
    CallFrame& cf = currentFrame();
    Function* func = cf.m_function;
 
-   // didn't find it locally, try globally
    Module* mod = 0;
    CallFrame* curFrame = m_callStack.m_top;
    do
@@ -1920,15 +1922,17 @@ Item* VMContext::resolveGlobal( const String& name, bool forAssign )
    }
    while ( curFrame > m_callStack.m_base && mod == 0  );
 
-   if( mod != 0 ) {
+   // do we have a module?
+   if( mod != 0 )
+   {
       // findGlobal will find also externally resolved variables.
-      Item* global = mod->getGlobalValue( name );
+      Item* global = mod->globals().getValue( name );
       if( global != 0 ) {
          return global;
       }
       else if( forAssign ) {
-         Variable* var = mod->addGlobal( name, Item(), false );
-         global = mod->getGlobalValue( var->id() );
+         GlobalsMap::Data* data = mod->addGlobal( name, Item(), false );
+         global = data->m_data;
          return global;
       }
    }
@@ -1940,7 +1944,7 @@ Item* VMContext::resolveGlobal( const String& name, bool forAssign )
       Function* caller = callerFrame(1).m_function;
       if ( caller->module() != 0 )
       {
-         Item* global = caller->module()->getGlobalValue( name );
+         Item* global = caller->module()->globals().getValue( name );
          if( global != 0 ) {
             return global;
          }

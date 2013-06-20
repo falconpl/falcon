@@ -32,7 +32,6 @@
 #include <falcon/itemarray.h>
 #include <falcon/range.h>
 #include <falcon/stdhandlers.h>
-#include <falcon/classes/classrequirement.h>
 #include <falcon/textwriter.h>
 
 #include <falcon/errors/ioerror.h>
@@ -843,16 +842,6 @@ bool ExprCase::addEntry( const Item& value )
    return res;
 }
 
-Requirement* ExprCase::addForwardClass( const String& name )
-{
-   CaseEntry* entry = new CaseEntry;
-   entry->setForwardClass( name );
-   _p->m_entries.push_back(entry);
-
-   CaseRequirement* cr = new CaseRequirement(_p->m_entries.size()-1, sr().line(), name, this );
-   return cr;
-}
-
 bool ExprCase::verify( const Item& value ) const
 {
    for ( Private::EntryList::iterator iter = _p->m_entries.begin();
@@ -1169,154 +1158,6 @@ bool ExprCase::remove( int32 n )
 }
 
 
-
-//================================================================
-// The requirer
-//
-void CaseRequirement::store( DataWriter* stream ) const
-{
-   stream->write(m_id);
-   stream->write(m_line);
-   Requirement::store(stream);
-}
-
-void CaseRequirement::restore( DataReader* stream )
-{
-   stream->read(m_id);
-   stream->read(m_line);
-   Requirement::restore(stream);
-}
-
-void CaseRequirement::onResolved( const Module* sourceModule, const String& sourceName, Module* targetModule, const Item& value, const Variable* )
-{
-   fassert( m_id < (int32) m_owner->_p->m_entries.size() );
-
-   const Item* itm = &value;
-   if( itm == 0 || (!itm->isOrdinal()&& ! itm->isClass()) )
-   {
-      throw new LinkError( ErrorParam( m_owner->selector() == 0 ? e_catch_invtype : e_select_invtype )
-         .line( m_line )
-         .module( targetModule->uri() )
-         .origin( ErrorParam::e_orig_linker )
-         .symbol( sourceName )
-         .extra( String("declared in ") + (sourceModule != 0 ? sourceModule->uri() : "<internal>" ) )
-         );
-   }
-
-   // an integer?
-   if( itm->isOrdinal() )
-   {
-      int64 tid = itm->forceInteger();
-      /*
-      if( m_owner->f )
-      {
-         throw new LinkError( ErrorParam( m_owner->selector() == 0 ? e_catch_clash : e_switch_clash )
-            .line( m_line )
-            .module( targetModule->uri() )
-            .origin( ErrorParam::e_orig_linker )
-            .symbol( sourceName )
-            .extra( String("declared in ") + (sourceModule != 0 ? sourceModule->uri() : "<internal>" ) )
-            );
-      }
-      */
-
-      m_owner->_p->m_entries[m_id]->setInt(tid);
-   }
-   else
-   {
-      fassert( itm->asClass()->isMetaClass() );
-      Class* cls = static_cast<Class*>(itm->asInst());
-      m_owner->_p->m_entries[m_id]->setClass(cls);
-      /*
-      if( ! m_owner->setSelectClass( m_id, m_clsId, cls ) )
-      {
-         throw new LinkError( ErrorParam( m_owner->selector() == 0 ? e_catch_clash : e_switch_clash )
-            .line( m_line )
-            .module( targetModule->uri() )
-            .origin( ErrorParam::e_orig_linker )
-            .symbol( sourceName )
-            .extra( String("declared in ") + (sourceModule != 0 ? sourceModule->uri() : "<internal>" ) )
-            );
-      }
-      */
-   }
-}
-
-
-class CaseRequirement::ClassCaseRequirement: public ClassRequirement
-{
-public:
-   ClassCaseRequirement():
-      ClassRequirement("$CaseRequirement")
-   {}
-
-   virtual ~ClassCaseRequirement() {}
-
-   virtual void store( VMContext*, DataWriter* stream, void* instance ) const
-   {
-      CaseRequirement* s = static_cast<CaseRequirement*>(instance);
-      s->store( stream );
-   }
-
-   virtual void flatten( VMContext*, ItemArray& subItems, void* instance ) const
-   {
-      CaseRequirement* s = static_cast<CaseRequirement*>(instance);
-      subItems.append( Item(s->m_owner->handler(), s->m_owner ) );
-   }
-
-   virtual void unflatten( VMContext*, ItemArray& subItems, void* instance ) const
-   {
-      CaseRequirement* s = static_cast<CaseRequirement*>(instance);
-      fassert( subItems.length() == 1 );
-      fassert( subItems[0].asClass()->name() == "Case" );
-      s->m_owner = static_cast<ExprCase*>(subItems[0].asInst());
-   }
-
-   virtual void restore( VMContext* ctx, DataReader* stream ) const
-   {
-      CaseRequirement* s = new CaseRequirement(0,0,"",0);
-      try {
-         s->restore(stream);
-         ctx->pushData( Item( this, s ) );
-      }
-      catch(...) {
-         delete s;
-         throw;
-      }
-   }
-
-   void describe( void* instance, String& target, int, int ) const
-   {
-      CaseRequirement* s = static_cast<CaseRequirement*>(instance);
-      if( s->m_owner == 0 )
-      {
-         target = "<Blank CaseRequirement>";
-      }
-      else {
-         target = "CaseRequirement for \"" + s->name() + "\"";
-      }
-   }
-};
-
-
-
-Class* CaseRequirement::handler() const
-{
-   return m_mantraClass;
-}
-
-
-Class* CaseRequirement::m_mantraClass = 0;
-
-
-void CaseRequirement::registerMantra( Engine* target )
-{
-
-   if( m_mantraClass == 0 ) {
-      m_mantraClass = new ClassCaseRequirement;
-      target->addMantra(m_mantraClass);
-   }
-}
 }
 
 /* end of exprcase.cpp */

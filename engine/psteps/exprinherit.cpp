@@ -22,10 +22,8 @@
 #include <falcon/error.h>
 #include <falcon/errors/codeerror.h>
 #include <falcon/itemarray.h>
-#include <falcon/classes/classrequirement.h>
 #include <falcon/stdhandlers.h>
 #include <falcon/textwriter.h>
-
 
 #include <falcon/symbol.h>
 #include <falcon/module.h>
@@ -44,7 +42,7 @@ namespace Falcon
 ExprInherit::ExprInherit( int line, int chr ):
    ExprVector( line, chr ),
    m_base(0),
-   m_bHadRequirement(false)
+   m_symbol(0)
 {
    FALCON_DECLARE_SYN_CLASS( expr_inherit )
    apply = apply_;
@@ -54,10 +52,20 @@ ExprInherit::ExprInherit( int line, int chr ):
 ExprInherit::ExprInherit( const String& name, int line, int chr ):
    ExprVector( line, chr ),
    m_base(0),
-   m_name( name ),
-   m_bHadRequirement(false)
+   m_symbol( Engine::getSymbol(name) )
 {
    FALCON_DECLARE_SYN_CLASS( expr_inherit )
+   apply = apply_;
+   m_trait = Expression::e_trait_inheritance;
+}
+
+ExprInherit::ExprInherit( Symbol* symbol, int line, int chr ):
+   ExprVector( line, chr ),
+   m_base(0),
+   m_symbol( symbol )
+{
+   FALCON_DECLARE_SYN_CLASS( expr_inherit )
+   symbol->incref();
    apply = apply_;
    m_trait = Expression::e_trait_inheritance;
 }
@@ -65,8 +73,7 @@ ExprInherit::ExprInherit( const String& name, int line, int chr ):
 ExprInherit::ExprInherit( Class* base, int line, int chr ):
    ExprVector( line, chr ),
    m_base( base ),
-   m_name( base->name() ),
-   m_bHadRequirement(false)
+   m_symbol( Engine::getSymbol(base->name()) )
 {
    FALCON_DECLARE_SYN_CLASS( expr_inherit )
    apply = apply_;
@@ -76,21 +83,31 @@ ExprInherit::ExprInherit( Class* base, int line, int chr ):
 ExprInherit::ExprInherit( const ExprInherit& other ):
    ExprVector( other ),
    m_base( other.m_base ),
-   m_name( other.m_name ),
-   m_bHadRequirement(false)
+   m_symbol( other.m_symbol )
 {
    apply = apply_;
+   if(m_symbol != 0 )
+   {
+      m_symbol->incref();
+   }
    m_trait = Expression::e_trait_inheritance;
 }
   
 ExprInherit::~ExprInherit()
 {
+   if(m_symbol != 0 )
+   {
+      m_symbol->decref();
+   }
 }
 
 void ExprInherit::base( Class* cls )
 {
    m_base = cls;
-   m_name = cls->name();
+   if( m_symbol == 0 )
+   {
+      m_symbol = Engine::getSymbol(cls->name());
+   }
 }
 
 
@@ -98,13 +115,9 @@ void ExprInherit::render( TextWriter* tw, int depth ) const
 {
    tw->write(renderPrefix(depth));
 
-   if( _p->m_exprs.empty() )
+   tw->write( m_symbol == 0 ? "?" : m_symbol->name() );
+   if( ! _p->m_exprs.empty() )
    {
-      tw->write( m_name );
-   }
-   else
-   {
-      tw->write( m_name );
       tw->write( "(" );
 
       TreeStepVector_Private::ExprVector::const_iterator iter = _p->m_exprs.begin();
@@ -168,128 +181,6 @@ void ExprInherit::apply_( const PStep* ps, VMContext* ctx )
    }
    // we're in charge of popping the parameters.
    ctx->popData(size);
-}
-
-
-Requirement* ExprInherit::makeRequirement( Class* target )
-{
-   m_bHadRequirement = true;
-   return new IRequirement( this, target );
-}
-
-
-void ExprInherit::IRequirement::onResolved( const Module* sourceModule, const String& sourceName, Module* targetModule, const Item& value, const Variable* )
-{
-   if( !value.isClass() )
-   {
-      // the symbol is not a class?   
-      throw new CodeError( ErrorParam( e_inv_inherit ) 
-         .module( sourceModule == 0 ? "<internal>" : sourceModule->uri() )
-         .symbol( sourceName )
-         .line( m_owner->sr().line())
-         .chr( m_owner->sr().chr())
-         .origin(ErrorParam::e_orig_linker));
-   }
-
-   // Ok, we have a valid class.
-   Class* newParent = static_cast<Class*>(value.asInst());
-   m_owner->base( newParent );
-   m_target->onInheritanceResolved( m_owner );
-   
-   // is the owner class a Falcon class?
-   if( m_target->isFalconClass() )
-   {
-      // then, see if we can link it.
-      FalconClass* falcls = static_cast<FalconClass*>(m_target);
-      if( falcls->missingParents() == 0 && targetModule != 0 )
-      {
-         // ok, the parent that has been found now was the last one.
-         targetModule->completeClass( falcls );
-      }
-   }
-}
-
-
-
-class ExprInherit::IRequirement::ClassIRequirement: public ClassRequirement
-{
-public:
-   ClassIRequirement():
-      ClassRequirement("$IRequirement")
-   {}
-
-   virtual ~ClassIRequirement() {}
-   
-   virtual void store( VMContext*, DataWriter* stream, void* instance ) const
-   {
-      IRequirement* s = static_cast<IRequirement*>(instance);
-      stream->write( s->name() );
-      s->store( stream );
-   }
-   
-   virtual void flatten( VMContext*, ItemArray& subItems, void* instance ) const
-   {
-      static Class* metaClass = Engine::handlers()->metaClass();
-      IRequirement* s = static_cast<IRequirement*>(instance);
-      
-      subItems.resize(2);
-      subItems[0] = Item( s->m_owner->handler(), s->m_owner );
-      subItems[1] = Item( metaClass, s->m_target );
-   }
-   
-   virtual void unflatten( VMContext*, ItemArray& subItems, void* instance ) const
-   {
-      IRequirement* s = static_cast<IRequirement*>(instance);
-      fassert( subItems.length() == 2 );
-   
-      s->m_owner = static_cast<ExprInherit*>(subItems[0].asInst());
-      s->m_target = static_cast<Class*>( subItems[1].asInst() );
-   }
-   
-   virtual void restore( VMContext* ctx, DataReader* stream ) const
-   {
-      String name;
-      stream->read( name );
-      
-      IRequirement* requirement = new IRequirement( name );
-      try {
-         requirement->restore(stream);
-         ctx->pushData( Item( this, requirement ) );
-      }
-      catch( ... ) {
-         delete requirement;
-         throw;
-      }
-   }
-   
-   void describe( void* instance, String& target, int, int ) const
-   {
-      IRequirement* s = static_cast<IRequirement*>(instance);
-      if( s->m_owner == 0 )
-      {
-         target = "<Blank IRequirement>";
-      }
-      else {
-         target = "IRequirement for \"" + s->name() + "\"";
-      }
-   }
-};
-
-
-Class* ExprInherit::IRequirement::handler() const
-{
-   return m_mantraClass;
-}
-
-
-Class* ExprInherit::IRequirement::m_mantraClass = 0;
-
-void ExprInherit::IRequirement::registerMantra( Engine* target )
-{
-   if( m_mantraClass == 0 ) {
-      m_mantraClass = new ClassIRequirement;
-      target->addMantra(m_mantraClass);
-   }
 }
 
 }

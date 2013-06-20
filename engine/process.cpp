@@ -36,6 +36,7 @@
 #include <falcon/modspace.h>
 #include <falcon/itemdict.h>
 #include <falcon/pool.h>
+#include <falcon/itemstack.h>
 
 #include <set>
 #include <map>
@@ -54,6 +55,10 @@ public:
    TransTable *m_transTable;
    TransTable *m_tempTable;
    Mutex m_mtx_tt;
+
+   typedef std::map <String, GCLock*> ExportMap;
+   ExportMap m_exports;
+   Mutex m_mtx_exports;
 
    Private() {
       m_transTable = 0;
@@ -80,6 +85,7 @@ Process::Process( VMachine* owner, ModSpace* ms ):
    m_tlgen(1)
 {
    m_itemPagePool = new Pool;
+   m_superglobals = new ItemStack(m_itemPagePool);
    _p = new Private;
 
    // get an ID for this process.
@@ -657,6 +663,74 @@ uint32 Process::getTranslationGeneration() const
    _p->m_mtx_tt.unlock();
 
    return gen;
+}
+
+
+Item* Process::addExport( const String& name, const Item& value )
+{
+   _p->m_mtx_exports.lock();
+   Private::ExportMap::iterator pos = _p->m_exports.find(name);
+   if( pos != _p->m_exports.end() )
+   {
+      _p->m_mtx_exports.unlock();
+      return 0;
+   }
+
+   Item* ptr = m_superglobals->push();
+   _p->m_exports[name] = Engine::collector()->lockPtr(ptr);
+   *ptr = value;
+   _p->m_mtx_exports.unlock();
+
+   return ptr;
+}
+
+
+bool Process::removeExport( const String& name )
+{
+   _p->m_mtx_exports.lock();
+   Private::ExportMap::size_type count = _p->m_exports.erase(name);
+   _p->m_mtx_exports.unlock();
+
+   return count != 0;
+}
+
+Item* Process::getExport( const String& name ) const
+{
+   _p->m_mtx_exports.lock();
+   Private::ExportMap::iterator pos = _p->m_exports.find(name);
+   if( pos == _p->m_exports.end() )
+   {
+      _p->m_mtx_exports.unlock();
+      return 0;
+   }
+
+   Item* target = pos->second->itemPtr();
+   _p->m_mtx_exports.unlock();
+
+   return target;
+}
+
+
+Item* Process::updateExport( const String& name, const Item& value, bool &existing ) const
+{
+   Item* ptr;
+
+   _p->m_mtx_exports.lock();
+   Private::ExportMap::iterator pos = _p->m_exports.find(name);
+   if( pos != _p->m_exports.end() )
+   {
+      ptr = pos->second->itemPtr();
+      existing = true;
+   }
+   else {
+      ptr = m_superglobals->push();
+      _p->m_exports[name] = Engine::collector()->lockPtr(ptr);
+      existing = false;
+   }
+   *ptr = value;
+   _p->m_mtx_exports.unlock();
+
+   return ptr;
 }
 
 }

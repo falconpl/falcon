@@ -140,11 +140,11 @@ static void make_class( Parser& p, int tCount,
    {
       NameList* list = static_cast<NameList*>( tParams->asData() );
       Function* func = cls->makeConstructor();
-      VarMap& symtab = func->variables();
+      SymbolMap& symtab = func->parameters();
 
       for(NameList::const_iterator it=list->begin(),end=list->end();it!=end;++it)
       {
-         symtab.addParam( *it );
+         symtab.insert( *it );
       }
    }
 
@@ -158,33 +158,7 @@ static void make_class( Parser& p, int tCount,
       for( int i = 0; i < flist->arity(); ++i ) {
          ExprInherit* inh = static_cast<ExprInherit*>( flist->nth(i) );
          // ask the owner the required symbol -- we're fine with locals.
-         Variable* symBaseClass = ctx->accessSymbol( inh->name() );
-         // if it's 0, we need a requirement; and we shall also add an externa symbol.
-         if( symBaseClass->type() == Variable::e_nt_extern )
-         {
-            // then just add the requirement
-            Requirement* req = inh->makeRequirement( cls );
-            ctx->onRequirement( req );
-         }
-         else {
-            // if it's defined and not a class, we're in trouble
-            const Item* value = ctx->getVariableValue( inh->name(), symBaseClass );
-            fassert( value != 0 );
-
-            if( value == 0 || ! value->isClass() )
-            {
-               p.addError( e_inv_inherit, p.currentSource(), ti->line(), ti->chr() );
-               p.simplify(tCount);
-               ctx->dropContext();
-               // we already did onOpenClass so the class should be registered.
-               // anon classes are already stored on the GC
-               p.popState();
-               return;
-            }
-            // cool, we can configure the inheritance.
-            inh->base( static_cast<Class*>(value->asInst()) );
-            cls->onInheritanceResolved(inh);
-         }
+         ctx->accessSymbol( inh->symbol()->name() );
       }
    }
 

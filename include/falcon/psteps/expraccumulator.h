@@ -17,7 +17,6 @@
 #define FALCON_EXPRACCUMULATOR_H
 
 #include <falcon/expression.h>
-#include <falcon/requirement.h>
 
 namespace re2 {
    class RE2;

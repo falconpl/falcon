@@ -245,15 +245,11 @@ static void internal_apply_catch( int toks, Parser& p, int line, int chr,
          }
 
          bool bClash = select->findBlockForItem(Item( errName->handler(), const_cast<String*>(errName) )) != 0;
-         Requirement* req;
 
-         if( bClash || (req = ecase->addForwardClass(*errName)) == 0 )
+         if( bClash )
          {
             // name clash.
             p.addError( e_catch_adef, p.currentSource(), line, chr );
-         }
-         else {
-            ctx->onRequirement( req );
          }
       }
       else if( tid >= 0 )

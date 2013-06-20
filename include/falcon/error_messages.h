@@ -300,6 +300,7 @@ FAL_ERRORDECL( e_param_arity, 908, "Unexpected number of parameters in evaluatio
 FAL_ERRORDECL( e_meta_not_proto, 909, "_meta is not a prototype" );
 FAL_ERRORDECL( e_expr_assign, 910, "Given tree step cannot be assigned to the host step" );
 
+FAL_ERRORDECL( e_internal, 998, "Intenral error" )
 FAL_ERRORDECL( e_paranoid, 999, "Paranoid check failed" );
 
 /* end of error_messages.h */

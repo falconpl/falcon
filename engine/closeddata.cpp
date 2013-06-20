@@ -214,7 +214,7 @@ class ClosedData::Private
 public:
    mutable Mutex m_mtx;
 
-   typedef std::map<String, ItemRef*> EntryMap;
+   typedef std::map<Symbol*, ItemRef*> EntryMap;
    EntryMap m_data;
 
    Private() {}
@@ -228,6 +228,8 @@ public:
       EntryMap::const_iterator end = m_data.end();
       while( iter != end )
       {
+         Symbol* sym = iter->first;
+         sym->decref();
          ItemRef* ir = iter->second;
          ir->decref();
          ++iter;
@@ -240,17 +242,21 @@ public:
       EntryMap::const_iterator end = other.m_data.end();
       while( iter != end )
       {
-         other.m_mtx.unlock();
+         Symbol* sym = iter->first;
          ItemRef* oi = iter->second;
+         sym->incref();
+         oi->incref();
+         other.m_mtx.unlock();
 
          m_mtx.lock();
          EntryMap::iterator pos = m_data.find( iter->first );
          if( pos == m_data.end() ) {
-            oi->incref();
-            m_data[iter->first] = oi;
+            m_data[sym] = oi;
          }
          else {
             pos->second->copy(*oi);
+            sym->decref();
+            oi->decref();
          }
          m_mtx.unlock();
 
@@ -323,12 +329,20 @@ uint32 ClosedData::size() const
 
 void ClosedData::add( const String& name, const Item& value )
 {
+   Symbol* sym = Engine::getSymbol(name);
+   add(sym, value);
+   sym->decref();
+}
+
+void ClosedData::add( Symbol* sym, const Item& value )
+{
    _p->m_mtx.lock();
-   Private::EntryMap::iterator pos = _p->m_data.find( name );
+   Private::EntryMap::iterator pos = _p->m_data.find( sym );
    if( pos == _p->m_data.end() ) {
       ItemRef* ir = new ItemRef();
       ir->copy( value );
-      _p->m_data[name] = ir;
+      sym->incref();
+      _p->m_data[sym] = ir;
    }
    else {
       pos->second->copy(value);
@@ -340,9 +354,19 @@ void ClosedData::add( const String& name, const Item& value )
 
 Item* ClosedData::get( const String& name ) const
 {
+   Symbol* sym = Engine::getSymbol(name);
+   Item* value = get(sym);
+   sym->decref();
+
+   return value;
+}
+
+
+Item* ClosedData::get( Symbol* sym ) const
+{
    Item* value = 0;
    _p->m_mtx.lock();
-   Private::EntryMap::iterator pos = _p->m_data.find(name);
+   Private::EntryMap::iterator pos = _p->m_data.find(sym);
    if( pos != _p->m_data.end() )
    {
       value = pos->second;
@@ -368,9 +392,9 @@ void ClosedData::flatten( VMContext*, ItemArray& subItems ) const
    Private::EntryMap::iterator end = _p->m_data.end();
    while( pos != end )
    {
-      const String& name = pos->first;
+      Symbol* sym = pos->first;
       const Item& value = *pos->second;
-      subItems.append(Item(name.handler(), const_cast<String*>(&name)));
+      subItems.append(Item(sym));
       subItems.append(value);
 
    }
@@ -393,14 +417,15 @@ void ClosedData::unflatten( VMContext*, ItemArray& subItems, uint32 pos )
    while( size > 0 && pos + 2 < subItems.length() ) {
       Item& nameItem = subItems[pos++];
       Item& valueItem = subItems[pos++];
-      if( ! nameItem.isString() ) {
+      if( ! nameItem.isSymbol() ) {
          return;
       }
-      String& name = *nameItem.asString();
+      Symbol* sym = nameItem.asSymbol();
 
       ItemRef* ir = new ItemRef;
       ir->copy(valueItem);
-      _p->m_data[name] = ir;
+      _p->m_data[sym] = ir;
+      sym->incref();
    }
 }
 
@@ -412,11 +437,9 @@ void ClosedData::defineSymbols( VMContext* ctx )
    Private::EntryMap::iterator end = _p->m_data.end();
    while( pos != end )
    {
-      const String& name = pos->first;
+      Symbol* sym = pos->first;
       Item* value = pos->second;
-      Symbol* symbol = Engine::getSymbol(name);
-      ctx->defineSymbol( symbol , value );
-      symbol->decref();
+      ctx->defineSymbol( sym , value );
       ++pos;
    }
    _p->m_mtx.unlock();

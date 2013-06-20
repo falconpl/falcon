@@ -441,8 +441,15 @@ public:
     */
    GCLock* lock( const Item& item );
 
-   /** Unlocks a locked item. */
+   /** Unlocks a locked item.
+    * \see GClock::dispose
+    * */
    void unlock( GCLock* lock );
+
+   /** Locks an item that is separately allocated in the heap.
+    * @see GCLock
+    */
+   GCLock* lockPtr( Item* ptr );
 
    /**
     * Accounts for new or released memory.

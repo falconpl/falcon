@@ -348,7 +348,7 @@ public:
     If some of the parents are not FalconClass, the engine must generate an
     hyperclass out of this falcon class.
     */
-   bool construct();
+   bool construct( VMContext* ctx );
 
    /** Return the count of currently unknown parents.
     \return The count of unresolved inheritances.
@@ -368,28 +368,6 @@ public:
           should be abandoned.
     */
    HyperClass* hyperConstruct();
-
-   /** Called back by an inheritance when it gets resolved.
-    \param inh The inheritance that has been just resolved.
-
-    When a foreign inheritance of a class gets resolved during the link
-    phase, the parent need to know about this fact to prepare itself.
-
-    The inheritance determines if the owner is a falcon class, and in case
-    it is, it calls back this method.
-
-    \note The class hierarcy itself doesn't need to know about resovled
-    inheritances, as normally the classes can be formed only when all their
-    components are known. Third party user-classes must pre-load the
-    required components and pre-resolve their dependencies. Prototypes
-    are created at runtime when all the dependencies are known, and hyperclasses
-    follow the rules of third party classes. In short, the only class type that
-    supports forward definition of parentship is FalconClass.
-
-    On a FalconClass instance, this determines if the class is a pure
-    FalconClass or needs to be transformed in an HyperClass.
-    */
-   virtual void onInheritanceResolved( ExprInherit* inh );
 
    /** Pushes a VM step to initialize the instance properties.
     It expects to be called while inside a constructor frame.
@@ -427,6 +405,8 @@ public:
    virtual bool op_init( VMContext* ctx, void* instance, int32 pcount ) const;
    virtual void op_getProperty( VMContext* ctx, void* self, const String& prop) const;
    virtual void op_setProperty( VMContext* ctx, void* self, const String& prop ) const;
+
+   ExprParentship* getParentship();
 
 private:
    class Private;

@@ -169,7 +169,7 @@ void on_close_function( void* thing )
    */
    
    // was this a closure?
-   if( func->variables().closedCount() > 0 ) {
+   if( func->hasClosure() > 0 ) {
       // change our token -- from function (value) to closure
       sp.getLastToken()->setValue( new ExprClosure(func), treestep_deletor );
    }  
@@ -191,7 +191,7 @@ void on_close_lambda( void* thing )
    }
    
    // was this a closure?
-   if( func->variables().closedCount() > 0 ) {
+   if( func->hasClosure() > 0 ) {
       // change our token -- from function (value) to closure
       sp.getLastToken()->setValue( new ExprClosure(func), treestep_deletor );
    }  
@@ -463,15 +463,16 @@ void internal_lit_params(const Rule&, Parser& p, bool isEta )
    if( ! list->empty() )
    {
       ExprTree* et = new ExprTree(ti->line(), ti->chr());
+      SymbolMap* params = new SymbolMap;
 
       for(NameList::const_iterator it=list->begin(),end=list->end();it!=end;++it)
       {
-         et->addParam(*it);
+         params->insert(*it);
       }
 
+      et->setParameters(params);
       if( isEta ) {
-         if( et->varmap() == 0 ) et->setVarMap(new VarMap);
-         et->varmap()->setEta( true );
+         et->setEta( true );
       }
 
       lit = new ExprLit(et, ti->line(),ti->chr());

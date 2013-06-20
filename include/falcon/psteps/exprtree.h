@@ -21,8 +21,7 @@
 
 namespace Falcon {
 
-class VarMap;
-class Variable;
+class SymbolMap;
 
 /** Non-syntactic expression holding evaluable code units.
 
@@ -50,8 +49,7 @@ public:
    /**
     Adds a parameter to this parametric  expression.
     */
-   Variable* addParam( const String& name );
-   Variable* addLocal( const String& name );
+   bool addParam( const String& name );
 
    /**
     Retrns the count of parameters.
@@ -72,12 +70,16 @@ public:
    virtual bool setNth( int32 n, TreeStep* ts );
 
    /** Returns the variable map associated with this tree expression */
-   VarMap* varmap() const { return m_varmap; }
-   void setVarMap( VarMap* );
+   SymbolMap* parameters() const { return m_symbols; }
+   void setParameters( SymbolMap* );
+
+   bool isEta() const { return m_bIsEta; }
+   void setEta( bool e ) { m_bIsEta = e; }
 
 private:
    TreeStep* m_child;
-   VarMap* m_varmap;
+   SymbolMap* m_symbols;
+   bool m_bIsEta;
    static void apply_( const PStep*, VMContext* ctx );
 };
 

@@ -40,8 +40,6 @@ public:
    virtual void addError( int code, const String& uri, int l, int c, int ctx, const String& extra );
    virtual void addError( int code, const String& uri, int l, int c=0, int ctx=0  );   
    virtual void addError( Error* err );
-   
-   void addNameSpace( const String ns );
 
    //===============================================
    // Terminal tokens

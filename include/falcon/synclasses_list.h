@@ -5,7 +5,7 @@
 #define FALCON_SYNCLASS_DECLARATOR_EX( variable, name, type, extra ) \
    class Class##name: public Class##type\
    {public:\
-      Class##name( Class* derfrom ): Class##type( #name ) {setParent(derfrom);}   \
+      Class##name( Class* derfrom ): Class##type( "Syn." #name ) {setParent(derfrom);}   \
       virtual ~Class##name() {};\
       virtual void* createInstance() const;\
       virtual bool op_init( VMContext* ctx, void* instance, int32 pcount ) const;\

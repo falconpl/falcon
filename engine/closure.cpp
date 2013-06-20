@@ -18,7 +18,6 @@
 #include <falcon/trace.h>
 
 #include <falcon/closure.h>
-#include <falcon/varmap.h>
 #include <falcon/item.h>
 #include <falcon/vmcontext.h>
 #include <falcon/callframe.h>
@@ -26,6 +25,7 @@
 #include <falcon/function.h>
 #include <falcon/itemarray.h>
 #include <falcon/stdhandlers.h>
+#include <falcon/symbol.h>
 
 #include <map>
 #include <vector>
@@ -107,6 +107,7 @@ void Closure::unflatten( VMContext*, ItemArray& subItems, uint32 pos )
    m_data = dataItem.isNil() ? 0 : static_cast<ClosedData*>(dataItem.asInst());
 }
 
+
 Class* Closure::handler() const
 {
    static Class* cls = Engine::handlers()->closureClass();
@@ -120,10 +121,10 @@ Class* Closure::handler() const
  */
 void Closure::close( VMContext* ctx )
 {
-   const VarMap& vars = m_closed->variables();
-   TRACE( "Closure::close %s -- %d vars", m_closed->name().c_ize(), vars.closedCount() )
+   const SymbolMap& vars = m_closed->closed();
+   TRACE( "Closure::close %s -- %d vars", m_closed->name().c_ize(), vars.size() )
 
-   uint32 closedCount = vars.closedCount();
+   uint32 closedCount = vars.size();
    if( closedCount == 0 ) return;
 
    CallFrame* current = &ctx->currentFrame();
@@ -151,16 +152,16 @@ void Closure::close( VMContext* ctx )
 
    for( uint32 i = 0; i < closedCount; ++i )
    {
-      const String& name = vars.getClosedName(i);
-      Item* data = ctx->resolveSymbol( Engine::getSymbol(name), false );
+      Symbol* sym = vars.getById(i);
+      Item* data = ctx->resolveSymbol( sym, false );
 
       if( data != 0 )
       {
-         TRACE1( "Closure::close %s -- found %s", m_closed->name().c_ize(), name.c_ize() );
-         m_data->add(name, *data);
+         TRACE1( "Closure::close %s -- found %s", m_closed->name().c_ize(), sym->name().c_ize() );
+         m_data->add(sym, *data);
       }
       else {
-         TRACE1( "Closure::close %s -- NOT found %s", m_closed->name().c_ize(), name.c_ize() );
+         TRACE1( "Closure::close %s -- NOT found %s", m_closed->name().c_ize(), sym->name().c_ize() );
       }
    }
 }

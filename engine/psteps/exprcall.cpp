@@ -134,10 +134,7 @@ void ExprCall::apply_( const PStep* v, VMContext* ctx )
                case FLC_CLASS_ID_TREESTEP:
                {
                   if( cls->userFlags() == FALCON_SYNCLASS_ID_TREE) {
-                     VarMap* st = static_cast<ExprTree*>(vts)->varmap();
-                     if( st != 0 ) {
-                        bHaveEta = st->isEta();
-                     }
+                     bHaveEta = static_cast<ExprTree*>(vts)->isEta();
                   }
                }
             }

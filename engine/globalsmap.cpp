@@ -1,0 +1,375 @@
+/*
+   FALCON - The Falcon Programming Language.
+   FILE: globalsmap.cpp
+
+   Map holding variables and associated data for global storage.
+   -------------------------------------------------------------------
+   Author: Giancarlo Niccolai
+   Begin: Tue, 08 Jan 2013 18:36:18 +0100
+
+   -------------------------------------------------------------------
+   (C) Copyright 2013: the FALCON developers (see list in AUTHORS file)
+
+   See LICENSE file for licensing details.
+*/
+
+#undef SRC
+#define SRC "engine/globalsmap.cpp"
+
+#include <falcon/string.h>
+#include <falcon/globalsmap.h>
+#include <falcon/variable.h>
+#include <falcon/module.h>
+#include <falcon/datareader.h>
+#include <falcon/datawriter.h>
+#include <falcon/itemarray.h>
+
+#include <map>
+#include <vector>
+
+namespace Falcon {
+
+//================================================================
+// VarDataMap::Private
+//================================================================
+
+class GlobalsMap::Private
+{
+public:
+   typedef std::map<Symbol*, Data*> VariableMap;
+
+   VariableMap m_variables;
+   VariableMap m_exports;
+
+   uint32 m_lastGCMark;
+
+   Private():
+      m_lastGCMark(0)
+   {};
+
+   ~Private() {
+      VariableMap::iterator iter = m_variables.begin();
+      VariableMap::iterator end = m_variables.end();
+      while( iter != end ) {
+         iter->first->decref();
+         delete iter->second;
+         ++iter;
+      }
+   }
+
+};
+
+//================================================================
+// GlobalsMap
+//================================================================
+
+GlobalsMap::GlobalsMap():
+         m_bExportAll( false )
+{
+   _p = new Private;
+}
+
+GlobalsMap::~GlobalsMap()
+{
+   delete _p;
+}
+
+
+void GlobalsMap::gcMark( uint32 mark )
+{
+   if( _p->m_lastGCMark != mark )
+   {
+      _p->m_lastGCMark = mark;
+
+      Private::VariableMap::iterator giter = _p->m_variables.begin();
+      Private::VariableMap::iterator gend = _p->m_variables.end();
+
+      while( giter != gend ) {
+         Data* vd = giter->second;
+         vd->m_data->gcMark( mark );
+         ++giter;
+      }
+   }
+}
+
+
+uint32 GlobalsMap::lastGCMark() const
+{
+   return _p->m_lastGCMark;
+}
+
+
+GlobalsMap::Data* GlobalsMap::add( const String& name, const Item& value, bool bExport )
+{
+   Symbol* sym = Engine::getSymbol(name);
+   Private::VariableMap::iterator pos = _p->m_variables.find( sym );
+   if( pos != _p->m_variables.end() ) {
+      // we don't have to keep the allocated symbol
+      sym->decref();
+     return 0;
+   }
+
+   // insert the value and save its pointer.
+   Data* data = new Data(value);
+   _p->m_variables[sym] = data;
+   if( bExport )
+   {
+     _p->m_exports[sym] = data;
+   }
+
+   return data;
+}
+
+
+GlobalsMap::Data* GlobalsMap::add( Symbol* sym, const Item& value, bool bExport )
+{
+   Private::VariableMap::iterator pos = _p->m_variables.find( sym );
+   if( pos != _p->m_variables.end() ) {
+      return 0;
+   }
+
+   // need a new reference for the symbol
+   sym->incref();
+   // insert the value and save its pointer.
+   Data* data = new Data(value);
+   _p->m_variables[sym] = data;
+   if( bExport )
+   {
+      _p->m_exports[sym] = data;
+   }
+
+   return data;
+}
+
+
+GlobalsMap::Data* GlobalsMap::addExtern( Symbol* sym, Item* value )
+{
+   Data* varData;
+
+   Private::VariableMap::iterator pos = _p->m_variables.find( sym );
+   if( pos != _p->m_variables.end() ) {
+      varData = pos->second;
+   }
+   else {
+      varData = new Data(value);
+      // need a new reference for the symbol
+      sym->incref();
+      // insert the value and save its pointer.
+      _p->m_variables[sym] = varData;
+   }
+
+   varData->m_bExtern = true;
+
+   return varData;
+}
+
+
+bool GlobalsMap::remove( const String& name )
+{
+   Symbol* sym = Engine::getSymbol(name);
+   bool result = remove(sym);
+   sym->decref();
+   return result;
+}
+
+
+bool GlobalsMap::remove( Symbol* sym )
+{
+   Private::VariableMap::iterator pos = _p->m_variables.find( sym );
+   if( pos == _p->m_variables.end() ) {
+      return false;
+   }
+
+   Data* vd = pos->second;
+   _p->m_variables.erase(pos);
+   delete vd;
+   sym->decref();
+
+   return true;
+}
+
+
+Item* GlobalsMap::getValue( const String& name ) const
+{
+   Symbol* sym = Engine::getSymbol(name);
+   Private::VariableMap::iterator pos = _p->m_variables.find(sym);
+   sym->decref();
+   if( pos == _p->m_variables.end() ) {
+      return 0;
+   }
+
+   Data* vd = pos->second;
+   return vd->m_data;
+}
+
+Item* GlobalsMap::getValue( Symbol* sym ) const
+{
+   Private::VariableMap::iterator pos = _p->m_variables.find(sym);
+   if( pos == _p->m_variables.end() ) {
+      return 0;
+   }
+
+   Data* vd = pos->second;
+   return vd->m_data;
+}
+
+
+GlobalsMap::Data* GlobalsMap::get( const String& name ) const
+{
+   Symbol* sym = Engine::getSymbol(name);
+   Private::VariableMap::iterator pos = _p->m_variables.find(sym);
+   sym->decref();
+   if( pos == _p->m_variables.end() ) {
+      return 0;
+   }
+
+   return pos->second;
+}
+
+
+GlobalsMap::Data* GlobalsMap::get( Symbol* sym ) const
+{
+   Private::VariableMap::iterator pos = _p->m_variables.find(sym);
+   if( pos == _p->m_variables.end() ) {
+      return 0;
+   }
+
+   return pos->second;
+}
+
+
+bool GlobalsMap::isExported( const String& name ) const
+{
+   Symbol* sym = Engine::getSymbol(name);
+   bool result = _p->m_exports.find( sym ) != _p->m_exports.end();
+   sym->decref();
+   return result;
+}
+
+
+bool GlobalsMap::isExported( Symbol* sym ) const
+{
+   bool result = _p->m_exports.find( sym ) != _p->m_exports.end();
+   return result;
+}
+
+
+void GlobalsMap::enumerateExports( VariableEnumerator& rator ) const
+{
+   Private::VariableMap::iterator iter, end;
+
+   if( m_bExportAll ) {
+      iter = _p->m_variables.begin();
+      end = _p->m_variables.end();
+   }
+   else {
+      iter = _p->m_exports.begin();
+      end = _p->m_exports.end();
+   }
+
+   while( iter != end ) {
+      Symbol* sym = iter->first;
+      if( ! sym->name().empty() && sym->name().getCharAt(0) != '_' )
+      {
+         Data* vd = iter->second;
+         rator( iter->first, vd->m_data );
+      }
+
+      ++iter;
+   }
+}
+
+
+uint32 GlobalsMap::size() const
+{
+   return _p->m_variables.size();
+}
+
+
+void GlobalsMap::store( DataWriter* dw ) const
+{
+   uint32 size = _p->m_variables.size();
+   dw->write( size );
+
+   Private::VariableMap::iterator iter = _p->m_variables.begin();
+   Private::VariableMap::iterator end = _p->m_variables.end();
+
+   while( iter != end )
+   {
+      Data* vd = *iter;
+      dw->write( iter->first->name() );
+      bool isExported = isExported( iter->first );
+      dw->write( isExported );
+      dw->write( vd->m_bExtern );
+
+      ++iter;
+   }
+}
+
+void GlobalsMap::restore( DataReader* dr )
+{
+   uint32 size = 0;
+   dr->read( size );
+
+   for( uint32 i = 0; i < size; ++ i )
+   {
+      String name;
+      bool exported, ext;
+      dr->read( name );
+      dr->read( exported );
+      dr->read( ext );
+
+      Data* vd = new Data();
+      Symbol* sym = Engine::getSymbol(name);
+
+      _p->m_variables[sym] = vd;
+      vd->m_bExtern = ext;
+      if( exported )
+      {
+         _p->m_exports[sym] = vd;
+      }
+   }
+}
+
+
+void GlobalsMap::flatten( VMContext*, ItemArray& subItems ) const
+{
+   Private::VariableMap::iterator iter = _p->m_variables.begin();
+   Private::VariableMap::iterator end = _p->m_variables.end();
+
+   subItems.reserve(_p->m_variables.size());
+   while( iter != end )
+   {
+      Data* vd = iter->second;
+      // ignore the data where the global points; store externals as nil
+      // we'll store the locally stored globals only.
+      subItems.append( vd->m_storage );
+      ++iter;
+   }
+}
+
+
+void GlobalsMap::unflatten( VMContext*, ItemArray& subItems, uint32 start, uint32 &count )
+{
+   Private::VariableMap::iterator iter = _p->m_variables.begin();
+   Private::VariableMap::iterator end = _p->m_variables.end();
+
+   fassert( subItems.length() == _p->m_variables.size());
+   uint32 c = start;
+   while( start < subItems.length() && iter != end )
+   {
+      Data* vd = *iter;
+      vd->m_storage = subItems[c];
+      vd->m_data = &vd->m_storage;
+      // eventually, the resolution of external values will change
+      // m_data ptr at a later time.
+      ++c;
+      ++iter;
+   }
+
+   count = c;
+}
+
+}
+
+/* end of globalsmap.cpp */

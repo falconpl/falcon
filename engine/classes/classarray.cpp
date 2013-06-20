@@ -1012,7 +1012,7 @@ void Function_merge::invoke(VMContext* ctx, int32 )
       throw new AccessError( ErrorParam( e_arracc, __LINE__, SRC ).extra("Same source & target arrays") );
    }
 
-   int64 from = from_i == 0 ? from = first->length() : from_i->forceInteger();
+   int64 from = from_i == 0 ? first->length() : from_i->forceInteger();
    ConcurrencyGuard::Writer gw(ctx,first->guard());
 
    if( from < 0 )

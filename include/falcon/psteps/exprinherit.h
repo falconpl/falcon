@@ -20,7 +20,6 @@
 #include <falcon/string.h>
 #include <falcon/pstep.h>
 #include <falcon/sourceref.h>
-#include <falcon/requirement.h>
 #include <falcon/psteps/exprvector.h>
 
 namespace Falcon
@@ -52,12 +51,13 @@ class FALCON_DYN_CLASS ExprInherit: public ExprVector
 public:
    ExprInherit( int line=0, int chr=0 );
    ExprInherit( const String& name, int line=0, int chr=0 );
+   ExprInherit( Symbol* sym, int line=0, int chr=0 );
    ExprInherit( Class* base, int line=0, int chr=0 );
    ExprInherit( const ExprInherit& other );
    
    virtual ~ExprInherit();
 
-   const String& name() const { return m_name; }
+   Symbol* symbol() const { return m_symbol; }
    
    /** The parent class.
     \return the Parent class, when resolved, or 0 if still not available.
@@ -73,61 +73,12 @@ public:
 
    virtual bool simplify( Item& ) const { return false; }  
    virtual ExprInherit* clone() const { return new ExprInherit(*this); }
-   
-   /** Creats a dynamic requirement for a missing base class in this expression.
-    This equates to a forward declaration of the base class.
-    */
-   Requirement* makeRequirement( Class* target );
-   
-   /** Specify if this inheritance was involved in a forward definition.
-    Elements that were involved in a requirement shall not serialize
-    their internal data as they were resolved, but as they were originally
-    created.
-    */
-   bool hadRequirement() const { return m_bHadRequirement; }
-   
-   /** Sets the requirement status of this inheritance.
-    Used during de-serialization to restore the status of this inheritance
-    in the host module.
-    */
-   void hadRequirement( bool b ) { m_bHadRequirement = b; }
-   
-   class FALCON_DYN_CLASS IRequirement: public Requirement
-   {
-   public:
-      IRequirement( const String& name ):
-         Requirement( name ),
-            m_owner(0),
-            m_target(0)         
-         {}
-      
-      IRequirement( ExprInherit* owner, Class* target ): 
-         Requirement( owner->name() ),
-         m_owner( owner ),
-         m_target( target )
-      {}      
-      virtual ~IRequirement() {}
-      
-      virtual void onResolved( const Module* sourceModule, const String& sourceName, Module* targetModule, const Item& value, const Variable* targetVar );
-      virtual Class* handler() const;
-      static void registerMantra( Engine* target );
-   private:
-      
-      ExprInherit* m_owner;
-      Class* m_target;
-      class ClassIRequirement;
-      friend class ClassIRequirement;
-      static Class* m_mantraClass;
-   };
+
    
 private:
    Class* m_base;
-   String m_name;
-   bool m_bHadRequirement;
+   Symbol* m_symbol;
    
-   
-   
-   friend class IRequirement;   
    static void apply_( const PStep*, VMContext* ctx );
 };
 

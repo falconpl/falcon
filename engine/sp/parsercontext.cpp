@@ -105,7 +105,7 @@ public:
    FalconClass * m_cclass;
 
    // Current symbol table, precached for performance.
-   VarMap* m_varmap;
+   SymbolMap* m_varmap;
 };
 
 ParserContext::CCFrame::CCFrame():
@@ -256,81 +256,71 @@ void ParserContext::onStatePopped()
 }
 
 
-Variable* ParserContext::defineSymbol( const String& variable )
+void ParserContext::defineSymbol( const String& variable )
 {
-   TRACE("ParserContext::defineSymbol on (: %s :)", variable.c_ize() );
-   Variable* nuks;
+   TRACE("ParserContext::defineSymbol(: %s :)", variable.c_ize() );
    
    // in literal context, we never define variables.
    if( !_p->m_litContexts.empty() ) {
-      return 0;
+      return;
    }
 
    if( m_varmap == 0 )
    {
       // we're in the global context.
       bool bAlready;
-      nuks = onGlobalDefined( variable, bAlready );
+      onGlobalDefined( variable, bAlready );
    }
    else
    {
       // add it in the current symbol table.
-      nuks = m_varmap->find( variable );
-      if( nuks == 0 ) {
-         nuks = m_varmap->addLocal( variable );
-         fassert( nuks != 0 );
-      }
+      m_varmap->insert( variable );
+      // ignore symbol duplication.
    }
-   
-   return nuks;
 }
 
-Variable* ParserContext::accessSymbol( const String& variable )
+bool ParserContext::accessSymbol( const String& variable )
 {
-   static Variable dummy(Variable::e_nt_local);
-   TRACE("ParserContext::accessSymbol on (: %s :)", variable.c_ize() );
-   Variable* nuks;
-   
+   TRACE("ParserContext::accessSymbol(: %s :)", variable.c_ize() );
    if( m_varmap == 0 )
    {
       // we're in the global context.
       if( _p->m_litContexts.empty() )
       {
-         nuks = onGlobalAccessed( variable );
+         return onGlobalAccessed( variable );
       }
       else {
-         /*
-         nuks = _p->m_litContexts.back()->addLocal(variable);
-         m_varmap = _p->m_litContexts.back()->varmap();
-         */
-         nuks = &dummy; // for now...
          // don't need to add any local.
+         TRACE1("ParserContext::accessSymbol(: %s :) ignoring access in literal contexts", variable.c_ize() );
       }
    }
    else
    {
       // search in the local contexts
-      nuks = findLocalSymbol( variable );
+      bool isLocal = isLocalSymbol( variable );
       // not found?
 
-      if ( nuks == 0 )
+      if ( ! isLocal )
       {
          if( !_p->m_litContexts.empty() )
          {
-            // actually, we discard this; it's totally unneeded bu
-            nuks = m_varmap->addLocal(variable);
+            m_varmap->insert(variable);
+            TRACE1("ParserContext::accessSymbol(: %s :) found a local symbol", variable.c_ize() );
          }
          else if( isParentLocal( variable ) ) {
-            nuks = m_varmap->addClosed(variable);
+            m_cfunc->closed().insert(variable);
+            TRACE1("ParserContext::accessSymbol(: %s :) closed symbol", variable.c_ize() );
          }
          else {
             // tell the subclass we're accessing this variable as global.
-            nuks = onGlobalAccessed( variable );
+            return onGlobalAccessed( variable );
          }
       }
    }
 
-   return nuks;
+   // only access to globals can return "non local"
+   // -- and we returned directly any onGlobalAccessed.
+   return true;
 }
 
 
@@ -395,23 +385,23 @@ void ParserContext::accessSymbols( Expression* expr )
 }
 
 
-Variable* ParserContext::findLocalSymbol( const String& name )
+bool ParserContext::isLocalSymbol( const String& name )
 {
    TRACE1("ParserContext::findLocalSymbol \"%s\"", name.c_ize() );
    if( m_varmap == 0 )
    {
-      return 0;
+      return false;
    }
 
    // found at first shot?
-   Variable* var = m_varmap->find( name );
-   if( var !=  0 )
+   int32 symId =  m_varmap->find( name );
+   if( symId >=  0 )
    {
       TRACE1("ParserContext::findSymbol \"%s\" found locally", name.c_ize() );
-      return var;
+      return true;
    }
 
-   return 0;
+   return false;
 }
 
 bool ParserContext::isParentLocal( const String& name )
@@ -428,13 +418,13 @@ bool ParserContext::isParentLocal( const String& name )
          break;
       }
 
-      if( frame.m_type != CCFrame::t_func_type || &frame.m_elem.func->variables() == m_varmap ) {
+      if( frame.m_type != CCFrame::t_func_type || &frame.m_elem.func->parameters() == m_varmap ) {
          ++iter;
          continue;
       }
 
-      Variable* var = frame.m_elem.func->variables().find( name );
-      if( var !=  0 )
+      int32 symId =  frame.m_elem.func->parameters().find( name );
+      if( symId !=  0 )
       {
          TRACE1("ParserContext::findSymbol \"%s\" found, need to be closed", name.c_ize() );
          return true;
@@ -582,7 +572,7 @@ void ParserContext::openFunc( SynFunc *func )
    _p->m_frames.push_back(CCFrame(func));
 
    // get the symbol table.
-   m_varmap = &func->variables();
+   m_varmap = &func->parameters();
 }
 
 
@@ -599,7 +589,7 @@ void ParserContext::openClass( Class* cls, bool bIsObject )
    m_cclass = fcls;
    m_cstatement = 0;
    _p->m_frames.push_back(CCFrame(fcls, bIsObject ));
-   m_varmap = &fcls->makeConstructor()->variables();
+   m_varmap = &fcls->makeConstructor()->parameters();
    // TODO: get the symbol table.
 }
 
@@ -735,6 +725,25 @@ void ParserContext::reset()
    m_cfunc = 0;
    m_cclass = 0;
    m_varmap = 0;
+}
+
+
+Item* ParserContext::getValue( const String& name )
+{
+   Symbol* sym = Engine::getSymbol(name);
+   try
+   {
+      Item* item = getValue( sym );
+      sym->decref();
+      return item;
+   }
+   catch( ... )
+   {
+      sym->decref();
+      throw;
+   }
+
+   return 0;
 }
 
 }

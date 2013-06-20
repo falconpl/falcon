@@ -18,7 +18,7 @@
 
 #include <falcon/setup.h>
 #include <falcon/string.h>
-#include <falcon/varmap.h>
+#include <falcon/symbolmap.h>
 #include <falcon/mantra.h>
 
 namespace Falcon
@@ -154,7 +154,7 @@ public:
    void setEta( bool mode ) { m_bEta = mode; }
 
    inline Function* addParam( const String& name ) {
-      m_vars.addParam( name );
+      m_vars.insert( name );
       return this;
    }
 
@@ -210,11 +210,14 @@ public:
     */
    virtual Class* handler() const;
    
-   const VarMap& variables() const  { return m_vars; }
-   VarMap& variables() { return m_vars; }
+   const SymbolMap& parameters() const  { return m_vars; }
+   SymbolMap& parameters() { return m_vars; }
 
-   inline uint32 paramCount() const { return m_vars.paramCount(); }
-   bool hasClosure() const { return m_vars.closedCount() != 0; }
+   const SymbolMap& closed() const  { return m_closed; }
+   SymbolMap& closed() { return m_closed; }
+
+   inline uint32 paramCount() const { return m_vars.size(); }
+   bool hasClosure() const { return m_closed.size() != 0; }
 
    /**
     * Writes the function to an output stream.
@@ -229,7 +232,8 @@ public:
    void setMain( bool m ) { m_bMain = m; }
 
 protected:
-   VarMap m_vars;
+   SymbolMap m_vars;
+   SymbolMap m_closed;
    String m_signature;
    Class* m_methodOf;
    bool m_bEta;

@@ -235,9 +235,9 @@ static bool make_case_branch(  Parser& p, ParserContext* ctx, SynTree* st, bool 
             case CaseItem::e_sym:
                // Search the symbol
                {
-                  Variable* symBaseClass = ctx->accessSymbol( itm->m_sym->name() );
+                  bool isLocal = ctx->accessSymbol( itm->m_sym->name() );
                   // if it's 0, we need a requirement; and we shall also add an external symbol.
-                  if( symBaseClass == 0 || symBaseClass->type() == Variable::e_nt_extern )
+                  if( ! isLocal )
                   {
                      // then just add the requirement
                      if( p.interactive() )
@@ -245,20 +245,11 @@ static bool make_case_branch(  Parser& p, ParserContext* ctx, SynTree* st, bool 
                         p.addError( e_undef_sym, p.currentSource(), tlist->line(), tlist->chr(), 0, itm->m_sym->name() );
                         return false;
                      }
-
-                     Requirement* req = ecase->addForwardClass( itm->m_sym->name() );
-                     if( req == 0 )
-                     {
-                        noClash = false;
-                     }
-                     else {
-                        ctx->onRequirement( req );
-                     }
                   }
                   else
                   {
                      // if it's defined and not a class, we're in trouble
-                     const Item* value = ctx->getVariableValue( itm->m_sym->name(), symBaseClass );
+                     const Item* value = ctx->getValue( itm->m_sym );
                      fassert( value != 0 );
 
                      if( value == 0 || ! value->isClass() )

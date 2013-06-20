@@ -35,7 +35,6 @@
 #include <falcon/falconclass.h>
 #include <falcon/hyperclass.h>
 #include <falcon/modloader.h>
-#include <falcon/requirement.h>
 #include <falcon/stdsteps.h>
 
 #include <falcon/errors/genericerror.h>
@@ -248,12 +247,12 @@ void IntCompiler::Context::onGlobal( const String& name )
    ModCompiler::Context::onGlobal( name );
 }
 
-Variable* IntCompiler::Context::onGlobalAccessed( const String& name )
+bool IntCompiler::Context::onGlobalAccessed( const String& name )
 {
-   Variable* var = ModCompiler::Context::onGlobalAccessed(name);
+   bool isLocal = ModCompiler::Context::onGlobalAccessed(name);
 
    // if the variable is extern, resolve it immediately
-   if( var->type() == Variable::e_nt_extern && ! var->isResolved() )
+   if( ! isLocal )
    {
       Module* mod = m_owner->module();
       Module* declarer = 0;
@@ -277,7 +276,7 @@ Variable* IntCompiler::Context::onGlobalAccessed( const String& name )
       }
    }
 
-   return var;
+   return isLocal;
 }
 
 

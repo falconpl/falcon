@@ -85,7 +85,7 @@ void ExprInvoke::apply_( const PStep* ps, VMContext* ctx )
               }
               else if( callee->asClass()->typeID() == FLC_CLASS_ID_TREESTEP &&
                        callee->asClass()->userFlags() == FALCON_SYNCLASS_ID_TREE &&
-                       static_cast<ExprTree*>(callee->asInst())->varmap()->isEta()  ) {
+                       static_cast<ExprTree*>(callee->asInst())->isEta()  ) {
                  eta = true;
                  }
             }

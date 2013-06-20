@@ -317,9 +317,6 @@ Engine::Engine()
    // Syntax Reflection
    //
    
-   ExprInherit::IRequirement::registerMantra( this );
-   CaseRequirement::registerMantra( this );
-   
    m_synClasses = new SynClasses(m_stdHandlers->syntreeClass(), m_stdHandlers->statementClass(), m_stdHandlers->expressionClass() );
    m_synClasses->subscribe( this );
    
@@ -699,7 +696,6 @@ Symbol* Engine::getSymbol( const String& name )
    fassert( m_instance != 0 );
    return m_instance->m_symbols->get(name);
 }
-
 
 void Engine::refSymbol( Symbol* sym )
 {

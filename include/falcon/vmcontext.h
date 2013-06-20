@@ -45,7 +45,7 @@ class Shared;
 class Scheduler;
 class ContextGroup;
 class Process;
-class VarMap;
+class SymbolMap;
 class TreeStep;
 class GCToken;
 class ItemStack;
@@ -1118,7 +1118,7 @@ public:
     \param st The symbol table containing the Local Symbols to be added.
     \param pcount The count of the parameters that have been pushed for this frame.
     */
-   void addLocalFrame( VarMap* st, int pcount );
+   void addLocalFrame( SymbolMap* st, int pcount );
 
    /** Returns from the current frame.
     \param value The value considered as "exit value" of this frame.

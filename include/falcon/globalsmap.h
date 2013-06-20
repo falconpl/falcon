@@ -1,6 +1,6 @@
 /*
    FALCON - The Falcon Programming Language.
-   FILE: vardatamap.h
+   FILE: globals.h
 
    Map holding variables and associated data for global storage.
    -------------------------------------------------------------------
@@ -29,31 +29,39 @@ class Module;
 /** Map holding variables and associated data for global storage in modules.
  *
  */
-class FALCON_DYN_CLASS VarDataMap
+class FALCON_DYN_CLASS GlobalsMap
 {
 public:
-   VarDataMap();
-   ~VarDataMap();
+   GlobalsMap();
+   ~GlobalsMap();
 
-   class VarData
+   class Data
    {
    public:
-      VarData( const String& n, Variable v, const Item& data, bool bExtern = false, bool bExported = false ):
-         m_name(n),
-         m_var(v),
-         m_storage( data ),
-         m_bExported( bExported )
+      Data():
+         m_bExtern(false)
       {
-         if( ! bExtern ) {
-            m_data = &m_storage;
-         }
+         m_storage.setNil();
+         m_data = &m_storage;
       }
 
-      String m_name;
-      Variable m_var;
+      Data(const Item& data):
+         m_storage( data ),
+         m_bExtern(false)
+      {
+         m_data = &m_storage;
+      }
+
+     Data(Item* pdata):
+        m_bExtern(true)
+     {
+        m_storage.setNil();
+        m_data = pdata;
+     }
+
       Item* m_data;
       Item m_storage;
-      bool m_bExported;
+      bool m_bExtern;
    };
 
 
@@ -71,25 +79,38 @@ public:
       to the module mantra map.
 
       */
-   VarData* addGlobal( const String& name, const Item& value, bool bExport = false );
+   Data* add( const String& name, const Item& value, bool bExport = false );
+   Data* add( Symbol* sym, const Item& value, bool bExport = false );
 
-   VarData* addExtern( const String& name, bool bExport = false );
+   /** Imports a variable in as external.
+    * \param sym The symbol indicating the variable that is to be imported.
+    * \param value The new value for that variable.
+    * \return the data entry associated with that variable.
+    *
+    * This method forces creation or update of the given variable,
+    * whether it previously existed in the table or not. The variable
+    * is then associated to an external pointer, which must stay available for
+    * the scope of the owner module existence. This means the value must either
+    * come from the engine, from an embedding application or from a module in the
+    * same module space of the owner module.
+    */
+   Data* addExtern( Symbol* sym, Item* value );
 
-   bool removeGlobal( const String& name );
-   bool removeGlobal( uint32 id );
+   bool remove( const String& name );
+   bool remove( Symbol* sym );
 
-  /** Export a symbol.
+  /** Export a previously declared symbol.
    \param name The name of the symbol to be exported.
-   \param bAlready will be set to true if the symbol was already expored.
+   \param bAlready will be set to true if the symbol was already exported.
    \return The exported variable or zero if the name isn't known.
 
    \note In the falcon language it is NOT legal to export undefined symbols -- to avoid mistyping.
    */
-   VarData* addExport( const String& name, bool &bAlready );
+   Data* exportGlobal( const String& name, bool &bAlready );
 
-  inline VarData* addExport( const String& name ) {
+  inline Data* exportGlobal( const String& name ) {
      bool dummy;
-     return addExport(name, dummy);
+     return exportGlobal(name, dummy);
   }
 
    /** Finds the value of a global variable by name.
@@ -102,43 +123,24 @@ public:
 
    \note Still unimported extern variables return 0.
    */
-   Item* getGlobalValue( const String& name ) const;
+   Item* getValue( const String& name ) const;
+   Item* getValue( Symbol* sym ) const;
 
-   /** Finds the value of a global variable by its variable id.
-   \param name The variable name to be searched.
-   \return A global value.
-
-   Notice that the returned value might be either defined as a static
-   value in this module or being imported from other sources (i.e. the
-   exported data in the host module space).
-
-   \note Still unimported extern variables return 0.
-   */
-   Item* getGlobalValue( uint32 id ) const;
-
-   /** Finds the global variable associated with a given variable name.
-       \param name The variable name to be searched.
-       \return The variable definition, if found, or 0.
-   */
-   VarData* getGlobal( const String& name ) const;
-
-   /** Finds a variable definition and name given its id.
-       \param id The global ID of the desired variable.
-       \param name The variable name of the required global.
-       \param var The variable definition of the required global.
-       \return true if id is in range, false otherwise.
-
-       Notice that there isn't any distinction between global variables
-       defined by this module and extern variables imported here.
-
-       The value of the required variable can be directly accessed by invoking
-       getGlobalValue().
-   */
-   VarData* getGlobal( uint32 id ) const;
+   /** Gets the global data associated with the given variable name.
+    * \param name The name of the global variable to be searched.
+    * \return A valid Data pointer on success, 0 if the name is unknown.
+    *
+    * The returned value can be manipulated to change the stored value
+    * or the item pointer (i.e. to make it to point to the exported globals
+    * in the module space where a module is stored).
+    */
+   Data* get(const String& name ) const;
+   Data* get( Symbol* sym ) const;
 
    /** Checks if a variable is exported given its name.
    */
    bool isExported( const String& name ) const;
+   bool isExported( Symbol* sym ) const;
 
    /** Mark (dynamic) modules for Garbage Collecting.
     \param mark the current GC mark.
@@ -155,41 +157,26 @@ public:
     Machine for dynamic collection.
     */
 
-   uint32 lastGCMark() const { return m_lastGCMark; }
-
+   uint32 lastGCMark() const;
 
    class VariableEnumerator
    {
    public:
-      virtual void operator() ( const String& name, const Variable& var, const Item& value ) = 0;
+      virtual void operator() ( Symbol* sym, Item*& value ) = 0;
    };
-
 
    /** Enumerate all the variables exported by this module.
     *
     * By definition, exported variables are global and provide a valid pointer
     * when getGlobalValue() is invoked.
+    *
+    * Notice that the VariableEnumerator receives a value by pointer-reference,
+    * allowing the receiver to change the pointer if needed.
     */
    void enumerateExports( VariableEnumerator& rator ) const;
 
    /** Returns the count of global variables. */
    uint32 size() const;
-
-   /** Promotes a variable previously known as extern into a global.
-    * \param id The variable to be promoted (known by ID).
-    * \param value The concrete value that is given.
-    * \param redeclaredAt New line where the promotion is done.
-    * \return true if the variable was an extern, false otherwise.
-    *
-    * This turns an extern variable into a global, eventually removing the
-    * extern dependencies bound with the variable name.
-    *
-    * \note; on exit, the \b ext variable is external.
-    */
-   bool promoteExtern( uint32 id, const Item& value, int32 redeclaredAt=0 );
-
-   void forwardNS( VarDataMap* other, const String& remoteNS, const String& localNS );
-   void exportNS( Module* source, const String& sourceNS, Module* target, const String& targetNS );
 
    void store( DataWriter* dw ) const;
    void restore( DataReader* dr );
@@ -197,17 +184,18 @@ public:
    void flatten( VMContext* ctx, ItemArray& subItems ) const;
    void unflatten( VMContext* ctx, ItemArray& subItems, uint32 start, uint32 &count );
 
+   bool isExportAll() const { return m_bExportAll; }
+   void setExportAll( bool bMode ) { m_bExportAll = bMode; }
+
 private:
    class Private;
-   VarDataMap::Private* _p;
+   GlobalsMap::Private* _p;
 
-   Variable* addGlobalVariable( const String& name, Item* pvalue );
-
-   uint32 m_lastGCMark;
+   bool m_bExportAll;
 };
 
 }
 
 #endif
 
-/* end of vardatamap.h */
+/* end of globalsmap.h */

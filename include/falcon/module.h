@@ -17,6 +17,7 @@
 #ifndef FALCON_MODULE_H
 #define FALCON_MODULE_H
 
+#include <falcon/atomic.h>
 #include <falcon/setup.h>
 #include <falcon/string.h>
 #include <falcon/enumerator.h>
@@ -26,7 +27,7 @@
 #include <falcon/class.h>
 #include <falcon/function.h>
 #include <falcon/module.h>
-#include <falcon/vardatamap.h>
+#include <falcon/globalsmap.h>
 #include <falcon/attribute.h>
 #include <falcon/atomic.h>
 
@@ -34,7 +35,7 @@
 #define DEFALUT_FALCON_MODULE_INIT_NAME "falcon_module_init"
 
 #define FALCON_MODULE_DECL \
-   FALCON_MODULE_TYPE DEFALUT_FALCON_MODULE_INIT()
+   FALCON_MODULE_TYPE DEFALUT_FALCON_MODULE_onLinkComplete()
 
 namespace Falcon {
 
@@ -121,6 +122,22 @@ public:
    /** Physical world location of the module. */
    const String& uri() const {return m_uri;}
 
+   /** Creates a new global variable in the module (or promotes an extern).
+    * \param name The name of the global to be added.
+    * \param value The value of the new global.
+    * \return The data of the added global, or 0 if the global name is not available.
+    *
+    */
+   GlobalsMap::Data* addGlobal( const String& name, const Item& value, bool bExport = true );
+
+   /** Creates a new global variable in the module (or promotes an extern).
+    * \param sym The symbol of the global to be added.
+    * \param value The value of the new global.
+    * \return The data of the added global, or 0 if the global name is not available.
+    *
+    */
+   GlobalsMap::Data* addGlobal( Symbol* sym, const Item& value, bool bExport = true );
+
 
    /** Adds a global mantra, possibly exportable.
     \param f The function to be added
@@ -134,7 +151,7 @@ public:
       This means that after calling this method, the name of the mantra is also known as
       a global, possibly exported variable.
     */
-   Variable* addMantra( Mantra* f, bool bExport = true );
+   bool addMantra( Mantra* f, bool bExport = true );
    
    /** Adds a class and the required structures to make it initializable at startup.
     *
@@ -145,7 +162,7 @@ public:
     * \note this is for internal usage. Use addObject instead.
     *
     */
-   Variable* addInitClass( Class* cls, bool bExport = true );
+   bool addInitClass( Class* cls, bool bExport = true );
 
    /** Creates a singleton object that is initialized at startup
     *
@@ -154,7 +171,7 @@ public:
     * added.
     *
     */
-   Variable* addObject( Class* cls, bool bExport = true );
+   bool addObject( Class* cls, bool bExport = true );
 
    /**
     * Returns the count of classes with an init-time instance to be filled.
@@ -167,7 +184,18 @@ public:
    Class* getInitClass( int32 val ) const;
 
 
-   Variable* addConstant( const String& name, const Item& value, bool bExport = true );
+   /** Adds a constant to the module.
+    * @param name The name of the constant.
+    * @param value The value of the constant.
+    * @param bExport True to make the constant exported.
+    * \return true if the constant can be defined, false if it was already defined.
+    *
+    * Creates a global variable which will be initialized to the required
+    * value at load time.
+    *
+    * \note, contrarly to addGlobal, addConstant doesn't promote external values.
+    */
+   bool addConstant( const String& name, const Item& value, bool bExport = true );
 
    /** Adds an anonymous mantra.
     \param f The mantra to be added
@@ -199,54 +227,6 @@ public:
    Variable* addFunction( const String& name, ext_func_t f, bool bExport = true );
 
 
-   /** Creates a singleton object.
-    \param fc The class to be added
-    \param bExport if true, the returned symbol will be exported.
-    \return A variable containing the global ID or 0 if the variable
-             was already declared.
-    */
-   Variable* addSingleton( Class* fc, bool bExport = true );
-
-
-   /** Promotes a variable previously known as extern into a global.
-    * \param ext The variable to be promoted.
-    * \return true if the variable was an extern, false otherwise.
-    *
-    * This turns an extern variable into a global, eventually removing the
-    * extern dependencies bound with the variable name.
-    *
-    * \note; on exit, the \b ext variable is extern.
-    */
-   bool promoteExtern( Variable* ext, const Item& value, int32 declaredAt );
-
-
-   /** Sets an extern value once the relative extern variable is resolved.
-    * \param name The name of the extern variable that is being resolved.
-    * \param value The resolved value
-    * \param source The source module where this value comes from (can be 0).
-    * \return true if the variable name is found (and extern), false otherwise.
-    *
-    * If a dependency is waiting for this variable to be resolved, it is satisfied.
-    * This might lead to throw an error if the satisfied depenency decides so.
-    * */
-   bool resolveExternValue( const String& name, Module* source, Item* value );
-
-   /** Tries to create a new variable taking an external value.
-    *
-    * \param name the name for the extern global variable.
-    * \param source A source module where this item is allocated (can be 0).
-    * \param value The value to be associated with the variable.
-    * \return A valid variable entry on success, 0 if the variable is already defined as global.
-    *
-    * If the variable is not defined, or defined as extern, the value is set.
-    * This might also lead to dependency resolve, which in turn might raise an
-    * error if the resolved dependency is willing to do so.
-    *
-    * If the value is already defined as a global variable, this method returns 0.
-    */
-   Variable* importValue( const String& name, Module* source, Item* value, int line = 0 );
-
-
    /** Finds a function.
     \param name The function name to be searched.
     \return A global function or 0 if not found.
@@ -274,7 +254,7 @@ public:
 
    /** Adds a generic import request.
     \param source The source path or logical module name.
-    \param bIsUri If true, the source is an URI, otherwise is a module name.
+    \param bIsUri If true, the source is an URI, otherwise is a logical module name.
     \return True if the module could be added or promoted, false if it was
             already imported as generic.
    
@@ -302,52 +282,187 @@ public:
 
    uint32 lastGCMark() const { return m_lastGCMark; }
 
+   /** Adds a request to load or import a module.
+    *
+    * \param name Logical name or URI of the target module.
+    * \param isUri if true, the given name is to be intended as an URI, otherwise it's
+    *        a logical module name.
+    * \param isLoad if true, the module is loaded with load semantic (static export
+    *        requests will be honored).
+    *
+    * When a module gets deserialized or anyhow loaded in the engine, it can ask
+    * for a set of other modules to be loaded in the same module space before
+    * the module can run.
+    *
+    * The engine will store the required modules, or retrieve the modules in the
+    * same target module space if they were already loaded by something else,
+    * and fill the appropriate ModRequest::module() field prior calling onLinkComplete()
+    * on this module.
+    *
+    * If any of the required modules cannot be found, the engine stops the load process
+    * with error, and the onLinkComplete() method of this module is never called. Notice that
+    * processes can invoke functions that explicitly load modules in a sandbox process,
+    * like in the case of the include() function, so this doesn't mean that the VM
+    * will stop.
+    *
+    * \note There is no guarantee on the call order of the onLinkComplete() method of the
+    * modules invoked in the modRequest. As onLinkComplete() in this module gets called,
+    * the modules stored in the created ModRequest entries might or might not already
+    * be initialized or even run. However, they will have been fully linked, and their
+    * constructor and onLoad() methods (where static class/function definition are honored)
+    * will have been called.
+    *
+    */
+
+   ModRequest* addModRequest( const String& name, bool isUri, bool isLoad = false );
+
+   /** Callback invoked by the engine as soon as the module is considered "live".
+    *
+    * This method is invoked when a module is inserted in a module space. This is the moment
+    * in which the module is considered to be "alive" and ready to respond to engine requests.
+    *
+    * After the method returns, the static module request resolution starts; so, in this moment
+    * ModRequest entries are still void.
+    *
+    * This is a good spot to add dynamic entries that couldn't be possibly added in the Module
+    * subclass constructor.
+    *
+    * New ModRequest and ImportDef can be added during this step.
+    *
+    * \note At time of call, the modSpace() member is already filled-in and the module is already
+    *       stored in the parent modSpace. Also, usingLoad() is correctly set.
+    */
+   virtual void onLoad();
    
+   /** Called back by the engine when a required module is found and loaded.
+    * \param mr The module request that has just been filled.
+    *
+    * This method is called back as soon as the ModRequest::module() member is filled
+    * with a Module*. It is guaranteed that the module that is loaded has been correctly
+    * initialized, and its onLoad() method has been called, but there is no other
+    * guarantee on the lifecycle of the given module.
+    *
+    * For instance, if the module was already present in the parent module space,
+    * it might have already been used for running code, while, if it was freshly loaded,
+    * it might not yet have had its onLinkComplete() method called.
+    *
+    * \note The onLinkComplete() method is called as soon as all the ModRequest are resolved (and
+    *  onModuleResolved is called for each one of them).
+    */
+   virtual void onModuleResolved( ModRequest* mr );
+
+   /** Called back when a static import definition is resolved.
+    * \param id The import definition that generated the symbol.
+    * \param sym The symbol that was resolved.
+    * \param value The value asociated with the symbol.
+    *
+    * This is called back when an explicit static import definition is
+    * resolved by the module space.
+    */
+   virtual void onImportResolved( ImportDef* id, Symbol* sym, Item* value );
+
+   /** Callback invoked by the engine after the link process is complete.
+    *
+    * This method is called when the static link process is considered complete.
+    *
+    * This happens when all the statically declared ModRequest have been honored (all
+    * the required modules are loaded) and after all the statically declared external
+    * symbols have been resolved, and prior any code of the module (including static object
+    * initialization) is run.
+    *
+    * This is a good place where to search for symbols defined in foreign modules, or that should
+    * be found in the module space, and cache them in the globals map and/or in local C++ members.
+    *
+    * \note The base version of this method does nothing.
+    *
+    * \note The method can throw an error if, for any reason, the initialization of the module
+    * can't be performed.
+    */
+   virtual void onLinkComplete();
+
+   /** Perform live module initialization on a virtual machine.
+    * \param VMContext The context where the module is invoked.
+    *
+    * This method prepares the execution of code declared within the module (if any)
+    * in the target context.
+    *
+    * This is articulated in three steps:
+    * - Initialization of falcon classes (if any).
+    * - Initialization of attributes (if any).
+    * - Initialization of singleton objects (if any).
+    *
+    * This steps may be executed immediately or pushed in the context as PSteps for
+    * later execution; there is no guarantee about the execution time, but it is guaranteed
+    * that they will be executed in the given order.
+    *
+    * Subclasses can extend this functionality. If they don't provide falcon classes, singleton
+    * objects and a syntactic (PStep-tree based) main function, they can safely ignore the base method.
+    * Also, the base method can be ignored if the subclass knows how to initialize its own FalconClass
+    * instances.
+    *
+    * In all the other cases, the derived classes should invoke the base method immediately, and then
+    * eventually add their own initialization code to the context, in order for that to be executed
+    * first (the PSteps in the context are a LIFO stack: later pushed PSteps are executed first).
+    *
+    * \note The module should never invoke its own main function; this is a decision that
+    *     is demanded to the module loader, either the default one in the ModSpace or a dynamic
+    *     loader deserializing the module on its own.
+    *
+    * \note The caller may check if this method has left pending PSteps operations in the context
+    *       by confronting the depth of the code stack prior and after invoking it.
+    */
+   virtual void startup( VMContext* ctx );
+
    /** Adds a standard import/from or load request.
     \param def An import definition.
+    \param error An output error that is created in case of error.
     \return true if the import definition is compatible with the module,
     false if the symbols are already defined or if a load request was
     already issued for a newly loaded module.
     
-    In case the function returns false, the caller should look into the
-    import def and eventually raise a consistent error, then discard it.
-    If it returns true, the ownership passes on the module.
+    The method adds an import definition (corresponding to a "import" directive line
+    in the source) to the current module.
+
+    Several checks are performed in order to ensure that the import request is coherent
+    with the module. In particular:
+    - Output (locally visible) symbols declared in the import definition must not be
+      already declared.
+    - The module declared in the import directive (if any) must not have been
+      already declared as loaded.
+
+    In case of error, the method returns false and a consistent newly allocated error
+    will be placed in the \b error parameter. The caller might add it to
+    a list of errors or raise it immediately.
+
+    \note Multiple if the import directive generates multiple errors, they are stored
+    as sub-errors of a LinkError.
     */
-   Error* addImport( ImportDef* def );
+   bool addImport( ImportDef* def, Error*& error, int32 line = 0 );
    
-   void removeImport( ImportDef* def );
+   /** Adds an implicitly imported symbol.
+    Proxy to the version using a Symbol as parameter.
+    */
+   bool addImplicitImport( const String& name, int32 line = 0 );
+
+   /** Adds an implicitly imported symbol.
+    \param name The unknown symbol that should be resolved during link time.
+    \param line The line where the symbol is defined.
+    \return true if the symbol is new, false if it was already defined.
+
+    \note If the method returns false, the caller should raise a LinkError for
+    doubly defined symbol.
+    */
+   bool addImplicitImport( Symbol* sym, int32 line = 0 );
    
    /** Shortcut to create a load ImportDef only if load is valid.
     \param name The name or URI of the module.
     \param bIsUri if name is URI.
-    \return 0 if the load was already declared, a valid ImportDef 
-    (already added to the module) if not.
+    \param Error a reference to a Error* that will be filled in case of error.
+    \return true if the load request can be added, false if the module is
+       already declared as required for load.
     
     */
-   Error* addLoad( const String& name, bool bIsUri );
-
-   /** Adds an implicitly imported symbol.
-    \param name The unknown symbol that should be resolved during link time.
-    \param isNew True if the symbol is new.
-    \return A valid variable (possibly created as "extern" on the spot).
-    
-    Adds an implicit import. This is the same as import, but will always return
-    a valid variable, which might be undefined if the symbol wasn't known before,
-    or it might be an existing global variable.
-    */
-   Variable* addImplicitImport( const String& name, int line, bool& isNew );
-   
-   Variable* addImplicitImport( const String& name, int line )
-   {
-      bool bDummy;
-      return addImplicitImport( name, line, bDummy );
-   }
-   
-   /** Removes an extern.
-    * Mainly used by the interactive compiler to undo an unnecessary implicit import.
-    *
-    */
-   bool removeExtern( const String& name );
+   bool addLoad( const String& name, bool bIsUri, Error*& error, int32 line = 0 );
 
    /** Callback that is called when a symbol import request is satisfied.
     \param requester The module from which the request was issued.
@@ -373,23 +488,6 @@ public:
    
    void addImportRequest( Requirement* req, 
                const String& sourceMod="", bool bModIsPath=false );
-
-   
-   /** Adds a request for a foreign entity that shall be resolved at link phase.
-    
-    \param cr A Requirement that will be called back.
-    \return The symbol attached to this requirement (usually an undefined symbol).       
-    
-    The caller should not generate a requirement for a global symbol
-    that is already defined. However, if there is a global and defined symbol 
-    matching the requirement, it is IMMEDIATELY resolved (Requirement::onResolved
-    is called), and the globally defined symbol is returned.
-    
-    \note The method may throw immeately, as the requirement may throw immediately.
-    
-    \see Requirement
-    */
-   Variable* addRequirement( Requirement* cr );
 
    
    /** Perform completion checks on source classes.
@@ -429,9 +527,6 @@ public:
    bool isMain() const { return m_bMain; }
    
    void setMain( bool isMain = true ) { m_bMain = isMain; } 
-   
-   /** Executes a namespace forwarding from a module into this one. */
-   void forwardNS( Module* mod, const String& remoteNS, const String& localNS );
 
    /** Check if we can use an existing module to resolve this requirement.
     
@@ -484,70 +579,77 @@ public:
       static_cast<Function*>( getMantra(name, Mantra::e_c_function) ); }
 
    /** Count of import definitions (dependencies). */
-   uint32 depsCount() const;
+   uint32 importCount() const;
 
    /** Get the nth import definition (dependency).
     * \param n Definition number in range 0 <= n < depsCount().
     * \return ImportDef for that number.
     */
-   ImportDef* getDep( uint32 n ) const;
+   ImportDef* getImport( uint32 n ) const;
 
-   VarDataMap& globals() { return m_globals; }
-   const VarDataMap& globals() const { return m_globals; }
+   /** Access to the global variables map of this module. */
+   GlobalsMap& globals() { return m_globals; }
 
+   /** Access to the global variables map of this module. */
+   const GlobalsMap& globals() const { return m_globals; }
 
-   Variable* addGlobal( const String& name, const Item& value, bool bExport = false )
-   {
-      VarDataMap::VarData* vd = m_globals.addGlobal(name, value, bExport);
-      if( vd == 0 ) return 0;
-      return &vd->m_var;
-   }
+   /** Resolves a symbol that is requested as a global entity by module users.
+    * \param Symbol the symbol to be found.
+    * \return 0 if the symbol is not found in the engine, otherwise a valid
+    *    item known as the given symbol in this module.
+    *
+    * The symbol is searched looking at this module and in its dependencies in the
+    * following order:
+    *
+    * - local search (through resloveLocally() method).
+    * - search in modules providing symbols through import declarations.
+    * - search in the holder module space (if any): this resolves in searching explicit
+    *   exports from other modules imported in the module space via "load" directive.
+    * - search in the engine built-ins.
+    *
+    * If the symbol is not found, 0 is returned.
+    *
+    * \note When a symbol is resolved, it is locally cached in the globals map. This means
+    * that the resolution of unknown symbols is performed once only (it is not possible
+    * to provide different item* at a later invocation),
+    *
+    * \note As globals get serialized when the module is stored, serializing a module after it has been linked
+    * or run will have the effect of storing the resolved globals with it; this means that deserializing
+    * that module afterwards will restore the dependencies automatically. In other words, the dependencies
+    * that were recorded after looking at the import definition table will now be statically re-created at
+    * de-serialization and won't be looked up anymore. Notice that the engine never serializes a module
+    * after link or run; this consideration is relevant just to user-created modules that are explicitly
+    * saved on a stream after being run via a Storer object.
+    *
+    */
+   Item* resolve( Symbol* sym );
 
-   Variable* addExtern( const String& name, bool bExport = false )
-   {
-      VarDataMap::VarData* vd = m_globals.addExtern(name, bExport);
-      if( vd == 0 ) return 0;
-      return &vd->m_var;
-   }
+   /** Performs resolution of locally defined global symbols.
+    * \param The symbol to be resolved.
+    * \return A value associated with this symbol, or 0 if the symbol is not locally known.
+    *
+    * This method returns a the value associated with a symbol as locally
+    * known by this module.
+    *
+    * The default version of this method returns a symbol in the globals map. Subclasses
+    * of the Module class might dynamically provide values as they are requested by importers.
+    */
+   virtual Item* resolveLocally( Symbol* sym );
 
-
-   Variable* addExport( const String& name, bool &bAlready )
-   {
-      VarDataMap::VarData* vd = m_globals.addExport(name, bAlready);
-      if( vd == 0 ) return 0;
-      return &vd->m_var;
-   }
-
-   inline Variable* addExport( const String& name ) {
-       bool dummy;
-       return addExport(name, dummy);
-   }
-
-
-   Item* getGlobalValue( const String& name ) const
-   {
-      return m_globals.getGlobalValue(name);
-   }
-
-   Item* getGlobalValue( uint32 id ) const
-   {
-      return m_globals.getGlobalValue(id);
-   }
-
-   Variable* getGlobal( const String& name ) const
-   {
-      VarDataMap::VarData* vd = m_globals.getGlobal(name);
-      if( vd == 0 ) return 0;
-      return &vd->m_var;
-   }
-
-   void exportNS( const String& sourceNS, Module* target, const String& targetNS )
-   {
-      m_globals.exportNS(this, sourceNS, target, targetNS );
-   }
+   /** Resolves a symbol in this module.
+    * \param name the name of the symbol to be resolved.
+    * \return  0 if the symbol is not found in the engine, otherwise a valid
+    *    item known as the given symbol in this module.
+    *
+    *  This version of resolve( Symbol* sym ) can be used if a symbol is to be searched
+    *  by name and the pointer to the globally known symbol entry in the engine is not
+    *  readily available.
+    */
+   Item* resolve( const String& symName );
 
    /** Returns the attributes for this entity. */
    const AttributeMap& attributes() const { return m_attributes; }
+
    /** Returns the attributes for this entity. */
    AttributeMap& attributes() { return m_attributes; }
 
@@ -560,6 +662,9 @@ public:
 
    typedef Enumerator<String> IStringEnumerator;
 
+   /** Enumerate all the international strings declared in this module.
+    * @param cb An enumerator receiving the strings one at a time.
+    */
    void enumerateIStrings( IStringEnumerator& cb ) const;
 
    /** Returns the number of international strings that can be enumerated in this module.
@@ -594,14 +699,14 @@ protected:
     */
    virtual void unload();
 
-
 private:
    class Private;
    Module::Private* _p;
    
-   VarDataMap m_globals;
+   GlobalsMap m_globals;
 
    ModSpace* m_modSpace;
+
    String m_name;
    String m_uri;
    uint32 m_lastGCMark;
@@ -626,16 +731,6 @@ private:
    void name( const String& v ) { m_name = v; }
    void uri( const String& v ) { m_uri = v; }
    void setDynUnloader( DynUnloader* ul ) { m_unloader = ul; } 
-   
-   // checks for forward declarations, eventually removing them.
-   bool checkWaitingFwdDef( const String& name, Item* value );
-   
-   // used by various import and load requests.
-   Error* addModuleRequirement( ImportDef* def, ModRequest*& req );
-   bool removeModuleRequirement( ImportDef* def );
-
-   class FuncRequirement;      
-
 };
 
 }

@@ -81,7 +81,7 @@ void SynFunc::invoke( VMContext* ctx, int32 nparams )
 {  
    // nothing to do?
    register int paramCount = (int) this->paramCount();
-   register int localCount = (int) this->variables().localCount();
+   register int localCount = (int) this->parameters().localCount();
    
    // fill the parameters
    TRACE1( "-- filing parameters: %d/%d, and locals %d",
@@ -124,7 +124,7 @@ void SynFunc::invoke( VMContext* ctx, int32 nparams )
 
    while( i < filledParams )
    {
-      paramSym = this->variables().getParamSymbol(i);
+      paramSym = this->parameters().getParamSymbol(i);
       fassert( paramSym != 0 );
       ctx->defineSymbol( paramSym, base );
       ++i;
@@ -133,7 +133,7 @@ void SynFunc::invoke( VMContext* ctx, int32 nparams )
 
    while( i < paramCount )
    {
-      paramSym = this->variables().getParamSymbol(i);
+      paramSym = this->parameters().getParamSymbol(i);
       ctx->defineSymbol( paramSym );
       ++i;
    }

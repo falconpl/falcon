@@ -63,8 +63,6 @@
 #include <falcon/errors/encodingerror.h>
 #include <falcon/errors/linkerror.h>
 
-//--- class headers ---
-#include <falcon/requirement.h>
 
 #endif	/* FALCON_H */
 

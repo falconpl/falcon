@@ -28,7 +28,6 @@
 #include <falcon/errors/linkerror.h>
 
 #include <falcon/psteps/stmtselect.h>
-#include <falcon/classes/classrequirement.h>
 
 #include <falcon/engine.h>
 #include <falcon/synclasses.h>

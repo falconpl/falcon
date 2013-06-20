@@ -35,6 +35,7 @@
 #include <falcon/attribute.h>
 #include <falcon/stdhandlers.h>
 #include <falcon/textwriter.h>
+#include <falcon/symbol.h>
 
 #include <falcon/delegatemap.h>
 
@@ -46,6 +47,7 @@
 #include <falcon/errors/operanderror.h>
 #include <falcon/errors/accesserror.h>
 #include <falcon/errors/accesstypeerror.h>
+#include <falcon/errors/linkerror.h>
 
 #include <map>
 #include <list>
@@ -152,7 +154,7 @@ FalconClass::Property::~Property()
 }
 
 FalconClass::Property::Property( ExprInherit* value ):
-   m_name(value->name()),
+   m_name(value->symbol() == 0 ? "?" : value->symbol()->name()),
    m_type(t_inh),
    m_expr(0)
 {
@@ -411,14 +413,14 @@ Class* FalconClass::getParent( const String& name ) const
 bool FalconClass::addParent( ExprInherit* inh )
 {
    // we cannot accept parented expressions.
-   if( inh->parent() != 0 )
+   if( inh->parent() != 0 || inh->symbol() == 0 )
    {
       return false;
    }
    
    Private::MemberMap& members = *_p->m_members;
 
-   const String& name = inh->name();
+   const String& name = inh->symbol()->name();
 
    // first time around?
    if ( members.find( name ) != members.end() )
@@ -470,7 +472,7 @@ bool FalconClass::addParent( ExprInherit* inh )
        ExprInherit* ei = static_cast<ExprInherit*>( inh->get(i) );
        fassert( ei->trait() == Expression::e_trait_inheritance );
        
-       if( ei->base() == 0)
+       if( ei->base() == 0 )
        {
           m_missingParents++;
        }
@@ -479,26 +481,15 @@ bool FalconClass::addParent( ExprInherit* inh )
           m_bPureFalcon = false;
        }
        
-       (*_p->m_members)[ei->name()] = new Property( ei );
+       (*_p->m_members)[ei->symbol()->name()] = new Property( ei );
     }
     
     SynFunc* ctr = makeConstructor();
     inh->setParent( &ctr->syntree() );
     
     return true;
- }
- 
-
-void FalconClass::onInheritanceResolved( ExprInherit* inh )
-{
-   m_missingParents--;
-
-   if( ! inh->base()->isFalconClass() )
-   {
-      m_bPureFalcon = false;
-   }
 }
-
+ 
 
 bool FalconClass::getProperty( const String& name, Item& target ) const
 {
@@ -624,7 +615,7 @@ bool FalconClass::isDerivedFrom( const Class* cls ) const
          }
       }
       else {
-         if( inh->name() == cls->name() )
+         if( inh->symbol()->name() == cls->name() )
          {
             return true;
          }
@@ -660,15 +651,9 @@ SynFunc* FalconClass::makeConstructor()
 }
 
 
-bool FalconClass::construct()
+bool FalconClass::construct( VMContext* ctx )
 {
    TRACE( "FalconClass::construct -- constructing class \"%s\"", this->name().c_ize() );
-
-   if( m_missingParents > 0 || ! m_bPureFalcon )
-   {
-      TRACE1( "FalconClass::construct -- failed to construct \"%s\"", this->name().c_ize() );
-      return false;
-   }
    
    if( m_bConstructed )
    {
@@ -687,8 +672,35 @@ bool FalconClass::construct()
       for( int i = 0; i < len; i++ )
       {
          ExprInherit* inh = static_cast<ExprInherit*>(m_parentship->nth( i ));
-         // we checked that we have no missing parents, all the bases should be there.
-         fassert( inh->base() != 0 );
+         if( inh->symbol() == 0 )
+         {
+            throw FALCON_SIGN_XERROR( CodeError, e_internal, .extra("Parentship without symbol") );
+         }
+
+         if( inh->base() == 0 )
+         {
+            Item* ibase = ctx->resolveSymbol(inh->symbol(), false);
+            if( ibase == 0 )
+            {
+               throw FALCON_SIGN_XERROR( LinkError, e_undef_sym, .extra(inh->symbol()->name() ) );
+            }
+
+            if( ! ibase->isClass() )
+            {
+               throw FALCON_SIGN_XERROR( LinkError, e_inv_inherit, .extra(inh->symbol()->name() ) );
+            }
+
+            Class* bc = static_cast<Class*>(ibase->asInst());
+            inh->base(bc);
+
+            if( ! bc->isFalconClass() )
+            {
+               m_bPureFalcon = false;
+            }
+
+            m_missingParents--;
+         }
+
          Class* base = inh->base();
          //... and we checked that we're pure falcon, so it should be a falcon class.
          fassert( base->isFalconClass() );
@@ -724,6 +736,13 @@ bool FalconClass::construct()
    }
    
    m_bConstructed = true;
+
+   if( m_missingParents > 0 || ! m_bPureFalcon )
+   {
+      TRACE1( "FalconClass::construct -- failed to construct \"%s\"", this->name().c_ize() );
+      return false;
+   }
+
    return true;
 }
 
@@ -1345,16 +1364,16 @@ void FalconClass::render( TextWriter* tw, int32 depth )  const
    {
       tw->write( "(" );
 
-      const VarMap& params = ctor->variables();
-      for( uint32 pc = 0; pc < params.paramCount(); ++pc )
+      const SymbolMap& params = ctor->parameters();
+      for( uint32 pc = 0; pc < params.size(); ++pc )
       {
-         const String& name = params.getParamName(pc);
+         Symbol* sym = params.getById(pc);
          if( pc > 0 )
          {
             tw->write( "," );
          }
 
-         tw->write( name );
+         tw->write( sym->name() );
       }
 
       tw->write( ")" );

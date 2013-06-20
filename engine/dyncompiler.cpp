@@ -101,20 +101,15 @@ public:
       m_sp.addError( e_directive_not_allowed, m_sp.currentSource(), m_sp.currentLine()-1, 0, 0 );
    }
 
-   virtual Variable* onGlobalDefined( const String& , bool&  ) {
-      static Variable var(Variable::e_nt_undefined, Variable::undef, 0, true);
-      return &var;
+   virtual void onGlobalDefined( const String& , bool&  ) {
    }
 
-   virtual Variable* onGlobalAccessed( const String& ) {
-      static Variable var(Variable::e_nt_undefined, Variable::undef, 0, true);
-      return &var;
+   virtual bool onGlobalAccessed( const String& ) {
+      return false;
    }
 
-   virtual Item* getVariableValue( const String& name, Variable* ) {
-      Symbol* sym = Engine::getSymbol(name);
+   virtual Item* getValue( Symbol* sym ) {
       Item* value = m_ctx->resolveSymbol( sym, false);
-      sym->decref();
       return value;
    }
 

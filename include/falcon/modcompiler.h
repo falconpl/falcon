@@ -104,9 +104,9 @@ protected:
       virtual void onExport(const String& symName);
       virtual void onDirective(const String& name, const String& value);
       virtual void onGlobal( const String& name );
-      virtual Variable* onGlobalDefined( const String& name, bool& bUnique );
-      virtual Variable* onGlobalAccessed( const String& name );
-      virtual Item* getVariableValue( const String& name, Variable* var );
+      virtual void onGlobalDefined( const String& name, bool& bUnique );
+      virtual bool onGlobalAccessed( const String& name );
+      virtual Item* getVariableValue( const String& name );
       virtual void onRequirement( Requirement* rec );
       virtual void onIString(const String& string );
 

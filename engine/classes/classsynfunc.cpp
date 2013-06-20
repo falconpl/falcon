@@ -106,7 +106,7 @@ void ClassSynFunc::store( VMContext*, DataWriter* stream, void* instance ) const
    stream->write( synfunc->signature() );
    
    // now we got to save the function parameter table.
-   synfunc->variables().store( stream );
+   synfunc->parameters().store( stream );
 
    // and the attributes table
    synfunc->attributes().store(stream);
@@ -135,7 +135,7 @@ void ClassSynFunc::restore(VMContext* ctx, DataReader* stream) const
    }
 
    try {
-      synfunc->variables().restore( stream );
+      synfunc->parameters().restore( stream );
 
       // and the attributes table
       synfunc->attributes().restore(stream);

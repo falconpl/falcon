@@ -202,7 +202,7 @@ bool MetaFalconClass::op_init( VMContext* ctx, void* instance, int32 pcount ) co
       members->enumerate( rator );
    }
    
-   if( ! fcls->construct() )
+   if( ! fcls->construct(ctx) )
    {
       // we need to hyperconstruct it -- and this means changing the instance.
       HyperClass* hcls = fcls->hyperConstruct();
