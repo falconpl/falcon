@@ -45,10 +45,6 @@ public:
 
 
       const List& source = other.m_list;
-      const Map& varmap = other.m_map;
-
-      List::const_iterator iter = source.begin();
-      List::const_iterator end = source.end();
       for( uint32 pos = 0; pos < source.size(); ++pos )
       {
          Symbol* sym = source[pos];
@@ -167,13 +163,20 @@ Symbol* SymbolMap::getById( uint32 id ) const
 }
 
 
+uint32 SymbolMap::size() const
+{
+   return _p->m_list.size();
+}
+
+
 void SymbolMap::enumerate( Enumerator& e )
 {
    Private::Map::iterator pos = _p->m_map.begin();
    Private::Map::iterator end = _p->m_map.end();
 
-   while( pos != end ) {
-      e( pos->first, pos->second );
+   while( pos != end )
+   {
+      e( pos->first->name() );
       ++pos;
    }
 }
@@ -195,8 +198,6 @@ void SymbolMap::store( DataWriter* dw ) const
 
 void SymbolMap::restore( DataReader* dr )
 {
-   bool ie;
-
    uint32 size;
    dr->read(size);
    _p->m_list.reserve( size );
@@ -213,4 +214,4 @@ void SymbolMap::restore( DataReader* dr )
 
 }
 
-/* end of varmap.cpp */
+/* end of symbolmap.cpp */

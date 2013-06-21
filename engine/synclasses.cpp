@@ -960,7 +960,6 @@ void SynClasses::ClassInherit::flatten( VMContext* ctx, ItemArray& subItems, voi
    // to decide how to flatten a class, we need to know if we're flattening our module.
    if( storer != 0 && storer->topData() == baseClass->module() 
       // Yep, we're storing the module, so  we're not forced to store external classes
-      && ! inh->hadRequirement()
       )
    {
       // so, it's a module and we had a requirement. We're not storing this at all.
@@ -996,19 +995,15 @@ void SynClasses::ClassInherit::unflatten( VMContext*, ItemArray& subItems, void*
 void SynClasses::ClassInherit::store( VMContext* ctx, DataWriter* wr, void* instance ) const
 {
    ExprInherit* inh = static_cast<ExprInherit*>(instance);
-   wr->write( inh->name() );
-   wr->write( inh->hadRequirement() );
+   wr->write( inh->symbol()->name() );
    m_parent->store( ctx, wr, instance );
 }
 void SynClasses::ClassInherit::restore( VMContext* ctx, DataReader* dr ) const
 {
    String name;
-   bool bHadReq;
    dr->read( name );
-   dr->read( bHadReq );
 
    ExprInherit* expr = new ExprInherit(name);
-   expr->hadRequirement( bHadReq );
    
    try {
       ctx->pushData( Item( this, expr ) );
@@ -1221,7 +1216,7 @@ void SynClasses::ClassTree::op_call(VMContext* ctx, int pcount, void* instance) 
 
    // TODO: really need to check for childhood?
    if( child != 0 ) {
-      NameMap* st = tree->varmap();
+      SymbolMap* st = tree->parameters();
       // We must always push a local frame, also with st == 0
       ctx->addLocalFrame( st, pcount );
       ctx->pushCode( child );
@@ -1270,15 +1265,14 @@ void SynClasses::ClassTree::store( VMContext* ctx, DataWriter* wr, void* instanc
    m_parent->store( ctx, wr, tree );
 
    wr->write( tree->isEta() );
-   bool vmap = tree->varmap() != 0;
+   bool vmap = tree->parameters() != 0;
    wr->write( vmap );
    if( vmap ) {
-      tree->varmap()->store( wr );
+      tree->parameters()->store( wr );
    }
 }
 void SynClasses::ClassTree::restore( VMContext* ctx, DataReader* dr ) const
 {
-   bool isEta = false;
    ExprTree* expr = new ExprTree;
    try {
       ctx->pushData( Item( this, expr ) );
@@ -1289,8 +1283,8 @@ void SynClasses::ClassTree::restore( VMContext* ctx, DataReader* dr ) const
 
       expr->setEta(isEta);
       if( hasVmap ) {
-         expr->setVarMap( new NameMap );
-         expr->varmap()->restore( dr );
+         expr->setParameters( new SymbolMap );
+         expr->parameters()->restore( dr );
       }
    }
    catch(...) {

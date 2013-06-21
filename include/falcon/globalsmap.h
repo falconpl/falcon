@@ -95,6 +95,7 @@ public:
     * same module space of the owner module.
     */
    Data* addExtern( Symbol* sym, Item* value );
+   Data* addExtern( const String& symName, Item* value );
 
    bool remove( const String& name );
    bool remove( Symbol* sym );
@@ -108,10 +109,17 @@ public:
    */
    Data* exportGlobal( const String& name, bool &bAlready );
 
-  inline Data* exportGlobal( const String& name ) {
-     bool dummy;
-     return exportGlobal(name, dummy);
-  }
+   inline Data* exportGlobal( const String& name ) {
+      bool dummy;
+      return exportGlobal(name, dummy);
+   }
+
+   Data* exportGlobal( Symbol* sym, bool &bAlready );
+   Data* exportGlobal( Symbol* sym )
+   {
+      bool dummy;
+      return exportGlobal(sym, dummy);
+   }
 
    /** Finds the value of a global variable by name.
    \param name The variable name to be searched.

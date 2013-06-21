@@ -284,8 +284,6 @@ private:
    virtual ~ModSpace();
    bool exportFromModule( Module* mod, Error*& link_errors );
    
-   void importInModule(Module* mod, Error*& link_errors);
-   void importInNS(Module* mod );
    void addLinkError( Error*& top, Error* newError );
    
    void importSpecificDep( Module* asker, void* def, Error*& link_errors);

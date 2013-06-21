@@ -27,12 +27,13 @@
 #include <falcon/modloader.h>
 #include <falcon/modrequest.h>
 #include <falcon/importdef.h>
-#include <falcon/requirement.h>
 #include <falcon/error.h>
 #include <falcon/falconclass.h>
 #include <falcon/hyperclass.h>
 #include <falcon/dynunloader.h>
 #include <falcon/textwriter.h>
+#include <falcon/stdsteps.h>
+
 
 #include <falcon/errors/codeerror.h>
 #include <falcon/errors/genericerror.h>
@@ -243,7 +244,7 @@ Item* Module::resolve( Symbol* sym )
 
    // still no luck? -- try in the engine
    static Engine* engine = Engine::instance();
-   value = engine->getBuiltin( sym->name() );
+   value = const_cast<Item*>(engine->getBuiltin( sym->name() ));
 
    if( value != 0 )
    {
@@ -331,7 +332,7 @@ bool Module::addMantra(Mantra* f, bool bExport)
 }
 
 
-GlobalsMap::Data* Module::addGlobal( const String& name, const Item& value, bool bExport = true )
+GlobalsMap::Data* Module::addGlobal( const String& name, const Item& value, bool bExport )
 {
    Symbol* sym = Engine::getSymbol(name);
    GlobalsMap::Data* vd = m_globals.get( sym );
@@ -371,7 +372,7 @@ GlobalsMap::Data* Module::addGlobal( Symbol* sym, const Item& value, bool bExpor
 
 bool Module::addInitClass( Class* cls, bool bExport )
 {
-   bool ok = addMantra( cls, false );
+   bool ok = addMantra( cls, bExport );
    if( ok )
    {
       _p->m_initList.push_back(cls);
@@ -403,7 +404,7 @@ Class* Module::getInitClass( int32 val ) const
 }
 
 
-Variable* Module::addFunction( const String &name, ext_func_t f, bool bExport )
+Function* Module::addFunction( const String &name, ext_func_t f, bool bExport )
 {
    // check if the name is free.
    GlobalsMap::Data* vd = m_globals.get( name );
@@ -414,7 +415,13 @@ Variable* Module::addFunction( const String &name, ext_func_t f, bool bExport )
 
    // ok, the name is free; add it
    Function* extfunc = new ExtFunc( name, f, this );
-   return addMantra( extfunc, bExport );
+   if( addMantra( extfunc, bExport ) )
+   {
+      return extfunc;
+   }
+
+   delete extfunc;
+   return 0;
 }
 
 
@@ -473,7 +480,7 @@ bool Module::addImplicitImport( const String& name, int32 line )
    Symbol* sym = Engine::getSymbol(name);
    GlobalsMap::Data* data = m_globals.add( sym, Item(), false );
    data->m_bExtern = true;
-   _p->m_externals[sym] = std::make_pair(line, 0);
+   _p->m_externals.insert( std::make_pair(sym, std::make_pair(line, (ImportDef*)0)) );
    sym->decref();
    return true;
 }
@@ -488,7 +495,7 @@ bool Module::addImplicitImport( Symbol* sym, int32 line )
 
    GlobalsMap::Data* data = m_globals.add( sym, Item(), false );
    data->m_bExtern = true;
-   _p->m_externals[sym] = std::make_pair(line, 0);
+   _p->m_externals.insert( std::make_pair(sym, std::make_pair(line, (ImportDef*)0)) );
    return true;
 }
 
@@ -701,7 +708,7 @@ void Module::startup( VMContext* ctx )
             // notice that in case of hard errors, as undefined symbols, we threw here.
             HyperClass* cls = fcls->hyperConstruct();
             _p->m_mantras[cls->name()] = cls;
-            Item* icls = m_globals.get(cls->name());
+            Item* icls = m_globals.getValue(cls->name());
             fassert(icls!=0);
             icls->setUser(cls->handler(), cls);
          }
@@ -752,11 +759,22 @@ void Module::startup( VMContext* ctx )
 }
 
 
-bool Module::addLoad( const String& name, bool bIsUri, Error*& error, int32 line = 0 )
+bool Module::addLoad( const String& name, bool bIsUri, Error*& error, int32 line )
 {
    ImportDef* id = new ImportDef;
    id->setLoad( name, bIsUri );
    return addImport(id, error, line);
+}
+
+
+bool Module::exportAll() const
+{
+   return globals().isExportAll();
+}
+
+void Module::exportAll( bool e )
+{
+   globals().setExportAll(e);
 }
 
 

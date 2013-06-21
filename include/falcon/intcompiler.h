@@ -112,7 +112,6 @@ protected:
       virtual void onDirective(const String& name, const String& value);
       virtual void onGlobal( const String& name );
       virtual bool onGlobalAccessed( const String& name );
-      virtual void onRequirement( Requirement* rec );
       virtual bool onAttribute( const String&, TreeStep*, Mantra* );
       virtual void onInputOver();
    };

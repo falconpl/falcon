@@ -28,7 +28,6 @@
 
 #include <falcon/engine.h>
 #include <falcon/synclasses.h>
-#include <falcon/varmap.h>
 #include <falcon/synclasses_id.h>
 
 #include "psteps/exprvector_private.h"

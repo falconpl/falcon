@@ -48,24 +48,23 @@ public:
 
    virtual void onInputOver() {}
 
-   virtual Variable* onOpenFunc( Function* func ) {
-      static Variable var(Variable::e_nt_undefined, Variable::undef, 0, true);
+   virtual bool onOpenFunc( Function* func ) {
       FALCON_GC_HANDLE( func );
-      return &var;
+      return true;
    }
 
    virtual void onCloseFunc( Function* f) {
       if( f->name() == "") f->name("$anon");
    }
 
-   virtual Variable* onOpenClass( Class* cls, bool isObj ) {
-      static Variable var(Variable::e_nt_undefined, Variable::undef, 0, true);
+   virtual bool onOpenClass( Class* cls, bool isObj ) {
       FALCON_GC_HANDLE( cls );
 
       if( isObj ) {
          m_sp.addError( e_toplevel_obj, m_sp.currentSource(), m_sp.currentLine()-1, 0, 0 );
+         return false;
       }
-      return &var;
+      return true;
    }
 
    virtual void onOpenMethod( Class* cls, Function* func) {

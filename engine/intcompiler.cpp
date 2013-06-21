@@ -93,19 +93,21 @@ void IntCompiler::Context::onCloseClass( Class* cls, bool isObj )
    Mantra* current;
    FalconClass* fcls = static_cast<FalconClass*>(cls);
    current = fcls;
+   VMContext* vmctx = static_cast<IntCompiler*>(m_owner)->m_vmctx;
+
    if( fcls->missingParents() == 0 )
    {
       try
       {
-         if( ! fcls->construct() )
+         if( ! fcls->construct(vmctx) )
          {
             current = fcls->hyperConstruct();
          }
          static_cast<IntCompiler*>(m_owner)->m_currentMantra = current;
 
          // initialize the object now.
-         if ( isObj ) {
-            VMContext* vmctx = static_cast<IntCompiler*>(m_owner)->m_vmctx;
+         if ( isObj )
+         {
             vmctx->pushCode( &steps->m_fillInstance );
             vmctx->callItem( Item(current->handler(), current) );
          }
@@ -117,7 +119,6 @@ void IntCompiler::Context::onCloseClass( Class* cls, bool isObj )
          e->decref();
       }
    }
-
 }
 
 
@@ -152,8 +153,9 @@ void IntCompiler::Context::onLoad( const String& path, bool isFsPath )
    ModSpace* theSpace = m_owner->module()->modSpace();
 
    // do we have a module?
-   Error* err = m_owner->module()->addLoad( path, isFsPath );
-   if( err )
+   Error* err = 0;
+   bool status = m_owner->module()->addLoad( path, isFsPath, err, sp.currentLexer()->line() );
+   if( ! status )
    {
       sp.addError( err );
       return;
@@ -179,7 +181,8 @@ bool IntCompiler::Context::onImportFrom( ImportDef* def )
    VMContext* cctx = static_cast<IntCompiler*>(m_owner)->m_vmctx;
    Module* mod = m_owner->module();
    ModSpace* ms = cctx->process()->modSpace();
-   Error* err = mod->addImport( def );
+   Error* err = 0;
+   mod->addImport( def, err );
    if( err != 0 ) {
       sp.addError(err);
    }
@@ -201,25 +204,32 @@ void IntCompiler::Context::onExport(const String& symName )
 
    Module* mod = m_owner->module();
 
+   Symbol* sym = Engine::getSymbol(symName);
    // do we have a module?
-   Variable* sym = 0;
-   bool already;
-   sym = mod->addExport( symName, already );
+   bool status = mod->globals().exportGlobal( sym );
 
    // already exported?
-   if( already )
+   if( ! status )
    {
       sp.addError( e_export_already, m_owner->sp().currentSource(),
-           sym->declaredAt(), 0, 0 );
+           sp.currentLexer()->line(), 0, 0 );
+      sym->decref();
       return;
    }
 
-   Error* e = mod->modSpace()->exportSymbol( mod, symName, *sym );
-   if( e != 0 )
+   Item* newValue = mod->modSpace()->exportSymbol( sym, *mod->globals().getValue(sym) );
+
+   if( newValue == 0 )
    {
-      sp.addError( e );
-      e->decref();
+      sp.addError( e_export_already, sp.currentSource(),
+                   sp.currentLexer()->line(), 0, 0 );
    }
+   else {
+      // update the value with the exported one.
+      mod->globals().addExtern(sym, newValue);
+   }
+
+   sym->decref();
 }
 
 
@@ -255,17 +265,11 @@ bool IntCompiler::Context::onGlobalAccessed( const String& name )
    if( ! isLocal )
    {
       Module* mod = m_owner->module();
-      Module* declarer = 0;
-      Item* value = mod->modSpace()->findExportedOrGeneralValue(mod, name, declarer);
-      if( value != 0 ) {
-         mod->resolveExternValue(name, declarer, value);
-      }
-      else
+      Item* value = mod->resolve(name);
+
+      if (value == 0)
       {
          SourceParser& sp = m_owner->sp();
-         // consider it a global, and remove it.
-         mod->removeExtern( name );
-
          sp.addError(
                   new LinkError(
                            ErrorParam(e_undef_sym, __LINE__, SRC )
@@ -279,20 +283,6 @@ bool IntCompiler::Context::onGlobalAccessed( const String& name )
    return isLocal;
 }
 
-
-
-void IntCompiler::Context::onRequirement( Requirement* req )
-{
-   // the incremental compiler cannot store requirements.
-   delete req;
-
-   SourceParser& sp = m_owner->sp();
-   sp.addError(
-      new LinkError(
-            ErrorParam(e_undef_sym, sp.currentLine(), sp.currentSource() )
-            .extra(req->name())
-            .origin(ErrorParam::e_orig_compiler) ) );
-}
 
 void IntCompiler::Context::onInputOver()
 {

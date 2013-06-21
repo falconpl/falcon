@@ -17,7 +17,6 @@
 #include <falcon/modcompiler.h>
 #include <falcon/module.h>
 #include <falcon/falconclass.h>
-#include <falcon/requirement.h>
 #include <falcon/vmcontext.h>
 #include <falcon/synclasses_id.h>
 
@@ -88,6 +87,7 @@ void ModCompiler::Context::onInputOver()
       sp.addError(e_runaway_eof, sp.lastSource(), sp.lastLine(), 0, line, error );
    }
 
+   /*
    Module* mod = m_owner->m_module;
 
    class Rator: public Module::MantraEnumerator
@@ -114,21 +114,22 @@ void ModCompiler::Context::onInputOver()
    rator(mod);
 
    mod->enumerateMantras(rator);
+   */
 }
 
 
-Variable* ModCompiler::Context::onOpenFunc( Function* function )
+bool ModCompiler::Context::onOpenFunc( Function* function )
 {
    Module* mod = m_owner->m_module;
    if( function->name().size() == 0 ) {
       mod->addAnonMantra( function );
-      return 0;
+      return false;
    }
    else
    {
-      Variable* var = mod->addMantra( function, false );
+      bool ok = mod->addMantra( function, false );
 
-      if( var == 0  )
+      if( ! ok )
       {
          // save it somewhere anyhow
          mod->addAnonMantra( function );
@@ -140,7 +141,8 @@ Variable* ModCompiler::Context::onOpenFunc( Function* function )
             .origin(ErrorParam::e_orig_compiler)
             ));
       }
-      return var;
+
+      return ok;
    }
 }
 
@@ -168,16 +170,16 @@ void ModCompiler::Context::onCloseFunc( Function* )
 }
 
 
-Variable* ModCompiler::Context::onOpenClass( Class* cls, bool isObject )
+bool ModCompiler::Context::onOpenClass( Class* cls, bool isObject )
 {
    Module* mod = m_owner->m_module;
-   Variable* var;
+   bool status;
    cls->module(mod);
 
    if ( isObject )
    {
       // add a global as a placeholder for the object
-      var = mod->addInitClass(cls);
+      status = mod->addInitClass(cls);
    }
    else {
       if( cls->name().size() == 0 ) {
@@ -186,11 +188,11 @@ Variable* ModCompiler::Context::onOpenClass( Class* cls, bool isObject )
          return 0;
       }
       else {
-         var = mod->addMantra( cls, false );
+         status = mod->addMantra( cls, false );
       }
    }
 
-   if( var == 0 )
+   if( ! status )
    {
       // save it anyhow
       mod->addAnonMantra( cls );
@@ -202,7 +204,7 @@ Variable* ModCompiler::Context::onOpenClass( Class* cls, bool isObject )
          ));
    }
 
-   return var;
+   return status;
 }
 
 bool ModCompiler::Context::onAttribute(const String& name, TreeStep* generator, Mantra* target )
@@ -261,7 +263,8 @@ void ModCompiler::Context::onLoad( const String& path, bool isFsPath )
 {
    SourceParser& sp = m_owner->m_sp;
 
-   Error* err = m_owner->m_module->addLoad( path, isFsPath );
+   Error* err = 0;
+   m_owner->m_module->addLoad( path, isFsPath, err );
    if( err )
    {
       sp.addError( err );
@@ -271,7 +274,8 @@ void ModCompiler::Context::onLoad( const String& path, bool isFsPath )
 
 bool ModCompiler::Context::onImportFrom( ImportDef* def )
 {
-   Error* err = m_owner->m_module->addImport( def );
+   Error* err = 0;
+   m_owner->m_module->addImport( def, err );
    if( err ) {
       SourceParser& sp = m_owner->m_sp;
       sp.addError( err );
@@ -301,9 +305,9 @@ void ModCompiler::Context::onExport(const String& symName)
       sp.addError( e_export_private, sp.currentSource(), sp.currentLine()-1, 0, 0, symName );
    }
    else {
-      bool adef;
-      Variable* sym = mod.addExport( symName, adef );
-      if( sym == 0 )
+      bool adef = false;
+
+      if( ! mod.globals().exportGlobal(symName, adef) )
       {
          sp.addError( e_undef_sym, sp.currentSource(), sp.currentLine()-1, 0, 0, symName );
       }
@@ -352,8 +356,7 @@ bool ModCompiler::Context::onGlobalAccessed( const String& name )
    GlobalsMap::Data* var = m_owner->m_module->globals().get( name );
    if( var == 0 )
    {
-      var = m_owner->m_module->addImplicitImport( name, m_owner->m_sp.currentLine() );
-      return false;
+      return m_owner->m_module->addImplicitImport( name, m_owner->m_sp.currentLine() );
    }
 
    return true;
@@ -365,17 +368,16 @@ Item* ModCompiler::Context::getVariableValue( const String& name )
    return m_owner->m_module->globals().getValue( name );
 }
 
-void ModCompiler::Context::onRequirement( Requirement* rec )
-{
-   m_owner->m_module->addRequirement( rec );
-}
-
 
 void ModCompiler::Context::onIString(const String& string )
 {
    m_owner->m_module->addIString( string );
 }
 
+Item* ModCompiler::Context::getValue( Symbol* sym )
+{
+   return m_owner->m_module->globals().getValue( sym );
+}
 //=================================================================
 //
 //

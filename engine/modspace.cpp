@@ -315,9 +315,9 @@ bool ModSpace::exportFromModule( Module* mod, Error*& link_errors )
       }
 
    private:
-      Error*& m_link_errors;
-      Module* m_module;
       ModSpace* m_owner;
+      Module* m_module;
+      Error*& m_link_errors;
    }
    rator(this, mod, link_errors );
 
@@ -366,8 +366,8 @@ void ModSpace::gcMark( uint32 mark )
       Private::ExportSymMap::iterator esi_end = _p->m_symMap.end();
 
       while( esi != esi_end ) {
-         Item* item = esi->second;
-         item->gcMark(mark);
+         Item& item = esi->second;
+         item.gcMark(mark);
          ++esi;
       }
 
@@ -388,7 +388,7 @@ Item* ModSpace::findExportedValue( Symbol* sym )
    
    if ( iter != _p->m_symMap.end() )
    {
-      Item* value = iter->second;
+      Item* value = &iter->second;
       return value;
    }
    
@@ -594,12 +594,7 @@ void ModSpace::PStepLoader::apply_( const PStep* self, VMContext* ctx )
       TRACE( "ModSpace::PStepLoader::apply_ step 1 (resolve imports/startup) on module %s", mod->name().c_ize() );
       seqId = (seqId&0xf) | 0x20;
 
-      // Now that deps are resolved, do imports.
-      ms->importInModule( mod, error );
-      if( error != 0 ) {
-         throw error;
-      }
-      ms->importInNS( mod );
+      //TODO: Check imports
 
       // inform the module about the good news.
       mod->onLinkComplete();
@@ -609,7 +604,7 @@ void ModSpace::PStepLoader::apply_( const PStep* self, VMContext* ctx )
 
       // went deep?
       // -- actually we may just return, and it would be probably faster.
-      if ( &ctx->currentCode() != current ) {
+      if ( &ctx->currentCode() != &current ) {
          return;
       }
    }
@@ -730,6 +725,7 @@ void ModSpace::PStepResolver::apply_( const PStep* self, VMContext* ctx )
                {
                   const String& symname = idef->sourceSymbol(i);
                   Item* orig = other->globals().getValue(symname);
+
                   if( orig == 0 ) {
                      Error* em = new LinkError( ErrorParam(e_undef_sym, __LINE__, SRC )
                         .origin( ErrorParam::e_orig_linker )
@@ -741,7 +737,7 @@ void ModSpace::PStepResolver::apply_( const PStep* self, VMContext* ctx )
                   }
 
                   String finalName = idef->targetSymbol(i);
-                  mod->resolve(finalName, other, orig);
+                  mod->globals().addExtern( finalName, orig );
                }
             }
 

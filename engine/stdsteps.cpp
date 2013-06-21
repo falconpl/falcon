@@ -364,7 +364,7 @@ void StdSteps::PStepFillInstance::apply_( const PStep*, VMContext* ctx )
          if( owner )
          {
             String instName = cls->name().subString(1);
-            Item* gval = owner->getGlobalValue(instName);
+            Item* gval = owner->globals().getValue(instName);
             if( gval != 0 )
             {
                // Success!

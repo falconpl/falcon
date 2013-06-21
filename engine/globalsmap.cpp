@@ -23,6 +23,7 @@
 #include <falcon/datareader.h>
 #include <falcon/datawriter.h>
 #include <falcon/itemarray.h>
+#include <falcon/symbol.h>
 
 #include <map>
 #include <vector>
@@ -164,6 +165,15 @@ GlobalsMap::Data* GlobalsMap::addExtern( Symbol* sym, Item* value )
 }
 
 
+GlobalsMap::Data* GlobalsMap::addExtern( const String& symName, Item* value )
+{
+   Symbol* sym = Engine::getSymbol(symName);
+   Data* dt = addExtern( sym, value );
+   sym->decref();
+   return dt;
+}
+
+
 bool GlobalsMap::remove( const String& name )
 {
    Symbol* sym = Engine::getSymbol(name);
@@ -172,6 +182,30 @@ bool GlobalsMap::remove( const String& name )
    return result;
 }
 
+GlobalsMap::Data* GlobalsMap::exportGlobal( const String& name, bool &bAlready )
+{
+   Symbol* sym = Engine::getSymbol(name);
+   Data* result = exportGlobal(sym, bAlready );
+   sym->decref();
+   return result;
+}
+
+GlobalsMap::Data* GlobalsMap::exportGlobal( Symbol* sym, bool &bAlready )
+{
+   Private::VariableMap::iterator pos = _p->m_variables.find( sym );
+   if( pos == _p->m_variables.end() ) {
+      return 0;
+   }
+
+   Data* vd = pos->second;
+   pos = _p->m_exports.find( sym );
+   bAlready = pos != _p->m_exports.end();
+   if( ! bAlready )
+   {
+      _p->m_exports.insert(std::make_pair(sym, vd));
+   }
+   return vd;
+}
 
 bool GlobalsMap::remove( Symbol* sym )
 {
@@ -182,6 +216,7 @@ bool GlobalsMap::remove( Symbol* sym )
 
    Data* vd = pos->second;
    _p->m_variables.erase(pos);
+   _p->m_exports.erase(sym); // remove in case it's also there.
    delete vd;
    sym->decref();
 
@@ -296,10 +331,10 @@ void GlobalsMap::store( DataWriter* dw ) const
 
    while( iter != end )
    {
-      Data* vd = *iter;
+      Data* vd = iter->second;
       dw->write( iter->first->name() );
-      bool isExported = isExported( iter->first );
-      dw->write( isExported );
+      bool exp = isExported( iter->first );
+      dw->write( exp );
       dw->write( vd->m_bExtern );
 
       ++iter;
@@ -358,7 +393,7 @@ void GlobalsMap::unflatten( VMContext*, ItemArray& subItems, uint32 start, uint3
    uint32 c = start;
    while( start < subItems.length() && iter != end )
    {
-      Data* vd = *iter;
+      Data* vd = iter->second;
       vd->m_storage = subItems[c];
       vd->m_data = &vd->m_storage;
       // eventually, the resolution of external values will change

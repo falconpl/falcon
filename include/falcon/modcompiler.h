@@ -91,10 +91,10 @@ protected:
 
       virtual void onInputOver();
 
-      virtual Variable* onOpenFunc( Function* function );
+      virtual bool onOpenFunc( Function* function );
       virtual void onOpenMethod( Class* cls, Function* function );
       virtual void onCloseFunc( Function* function );
-      virtual Variable* onOpenClass( Class* cls, bool bIsObj );
+      virtual bool onOpenClass( Class* cls, bool bIsObj );
       virtual void onCloseClass( Class* cls, bool bIsObj );
       virtual bool onAttribute(const String& name, TreeStep* generator, Mantra* target );
 
@@ -107,8 +107,10 @@ protected:
       virtual void onGlobalDefined( const String& name, bool& bUnique );
       virtual bool onGlobalAccessed( const String& name );
       virtual Item* getVariableValue( const String& name );
-      virtual void onRequirement( Requirement* rec );
       virtual void onIString(const String& string );
+
+      virtual Item* getValue( Symbol* name );
+
 
    protected:
       ModCompiler* m_owner;

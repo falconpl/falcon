@@ -96,7 +96,6 @@ static void make_class( Parser& p, int tCount,
    FalconClass* cls = ctx->currentClass();
    fassert( cls != 0 );
 
-   Variable* symclass = 0;
    TokenInstance* ti = 0;
    
    bool isObject = false;
@@ -108,8 +107,8 @@ static void make_class( Parser& p, int tCount,
       isObject = cls->name().getCharAt(0) == '%';
 
       // register as a global class...
-      symclass = ctx->onOpenClass( cls, isObject );
-      if( symclass == 0 )
+      bool ok = ctx->onOpenClass( cls, isObject );
+      if( ! ok )
       {
           p.addError( e_already_def,  p.currentSource(), cls->sr().line(), cls->sr().chr() );
            // however, go on with class creation

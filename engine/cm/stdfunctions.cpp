@@ -49,7 +49,7 @@ namespace Ext {
    The parameter may be a floating point number if a pause shorter than a second is
    required.
 
-   @note As this call is performed, any critical section is abandoned, and aquired
+   @note As this call is performed, any critical section is abandoned, and acquired
    shared resources are signaled.
 */
 

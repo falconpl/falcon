@@ -224,7 +224,7 @@ public:
       This means that after calling this method, the given name is also known as
       a global, possibly exported variable.
     */
-   Variable* addFunction( const String& name, ext_func_t f, bool bExport = true );
+   Function* addFunction( const String& name, ext_func_t f, bool bExport = true );
 
 
    /** Finds a function.
@@ -489,27 +489,15 @@ public:
    void addImportRequest( Requirement* req, 
                const String& sourceMod="", bool bModIsPath=false );
 
-   
-   /** Perform completion checks on source classes.
-    \param fcls The class that have just been completed.
-    
-    This method is called when all the inheritances of a FalconClass are
-    (successfully) resolved. In case it's necessary to create a HyperClass
-    out of this FalconClass, the class ID and eventually the global symbol
-    bound to this class are updated.
-    */
-   void completeClass( FalconClass* fcls );
-   
-   
    /** Reads the exportAll flag.
     \return True if this module wants to export all the non-private symbols.
     */
-   bool exportAll() const { return m_bExportAll; }
+   bool exportAll() const;
    
    /** Sets the exportAll flag.
     \param e set to true if this module wants to export all the non-private symbols.
     */   
-   void exportAll( bool e ) { m_bExportAll = e; }
+   void exportAll( bool e );
    
    /** Returns the module group associated with this module.    
     \return The module group in which this module is stored, or 0 if this

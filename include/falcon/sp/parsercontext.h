@@ -88,7 +88,7 @@ public:
     with a entity having an empty name. The subclass is responsible to find
     an adequate name for the entity and set it, if necessary.
     */
-   virtual Variable* onOpenFunc( Function* function ) = 0;
+   virtual bool onOpenFunc( Function* function ) = 0;
 
    virtual void onOpenMethod( Class* cls, Function* function ) = 0;
 
@@ -110,7 +110,7 @@ public:
     with a entity having an empty name. The subclass is responsible to find
     an adequate name for the entity and set it, if necessary.
     */
-   virtual Variable* onOpenClass( Class* cls, bool bIsObj ) = 0;
+   virtual bool onOpenClass( Class* cls, bool bIsObj ) = 0;
 
    virtual void onCloseClass( Class* cls, bool bIsObj ) = 0;
 

@@ -1957,7 +1957,7 @@ Item* VMContext::resolveGlobal( const String& name, bool forAssign )
       // if the module space is the same as the vm modspace,
       // mod->findGlobal has already searched for it
       Item* item = mod != 0 ?
-         process()->modSpace()->findExportedOrGeneralValue( mod, name )
+         mod->resolve( name )
          :  process()->modSpace()->findExportedValue( name ) ;
       if( item != 0 ) {
          return item;
@@ -2024,7 +2024,6 @@ void VMContext::onTerminated()
       refs = refs->m_next;
    }
    m_mtxWeakRef.unlock();
-
 
    // get the events now
    int value;

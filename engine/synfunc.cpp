@@ -124,7 +124,7 @@ void SynFunc::invoke( VMContext* ctx, int32 nparams )
 
    while( i < filledParams )
    {
-      paramSym = this->parameters().getParamSymbol(i);
+      paramSym = this->parameters().getById(i);
       fassert( paramSym != 0 );
       ctx->defineSymbol( paramSym, base );
       ++i;
@@ -133,7 +133,7 @@ void SynFunc::invoke( VMContext* ctx, int32 nparams )
 
    while( i < paramCount )
    {
-      paramSym = this->parameters().getParamSymbol(i);
+      paramSym = this->parameters().getById(i);
       ctx->defineSymbol( paramSym );
       ++i;
    }

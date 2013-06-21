@@ -19,7 +19,6 @@
 #include <falcon/psteps/exprvalue.h>
 #include <falcon/psteps/exprsym.h>
 #include <falcon/engine.h>
-#include <falcon/varmap.h>
 #include <falcon/stdhandlers.h>
 
 #include <falcon/statement.h>
