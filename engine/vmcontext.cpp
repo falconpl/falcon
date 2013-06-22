@@ -1758,7 +1758,7 @@ void VMContext::defineSymbol(Symbol* sym)
 }
 
 
-Item* VMContext::resolveSymbol( const Symbol* dyns, bool forAssign )
+Item* VMContext::resolveSymbol( Symbol* dyns, bool forAssign )
 {
    TRACE1( "VMContext::resolveSymbol -- resolving symbol \"%s\"%s",
             dyns->name().c_ize(),
@@ -1828,7 +1828,7 @@ Item* VMContext::resolveSymbol( const Symbol* dyns, bool forAssign )
       if( currentFrame().m_function->isMain() )
       {
          TRACE2( "VMContext::resolveSymbol -- \"%s\" went down to global context, searching global.", dyns->name().c_ize() );
-         newSlot->m_value = resolveGlobal(dyns->name(), true);
+         newSlot->m_value = resolveGlobal(dyns, true);
          if( newSlot->m_value == 0 )
          {
             TRACE2( "VMContext::resolveSymbol -- \"%s\" NOT found global.", dyns->name().c_ize() );
@@ -1868,7 +1868,7 @@ Item* VMContext::resolveSymbol( const Symbol* dyns, bool forAssign )
    }
 
    // not a local symbol. Try to see if it's global.
-   Item* var = resolveGlobal( dyns->name(), forAssign );
+   Item* var = resolveGlobal( dyns, forAssign );
 
    // global arena failed as well. We're doomed
    if( var == 0 )
@@ -1905,9 +1905,9 @@ Item* VMContext::resolveSymbol( const Symbol* dyns, bool forAssign )
 }
 
 
-Item* VMContext::resolveGlobal( const String& name, bool forAssign )
+Item* VMContext::resolveGlobal( Symbol* sym, bool forAssign )
 {
-   TRACE1( "VMContext::resolveGlobal -- resolving %s%s", name.c_ize(), (forAssign? " (for assign)": "" ) )
+   TRACE1( "VMContext::resolveGlobal -- resolving %s%s", sym->name().c_ize(), (forAssign? " (for assign)": "" ) )
 
    // Get the topmost function having a module.
    CallFrame& cf = currentFrame();
@@ -1926,13 +1926,9 @@ Item* VMContext::resolveGlobal( const String& name, bool forAssign )
    if( mod != 0 )
    {
       // findGlobal will find also externally resolved variables.
-      Item* global = mod->globals().getValue( name );
-      if( global != 0 ) {
-         return global;
-      }
-      else if( forAssign ) {
-         GlobalsMap::Data* data = mod->addGlobal( name, Item(), false );
-         global = data->m_data;
+      Item* global = mod->resolve( sym );
+      if( global != 0 )
+      {
          return global;
       }
    }
@@ -1944,7 +1940,7 @@ Item* VMContext::resolveGlobal( const String& name, bool forAssign )
       Function* caller = callerFrame(1).m_function;
       if ( caller->module() != 0 )
       {
-         Item* global = caller->module()->globals().getValue( name );
+         Item* global = caller->module()->resolve( sym );
          if( global != 0 ) {
             return global;
          }
@@ -1957,8 +1953,8 @@ Item* VMContext::resolveGlobal( const String& name, bool forAssign )
       // if the module space is the same as the vm modspace,
       // mod->findGlobal has already searched for it
       Item* item = mod != 0 ?
-         mod->resolve( name )
-         :  process()->modSpace()->findExportedValue( name ) ;
+         mod->resolve( sym )
+         :  process()->modSpace()->findExportedValue( sym ) ;
       if( item != 0 ) {
          return item;
       }

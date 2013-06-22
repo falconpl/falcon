@@ -594,7 +594,11 @@ void ModSpace::PStepLoader::apply_( const PStep* self, VMContext* ctx )
       TRACE( "ModSpace::PStepLoader::apply_ step 1 (resolve imports/startup) on module %s", mod->name().c_ize() );
       seqId = (seqId&0xf) | 0x20;
 
-      //TODO: Check imports
+      Error* error = 0;
+      if( ! mod->resolveImports( error ) )
+      {
+         throw error;
+      }
 
       // inform the module about the good news.
       mod->onLinkComplete();

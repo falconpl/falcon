@@ -624,6 +624,20 @@ public:
     */
    virtual Item* resolveLocally( Symbol* sym );
 
+   /** Performs resolution of non-locally defined global symbols.
+    * \param The symbol to be resolved.
+    * \return A value associated with this symbol, or 0 if the symbol is not locally known.
+    *
+    * This method returns a the value associated with a symbol as ignoring local definitions
+    * of the given symbol. This performs a search in the imported modules and exports in
+    * the module space, plus a search in the engine.
+    *
+    * This method comes useful when the imported symbol is already defined in the module,
+    * (i.e. as implicit import) and the actual value is to be found in one of the related
+    * modules.
+    */
+   Item* resolveGlobally( Symbol* sym );
+
    /** Resolves a symbol in this module.
     * \param name the name of the symbol to be resolved.
     * \return  0 if the symbol is not found in the engine, otherwise a valid
@@ -634,6 +648,12 @@ public:
     *  readily available.
     */
    Item* resolve( const String& symName );
+
+   /** Resolve all the imported values.
+    * \param error On failure, will hold a LinkError with relevant information.
+    * \return true on success, false on failure.
+    */
+   bool resolveImports( Error*& error );
 
    /** Returns the attributes for this entity. */
    const AttributeMap& attributes() const { return m_attributes; }

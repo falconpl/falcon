@@ -353,12 +353,17 @@ void ModCompiler::Context::onGlobalDefined( const String& name, bool& bAlreadyDe
 
 bool ModCompiler::Context::onGlobalAccessed( const String& name )
 {
-   GlobalsMap::Data* var = m_owner->m_module->globals().get( name );
+   Symbol* sym = Engine::getSymbol(name);
+   Item* var = m_owner->m_module->resolveLocally( sym );
+
    if( var == 0 )
    {
-      return m_owner->m_module->addImplicitImport( name, m_owner->m_sp.currentLine() );
+      m_owner->m_module->addImplicitImport( sym, m_owner->m_sp.currentLine() );
+      sym->decref();
+      return false;
    }
 
+   sym->decref();
    return true;
 }
 

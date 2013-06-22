@@ -190,6 +190,35 @@ Item* Module::resolve( const String& symName )
    return 0;
 }
 
+bool Module::resolveImports( Error*& error )
+{
+   Private::Externals::iterator iter = _p->m_externals.begin();
+   Private::Externals::iterator end = _p->m_externals.end();
+
+   error = 0;
+   while( iter != end )
+   {
+      Symbol* sym = iter->first;
+      Item* value = resolveGlobally( sym );
+      if( value == 0 )
+      {
+         if( error == 0 )
+         {
+            error = FALCON_SIGN_ERROR(LinkError, e_link_error);
+         }
+         error->appendSubError(
+                  FALCON_SIGN_XERROR(LinkError, e_undef_sym,
+                           .extra( sym->name() ).line( iter->second.first ).module(uri())
+                         ) );
+      }
+      else {
+         m_globals.addExtern(sym, value);
+      }
+      ++iter;
+   }
+
+   return error == 0;
+}
 
 Item* Module::resolve( Symbol* sym )
 {
@@ -201,9 +230,16 @@ Item* Module::resolve( Symbol* sym )
    }
 
    // no? -- try to resolve in the namespace translation map.
+   return resolveGlobally( sym );
+}
+
+Item* Module::resolveGlobally( Symbol* sym )
+{
+   Item* value = 0;
+
    length_t nspos = sym->name().rfind(".");
    String ns;
-   if( nspos > 0 )
+   if( nspos != String::npos )
    {
       ns = sym->name().subString(0,nspos);
    }
@@ -234,7 +270,7 @@ Item* Module::resolve( Symbol* sym )
    // no? -- try in the module space.
    if( m_modSpace != 0 )
    {
-      value = m_modSpace->findExportedValue( sym->name() );
+      value = m_modSpace->findExportedValue( sym );
       if( value != 0 )
       {
          m_globals.addExtern( sym, value );

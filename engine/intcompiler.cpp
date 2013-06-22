@@ -265,7 +265,9 @@ bool IntCompiler::Context::onGlobalAccessed( const String& name )
    if( ! isLocal )
    {
       Module* mod = m_owner->module();
-      Item* value = mod->resolve(name);
+      Symbol* sym = Engine::getSymbol(name);
+      Item* value = mod->resolveGlobally(sym);
+      sym->decref();
 
       if (value == 0)
       {

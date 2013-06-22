@@ -150,6 +150,7 @@ GlobalsMap::Data* GlobalsMap::addExtern( Symbol* sym, Item* value )
    Private::VariableMap::iterator pos = _p->m_variables.find( sym );
    if( pos != _p->m_variables.end() ) {
       varData = pos->second;
+      varData->m_data = value;
    }
    else {
       varData = new Data(value);
@@ -389,7 +390,7 @@ void GlobalsMap::unflatten( VMContext*, ItemArray& subItems, uint32 start, uint3
    Private::VariableMap::iterator iter = _p->m_variables.begin();
    Private::VariableMap::iterator end = _p->m_variables.end();
 
-   fassert( subItems.length() == _p->m_variables.size());
+   fassert( subItems.length()-start >= _p->m_variables.size());
    uint32 c = start;
    while( start < subItems.length() && iter != end )
    {
