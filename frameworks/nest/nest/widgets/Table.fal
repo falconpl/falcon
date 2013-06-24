@@ -222,16 +222,16 @@ class TableBody( id ) from widget.Widget( id + ".tb" )
             if col==self.parent.orderColumn
                css='ordered'
                flag = -col
-               tooltip = t_('invert order')
+               tooltip = 'invert order'
                img = self.parent.asc_ord_tag
             elif col==-self.parent.orderColumn
                css='ordered'
                flag = 0
-               tooltip = t_('remove order')
+               tooltip = 'remove order'
                img = self.parent.desc_ord_tag
             else
                flag = col
-               tooltip = t_('order by')+" "+title
+               tooltip = 'order by'+" "+title
                img = self.parent.no_ord_tag
             end
             strord = @ "<a class='$css' href=\"javascript:" + self.parent.getJSSelf() + 
