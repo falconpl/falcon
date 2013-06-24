@@ -233,6 +233,16 @@ Item* Module::resolve( Symbol* sym )
    return resolveGlobally( sym );
 }
 
+
+Item* Module::resolveGlobally( const String& name )
+{
+   Symbol* sym = Engine::getSymbol(name);
+   Item* value = resolveGlobally(sym);
+   sym->decref();
+   return value;
+}
+
+
 Item* Module::resolveGlobally( Symbol* sym )
 {
    Item* value = 0;
@@ -252,9 +262,11 @@ Item* Module::resolveGlobally( Symbol* sym )
    while( nsti != _p->m_nsTransMap.end() && nsti->first == ns )
    {
       Module* provider = nsti->second->modReq()->module();
+      String origName = sym->name().subString(nspos+1);
       if( provider != 0 )
       {
-         Item* value = provider->resolveLocally( sym );
+
+         Item* value = provider->resolveLocally( origName );
          if( value != 0 )
          {
             m_globals.addExtern( sym, value );
@@ -291,6 +303,14 @@ Item* Module::resolveGlobally( Symbol* sym )
    return 0;
 }
 
+
+Item* Module::resolveLocally(const String& name)
+{
+   Symbol* sym = Engine::getSymbol(name);
+   Item* value = m_globals.getValue( sym );
+   sym->decref();
+   return value;
+}
 
 Item* Module::resolveLocally(Symbol* sym)
 {
@@ -568,7 +588,6 @@ bool Module::addImport( ImportDef* def, Error*& error, int32 line )
          else {
             // link request and import definition
             req->addImportDef(def);
-            def->modReq(req);
          }
       }
       else
@@ -578,8 +597,13 @@ bool Module::addImport( ImportDef* def, Error*& error, int32 line )
 
          // link the definition in it
          req->addImportDef(def);
+
       }
+
+      // assign the correct import request.
+      def->modReq(req);
    }
+
 
    // then, check if there is a clash with already defined symbols.
    int symcount = def->symbolCount();
@@ -633,7 +657,7 @@ bool Module::addImport( ImportDef* def, Error*& error, int32 line )
    _p->m_importDefs.push_back( def );
 
    // prepare the namespace resolution map for this definition.
-   if( def->isGeneric() )
+   if( ! def->isNameSpace() )
    {
       // gives symbols in the generic namespace.
       _p->m_nsTransMap.insert( std::make_pair( "", def) );
@@ -642,6 +666,14 @@ bool Module::addImport( ImportDef* def, Error*& error, int32 line )
    {
       // Check all the namespaces provided by this request
       int symcount = def->symbolCount();
+
+      // will be performed if this module is generic.
+      if( symcount == 0 )
+      {
+         _p->m_nsTransMap.insert( std::make_pair( def->target(), def) );
+      }
+
+      // will be skipped if this module is generic.
       for( int i = 0; i < symcount; ++ i )
       {
          String name;
@@ -666,6 +698,12 @@ bool Module::addImport( ImportDef* def, Error*& error, int32 line )
                }
 
                _p->m_nsTransMap.insert( std::make_pair( name, def) );
+
+               if( def->isNameSpace() )
+               {
+                  String targetNs = def->target();
+                  _p->m_nsTransMap.insert( std::make_pair( targetNs, def) );
+               }
             }
          }
 

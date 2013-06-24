@@ -37,7 +37,7 @@
 
 // See the contents of this header file for a deeper overall
 // explanation of the MODSTR system.
-#include <falcon/message_defs.h>
+
 
 // The first parameter is an unique identifier in your project that
 // will be bound to the correct entry in the module string table.
@@ -50,13 +50,13 @@
 #define FAL_STR_bufext_inv_write "Tried to write beyond valid buffer space"
 #define FAL_STR_bufext_buf_full "Buffer is full; can't write more data"
 
-FAL_MODSTR( bufext_inv_endian,            "Invalid endian ID" );
-FAL_MODSTR( bufext_bytebuf_fixed_endian,  "This ByteBuf has a fixed endian, can not be changed" );
-FAL_MODSTR( bufext_not_buf,               "Unsupported buffer type or not a buffer" );
-FAL_MODSTR( bufext_inv_charsize,          "Invalid char size, must be 1, 2, or 4" );
-FAL_MODSTR( bufext_bitbuf_nofloat,        "BitBuf does not support reading/writing floating-point" );
-FAL_MODSTR( bufext_inv_read,              FAL_STR_bufext_inv_read);
-FAL_MODSTR( bufext_inv_write,             FAL_STR_bufext_inv_write );
-FAL_MODSTR( bufext_buf_full,              FAL_STR_bufext_buf_full );
+#define bufext_inv_endian            "Invalid endian ID"
+#define bufext_bytebuf_fixed_endian  "This ByteBuf has a fixed endian, can not be changed"
+#define bufext_not_buf               "Unsupported buffer type or not a buffer"
+#define bufext_inv_charsize          "Invalid char size, must be 1, 2, or 4"
+#define bufext_bitbuf_nofloat        "BitBuf does not support reading/writing floating-point"
+#define bufext_inv_read              FAL_STR_bufext_inv_read
+#define bufext_inv_write             FAL_STR_bufext_inv_write
+#define bufext_buf_full              FAL_STR_bufext_buf_full
 
 /* end of bufext_st.h */

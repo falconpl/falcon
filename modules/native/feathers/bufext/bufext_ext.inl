@@ -1,13 +1,12 @@
 #include <falcon/error.h>
-#include <falcon/falcondata.h>
+
 #include <falcon/vm.h>
 #include <falcon/stream.h>
-#include <falcon/membuf.h>
 #include <falcon/types.h>
 
 namespace Falcon { namespace Ext {
 
-
+/*
 // untested
 template <typename BUFTYPE> bool BufCarrier<BUFTYPE>::serialize( Stream *stream, bool bLive ) const
 {
@@ -27,77 +26,36 @@ template <typename BUFTYPE> bool BufCarrier<BUFTYPE>::deserialize( Stream *strea
     uint32 result = (uint32)stream->read((void*)buf.getBuf(), serBytes);
     return result == buf.size();
 }
-
-template <typename BUFTYPE, typename SRCTYPE> BufCarrier<BUFTYPE> *BufInitHelper(const Item *itm, const Item *p1)
-{
-    BufCarrier<SRCTYPE> *src = (BufCarrier<SRCTYPE>*)(itm->asObject()->getUserData());
-    SRCTYPE& srcbuf = src->GetBuf();
-    BufCarrier<BUFTYPE> *newbuf;
-    if(p1)
-    {
-        if(p1->isBoolean() && p1->isTrue()) // adopt
-        {
-            newbuf = new BufCarrier<BUFTYPE>((uint8*)srcbuf.getBuf(), srcbuf.size(), srcbuf.capacity(), false, 0);
-            Garbageable *dep = src->dependant() ? src->dependant() : itm->asObject();
-            newbuf->dependant(dep);
-        }
-        else // copy with extra bytes
-        {
-            uint32 extra = (uint32)p1->forceInteger();
-            newbuf = new BufCarrier<BUFTYPE>((uint8*)srcbuf.getBuf(), srcbuf.size(), srcbuf.capacity(), true, extra);
-        }
-    }
-    else // copy
-        newbuf = new BufCarrier<BUFTYPE>((uint8*)srcbuf.getBuf(), srcbuf.size(), srcbuf.capacity(), true, 0);
-
-    return newbuf;
-}
+*/
 
 // params: none, int, object [int]
 // for docs see bufext.cpp
-template <typename BUFTYPE> FALCON_FUNC Buf_init( ::Falcon::VMachine *vm )
+template <typename BUFTYPE> FALCON_FUNC Buf_init( ::Falcon::VMContext *ctx, int32 pCount)
 {
-    CoreObject *vmobj = vm->self().asObject();
-    if(!vm->paramCount())
+    BUFTYPE *buffer = static_cast<BUFTYPE *>(ctx->self().asInst());
+    if(!pCount)
     {
-        // no params, use default config
-        vmobj->setUserData(new BufCarrier<BUFTYPE>());
+        // no params, use default config        
         return;
     }
+    
     const Item *p0 = vm->param(0);
     const Item *p1 = vm->param(1);
     Item vmRet;
 
-    if(p0->isScalar()) // int or numeric
+    if(p0->isOrdinal()) // int or numeric
     {
         uint32 ressize = (uint32)p0->forceInteger();
-        vmobj->setUserData(new BufCarrier<BUFTYPE>(ressize));
+        buffer->alloc(ressize);
         return;
     }
 
-    bool adopt = p1 && p1->isBoolean() && p1->isTrue();
-
-    if(p0->isMemBuf())
+    if(p0->isString())
     {
-/* goto */ is_membuf: // --- the only jump label in this module!
-        MemBuf *mb = p0->asMemBuf();
-
-        BufCarrier<BUFTYPE> *carrier;
-        if(adopt)
-        {
-            uint8 *ptr = mb->data();
-            uint32 usedsize = mb->limit();
-            uint32 totalsize = mb->size();
-            carrier = new BufCarrier<BUFTYPE>(ptr, usedsize,totalsize, false, 0); // don't copy
-            Garbageable *dep = mb->dependant() ? (Garbageable*)mb->dependant() : (Garbageable*)mb;
-            carrier->dependant(dep); // if mb is already dependant, use that, otherwise, the membuf itself
-        }
-        else
-        {
-            uint32 extra = p1 ? (uint32)p1->forceInteger() : 0;
-            carrier = new BufCarrier<BUFTYPE>(mb, extra);
-        }
-        vmobj->setUserData(carrier);
+        String *mb = p0->asString();
+        
+        uint8 *ptr = static_cast<uint8 *>(mb->getRawStorage());
+        data->append(ptr);
         return;
     }
 
@@ -121,30 +79,11 @@ template <typename BUFTYPE> FALCON_FUNC Buf_init( ::Falcon::VMachine *vm )
             else // its really a ByteBuf object and nothing more
                 carrier = BufInitHelper<BUFTYPE, ByteBuf>(p0, p1);
         }
-        else
-        {
-            Item method;
-            if(p0->asObject()->getMethod("toMemBuf", method) && method.isCallable())
-            {
-                vm->callItemAtomic(method, 0);
-                vmRet = vm->regA();
-                if(vmRet.isMemBuf())
-                {
-                    p0 = &vmRet;
-                    goto is_membuf;
-                }
-            }
-        }
-
-        if(carrier)
-        {
-            vmobj->setUserData(carrier);
-            return;
-        }
+        return;
     }
 
     throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
-        .origin( e_orig_mod ).extra( "none or I or X [, I [, B]]" ) );
+        .origin( ErrorParam::e_orig_mod ).extra( "none or I or X [, I [, B]]" ) );
 }
 
 /*#
@@ -156,18 +95,18 @@ template <typename BUFTYPE> FALCON_FUNC Buf_init( ::Falcon::VMachine *vm )
 
 @note This function works differently for a BitBuf, where the index addresses one bit, and the return type is boolean!
 */
-template <typename BUFTYPE> FALCON_FUNC Buf_getIndex( ::Falcon::VMachine *vm )
+template <typename BUFTYPE> FALCON_FUNC Buf_getIndex( ::Falcon::VMContext *ctx, int32 )
 {
-    uint32 index = (uint32)vm->param(0)->forceIntegerEx();
-    BUFTYPE& buf = vmGetBuf<BUFTYPE>(vm);
-    vm->retval( (int64)(buf[index]) );
+    uint32 index = (uint32)ctx->param(0)->forceIntegerEx();
+    BUFTYPE& buf = vmGetBuf<BUFTYPE>(ctx);
+    ctx->returnFrame( (int64)(buf[index]) );
 }
 
-template <> FALCON_FUNC Buf_getIndex<BitBuf>( ::Falcon::VMachine *vm )
+template <> FALCON_FUNC Buf_getIndex<BitBuf>( ::Falcon::VMContext *ctx, int32 )
 {
-    uint32 index = (uint32)vm->param(0)->forceIntegerEx();
-    BitBuf& buf = vmGetBuf<BitBuf>(vm);
-    vm->retval(buf[index]); // is bool
+    uint32 index = (uint32)ctx->param(0)->forceIntegerEx();
+    BitBuf& buf = vmGetBuf<BitBuf>(ctx);
+    ctx->returnFrame(buf[index]); // is bool
 }
 
 /*#
@@ -180,31 +119,33 @@ template <> FALCON_FUNC Buf_getIndex<BitBuf>( ::Falcon::VMachine *vm )
 @note This function works differently for a BitBuf, where the index addresses one bit,
 and the the passed @i value is interpreted as boolean!
 */
-template <typename BUFTYPE> FALCON_FUNC Buf_setIndex( ::Falcon::VMachine *vm )
+template <typename BUFTYPE> FALCON_FUNC Buf_setIndex( ::Falcon::VMContext *ctx, int32 )
 {
-    uint32 index = (uint32)vm->param(0)->forceIntegerEx();
-    uint8 val = (uint8)vm->param(1)->forceIntegerEx();
-    BUFTYPE& buf = vmGetBuf<BUFTYPE>(vm);
+    uint32 index = (uint32)ctx->param(0)->forceIntegerEx();
+    uint8 val = (uint8)ctx->param(1)->forceIntegerEx();
+    BUFTYPE& buf = vmGetBuf<BUFTYPE>(ctx);
     buf.put(index, val);
+    ctx->returnFrame();
 }
 
-template <> FALCON_FUNC Buf_setIndex<BitBuf>( ::Falcon::VMachine *vm )
+template <> FALCON_FUNC Buf_setIndex<BitBuf>( ::Falcon::VMContext *ctx, int32 )
 {
-    uint32 index = (uint32)vm->param(0)->forceIntegerEx();
-    bool val = vm->param(1)->isTrue();
-    BitBuf& buf = vmGetBuf<BitBuf>(vm);
+    uint32 index = (uint32)ctx->param(0)->forceIntegerEx();
+    bool val = ctx->param(1)->isTrue();
+    BitBuf& buf = vmGetBuf<BitBuf>(ctx);
     buf.put(val, index);
+    ctx->returnFrame();
 }
 
 // generic case: forbid endian change
-template <typename BUFTYPE> inline void SetEndianHelper(::Falcon::VMachine *vm, BUFTYPE& buf, uint32 endian)
+template <typename BUFTYPE> inline void SetEndianHelper(::Falcon::VMContext *ctx, int32, BUFTYPE& buf, uint32 endian)
 {
     throw new AccessError(ErrorParam(e_not_implemented, __LINE__)
         .extra(FAL_STR(bufext_bytebuf_fixed_endian)));
 }
 
 // special case: endian can be changed during runtime
-template <> inline void SetEndianHelper<ByteBufManualEndian>(::Falcon::VMachine *vm, ByteBufManualEndian& buf, uint32 endian)
+template <> inline void SetEndianHelper<ByteBufManualEndian>(::Falcon::VMContext *ctx, int32, ByteBufManualEndian& buf, uint32 endian)
 {
     if(endian >= ENDIANMODE_MAX)
     {
@@ -223,15 +164,15 @@ template <> inline void SetEndianHelper<ByteBufManualEndian>(::Falcon::VMachine 
 
 @note This function works only for a ByteBuf, all other derived classes raise an error.
 */
-template <typename BUFTYPE> FALCON_FUNC Buf_setEndian( ::Falcon::VMachine *vm )
+template <typename BUFTYPE> FALCON_FUNC Buf_setEndian( ::Falcon::VMContext *ctx, int32 )
 {
-    Item *param = vm->param(0);
+    Item *param = ctx->param(0);
     if(param != NULL)
     {
-        BUFTYPE& buf = vmGetBuf<BUFTYPE>(vm);
+        BUFTYPE& buf = vmGetBuf<BUFTYPE>(ctx);
         uint32 endian = (uint32)param->forceInteger();
-        SetEndianHelper<BUFTYPE>(vm, buf, endian);
-        vm->retval(vm->self());
+        SetEndianHelper<BUFTYPE>(ctx, buf, endian);
+        ctx->returnFrame(ctx->self());
         return;
     }
 
@@ -246,15 +187,15 @@ template <typename BUFTYPE> FALCON_FUNC Buf_setEndian( ::Falcon::VMachine *vm )
 @raise AccessError if used on anything that is not a ByteBuf base class object
 @return One of ByteBuf.*_ENDIAN
 */
-template <typename BUFTYPE> FALCON_FUNC Buf_getEndian( ::Falcon::VMachine *vm )
+template <typename BUFTYPE> FALCON_FUNC Buf_getEndian( ::Falcon::VMContext *ctx, int32 )
 {
-    BUFTYPE& buf = vmGetBuf<BUFTYPE>(vm);
-    vm->retval((int64)buf.getEndian());
+    BUFTYPE& buf = vmGetBuf<BUFTYPE>(ctx);
+    ctx->returnFrame((int64)buf.getEndian());
 }
 
-template <> FALCON_FUNC Buf_getEndian<BitBuf>( ::Falcon::VMachine *vm )
+template <> FALCON_FUNC Buf_getEndian<BitBuf>( ::Falcon::VMContext *ctx, int32 )
 {
-    vm->retval((int64)0);
+    ctx->returnFrame((int64)0);
 }
 
 /*#
@@ -270,10 +211,10 @@ Any read/write operations beyond this limit will raise an error.
 
 @note Use @b resize() to change this limit by hand.
 */
-template <typename BUFTYPE> FALCON_FUNC Buf_size( ::Falcon::VMachine *vm )
+template <typename BUFTYPE> FALCON_FUNC Buf_size( ::Falcon::VMContext *ctx, int32 )
 {
-    BUFTYPE& buf = vmGetBuf<BUFTYPE>(vm);
-    vm->retval((int64)buf.size());
+    BUFTYPE& buf = vmGetBuf<BUFTYPE>(ctx);
+    ctx->returnFrame((int64)buf.size());
 }
 
 /*#
@@ -294,15 +235,15 @@ if the buffer is made smaller and a position would point beyond the buffer size.
 
 @note Using this does not actually shrink the internal buffer.
 */
-template <typename BUFTYPE> FALCON_FUNC Buf_resize( ::Falcon::VMachine *vm )
+template <typename BUFTYPE> FALCON_FUNC Buf_resize( ::Falcon::VMContext *ctx, int32 )
 {
     Item *param = vm->param(0);
     if(param != NULL)
     {
-        BUFTYPE& buf = vmGetBuf<BUFTYPE>(vm);
+        BUFTYPE& buf = vmGetBuf<BUFTYPE>(ctx);
         uint32 newsize = (uint32)param->forceInteger();
         buf.resize(newsize);
-        vm->retval(vm->self());
+        ctx->returnFrame(vm->self());
         return;
     }
 
@@ -323,14 +264,15 @@ This does not change the actual read/write limit, and is safe to use.
 
 @note Using this does never decrease the capacity. The resulting capacity but may be slightly larger then exactly @i size bytes.
 */
-template <typename BUFTYPE> FALCON_FUNC Buf_reserve( ::Falcon::VMachine *vm )
+template <typename BUFTYPE> FALCON_FUNC Buf_reserve( ::Falcon::VMContext *ctx, int32 )
 {
     Item *param = vm->param(0);
     if(param != NULL)
     {
-        BUFTYPE& buf = vmGetBuf<BUFTYPE>(vm);
+        BUFTYPE& buf = vmGetBuf<BUFTYPE>(ctx);
         uint32 newsize = (uint32)param->forceInteger();
         buf.reserve(newsize);
+        return;
     }
 
     throw new ParamError(ErrorParam(e_inv_params, __LINE__)
@@ -345,10 +287,10 @@ template <typename BUFTYPE> FALCON_FUNC Buf_reserve( ::Falcon::VMachine *vm )
 Can be used to check if a buffer is large enough for huge write operations,
 so that more memory can be reseved if required.
 */
-template <typename BUFTYPE> FALCON_FUNC Buf_capacity( ::Falcon::VMachine *vm )
+template <typename BUFTYPE> FALCON_FUNC Buf_capacity( ::Falcon::VMContext *ctx, int32 )
 {
-    BUFTYPE& buf = vmGetBuf<BUFTYPE>(vm);
-    vm->retval((int64)buf.capacity());
+    BUFTYPE& buf = vmGetBuf<BUFTYPE>(ctx);
+    ctx->returnFrame((int64)buf.capacity());
 }
 
 /*#
@@ -361,7 +303,7 @@ template <typename BUFTYPE> FALCON_FUNC Buf_capacity( ::Falcon::VMachine *vm )
 Write @i bytes from @i ptr to the buffer. Dangerous function, absolutely no checks are done,
 use only if you know what you are doing.
 */
-template <typename BUFTYPE> FALCON_FUNC Buf_writePtr( ::Falcon::VMachine *vm )
+template <typename BUFTYPE> FALCON_FUNC Buf_writePtr( ::Falcon::VMContext *ctx, int32 )
 {
     if(vm->paramCount() < 2)
     {
@@ -374,7 +316,7 @@ template <typename BUFTYPE> FALCON_FUNC Buf_writePtr( ::Falcon::VMachine *vm )
 
     buf.append(ptr, size);
 
-    vm->retval(vm->self());
+    ctx->returnFrame(vm->self());
 }
 
 /*#
@@ -451,13 +393,12 @@ Writes 64-bit doubles to the buffer at wpos(), and for each double the write pos
 */
 
 #define MAKE_WRITE_FUNC(FUNC, TY, MTH) \
-    template <typename BUFTYPE> FALCON_FUNC FUNC( ::Falcon::VMachine *vm ) \
+    template <typename BUFTYPE> FALCON_FUNC FUNC( ::Falcon::VMContext *ctx, int32 paramCount ) \
     { \
-        uint32 paramCount = vm->paramCount(); \
-        BUFTYPE& buf = vmGetBuf<BUFTYPE>(vm); \
+        BUFTYPE& buf = vmGetBuf<BUFTYPE>(ctx); \
         for(uint32 i = 0; i < paramCount; i++) \
-            buf.template append<TY>((TY)vm->param(i)->MTH()); \
-        vm->retval(vm->self()); \
+            buf.template append<TY>((TY)ctx->param(i)->MTH()); \
+        ctx->returnFrame(ctx->self()); \
     }
 
 MAKE_WRITE_FUNC(Buf_wb, bool, isTrue)
@@ -542,17 +483,17 @@ Reads one double from the buffer at rpos(), and advances the read position by 8.
 */
 
 #define MAKE_READ_FUNC(FUNC, TY, STY, RTY, SC) \
-    template <typename BUFTYPE> FALCON_FUNC FUNC( ::Falcon::VMachine *vm ) \
+    template <typename BUFTYPE> FALCON_FUNC FUNC( ::Falcon::VMContext *ctx, int32 ) \
     { \
-        Item *param = vm->param(0); \
-        BUFTYPE& buf = vmGetBuf<BUFTYPE>(vm); \
+        Item *param = ctx->param(0); \
+        BUFTYPE& buf = vmGetBuf<BUFTYPE>(ctx); \
         if(SC && param != NULL && param->isTrue()) \
         { \
             RTY t = buf.template read<STY>(); \
-            vm->retval(t); \
+            ctx->returnFrame(t); \
         } \
         else \
-            vm->retval((RTY)buf.template read<TY>()); \
+            ctx->returnFrame((RTY)buf.template read<TY>()); \
     }
 // using a temp var ("RTY t = ...") above is intentional,
 // it returned wrong results otherwise
@@ -562,22 +503,22 @@ MAKE_READ_FUNC(Buf_r16, uint16, int16, int64, true)
 MAKE_READ_FUNC(Buf_r32, uint32, int32, int64, true)
 MAKE_READ_FUNC(Buf_r64, uint64, int64, int64, false)
 
-template <typename BUFTYPE> FALCON_FUNC Buf_rb( ::Falcon::VMachine *vm )
+template <typename BUFTYPE> FALCON_FUNC Buf_rb( ::Falcon::VMContext *ctx, int32 )
 {
-    BUFTYPE& buf = vmGetBuf<BUFTYPE>(vm);
-    vm->retval(buf.template read<bool>());
+    BUFTYPE& buf = vmGetBuf<BUFTYPE>(ctx);
+    ctx->returnFrame(buf.template read<bool>());
 }
 
-template <typename BUFTYPE> FALCON_FUNC Buf_rf( ::Falcon::VMachine *vm )
+template <typename BUFTYPE> FALCON_FUNC Buf_rf( ::Falcon::VMContext *ctx, int32 )
 {
-    BUFTYPE& buf = vmGetBuf<BUFTYPE>(vm);
-    vm->retval(numeric(buf.template read<float>()));
+    BUFTYPE& buf = vmGetBuf<BUFTYPE>(ctx);
+    ctx->returnFrame(numeric(buf.template read<float>()));
 }
 
-template <typename BUFTYPE> FALCON_FUNC Buf_rd( ::Falcon::VMachine *vm )
+template <typename BUFTYPE> FALCON_FUNC Buf_rd( ::Falcon::VMContext *ctx, int32 )
 {
-    BUFTYPE& buf = vmGetBuf<BUFTYPE>(vm);
-    vm->retval(numeric(buf.template read<numeric>()));
+    BUFTYPE& buf = vmGetBuf<BUFTYPE>(ctx);
+    ctx->returnFrame(numeric(buf.template read<numeric>()));
 }
 
 #undef MAKE_READ_FUNC
@@ -595,22 +536,22 @@ Use with care!
 be careful that no re-allocation occurs when modifying the ByteBuf,
 otherwise the MemBuf will be invalid and crash the VM!
 */
-template <typename BUFTYPE> FALCON_FUNC Buf_toMemBuf( ::Falcon::VMachine *vm )
+template <typename BUFTYPE> FALCON_FUNC Buf_toMemBuf( ::Falcon::VMContext *ctx, int32 )
 {
     Item* param= vm->param(0);
-    BUFTYPE& buf = vmGetBuf<BUFTYPE>(vm);
+    BUFTYPE& buf = vmGetBuf<BUFTYPE>(ctx);
 
     if(param != NULL && param->isTrue())
     {
         MemBuf_1 *mb = new MemBuf_1(buf.size());
         memcpy(mb->data(), buf.getBuf(), buf.size());
-        vm->retval(mb);
+        ctx->returnFrame(mb);
     }
     else
     {
         MemBuf_1 *mb = new MemBuf_1((byte*)buf.getBuf(), buf.size(), 0);
         mb->dependant(vm->self().asObject()); // the MemBuf depends on us, this will prevent this buf from beeing deleted
-        vm->retval(mb);                       // during the MemBuf's lifetime.
+        ctx->returnFrame(mb);                       // during the MemBuf's lifetime.
     }
 }
 
@@ -621,10 +562,10 @@ template <typename BUFTYPE> FALCON_FUNC Buf_toMemBuf( ::Falcon::VMachine *vm )
 
 For raw memory manipulation and other dangerous things, use only if you know what you're doing!
 */
-template <typename BUFTYPE> FALCON_FUNC Buf_ptr( ::Falcon::VMachine *vm )
+template <typename BUFTYPE> FALCON_FUNC Buf_ptr( ::Falcon::VMContext *ctx, int32 )
 {
-    BUFTYPE& buf = vmGetBuf<BUFTYPE>(vm);
-    vm->retval((int64)buf.getBuf());
+    BUFTYPE& buf = vmGetBuf<BUFTYPE>(ctx);
+    ctx->returnFrame((int64)buf.getBuf());
 }
 
 /*#
@@ -634,10 +575,10 @@ template <typename BUFTYPE> FALCON_FUNC Buf_ptr( ::Falcon::VMachine *vm )
 
 @note The string will have a length of size() * 2
 */
-template <typename BUFTYPE> FALCON_FUNC Buf_toString( ::Falcon::VMachine *vm )
+template <typename BUFTYPE> FALCON_FUNC Buf_toString( ::Falcon::VMContext *ctx, int32 )
 {
-    BUFTYPE& buf = vmGetBuf<BUFTYPE>(vm);
-    vm->retval(ByteArrayToHex((byte*)buf.getBuf(), buf.size()));
+    BUFTYPE& buf = vmGetBuf<BUFTYPE>(ctx);
+    ctx->returnFrame(ByteArrayToHex((byte*)buf.getBuf(), buf.size()));
 }
 
 /*#
@@ -648,18 +589,18 @@ template <typename BUFTYPE> FALCON_FUNC Buf_toString( ::Falcon::VMachine *vm )
 
 @note Attempting to set the write position beyond the buffer size will set it to the end of the buffer.
 */
-template <typename BUFTYPE> FALCON_FUNC Buf_wpos( ::Falcon::VMachine *vm )
+template <typename BUFTYPE> FALCON_FUNC Buf_wpos( ::Falcon::VMContext *ctx, int32 )
 {
-    Item *param = vm->param(0);
-    BUFTYPE& buf = vmGetBuf<BUFTYPE>(vm);
+    Item *param = ctx->param(0);
+    BUFTYPE& buf = vmGetBuf<BUFTYPE>(ctx);
     if(param != NULL)
     {
         int64 wpos = (int64)param->forceInteger();
         buf.wpos((uint32)wpos);
-        vm->retval(vm->self());
+        ctx->returnFrame(vm->self());
     }
     else
-        vm->retval((int64)buf.wpos());
+        ctx->returnFrame((int64)buf.wpos());
 }
 
 /*#
@@ -670,18 +611,18 @@ template <typename BUFTYPE> FALCON_FUNC Buf_wpos( ::Falcon::VMachine *vm )
 
 @note Attempting to set the read position beyond the buffer size will set it to the end of the buffer.
 */
-template <typename BUFTYPE> FALCON_FUNC Buf_rpos( ::Falcon::VMachine *vm )
+template <typename BUFTYPE> FALCON_FUNC Buf_rpos( ::Falcon::VMContext *ctx, int32 )
 {
     Item *param = vm->param(0);
-    BUFTYPE& buf = vmGetBuf<BUFTYPE>(vm);
+    BUFTYPE& buf = vmGetBuf<BUFTYPE>(ctx);
     if(param != NULL)
     {
         int64 rpos = (int64)param->forceInteger();
         buf.rpos((uint32)rpos);
-        vm->retval(vm->self());
+        ctx->returnFrame(vm->self());
     }
     else
-        vm->retval((int64)buf.rpos());
+        ctx->returnFrame((int64)buf.rpos());
 }
 
 /*#
@@ -698,18 +639,18 @@ which means the ByteBuf now uses its own memory, and the original memory is no l
 
 Setting growable to false will forbid any re-allocation and raise a BufferError if a re-allocation attempt is made.
 */
-template <typename BUFTYPE> FALCON_FUNC Buf_growable( ::Falcon::VMachine *vm )
+template <typename BUFTYPE> FALCON_FUNC Buf_growable( ::Falcon::VMContext *ctx, int32 )
 {
     Item *param = vm->param(0);
-    BUFTYPE& buf = vmGetBuf<BUFTYPE>(vm);
+    BUFTYPE& buf = vmGetBuf<BUFTYPE>(ctx);
     if(param != NULL)
     {
         bool growable = param->isTrue();
         buf.growable(growable);
-        vm->retval(vm->self());
+        ctx->returnFrame(ctx->self());
     }
     else
-        vm->retval(buf.growable());
+        ctx->returnFrame(buf.growable());
 }
 
 /*#
@@ -719,10 +660,10 @@ template <typename BUFTYPE> FALCON_FUNC Buf_growable( ::Falcon::VMachine *vm )
 
 This is a shortcut for size() - rpos().
 */
-template <typename BUFTYPE> FALCON_FUNC Buf_readable( ::Falcon::VMachine *vm )
+template <typename BUFTYPE> FALCON_FUNC Buf_readable( ::Falcon::VMContext *ctx, int32 )
 {
-    BUFTYPE& buf = vmGetBuf<BUFTYPE>(vm);
-    vm->retval(int64(buf.readable()));
+    BUFTYPE& buf = vmGetBuf<BUFTYPE>(ctx);
+    ctx->returnFrame(int64(buf.readable()));
 }
 
 /*#
@@ -731,9 +672,9 @@ template <typename BUFTYPE> FALCON_FUNC Buf_readable( ::Falcon::VMachine *vm )
 
 This is a shortcut for rpos(0); wpos(0); resize(0).
 */
-template <typename BUFTYPE> FALCON_FUNC Buf_reset( ::Falcon::VMachine *vm )
+template <typename BUFTYPE> FALCON_FUNC Buf_reset( ::Falcon::VMContext *ctx, int32 )
 {
-    BUFTYPE& buf = vmGetBuf<BUFTYPE>(vm);
+    BUFTYPE& buf = vmGetBuf<BUFTYPE>(ctx);
     buf.reset();
 }
 
@@ -766,7 +707,7 @@ template <typename BUFTYPE, bool NULL_TERM> inline void BufWriteStringHelper( BU
     }
 }
 
-template <typename BUFTYPE, bool NULL_TERM> inline void BufWriteHelper( ::Falcon::VMachine *vm, BUFTYPE& buf, Item *itm, uint32 stackDepth )
+template <typename BUFTYPE, bool NULL_TERM> inline void BufWriteHelper( ::Falcon::VMContext *ctx, int32, BUFTYPE& buf, Item *itm, uint32 stackDepth )
 {
     if(stackDepth > 500) // TODO: is this value safe? does it require adjusting for other platforms/OSes?
     {
@@ -798,7 +739,7 @@ template <typename BUFTYPE, bool NULL_TERM> inline void BufWriteHelper( ::Falcon
             CoreArray *arr = itm->asArray();
             for(uint32 i = 0; i < arr->length(); ++i)
             {
-                BufWriteHelper<BUFTYPE, NULL_TERM>(vm, buf, &arr->at(i), stackDepth + 1);
+                BufWriteHelper<BUFTYPE, NULL_TERM>(ctx, buf, &arr->at(i), stackDepth + 1);
             }
             return;
         }
@@ -811,35 +752,6 @@ template <typename BUFTYPE, bool NULL_TERM> inline void BufWriteHelper( ::Falcon
             {
                 BufWriteHelper<BUFTYPE, NULL_TERM>(vm, buf, &iter.getCurrent(), stackDepth + 1);
                 iter.next();
-            }
-            return;
-        }
-
-        case FLC_ITEM_MEMBUF:
-        {
-            MemBuf *mb = itm->asMemBuf();
-            uint32 ws = mb->wordSize();
-            switch(ws)
-            {
-                case 1:
-                    buf.append(mb->data() + mb->position(), mb->limit() - mb->position());
-                    break;
-
-                case 2:
-                    for(uint32 i = mb->position(); i < mb->limit(); i++)
-                        buf << uint16(mb->get(i));
-                    break;
-
-                case 3:
-                case 4:
-                    for(uint32 i = mb->position(); i < mb->limit(); i++)
-                        buf << uint32(mb->get(i));
-                    break;
-
-                default:
-                    throw new Falcon::TypeError(
-                        Falcon::ErrorParam( Falcon::e_param_type, __LINE__ )
-                        .extra( "Unsupported MemBuf word length" ) );
             }
             return;
         }
@@ -938,7 +850,7 @@ This method can be used to stuff almost anything into the buffer:
 
 This method is functionally equivalent to @b write(), but does not append null terminators to strings.
 */
-template <typename BUFTYPE, bool NULL_TERM> FALCON_FUNC Buf_write( ::Falcon::VMachine *vm )
+template <typename BUFTYPE, bool NULL_TERM> FALCON_FUNC Buf_write( ::Falcon::VMContext *ctx, int32 )
 {
     uint32 paramCount = vm->paramCount();
     BUFTYPE& buf = vmGetBuf<BUFTYPE>(vm);
@@ -948,7 +860,7 @@ template <typename BUFTYPE, bool NULL_TERM> FALCON_FUNC Buf_write( ::Falcon::VMa
         BufWriteHelper<BUFTYPE, NULL_TERM>(vm, buf, itm, 0);
     }
 
-    vm->retval(vm->self());
+    ctx->returnFrame(vm->self());
 }
 
 /*#
@@ -961,7 +873,7 @@ template <typename BUFTYPE, bool NULL_TERM> FALCON_FUNC Buf_write( ::Falcon::VMa
 Read @i bytes bytes from the buffer and write them to @i ptr, increasing rpos() by the amount of bytes read.
 Dangerous function, absolutely no checks are done, use only if you know what you are doing.
 */
-template <typename BUFTYPE> FALCON_FUNC Buf_readPtr( ::Falcon::VMachine *vm )
+template <typename BUFTYPE> FALCON_FUNC Buf_readPtr( ::Falcon::VMContext *ctx, int32 )
 {
     if(vm->paramCount() < 2)
     {
@@ -974,7 +886,7 @@ template <typename BUFTYPE> FALCON_FUNC Buf_readPtr( ::Falcon::VMachine *vm )
 
     buf.read(ptr, size);
 
-    vm->retval(vm->self());
+    ctx->returnFrame(vm->self());
 }
 
 
@@ -1061,7 +973,7 @@ or the source buffer is empty.
 
 @note If @i dest is a 3-byte wide MemBuf, it still reads 4 bytes per integer.
 */
-template <typename BUFTYPE> FALCON_FUNC Buf_readToBuf( ::Falcon::VMachine *vm )
+template <typename BUFTYPE> FALCON_FUNC Buf_readToBuf( ::Falcon::VMContext *ctx, int32 )
 {
     if(!vm->paramCount())
     {
@@ -1112,7 +1024,7 @@ template <typename BUFTYPE> FALCON_FUNC Buf_readToBuf( ::Falcon::VMachine *vm )
                     .extra( "Unsupported MemBuf word length" ) );
 
         }
-        vm->retval((int64)bytes);
+        ctx->returnFrame((int64)bytes);
         return;
     }
 
@@ -1147,7 +1059,7 @@ template <typename BUFTYPE> FALCON_FUNC Buf_readToBuf( ::Falcon::VMachine *vm )
             .extra(FAL_STR(bufext_not_buf)));
     }
 
-    vm->retval((int64)read);
+    ctx->returnFrame((int64)read);
 }
 
 template <typename BUFTYPE, typename TY> inline void ReadStringHelper(BUFTYPE& buf, String *str, uint32 maxchars)
@@ -1185,7 +1097,7 @@ If the size of the char is known and no null terminator is present, @i maxchars 
 string size to be read. The total amount of bytes read in this case will be @i maxchars * @i charSize,
 unless a null terminator is reached, in this case, reading will stop earlier.
 */
-template <typename BUFTYPE> FALCON_FUNC Buf_readString( ::Falcon::VMachine *vm )
+template <typename BUFTYPE> FALCON_FUNC Buf_readString( ::Falcon::VMContext *ctx, int32 )
 {
     uint32 cs = 1;
     uint32 maxchars = 0;
@@ -1234,7 +1146,7 @@ template <typename BUFTYPE> FALCON_FUNC Buf_readString( ::Falcon::VMachine *vm )
         case 4: ReadStringHelper<BUFTYPE, uint32>(buf, str, maxchars); break;
         default: fassert(false); // this can't happen
     }
-    vm->retval(str);
+    ctx->returnFrame(str);
 }
 
 }} // namespace Falcon::Ext

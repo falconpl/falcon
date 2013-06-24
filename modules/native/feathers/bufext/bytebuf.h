@@ -32,8 +32,11 @@ under the License.
 
 #include <string.h>
 #include <stdio.h>
+#include <memory.h>
+
 
 #include <falcon/types.h>
+#include <falcon/class.h>
 #include "endianswap.h"
 #include "buffererror.h"
 
@@ -57,39 +60,32 @@ template<ByteBufEndianMode ENDIANMODE> class ByteBufTemplate
     public:
 
         ByteBufTemplate()
-            : _rpos(0), _wpos(0), _buf(NULL), _size(0), _growable(true)
+            : _rpos(0), _wpos(0), _buf(NULL), _size(0)
         {
             setEndian(ENDIANMODE);
-            _allocate(128);
+            allocate(128);
         }
         ByteBufTemplate(uint32 res)
-            : _rpos(0), _wpos(0), _buf(NULL), _size(0), _growable(true)
+            : _rpos(0), _wpos(0), _buf(NULL), _size(0)
         {
             setEndian(ENDIANMODE);
-            _allocate(res);
+            allocate(res);
         }
-        ByteBufTemplate(const ByteBufTemplate &buf, uint32 extra = 0)
-            : _rpos(0), _wpos(0), _buf(NULL), _size(0), _growable(true)
+
+        ByteBufTemplate(uint8 *buf, uint32 usedsize, uint32 totalsize )
+            : _rpos(0), _wpos(0), _size(usedsize), _buf(NULL)
         {
             setEndian(ENDIANMODE);
-            _allocate(buf.size() + extra);
-            append(buf);
+            allocate(totalsize);
+            append(buf, usedsize);
         }
-        ByteBufTemplate(uint8 *buf, uint32 usedsize, uint32 totalsize, bool copy = true, uint32 extra = 0)
-            : _rpos(0), _wpos(0), _size(usedsize), _buf(NULL), _growable(true)
+
+        ByteBufTemplate(const ByteBufTemplate& other)
+            : _rpos(other._rpos), _wpos(other._wpos), _buf(NULL), _size(other._size)
         {
             setEndian(ENDIANMODE);
-            if(copy)
-            {
-                _allocate(totalsize + extra);
-                append(buf, usedsize);
-            }
-            else
-            {
-                _mybuf = false;
-                _buf = buf;
-                _res = totalsize;
-            }
+            allocate(other.size());
+            append(other);
         }
 
         ~ByteBufTemplate()
@@ -97,15 +93,13 @@ template<ByteBufEndianMode ENDIANMODE> class ByteBufTemplate
             clear();
         }
 
+        ByteBufTemplate<ENDIANMODE>* clone() const { return new ByteBufTemplate<ENDIANMODE>(*this); }
 
         void clear(void)
         {
-            if(_mybuf)
-            {
-                memFree(_buf);
-                _buf = NULL;
-                _res = 0;
-            }
+             free(_buf);
+             _buf = NULL;
+             _res = 0;
             reset();
         }
         
@@ -128,7 +122,7 @@ template<ByteBufEndianMode ENDIANMODE> class ByteBufTemplate
         void reserve(uint32 newsize)
         {
             if(_res < newsize)
-                _allocate(newsize);
+                allocate(newsize);
         }
 
         // ---------------------- Write methods -----------------------
@@ -296,30 +290,20 @@ template<ByteBufEndianMode ENDIANMODE> class ByteBufTemplate
             return _endian;
         }
 
-        inline bool growable(void) { return _growable; }
-        inline void growable(bool b) { _growable = b; }
+        // allocate larger buffer and copy contents. if we own the current buffer, delete old, otherwise, leave it as it is.
+        void allocate(uint32 s)
+        {
+           uint8 *newbuf = (uint8*)malloc(s);
+           if(_buf)
+           {
+               memcpy(newbuf, _buf, _size);
+                free(_buf);
+           }
+           _buf = newbuf;
+           _res = s;
+        }
 
     protected:
-    
-        // allocate larger buffer and copy contents. if we own the current buffer, delete old, otherwise, leave it as it is.
-        void _allocate(uint32 s)
-        {
-            if(!_growable && _buf) // only throw if we already have a buf
-            {
-                throw new BufferError( ErrorParam(e_io_error, __LINE__)
-                    .desc(FAL_STR_bufext_buf_full) );
-            }
-            uint8 *newbuf = (uint8*)memAlloc(s);
-            if(_buf)
-            {
-                memcpy(newbuf, _buf, _size);
-                if(_mybuf)
-                    memFree(_buf);
-            }
-            _buf = newbuf;
-            _res = s;
-            _mybuf = true;
-        }
 
         void _enlargeIfReq(uint32 minSize)
         {
@@ -328,7 +312,7 @@ template<ByteBufEndianMode ENDIANMODE> class ByteBufTemplate
                 uint32 a = _res * 2;
                 if(a < minSize) // fallback if doubling the space was not enough
                     a += minSize;
-                _allocate(a);
+                allocate(a);
             }
         }
         
@@ -339,9 +323,6 @@ template<ByteBufEndianMode ENDIANMODE> class ByteBufTemplate
 
         ByteBufEndianMode _endian; // used endian, only relevant in ENDIANMODE_MANUAL specialization
         uint8 *_buf; // the ptr to the buffer that holds all the bytes  
-        bool _mybuf; // if true, destructor deletes buffer
-        bool _growable; // default true, if false, buffer will not re-allocate more space
-
 
     private:
 
@@ -374,10 +355,10 @@ template<typename T> inline void ByteBufTemplate<ENDIANMODE>::EndianConvertHelpe
 }
 
 
-template <> inline void ByteBufTemplate<ENDIANMODE_NATIVE>::setEndian(ByteBufEndianMode en) {}
-template <> inline void ByteBufTemplate<ENDIANMODE_LITTLE>::setEndian(ByteBufEndianMode en) {}
-template <> inline void ByteBufTemplate<ENDIANMODE_BIG>::setEndian(ByteBufEndianMode en) {}
-template <> inline void ByteBufTemplate<ENDIANMODE_REVERSE>::setEndian(ByteBufEndianMode en) {}
+template <> inline void ByteBufTemplate<ENDIANMODE_NATIVE>::setEndian(ByteBufEndianMode ) {}
+template <> inline void ByteBufTemplate<ENDIANMODE_LITTLE>::setEndian(ByteBufEndianMode ) {}
+template <> inline void ByteBufTemplate<ENDIANMODE_BIG>::setEndian(ByteBufEndianMode ) {}
+template <> inline void ByteBufTemplate<ENDIANMODE_REVERSE>::setEndian(ByteBufEndianMode ) {}
 
 template <> inline ByteBufEndianMode ByteBufTemplate<ENDIANMODE_NATIVE>::getEndian() const { return ENDIANMODE_NATIVE; }
 template <> inline ByteBufEndianMode ByteBufTemplate<ENDIANMODE_LITTLE>::getEndian() const { return ENDIANMODE_LITTLE; }

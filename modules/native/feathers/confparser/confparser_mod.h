@@ -20,11 +20,7 @@
 #ifndef flc_confparser_mod_H
 #define flc_confparser_mod_H
 
-#include <falcon/dir_sys.h>
 #include <falcon/stream.h>
-#include <falcon/destroyable.h>
-#include <falcon/genericlist.h>
-#include <falcon/genericmap.h>
 
 namespace Falcon {
 
@@ -35,7 +31,7 @@ namespace Falcon {
    Having the list of lines including non-meaningful lines allows to modify
    the configuration file maintaining the original layout.
 */
-class ConfigFileLine:public BaseAlloc
+class ConfigFileLine
 {
 
 public:
@@ -75,7 +71,7 @@ void deletor_ConfigFileLine( void *memory );
    the last time it has been read and a cached pointer to the dir service.
 */
 
-class ConfigEntry: public BaseAlloc
+class ConfigEntry
 {
 public:
    /** Single entry, complete from root, i.e.
@@ -91,18 +87,8 @@ public:
 
 };
 
-class ConfigEntryPtrTraits: public ElementTraits
-{
-public:
-	virtual uint32 memSize() const;
-	virtual void init( void *itemZone ) const;
-	virtual void copy( void *targetZone, const void *sourceZone ) const;
-	virtual int compare( const void *first, const void *second ) const;
-	virtual void destroy( void *item ) const;
-   virtual bool owning() const;
-};
 
-class ConfigSection: public Destroyable
+class ConfigSection
 {
 public:
    String m_name;
@@ -123,18 +109,6 @@ public:
 
    ConfigSection( const String &name, ListElement *sectLine=0, ListElement *addPoint = 0 );
 };
-
-class ConfigSectionPtrTraits: public ElementTraits
-{
-public:
-	virtual uint32 memSize() const;
-	virtual void init( void *itemZone ) const;
-	virtual void copy( void *targetZone, const void *sourceZone ) const;
-	virtual int compare( const void *first, const void *second ) const;
-	virtual void destroy( void *item ) const;
-   virtual bool owning() const;
-};
-
 
 class ConfigFile: public FalconData
 {

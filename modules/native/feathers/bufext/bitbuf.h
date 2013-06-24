@@ -93,6 +93,9 @@ private:
 
 public:
 
+    uint32 currentMark() const { return _gcMark; }
+    void gcMark( uint32 mark ) { _gcMark = mark; }
+
     // reserve certain amount of bytes for fast write, default is stack buf size
     // if less is used, it will use stack size anyways
     StackBitBuf(NUMTYPE ressize = BITBUF_STACKSIZE)
@@ -579,6 +582,7 @@ protected:
     bool _growable; // if true, memory is enlarged if required, otherwise an error is thrown
     bool _myheapbuf; // true if we own the _heapbuf memory and must delete it later
 
+    uint32 _gcMark;
 };
 
 // only allow reading floating point with full byte count (everything else makes no sense)

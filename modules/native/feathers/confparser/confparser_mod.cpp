@@ -19,7 +19,6 @@
 
 #include "confparser_mod.h"
 #include <falcon/fstream.h>
-#include <falcon/transcoding.h>
 #include <falcon/stdstreams.h>
 
 namespace Falcon {

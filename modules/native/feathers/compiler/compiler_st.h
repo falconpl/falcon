@@ -20,9 +20,7 @@
 #ifndef flc_compiler_st_H
 #define flc_compiler_st_H
 
-#include <falcon/message_defs.h>
-
-FAL_MODSTR( cmp_msg_unloaded, "The module has been unloaded." );
+#define cmp_msg_unloaded "The module has been unloaded."
 
 #endif
 

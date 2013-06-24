@@ -356,15 +356,13 @@ bool ModCompiler::Context::onGlobalAccessed( const String& name )
    Symbol* sym = Engine::getSymbol(name);
    Item* var = m_owner->m_module->resolveLocally( sym );
 
-   if( var == 0 )
+   if( var == 0 && ! m_owner->sp().interactive() )
    {
       m_owner->m_module->addImplicitImport( sym, m_owner->m_sp.currentLine() );
-      sym->decref();
-      return false;
    }
 
    sym->decref();
-   return true;
+   return var != 0;
 }
 
 

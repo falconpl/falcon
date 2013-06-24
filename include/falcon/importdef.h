@@ -221,47 +221,8 @@ public:
     *
     */
    bool isExplicit() const;
+   
 
-   /** Set this as a direct import request. 
-    \param symName the name of the symbol to be searched on the source module.
-    \param modName The name of the module where the symbol is to be searched.
-    \param bIsURI If true, the modName parameter is intended as a VFS URI,
-    otherwise is a logical name.
-    
-    Direct import request are created explicity from code and third party
-    modules when the module is synthesized from binary data. They passed 
-    directly to a resolve handler when the symbol is resolved.
-    
-    They are equivalent to the directive "import sym from mod", but won't
-    create a symbol in the host module; instead, when they are resolved
-    this usually triggers a set of Requirement callbacks.
-    
-    This version requires explicitly a symbol to be found in a module.
-    */
-   void setDirect( const String& symName, const String& modName, bool bIsURI );
-   
-   /** Set this as a direct import request. 
-    \param symName the name of the symbol to be searched on the source module.
-    
-    Direct import request are created explicitly from code and third party
-    modules when the module is synthesized from binary data. They are passed
-    directly to a resolve handler when the symbol is resolved.
-    
-    This version searches the symbol on exported symbols of the loaded modules in
-    the host ModSpace. Notice that load order declaration is respected; when
-    unsure, put a load ImportDef before this direct import request on the
-    target module.
-    
-    \note Direct imports are not shown when rendering a module to string.
-    */
-   void setDirect( const String& symName );
-   
-   /** Return true if this is a direct import request.
-    \return True if this is a direct import request.
-    \see setDirect
-    */
-   bool isDirect() const {return m_bIsDirect; }
-   
    const SourceRef& sr() const { return m_sr; }
    SourceRef sr() { return m_sr; }
    
@@ -316,7 +277,6 @@ private:
    bool m_bIsLoad;
    bool m_bIsUri;
    bool m_bIsNS;
-   bool m_bIsDirect;
    bool m_isProcessed;
    bool m_isLoaded;
    

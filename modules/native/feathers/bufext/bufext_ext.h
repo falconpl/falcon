@@ -38,82 +38,73 @@
 #include <falcon/types.h>
 #include <falcon/module.h>
 #include <falcon/vm.h>
-#include <falcon/falcondata.h>
-#include <falcon/membuf.h>
+#include <falcon/classes/classerror.h>
+#include <falcon/class.h>
+
 #include "bufext_st.h"
 #include "bytebuf.h"
 #include "bitbuf.h"
 
 namespace Falcon { namespace Ext {
 
+template <typename BUFTYPE> inline BUFTYPE& vmGetBuf( ::Falcon::VMContext *ctx )
+{
+    return *static_cast<BUFTYPE*>(ctx->self().asInst());
+}
 
-template <typename BUFTYPE> class BufCarrier : public FalconData
+String *ByteArrayToHex(byte *arr, uint32 size);
+
+FALCON_FUNC BitBuf_bitCount( ::Falcon::VMContext *ctx, int pCount );
+FALCON_FUNC BitBuf_readBits( ::Falcon::VMContext *ctx, int pCount );
+FALCON_FUNC BitBuf_writeBits( ::Falcon::VMContext *ctx, int pCount );
+FALCON_FUNC BitBuf_sizeBits( ::Falcon::VMContext *ctx, int pCount );
+FALCON_FUNC BitBuf_rposBits( ::Falcon::VMContext *ctx, int pCount );
+FALCON_FUNC BitBuf_wposBits( ::Falcon::VMContext *ctx, int pCount );
+FALCON_FUNC BitBuf_readableBits( ::Falcon::VMContext *ctx, int pCount );
+FALCON_FUNC BitBuf_bits_req( ::Falcon::VMContext *ctx, int pCount );
+
+FALCON_FUNC BufferError_init( ::Falcon::VMContext *ctx, int pCount );
+
+//================================================================
+//
+
+template<ByteBufEndianMode ENDIANMODE>
+class ClassByteBufBase: public Class
 {
 public:
-    BufCarrier(): m_dependant(NULL) {} // default ctor
-    ~BufCarrier() {}
+   ClassByteBufBase( Class* parent, const String& name ): Class(name) { if (parent != 0 ) setParent(parent); }
+   virtual ~ClassByteBufBase() {}
 
-    BufCarrier(uint32 res): buf(res), m_dependant(NULL) {} // pre-alloc ctor
-
-    BufCarrier(MemBuf *other, uint32 extra = 0)            // MemBuf copy ctor
-        : buf(other->data(), other->limit(), other->size(), true, extra), m_dependant(NULL) {}
-
-    BufCarrier(uint8 *ptr, uint32 usedsize, uint32 totalsize, bool copy, uint32 extra); // direct memory ctor
-
-    inline BUFTYPE& GetBuf(void) { return buf; }
-
-    virtual BufCarrier<BUFTYPE> *clone() const;
-
-    virtual void gcMark( uint32 mark );
-
-    virtual bool serialize( Stream *stream, bool bLive ) const;
-    virtual bool deserialize( Stream *stream, bool bLive );
-    inline Garbageable *dependant(void) const { return m_dependant; }
-    inline void dependant(Garbageable *obj) { m_dependant = obj; }
-
-private:
-    Garbageable *m_dependant; // for MemBuf and other objects
-    BUFTYPE buf;
+   virtual void dispose( void* instance ) const { delete static_cast< ByteBufTemplate<ENDIANMODE>* >(instance); }
+   virtual void* clone( void* instance ) const { return static_cast<ByteBufTemplate<ENDIANMODE>*>(instance)->clone(); }
+   virtual void* createInstance() const { return new ByteBufTemplate<ENDIANMODE>;}
 };
 
-template <typename BUFTYPE>
-BufCarrier<BUFTYPE>::BufCarrier(uint8 *ptr, uint32 usedsize, uint32 totalsize, bool copy, uint32 extra)
-: buf(ptr, usedsize, totalsize, copy, extra), m_dependant(NULL)
+typedef ClassByteBufBase<ENDIANMODE_MANUAL> ClassByteBufManual;
+typedef ClassByteBufBase<ENDIANMODE_NATIVE> ClassByteBufNativeEndian;
+typedef ClassByteBufBase<ENDIANMODE_LITTLE> ClassByteBufLittleEndian;
+typedef ClassByteBufBase<ENDIANMODE_BIG> ClassByteBufBigEndian;
+typedef ClassByteBufBase<ENDIANMODE_REVERSE> ClassByteBufReverseEndian;
+
+//================================================================
+//
+
+class BufferError: public Falcon::Error
 {
-}
+public:
+   BufferError( const Class* handler ): Error( handler ) {}
+   BufferError( Class* handler, const ErrorParam &params ): Error( handler, params ) {}
+   virtual ~BufferError() {}
+};
 
-template <typename BUFTYPE> BufCarrier<BUFTYPE> *BufCarrier<BUFTYPE>::clone() const
+
+class ClassBufferError: public ClassError
 {
-    return new BufCarrier<BUFTYPE>((uint8*)buf.getBuf(), buf.size(), buf.capacity(), true, 0);
-}
-
-template <typename BUFTYPE> void BufCarrier<BUFTYPE>::gcMark(uint32 mark)
-{
-    // small optimization; resolve the problem here instead of looping again.
-    if( m_dependant && m_dependant->mark() != mark )
-    {
-        m_dependant->gcMark( mark );
-    }
-}
-
-template <typename BUFTYPE> inline BUFTYPE& vmGetBuf( ::Falcon::VMachine *vm )
-{
-    BufCarrier<BUFTYPE> *carrier = (BufCarrier<BUFTYPE>*)(vm->self().asObject()->getUserData());
-    return carrier->GetBuf();
-}
-
-CoreString *ByteArrayToHex(byte *arr, uint32 size);
-
-FALCON_FUNC BitBuf_bitCount( ::Falcon::VMachine *vm );
-FALCON_FUNC BitBuf_readBits( ::Falcon::VMachine *vm );
-FALCON_FUNC BitBuf_writeBits( ::Falcon::VMachine *vm );
-FALCON_FUNC BitBuf_sizeBits( ::Falcon::VMachine *vm );
-FALCON_FUNC BitBuf_rposBits( ::Falcon::VMachine *vm );
-FALCON_FUNC BitBuf_wposBits( ::Falcon::VMachine *vm );
-FALCON_FUNC BitBuf_readableBits( ::Falcon::VMachine *vm );
-FALCON_FUNC BitBuf_bits_req( ::Falcon::VMachine *vm );
-
-FALCON_FUNC BufferError_init( ::Falcon::VMachine *vm );
+public:
+   ClassBufferError(): ClassError("BufferError") {}
+   virtual ~ClassBufferError() {}
+   virtual void* createInstance() const { return new BufferError(this); }
+};
 
 
 }} // namespace Falcon::Ext

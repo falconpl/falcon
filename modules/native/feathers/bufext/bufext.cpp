@@ -34,7 +34,9 @@
 */
 
 #include <falcon/module.h>
-#include <falcon/symbol.h>
+#include <falcon/class.h>
+#include <falcon/ov_names.h>
+
 #include "bufext_ext.h"
 #include "bufext_ext.inl"
 #include "bufext_st.h"
@@ -198,57 +200,51 @@ Attempting to change it has no effect, thus, to prevent unexpected behavior, cal
 See the Error class in the core module.
 */
 
-template <typename BUFTYPE> Falcon::Symbol *SimpleRegisterBuf(Falcon::Module *self, const char *name,
-                                                              Falcon::InheritDef *parent)
+template <typename BUFTYPE> Falcon::Class *SimpleRegisterBuf(Falcon::Module *self, Falcon::Class *cls)
 {
-    Falcon::Symbol *cls = self->addClass(name, Falcon::Ext::Buf_init<BUFTYPE>);
-    self->addClassMethod(cls, OVERRIDE_OP_GETINDEX, Falcon::Ext::Buf_getIndex<BUFTYPE>);
-    self->addClassMethod(cls, OVERRIDE_OP_SETINDEX, Falcon::Ext::Buf_setIndex<BUFTYPE>);
-    self->addClassMethod(cls, "setEndian", Falcon::Ext::Buf_setEndian<BUFTYPE>);
-    self->addClassMethod(cls, "getEndian", Falcon::Ext::Buf_getEndian<BUFTYPE>);
-    self->addClassMethod(cls, "size", Falcon::Ext::Buf_size<BUFTYPE>);
-    self->addClassMethod(cls, "resize", Falcon::Ext::Buf_resize<BUFTYPE>);
-    self->addClassMethod(cls, "reserve", Falcon::Ext::Buf_reserve<BUFTYPE>);
-    self->addClassMethod(cls, "capacity", Falcon::Ext::Buf_capacity<BUFTYPE>);
-    self->addClassMethod(cls, "readable", Falcon::Ext::Buf_readable<BUFTYPE>);
-    self->addClassMethod(cls, "growable", Falcon::Ext::Buf_growable<BUFTYPE>);
-    self->addClassMethod(cls, "wpos", Falcon::Ext::Buf_wpos<BUFTYPE>);
-    self->addClassMethod(cls, "rpos", Falcon::Ext::Buf_rpos<BUFTYPE>);
-    self->addClassMethod(cls, "reset", Falcon::Ext::Buf_reset<BUFTYPE>);
-    self->addClassMethod(cls, "write", Falcon::Ext::Buf_write<BUFTYPE, true>);
-    self->addClassMethod(cls, "writeNoNT", Falcon::Ext::Buf_write<BUFTYPE, false>);
-    self->addClassMethod(cls, "writePtr", Falcon::Ext::Buf_writePtr<BUFTYPE>).asSymbol()
+    cls->setConstuctor(  Falcon::Ext::Buf_init<BUFTYPE>, Falcon::String(name)+"._init" );
+
+    cls->addMethod(cls, OVERRIDE_OP_GETINDEX, Falcon::Ext::Buf_getIndex<BUFTYPE>);
+    cls->addMethod(cls, OVERRIDE_OP_SETINDEX, Falcon::Ext::Buf_setIndex<BUFTYPE>);
+    cls->addMethod(cls, "setEndian", Falcon::Ext::Buf_setEndian<BUFTYPE>);
+    cls->addMethod(cls, "getEndian", Falcon::Ext::Buf_getEndian<BUFTYPE>);
+    cls->addMethod(cls, "size", Falcon::Ext::Buf_size<BUFTYPE>);
+    cls->addMethod(cls, "resize", Falcon::Ext::Buf_resize<BUFTYPE>);
+    cls->addMethod(cls, "reserve", Falcon::Ext::Buf_reserve<BUFTYPE>);
+    cls->addMethod(cls, "capacity", Falcon::Ext::Buf_capacity<BUFTYPE>);
+    cls->addMethod(cls, "readable", Falcon::Ext::Buf_readable<BUFTYPE>);
+    cls->addMethod(cls, "growable", Falcon::Ext::Buf_growable<BUFTYPE>);
+    cls->addMethod(cls, "wpos", Falcon::Ext::Buf_wpos<BUFTYPE>);
+    cls->addMethod(cls, "rpos", Falcon::Ext::Buf_rpos<BUFTYPE>);
+    cls->addMethod(cls, "reset", Falcon::Ext::Buf_reset<BUFTYPE>);
+    cls->addMethod(cls, "write", Falcon::Ext::Buf_write<BUFTYPE, true>);
+    cls->addMethod(cls, "writeNoNT", Falcon::Ext::Buf_write<BUFTYPE, false>);
+    cls->addMethod(cls, "writePtr", Falcon::Ext::Buf_writePtr<BUFTYPE>)
         ->addParam("src")->addParam("bytes");
-    self->addClassMethod(cls, "readString", Falcon::Ext::Buf_readString<BUFTYPE>).asSymbol()
+    cls->addMethod(cls, "readString", Falcon::Ext::Buf_readString<BUFTYPE>)
         ->addParam("charSize");
-    self->addClassMethod(cls, "readToBuf", Falcon::Ext::Buf_readToBuf<BUFTYPE>).asSymbol()
+    cls->addMethod(cls, "readToBuf", Falcon::Ext::Buf_readToBuf<BUFTYPE>)
         ->addParam("bytes");
-    self->addClassMethod(cls, "readPtr", Falcon::Ext::Buf_readPtr<BUFTYPE>).asSymbol()
+    cls->addMethod(cls, "readPtr", Falcon::Ext::Buf_readPtr<BUFTYPE>)
         ->addParam("dest")->addParam("bytes");
-    self->addClassMethod(cls, "toMemBuf", Falcon::Ext::Buf_toMemBuf<BUFTYPE>);
-    self->addClassMethod(cls, "ptr", Falcon::Ext::Buf_ptr<BUFTYPE>);
-    self->addClassMethod(cls, "toString", Falcon::Ext::Buf_toString<BUFTYPE>);
+    cls->addMethod(cls, "toMemBuf", Falcon::Ext::Buf_toMemBuf<BUFTYPE>);
+    cls->addMethod(cls, "ptr", Falcon::Ext::Buf_ptr<BUFTYPE>);
+    cls->addMethod(cls, "toString", Falcon::Ext::Buf_toString<BUFTYPE>);
 
-    self->addClassMethod(cls, "wb", Falcon::Ext::Buf_wb<BUFTYPE>);
-    self->addClassMethod(cls, "w8", Falcon::Ext::Buf_w8<BUFTYPE>);
-    self->addClassMethod(cls, "w16", Falcon::Ext::Buf_w16<BUFTYPE>);
-    self->addClassMethod(cls, "w32", Falcon::Ext::Buf_w32<BUFTYPE>);
-    self->addClassMethod(cls, "w64", Falcon::Ext::Buf_w64<BUFTYPE>);
-    self->addClassMethod(cls, "wf", Falcon::Ext::Buf_wf<BUFTYPE>);
-    self->addClassMethod(cls, "wd", Falcon::Ext::Buf_wd<BUFTYPE>);
-    self->addClassMethod(cls, "rb", Falcon::Ext::Buf_rb<BUFTYPE>);
-    self->addClassMethod(cls, "r8", Falcon::Ext::Buf_r8<BUFTYPE>);
-    self->addClassMethod(cls, "r16", Falcon::Ext::Buf_r16<BUFTYPE>);
-    self->addClassMethod(cls, "r32", Falcon::Ext::Buf_r32<BUFTYPE>);
-    self->addClassMethod(cls, "r64", Falcon::Ext::Buf_r64<BUFTYPE>);
-    self->addClassMethod(cls, "rf", Falcon::Ext::Buf_rf<BUFTYPE>);
-    self->addClassMethod(cls, "rd", Falcon::Ext::Buf_rd<BUFTYPE>);
-
-    cls->setWKS(true);
-
-    if(parent)
-        cls->getClassDef()->addInheritance(parent);
-
+    cls->addMethod(cls, "wb", Falcon::Ext::Buf_wb<BUFTYPE>);
+    cls->addMethod(cls, "w8", Falcon::Ext::Buf_w8<BUFTYPE>);
+    cls->addMethod(cls, "w16", Falcon::Ext::Buf_w16<BUFTYPE>);
+    cls->addMethod(cls, "w32", Falcon::Ext::Buf_w32<BUFTYPE>);
+    cls->addMethod(cls, "w64", Falcon::Ext::Buf_w64<BUFTYPE>);
+    cls->addMethod(cls, "wf", Falcon::Ext::Buf_wf<BUFTYPE>);
+    cls->addMethod(cls, "wd", Falcon::Ext::Buf_wd<BUFTYPE>);
+    cls->addMethod(cls, "rb", Falcon::Ext::Buf_rb<BUFTYPE>);
+    cls->addMethod(cls, "r8", Falcon::Ext::Buf_r8<BUFTYPE>);
+    cls->addMethod(cls, "r16", Falcon::Ext::Buf_r16<BUFTYPE>);
+    cls->addMethod(cls, "r32", Falcon::Ext::Buf_r32<BUFTYPE>);
+    cls->addMethod(cls, "r64", Falcon::Ext::Buf_r64<BUFTYPE>);
+    cls->addMethod(cls, "rf", Falcon::Ext::Buf_rf<BUFTYPE>);
+    cls->addMethod(cls, "rd", Falcon::Ext::Buf_rd<BUFTYPE>);
     return cls;
 }
 
@@ -259,45 +255,43 @@ Falcon::Module *bufext_module_init(void)
    // initialize the module
    Falcon::Module *self = new Falcon::Module();
    self->name( "bufext" );
-   self->language( "en_US" );
-   self->engineVersion( FALCON_VERSION_NUM );
-   self->version( VERSION_MAJOR, VERSION_MINOR, VERSION_REVISION );
-
-   //============================================================
-   // Here declare the international string table implementation
-   //
-   #include "bufext_st.h"
+   //self->engineVersion( FALCON_VERSION_NUM );
+   //self->version( VERSION_MAJOR, VERSION_MINOR, VERSION_REVISION );
 
    //============================================================
    // API declarations
    //
-   Falcon::Symbol *baseSym = SimpleRegisterBuf<Falcon::ByteBuf>(self, "ByteBuf", NULL);
-   self->addClassProperty( baseSym, "NATIVE_ENDIAN").setInteger( (Falcon::int64)Falcon::ENDIANMODE_NATIVE );
-   self->addClassProperty( baseSym, "LITTLE_ENDIAN").setInteger( (Falcon::int64)Falcon::ENDIANMODE_LITTLE );
-   self->addClassProperty( baseSym, "BIG_ENDIAN")   .setInteger( (Falcon::int64)Falcon::ENDIANMODE_BIG );
-   self->addClassProperty( baseSym, "REVERSE_ENDIAN").setInteger( (Falcon::int64)Falcon::ENDIANMODE_REVERSE );
+   Falcon::Class *baseSym = new ClassByteBuf();
 
-   SimpleRegisterBuf<Falcon::ByteBufNativeEndian>  (self, "ByteBufNativeEndian", new Falcon::InheritDef(baseSym));
-   SimpleRegisterBuf<Falcon::ByteBufLittleEndian>  (self, "ByteBufLittleEndian", new Falcon::InheritDef(baseSym));
-   SimpleRegisterBuf<Falcon::ByteBufBigEndian>     (self, "ByteBufBigEndian"   , new Falcon::InheritDef(baseSym));
-   SimpleRegisterBuf<Falcon::ByteBufReverseEndian> (self, "ByteBufReverseEndian",new Falcon::InheritDef(baseSym));
+   SimpleRegisterBuf<Falcon::ByteBuf>(self, baseSym);
+   baseSym->addConstant( "NATIVE_ENDIAN", (Falcon::int64)Falcon::ENDIANMODE_NATIVE );
+   baseSym->addConstant( "LITTLE_ENDIAN", (Falcon::int64)Falcon::ENDIANMODE_LITTLE );
+   baseSym->addConstant( "BIG_ENDIAN",    (Falcon::int64)Falcon::ENDIANMODE_BIG );
+   baseSym->addConstant( "REVERSE_ENDIAN",(Falcon::int64)Falcon::ENDIANMODE_REVERSE );
 
-   Falcon::Symbol *bitcls = SimpleRegisterBuf<Falcon::BitBuf>(self, "BitBuf",    new Falcon::InheritDef(baseSym));
-   self->addClassMethod(bitcls, "bitCount", Falcon::Ext::BitBuf_bitCount);
-   self->addClassMethod(bitcls, "writeBits", Falcon::Ext::BitBuf_writeBits);
-   self->addClassMethod(bitcls, "readBits", Falcon::Ext::BitBuf_readBits);
-   self->addClassMethod(bitcls, "sizeBits", Falcon::Ext::BitBuf_sizeBits);
-   self->addClassMethod(bitcls, "rposBits", Falcon::Ext::BitBuf_rposBits);
-   self->addClassMethod(bitcls, "wposBits", Falcon::Ext::BitBuf_wposBits);
-   self->addClassMethod(bitcls, "readableBits", Falcon::Ext::BitBuf_readableBits);
+   Falcon::Class *cls = new ClassByteBufNativeEndian(baseSym);
+   SimpleRegisterBuf<Falcon::ByteBufNativeEndian>  (self, cls);
+   cls = new ClassByteBufLittleEndian(baseSym);
+   SimpleRegisterBuf<Falcon::ByteBufLittleEndian>  (self, "ByteBufLittleEndian", cls);
+   cls = new ClassByteBufBigEndian(baseSym);
+   SimpleRegisterBuf<Falcon::ByteBufBigEndian>     (self, "ByteBufBigEndian"   , cls);
+   cls = new ClassByteByteBufReverseEndian(baseSym);
+   SimpleRegisterBuf<Falcon::ByteBufReverseEndian> (self, "ByteBufReverseEndian", cls);
+
+   Falcon::Class *bitcls = new ClassBitBuf(baseSym);
+   SimpleRegisterBuf<Falcon::BitBuf>(self, bitcls);
+   bitcls->addMethod( "bitCount", Falcon::Ext::BitBuf_bitCount, "bits:[N]" );
+   bitcls->addMethod( "writeBits", Falcon::Ext::BitBuf_writeBits, "..." );
+   bitcls->addMethod( "readBits", Falcon::Ext::BitBuf_readBits, "neg:[B]" );
+   bitcls->addMethod( "sizeBits", Falcon::Ext::BitBuf_sizeBits, "" );
+   bitcls->addMethod( "rposBits", Falcon::Ext::BitBuf_rposBits, "bits:[N]" );
+   bitcls->addMethod( "wposBits", Falcon::Ext::BitBuf_wposBits, "bits:[N]" );
+   bitcls->addMethod( "readableBits", Falcon::Ext::BitBuf_readableBits, "" );
 
    // static BitBuf methods
-   self->addClassMethod(bitcls, "bitsForInt", Falcon::Ext::BitBuf_bits_req);
+   bitcls->addMethod("bitsForInt", Falcon::Ext::BitBuf_bits_req, "n:[N]", true);
 
-   Falcon::Symbol *error_class = self->addExternalRef( "Error" ); // it's external
-   Falcon::Symbol *buferr_cls = self->addClass( "BufferError", Falcon::Ext::BufferError_init );
-   buferr_cls->setWKS( true );
-   buferr_cls->getClassDef()->addInheritance(  new Falcon::InheritDef( error_class ) );
+   self->addMantra( new ClassBufferError, true );
 
    return self;
 }

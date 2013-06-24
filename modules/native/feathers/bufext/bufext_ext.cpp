@@ -37,15 +37,17 @@
 */
 
 #include <falcon/engine.h>
+#include <falcon/errors/paramerror.h>
+
 #include "bufext_ext.h"
 #include "bufext_st.h"
 
 namespace Falcon { namespace Ext {
 
 
-CoreString *ByteArrayToHex(byte *arr, uint32 size)
+String *ByteArrayToHex(byte *arr, uint32 size)
 {
-    CoreString *str = new CoreString; // each byte will be encoded to 2 chars
+    String *str = new String; // each byte will be encoded to 2 chars
     str->reserve(size * 2);
 
     for(uint32 i = 0; i < size; i++)
@@ -73,19 +75,19 @@ Values > 64 are not recommended to use as they make no sense.
     bb.bitCount(3).writeBits(7,4,3).bitCount(5).writeBits(30,20,10) // write with variable bit sizes
 @endcode
 */
-FALCON_FUNC BitBuf_bitCount( ::Falcon::VMachine *vm )
+FALCON_FUNC BitBuf_bitCount( ::Falcon::VMContext *ctx, int32 )
 {
-    BitBuf& buf = vmGetBuf<BitBuf>(vm);
+    BitBuf& buf = vmGetBuf<BitBuf>(ctx);
 
-    if(Item *p0 = vm->param(0))
+    if(Item *p0 = ctx->param(0))
     {
         if(uint32 bc = (uint32)p0->forceIntegerEx())
             buf.bitcount(bc);
-        vm->retval(vm->self());
+        ctx->returnFrame(ctx->self());
     }
     else
     {
-        vm->retval((int64)buf.bitcount());
+        ctx->returnFrame((int64)buf.bitcount());
     }
 }
 
@@ -109,18 +111,18 @@ To restore a negative number, use readBits(true).
     bb.bitCount(3).writeBits(7,4,3).bitCount(5).writeBits(30,20,10) // write with variable bit sizes
 @endcode
 */
-FALCON_FUNC BitBuf_writeBits( ::Falcon::VMachine *vm )
+FALCON_FUNC BitBuf_writeBits( ::Falcon::VMContext *ctx, int32 )
 {
-    BitBuf& buf = vmGetBuf<BitBuf>(vm);
-    register uint32 size = uint32(vm->paramCount());
+    BitBuf& buf = vmGetBuf<BitBuf>(ctx);
+    register uint32 size = uint32(ctx->paramCount());
 
     for(uint32 i = 0; i < size; i++)
     {
-        Item *itm = vm->param(i);
+        Item *itm = ctx->param(i);
         buf << itm->forceInteger(); // << operator makes it append with chosen bit size
     }
 
-    vm->retval(vm->self());
+    ctx->returnFrame(ctx->self());
 }
 
 /*#
@@ -144,17 +146,17 @@ to restore a previously written negative number.
 
 @note Unlike r8()..r64(), the boolean parameter for this method *forces* a negative number.
 */
-FALCON_FUNC BitBuf_readBits( ::Falcon::VMachine *vm )
+FALCON_FUNC BitBuf_readBits( ::Falcon::VMContext *ctx, int32 pCount )
 {
-    BitBuf& buf = vmGetBuf<BitBuf>(vm);
+    BitBuf& buf = vmGetBuf<BitBuf>(ctx);
 
     int64 val;
     buf >> val; // >> operator makes it read with chosen bit size
 
-    if(vm->paramCount() && vm->param(0)->isTrue())
+    if( pCount != 0 && ctx->param(0)->isTrue())
         val |= (uint64(-1) << buf.bitcount());
 
-    vm->retval(val);
+    ctx->returnFrame(val);
 }
 
 /*#
@@ -165,10 +167,10 @@ FALCON_FUNC BitBuf_readBits( ::Falcon::VMachine *vm )
 This function returns or sets the BitBuf size precisely, which can be calculated as
 (size() * 8) + X, where X is in [0...7].
 */
-FALCON_FUNC BitBuf_sizeBits( ::Falcon::VMachine *vm )
+FALCON_FUNC BitBuf_sizeBits( ::Falcon::VMContext *ctx, int32 )
 {
-    BitBuf& buf = vmGetBuf<BitBuf>(vm);
-    vm->retval((int64)buf.size_bits());
+    BitBuf& buf = vmGetBuf<BitBuf>(ctx);
+    ctx->returnFrame((int64)buf.size_bits());
 }
 
 /*#
@@ -179,18 +181,18 @@ FALCON_FUNC BitBuf_sizeBits( ::Falcon::VMachine *vm )
 This function returns or sets the BitBuf read position precisely, which can be calculated as
 (rpos() * 8) + X, where X is in [0...7].
 */
-FALCON_FUNC BitBuf_rposBits( ::Falcon::VMachine *vm )
+FALCON_FUNC BitBuf_rposBits( ::Falcon::VMContext *ctx, int32 )
 {
-    BitBuf& buf = vmGetBuf<BitBuf>(vm);
+    BitBuf& buf = vmGetBuf<BitBuf>(ctx);
 
-    if(Item *p0 = vm->param(0))
+    if(Item *p0 = ctx->param(0))
     {
         buf.rpos_bits((uint32)p0->forceIntegerEx());
-        vm->retval(vm->self());
+        ctx->returnFrame(ctx->self());
     }
     else
     {
-        vm->retval((int64)buf.rpos_bits());
+        ctx->returnFrame((int64)buf.rpos_bits());
     }
 }
 
@@ -202,18 +204,18 @@ FALCON_FUNC BitBuf_rposBits( ::Falcon::VMachine *vm )
 This function returns the BitBuf write position precisely, which can be calculated as
 (wpos() * 8) + X, where X is in [0...7].
 */
-FALCON_FUNC BitBuf_wposBits( ::Falcon::VMachine *vm )
+FALCON_FUNC BitBuf_wposBits( ::Falcon::VMContext *ctx, int32 )
 {
-    BitBuf& buf = vmGetBuf<BitBuf>(vm);
+    BitBuf& buf = vmGetBuf<BitBuf>(ctx);
 
-    if(Item *p0 = vm->param(0))
+    if(Item *p0 = ctx->param(0))
     {
         buf.wpos_bits((uint32)p0->forceIntegerEx());
-        vm->retval(vm->self());
+        ctx->returnFrame(ctx->self());
     }
     else
     {
-        vm->retval((int64)buf.wpos_bits());
+        ctx->returnFrame((int64)buf.wpos_bits());
     }
 }
 
@@ -225,10 +227,10 @@ FALCON_FUNC BitBuf_wposBits( ::Falcon::VMachine *vm )
 This function returns the remaining bits precisely, which can be calculated as
 (readable() * 8) + X, where X is in [0...7].
 */
-FALCON_FUNC BitBuf_readableBits( ::Falcon::VMachine *vm )
+FALCON_FUNC BitBuf_readableBits( ::Falcon::VMContext *ctx, int32 )
 {
-    BitBuf& buf = vmGetBuf<BitBuf>(vm);
-    vm->retval(int64(buf.size_bits() - buf.rpos_bits()));
+    BitBuf& buf = vmGetBuf<BitBuf>(ctx);
+    ctx->returnFrame(int64(buf.size_bits() - buf.rpos_bits()));
 }
 
 /*#
@@ -241,29 +243,19 @@ Calculates how many bits are required to hold the value of the passed integer wi
 
 @note A negative number can be 1 greater then its corresponding positive number, and yield the same result (-8 needs 3 bits, where +8 needs 4, for example)
 */
-FALCON_FUNC BitBuf_bits_req( ::Falcon::VMachine *vm )
+FALCON_FUNC BitBuf_bits_req( ::Falcon::VMContext *ctx, int32 pCount )
 {
-    if(!vm->paramCount())
+    if(!pCount)
     {
         throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
-            .origin( e_orig_mod ).extra( "I" ) );
+            .origin( ErrorParam::e_orig_mod ).extra( "I" ) );
     }
-    int64 i = vm->param(0)->forceIntegerEx();
+    int64 i = ctx->param(0)->forceIntegerEx();
     if(i < 0)
-        vm->retval(int64(BitBuf::bits_req(uint64(~(i - 1)) - 1))); // make number positive and fix 2-complement off-by-1
+        ctx->returnFrame(int64(BitBuf::bits_req(uint64(~(i - 1)) - 1))); // make number positive and fix 2-complement off-by-1
     else
-        vm->retval(int64(BitBuf::bits_req(uint64(i))));
+        ctx->returnFrame(int64(BitBuf::bits_req(uint64(i))));
 }
-
-FALCON_FUNC BufferError_init( ::Falcon::VMachine *vm )
-{
-    CoreObject *obj = vm->self().asObject();
-    if(!obj->getUserData())
-        obj->setUserData( new BufferError );
-
-    ::Falcon::core::Error_init( vm );
-}
-
 
 }} // namespace Falcon::Ext
 

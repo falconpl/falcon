@@ -30,7 +30,6 @@ ImportDef::ImportDef():
    m_bIsLoad( false ),
    m_bIsUri( false ),
    m_bIsNS( false ),
-   m_bIsDirect( false ),
    m_isProcessed(false),
    m_isLoaded(false),
    m_modreq(0),
@@ -44,7 +43,6 @@ ImportDef::ImportDef( const String& path, bool isFsPath, const String& symName,
    m_bIsLoad( false ),
    m_bIsUri( false ),
    m_bIsNS( false ),
-   m_bIsDirect( false ),
    m_isProcessed(false),
    m_isLoaded(false),
    m_modreq(0),
@@ -197,30 +195,6 @@ void ImportDef::targetSymbol( int i, String& target ) const
 }
 
 
-void ImportDef::setDirect( const String& symName, const String& modName, bool bIsURI )
-{
-   m_bIsDirect = true;
-   if( m_symList == 0 )
-   {
-      m_symList = new SymbolList;
-   }
-   else
-   {
-      m_symList->clear();
-   }
-     
-   m_symList->push_back( symName );
-   m_module = modName;
-   m_bIsUri = bIsURI;
-} 
-   
-   
-void ImportDef::setDirect( const String& symName )
-{
-   setDirect( symName, "", false );
-}
-
-
 bool ImportDef::isValid() const
 {
    if( m_bIsLoad ) {
@@ -286,7 +260,6 @@ void ImportDef::store(DataWriter* wr) const
    wr->write( m_bIsLoad );
    wr->write( m_bIsUri );
    wr->write( m_bIsNS );
-   wr->write( m_bIsDirect );
 
    wr->write( m_module );
    wr->write( m_tgNameSpace );
@@ -309,7 +282,6 @@ void ImportDef::restore( DataReader* rd )
    rd->read( m_bIsLoad );
    rd->read( m_bIsUri );
    rd->read( m_bIsNS );
-   rd->read( m_bIsDirect );
 
    rd->read( m_module );
    rd->read( m_tgNameSpace );

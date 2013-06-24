@@ -35,7 +35,7 @@
 #define DEFALUT_FALCON_MODULE_INIT_NAME "falcon_module_init"
 
 #define FALCON_MODULE_DECL \
-   FALCON_MODULE_TYPE DEFALUT_FALCON_MODULE_onLinkComplete()
+   FALCON_MODULE_TYPE DEFALUT_FALCON_MODULE_INIT()
 
 namespace Falcon {
 
@@ -471,23 +471,6 @@ public:
     */
    
    typedef Error* (*t_func_import_req)( const Module* sourceModule, const String& sourceName, Module* targetModule, const Item& value, const Variable* targetVar );
-   
-   /** Adds an import request.
-    \param cbFunc a t_func_import_req callback that will be notified when this
-      symbol is found (if ever). 
-    \param symName the symbol to be searched.
-    \param sourceMod The module that should provide the required symbol, or ""
-           if the symbol should be searched in the global export table.
-    \param bModIsPath True if sourceMod is a location or URI, false if it's
-           a logical name.
-               
-    This method requests that a certain callback is invoked when a certain dependency is rsolved.
-    */
-   void addImportRequest( t_func_import_req cbFunc, const String& symName, 
-               const String& sourceMod="", bool bModIsPath=false );
-   
-   void addImportRequest( Requirement* req, 
-               const String& sourceMod="", bool bModIsPath=false );
 
    /** Reads the exportAll flag.
     \return True if this module wants to export all the non-private symbols.
@@ -623,6 +606,7 @@ public:
     * of the Module class might dynamically provide values as they are requested by importers.
     */
    virtual Item* resolveLocally( Symbol* sym );
+   Item* resolveLocally( const String& symName );
 
    /** Performs resolution of non-locally defined global symbols.
     * \param The symbol to be resolved.
@@ -637,6 +621,7 @@ public:
     * modules.
     */
    Item* resolveGlobally( Symbol* sym );
+   Item* resolveGlobally( const String& name );
 
    /** Resolves a symbol in this module.
     * \param name the name of the symbol to be resolved.

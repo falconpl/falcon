@@ -32,11 +32,6 @@ namespace Falcon {
 VFSModule::VFSModule():
    Module("vfs")
 {
-   // We want the URI core class.
-   addImportRequest( &onURIResolved, "URI" );
-   // and, of course, we need the stream class.
-   addImportRequest( &onStreamResolved, "Stream" );
-   
    *this
       // Standard functions
       << new Ext::ClassVFS
@@ -64,42 +59,31 @@ VFSModule::VFSModule():
    //this->addConstant( "C_RAW", (int64)FALCON_VFS_MODE_FLAG_RAW );
 }
 
-VFSModule::~VFSModule()
-{}
+void VFSModule::onLinkComplete()
+{
+   Item* i_uriClass = resolveGlobally("URI");
+   Item* i_streamClass = resolveGlobally("Stream");
 
-Falcon::Error* VFSModule::onURIResolved( const Module*, const String&, Module* targetModule, const Item& value, const Variable* )
-{   
-   // printl should really be a function in a global symbol ,but...
-   if( ! value.isClass() )
+   if( i_uriClass == 0 || ! i_uriClass->isClass() )
    {
-      return new Falcon::LinkError( Falcon::ErrorParam( 
-            Falcon::e_link_error, __LINE__, targetModule->name() )
+      throw new Falcon::LinkError( Falcon::ErrorParam( Falcon::e_link_error, __LINE__, SRC )
+          .module(this->name())
          .extra( "Class URI not found" ) );
    }
 
-   // We know the requester is an instance of our module.
-   static_cast<VFSModule*>(targetModule)->m_uriClass = (Class*)value.asInst();
-
-   // we have no error to signal. 
-   return 0;
-}
-
-Falcon::Error* VFSModule::onStreamResolved( const Module*, const String&, Module* targetModule, const Item& value, const Variable* )
-{   
-   // printl should really be a function in a global symbol ,but...
-   if( ! value.isClass() )
+   if( i_streamClass == 0 || ! i_streamClass->isClass() )
    {
-      return new Falcon::LinkError( Falcon::ErrorParam( 
-            Falcon::e_link_error, __LINE__, targetModule->name() )
+      throw new Falcon::LinkError( Falcon::ErrorParam( Falcon::e_link_error, __LINE__, name() )
+         .module(this->name())
          .extra( "Class Stream not found" ) );
    }
 
-   // We know the requester is an instance of our module.
-   static_cast<VFSModule*>(targetModule)->m_streamClass = (Class*)value.asInst();
-
-   // we have no error to signal. 
-   return 0;
+  m_uriClass = static_cast<Class*>(i_uriClass->asInst());
+  m_streamClass = static_cast<Class*>(i_streamClass->asInst());
 }
+
+VFSModule::~VFSModule()
+{}
 
 }
 
