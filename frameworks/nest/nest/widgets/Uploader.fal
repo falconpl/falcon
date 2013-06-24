@@ -24,6 +24,7 @@ import JSP from nest.widgets.widget as JSP
 */
 class UploaderInput(id) from Widget(id)
    tag = "input"
+   isSelfClosing = true
    init
       // have the name value automatically set
       self.props = ["name" => nil, "type" => "file"]

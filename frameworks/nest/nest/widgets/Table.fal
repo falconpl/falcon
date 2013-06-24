@@ -77,7 +77,7 @@ class TableColumn( name, heading, fmt, nullrep )
       recs = strSplit( initData, "|" )
       rlen = recs.len()
       self.fieldName = recs[0]
-      self.heading = rlen > 1 ? t_(recs[1]) : recs[0]
+      self.heading = rlen > 1 ? recs[1] : recs[0]
       if rlen > 2: self.format = rlen[2]
       if rlen > 3: self.nullRep = rlen[3]
    end
