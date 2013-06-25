@@ -59,7 +59,7 @@ VFSModule::VFSModule():
    //this->addConstant( "C_RAW", (int64)FALCON_VFS_MODE_FLAG_RAW );
 }
 
-void VFSModule::onLinkComplete()
+void VFSModule::onLinkComplete( VMContext* )
 {
    Item* i_uriClass = resolveGlobally("URI");
    Item* i_streamClass = resolveGlobally("Stream");

@@ -32,7 +32,7 @@ public:
    Class* uriClass() const { return m_uriClass; }
    Class* streamClass() const { return m_streamClass; }
    
-   void onLinkComplete();
+   virtual void onLinkComplete( VMContext* ctx );
 private:
    Class* m_uriClass;
    Class* m_streamClass;
