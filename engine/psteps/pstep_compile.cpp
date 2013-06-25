@@ -109,6 +109,7 @@ void PStepCompile::apply_( const PStep* ps, VMContext* ctx )
 
    CodeFrame& curcode = ctx->currentCode();
    int status = ctx->currentCode().m_seqId;
+   ctx->currentCode().m_seqId = 0; // always reset prior next operation.
    String tgt;
    String prompt = comp->isComplete() ? ">>> " : "... ";
 

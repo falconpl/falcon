@@ -316,6 +316,17 @@ public:
 
    ModRequest* addModRequest( const String& name, bool isUri, bool isLoad = false );
 
+   /** Gets the count of external module dependencies in this module.
+    * \return count of external module dependencies statically declared by this module.
+    */
+   length_t modRequestCount() const;
+
+   /** Gets the nth external module dependency in this module.
+    * \param id position of the module dependency.
+    * \return 0 if id is out of range, a valid ModRequest* otherwise.
+    */
+   ModRequest* getModRequest(length_t id) const;
+
    /** Callback invoked by the engine as soon as the module is considered "live".
     *
     * This method is invoked when a module is inserted in a module space. This is the moment
@@ -363,6 +374,8 @@ public:
 
    /** Callback invoked by the engine after the link process is complete.
     *
+    * \param ctx The context where the link has been completed.
+    *
     * This method is called when the static link process is considered complete.
     *
     * This happens when all the statically declared ModRequest have been honored (all
@@ -378,7 +391,14 @@ public:
     * \note The method can throw an error if, for any reason, the initialization of the module
     * can't be performed.
     */
-   virtual void onLinkComplete();
+   virtual void onLinkComplete( VMContext* ctx );
+
+   /** Invoked by the loader when all the init functions and the main function have been called.
+    *
+    * \note The loader may skip calling the main function if this is a main module, or if it is
+    * explicitly required not to call the main function at load.
+    */
+   virtual void onStartupComplete( VMContext* ctx );
 
    /** Perform live module initialization on a virtual machine.
     * \param VMContext The context where the module is invoked.

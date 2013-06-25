@@ -718,12 +718,34 @@ bool Module::addImport( ImportDef* def, Error*& error, int32 line )
 ModRequest* Module::addModRequest( const String& name, bool isUri, bool isLoad )
 {
    // add the module request
+   Private::ModReqMap::iterator pos = _p->m_mrmap.find(name);
+   // already in?
+   if( pos != _p->m_mrmap.end() )
+   {
+      return pos->second;
+   }
+
+   // No -- add it anew.
    ModRequest* req = new ModRequest( name, isUri, isLoad );
    _p->m_mrlist.push_back(req);
    _p->m_mrmap[name] = req;
    return req;
 }
 
+length_t Module::modRequestCount() const
+{
+   return _p->m_mrlist.size();
+}
+
+ModRequest* Module::getModRequest(length_t id) const
+{
+   if( id >= _p->m_mrlist.size() )
+   {
+      return 0;
+   }
+
+   return _p->m_mrlist[id];
+}
 
 void Module::onLoad()
 {
@@ -737,7 +759,12 @@ void Module::onImportResolved( ImportDef*, Symbol*, Item* )
 {
 }
 
-void Module::onLinkComplete()
+void Module::onLinkComplete( VMContext* )
+{
+}
+
+
+void Module::onStartupComplete( VMContext* )
 {
 }
 

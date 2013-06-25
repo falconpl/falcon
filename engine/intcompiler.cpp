@@ -324,6 +324,8 @@ void IntCompiler::setCompilationContext( Function* function, Module* mod, VMCont
 
 IntCompiler::t_compile_status IntCompiler::compileNext( TextReader* input, SynTree*& code, Mantra*& definition )
 {
+   MESSAGE( "IntCompiler::compileNext" );
+
    m_lexer->setReader(input);
    t_compile_status status;
 
@@ -371,7 +373,7 @@ IntCompiler::t_compile_status IntCompiler::compileNext( TextReader* input, SynTr
          m_currentTree = 0;
       }
       else {
-         status= e_definition;
+         status= m_currentMantra == 0 ? e_incomplete : e_definition;
          definition = m_currentMantra;
       }
    }

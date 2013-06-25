@@ -46,6 +46,379 @@
 
 namespace Falcon {
    
+//========================================================================
+// PSteps used by ModSpace
+//========================================================================
+
+class ModSpace::PStepManagedLoadedModule: public PStep
+{
+public:
+   PStepManagedLoadedModule( ModSpace* owner ): m_owner( owner ) {
+      apply = apply_;
+   }
+   virtual ~PStepManagedLoadedModule() {};
+   virtual void describeTo( String& str, int ) const { str = "PStepManagedLoadedModule"; }
+
+private:
+   static void apply_( const PStep* self, VMContext* ctx );
+   ModSpace* m_owner;
+};
+
+class ModSpace::PStepResolveModReq: public PStep
+{
+public:
+   PStepResolveModReq( ModSpace* owner ): m_owner( owner ) {
+      apply = apply_;
+   }
+   virtual ~PStepResolveModReq() {};
+   virtual void describeTo( String& str, int ) const { str = "PStepResolveModReq"; }
+
+private:
+   static void apply_( const PStep* self, VMContext* ctx );
+   ModSpace* m_owner;
+};
+
+class ModSpace::PStepStoreModReq: public PStep
+{
+public:
+   PStepStoreModReq( ModSpace* owner ): m_owner( owner ) {
+      apply = apply_;
+   }
+   virtual ~PStepStoreModReq() {};
+   virtual void describeTo( String& str, int ) const { str = "PStepStoreModReq"; }
+
+private:
+   static void apply_( const PStep* self, VMContext* ctx );
+   ModSpace* m_owner;
+};
+
+class ModSpace::PStepSetupModule: public PStep
+{
+public:
+   PStepSetupModule( ModSpace* owner ): m_owner( owner ) {
+      apply = apply_;
+   }
+   virtual ~PStepSetupModule() {};
+   virtual void describeTo( String& str, int ) const { str = "PStepSetupModule"; }
+
+private:
+   static void apply_( const PStep* self, VMContext* ctx );
+   ModSpace* m_owner;
+};
+
+class ModSpace::PStepCompleteLoad: public PStep
+{
+public:
+   PStepCompleteLoad( ModSpace* owner ): m_owner( owner ) {
+      apply = apply_;
+   }
+   virtual ~PStepCompleteLoad() {};
+   virtual void describeTo( String& str, int ) const { str = "PStepCompleteLoad"; }
+
+private:
+   static void apply_( const PStep* self, VMContext* ctx );
+   ModSpace* m_owner;
+};
+
+
+class ModSpace::PStepDisposeLoad: public PStep
+{
+public:
+   PStepDisposeLoad( ModSpace* owner ): m_owner( owner ) {
+      apply = apply_;
+   }
+   virtual ~PStepDisposeLoad() {};
+   virtual void describeTo( String& str, int ) const { str = "PStepDisposeLoad"; }
+
+private:
+   static void apply_( const PStep* self, VMContext* ctx );
+   ModSpace* m_owner;
+};
+
+class ModSpace::PStepSaveDynMantra: public PStep
+{
+public:
+   PStepSaveDynMantra( ModSpace* owner ): m_owner( owner ) {
+      apply = apply_;
+   }
+   virtual ~PStepSaveDynMantra() {};
+   virtual void describeTo( String& str, int ) const { str = "PStepSaveDynMantra"; }
+
+private:
+   static void apply_( const PStep* self, VMContext* ctx );
+   ModSpace* m_owner;
+};
+
+
+void ModSpace::PStepManagedLoadedModule::apply_( const PStep* self, VMContext* ctx )
+{
+   Error* error = 0;
+   const ModSpace::PStepManagedLoadedModule* pstep = static_cast<const ModSpace::PStepManagedLoadedModule* >(self);
+
+   CodeFrame& current = ctx->currentCode();
+   int& seqId = current.m_seqId;
+   // the module we're working on is at top data stack.
+   Module* mod = static_cast<Module*>(ctx->topData().asInst());
+   ModSpace* ms = pstep->m_owner;
+
+   TRACE( "ModSpace::PStepManagedLoadedModule::apply_ - %d on module %s", seqId, mod->name().c_ize() );
+
+   // we don't need to be around anymore
+   ctx->popCode();
+   // the code below us should be PStepSetupModule
+
+   bool isLoad = (seqId & 1) != 0;
+   bool isMain = (seqId & 2) != 0;
+   mod->setMain( isMain );
+   mod->usingLoad( isLoad );
+
+   // store the module
+   ms->store( mod );
+
+   // perform exports, so imports can find them on need.
+   if( isLoad ) {
+      ms->exportFromModule( mod, error );
+
+      if( error != 0 ) {
+         throw error;
+      }
+   }
+
+   //do we have some dependency?
+   if( mod->modRequestCount() != 0 )
+   {
+      // let's manage them.
+      ctx->stepIn( ms->m_stepResolveModReq );
+   }
+}
+
+
+void ModSpace::PStepResolveModReq::apply_( const PStep* self, VMContext* ctx )
+{
+  const ModSpace::PStepResolveModReq* pstep = static_cast<const ModSpace::PStepResolveModReq* >(self);
+
+  CodeFrame& current = ctx->currentCode();
+  int& seqId = current.m_seqId;
+  // the module we're working on is at top data stack.
+  Module* mod = static_cast<Module*>(ctx->topData().asInst());
+  ModSpace* ms = pstep->m_owner;
+
+  TRACE( "ModSpace::PStepResolveModReq::apply_ - step %d on module %s", seqId, mod->name().c_ize() );
+
+  int depCount = (int) mod->modRequestCount();
+  while( seqId < depCount )
+  {
+     // get the required dependency
+     ModRequest* mreq = mod->getModRequest(seqId);
+
+     TRACE1( "ModSpace::PStepResolveModReq::apply_ - Checking dep %d: %s(%s %s)%s",
+              seqId,
+              mreq->name().c_ize(),
+              (mreq->isUri() ? "URI" : "path"),
+              (mreq->isLoad() ? "load" : "import"),
+              (mreq->module() == 0 ? "": " already resolved" )
+              );
+
+     // prepare for next loop
+     ++seqId;
+
+     // still unresolved?
+     if( mreq->module() == 0 )
+     {
+        // are we lucky?
+        Module* found = 0;
+        if( mreq->isUri() ) {
+           found = ms->findByURI( mreq->name() );
+        }
+        else {
+           found = ms->findByName( mreq->name() );
+        }
+
+        if( found != 0 )
+        {
+           mreq->module( found );
+           mod->onModuleResolved(mreq);
+        }
+        else {
+           // start the load process.
+           ctx->pushCode( ms->m_stepStoreModReq );
+           ctx->currentCode().m_seqId = seqId - 1;
+           ms->loadModuleInContext( mreq->name(), mreq->isUri(), mreq->isLoad(), false, ctx, mod, true );
+           return;
+        }
+     }
+  }
+
+  // we did our job.
+  ctx->popCode();
+}
+
+
+void ModSpace::PStepStoreModReq::apply_( const PStep*, VMContext* ctx )
+{
+  CodeFrame& current = ctx->currentCode();
+  int& seqId = current.m_seqId;
+  // the module we're working on is at top data stack.
+  Module* loadedMod = static_cast<Module*>(ctx->topData().asInst());
+  ctx->popData();
+  Module* sourceMod = static_cast<Module*>(ctx->topData().asInst());
+
+  TRACE( "ModSpace::PStepResolveModReq::apply_ - step %d on module %s <- %s ", seqId,
+           sourceMod->name().c_ize(), loadedMod->name().c_ize() );
+
+  // save in the correct position.
+  ModRequest* req = sourceMod->getModRequest(seqId);
+  fassert( req != 0 );
+  req->module(loadedMod);
+  // abandon the extra reference.
+  loadedMod->decref();
+  // signal the loader about the news
+  sourceMod->onModuleResolved(req);
+
+  // we're not needed anymore.
+  ctx->popCode();
+}
+
+
+void ModSpace::PStepSetupModule::apply_( const PStep*, VMContext* ctx )
+{
+   static PStep* popStep = &Engine::instance()->stdSteps()->m_pop;
+
+   // the module we're working on is at top data stack.
+   Module* mod = static_cast<Module*>(ctx->topData().asInst());
+
+   TRACE( "ModSpace::PStepSetupModule::apply_ - module %s ", mod->name().c_ize() );
+
+   // we're not needed anymore.
+   ctx->popCode();
+
+   // resolve all the import defs.
+   Error* error = 0;
+   if( ! mod->resolveImports( error ) )
+   {
+      throw error;
+   }
+
+   // Give the module the good news.
+   mod->onLinkComplete( ctx );
+
+   // Eventually ready the main functions.
+   if( ! mod->isMain() && mod->getMainFunction() != 0 )
+   {
+      // we won't need the return value of the main function.
+      ctx->pushCode( popStep );
+      ctx->callInternal(mod->getMainFunction(), 0 );
+   }
+
+   // prepare the inits of this module
+   mod->startup( ctx );
+
+   // on exit, the init routines + the main function will be executed as needed.
+}
+
+
+void ModSpace::PStepDisposeLoad::apply_( const PStep*, VMContext* ctx )
+{
+  // the module we're working on is at top data stack.
+  Module* mod = static_cast<Module*>(ctx->topData().asInst());
+
+  TRACE( "ModSpace::PStepDisposeLoad::apply_ - module %s ", mod->name().c_ize() );
+
+  // we're not needed anymore.
+  ctx->popCode();
+
+  // Give the module the good news.
+  mod->onStartupComplete( ctx );
+
+  // remove the module from the stack.
+  mod->decref();
+  ctx->popData();
+}
+
+void ModSpace::PStepCompleteLoad::apply_( const PStep*, VMContext* ctx )
+{
+  // the module we're working on is at top data stack.
+  Module* mod = static_cast<Module*>(ctx->topData().asInst());
+
+  TRACE( "ModSpace::PStepCompleteLoad::apply_ - module %s ", mod->name().c_ize() );
+
+  // we're not needed anymore.
+  ctx->popCode();
+
+  // Give the module the good news.
+  mod->onStartupComplete( ctx );
+
+  // keep the module in the stack, something else needs it.
+}
+
+
+
+void ModSpace::PStepSaveDynMantra::apply_( const PStep* self, VMContext* ctx )
+{
+   static Engine* eng = Engine::instance();
+   Mantra* theClass;
+
+   ModSpace* ms = static_cast<const ModSpace::PStepSaveDynMantra*>(self)->m_owner;
+   // get the parameters
+   Module* clsContainer = ctx->topData().isNil() ? 0 : static_cast<Module*>( ctx->topData().asInst() );
+   const String& className = *ctx->opcodeParam(1).asString();
+
+   // remove the module
+   ctx->popData();
+
+   // still no luck?
+   if( clsContainer == 0 )
+   {
+      Item* sym = ms->findExportedValue( className );
+      if( sym == 0 )
+      {
+         theClass = eng->getMantra( className );
+         if( theClass == 0 )
+         {
+            throw new UnserializableError( ErrorParam(e_deser, __LINE__, SRC )
+               .origin( ErrorParam::e_orig_runtime)
+               .extra( "Unavailable mantra " + className ));
+         }
+      }
+      else
+      {
+
+         if( sym->isClass() || sym->isFunction() )
+         {
+            theClass = static_cast<Mantra*>(sym->asInst());
+         }
+         else
+         {
+             throw new UnserializableError( ErrorParam(e_deser, __LINE__, SRC )
+               .origin( ErrorParam::e_orig_runtime)
+               .extra( "Symbol is not mantra " + className ));
+         }
+      }
+   }
+   else
+   {
+      // we are sure about the sourceship of the class...
+      theClass = clsContainer->getMantra( className );
+      if( theClass == 0 )
+      {
+         String expl = "Unavailable mantra " +
+                  className + " in " + clsContainer->uri();
+         clsContainer->decref();
+         throw new UnserializableError( ErrorParam(e_deser, __LINE__, SRC )
+            .origin( ErrorParam::e_orig_runtime)
+            .extra( expl ));
+      }
+
+      clsContainer->decref();
+   }
+
+   ctx->pushData( Item(theClass->handler(), theClass) );
+}
+
+
+//========================================================================
+// Main ModSpace class
+//========================================================================
 Class* ModSpace::handler()
 {
    static Class* ms = Engine::handlers()->modSpaceClass();
@@ -109,19 +482,21 @@ ModSpace::ModSpace( Process* owner, ModSpace* parent ):
    _p( new Private ),   
    m_parent(parent),
    m_lastGCMark(0),
-   m_mainMod(0),
-   m_stepLoader(this),
-   m_stepResolver(this),
-   m_stepDynModule(this),
-   m_stepDynMantra(this),
-   m_stepExecMain(this),
-   m_startLoadStep(this)
+   m_mainMod(0)
 {
    m_process = owner;
    m_loader = new ModLoader(this);
    SynFunc* sf = new SynFunc("$loadModule");
    sf->syntree().append( new StmtReturn );
    m_loaderFunc = sf;
+
+   m_stepManagedLoadedModule = new PStepManagedLoadedModule(this);
+   m_stepResolveModReq = new PStepResolveModReq(this);
+   m_stepStoreModReq = new PStepStoreModReq(this);
+   m_stepSetupModule = new PStepSetupModule(this);
+   m_stepCompleteLoad = new PStepCompleteLoad(this);
+   m_stepDisposeLoad = new PStepDisposeLoad(this);
+   m_stepSaveDynMantra = new PStepSaveDynMantra(this);
 
    if( parent != 0 )
    {
@@ -141,6 +516,15 @@ ModSpace::~ModSpace()
    delete _p;
    delete m_loader;
    delete m_loaderFunc;
+
+   delete m_stepManagedLoadedModule;
+   delete m_stepResolveModReq;
+   delete m_stepStoreModReq;
+   delete m_stepSetupModule;
+   delete m_stepCompleteLoad;
+   delete m_stepDisposeLoad;
+   delete m_stepSaveDynMantra;
+
    TRACE( "ModSpace::~ModSpace complete deletion of %p", this );
 }
 
@@ -167,25 +551,13 @@ Process* ModSpace::loadModule( const String& name, bool isUri,  bool asLoad, boo
 
 void ModSpace::loadModuleInProcess( Process* process, const String& name, bool isUri,  bool asLoad, bool isMain, Module* loader )
 {
-   static Class* clsModule = Engine::handlers()->moduleClass();
-
    process->adoptModSpace(this);
 
    VMContext* tgtContext = process->mainContext();
    tgtContext->call( m_loaderFunc );
    tgtContext->pushCode(&Engine::instance()->stdSteps()->m_returnFrameWithTop);
 
-   if( loader != 0 )
-   {
-      tgtContext->pushData(Item(clsModule, loader));
-   }
-   else {
-      tgtContext->pushData( Item() );
-   }
-   tgtContext->pushData( FALCON_GC_HANDLE(new String(name)) );
-   tgtContext->pushCode( &m_startLoadStep );
-   int32 v = (isUri ? 1 : 0) | (asLoad ? 2 : 0) | (isMain ? 4 : 0);
-   tgtContext->currentCode().m_seqId = v;
+   loadModuleInContext( name, isUri, asLoad, isMain, tgtContext, loader, true );
 }
 
 void ModSpace::loadModuleInProcess( const String& name, bool isUri, bool asLoad, bool isMain, Module* loader )
@@ -195,11 +567,31 @@ void ModSpace::loadModuleInProcess( const String& name, bool isUri, bool asLoad,
 
 void ModSpace::loadModuleInContext( const String& name, bool isUri, bool isLoad, bool isMain, VMContext* tgtContext, Module* loader, bool getResult )
 {
-   tgtContext->pushCode( &m_stepLoader );
+   TRACE1( "ModSpace::loadModuleInContext(%s, %s, %s, %s, %p/%d, %s, %s )",
+            name.c_ize(), (isUri? "uri" : "name"), (isLoad?"load": "import"), (isMain?"main":"normal"),
+            tgtContext, tgtContext->id(), (loader == 0 ? "no loader" : loader->name().c_ize()), getResult ? "keep" : "dispose");
+
+   // determine the fate of the loaded module.
+   if( getResult )
+   {
+      tgtContext->pushCode( m_stepCompleteLoad );
+   }
+   else {
+      tgtContext->pushCode( m_stepDisposeLoad );
+   }
+
+   // push the code that will invoke module setup on success.
+   tgtContext->pushCode( m_stepSetupModule );
+
+   // push the code that will handle the load result on success.
+   // this will also push the resolver step if needed.
+   tgtContext->pushCode( m_stepManagedLoadedModule );
+
+   // we need to know what we should do with the module.
    tgtContext->currentCode().m_seqId = (isLoad ? 1:0) | (isMain ? 2:0) |  (getResult? 4 : 0);
 
+   // start the loading process.
    bool loading;
-
    if( isUri )
    {
       loading = m_loader->loadFile( tgtContext, name, ModLoader::e_mt_none, true, loader );
@@ -213,6 +605,9 @@ void ModSpace::loadModuleInContext( const String& name, bool isUri, bool isLoad,
       throw new IOError( ErrorParam( e_mod_notfound, __LINE__, SRC )
                .extra( name + " in " + m_loader->getSearchPath() ));
    }
+
+   // the loader will have pushed the needed steps to complete the operation, by now.
+   // the process will continue at PStepManagedLoadedModule::apply_.
 }
 
 
@@ -273,13 +668,17 @@ void ModSpace::store( Module* mod )
 
 void ModSpace::resolveDeps( VMContext* ctx, Module* mod )
 {
-   static StdSteps* steps = Engine::instance()->stdSteps();
-   static Class* modcls = Engine::handlers()->moduleClass();
+   static Class* modClass = Engine::instance()->stdHandlers()->moduleClass();
 
-   ctx->pushData( Item( modcls, mod ) );
-   ctx->pushData( Item() );
-   ctx->pushCode( &steps->m_pop );
-   ctx->pushCode( &m_stepResolver );
+   TRACE( "ModSpace::resolveDeps on module %s, %d deps", mod->name().c_ize(), mod->modRequestCount() );
+
+   if ( mod->modRequestCount() > 0 )
+   {
+      mod->incref();
+      ctx->pushData( Item(modClass, mod) );
+      ctx->pushCode( m_stepDisposeLoad );
+      ctx->pushCode( m_stepResolveModReq );
+   }
 }
 
 
@@ -473,17 +872,39 @@ void ModSpace::retreiveDynamicModule(
    // still not found?
    if( clsContainer == 0 )
    {
-      // then try to load the module via URI
-      ctx->pushData( Item( moduleName.handler(), const_cast<String*>(&moduleName)) );
-      //... delayed check
-      ctx->pushCode( &m_stepDynModule );
+      // we need the module we just found -- so save it
+      ctx->pushCode( m_stepCompleteLoad );
 
-      m_loader->loadFile( ctx, moduleUri, ModLoader::e_mt_none, true );
+      // push the code that will invoke module setup on success.
+      ctx->pushCode( m_stepSetupModule );
+
+      // push the code that will handle the load result on success.
+      // this will also push the resolver step if needed.
+      ctx->pushCode( m_stepManagedLoadedModule );
+
+      // we need to know what we should do with the module.
+      ctx->currentCode().m_seqId = 4; // non-load, non-main, get result
+
+      // start the loading process.
+      bool loading;
+      loading = m_loader->loadFile( ctx, moduleUri, ModLoader::e_mt_none, true );
+      if( ! loading )
+      {
+         loading = m_loader->loadName( ctx, moduleName, ModLoader::e_mt_none );
+
+         if( ! loading )
+         {
+            // push an empty entry and let the caller to handle the situation.
+            ctx->pushData(Item());
+         }
+      }
    }
    else
    {
       TRACE( "ModSpace::retreiveDynamicModule found module %s: %s",
                  clsContainer->name().c_ize(), clsContainer->uri().c_ize() );
+      // the gc/caller will decref this.
+      clsContainer->incref();
       ctx->pushData( Item( clsMod, clsContainer ) );
    }
 }
@@ -518,7 +939,7 @@ void ModSpace::findDynamicMantra(
 
    // push the mantra resolver step.
    ctx->pushData( Item( className.handler(), const_cast<String*>(&className)) );
-   ctx->pushCode( &m_stepDynMantra );
+   ctx->pushCode( m_stepSaveDynMantra );
 
    // and then start resolving the module
    retreiveDynamicModule( ctx, moduleUri, moduleName );
@@ -543,6 +964,8 @@ void ModSpace::enumerateIStrings( IStringEnumerator& cb ) const
 //================================================================================
 // Psteps
 //================================================================================
+
+#if 0
 
 void ModSpace::PStepLoader::apply_( const PStep* self, VMContext* ctx )
 {
@@ -911,6 +1334,7 @@ void ModSpace::PStepStartLoad::apply_( const PStep* ps, VMContext* ctx )
    sl->m_owner->loadModuleInContext(modName, isUri, asLoad, isMain, ctx, invoker, true );
 }
 
+#endif
 }
 
 /* end of modspace.cpp */

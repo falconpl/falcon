@@ -121,8 +121,6 @@ public:
     */
    void store( Module* mod );
 
-   void resolveDeps( VMContext* ctx, Module* mod );
-
    /** Creates a process ready to load the module and all its dependencies.
     * \param name The name of the module to be loaded.
     * \param isUri true if the given name is actually a URI
@@ -268,6 +266,9 @@ public:
    */
    void setParent( ModSpace* parent );
 
+   /** Prepare a module dependency resolver in the target context. */
+   void resolveDeps( VMContext* ctx, Module* mod );
+
 private:      
    class Private;
    ModSpace::Private* _p;
@@ -295,6 +296,117 @@ private:
       const String& moduleUri, 
       const String& moduleName);
 
+   /** Gets the module that is on top of the stack and manages it.
+    *
+    * Operations performed by this step:
+    * # Export symbols if required.
+    * # Add module to the module space.
+    * # Prepare all the ModReq resolutions, pushing them in the stack.
+    */
+   PStep *m_stepManagedLoadedModule;
+
+   /** Resolves each module request.
+    *
+    * Gets a module request on top of the stack and processes it. The seqId is the
+    * count of module requests still left in the stack to be processed. When it's 0,
+    * the opcode can pop itself.
+    *
+    * A module request can be resolved either by finding the module in the ModSpace where
+    * the owner module resides, or in any parent ModSpace, or by initiating a new load
+    * in the current ModSpace.
+    */
+   PStep *m_stepResolveModReq;
+
+   /** Saves a just resolved module request.
+    *
+    * The topmost entity in the stack is the module that has been just loaded,
+    * while the second-topmost item is the loader (requester) module.
+    *
+    * This step pops the topmost item, with the freshly resolved module in it,
+    * and stores it in the nth ModRequest* entry of the loader module. The id
+    * of the host mod request waiting for the given module to be resolved
+    * is stored as seqId of this pstep.
+    */
+   PStep* m_stepStoreModReq;
+
+   /** Setup the module after all the module requests have been solved.
+    *
+    * This step performs the following operations:
+    * # invoke onLinkComplete() to inform the loaded module about all
+    *   dependencies having been resolved.
+    * # if required, invokes the main() function of the module, without
+    *   running it.
+    * # invokes the initModule() method to ask for the module to prepare
+    *   the VMContext as needed.
+    *
+    * The default action of initModule are that of creating the startup
+    * environment for the module, which usually translates in creating the
+    * falcon classes and preparing the init operations for static objects
+    * in the host context.
+    *
+    * When this pstep exits, the code stack will have the required init/main
+    * functions properly pushed to be run in order.
+    */
+   PStep *m_stepSetupModule;
+
+   /** Saves the module on top of the stack to the process result.
+    *
+    * This step invokes the module onStartupComplete() to inform the
+    * module that everything is green/go.
+    *
+    * The module is left on top of the data stack. Other psteps
+    * shall use/dispose of it.
+    *
+    * This step is pushed when the request to load a module is explicit,
+    * and the caller wants to have a reference to the module as a final
+    * result of the operation.
+    */
+   PStep *m_stepCompleteLoad;
+
+   /** Discards the module on top of the stack, as it's referenced elsewhere.
+    *
+    * This step invokes the module onStartupComplete() to inform the
+    * module that everything is green/go, and then pops the module
+    * from the top of the data stack and dereferences it.
+    *
+    * This is done when the module was automatically loaded by a ModReq; as
+    * the result of this operation is that of saving the module in the module space,
+    * there isn't any need to keep the module around in any other place.
+    */
+   PStep *m_stepDisposeLoad;
+
+   /** Stores a mantra dynamically found on a just loaded module in its place.
+    *
+    * During deserialization of mantras, it might be found that they depend
+    * on foreign mantras coming from modules that are not yet loaded.
+    *
+    * This step is used during the process of loading the module where the
+    * required mantra is stored. Once the module load is complete, this step
+    * searches for the required mantra in the newly loaded module, and if found,
+    * it puts it on top of the data stack.
+    */
+   PStep *m_stepSaveDynMantra;
+
+   // internal (not exported) forward class declaration.
+   class PStepManagedLoadedModule;
+   friend class PStepManagedLoadedModule;
+
+   // internal (not exported) forward class declaration.
+   class PStepResolveModReq;
+   friend class PStepResolveModReq;
+
+   // internal (not exported) forward class declaration.
+   class PStepStoreModReq;
+   // internal (not exported) forward class declaration.
+   class PStepSetupModule;
+   // internal (not exported) forward class declaration.
+   class PStepCompleteLoad;
+   // internal (not exported) forward class declaration.
+   class PStepDisposeLoad;
+
+   class PStepSaveDynMantra;
+
+#if 0
 
    class FALCON_DYN_CLASS PStepLoader: public PStep
    {
@@ -387,6 +499,7 @@ private:
       ModSpace* m_owner;
    };
    PStepStartLoad m_startLoadStep;
+#endif
 
    FALCON_REFERENCECOUNT_DECLARE_INCDEC(ModSpace);
 };
