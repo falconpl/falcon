@@ -39,7 +39,16 @@ private:
 
       // put our parent back in charge.
       ctx->resetCode( cst->m_compiler );
-      cst->m_compiler->onError(ctx->thrownError());
+      if( ctx->thrownError() == 0 )
+      {
+         CodeError* error = FALCON_SIGN_XERROR(CodeError, e_uncaught, .extra("Interactive"));
+         error->raised( ctx->raised() );
+         cst->m_compiler->onError( error );
+         error->decref();
+      }
+      else {
+         cst->m_compiler->onError(ctx->thrownError());
+      }
    }
 
    virtual void describeTo( String& tgt, int depth = 0) const

@@ -1161,6 +1161,7 @@ public:
     \see manageError()
     */
    void raiseItem( const Item& raised );
+   const Item& raised() const { return m_raised; }
 
    /** Tries to manage an error through try handlers.
     \param exc The Falcon::Error instance that was thrown.
