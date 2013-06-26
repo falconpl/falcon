@@ -974,7 +974,7 @@ bool ExprCase::verifyItem( const Item& item, VMContext* ctx ) const
 }
 
 
-bool ExprCase::verifyType( const Item& item) const
+bool ExprCase::verifyType( const Item& item, VMContext* ctx ) const
 {
    int64 type = (int64) item.type();
 
@@ -983,6 +983,31 @@ bool ExprCase::verifyType( const Item& item) const
                     ++iter )
    {
       CaseEntry* entry = *iter;
+      if( entry->m_type == CaseEntry::e_t_symbol )
+      {
+         // Resolve NOW
+         Symbol* sym = entry->m_data.symbol;
+         Item* value = ctx->resolveSymbol( sym, false );
+         if( value == 0 ) {
+            throw FALCON_SIGN_XERROR(LinkError, e_undef_sym, .extra(sym->name()).line(line()) );
+         }
+         else if( value->isInteger() )
+         {
+            entry->m_type = CaseEntry::e_t_int;
+            entry->m_data.ints.int1 = value->asInteger();
+            sym->decref();
+         }
+         else if( value->isClass() )
+         {
+            entry->m_type = CaseEntry::e_t_class;
+            entry->m_class = static_cast<Class*>(value->asInst());
+            sym->decref();
+         }
+         else {
+            throw FALCON_SIGN_XERROR(LinkError, e_inv_const_val, .extra("Must be a type number or a class").line(line()) );
+         }
+      }
+
       if( entry->m_type == CaseEntry::e_t_int )
       {
          if( entry->m_data.ints.int1 == type )

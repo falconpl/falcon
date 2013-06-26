@@ -86,7 +86,7 @@ void StmtSelect::apply_( const PStep* ps, VMContext* ctx )
       }
    }
 
-   SynTree* res = self->findBlockForType( ctx->topData() );
+   SynTree* res = self->findBlockForType( ctx->topData(), ctx );
 
    // we're gone
    ctx->popCode();

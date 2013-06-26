@@ -46,7 +46,7 @@ public:
    //virtual void gcMark( uint32 mark );
    SynTree* findBlockForItem( const Item& value ) const;
    SynTree* findBlockForItem( const Item& value, VMContext* ctx ) const;
-   SynTree* findBlockForType( const Item& value ) const;
+   SynTree* findBlockForType( const Item& value, VMContext* ctx ) const;
    SynTree* getDefault() const;
 
    virtual void render( TextWriter* tw, int32 depth ) const;

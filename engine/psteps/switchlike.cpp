@@ -279,10 +279,17 @@ public:
 class TypeVerifier
 {
 public:
+   TypeVerifier( VMContext* ctx ):
+      m_ctx(ctx)
+   {}
+
    bool check( ExprCase* cs, const Item& value ) const
    {
-      return cs->verifyType(value);
+      return cs->verifyType(value, m_ctx);
    }
+
+private:
+   VMContext* m_ctx;
 };
 
 
@@ -317,10 +324,10 @@ SynTree* SwitchlikeStatement::findBlockForItem( const Item& value, VMContext* ct
    return findBlock(value, vv);
 }
 
-SynTree* SwitchlikeStatement::findBlockForType( const Item& value ) const
+SynTree* SwitchlikeStatement::findBlockForType( const Item& value, VMContext* ctx ) const
 {
-   TypeVerifier vv;
-   return findBlock(value, vv );
+   TypeVerifier v(ctx);
+   return findBlock(value, v );
 }
 
 SynTree* SwitchlikeStatement::getDefault() const

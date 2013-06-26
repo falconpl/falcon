@@ -199,7 +199,7 @@ void apply_raise( const Rule&, Parser& p )
 
 
 static void internal_apply_catch( int toks, Parser& p, int line, int chr,
-      int64 tid, const String* errName, String* tgt, bool genTrace = false, bool bNew = true )
+      int64 tid, const String* errName, Symbol* errSym, String* tgt, bool genTrace = false, bool bNew = true )
 {   
    ParserContext* ctx = static_cast<ParserContext*>(p.context());
    TreeStep* stmt = ctx->currentStmt();
@@ -236,7 +236,7 @@ static void internal_apply_catch( int toks, Parser& p, int line, int chr,
       StmtSelect* select = &stmttry->catchSelect();
       ExprCase* ecase = static_cast<ExprCase*>(newBranch->selector());
 
-      if( errName != 0 )
+      if( errName != 0 || errSym != 0)
       {
          if( ecase == 0 )
          {
@@ -244,7 +244,15 @@ static void internal_apply_catch( int toks, Parser& p, int line, int chr,
             newBranch->selector(ecase);
          }
 
-         bool bClash = select->findBlockForItem(Item( errName->handler(), const_cast<String*>(errName) )) != 0;
+         bool bClash = false;
+         if( errName != 0 )
+         {
+            ecase->addEntry( *errName );
+            bClash = select->findBlockForItem(Item( errName->handler(), const_cast<String*>(errName) )) != 0;
+         }
+         else {
+            ecase->addEntry( errSym );
+         }
 
          if( bClash )
          {
@@ -299,15 +307,15 @@ static void internal_apply_catch_case( int toks, Parser& p, int line, int chr,
 
       switch( itm->m_type ) {
          case CaseItem::e_int:
-            internal_apply_catch( 0, p, line, chr, itm->m_iLow, 0, tgt, genTrace, iter == cli->begin() );
+            internal_apply_catch( 0, p, line, chr, itm->m_iLow, 0, 0, tgt, genTrace, iter == cli->begin() );
             break;
 
          case CaseItem::e_sym:
-            internal_apply_catch( 0, p, line, chr, -1, &itm->m_sym->name(), tgt, genTrace, iter == cli->begin()  );
+            internal_apply_catch( 0, p, line, chr, -1, 0, itm->m_sym, tgt, genTrace, iter == cli->begin()  );
             break;
 
          case CaseItem::e_string:
-            internal_apply_catch( 0, p, line, chr, -1, itm->m_sLow, tgt, genTrace, iter == cli->begin() );
+            internal_apply_catch( 0, p, line, chr, -1, itm->m_sLow, 0, tgt, genTrace, iter == cli->begin() );
             break;
 
          case CaseItem::e_nil:
@@ -364,7 +372,7 @@ void apply_catch_in_var( const Rule&, Parser& p )
    // << T_in << T_Name << T_EOL
    p.getNextToken();
    TokenInstance* ti = p.getNextToken();
-   internal_apply_catch( 3, p, ti->line(), ti->chr(), -1, 0, ti->asString() );
+   internal_apply_catch( 3, p, ti->line(), ti->chr(), -1, 0, 0, ti->asString() );
 }
 
 void apply_catch_as_var( const Rule&, Parser& p )
@@ -372,7 +380,7 @@ void apply_catch_as_var( const Rule&, Parser& p )
    // << T_as << T_Name << T_EOL
    p.getNextToken();
    TokenInstance* ti = p.getNextToken();
-   internal_apply_catch( 3, p, ti->line(), ti->chr(), -1, 0, ti->asString(), true );
+   internal_apply_catch( 3, p, ti->line(), ti->chr(), -1, 0, 0, ti->asString(), true );
 }
 
 

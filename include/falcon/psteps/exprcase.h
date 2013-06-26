@@ -93,7 +93,7 @@ public:
     * This verify is performed on the item type or base class.
     * This is used for select and catch branches.
     */
-   bool verifyType( const Item& item) const;
+   bool verifyType( const Item& item, VMContext* ctx) const;
 
    void store( DataWriter* dw );
    void restore( DataReader* dr );

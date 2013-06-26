@@ -991,7 +991,7 @@ public:
             return true;
          }
 
-         SynTree* st = stry->catchSelect().findBlockForType( m_item );
+         SynTree* st = stry->catchSelect().findBlockForType( m_item, ctx );
          ctx->setCatchBlock( st );
          return st != 0;
       }
@@ -1040,7 +1040,7 @@ public:
             return true;
          }
 
-         SynTree* st = stry->catchSelect().findBlockForType( Item( m_errClass, m_error) );
+         SynTree* st = stry->catchSelect().findBlockForType( Item( m_errClass, m_error), ctx );
 
          if( st != 0 )
          {
