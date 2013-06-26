@@ -95,29 +95,26 @@ void IntCompiler::Context::onCloseClass( Class* cls, bool isObj )
    current = fcls;
    VMContext* vmctx = static_cast<IntCompiler*>(m_owner)->m_vmctx;
 
-   if( fcls->missingParents() == 0 )
+   try
    {
-      try
+      if( ! fcls->construct(vmctx) )
       {
-         if( ! fcls->construct(vmctx) )
-         {
-            current = fcls->hyperConstruct();
-         }
-         static_cast<IntCompiler*>(m_owner)->m_currentMantra = current;
-
-         // initialize the object now.
-         if ( isObj )
-         {
-            vmctx->pushCode( &steps->m_fillInstance );
-            vmctx->callItem( Item(current->handler(), current) );
-         }
-
+         current = fcls->hyperConstruct();
       }
-      catch( Error* e )
+      static_cast<IntCompiler*>(m_owner)->m_currentMantra = current;
+
+      // initialize the object now.
+      if ( isObj )
       {
-         m_owner->sp().addError( e );
-         e->decref();
+         vmctx->pushCode( &steps->m_fillInstance );
+         vmctx->callItem( Item(current->handler(), current) );
       }
+
+   }
+   catch( Error* e )
+   {
+      m_owner->sp().addError( e );
+      e->decref();
    }
 }
 

@@ -693,12 +693,12 @@ bool FalconClass::construct( VMContext* ctx )
             Class* bc = static_cast<Class*>(ibase->asInst());
             inh->base(bc);
 
+            m_missingParents--;
             if( ! bc->isFalconClass() )
             {
                m_bPureFalcon = false;
+               continue;
             }
-
-            m_missingParents--;
          }
 
          Class* base = inh->base();
@@ -1330,18 +1330,7 @@ void FalconClass::op_setProperty( VMContext* ctx, void* self, const String& prop
 
    if( ! overrideSetProperty( ctx, self, propName ) )
    {
-      const Property* prop = getProperty( propName );
-      if( prop == 0 )
-      {
-         throw new AccessError( ErrorParam( e_prop_acc, __LINE__, __FILE__ ).extra( propName ) );
-      }
-
-      if( prop->m_type != FalconClass::Property::t_prop )
-      {
-         throw new AccessTypeError( ErrorParam( e_prop_ro, __LINE__, __FILE__ ).extra( propName ) );
-      }
-
-      inst->m_data[ prop->m_value.id ].copyFromLocal( ctx->opcodeParam(1) );
+      inst->setProperty( propName, ctx->opcodeParam(1) );
       ctx->popData();
    }
 }
