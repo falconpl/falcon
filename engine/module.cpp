@@ -245,6 +245,8 @@ Item* Module::resolveGlobally( const String& name )
 
 Item* Module::resolveGlobally( Symbol* sym )
 {
+   static Engine* engine = Engine::instance();
+
    Item* value = 0;
 
    length_t nspos = sym->name().rfind(".");
@@ -261,16 +263,52 @@ Item* Module::resolveGlobally( Symbol* sym )
    Private::NSTransMap::iterator nsti = _p->m_nsTransMap.find(ns);
    while( nsti != _p->m_nsTransMap.end() && nsti->first == ns )
    {
-      Module* provider = nsti->second->modReq()->module();
-      String origName = sym->name().subString(nspos+1);
-      if( provider != 0 )
-      {
+      ImportDef* id = nsti->second;
 
-         Item* value = provider->resolveLocally( origName );
-         if( value != 0 )
+      // coming from a specific module?
+      if( id->modReq() != 0 )
+      {
+         Module* provider = nsti->second->modReq()->module();
+         String origName = sym->name().subString(nspos+1);
+         if( provider != 0 )
          {
-            m_globals.addExtern( sym, value );
-            return value;
+
+            Item* value = provider->resolveLocally( origName );
+            if( value != 0 )
+            {
+               m_globals.addExtern( sym, value );
+               return value;
+            }
+         }
+      }
+      else if( id->symbolCount() == 1 )
+      {
+         // no? -- try in the module space...
+
+         const String& prefix = id->sourceSymbol(0);
+         if( prefix.getCharAt(prefix.length()-1) == '*' )
+         {
+            Symbol* symWithNs = Engine::getSymbol(prefix.subString(0, prefix.length()-1) + sym->name());
+
+            if( m_modSpace != 0 )
+            {
+               value = m_modSpace->findExportedValue( symWithNs );
+               if( value != 0 )
+               {
+                  m_globals.addExtern( symWithNs, value );
+                  symWithNs->decref();
+                  return value;
+               }
+            }
+            //... or in the engine
+            value = const_cast<Item*>(engine->getBuiltin( symWithNs->name() ));
+
+            if( value != 0 )
+            {
+               m_globals.addExtern( symWithNs, value );
+               symWithNs->decref();
+               return value;
+            }
          }
       }
 
@@ -291,7 +329,6 @@ Item* Module::resolveGlobally( Symbol* sym )
    }
 
    // still no luck? -- try in the engine
-   static Engine* engine = Engine::instance();
    value = const_cast<Item*>(engine->getBuiltin( sym->name() ));
 
    if( value != 0 )
