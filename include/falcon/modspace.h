@@ -219,7 +219,7 @@ public:
     * On success, the exporter should discard the item it was previously associated
     * with the symbol, and use the returned value instead.
     */
-   Item* exportSymbol( Symbol* sym, const Item& value );
+   bool exportSymbol( Symbol* sym, Item* value );
 
    /** Finds a value that has been generally exported via the load/export constructs.
     \param symName the name of the global variable to be searched.

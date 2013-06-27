@@ -307,6 +307,7 @@ void ModSpace::PStepSetupModule::apply_( const PStep*, VMContext* ctx )
    {
       // we won't need the return value of the main function.
       ctx->pushCode( popStep );
+      ctx->pushData( mod->getMainFunction() );
       ctx->callInternal(mod->getMainFunction(), 0 );
    }
 
@@ -449,7 +450,7 @@ public:
    };
    */
    
-   typedef std::map<Symbol*, Item> ExportSymMap;
+   typedef std::map<Symbol*, Item*> ExportSymMap;
    ExportSymMap m_symMap;
    
    typedef std::map<String, Module*> ModMap;
@@ -470,6 +471,13 @@ public:
          mod->modSpace(0);
          mod->decref();
          ++iter;
+      }
+
+      ExportSymMap::iterator esi = m_symMap.begin();
+      while( esi != m_symMap.end() )
+      {
+         esi->first->decref();
+         ++esi;
       }
    }  
 };
@@ -698,8 +706,8 @@ bool ModSpace::exportFromModule( Module* mod, Error*& link_errors )
 
       virtual void operator() ( Symbol* sym, Item*& value )
       {
-         Item* newValue = m_owner->exportSymbol( sym, *value );
-         if( newValue == 0 )
+         bool status =  m_owner->exportSymbol( sym, value );
+         if( ! status )
          {
             Error* e = new LinkError( ErrorParam( e_already_def )
                   .origin(ErrorParam::e_orig_linker)
@@ -708,9 +716,7 @@ bool ModSpace::exportFromModule( Module* mod, Error*& link_errors )
 
             m_owner->addLinkError( m_link_errors, e );
          }
-         else {
-            value = newValue;
-         }
+
       }
 
    private:
@@ -725,7 +731,7 @@ bool ModSpace::exportFromModule( Module* mod, Error*& link_errors )
 }
 
 
-Item* ModSpace::exportSymbol( Symbol* sym, const Item& value )
+bool ModSpace::exportSymbol( Symbol* sym, Item* value )
 {
    TRACE1( "ModSpace::exportSymbol %s", sym->name().c_ize());
 
@@ -734,7 +740,7 @@ Item* ModSpace::exportSymbol( Symbol* sym, const Item& value )
    {
       // name clash!
       TRACE1( "ModSpace::exportSymbol %s defined in this space, failing.", sym->name().c_ize());
-      return 0;
+      return false;
    }
 
    // check name clashes in parent.
@@ -743,7 +749,7 @@ Item* ModSpace::exportSymbol( Symbol* sym, const Item& value )
       if( m_parent->findExportedValue( sym ) != 0 )
       {
          TRACE1( "ModSpace::exportSymbol %s defined in parent space, failing.", sym->name().c_ize());
-         return 0;
+         return false;
       }
    }
 
@@ -751,8 +757,8 @@ Item* ModSpace::exportSymbol( Symbol* sym, const Item& value )
    TRACE1( "ModSpace::exportSymbol exporting %s", sym->name().c_ize() );
 
    sym->incref();
-   Item* newValue = &_p->m_symMap.insert( std::make_pair(sym, value) ).first->second;
-   return newValue;
+   _p->m_symMap.insert( std::make_pair(sym, value) );
+   return true;
 }
 
 
@@ -765,8 +771,8 @@ void ModSpace::gcMark( uint32 mark )
       Private::ExportSymMap::iterator esi_end = _p->m_symMap.end();
 
       while( esi != esi_end ) {
-         Item& item = esi->second;
-         item.gcMark(mark);
+         Item* item = esi->second;
+         item->gcMark(mark);
          ++esi;
       }
 
@@ -787,7 +793,7 @@ Item* ModSpace::findExportedValue( Symbol* sym )
    
    if ( iter != _p->m_symMap.end() )
    {
-      Item* value = &iter->second;
+      Item* value = iter->second;
       return value;
    }
    

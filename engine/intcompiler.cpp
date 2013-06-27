@@ -214,16 +214,12 @@ void IntCompiler::Context::onExport(const String& symName )
       return;
    }
 
-   Item* newValue = mod->modSpace()->exportSymbol( sym, *mod->globals().getValue(sym) );
+   status = mod->modSpace()->exportSymbol( sym, mod->globals().getValue(sym) );
 
-   if( newValue == 0 )
+   if( ! status )
    {
       sp.addError( e_export_already, sp.currentSource(),
                    sp.currentLexer()->line(), 0, 0 );
-   }
-   else {
-      // update the value with the exported one.
-      mod->globals().addExtern(sym, newValue);
    }
 
    sym->decref();
