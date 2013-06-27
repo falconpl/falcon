@@ -134,7 +134,7 @@ void Function_include::invoke( VMContext* ctx , int32 /* paramCount */)
 
    // this might throw on I/O error, or go deep to load more modules
    Module* callingModule = ctx->callDepth() > 1 ? ctx->callerFrame(1).m_function->module() : 0;
-   childMS->loadModuleInContext( file, true, false, true, ctx, callingModule, false );
+   childMS->loadModuleInContext( file, true, false, true, ctx, callingModule );
 }
 
 

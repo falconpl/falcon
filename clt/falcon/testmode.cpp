@@ -331,8 +331,7 @@ void TestMode::test( ScriptData* sd )
    m_app->configureVM( vm, loadProc );
 
    ModSpace* ms = loadProc->modSpace();
-   ms->loadModuleInProcess( sd->m_path,  true, true, false );
-
+   ms->loadAndRun( loadProc, sd->m_path, true );
 
    try
    {

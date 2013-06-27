@@ -153,10 +153,21 @@ public:
     */
    Process* loadModule( const String& name, bool isUri, bool asLoad, bool isMain = false);
 
-   void loadModuleInProcess( const String& name, bool isUri, bool asLoad, bool isMain = false, Module* loader = 0);
+   void loadModuleInProcess( const String& name, bool isUri, bool asLoad, bool isMain = false, Module* loader = 0 );
    void loadModuleInProcess( Process* prc, const String& name, bool isUri, bool asLoad, bool isMain = false, Module* loader = 0);
 
-   void loadModuleInContext( const String& name, bool isUri, bool asLoad, bool isMain, VMContext* tgtContext, Module* caller, bool getResult );
+   void loadModuleInContext( const String& name, bool isUri, bool asLoad, bool isMain, VMContext* tgtContext, Module* caller );
+
+   /** Loads and runs a module in the given process.
+    * The module will be loaded, and eventually prepared for execution (if it provides a main function).
+    *
+    * The result of the process after a start/wait() pair will be the module main function return value.
+    *
+    * The module will be invisible outside the call, as it will be not ready before start and destroyed
+    * after wait.
+    *
+    */
+   void loadAndRun( Process* process, const String& name, bool isUri, Module* loader = 0);
 
    //===================================================================
    // Service functions
@@ -387,6 +398,18 @@ private:
     */
    PStep *m_stepSaveDynMantra;
 
+   /** Step called to pop the result of a main function.
+    *
+    * This step is pushed right before invoking a non-main module, and has two modes:
+    * with seqId == 1, will push the process result in the stack, with seqId == 0 will
+    * pop an item from the stack and set it as process result.
+    *
+    * With this operations, the VM is able to save the proper module result as result
+    * of a process created specifically to run a module main function.
+    *
+    */
+   PStep* m_stepSetProcResult;
+
    // internal (not exported) forward class declaration.
    class PStepManagedLoadedModule;
    friend class PStepManagedLoadedModule;
@@ -405,6 +428,9 @@ private:
    class PStepDisposeLoad;
 
    class PStepSaveDynMantra;
+   class PStepSetProcResult;
+
+
 
 #if 0
 

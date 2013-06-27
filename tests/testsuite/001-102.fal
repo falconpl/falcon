@@ -14,6 +14,8 @@ Done
 
 */
 
+import Syn.*
+
 class test
    hello = 0
    function sayHello()
