@@ -1252,7 +1252,7 @@ public:
    inline int32 events() const { return atomicFetch(m_events); }
 
    /** Clear all thread-specific and non-fatal events. */
-   void clearEvents() { atomicSet( m_events, 0 ); }
+   void clearEvents() { atomicAnd( m_events, evtBreak ); }
 
    /** Asks for this context to be terminated asap.
        This event is never reset.
@@ -1279,6 +1279,7 @@ public:
       The StmtBreakpoint can be inserted in source flows for this purpose.
      */
    inline void setBreakpointEvent() { atomicOr(m_events, evtBreak);  }
+   inline void clearBreakpointEvent() { atomicAnd(m_events, ~evtBreak);  }
 
    /** Sets the swap event.
     This event ask the processor to swap the context out as soon as possible.

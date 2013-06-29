@@ -43,7 +43,7 @@ public:
    void execute(VMContext* ctx);
    void manageEvents( VMContext* ctx, int32 &events );
 
-   bool step();
+   void step( VMContext* ctx );
 
    static Processor* currentProcessor();
 

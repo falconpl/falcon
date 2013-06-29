@@ -21,6 +21,7 @@
 #include <falcon/mt.h>
 #include <falcon/item.h>
 #include <falcon/atomic.h>
+#include <falcon/breakcallback.h>
 
 namespace Falcon {
 
@@ -39,6 +40,8 @@ class GCLock;
 class ModSpace;
 class ItemPagePool;
 class ItemStack;
+
+class BreakCallback;
 
 /** Process Entity.
 
@@ -436,6 +439,29 @@ public:
     */
    Item* updateExport( const String& name, const Item& value, bool &existing ) const;
 
+   /** Sets (or removes) a break callback handler.
+    * \param bcb The new break callback, or zero to remove previous callbacks.
+    *
+    * The new break callback receives a BreakCallback::onInstalled message, while
+    * the old one receives a onUninstalled message.
+    *
+    * \note It's responsibility of the host
+    * code to ensure that the BreakCallback entity stays alive long enough. Also,
+    * there is no protection against concurrency, so the onUninstalled message could
+    * be generated even while the BreakCallback is currently being consulted; if necessary,
+    * use an internal reference counter to deal with the race condition.
+    *
+    */
+   void setBreakCallback( BreakCallback* bcb );
+
+   /** Invoked when a processor finds a breakpoint.
+    * \return True if a break callback handler was set and invoked, false otherwise.
+    *
+    * It is granted that the method will return coherently and atomically considering
+    * the currently installed break callback routine.
+    */
+   bool onBreakpoint( Processor* prc, VMContext* ctx );
+
 protected:
    Process( VMachine* owner, bool added );
    virtual ~Process();
@@ -477,9 +503,11 @@ protected:
 
    uint32 m_tlgen;
 
-
    Pool* m_itemPagePool;
    ItemStack* m_superglobals;
+
+   BreakCallback* m_breakCallback;
+   Mutex m_mtxBcb;
 
    void inheritStreams();
 

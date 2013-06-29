@@ -117,7 +117,8 @@ Process::Process( VMachine* owner, bool bAdded ):
    m_added(bAdded),
    m_resultLock(0),
    m_mark(0),
-   m_tlgen(1)
+   m_tlgen(1),
+   m_breakCallback(0)
 {
    m_itemPagePool = new Pool;
    _p = new Private;
@@ -154,6 +155,12 @@ void Process::inheritStreams()
 
 
 Process::~Process() {
+
+   if (m_breakCallback != 0 )
+   {
+      m_breakCallback->onUnistalled(this);
+   }
+
    m_context->decref();
    m_modspace->decref();
    if( m_error != 0 ) {
@@ -731,6 +738,44 @@ Item* Process::updateExport( const String& name, const Item& value, bool &existi
    _p->m_mtx_exports.unlock();
 
    return ptr;
+}
+
+void Process::setBreakCallback( BreakCallback* bcb )
+{
+   BreakCallback* oldBcb = 0;
+
+   m_mtxBcb.lock();
+   oldBcb = m_breakCallback;
+   m_breakCallback = bcb;
+   m_mtxBcb.unlock();
+
+   if( bcb != 0 )
+   {
+      bcb->onInstalled(this);
+   }
+
+   if (oldBcb != 0 )
+   {
+      oldBcb->onUnistalled(this);
+   }
+}
+
+
+bool Process::onBreakpoint( Processor* prc, VMContext* ctx )
+{
+   BreakCallback* oldBcb;
+
+   m_mtxBcb.lock();
+   oldBcb = m_breakCallback;
+   m_mtxBcb.unlock();
+
+   if( oldBcb != 0 )
+   {
+      oldBcb->onBreak(this, prc, ctx);
+      return true;
+   }
+
+   return false;
 }
 
 }

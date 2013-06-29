@@ -410,6 +410,19 @@ private:
     */
    PStep* m_stepSetProcResult;
 
+   /** Step used to invoke the main function of modules.
+    *
+    * The init step of modules can involve executing several init() methods
+    * of singleton objects.
+    *
+    * This must be performed prior invoking the main() function on that module.
+    *
+    * To achieve this, a step invoking the main function is first pushed, then
+    * all the required init operations are pushed. Once all the init have been
+    * completed, this step punches in and invokes the main function of the module.
+    */
+   PStep* m_stepCallMain;
+
    // internal (not exported) forward class declaration.
    class PStepManagedLoadedModule;
    friend class PStepManagedLoadedModule;
@@ -429,6 +442,7 @@ private:
 
    class PStepSaveDynMantra;
    class PStepSetProcResult;
+   class PStepCallMain;
 
 
 

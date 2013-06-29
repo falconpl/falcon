@@ -368,6 +368,8 @@ void TestMode::test( ScriptData* sd )
             sd->m_reason = "Expected output not matching";
             log->log( Log::fac_app, Log::lvl_info, String("Test ") +sd->m_id
                                     +" failing because expected output is not matching" );
+            log->log(Log::fac_app, Log::lvl_debug, String("Test ") +sd->m_id +
+                     " result:\n"+ *result +"\n--- end of " + sd->m_id + " result ---");
          }
 
          delete result;

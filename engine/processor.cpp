@@ -161,6 +161,10 @@ void Processor::manageEvents( VMContext* ctx, int32 &events )
 
    if( (events & VMContext::evtBreak) ) {
       TRACE( "Hit breakpoint before %s ", ctx->location().c_ize() );
+
+      events &= ~VMContext::evtBreak;
+      ctx->clearBreakpointEvent();
+      ctx->process()->onBreakpoint(this, ctx);
    }
 
    if( (events & VMContext::evtEmerge) ) {
@@ -237,7 +241,6 @@ void Processor::manageEvents( VMContext* ctx, int32 &events )
          m_currentContext->incref();
          m_activity = m_owner->scheduler().addActivity( FALCON_PROCESS_TIMESLICE, onTimesliceExpired, m_currentContext, true );
       }
-
    }
 
 }
@@ -250,6 +253,7 @@ void Processor::execute( VMContext* ctx )
    PARANOID( "Call stack empty", (ctx->callDepth() > 0) );
 
    ctx->setInspectible(true);
+   ctx->setStatus(VMContext::statusActive);
 
    while( true )
    {
@@ -283,46 +287,11 @@ void Processor::execute( VMContext* ctx )
 }
 
 
-bool Processor::step()
+void Processor::step( VMContext* ctx )
 {
-   int wasTerminated = 0;
-   if( m_currentContext == 0 )
-   {
-      TRACE("Processor::step %p (id %d) -- loading a new context.", this, this->id() );
-      m_owner->contextManager().readyContexts().tryGet( m_currentContext, &wasTerminated );
-
-      if( m_currentContext == 0 )
-      {
-         TRACE("Processor::step %p (id %d) -- Can't load a new context", this, this->id() );
-         return false;
-      }
-   }
-
-   register VMContext* ctx = currentContext();
-   TRACE( "Processor::step %p (id %d) ctx %d:%d with depth %d",
-            this, this->id(), ctx->process()->id(), ctx->id(),
-            (int) ctx->callDepth() );
-   PARANOID( "Call stack empty", (ctx->callDepth() > 0) );
-
-   // BEGIN STEP
-   register const PStep* ps = ctx->currentCode().m_step;
-
-   try
-   {
-      ps->apply( ps, ctx );
-   }
-   catch( Error* e )
-   {
-      ctx->raiseError( e );
-   }
-
-   int32 events;
-   if( (events = ctx->events()) != 0 )
-   {
-      manageEvents( ctx, events );
-   }
-
-   return true;
+   ctx->setBreakpointEvent();
+   execute(ctx);
+   ctx->clearBreakpointEvent();
 }
 
 

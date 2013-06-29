@@ -50,6 +50,7 @@ void StmtBreak::render( TextWriter* tw, int32 depth ) const
    }
 }
 
+
 void StmtBreak::apply_( const PStep*, VMContext* ctx )
 {
    // this will throw if not found

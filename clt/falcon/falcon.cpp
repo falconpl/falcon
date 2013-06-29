@@ -149,7 +149,6 @@ void FalconApp::launch( const String& script, int argc, char* argv[], int pos )
    // Create the virtual machine -- that is used also for textual output.
    VMachine& vm = *(new VMachine);
    Process* process = vm.createProcess();
-
    configureVM( vm, process );
 
    ModSpace* ms = process->modSpace();
@@ -242,6 +241,7 @@ void FalconApp::launch( const String& script, int argc, char* argv[], int pos )
 
 void FalconApp::configureVM( VMachine& vm, Process* prc, Log* log )
 {
+   prc->setBreakCallback(&m_dbg);
    vm.setProcessorCount( m_options.num_processors );
    vm.setStdEncoding( m_options.io_encoding );
 

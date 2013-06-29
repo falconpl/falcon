@@ -66,6 +66,8 @@ public:
    void configureVM( VMachine& vm, Process* prc, Log* log = 0 );
 
 private:
+
+   Debugger m_dbg;
 };
 
 } // namespace Falcon

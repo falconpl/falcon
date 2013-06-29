@@ -93,6 +93,7 @@ public:
    */
    TextReader( Stream* stream, Transcoder* decoder );
 
+   virtual ~TextReader();
 
    /** Change the text decoder used by this reader.
     \param decoder the new decoder that should be used instead of the current one.
@@ -282,10 +283,6 @@ protected:
    void clearTokens();
 
    void makeDefaultSeps();
-
-protected:
-   virtual ~TextReader();
-
 private:
    uint32 m_mark;
 };

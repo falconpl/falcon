@@ -39,7 +39,8 @@ class Error;
 class Function;
 class TextWriter;
 
-#define FALCON_CLASS_CREATE_AT_INIT ((void*)1)
+#define FALCON_CLASS_CREATE_AT_INIT          ((void*)1)
+#define FALCON_CLASS_NO_NEED_FOR_INSTANCE    ((void*)2)
 
 /** Representation of classes, that is item types.
 

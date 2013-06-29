@@ -20,6 +20,7 @@
 
 #include <falcon/cm/barrier.h>
 #include <falcon/cm/compile.h>
+#include <falcon/cm/debugger.h>
 #include <falcon/cm/event.h>
 #include <falcon/cm/fence.h>
 #include <falcon/cm/iff.h>
@@ -114,6 +115,7 @@ CoreModule::CoreModule():
 
    this->addObject( new Ext::ClassGC );
    this->addObject( new Ext::ClassVMContext );
+   this->addObject( new Ext::ClassDebugger );
 
    // Add the args global
    this->globals().add("args", Item(), true);

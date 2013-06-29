@@ -490,6 +490,17 @@ void StdSteps::PStepReinvoke::apply_(const PStep*, VMContext* ctx)
    current.m_function->invoke(ctx, current.m_paramCount);
 }
 
+void StdSteps::PStepBreakpoint::describeTo( String& target ) const
+{
+   target = "PStepBreakpoint";
+}
+
+void StdSteps::PStepBreakpoint::apply_(const PStep*, VMContext* ctx)
+{
+   ctx->popCode(); // in case, we'll be pushed again.
+   ctx->setBreakpointEvent();
+}
+
 }
 
 /* end of stdsteps.cpp */

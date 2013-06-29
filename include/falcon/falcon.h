@@ -31,6 +31,9 @@
 #include <falcon/datawriter.h>
 #include <falcon/datareader.h>
 
+#include <falcon/debugger.h>
+
+
 #include <falcon/module.h>
 #include <falcon/intcompiler.h>
 #include <falcon/modcompiler.h>

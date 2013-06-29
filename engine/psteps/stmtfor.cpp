@@ -194,6 +194,7 @@ void StmtForBase::render( TextWriter* tw, int32 depth ) const
    {
       tw->write( renderPrefix(depth) );
       renderHeading( tw, depth );
+      tw->write("\n");
 
       int dp = depth < 0 ? -depth : depth;
       if( m_body != 0 )

@@ -164,6 +164,21 @@ private:
 };
 
 
+class ModSpace::PStepCallMain: public PStep
+{
+public:
+   PStepCallMain( ModSpace* owner ): m_owner( owner ) {
+      apply = apply_;
+   }
+   virtual ~PStepCallMain() {};
+   virtual void describeTo( String& str, int ) const { str = "PStepCallMain"; }
+
+private:
+   static void apply_( const PStep* self, VMContext* ctx );
+   ModSpace* m_owner;
+};
+
+
 void ModSpace::PStepManagedLoadedModule::apply_( const PStep* self, VMContext* ctx )
 {
    Error* error = 0;
@@ -317,17 +332,28 @@ void ModSpace::PStepSetupModule::apply_( const PStep*, VMContext* ctx )
    // Eventually ready the main functions.
    if( ! mod->isMain() && mod->getMainFunction() != 0 )
    {
-      // Tentatively, the process result is the result of this function.
-      // this will also pop the function result, as we don't want it around.
-      ctx->pushCode( mod->modSpace()->m_stepSetProcResult );
-      ctx->pushData( mod->getMainFunction() );
-      ctx->callInternal(mod->getMainFunction(), 0 );
+      ctx->pushCode( mod->modSpace()->m_stepCallMain );
    }
 
    // prepare the inits of this module
    mod->startup( ctx );
 
    // on exit, the init routines + the main function will be executed as needed.
+}
+
+
+void ModSpace::PStepCallMain::apply_( const PStep*, VMContext* ctx )
+{
+   // the module we're working on is at top data stack.
+   Module* mod = static_cast<Module*>(ctx->topData().asInst());
+
+   TRACE( "ModSpace::PStepCallMain::apply_ - module %s ", mod->name().c_ize() );
+
+   // Tentatively, the process result is the result of this function.
+   // this will also pop the function result, as we don't want it around.
+   ctx->resetCode( mod->modSpace()->m_stepSetProcResult );
+   ctx->call(mod->getMainFunction());
+   // the main function will be executed as needed.
 }
 
 
@@ -355,6 +381,9 @@ void ModSpace::PStepCompleteLoad::apply_( const PStep*, VMContext* ctx )
   Module* mod = static_cast<Module*>(ctx->topData().asInst());
 
   TRACE( "ModSpace::PStepCompleteLoad::apply_ - module %s ", mod->name().c_ize() );
+
+  // add a reference, as it will be asked from outside.
+  mod->incref();
 
   // we're not needed anymore.
   ctx->popCode();
@@ -517,6 +546,7 @@ ModSpace::ModSpace( Process* owner, ModSpace* parent ):
    m_stepDisposeLoad = new PStepDisposeLoad(this);
    m_stepSaveDynMantra = new PStepSaveDynMantra(this);
    m_stepSetProcResult = new PStepSetProcResult(this);
+   m_stepCallMain = new PStepCallMain(this);
 
    if( parent != 0 )
    {
@@ -545,6 +575,7 @@ ModSpace::~ModSpace()
    delete m_stepDisposeLoad;
    delete m_stepSaveDynMantra;
    delete m_stepSetProcResult;
+   delete m_stepCallMain;
 
    TRACE( "ModSpace::~ModSpace complete deletion of %p", this );
 }
@@ -570,6 +601,7 @@ Process* ModSpace::loadModule( const String& name, bool isUri,  bool asLoad, boo
    return process;
 }
 
+
 void ModSpace::loadModuleInProcess( Process* process, const String& name, bool isUri,  bool asLoad, bool isMain, Module* loader )
 {
    process->adoptModSpace(this);
@@ -580,6 +612,7 @@ void ModSpace::loadModuleInProcess( Process* process, const String& name, bool i
 
    loadModuleInContext( name, isUri, asLoad, isMain, tgtContext, loader );
 }
+
 
 void ModSpace::loadAndRun( Process* process, const String& name, bool isUri, Module* loader )
 {
@@ -603,6 +636,7 @@ void ModSpace::loadModuleInProcess( const String& name, bool isUri, bool asLoad,
 {
    loadModuleInProcess( m_process, name, isUri, asLoad, isMain, loader );
 }
+
 
 void ModSpace::loadModuleInContext( const String& name, bool isUri, bool isLoad, bool isMain, VMContext* tgtContext, Module* loader )
 {
@@ -657,7 +691,7 @@ void ModSpace::add( Module* mod )
    store( mod );
 
    Error* le = 0;
-   exportFromModule(mod, le );
+   exportFromModule(mod, le);
    if( le != 0 ) {
       throw le;
    }

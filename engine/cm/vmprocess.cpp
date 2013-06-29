@@ -192,7 +192,7 @@ static void get_id(const Class*, const String&, void* instance, Item& value )
 
 /*#
  @property current VMProcess
- @brief Returns the ID of this VM process.
+ @brief Returns an instance of the current VM process.
  */
 static void get_current(const Class* cls, const String&, void*, Item& value )
 {

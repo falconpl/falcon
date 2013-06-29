@@ -68,7 +68,7 @@ Module::Private::~Private()
       ++rl_i;
    }
 
-
+   /*
    MantraMap::iterator mi = m_mantras.begin();
    while( mi != m_mantras.end() )
    {
@@ -76,6 +76,7 @@ Module::Private::~Private()
       delete mantra;
       ++mi;
    }
+   */
 }
 
 
@@ -142,6 +143,23 @@ Module::Module( const String& name, const String& uri, bool bNative ):
 Module::~Module()
 {
    TRACE("Deleting module %s", m_name.c_ize() );
+
+   // remove all the singletons.
+   {
+      Private::InitList::iterator iter = _p->m_initList.begin();
+      while( iter != _p->m_initList.end() )
+      {
+         Class* sclass = *iter;
+         String singName = sclass->name().subString(1);
+         Item* singleton = globals().getValue(singName);
+         if( singleton != 0 )
+         {
+            sclass->dispose(singleton->asInst());
+         }
+         ++iter;
+      }
+   }
+
    // this is doing to do a bit of stuff; see ~Private()
    delete _p;
    TRACE("Module '%s' deletion complete", m_name.c_ize() );
@@ -481,9 +499,20 @@ bool Module::addObject( Class* cls, bool bExport )
    {
       cls->name( "%" + cls->name() );
    }
-   return addInitClass(cls, bExport);
-}
 
+   // the class of singletons is always private.
+   if( addInitClass(cls, false) )
+   {
+      // create a simple -- non initialized singleton instance.
+      void* instance = cls->createInstance();
+      // do not GC -- the module destructor will dispose of this
+      // ok even if instance is 0
+      globals().add(cls->name().subString(1), Item(cls, instance), bExport );
+      return true;
+   }
+
+   return false;
+}
 
 
 int32 Module::getInitCount() const
@@ -828,6 +857,8 @@ void Module::startup( VMContext* ctx )
 
    TRACE( "Module::startup for module %s", name().c_ize() );
 
+   // init all the classes
+
    // check all the mantras...
    Private::MantraMap::iterator iter = _p->m_mantras.begin();
    while( iter != _p->m_mantras.end() )
@@ -865,7 +896,9 @@ void Module::startup( VMContext* ctx )
 
       for( int32 i = 0; i < icount; ++i )
       {
+         //initialize simple singletons
          Class* cls = getInitClass(i);
+         // prepare all the required calls.
          ctx->pushCode( initStep );
          ctx->callItem( Item(cls->handler(), cls) );
       }

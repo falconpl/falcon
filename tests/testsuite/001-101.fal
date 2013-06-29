@@ -22,6 +22,8 @@ end
 
 inst = test()
 
+Debugger.breakpoint()
+
 > "Simple provides test with dynamic clases"
 for prop in ["hello", "world", "sayHello"]
    x = Syn.Provides( &inst, prop)

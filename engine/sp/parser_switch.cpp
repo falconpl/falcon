@@ -252,10 +252,15 @@ static bool make_case_branch(  Parser& p, ParserContext* ctx, SynTree* st, bool 
                      const Item* value = ctx->getValue( itm->m_sym );
                      fassert( value != 0 );
 
-                     if( value == 0 || ! value->isClass() )
+                     if( value == 0 || (value->isUser() && ! value->isClass()) )
                      {
                         p.addError( e_select_invtype, p.currentSource(), tlist->line(), tlist->chr() );
                         return false;
+                     }
+                     else if( ! value->isUser() )
+                     {
+                        noClash = swc->findBlockForItem(*value) == 0;
+                        ecase->addEntry( value->type() );
                      }
                      else {
                         // cool, we can add the resolved symbol

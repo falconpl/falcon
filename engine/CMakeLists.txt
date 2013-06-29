@@ -145,6 +145,7 @@ add_library(falcon_engine SHARED
   cm/compile.cpp
   cm/datareader.cpp
   cm/datawriter.cpp
+  cm/debugger.cpp
   cm/event.cpp
   cm/fence.cpp
   cm/gc.cpp
@@ -358,6 +359,7 @@ add_library(falcon_engine SHARED
   contextmanager.cpp
   datareader.cpp
   datawriter.cpp
+  debugger.cpp
   delegatemap.cpp
   directory.cpp
   diskfiletraits.cpp

@@ -450,6 +450,19 @@ public:
    PStepReinvoke m_reinvoke;
 
 
+   /** Breakpoint.
+    *
+    * Sets the break event and pop itself.
+    */
+   class PStepBreakpoint: public PStep
+   {
+   public:
+      PStepBreakpoint() { apply = apply_; }
+      virtual ~PStepBreakpoint() {}
+      virtual void describeTo( String& target ) const;
+      static void apply_(const PStep*, VMContext* ctx);
+   };
+   PStepBreakpoint m_breakpoint;
 };
 
 }
