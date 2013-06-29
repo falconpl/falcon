@@ -186,9 +186,6 @@ public:
    /** Returns the count of global variables. */
    uint32 size() const;
 
-   void store( DataWriter* dw ) const;
-   void restore( DataReader* dr );
-
    void flatten( VMContext* ctx, ItemArray& subItems ) const;
    void unflatten( VMContext* ctx, ItemArray& subItems, uint32 start, uint32 &count );
 

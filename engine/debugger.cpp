@@ -47,7 +47,7 @@ private:
    static void apply_( const PStep*, VMContext* ctx )
    {
       ctx->popCode();
-      TextWriter tw( ctx->vm()->stdOut() );
+      TextWriter tw( ctx->vm()->stdErr() );
       tw.write("**: ");
       tw.writeLine( ctx->topData().describe() );
       ctx->popData(2);
@@ -71,7 +71,7 @@ void Debugger::onBreak( Process* p, Processor*, VMContext* ctx )
 
    // get the standard input stream.
    Stream* input = p->vm()->stdIn();
-   Stream* output = p->vm()->stdOut();
+   Stream* output = p->vm()->stdErr();
 
    TextReader tr(input);
    TextWriter wr( output );
@@ -159,6 +159,10 @@ bool Debugger::parseCommand( TextWriter& wr, const String& line, VMContext* ctx 
    {
       printLoc(wr, ctx);
       printCode(wr, ctx);
+      cont = true;
+   }
+   else {
+      wr.writeLine("*!: Unknown command");
       cont = true;
    }
 

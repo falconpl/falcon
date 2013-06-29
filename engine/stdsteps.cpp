@@ -355,6 +355,8 @@ void StdSteps::PStepFillInstance::apply_( const PStep*, VMContext* ctx )
    Class* cls = 0;
    void* data = 0;
 
+   TRACE("StdSteps::PStepFillInstance::apply_ on %s", inst.describe().c_ize() );
+
    if( inst.asClassInst(cls, data) )
    {
       // is this a valid class instance?

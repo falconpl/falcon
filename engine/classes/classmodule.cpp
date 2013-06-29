@@ -134,9 +134,6 @@ void ClassModule::store( VMContext*, DataWriter* stream, void* instance ) const
    Module::Private* mp = mod->_p;
    int32 progID;
 
-   // first, save symbols
-   mod->globals().store(stream);
-
    // Now store the module requests
    {
       // first, number the module requests.
@@ -307,9 +304,6 @@ void ClassModule::restoreModule( Module* mod, DataReader* stream ) const
    int32 progID, count;
    // First, prepare to save the module ids.
    Module::Private* mp = mod->_p;
-
-   // first, write the symbols.
-   mod->globals().restore(stream);
 
    // Now restore the module requests
    Module::Private::ModReqList& mrlist = mp->m_mrlist;
@@ -512,7 +506,7 @@ void ClassModule::flatten( VMContext* ctx, ItemArray& subItems, void* instance )
    Module::Private* mp = mod->_p;
 
    subItems.reserve(
-      mod->globals().size() +
+      mod->globals().size()*3 +
       mp->m_mantras.size()+
       mod->attributes().size() * 2 +
       4
@@ -520,7 +514,9 @@ void ClassModule::flatten( VMContext* ctx, ItemArray& subItems, void* instance )
 
    // save all the global variables
    mod->globals().flatten(ctx, subItems);
-   TRACE( "ClassModule::flatten -- stored %d variables", (uint32) subItems.length() );
+   TRACE( "ClassModule::flatten -- stored %d variables", (uint32) subItems.length() / 3 );
+   // Push a nil as a separator
+   subItems.append(Item());
 
    // save mantras
    {
@@ -584,7 +580,8 @@ void ClassModule::unflatten( VMContext* ctx, ItemArray& subItems, void* instance
 
    // First, restore the global variables.
    mod->globals().unflatten( ctx, subItems, 0, pos);
-   TRACE( "ClassModule::unflatten -- restored %d globals", pos );
+   TRACE( "ClassModule::unflatten -- restored %d globals", pos/3 );
+   ++pos; // skip the nil spearator after globals.
 
    const Item* current = &subItems[pos];
    while( ! current->isNil() && pos < subItems.length()-2 )

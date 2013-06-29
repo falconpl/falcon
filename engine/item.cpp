@@ -19,6 +19,7 @@
 #include <falcon/item.h>
 #include <falcon/itemid.h>
 #include <falcon/stdhandlers.h>
+#include <falcon/symbol.h>
 
 #include "falcon/itemarray.h"
 
@@ -54,6 +55,14 @@ Item& Item::setString( const wchar_t* str )
 Item& Item::setString( const String& str )
 {
    setUser( FALCON_GC_HANDLE(new String(str)) );
+   return *this;
+}
+
+
+Item& Item::setSymbol( Symbol* sym )
+{
+   sym->incref();
+   setUser( FALCON_GC_HANDLE(sym) );
    return *this;
 }
 

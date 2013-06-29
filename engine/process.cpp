@@ -82,7 +82,8 @@ Process::Process( VMachine* owner, ModSpace* ms ):
    m_added(false),
    m_resultLock(0),
    m_mark(0),
-   m_tlgen(1)
+   m_tlgen(1),
+   m_breakCallback(0)
 {
    m_itemPagePool = new Pool;
    m_superglobals = new ItemStack(m_itemPagePool);

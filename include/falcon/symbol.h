@@ -84,6 +84,8 @@ public:
    void incref();
    void decref();
 
+   static Class* handler();
+
 protected:
    // Notice: we're using the string GC mark to keep ours.
    String m_name;

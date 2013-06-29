@@ -22,6 +22,7 @@
 #include <falcon/itemarray.h>
 #include <falcon/fassert.h>
 #include <falcon/modspace.h>
+#include <falcon/stdhandlers.h>
 
 #include <falcon/module.h>
 #include <falcon/closure.h>
@@ -66,7 +67,11 @@ void Symbol::decref()
    Engine::releaseSymbol( this );
 }
 
-
+Class* Symbol::handler()
+{
+   static Class* h = Engine::instance()->handlers()->symbolClass();
+   return h;
+}
 
 }
 

@@ -163,6 +163,11 @@ public:
       setOpaque(name, opaque);
    }
 
+   Item( Symbol* sym )
+   {
+      setSymbol( sym );
+   }
+
    void setOpaque( const char* name, void* opaque ) {
       type( FLC_ITEM_OPAQUE );
       content.data.opaque.pOpaqueName = name;
@@ -224,6 +229,8 @@ public:
     \see Item( const String& )
     */
    Item& setString( const String& str );
+
+   Item& setSymbol( Symbol* sym );
 
    /** Creates a boolean item. */
    explicit inline Item( bool b ) {

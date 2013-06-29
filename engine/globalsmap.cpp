@@ -322,64 +322,24 @@ uint32 GlobalsMap::size() const
 }
 
 
-void GlobalsMap::store( DataWriter* dw ) const
-{
-   uint32 size = _p->m_variables.size();
-   dw->write( size );
-
-   Private::VariableMap::iterator iter = _p->m_variables.begin();
-   Private::VariableMap::iterator end = _p->m_variables.end();
-
-   while( iter != end )
-   {
-      Data* vd = iter->second;
-      dw->write( iter->first->name() );
-      bool exp = isExported( iter->first );
-      dw->write( exp );
-      dw->write( vd->m_bExtern );
-
-      ++iter;
-   }
-}
-
-void GlobalsMap::restore( DataReader* dr )
-{
-   uint32 size = 0;
-   dr->read( size );
-
-   for( uint32 i = 0; i < size; ++ i )
-   {
-      String name;
-      bool exported, ext;
-      dr->read( name );
-      dr->read( exported );
-      dr->read( ext );
-
-      Data* vd = new Data();
-      Symbol* sym = Engine::getSymbol(name);
-
-      _p->m_variables[sym] = vd;
-      vd->m_bExtern = ext;
-      if( exported )
-      {
-         _p->m_exports[sym] = vd;
-      }
-   }
-}
-
-
 void GlobalsMap::flatten( VMContext*, ItemArray& subItems ) const
 {
    Private::VariableMap::iterator iter = _p->m_variables.begin();
    Private::VariableMap::iterator end = _p->m_variables.end();
 
-   subItems.reserve(_p->m_variables.size());
+   subItems.reserve(_p->m_variables.size() * 3);
    while( iter != end )
    {
+      Symbol* sym = iter->first;
       Data* vd = iter->second;
+      subItems.append( sym );
       // ignore the data where the global points; store externals as nil
       // we'll store the locally stored globals only.
       subItems.append( vd->m_storage );
+
+      int64 flags = (isExported(sym) ? 1 : 0) + (vd->m_bExtern ? 2:0);
+      subItems.append( flags );
+
       ++iter;
    }
 }
@@ -387,20 +347,21 @@ void GlobalsMap::flatten( VMContext*, ItemArray& subItems ) const
 
 void GlobalsMap::unflatten( VMContext*, ItemArray& subItems, uint32 start, uint32 &count )
 {
-   Private::VariableMap::iterator iter = _p->m_variables.begin();
-   Private::VariableMap::iterator end = _p->m_variables.end();
-
-   fassert( subItems.length()-start >= _p->m_variables.size());
    uint32 c = start;
-   while( start < subItems.length() && iter != end )
+   while( c+3 <= subItems.length() && ! subItems[c].isNil() )
    {
-      Data* vd = iter->second;
-      vd->m_storage = subItems[c];
+      Symbol* sym = static_cast<Symbol*>(subItems[c++].asInst());
+      Data* vd = new Data;
+      vd->m_storage = subItems[c++];
       vd->m_data = &vd->m_storage;
-      // eventually, the resolution of external values will change
-      // m_data ptr at a later time.
-      ++c;
-      ++iter;
+
+      int64 flags = subItems[c++].asInteger();
+      vd->m_bExtern = (flags & 2) != 0;
+      _p->m_variables[sym] = vd;
+      if( (flags & 1) != 0 )
+      {
+         _p->m_exports[sym] = vd;
+      }
    }
 
    count = c;
