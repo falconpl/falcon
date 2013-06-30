@@ -272,7 +272,7 @@ void ModSpace::PStepResolveModReq::apply_( const PStep* self, VMContext* ctx )
            // start the load process.
            ctx->pushCode( ms->m_stepStoreModReq );
            ctx->currentCode().m_seqId = seqId - 1;
-           ms->loadModuleInContext( mreq->name(), mreq->isUri(), mreq->isLoad(), false, ctx, mod );
+           ms->loadModuleInContext( mreq->name(), mreq->isUri(), mreq->isLoad(), false, ctx, mod, true );
            return;
         }
      }
@@ -638,14 +638,14 @@ void ModSpace::loadModuleInProcess( const String& name, bool isUri, bool asLoad,
 }
 
 
-void ModSpace::loadModuleInContext( const String& name, bool isUri, bool isLoad, bool isMain, VMContext* tgtContext, Module* loader )
+void ModSpace::loadModuleInContext( const String& name, bool isUri, bool isLoad, bool isMain, VMContext* tgtContext, Module* loader, bool isNeeded )
 {
    TRACE1( "ModSpace::loadModuleInContext(%s, %s, %s, %s, %p/%d, %s )",
             name.c_ize(), (isUri? "uri" : "name"), (isLoad?"load": "import"), (isMain?"main":"normal"),
             tgtContext, tgtContext->id(), (loader == 0 ? "no loader" : loader->name().c_ize()) );
 
    // determine the fate of the loaded module.
-   if( isMain )
+   if( isMain || isNeeded )
    {
       tgtContext->pushCode( m_stepCompleteLoad );
    }

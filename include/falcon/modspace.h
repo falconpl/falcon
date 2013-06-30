@@ -156,7 +156,7 @@ public:
    void loadModuleInProcess( const String& name, bool isUri, bool asLoad, bool isMain = false, Module* loader = 0 );
    void loadModuleInProcess( Process* prc, const String& name, bool isUri, bool asLoad, bool isMain = false, Module* loader = 0);
 
-   void loadModuleInContext( const String& name, bool isUri, bool asLoad, bool isMain, VMContext* tgtContext, Module* caller );
+   void loadModuleInContext( const String& name, bool isUri, bool asLoad, bool isMain, VMContext* tgtContext, Module* caller, bool isNeeded = false );
 
    /** Loads and runs a module in the given process.
     * The module will be loaded, and eventually prepared for execution (if it provides a main function).

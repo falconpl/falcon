@@ -664,7 +664,7 @@ bool Module::addImport( ImportDef* def, Error*& error, int32 line )
       else
       {
          // this is a new request.
-         req = addModRequest( def->sourceModule(), def->isUri() );
+         req = addModRequest( def->sourceModule(), def->isUri(), def->isLoad() );
 
          // link the definition in it
          req->addImportDef(def);
