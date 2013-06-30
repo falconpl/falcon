@@ -45,10 +45,11 @@ public:
    void printLoc( TextWriter& wr, VMContext* ctx );
 
 private:
-
    PStep* m_stepPostEval;
    class PStepPostEval;
 
+   String m_lastCommand;
+   bool m_hello;
 };
 
 }

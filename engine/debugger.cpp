@@ -55,7 +55,8 @@ private:
 };
 
 
-Debugger::Debugger()
+Debugger::Debugger() :
+    m_hello(true)
 {
    m_stepPostEval = new PStepPostEval;
 }
@@ -75,6 +76,12 @@ void Debugger::onBreak( Process* p, Processor*, VMContext* ctx )
 
    TextReader tr(input);
    TextWriter wr( output );
+
+   if( m_hello )
+   {
+      wr.writeLine( "*: Falcon debugger engaged, type \"help\" for help." );
+      m_hello = false;
+   }
 
    printCode( wr, ctx );
 
@@ -104,14 +111,37 @@ bool Debugger::parseCommand( TextWriter& wr, const String& line, VMContext* ctx 
 
    // by default, we don't want to loop immediately.
    bool cont = false;
+   // whether to save this line or not
+   bool save = true;
 
    if( line == "quit" )
    {
       ctx->process()->terminate();
+      save = false;
    }
-   else if( line == "help" )
+   else if( line == "exit" )
    {
-      wr.write( "*: Placeholder\n" );
+      MESSAGE("Debugger::parseCommand -- Exiting the debugger on user request" );
+      cont = false;
+   }
+   else if( line == "help" || line == "?" )
+   {
+      wr.write( "*: Command list:\n"
+               "*: help: This help.\n"
+
+               "*: quit: Terminate current Falcon VM process.\n"
+               "*: exit: terminate the debugger and resume execution.\n"
+
+               "*: step: Proceed in the next expression (step in).\n"
+               "*: next: Execute next expression without descending into it (step over).\n"
+               "*: cont: Resume execution up to the next breakpoint.\n"
+
+               "*: eval <expr>: Evaluate given expression -- can change variables.\n"
+               "*: src: Locate current code in module and function.\n"
+
+               "*: Entering an empty line repeats the previous command.\n"
+               );
+      cont = true;
    }
    else if( line == "step" )
    {
@@ -120,7 +150,7 @@ bool Debugger::parseCommand( TextWriter& wr, const String& line, VMContext* ctx 
    }
    else if( line == "next" )
    {
-      wr.write( "*: big step\n" );
+      wr.writeLine( "*: big step" );
       CodeFrame temp = ctx->currentCode();
       ctx->resetCode( stepBreak );
       ctx->pushCode( temp.m_step );
@@ -130,7 +160,7 @@ bool Debugger::parseCommand( TextWriter& wr, const String& line, VMContext* ctx 
    }
    else if( line == "cont" )
    {
-      wr.write( "Continuing\n" );
+      wr.writeLine( "*: Continuing." );
    }
    else if( line.startsWith("eval ") )
    {
@@ -161,9 +191,25 @@ bool Debugger::parseCommand( TextWriter& wr, const String& line, VMContext* ctx 
       printCode(wr, ctx);
       cont = true;
    }
+   else if( line == "" )
+   {
+      if (m_lastCommand != "")
+      {
+         cont = Debugger::parseCommand(wr, m_lastCommand, ctx);
+      }
+      else {
+         save = false;
+      }
+   }
    else {
       wr.writeLine("*!: Unknown command");
       cont = true;
+      save = false;
+   }
+
+   if( save )
+   {
+      m_lastCommand = line;
    }
 
    TRACE1("Debugger::parseCommand -- return with continuation '%s'", (cont? "true": "false") );
