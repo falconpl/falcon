@@ -31,7 +31,7 @@ namespace Falcon
 
 MetaFalconClass::MetaFalconClass()
 {
-   m_name = "Class";
+   m_name = "FalconClass";
 }
 
 MetaFalconClass::~MetaFalconClass()
@@ -92,7 +92,7 @@ void MetaFalconClass::unflatten( VMContext*, ItemArray& subItems, void* instance
 bool MetaFalconClass::op_init( VMContext* ctx, void* instance, int32 pcount ) const
 {
    static Class* classParentship = static_cast<Class*>(
-            Engine::instance()->getMantra("Parentship", Mantra::e_c_class));
+            Engine::instance()->getMantra("Syn.Parentship", Mantra::e_c_class));
    fassert( classParentship != 0 );
    
    Item* operands = ctx->opcodeParams( pcount );

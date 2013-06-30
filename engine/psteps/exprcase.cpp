@@ -859,6 +859,22 @@ bool ExprCase::verify( const Item& value ) const
 }
 
 
+bool ExprCase::verifySymbol( Symbol* value ) const
+{
+   for ( Private::EntryList::iterator iter = _p->m_entries.begin();
+            iter !=  _p->m_entries.end();
+            ++iter )
+   {
+      CaseEntry* entry = *iter;
+      if( entry->m_type == CaseEntry::e_t_symbol && entry->m_data.symbol == value )
+      {
+         return true;
+      }
+   }
+
+   return false;
+}
+
 void ExprCase::store( DataWriter* dw )
 {
    uint32 size = _p->m_entries.size();

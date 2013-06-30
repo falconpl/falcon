@@ -239,18 +239,23 @@ static bool make_case_branch(  Parser& p, ParserContext* ctx, SynTree* st, bool 
                   // if it's 0, we need a requirement; and we shall also add an external symbol.
                   if( ! isLocal )
                   {
-                     // then just add the requirement
+                     // When interactive, all the symbols must be defined.
                      if( p.interactive() )
                      {
                         p.addError( e_undef_sym, p.currentSource(), tlist->line(), tlist->chr(), 0, itm->m_sym->name() );
                         return false;
+                     }
+                     // else, we can add a symbol that will be resolved runtime.
+                     else {
+                        noClash = swc->findBlockForSymbol( itm->m_sym ) == 0;
+                        ecase->addEntry(itm->m_sym);
                      }
                   }
                   else
                   {
                      // if it's defined and not a class, we're in trouble
                      const Item* value = ctx->getValue( itm->m_sym );
-                     fassert( value != 0 );
+                     fassert( value != 0 ); // because the compiler context said it was local.
 
                      if( value == 0 || (value->isUser() && ! value->isClass()) )
                      {

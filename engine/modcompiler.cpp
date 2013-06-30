@@ -353,16 +353,14 @@ void ModCompiler::Context::onGlobalDefined( const String& name, bool& bAlreadyDe
 
 bool ModCompiler::Context::onGlobalAccessed( const String& name )
 {
-   Symbol* sym = Engine::getSymbol(name);
-   Item* var = m_owner->m_module->resolveLocally( sym );
+   GlobalsMap::Data* var = m_owner->m_module->globals().get( name );
 
    if( var == 0 && ! m_owner->sp().interactive() )
    {
-      m_owner->m_module->addImplicitImport( sym, m_owner->m_sp.currentLine() );
+      m_owner->m_module->addImplicitImport( name, m_owner->m_sp.currentLine() );
    }
 
-   sym->decref();
-   return var != 0;
+   return var != 0 && ! var->m_bExtern;
 }
 
 
@@ -379,7 +377,7 @@ void ModCompiler::Context::onIString(const String& string )
 
 Item* ModCompiler::Context::getValue( Symbol* sym )
 {
-   return m_owner->m_module->globals().getValue( sym );
+   return m_owner->m_module->resolve( sym );
 }
 //=================================================================
 //

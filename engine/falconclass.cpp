@@ -36,6 +36,7 @@
 #include <falcon/stdhandlers.h>
 #include <falcon/textwriter.h>
 #include <falcon/symbol.h>
+#include <falcon/module.h>
 
 #include <falcon/delegatemap.h>
 
@@ -679,10 +680,18 @@ bool FalconClass::construct( VMContext* ctx )
 
          if( inh->base() == 0 )
          {
-            Item* ibase = ctx->resolveSymbol(inh->symbol(), false);
-            if( ibase == 0 )
+            // first, try a static resolution
+            Item* ibase = 0;
+            if ( m_module != 0 ) {
+               ibase = m_module->resolve(inh->symbol());
+            }
+
+            // if not found, try to resolve in our context (our module might be not live yet)
+            if( ibase == 0 && m_module != 0 )
             {
-               throw FALCON_SIGN_XERROR( LinkError, e_undef_sym, .extra(inh->symbol()->name() ) );
+               // will throw on failure
+               ibase = ctx->resolveSymbol(inh->symbol(), false);
+               fassert( ibase != 0 )
             }
 
             if( ! ibase->isClass() )
@@ -1114,6 +1123,7 @@ void FalconClass::unflattenSelf( ItemArray& flatArray )
       m_constructor = static_cast<SynFunc*>(flatArray[1].asInst());
       // constructor status is not flattened.
       m_constructor->setConstructor();
+      m_constructor->module(this->module());
    }
    
    if( ! flatArray[2].isNil() )

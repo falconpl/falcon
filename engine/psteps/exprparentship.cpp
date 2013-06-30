@@ -18,6 +18,9 @@
 #include <falcon/synclasses.h>
 #include <falcon/vmcontext.h>
 #include <falcon/textwriter.h>
+#include <falcon/symbol.h>
+
+#include <falcon/errors/linkerror.h>
 
 #include "exprvector_private.h"
 #include "falcon/psteps/exprinherit.h"
@@ -79,7 +82,7 @@ void ExprParentship::apply_( const PStep* ps, VMContext* ctx )
    const TreeStepVector_Private::ExprVector& exprs = self->_p->m_exprs;
    int size = (int) exprs.size();   
    
-   TRACE1("Apply with %d/%d parameters", size-seqId-1, size );
+   TRACE1("ExprParentship::apply_ with %d/%d parameters", size-seqId-1, size );
    
    // execute the init of all the stuff ( last to first
    while( seqId < size )
@@ -87,6 +90,24 @@ void ExprParentship::apply_( const PStep* ps, VMContext* ctx )
       ++seqId;
       ExprInherit* exp = static_cast<ExprInherit*>(exprs[size - seqId]);
       
+      // resolve dynamically the required class
+      if( exp->base() == 0 )
+      {
+         TRACE1("ExprParentship::apply_ dynamic parentship resolution for %s", exp->symbol()->name().c_ize() );
+         Item* parent = ctx->resolveSymbol( exp->symbol(), false );
+         if( parent == 0 )
+         {
+            throw  FALCON_SIGN_XERROR( LinkError, e_undef_sym, .extra( exp->symbol()->name() ) );
+         }
+         else if( ! parent->isClass() )
+         {
+            throw  FALCON_SIGN_XERROR( LinkError, e_inv_inherit, .extra( exp->symbol()->name() ) );
+         }
+         else {
+            exp->base( static_cast<Class*>(parent->asInst()) );
+         }
+      }
+
       Item& iinst = ctx->self();
       fassert( iinst.isUser() );
       Class* cls = iinst.asClass();

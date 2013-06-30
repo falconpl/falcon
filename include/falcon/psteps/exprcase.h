@@ -81,6 +81,12 @@ public:
     */
    bool verify( const Item& item ) const;
 
+   /** Checks if this entry is compatible with the given symbol.
+    *
+    * Symbols are checked literally, ignoring the value they refer to.
+    */
+   bool verifySymbol( Symbol* value ) const;
+
    /** Verifies a live item.
     *
     * Here, symbols in the switch/select branches get

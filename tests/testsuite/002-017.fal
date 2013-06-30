@@ -10,7 +10,6 @@ testing value '[Array of 2 elements]': It's something else
 @endoutput
 */
 
-
 > "Advanced select"
 
 function test( value )

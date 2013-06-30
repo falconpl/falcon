@@ -38,6 +38,8 @@ function test( value )
    
 end
 
+//Debugger.breakpoint()
+
 values = .[ Advanced() Base() "Hello" .[1 2] ]
 for v in values
    test(v)

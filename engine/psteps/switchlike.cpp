@@ -238,8 +238,8 @@ SynTree* SwitchlikeStatement::dummyTree()
 }
 
 
-template<class __T>
-SynTree* SwitchlikeStatement::findBlock( const Item& value, const __T& verifier ) const
+template<class __TI, class __T>
+SynTree* SwitchlikeStatement::findBlock( const __TI& value, const __T& verifier ) const
 {
    Private::Blocks::iterator iter = _p->m_blocks.begin();
    while( iter != _p->m_blocks.end() )
@@ -274,6 +274,16 @@ public:
       return cs->verify(value);
    }
 };
+
+class SymbolVerifier
+{
+public:
+   bool check( ExprCase* cs, Symbol* value ) const
+   {
+      return cs->verifySymbol(value);
+   }
+};
+
 
 
 class TypeVerifier
@@ -317,6 +327,12 @@ SynTree* SwitchlikeStatement::findBlockForItem( const Item& value ) const
    return findBlock(value, vv);
 }
 
+
+SynTree* SwitchlikeStatement::findBlockForSymbol( Symbol* value ) const
+{
+   SymbolVerifier vv;
+   return findBlock(value, vv);
+}
 
 SynTree* SwitchlikeStatement::findBlockForItem( const Item& value, VMContext* ctx ) const
 {
