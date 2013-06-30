@@ -331,7 +331,7 @@ public:
       case e_t_class:
          delete m_data.strings.string1;
          // already resolved?
-         if( m_class != 0 )
+         if( m_class != 0 && m_lock != 0 )
          {
             m_lock->dispose();
             m_lock = 0;
