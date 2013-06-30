@@ -5,6 +5,7 @@
 @result a=5
 */
 
+import Syn.*
 
 > "Homoiconic While (without children) Test"
 a = 0

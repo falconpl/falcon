@@ -154,7 +154,7 @@ public:
    void setEta( bool mode ) { m_bEta = mode; }
 
    inline Function* addParam( const String& name ) {
-      m_vars.insert( name );
+      m_params.insert( name );
       return this;
    }
 
@@ -210,13 +210,16 @@ public:
     */
    virtual Class* handler() const;
    
-   const SymbolMap& parameters() const  { return m_vars; }
-   SymbolMap& parameters() { return m_vars; }
+   const SymbolMap& parameters() const  { return m_params; }
+   SymbolMap& parameters() { return m_params; }
+
+   const SymbolMap& locals() const  { return m_locals; }
+   SymbolMap& locals() { return m_locals; }
 
    const SymbolMap& closed() const  { return m_closed; }
    SymbolMap& closed() { return m_closed; }
 
-   inline uint32 paramCount() const { return m_vars.size(); }
+   inline uint32 paramCount() const { return m_params.size(); }
    bool hasClosure() const { return m_closed.size() != 0; }
 
    /**
@@ -232,7 +235,8 @@ public:
    void setMain( bool m ) { m_bMain = m; }
 
 protected:
-   SymbolMap m_vars;
+   SymbolMap m_params;
+   SymbolMap m_locals;
    SymbolMap m_closed;
    String m_signature;
    Class* m_methodOf;

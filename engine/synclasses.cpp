@@ -943,59 +943,11 @@ bool SynClasses::ClassInherit::op_init( VMContext* ctx, void* instance, int pcou
  
    return false;
 }
-
-void SynClasses::ClassInherit::flatten( VMContext* ctx, ItemArray& subItems, void* instance ) const
-{
-   ExprInherit* inh = static_cast<ExprInherit*>( instance );
-   Storer* storer = ctx->getTopStorer();
-   
-   subItems.resize(1+ inh->arity() );
-   Class* baseClass = inh->base();
-   if( baseClass == 0 )
-   {
-      // should not happen, but... keep the item nil.
-      return;
-   }
-   
-   // to decide how to flatten a class, we need to know if we're flattening our module.
-   if( storer != 0 && storer->topData() == baseClass->module() 
-      // Yep, we're storing the module, so  we're not forced to store external classes
-      )
-   {
-      // so, it's a module and we had a requirement. We're not storing this at all.
-      return;
-   }
-   
-   // in all the other cases, properly store the class.
-   subItems[0].setUser( baseClass->handler(), baseClass );
-   for( int i = 0; i < inh->arity(); ++i )
-   {
-      TreeStep* expr = inh->nth( i );
-      subItems[i+1].setUser( expr->handler(), expr );
-   }
-}
-void SynClasses::ClassInherit::unflatten( VMContext*, ItemArray& subItems, void* instance ) const
-{
-   fassert(subItems.length() >= 1);
-   const Item& item = subItems[0];
-   if( item.isNil() )
-   {
-      return;
-   }
-   
-   ExprInherit* inherit = static_cast<ExprInherit*>( instance );
-   Class* cls = static_cast<Class*>(item.asInst());
-   inherit->base( cls );
-   for( int i = 1; i < (int) subItems.length(); ++i )
-   {
-      Expression* expr = static_cast<Expression*>( subItems[i].asInst() );
-      inherit->add(expr);
-   }
-}
 void SynClasses::ClassInherit::store( VMContext* ctx, DataWriter* wr, void* instance ) const
 {
    ExprInherit* inh = static_cast<ExprInherit*>(instance);
    wr->write( inh->symbol()->name() );
+
    m_parent->store( ctx, wr, instance );
 }
 void SynClasses::ClassInherit::restore( VMContext* ctx, DataReader* dr ) const
@@ -1026,7 +978,7 @@ bool SynClasses::ClassParentship::op_init( VMContext* ctx, void* instance, int p
 {
    static Class* clsParent = 
                static_cast<Class*>( Engine::instance()
-                     ->getMantra("Inherit", Mantra::e_c_class ) );
+                     ->getMantra("Syn.Inherit", Mantra::e_c_class ) );
    fassert( clsParent != 0 );
    
    if( pcount == 0 )

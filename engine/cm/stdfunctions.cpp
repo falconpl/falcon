@@ -390,8 +390,10 @@ FALCON_DEFINE_FUNCTION_P(passvp)
       CallFrame& frame = ctx->currentFrame();
       Function* func = frame.m_function;
       ItemArray* retval = new ItemArray;
+      int32 i = func->paramCount();
+      int32 max = ctx->paramCount();
 
-      for( int i = func->paramCount(); i < ctx->paramCount(); ++i )
+      for( ; i < max; ++i )
       {
          retval->append( *ctx->param(i) );
       }

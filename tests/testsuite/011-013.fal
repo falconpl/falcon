@@ -13,6 +13,8 @@ Done.
 @endoutput
 */
 
+import Syn.*
+
 function gen(v)
    return v*2
 end

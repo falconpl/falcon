@@ -461,9 +461,6 @@ private:
    // Current class, precached for performance.
    FalconClass * m_cclass;
 
-   // Current symbol table, precached for performance.
-   SymbolMap* m_varmap;
-
    void saveStatus( CCFrame& cf ) const;
    void restoreStatus( const CCFrame& cf );
 

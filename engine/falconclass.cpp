@@ -947,14 +947,12 @@ Class* FalconClass::handler() const
    return cls;
 }
 
-void FalconClass::storeSelf( DataWriter* wr, bool asConstructed ) const
+void FalconClass::storeSelf( DataWriter* wr ) const
 {
    // name has been already stored by the metaclass.
-   wr->write( asConstructed );
    wr->write(m_shouldMark);
    wr->write(m_hasInitExpr);
    wr->write(m_hasInit);
-   wr->write(m_missingParents); // todo -- orig missing parents
    wr->write(m_bPureFalcon); 
    
    // now write name and type of each member -- for the values, use flatten.
@@ -969,35 +967,18 @@ void FalconClass::storeSelf( DataWriter* wr, bool asConstructed ) const
       wr->write( (char) prop->m_type );      
       ++pos;
    }
-   
-   // then, if we must save the constructed part, save the constructed members as well.
-   if( asConstructed ) {
-      members = &_p->m_curMembers;
-      wr->write( (uint32) members->size() );
-      Private::MemberMap::iterator pos = members->begin();
-      while( pos != members->end() )
-      {
-         Property* prop = pos->second;
-         wr->write( prop->m_name);
-         wr->write( (char) prop->m_type );      
-         ++pos;
-      }
-   }
-   
+
    // save the attributes
    attributes().store(wr);
-
 }
    
 
 void FalconClass::restoreSelf( DataReader* rd )
 {
    // name has been already stored by the metaclass.
-   rd->read( m_bConstructed );
    rd->read(m_shouldMark);
    rd->read(m_hasInitExpr);
    rd->read(m_hasInit);
-   rd->read(m_missingParents); // todo -- orig missing parents
    rd->read(m_bPureFalcon); 
    
    // Read the original members.
@@ -1014,35 +995,15 @@ void FalconClass::restoreSelf( DataReader* rd )
       _p->m_origMembers[name] = prop;
    }
    
-   // then restore the constructed, if necessary
-   if( m_bConstructed )
-   {
-      _p->constructing();
-      
-      rd->read( count );
-      for( uint32 i = 0; i < count; ++ i )
-      {
-         String name;
-         char type;
-         rd->read( name );
-         rd->read( type );
-
-         if( _p->m_curMembers.find( name ) == _p->m_curMembers.end() )
-         {
-            Property* prop = new Property(name, (Property::Type) type );
-            _p->m_curMembers[name] = prop;            
-         }
-      }
-   }
-
+   m_bConstructed = false;
    // restore the attributes
    attributes().restore(rd);
 }
    
 
-void FalconClass::flattenSelf( ItemArray& flatArray, bool asConstructed ) const
+void FalconClass::flattenSelf( ItemArray& flatArray ) const
 {
-   Private::MemberMap* members = asConstructed ? &_p->m_origMembers : _p->m_members;
+   Private::MemberMap* members = &_p->m_origMembers;
    Private::MemberMap::iterator pos = members->begin();
    
    flatArray.reserve( members->size() + 5 );
@@ -1128,7 +1089,8 @@ void FalconClass::unflattenSelf( ItemArray& flatArray )
    
    if( ! flatArray[2].isNil() )
    {
-      m_parentship = static_cast<ExprParentship*>(flatArray[2].asInst());
+      ExprParentship* parents = static_cast<ExprParentship*>(flatArray[2].asInst());
+      setParentship(parents);
    }
    
    _p->m_initExpr.clear(); // just in case

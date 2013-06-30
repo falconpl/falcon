@@ -15,6 +15,7 @@ Done.
 @endoutput
 */
 
+import Syn.*
 
 > "Homoiconic SynTree"
 > "Check for empty syntree:"

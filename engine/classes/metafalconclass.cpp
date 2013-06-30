@@ -44,15 +44,15 @@ Class* MetaFalconClass::handler() const
    return cls;
 }
 
-void MetaFalconClass::store( VMContext* ctx, DataWriter* wr, void* inst ) const
+void MetaFalconClass::store( VMContext*, DataWriter* wr, void* inst ) const
 {
    FalconClass* fcls = static_cast<FalconClass*>(inst);
    
    wr->write( fcls->name() );
    // if we're storing our own module, then we should save our unconstructed status.
-   Storer* storer = ctx->getTopStorer();
-   bool isConstructed = storer == 0 || storer->topData() != fcls->module();
-   fcls->storeSelf( wr, isConstructed );
+   /*Storer* storer = ctx->getTopStorer();
+   bool isConstructed = storer == 0 || storer->topData() != fcls->module();*/
+   fcls->storeSelf( wr );
 }
 
 
@@ -73,12 +73,14 @@ void MetaFalconClass::restore( VMContext* ctx, DataReader* rd ) const
 }
 
 
-void MetaFalconClass::flatten( VMContext* ctx, ItemArray& subItems, void* instance ) const
+void MetaFalconClass::flatten( VMContext*, ItemArray& subItems, void* instance ) const
 {
    FalconClass* fcls = static_cast<FalconClass*>(instance);
+   /*
    Storer* storer = ctx->getTopStorer();
    bool isConstructed = storer == 0 || storer->topData() != fcls->module();
-   fcls->flattenSelf( subItems, isConstructed );
+   */
+   fcls->flattenSelf( subItems );
 }
    
 

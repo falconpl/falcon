@@ -143,6 +143,40 @@ GlobalsMap::Data* GlobalsMap::add( Symbol* sym, const Item& value, bool bExport 
 }
 
 
+GlobalsMap::Data* GlobalsMap::promote( const String& name, const Item& value, bool bExport )
+{
+   Symbol* sym = Engine::getSymbol(name);
+   Data* dt = promote( sym, value, bExport );
+   sym->decref();
+   return dt;
+}
+
+
+GlobalsMap::Data* GlobalsMap::promote( Symbol* sym, const Item& value, bool bExport )
+{
+   Private::VariableMap::iterator pos = _p->m_variables.find( sym );
+   Data* dt = 0;
+   if( pos != _p->m_variables.end() ) {
+      dt = pos->second;
+      dt->m_storage = value;
+      dt->m_bExtern = false;
+      dt->m_data = &dt->m_storage;
+   }
+   else {
+     dt = new Data(value);
+     // need a new reference for the symbol
+     sym->incref();
+     _p->m_variables[sym] = dt;
+     if( bExport )
+     {
+        _p->m_exports[sym] = dt;
+     }
+   }
+
+   return dt;
+}
+
+
 GlobalsMap::Data* GlobalsMap::addExtern( Symbol* sym, Item* value )
 {
    Data* varData;

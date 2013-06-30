@@ -9,6 +9,7 @@ Done.
 @endoutput
 */
 
+import Syn.*
 
 > "Homoiconic If simple"
 

@@ -152,7 +152,7 @@ Module::~Module()
          Class* sclass = *iter;
          String singName = sclass->name().subString(1);
          Item* singleton = globals().getValue(singName);
-         if( singleton != 0 )
+         if( singleton != 0 && (singleton->flags() & Item::flagIsGarbage) == 0 )
          {
             sclass->dispose(singleton->asInst());
          }
@@ -437,7 +437,10 @@ bool Module::addMantra(Mantra* f, bool bExport)
 
    // then add the required global.
    TRACE1(" Module::addMantra -- %s(%p) adding as new global", f->name().c_ize(), f );
-   addGlobal( f->name(), Item( f->handler(), f ) );
+   Symbol* sym = Engine::getSymbol(f->name());
+   m_globals.promote( sym, Item( f->handler(), f ), bExport );
+   _p->m_externals.erase( sym );
+   sym->decref();
 
    return true;
 }
@@ -483,10 +486,12 @@ GlobalsMap::Data* Module::addGlobal( Symbol* sym, const Item& value, bool bExpor
 
 bool Module::addInitClass( Class* cls, bool bExport )
 {
-   bool ok = addMantra( cls, bExport );
+   bool ok = addMantra( cls, false );
    if( ok )
    {
       _p->m_initList.push_back(cls);
+      // add a place holder in the globals
+      addGlobal( cls->name().subString(1), Item(), bExport );
    }
 
    return ok;
@@ -501,13 +506,13 @@ bool Module::addObject( Class* cls, bool bExport )
    }
 
    // the class of singletons is always private.
-   if( addInitClass(cls, false) )
+   if( addInitClass(cls, bExport) )
    {
       // create a simple -- non initialized singleton instance.
       void* instance = cls->createInstance();
       // do not GC -- the module destructor will dispose of this
       // ok even if instance is 0
-      globals().add(cls->name().subString(1), Item(cls, instance), bExport );
+      globals().promote(cls->name().subString(1), Item(cls, instance), bExport );
       return true;
    }
 

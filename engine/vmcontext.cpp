@@ -1832,7 +1832,7 @@ Item* VMContext::resolveSymbol( Symbol* dyns, bool forAssign )
          if( newSlot->m_value == 0 )
          {
             TRACE2( "VMContext::resolveSymbol -- \"%s\" NOT found global.", dyns->name().c_ize() );
-            m_itemStack->push(m_dynsStack.depth());
+            newSlot->m_value = m_itemStack->push(m_dynsStack.depth());
             newSlot->m_value->setNil();
          }
       }

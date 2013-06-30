@@ -10,6 +10,7 @@ Done.
 @endoutput
 */
 
+import Syn.*
 
 > "Homoiconic smoke test"
 

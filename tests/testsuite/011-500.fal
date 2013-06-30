@@ -9,6 +9,8 @@ Done.
 @endoutput
 */
 
+import Syn.*
+
 > "Creating a dynamic loop:"
 
 // Testing if a dynamic code change works.

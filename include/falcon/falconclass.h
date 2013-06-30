@@ -387,10 +387,10 @@ public:
    //=========================================================
    // Storer helpers
    //
-   void storeSelf( DataWriter* wr, bool asConstructed ) const;
+   void storeSelf( DataWriter* wr ) const;
    void restoreSelf( DataReader* wr );
    
-   void flattenSelf( ItemArray& flatArray, bool asConstructed ) const;
+   void flattenSelf( ItemArray& flatArray ) const;
    void unflattenSelf( ItemArray& flatArray );
    
    /**

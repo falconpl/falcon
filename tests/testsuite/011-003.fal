@@ -14,6 +14,7 @@ Done.
 @endoutput
 */
 
+import Syn.*
 
 > "Homoiconic While with multiple children"
 > "Composing a = 0; while a < 5; > \"A: \", a; ++a; end"

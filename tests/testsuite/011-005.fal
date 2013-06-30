@@ -14,6 +14,7 @@ Done.
 @endoutput
 */
 
+import Syn.*
 
 > "Homoiconic Loop with single child"
 > "Composing a = 0; loop; > \"A: \", ++a; end a == 5"

@@ -9,6 +9,8 @@ Done.
 @endoutput
 */
 
+import Syn.*
+
 > "Homoiconic For/in complex"
 
 

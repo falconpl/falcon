@@ -82,6 +82,9 @@ public:
    Data* add( const String& name, const Item& value, bool bExport = false );
    Data* add( Symbol* sym, const Item& value, bool bExport = false );
 
+   Data* promote( const String& name, const Item& value, bool bExport = false );
+   Data* promote( Symbol* sym, const Item& value, bool bExport = false );
+
    /** Imports a variable in as external.
     * \param sym The symbol indicating the variable that is to be imported.
     * \param value The new value for that variable.
