@@ -207,9 +207,11 @@ void ClassModule::store( VMContext*, DataWriter* stream, void* instance ) const
 
          stream->write( sym->name() );
          // line
-         stream->write( depi->second.first );
-         ImportDef* def = depi->second.second;
+         stream->write( depi->second.m_line );
+         ImportDef* def = depi->second.m_def;
          stream->write( def == 0 ? -1 : def->id() );
+         Symbol* srcSym = depi->second.m_srcSym;
+         stream->write( srcSym == 0 ? "" : srcSym->name() );
 
          ++depi;
       }
@@ -407,11 +409,13 @@ void ClassModule::restoreModule( Module* mod, DataReader* stream ) const
    while( progID < count )
    {
       String sName;
+      String sSrcName;
       int32 line, idDef;
 
       stream->read( sName );
       stream->read( line );
       stream->read( idDef );
+      stream->read( sSrcName );
 
       ImportDef* idef = 0;
 
@@ -427,7 +431,13 @@ void ClassModule::restoreModule( Module* mod, DataReader* stream ) const
          idef = idlist[idDef];
       }
 
-      exts[Engine::getSymbol(sName)] = std::make_pair(line,idef);
+      if( sSrcName !=  "" )
+      {
+         exts.insert( std::make_pair(Engine::getSymbol(sName), Module::Private::ExtDef(line, idef, sSrcName ) ));
+      }
+      else {
+         exts.insert( std::make_pair(Engine::getSymbol(sName), Module::Private::ExtDef(line, idef ) ));
+      }
 
       TRACE2( "ClassModule::restoreModule -- restored dependency %d: %s idef:%d",
                progID, sName.c_ize(), idDef );

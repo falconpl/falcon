@@ -20,6 +20,9 @@
 #include <falcon/module.h>
 #include <falcon/modrequest.h>
 
+#include <falcon/engine.h>
+#include <falcon/symbol.h>
+
 #include <deque>
 #include <map>
 #include <vector>
@@ -56,7 +59,44 @@ public:
     * in the external list. It will be 0 for implicitly imported symbols.
     */
 
-   typedef std::pair<int32, ImportDef*> ExtDef;
+   class ExtDef {
+   public:
+      int32 m_line;
+      ImportDef* m_def;
+      Symbol* m_srcSym;
+
+      ExtDef() {}
+
+      ExtDef(int32 line, ImportDef* idef = 0, Symbol* srcSym = 0 ):
+         m_line(line),
+         m_def(idef),
+         m_srcSym(srcSym)
+      {
+         if( srcSym != 0 )
+         {
+            srcSym->incref();
+         }
+      }
+
+      ExtDef(int32 line, ImportDef* idef, const String& symName ):
+         m_line(line),
+         m_def(idef),
+         m_srcSym(Engine::getSymbol(symName))
+      {
+      }
+
+      ExtDef(const ExtDef& other ):
+         m_line(other.m_line),
+         m_def(other.m_def),
+         m_srcSym(other.m_srcSym)
+      {
+         if ( m_srcSym != 0 ) m_srcSym->incref();
+      }
+
+      ~ExtDef() {
+         if( m_srcSym != 0 ) m_srcSym->decref();
+      }
+   };
 
    typedef std::map<Symbol*, ExtDef> Externals;
    /* Explicit external requirements.

@@ -216,22 +216,46 @@ bool Module::resolveImports( Error*& error )
    error = 0;
    while( iter != end )
    {
+      Item* value = 0;
+
       Symbol* sym = iter->first;
-      Item* value = resolveGlobally( sym );
+      // get them directly from import.
+      Private::Externals::iterator pext = _p->m_externals.find( sym );
+      if( pext != _p->m_externals.end() )
+      {
+         // found, but can we i,port this stuff?
+         Private::ExtDef& def = iter->second;
+         ImportDef* idef = def.m_def;
+         if( idef != 0 && idef->modReq() != 0 && idef->modReq()->module() != 0 )
+         {
+
+            Module* srcMod = idef->modReq()->module();
+            value = srcMod->resolveLocally( def.m_srcSym );
+         }
+      }
+
+      // try the last trump card, resolve the symbol globally.
       if( value == 0 )
       {
-         if( error == 0 )
+         value = resolveGlobally( sym );
+         if( value == 0 )
          {
-            error = FALCON_SIGN_ERROR(LinkError, e_link_error);
+            if( error == 0 )
+            {
+               error = FALCON_SIGN_ERROR(LinkError, e_link_error);
+            }
+            error->appendSubError(
+                     FALCON_SIGN_XERROR(LinkError, e_undef_sym,
+                              .extra( sym->name() ).line( iter->second.m_line ).module(uri())
+                            ) );
          }
-         error->appendSubError(
-                  FALCON_SIGN_XERROR(LinkError, e_undef_sym,
-                           .extra( sym->name() ).line( iter->second.first ).module(uri())
-                         ) );
       }
-      else {
+
+      if( value != 0 )
+      {
          m_globals.addExtern(sym, value);
       }
+
       ++iter;
    }
 
@@ -279,7 +303,10 @@ Item* Module::resolveGlobally( Symbol* sym )
 
    // check if there are import requests providing this namespace
    Private::NSTransMap::iterator nsti = _p->m_nsTransMap.find(ns);
-   while( nsti != _p->m_nsTransMap.end() && nsti->first == ns )
+   while(
+            nsti != _p->m_nsTransMap.end()
+            && nsti->first == ns
+    )
    {
       ImportDef* id = nsti->second;
 
@@ -607,7 +634,7 @@ bool Module::addImplicitImport( const String& name, int32 line )
    Symbol* sym = Engine::getSymbol(name);
    GlobalsMap::Data* data = m_globals.add( sym, Item(), false );
    data->m_bExtern = true;
-   _p->m_externals.insert( std::make_pair(sym, std::make_pair(line, (ImportDef*)0)) );
+   _p->m_externals.insert( std::make_pair(sym, Private::ExtDef(line)) );
    sym->decref();
    return true;
 }
@@ -622,7 +649,7 @@ bool Module::addImplicitImport( Symbol* sym, int32 line )
 
    GlobalsMap::Data* data = m_globals.add( sym, Item(), false );
    data->m_bExtern = true;
-   _p->m_externals.insert( std::make_pair(sym, std::make_pair(line, (ImportDef*)0)) );
+   _p->m_externals.insert( std::make_pair(sym, Private::ExtDef(line)) );
    return true;
 }
 
@@ -719,7 +746,8 @@ bool Module::addImport( ImportDef* def, Error*& error, int32 line )
          {
             // create a global entry, and add it to the external requirements.
             m_globals.add( imported, Item(), false );
-            _p->m_externals.insert(std::make_pair( imported, Private::ExtDef(line, def) ));
+            const String srcSym = def->sourceSymbol(i);
+            _p->m_externals.insert(std::make_pair( imported, Private::ExtDef(line, def, srcSym ) ));
          }
       }
    }

@@ -17,6 +17,7 @@ Done
 import VFS from vfs in ts
 
 > "Import sysm from/in directive"
+> ts.VFS.describe()
 > "open() class name: ", ts.VFS.open.className
 > "create() class name: ", ts.VFS.create.className
 > "Done"

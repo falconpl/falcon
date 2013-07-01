@@ -85,10 +85,12 @@ void ModRequest::module( Module* mod )
    m_module = mod;
 }
 
+
 void ModRequest::addImportDef( ImportDef* id )
 {
    m_idl->push_back( id );
 }
+
 
 void ModRequest::removeImportDef( ImportDef* id )
 {
