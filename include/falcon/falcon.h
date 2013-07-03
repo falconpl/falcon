@@ -26,6 +26,7 @@
 
 #include <falcon/stdstreams.h>
 #include <falcon/streambuffer.h>
+#include <falcon/stringstream.h>
 #include <falcon/textwriter.h>
 #include <falcon/textreader.h>
 #include <falcon/datawriter.h>
@@ -38,9 +39,12 @@
 #include <falcon/intcompiler.h>
 #include <falcon/modcompiler.h>
 #include <falcon/modspace.h>
+#include <falcon/process.h>
+#include <falcon/loaderprocess.h>
 
 #include <falcon/vm.h>
 #include <falcon/vmcontext.h>
+#include <falcon/wvmcontext.h>
 #include <falcon/application.h>
 
 #include <falcon/cm/coremodule.h>

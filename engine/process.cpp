@@ -353,6 +353,12 @@ void Process::startContext( VMContext* ctx ) {
 
 void Process::onContextTerminated( VMContext* ctx )
 {
+   removeLiveContext( ctx );
+}
+
+
+void Process::removeLiveContext( VMContext* ctx )
+{
    m_mtxContexts.lock();
    Private::ContextSet::iterator iter = _p->m_liveContexts.find( ctx );
    if( iter != _p->m_liveContexts.end() )
@@ -365,6 +371,7 @@ void Process::onContextTerminated( VMContext* ctx )
       m_mtxContexts.unlock();
    }
 }
+
 
 bool Process::checkRunning()
 {

@@ -51,9 +51,13 @@ class GCToken;
 class ItemStack;
 
 /**
- * Structure needed to store VM data.
+ * Execution context for Falcon virtual machine.
  *
- * Note, VMContext is better not to have virtual members.
+ * A pure VM context is preferentially used by the engine
+ * and extensions that integrate in the engine.
+ *
+ * Embedders are directed to use WVMContext that has more
+ * support and facilities for third party applications.
  *
  */
 class FALCON_DYN_CLASS VMContext
@@ -191,7 +195,7 @@ public:
 
     This clears the context and sets it as if it was just created.
     */
-   void reset();
+   virtual void reset();
 
    /** Register a callback that is invoked at termination.
     * \see VMContextWeakRef
@@ -1286,6 +1290,19 @@ public:
    */
    inline void setSwapEvent() { atomicOr(m_events, evtSwap);  }
 
+   /** Swaps a context out of execution.
+    *
+    * This method instructs the processor where the context is running to
+    * remove the context and NOT send it to the context manager for later
+    * rescheduling.
+    *
+    * Also, it instructs the process that this context is not "live" anymore.
+    *
+    * However, the context still exists and is accounted for in the garbage
+    * collector; it can be re-started by invoking process::start.
+    */
+   void swapOut();
+
    /** Sets the inspect event.
     Indicates that this contexts should be inspected by the garbage collector ASAP.
     The swap event is also set.
@@ -1579,6 +1596,12 @@ public:
     */
    virtual void onTerminated();
 
+   /** Called back when this context is declared temporarily done.
+    *
+    * The base class one just invokes onTerminated.
+   */
+   virtual void onComplete();
+
    void inGroup( ContextGroup* grp ) { m_inGroup = grp; }
 
    ContextGroup* inGroup() const {return m_inGroup;}
@@ -1602,7 +1625,7 @@ public:
    }
 
    void gcStartMark( uint32 mark );
-   void gcPerformMark();
+   virtual void gcPerformMark();
    uint32 currentMark() const { return m_currentMark; }
 
    bool markedForInspection() const { return m_bInspectMark; }
@@ -1855,11 +1878,11 @@ protected:
     */
    void clearWaits();
 
+   virtual ~VMContext();
 private:
    GCToken* m_newTokens;
    ItemStack *m_itemStack;
 
-   virtual ~VMContext();
    FALCON_REFERENCECOUNT_DECLARE_INCDEC(VMContext)
 
    void onStackRebased( Item* oldBase );

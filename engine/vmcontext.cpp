@@ -1274,7 +1274,7 @@ void VMContext::pushComplete()
       static void apply_( const PStep*, VMContext *ctx )
       {
          ctx->popCode();
-         ctx->setCompleteEvent();
+         ctx->setTerminateEvent();
       }
    };
 
@@ -1997,6 +1997,11 @@ void VMContext::terminate()
 }
 
 
+void VMContext::onComplete()
+{
+   onTerminated();
+}
+
 void VMContext::onTerminated()
 {
    // declare the context dead
@@ -2199,6 +2204,13 @@ void VMContext::gcPerformMark()
       //process()->modSpace()->gcMark(mark);
    }
 }
+
+void VMContext::swapOut()
+{
+   setCompleteEvent();
+   process()->removeLiveContext(this);
+}
+
 
 void VMContext::setInspectEvent()
 {

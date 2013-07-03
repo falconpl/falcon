@@ -429,7 +429,7 @@ void StdSteps::PStepEndOfContext::apply_( const PStep*, VMContext* ctx )
    TRACE("PStepEndOfContext -- end of context reached: %d(%p) in process %d(%p)",
             ctx->id(), ctx, ctx->process()->id(), ctx->process());
 
-   ctx->setCompleteEvent();
+   ctx->setTerminateEvent();
 }
 
 void StdSteps::PStepEndOfContext::describeTo( String& s ) const

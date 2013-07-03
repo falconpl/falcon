@@ -32,6 +32,7 @@ class SynFunc;
  */
 class FALCON_DYN_CLASS LoaderProcess: public Process
 {
+public:
    LoaderProcess( VMachine* vm, ModSpace* ms );
 
    void loadModule( const String& modUri, bool isUri, bool launchMain=false );

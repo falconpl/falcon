@@ -449,6 +449,7 @@ add_library(falcon_engine SHARED
   vm.cpp
   vmcontext.cpp
   writer.cpp
+  wvmcontext.cpp
   
   ${re2_SRCS}
 )

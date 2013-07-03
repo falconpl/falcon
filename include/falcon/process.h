@@ -109,6 +109,8 @@ public:
     */
    void onContextTerminated( VMContext* ctx );
 
+   void removeLiveContext( VMContext* ctx );
+
    /** Returns the result of the evaluation.
     This is actually the topmost value in the stack of the main context.
     */

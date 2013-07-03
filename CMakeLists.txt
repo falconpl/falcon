@@ -18,7 +18,6 @@
 #
 ##  Options
 #
-# FALCON_SKIP_BISON         - Turn ON to avoid using bison.
 # FALCON_WITH_MANPAGES      - Turn ON to build and install man pages.
 # FALCON_BUILD_FEATHERS     - Turn OFF to skip building Feathers.
 # FALCON_BUILD_MODULES      - Turn OFF to skip building Falcon modules.
@@ -191,9 +190,13 @@ if( FALCON_BUILD_DIST )
 	add_subdirectory( dist )
 endif()
 
+if( FALCON_BUILD_BINTESTS )
+    message( STATUS "Building embedding binary tests" )
+    add_subdirectory( tests/bin )
+endif()
+
 if( FALCON_INSTALL_TESTS )
     message( STATUS "Adding (source) tests, samples and demos to the distribution" )
-    add_subdirectory( tests )
 else()
     message( STATUS "Not installing tests" )
 endif()
