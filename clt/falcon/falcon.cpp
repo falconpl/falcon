@@ -17,6 +17,7 @@
 #include <falcon/falcon.h>
 #include <falcon/modloader.h>
 #include <falcon/trace.h>
+#include <falcon/stringstream.h>
 
 #include <falcon/itemarray.h>    // for args
 #include <falcon/gclock.h>       // for args
@@ -105,6 +106,10 @@ void FalconApp::guardAndGo( int argc, char* argv[] )
          log->log(Log::fac_app, Log::lvl_info, String("Going testmode") );
          testMode();
       }
+      else if( m_options.m_bEval )
+      {
+         evaluate( m_options.m_sEval );
+      }
       else
       {
          if ( scriptPos <= 0 )
@@ -130,6 +135,7 @@ void FalconApp::guardAndGo( int argc, char* argv[] )
 
 
 void FalconApp::interactive()
+
 {
    IntMode intmode( this );
    intmode.run();
@@ -141,6 +147,7 @@ void FalconApp::testMode()
    TestMode tm(this);
    tm.perform();
 }
+
 
 void FalconApp::launch( const String& script, int argc, char* argv[], int pos )
 {
@@ -232,6 +239,61 @@ void FalconApp::launch( const String& script, int argc, char* argv[], int pos )
    catch( ... )
    {
       mod->decref();
+      process->decref();
+      delete& vm;
+      throw;
+   }
+}
+
+
+
+void FalconApp::evaluate( const String& script )
+{
+   Log* log = Engine::instance()->log();
+
+   // Create the virtual machine -- that is used also for textual output.
+   VMachine& vm = *(new VMachine);
+   Process* process = vm.createProcess();
+   configureVM( vm, process );
+
+   IntCompiler ic;
+   StringStream* sinput = new StringStream( script );
+   TextReader* tr = new TextReader(sinput);
+   Module* mod = 0;
+
+   try {
+      Module* mod = ic.compile(tr, "eval://", "<evaluated>", false);
+      if( mod == 0 )
+      {
+         throw ic.makeError();
+      }
+
+      process->modSpace()->add(mod);
+
+      // run main function
+      Function* mainfunc = mod->getMainFunction();
+      if( mainfunc != 0 )
+      {
+         log->log(Log::fac_app, Log::lvl_info, String("Launching evaluation on command line") );
+         log->log(Log::fac_app, Log::lvl_detail, String("Evaluated script:\n") + script );
+         process->start( mainfunc, 0, 0 );
+         process->wait();
+         m_exitValue = (int) process->result().forceInteger();
+
+         log->log(Log::fac_app, Log::lvl_info, String("Script complete, exit value: ").N(m_exitValue) );
+         log->log(Log::fac_app, Log::lvl_detail, String("Exit value as item: ") + process->result().describe(3,128) );
+      }
+
+      log->log(Log::fac_app, Log::lvl_info, "Performing cleanup sequence" );
+      mod->decref();
+      process->decref();
+      delete& vm;
+      Engine::instance()->collector()->performGC(true);
+      log->log(Log::fac_app, Log::lvl_info, "Performing cleanup sequence complete" );
+   }
+   catch( ... )
+   {
+      if (mod != 0) mod->decref();
       process->decref();
       delete& vm;
       throw;

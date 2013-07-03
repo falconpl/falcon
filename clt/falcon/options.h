@@ -82,6 +82,9 @@ public:
 
    int num_processors;
 
+   bool m_bEval;
+   String m_sEval;
+
    FalconOptions();
 
    void parse( int argc, char **argv, int &script_pos );

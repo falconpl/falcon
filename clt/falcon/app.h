@@ -62,6 +62,7 @@ public:
    void interactive();
    void testMode();
    void launch( const String& script, int argc, char* argv[], int pos );
+   void evaluate( const String& string );
 
    void configureVM( VMachine& vm, Process* prc, Log* log = 0 );
 

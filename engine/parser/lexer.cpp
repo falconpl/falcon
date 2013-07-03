@@ -38,7 +38,10 @@ Lexer::Lexer( const String& uri, Parser* p, TextReader* reader ):
 
 Lexer::~Lexer()
 {
-   m_reader->decref();
+   if( m_reader != 0 )
+   {
+      m_reader->decref();
+   }
 }
 
 void Lexer::addError( int code, const String& extra )

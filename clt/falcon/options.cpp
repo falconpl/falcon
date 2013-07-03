@@ -53,6 +53,7 @@ FalconOptions::FalconOptions():
    list_tests(false),
    log_level(-1),
    num_processors(0),
+   m_bEval( false ),
 
    m_modal( false ),
    m_justinfo( false )
@@ -64,6 +65,7 @@ void FalconOptions::usage( bool deep )
    cout
       << "Usage:\n" << endl
       << "       falcon (-c|-S|-t) [c_opts] [-o<output>] module" << endl
+      << "       falcon [-p <mod> -p <mod>...] -r \"program to be evaluated\"" << endl
       << "       falcon -y [-o<output>] module" << endl
       << "       falcon -x [c_options] module" << endl
       << "       falcon --test <directory> [test_opts]" << endl
@@ -80,6 +82,7 @@ void FalconOptions::usage( bool deep )
       << "  -t           generate a syntactic tree (for logic debug)" << endl
       << "  -x           execute a binary '.fam' module" << endl
       << "  -y           write string translation table for the module" << endl
+      << "  -r <text>    Run (evaluate) given text and exit" << endl
       << "  --cgi        execute in GGI mode" << endl
       << "  --test <dir> Execute tests in the given directory" << endl
       << endl
@@ -178,6 +181,19 @@ void FalconOptions::parse( int argc, char **argv, int &script_pos )
                else
                {
                   io_encoding = op + 2;
+               }
+               break;
+
+            case 'r':
+               modalGiven();
+               m_bEval = true;
+               if ( op[2] == 0 && i + 1 < argc )
+               {
+                  m_sEval = argv[++i];
+               }
+               else
+               {
+                  m_sEval = op + 2;
                }
                break;
 
