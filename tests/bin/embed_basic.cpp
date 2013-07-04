@@ -8,7 +8,7 @@
    Begin: Wed, 03 Jul 2013 15:57:24 +0200
 
    -------------------------------------------------------------------
-   (C) Copyright 2011: the FALCON developers (see list in AUTHORS file)
+   (C) Copyright 2013: the FALCON developers (see list in AUTHORS file)
 
    See LICENSE file for licensing details.
 */

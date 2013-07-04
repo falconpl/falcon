@@ -310,8 +310,6 @@ void VMachine::addProcess( Process* proc, bool launch )
          else {
             _p->m_mtxProcessors.unlock();
          }
-
-         proc->startContext( proc->mainContext() );
       }
    }
 }

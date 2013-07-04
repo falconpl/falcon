@@ -21,6 +21,10 @@
 #include <falcon/psteps/stmttry.h>
 #include <falcon/errors/codeerror.h>
 #include <falcon/synfunc.h>
+#include <falcon/dyncompiler.h>
+
+#include <falcon/stringstream.h>
+#include <falcon/textreader.h>
 
 namespace Falcon {
 
@@ -159,6 +163,31 @@ void WVMContext::startItem( const Item& item, int32 np, Item const* params )
    process()->startContext(this);
 }
 
+
+void WVMContext::startEvaluation( const String& script )
+{
+   StringStream* ss = new StringStream(script);
+   TextReader tr(ss);
+   ss->decref();
+   startEvaluation( &tr );
+}
+
+
+void WVMContext::startEvaluation( TextReader* tr )
+{
+   DynCompiler dc(this);
+
+   reset();
+
+   // in case of throw, we're clean without unclean memory.
+   SynTree* st = dc.compile( tr );
+
+   pushData( Item(FALCON_GC_HANDLE(st)) );
+   pushCode( st );
+   process()->startContext(this);
+}
+
+
 void WVMContext::setOnComplete( complete_cbfunc func, void* data )
 {
    m_completeCbFunc = func;
@@ -200,6 +229,12 @@ void WVMContext::completeWithError( Error* error )
 void WVMContext::reset()
 {
    VMContext::reset();
+   if( m_completionError != 0 )
+   {
+      m_completionError->decref();
+      m_completionError = 0;
+   }
+
    call(m_baseFrame);
    pushCodeWithUnrollPoint(m_stepErrorGate);
    pushCode(m_stepComplete);

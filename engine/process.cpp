@@ -337,6 +337,7 @@ void Process::launch()
 {
    // The add will eventually launch the process.
    m_vm->addProcess( this, true );
+   startContext( mainContext() );
 }
 
 

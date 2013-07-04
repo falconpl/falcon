@@ -164,6 +164,13 @@ void VMContext::reset()
    pushBaseElements();
    clearEvents();
 
+   if( m_lastRaised != 0 )
+   {
+      m_lastRaised->decref();
+      m_lastRaised = 0;
+   }
+
+   m_raised.setNil();
 }
 
 

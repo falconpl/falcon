@@ -22,6 +22,9 @@
 
 namespace Falcon {
 
+class TextReader;
+class String;
+
 /**
  *
  */
@@ -111,6 +114,20 @@ public:
     */
    void completeWithError( Error* error );
 
+   /** Compiles and start the evaluation of the given code.
+    *
+    * \param script A source code to be evaluated.
+    *
+    * To know when the evaluation complete, the caller should have already registered
+    * a completion callback routine via setOnComplete(), or wait for completion via
+    * the wait() method.
+    *
+    * \note In case of error. Throw.
+    */
+   void startEvaluation( const String& script );
+
+   void startEvaluation( TextReader* tr );
+
    void reset();
 private:
    Event* m_evtComplete;
@@ -128,6 +145,9 @@ private:
    Error* m_completionError;
 
    Function* m_baseFrame;
+
+   // A module used to store globals and mantras that might be dynamically defined.
+   Module* m_defhub;
 };
 
 }
