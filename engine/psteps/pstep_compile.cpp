@@ -23,7 +23,7 @@
 
 namespace Falcon {
 
-class CatchSyntree: public SynTree
+class PStepCompile::CatchSyntree: public SynTree
 {
 public:
    CatchSyntree( PStepCompile* ps )

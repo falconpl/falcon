@@ -17,6 +17,10 @@
 
 #include <falcon/wvmcontext.h>
 #include <falcon/pstep.h>
+#include <falcon/syntree.h>
+#include <falcon/psteps/stmttry.h>
+#include <falcon/errors/codeerror.h>
+#include <falcon/synfunc.h>
 
 namespace Falcon {
 
@@ -32,6 +36,7 @@ private:
 
 void WVMContext::PStepComplete::apply_(const PStep*, VMContext* ctx )
 {
+   MESSAGE( "WVMContext::PStepComplete::apply_" );
    WVMContext* wctx = static_cast<WVMContext*>(ctx);
 
    ctx->popCode();  // not really necessary, but...
@@ -45,6 +50,42 @@ void WVMContext::PStepComplete::apply_(const PStep*, VMContext* ctx )
 }
 
 
+class WVMContext::PStepErrorGate: public SynTree
+{
+public:
+   PStepErrorGate(){ apply = apply_; }
+   virtual ~PStepErrorGate() {}
+
+   void describeTo( String& tgt, int ) const
+   {
+      tgt = "WVMContext::PStepErrorGate";
+   }
+
+private:
+   static void apply_(const PStep* ps, VMContext* ctx );
+};
+
+
+void WVMContext::PStepErrorGate::apply_(const PStep*, VMContext* ctx )
+{
+   MESSAGE( "WVMContext::PStepErrorGate::apply_" );
+
+   WVMContext* wctx = static_cast<WVMContext*>(ctx);
+
+   ctx->popCode(); // not really necessary, the ctx is going to die, but...
+
+   if( ctx->thrownError() == 0 )
+   {
+      CodeError* error = FALCON_SIGN_ERROR(CodeError, e_uncaught );
+      error->raised( ctx->raised() );
+      wctx->completeWithError( error );
+      error->decref();
+   }
+   else {
+      wctx->completeWithError(ctx->thrownError());
+   }
+}
+
 //============================================================================
 // Main WVMContext
 //============================================================================
@@ -52,16 +93,33 @@ void WVMContext::PStepComplete::apply_(const PStep*, VMContext* ctx )
 WVMContext::WVMContext( Process* prc, ContextGroup* grp ):
      VMContext( prc, grp ),
      m_completeCbFunc(0),
-     m_completeData(0)
+     m_completeData(0),
+     m_completionError(0)
 {
+   // event is hand-reset.
    m_evtComplete = new Event(false, false);
+
+   // create the completion step
    m_stepComplete = new PStepComplete;
+
+   // prepare the error gate.
+   StmtTry* errorGate = new StmtTry;
+   errorGate->catchSelect().append( new PStepErrorGate );
+   m_stepErrorGate = errorGate;
+
+   m_baseFrame = new SynFunc("<base>");
 }
 
 WVMContext::~WVMContext()
 {
+   if( m_completionError != 0 )
+   {
+      m_completionError->decref();
+   }
+
    delete m_evtComplete;
    delete m_stepComplete;
+   delete m_baseFrame;
 }
 
 
@@ -82,7 +140,6 @@ void WVMContext::start( Function* f, int32 np, Item const* params )
 {
    m_evtComplete->reset();
    reset();
-   pushCode(m_stepComplete);
    call(f,np,params);
    process()->startContext(this);
 }
@@ -91,8 +148,6 @@ void WVMContext::start( Closure* closure, int32 np, Item const* params )
 {
    m_evtComplete->reset();
    reset();
-
-   pushCode(m_stepComplete);
    call(closure,np,params);
    process()->startContext(this);
 }
@@ -100,7 +155,6 @@ void WVMContext::start( Closure* closure, int32 np, Item const* params )
 void WVMContext::startItem( const Item& item, int32 np, Item const* params )
 {
    reset();
-   pushCode(m_stepComplete);
    callItem(item,np,params);
    process()->startContext(this);
 }
@@ -115,6 +169,40 @@ void WVMContext::gcPerformMark()
 {
    VMContext::gcPerformMark();
    m_result.gcMark(m_currentMark);
+}
+
+
+bool WVMContext::wait(int32 to) const
+{
+   bool result = m_evtComplete->wait(to);
+   if ( m_completionError != 0 )
+   {
+      throw m_completionError;
+   }
+   return result;
+}
+
+
+void WVMContext::completeWithError( Error* error )
+{
+   error->incref();
+
+   if ( m_completionError != 0 )
+   {
+      m_completionError->decref();
+   }
+
+   m_completionError = error;
+
+   swapOut();
+}
+
+void WVMContext::reset()
+{
+   VMContext::reset();
+   call(m_baseFrame);
+   pushCodeWithUnrollPoint(m_stepErrorGate);
+   pushCode(m_stepComplete);
 }
 
 }

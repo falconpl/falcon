@@ -53,6 +53,8 @@ private:
 
    TextReader* m_tin;
    TextWriter* m_tout;
+
+   class CatchSyntree;
 };
 
 }

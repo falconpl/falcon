@@ -73,10 +73,17 @@ int main( int argc, char* argv[] )
          else {
             std::cout << "Starting evaluation of \"" << name << "\"..." << std::endl;
             std::cout << "============================================================" << std::endl;
-            wctx->startItem(*func );
-            wctx->wait();
-            std::cout << "============================================================" << std::endl;
-            std::cout << "Evaluation of \"" << name << "\" complete." << std::endl << std::endl;
+            try {
+               wctx->startItem(*func );
+               wctx->wait();
+               std::cout << "============================================================" << std::endl;
+               std::cout << "Evaluation of \"" << name << "\" complete." << std::endl << std::endl;
+            }
+            catch( Error* err ) {
+               std::cout << "============================================================" << std::endl;
+               std::cout << "The evaluation of this code generated an error:" << std::endl;
+               vm->textOut()->writeLine( err->describe( true ) );
+            }
          }
       }
 
