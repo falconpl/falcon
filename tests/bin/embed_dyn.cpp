@@ -1,6 +1,6 @@
 /*
    FALCON - The Falcon Programming Language.
-   FILE: embed_sync.cpp
+   FILE: embed_dyn.cpp
 
    Test for synchronous compilation and execution of dynamic code.
    -------------------------------------------------------------------
@@ -37,6 +37,10 @@ int main( int , char*[] )
    process->modSpace()->add(Engine::instance()->getCore());
 
    std::cout << "Expression to run (no multiline expression; quit exit)" << std::endl;
+
+   // this is needed because we don't start explicitly or implicitly a process,
+   // so the VM will want to know how many processors it has to run.
+   // 0 will use the same amount of CPUs on the machine (if it can be determined).
    vm->setProcessorCount(0);
 
    while( true )
