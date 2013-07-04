@@ -493,7 +493,7 @@ GlobalsMap::Data* Module::addGlobal( Symbol* sym, const Item& value, bool bExpor
    {
       if( ! vd->m_bExtern ) {
          TRACE1(" Module::addMantra -- %s(%p) already declared", sym->name().c_ize(), sym );
-         return false;
+         return NULL;
       }
       else {
          // promote.
