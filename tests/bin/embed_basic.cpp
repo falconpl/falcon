@@ -14,9 +14,10 @@
 */
 
 #include <falcon/falcon.h>
+#include <iostream>
+
 using namespace Falcon;
 
-#include <iostream>
 
 /** This example compiles and runs a script given as a single parameter in the command line.
  * If not given, the example will use the string

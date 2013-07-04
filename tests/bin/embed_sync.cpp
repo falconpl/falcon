@@ -14,9 +14,10 @@
 */
 
 #include <falcon/falcon.h>
+#include <iostream>
+
 using namespace Falcon;
 
-#include <iostream>
 
 /** Script executing an arbitrary function from a static module
  *  using the same context over and over again.
