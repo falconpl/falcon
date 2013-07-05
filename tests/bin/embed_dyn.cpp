@@ -14,9 +14,10 @@
 */
 
 #include <falcon/falcon.h>
-using namespace Falcon;
 
 #include <iostream>
+
+using namespace Falcon;
 
 /** Test for synchronous compilation and execution of dynamic code.
  */
