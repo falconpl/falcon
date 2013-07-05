@@ -214,7 +214,7 @@ public:
     option according to the host system, and with automatic flush at end-of-line;
     to change this setup, act directly on the TextWriters.
     */
-   inline TextWriter* textErr() const { return m_textOut; }
+   inline TextWriter* textErr() const { return m_textErr; }
 
    /** Cleanly terminates the virtual machine.
     *
