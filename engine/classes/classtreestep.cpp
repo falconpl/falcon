@@ -32,9 +32,7 @@
 #include <falcon/datawriter.h>
 #include <falcon/datareader.h>
 #include <falcon/stdhandlers.h>
-
-#include <falcon/errors/accesserror.h>
-#include <falcon/errors/codeerror.h>
+#include <falcon/stderrors.h>
 
 #ifdef NDEBUG
 #include <falcon/stdhandlers.h>

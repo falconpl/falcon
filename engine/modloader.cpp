@@ -40,9 +40,7 @@
 
 #include <falcon/trace.h>
 #include <falcon/fassert.h>
-
-#include <falcon/errors/ioerror.h>
-#include <falcon/errors/genericerror.h>
+#include <falcon/stderrors.h>
 
 #include <deque>
 

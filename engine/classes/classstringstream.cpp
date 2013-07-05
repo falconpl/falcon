@@ -18,7 +18,7 @@
 
 #include <falcon/classes/classstream.h>
 #include <falcon/classes/classstringstream.h>
-#include <falcon/errors/paramerror.h>
+#include <falcon/stderrors.h>
 #include <falcon/vmcontext.h>
 #include <falcon/stdsteps.h>
 #include <falcon/stringstream.h>

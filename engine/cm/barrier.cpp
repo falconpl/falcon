@@ -18,7 +18,7 @@
 
 #include <falcon/classes/classshared.h>
 #include <falcon/cm/barrier.h>
-#include <falcon/errors/paramerror.h>
+#include <falcon/stderrors.h>
 #include <falcon/vmcontext.h>
 #include <falcon/stdsteps.h>
 #include <falcon/stdhandlers.h>

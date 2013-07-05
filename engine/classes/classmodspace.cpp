@@ -18,7 +18,7 @@
 
 #include <falcon/fassert.h>
 #include <falcon/vmcontext.h>
-#include <falcon/errors/paramerror.h>
+#include <falcon/stderrors.h>
 #include <falcon/classes/classmodspace.h>
 
 #include <falcon/modspace.h>

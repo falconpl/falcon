@@ -18,14 +18,12 @@
 
 #include <falcon/classes/classshared.h>
 #include <falcon/cm/syncqueue.h>
-#include <falcon/errors/paramerror.h>
+#include <falcon/stderrors.h>
 #include <falcon/vmcontext.h>
 #include <falcon/stdsteps.h>
 #include <falcon/vm.h>
 #include <falcon/stdhandlers.h>
 #include <falcon/function.h>
-
-#include <falcon/errors/accesserror.h>
 
 #include <deque>
 

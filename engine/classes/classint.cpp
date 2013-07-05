@@ -25,8 +25,7 @@
 #include <falcon/datawriter.h>
 #include <falcon/stdhandlers.h>
 
-#include <falcon/errors/paramerror.h>
-#include <falcon/errors/operanderror.h>
+#include <falcon/stderrors.h>
 
 #include <math.h>
 

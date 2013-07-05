@@ -20,8 +20,7 @@
 #include <falcon/format.h>
 #include <falcon/vmcontext.h>
 #include <falcon/optoken.h>
-#include <falcon/errors/accesserror.h>
-#include <falcon/errors/paramerror.h>
+#include <falcon/stderrors.h>
 #include <falcon/stdsteps.h>
 #include <falcon/engine.h>
 #include <falcon/processor.h>

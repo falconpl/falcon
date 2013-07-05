@@ -19,7 +19,7 @@
 #include <falcon/builtin/derivedfrom.h>
 #include <falcon/vm.h>
 #include <falcon/vmcontext.h>
-#include <falcon/errors/codeerror.h>
+#include <falcon/stderrors.h>
 
 namespace Falcon {
 namespace Ext {

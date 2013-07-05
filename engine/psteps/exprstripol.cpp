@@ -18,7 +18,7 @@
 #include <falcon/pstep.h>
 #include <falcon/stripoldata.h>
 #include <falcon/psteps/exprvalue.h>
-#include <falcon/errors/operanderror.h>
+#include <falcon/stderrors.h>
 
 namespace Falcon {
 

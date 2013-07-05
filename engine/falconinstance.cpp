@@ -16,9 +16,7 @@
 #include <falcon/falconinstance.h>
 #include <falcon/falconclass.h>
 #include <falcon/psteps/exprinherit.h>
-
-#include <falcon/errors/accesserror.h>
-#include <falcon/errors/accesstypeerror.h>
+#include <falcon/stderrors.h>
 
 
 namespace Falcon

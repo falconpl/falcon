@@ -18,8 +18,7 @@
 #include <falcon/itemstack.h>
 #include <falcon/itempage.h>
 #include <falcon/engine.h>
-
-#include <falcon/errors/codeerror.h>
+#include <falcon/stderrors.h>
 
 namespace Falcon {
 

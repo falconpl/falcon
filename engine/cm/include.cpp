@@ -27,7 +27,7 @@
 #include <falcon/module.h>
 #include <falcon/syntree.h>
 #include <falcon/error.h>
-#include <falcon/errors/paramerror.h>
+#include <falcon/stderrors.h>
 #include <falcon/itemdict.h>
 #include <falcon/modloader.h>
 #include <falcon/stdsteps.h>

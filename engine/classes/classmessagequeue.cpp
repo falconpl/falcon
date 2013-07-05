@@ -25,10 +25,7 @@
 #include <falcon/eventmarshal.h>
 #include <falcon/itemarray.h>
 #include <falcon/stdhandlers.h>
-
-#include <falcon/errors/paramerror.h>
-#include <falcon/errors/accesserror.h>
-
+#include <falcon/stderrors.h>
 #include <falcon/vm.h>
 
 #include <map>

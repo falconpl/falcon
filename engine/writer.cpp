@@ -16,8 +16,7 @@
 #include <falcon/writer.h>
 #include <falcon/sys.h>
 #include <falcon/stream.h>
-
-#include <falcon/errors/ioerror.h>
+#include <falcon/stderrors.h>
 
 #include <stdio.h>
 #include <string.h>

@@ -44,11 +44,7 @@
 #include <falcon/psteps/exprself.h>
 #include <falcon/psteps/exprparentship.h>
 #include <falcon/psteps/exprinherit.h>
-
-#include <falcon/errors/operanderror.h>
-#include <falcon/errors/accesserror.h>
-#include <falcon/errors/accesstypeerror.h>
-#include <falcon/errors/linkerror.h>
+#include <falcon/stderrors.h>
 
 #include <map>
 #include <list>

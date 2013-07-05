@@ -14,7 +14,7 @@
 */
 
 #include <falcon/tc/transcoderutf8.h>
-#include <falcon/errors/encodingerror.h>
+#include <falcon/stderrors.h>
 
 namespace Falcon {
 

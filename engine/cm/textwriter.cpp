@@ -15,7 +15,7 @@
 
 #define SRC "engine/textwriter.cpp"
 
-#include <falcon/errors/paramerror.h>
+#include <falcon/stderrors.h>
 #include <falcon/cm/textwriter.h>
 #include <falcon/transcoder.h>
 #include <falcon/function.h>

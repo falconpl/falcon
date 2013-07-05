@@ -29,9 +29,7 @@
 #include <falcon/attribute_helper.h>
 #include <falcon/stringstream.h>
 #include <falcon/falconclass.h>
-
-
-#include <falcon/errors/genericerror.h>
+#include <falcon/stderrors.h>
 
 namespace Falcon {
 

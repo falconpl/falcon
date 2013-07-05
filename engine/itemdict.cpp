@@ -24,7 +24,7 @@
 #include <falcon/itemarray.h>
 #include <falcon/stdhandlers.h>
 
-#include <falcon/errors/accesstypeerror.h>
+#include <falcon/stderrors.h>
 
 #include <map>
 

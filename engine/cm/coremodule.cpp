@@ -48,9 +48,6 @@
 #include <falcon/cm/vmprocess.h>
 #include <falcon/stdhandlers.h>
 
-// the standard error classes
-#include <falcon/errorclasses.h>
-
 #include <falcon/engine.h>
 
 namespace Falcon {

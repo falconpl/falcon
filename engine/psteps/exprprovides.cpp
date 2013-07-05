@@ -20,8 +20,7 @@
 #include <falcon/trace.h>
 #include <falcon/vmcontext.h>
 #include <falcon/pstep.h>
-#include <falcon/errors/operanderror.h>
-#include <falcon/errors/paramerror.h>
+#include <falcon/stderrors.h>
 #include <falcon/synclasses.h>
 
 #include <falcon/datareader.h>

@@ -20,7 +20,7 @@
 #include <falcon/textwriter.h>
 #include <falcon/symbol.h>
 
-#include <falcon/errors/linkerror.h>
+#include <falcon/stderrors.h>
 
 #include "exprvector_private.h"
 #include "falcon/psteps/exprinherit.h"

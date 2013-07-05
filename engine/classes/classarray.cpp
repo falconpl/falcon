@@ -26,11 +26,7 @@
 #include <falcon/stdhandlers.h>
 #include <falcon/function.h>
 
-#include <falcon/errors/accesserror.h>
-#include <falcon/errors/concurrencyerror.h>
-#include <falcon/errors/codeerror.h>
-#include <falcon/errors/operanderror.h>
-#include <falcon/errors/paramerror.h>
+#include <falcon/stderrors.h>
 
 namespace Falcon {
 

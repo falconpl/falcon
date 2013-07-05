@@ -16,7 +16,7 @@
 #define SRC "engine/concurrencyguard.cpp"
 
 #include <falcon/concurrencyguard.h>
-#include <falcon/errors/concurrencyerror.h>
+#include <falcon/stderrors.h>
 #include <falcon/vmcontext.h>
 #include <falcon/process.h>
 #include <falcon/fassert.h>

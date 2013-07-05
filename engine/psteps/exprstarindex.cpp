@@ -20,7 +20,7 @@
 #include <falcon/trace.h>
 #include <falcon/vmcontext.h>
 #include <falcon/pstep.h>
-#include <falcon/errors/operanderror.h>
+#include <falcon/stderrors.h>
 #include <falcon/textwriter.h>
 
 #include <falcon/psteps/exprstarindex.h>

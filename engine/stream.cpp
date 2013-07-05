@@ -19,7 +19,7 @@
 
 #include <falcon/stream.h>
 #include <falcon/error.h>
-#include <falcon/errors/unsupportederror.h>
+#include <falcon/stderrors.h>
 #include <falcon/stdhandlers.h>
 
 namespace Falcon {

@@ -23,6 +23,7 @@
 #include <falcon/item.h>
 #include <falcon/enumerator.h>
 #include <falcon/tracestep.h>
+#include <falcon/classes/classerror.h>
 
 namespace Falcon {
 
@@ -39,6 +40,7 @@ class VMContext;
 
 /** Error Parameter class.
    This class provides the main Error class and its subclasses with named parameter idiom.
+
    Errors have many parameters and their configuration is bourdensome and also a big
    "bloaty" exactly in spots when one would want code to be small.
 
@@ -53,6 +55,7 @@ class VMContext;
    \endcode
 
    is an acceptable grammar to create an Error.
+
 */
 
 class ErrorParam
@@ -170,34 +173,77 @@ private:
 
 
 /** The Error class.
+ *
    This class implements an error instance.
-   Errors represent problems occoured both during falcon engine operations
+
+   Errors represent problems occurred both during falcon engine operations
    (i.e. compilation syntax errors, link errors, file I/O errors, dynamic
    library load errors ands o on) AND during runtime (i.e. VM opcode
    processing errors, falcon program exceptions, module function errors).
 
-   When an error is raised by an engine element whith this capability
-   (i.e. the compiler, the assembler, the runtime etc.), it is directly
-   passed to the error handler, which has the duty to do something with
-   it and eventually destroy it.
+   As errors can be handled directly and eventually created by both C++ code
+   and falcon script code, each Error subclass is required to provide an error
+   handler; as usual, the Error instance is seen as a Falcon instance, and its
+   handler is called ClassXXX, where XXX is the name of the instance class.
 
-   When an error is raised by a module function with the VMachine::raiseError()
-   method, the error is stored in the VM; if the error is "catchable" AND it
-   occours inside a try/catch statement, it is turned into a Falcon Error
-   object and passed to the script.
+   For example, a MathError instance requires a ClassMathError to be defined for
+   the scripts to use it on need. When a script invokes a MathError() constructor,
+   to create and eventually throw a math error, the ClassMathError() handler will
+   generate a C++ MathError* instance.
 
-   When a script raises an error both explicitly via the "raise" function or
-   by performing a programming error (i.e. array out of bounds), if there is
-   a try/catch block at work the error is turned into a Falcon error and
-   passed to the script.
+   The two entities can travel coupled or be de-coupled when needed. For instance,
+   suppose a script terminates because of a division by zero error. The item
+   traveling in the process will be a pair of (ClassMathError*, MathError*). As the
+   process terminates with error, the process owner may receive the MathError that was
+   thrown in several ways; for instance, in some cases it might be thrown again at C++
+   level and eventually handled in a C++ clause.
 
-   If there isn't a try/catch block or if the error is raised again by the
-   script, the error instance is passed to the VM error handler.
+   The reverse operation is also possible: engine related or third party code can
+   generate a Error subclass instance, and if it traverses the VM, it can be caught
+   by script handlers, and turned in a pair of (ClassXXX*, XXX*).
 
-   Scripts may raise any item, which may not necessary be Error instances.
-   The item is then copied in the m_item member and passed to the error
-   handler. In this case, hasRaised() will return true, and the raised item
- can be retrieved via the raised() method.
+   The link between an Error class and its ClassError handler is kept via a pair of methods:
+   the Error::handler() method on the error side, the Class::createInstance() on the
+   Class handler side.
+
+   To help developers in the task of accessing a single instance of a ClassError subclass that is
+   used as handler for multiple instances of the related Error subclass, the engine provides
+   a error class registration feature. Although optional, it is useful in most of the
+   possible usage contexts.
+
+\section error_registration
+
+    Registering a ClassError handler with the engine is done by invoking
+    Engine::instance()->registerError( Class* ) (or letting the ClassError
+    constructor to do this automatically).
+
+    The instances are then available by their declared name, that is, by the name
+    that is visible to the scripts, through the Engine::getError() method.
+
+     @note The declared name may include a default namespace given in the name, for instance
+       "MyExtension.MyErrorClass".
+
+    This mechanism is exploited by the base version of the Error::handler() method.
+    Its default behavior is that that of returning a mantra in the
+    engine having the same name of the given error. In other words:
+
+    @code
+      // default operations involved in error framing.
+      Error* someError = generateError();
+      Class* someErrorHandler = Engine::instance()->getError( someError->name() );
+      Item scriptLevelError = Item( someErrorHandler, someError );
+    @endcode
+
+    This behavior is just a basic pattern that is used mainly for engine and feather modules
+    error classes, although embedding and third party modules are free and encouraged to
+    use this.
+
+    @note Registering the Class as a error handler doesn't automatically adds the class
+    as an engine-level visible (superglobal) mantra. Normal mantra declaration, registration
+    and visibility rules still apply. Also, engine-level error registration doesn't reference
+    or keeps the mantra alive in any way; the Class handler should unregister itself when it
+    goes out of scope.
+
 */
 
 class FALCON_DYN_CLASS Error
@@ -289,7 +335,7 @@ public:
    */
    void scriptize( Item& tgt );
 
-   Class* handler() const { return m_handler; }
+   const Class* handler() const;
 
    /** Adds a trace step to this error.
     This method adds a tracestep that lead to the place where the error
@@ -311,9 +357,9 @@ public:
    void enumerateErrors( ErrorEnumerator &rator ) const;
 
    /** Return the name of this error class.
-    Set in the constructcor.
+    *  Set in the constructcor.
     */
-   const String &className() const;
+   const String &className() const{ return m_name; }
    
    /** Gets the first sub-error.
     Some errors are used to wrap a single lower level error. For example,
@@ -347,13 +393,15 @@ public:
    
 protected:
 
+   Error( const String& name, const ErrorParam &params );
+
    /** Minimal constructor.
       If the description is not filled, the toString() method will use the default description
       for the given error code.
    */
-   Error( Class* handler, const ErrorParam &params );
-   
-   Error( Class* handler );
+   Error( const String& name );
+
+   Error( const Class* handler );
 
    mutable int32 m_refCount;
 
@@ -364,7 +412,6 @@ protected:
    String m_module;
    String m_path;
    String m_signature;
-   Class* m_handler;
 
    uint32 m_line;
    uint32 m_chr;
@@ -376,6 +423,8 @@ protected:
    Item m_raised;
    bool m_bHasRaised;
 
+   const String& m_name;
+
 protected:
    /** Private destructor.
       Can be destroyed only via decref.
@@ -384,9 +433,38 @@ protected:
 
 private:
    Error_p* _p;
+   mutable const Class* m_handler;
 };
 
 }
+
+#define FALCON_DECLARE_ERROR_CLASS( __name__ ) \
+   class Class##__name__: public ::Falcon::ClassError \
+   {\
+   public:\
+      inline Class##__name__(): ::Falcon::ClassError( #__name__ ) {} \
+      inline Class##__name__( bool bInEngine ): ::Falcon::ClassError( #__name__, bInEngine ) {} \
+      inline virtual ~Class##__name__(){} \
+      inline virtual void* createInstance() const { return new __name__(this); } \
+   };
+
+/** Macro used to declare an error class and it's related handler class.
+ * \param __name__ The name of the error class as seen from the script.
+ *
+ * This macro will define Class<name> and <name> classes, with minimal
+ * method override to make them functional.
+ */
+#define FALCON_DECLARE_ERROR( __name__ ) \
+   class __name__ : public ::Falcon::Error\
+   {\
+   public:\
+      __name__ (): ::Falcon::Error( #__name__ ) {} \
+      __name__ ( const ErrorParam& ep ): ::Falcon::Error( #__name__, ep ) {} \
+      __name__ ( const Class* handler ): ::Falcon::Error( handler ) {} \
+       inline virtual ~__name__() {}\
+   };\
+   FALCON_DECLARE_ERROR_CLASS( __name__ )
+
 
 /**
  * Creates a signed error.
@@ -465,5 +543,7 @@ private:
          (VMContext__->raiseError(new AccessError(ErrorParam(e_prop_ro, __LINE__, SRC  ).extra(prop) ))->decref())
 
 #endif	/* FALCON_ERROR_H */
+
+
 
 /* end of error.h */

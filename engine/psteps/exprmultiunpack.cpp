@@ -17,8 +17,7 @@
 #include <falcon/psteps/exprmultiunpack.h>
 #include <falcon/item.h>
 #include <falcon/vm.h>
-#include <falcon/errors/operanderror.h>
-#include <falcon/errors/codeerror.h>
+#include <falcon/stderrors.h>
 #include <falcon/itemarray.h>
 #include <falcon/symbol.h>
 #include <falcon/synclasses_id.h>

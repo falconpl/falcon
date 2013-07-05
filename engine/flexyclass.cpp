@@ -23,9 +23,7 @@
 #include <falcon/engine.h>
 #include <falcon/ov_names.h>
 #include <falcon/itemarray.h>
-
-#include <falcon/errors/accesserror.h>
-#include <falcon/errors/operanderror.h>
+#include <falcon/stderrors.h>
 
 
 #include <map>

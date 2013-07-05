@@ -21,8 +21,7 @@
 #include <falcon/vmcontext.h>
 #include <falcon/function.h>
 #include <falcon/itemid.h>
-
-#include <falcon/errors/operanderror.h>
+#include <falcon/stderrors.h>
 
 #include <cstring>
 

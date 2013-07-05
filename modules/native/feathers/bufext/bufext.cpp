@@ -202,49 +202,47 @@ See the Error class in the core module.
 
 template <typename BUFTYPE> Falcon::Class *SimpleRegisterBuf(Falcon::Module *self, Falcon::Class *cls)
 {
-    cls->setConstuctor(  Falcon::Ext::Buf_init<BUFTYPE>, Falcon::String(name)+"._init" );
+    cls->setConstuctor(  Falcon::Ext::Buf_init<BUFTYPE>, "" );
 
-    cls->addMethod(cls, OVERRIDE_OP_GETINDEX, Falcon::Ext::Buf_getIndex<BUFTYPE>);
-    cls->addMethod(cls, OVERRIDE_OP_SETINDEX, Falcon::Ext::Buf_setIndex<BUFTYPE>);
-    cls->addMethod(cls, "setEndian", Falcon::Ext::Buf_setEndian<BUFTYPE>);
-    cls->addMethod(cls, "getEndian", Falcon::Ext::Buf_getEndian<BUFTYPE>);
-    cls->addMethod(cls, "size", Falcon::Ext::Buf_size<BUFTYPE>);
-    cls->addMethod(cls, "resize", Falcon::Ext::Buf_resize<BUFTYPE>);
-    cls->addMethod(cls, "reserve", Falcon::Ext::Buf_reserve<BUFTYPE>);
-    cls->addMethod(cls, "capacity", Falcon::Ext::Buf_capacity<BUFTYPE>);
-    cls->addMethod(cls, "readable", Falcon::Ext::Buf_readable<BUFTYPE>);
-    cls->addMethod(cls, "growable", Falcon::Ext::Buf_growable<BUFTYPE>);
-    cls->addMethod(cls, "wpos", Falcon::Ext::Buf_wpos<BUFTYPE>);
-    cls->addMethod(cls, "rpos", Falcon::Ext::Buf_rpos<BUFTYPE>);
-    cls->addMethod(cls, "reset", Falcon::Ext::Buf_reset<BUFTYPE>);
-    cls->addMethod(cls, "write", Falcon::Ext::Buf_write<BUFTYPE, true>);
-    cls->addMethod(cls, "writeNoNT", Falcon::Ext::Buf_write<BUFTYPE, false>);
-    cls->addMethod(cls, "writePtr", Falcon::Ext::Buf_writePtr<BUFTYPE>)
-        ->addParam("src")->addParam("bytes");
-    cls->addMethod(cls, "readString", Falcon::Ext::Buf_readString<BUFTYPE>)
-        ->addParam("charSize");
-    cls->addMethod(cls, "readToBuf", Falcon::Ext::Buf_readToBuf<BUFTYPE>)
-        ->addParam("bytes");
-    cls->addMethod(cls, "readPtr", Falcon::Ext::Buf_readPtr<BUFTYPE>)
-        ->addParam("dest")->addParam("bytes");
-    cls->addMethod(cls, "toMemBuf", Falcon::Ext::Buf_toMemBuf<BUFTYPE>);
-    cls->addMethod(cls, "ptr", Falcon::Ext::Buf_ptr<BUFTYPE>);
-    cls->addMethod(cls, "toString", Falcon::Ext::Buf_toString<BUFTYPE>);
+    cls->addMethod( OVERRIDE_OP_GETINDEX, Falcon::Ext::Buf_getIndex<BUFTYPE>, "index:N");
+    cls->addMethod( OVERRIDE_OP_SETINDEX, Falcon::Ext::Buf_setIndex<BUFTYPE>, "index:N,value:X");
+    cls->addMethod( "setEndian", Falcon::Ext::Buf_setEndian<BUFTYPE>, "endianity:N");
+    cls->addMethod( "getEndian", Falcon::Ext::Buf_getEndian<BUFTYPE>, "");
+    cls->addMethod( "size", Falcon::Ext::Buf_size<BUFTYPE>, "");
+    cls->addMethod( "resize", Falcon::Ext::Buf_resize<BUFTYPE>, "size:N");
+    cls->addMethod( "reserve", Falcon::Ext::Buf_reserve<BUFTYPE>, "size:N");
+    cls->addMethod( "capacity", Falcon::Ext::Buf_capacity<BUFTYPE>, "");
+    cls->addMethod( "readable", Falcon::Ext::Buf_readable<BUFTYPE>, "");
+    cls->addMethod( "growable", Falcon::Ext::Buf_growable<BUFTYPE>, "");
+    cls->addMethod( "wpos", Falcon::Ext::Buf_wpos<BUFTYPE>, "");
+    cls->addMethod( "rpos", Falcon::Ext::Buf_rpos<BUFTYPE>, "");
+    cls->addMethod( "reset", Falcon::Ext::Buf_reset<BUFTYPE>, "");
+    cls->addMethod( "write", Falcon::Ext::Buf_write<BUFTYPE, true>, "src:S,count:N");
+    cls->addMethod( "writeNoNT", Falcon::Ext::Buf_write<BUFTYPE, false>, "src:S,count:N");
+    cls->addMethod( "writePtr", Falcon::Ext::Buf_writePtr<BUFTYPE>, "src:S,count:N");
+    cls->addMethod( "readString", Falcon::Ext::Buf_readString<BUFTYPE>, "charSize:[N]");
+    cls->addMethod( "readToBuf", Falcon::Ext::Buf_readToBuf<BUFTYPE>, "dest:S,count:N" );
+    cls->addMethod( "readPtr", Falcon::Ext::Buf_readPtr<BUFTYPE>, "dest:S,count:N" );
+    cls->addMethod( "ptr", Falcon::Ext::Buf_ptr<BUFTYPE>, "" );
+    cls->addMethod( "toString", Falcon::Ext::Buf_toString<BUFTYPE>, "");
 
-    cls->addMethod(cls, "wb", Falcon::Ext::Buf_wb<BUFTYPE>);
-    cls->addMethod(cls, "w8", Falcon::Ext::Buf_w8<BUFTYPE>);
-    cls->addMethod(cls, "w16", Falcon::Ext::Buf_w16<BUFTYPE>);
-    cls->addMethod(cls, "w32", Falcon::Ext::Buf_w32<BUFTYPE>);
-    cls->addMethod(cls, "w64", Falcon::Ext::Buf_w64<BUFTYPE>);
-    cls->addMethod(cls, "wf", Falcon::Ext::Buf_wf<BUFTYPE>);
-    cls->addMethod(cls, "wd", Falcon::Ext::Buf_wd<BUFTYPE>);
-    cls->addMethod(cls, "rb", Falcon::Ext::Buf_rb<BUFTYPE>);
-    cls->addMethod(cls, "r8", Falcon::Ext::Buf_r8<BUFTYPE>);
-    cls->addMethod(cls, "r16", Falcon::Ext::Buf_r16<BUFTYPE>);
-    cls->addMethod(cls, "r32", Falcon::Ext::Buf_r32<BUFTYPE>);
-    cls->addMethod(cls, "r64", Falcon::Ext::Buf_r64<BUFTYPE>);
-    cls->addMethod(cls, "rf", Falcon::Ext::Buf_rf<BUFTYPE>);
-    cls->addMethod(cls, "rd", Falcon::Ext::Buf_rd<BUFTYPE>);
+    cls->addMethod("wb", Falcon::Ext::Buf_wb<BUFTYPE>, "data:X");
+    cls->addMethod("w8", Falcon::Ext::Buf_w8<BUFTYPE>, "data:X");
+    cls->addMethod("w16", Falcon::Ext::Buf_w16<BUFTYPE>, "data:X");
+    cls->addMethod("w32", Falcon::Ext::Buf_w32<BUFTYPE>, "data:X");
+    cls->addMethod("w64", Falcon::Ext::Buf_w64<BUFTYPE>, "data:X");
+    cls->addMethod("wf", Falcon::Ext::Buf_wf<BUFTYPE>, "data:X");
+    cls->addMethod("wd", Falcon::Ext::Buf_wd<BUFTYPE>, "data:X");
+    cls->addMethod("rb", Falcon::Ext::Buf_rb<BUFTYPE>, "data:X");
+    cls->addMethod("r8", Falcon::Ext::Buf_r8<BUFTYPE>, "data:X");
+    cls->addMethod("r16", Falcon::Ext::Buf_r16<BUFTYPE>, "data:X");
+    cls->addMethod("r32", Falcon::Ext::Buf_r32<BUFTYPE>, "data:X");
+    cls->addMethod("r64", Falcon::Ext::Buf_r64<BUFTYPE>, "data:X");
+    cls->addMethod("rf", Falcon::Ext::Buf_rf<BUFTYPE>, "data:X");
+    cls->addMethod("rd", Falcon::Ext::Buf_rd<BUFTYPE>, "data:X");
+
+    self->addMantra(cls);
+
     return cls;
 }
 

@@ -26,7 +26,6 @@
 
 #include <falcon/setup.h>
 #include <falcon/error.h>
-#include <falcon/classes/classerror.h>
 #include <falcon/class.h>
 #include <falcon/function.h>
 
@@ -75,28 +74,7 @@ private:
 
 };
 
-class ClassRegexError: public ClassError
-      {
-      private:
-         static ClassRegexError* m_instance;
-      public:
-         inline ClassRegexError(): ClassError( "RegexError" ) {} 
-         inline virtual ~ClassRegexError(){} 
-         virtual void* createInstance() const;
-         static ClassRegexError* singleton();
-      };
-
-class RegexError: public ::Falcon::Error
-{
-public:
-   RegexError():
-      Error( ClassRegexError::singleton() )
-   {}
-
-   RegexError( const ErrorParam &params  ):
-      Error( ClassRegexError::singleton(), params )
-      {}
-};
+FALCON_DECLARE_ERROR( RegexError )
 
 }
 }

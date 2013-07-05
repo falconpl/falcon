@@ -37,7 +37,6 @@ class Class;
 class BOM;
 class StdSteps;
 class StdHandlers;
-class StdErrors;
 class SynClasses;
 
 class Collector;
@@ -159,8 +158,6 @@ public:
     */
    static StdStreamTraits* streamTraits();
 
-
-
    /** Returns the collection of standard syntactic tree classes.
    \return the Engine instance of the SynClasses class collection.
 
@@ -172,9 +169,23 @@ public:
     */
    SynClasses* synclasses() const;
    
-   /** Returns the standard collection of error handlers.
+   /** Register an error handler class.
+    *
+    * All the details given in Falcon::Error description.
     */
-   StdErrors* stdErrors() const { return m_stdErrors; }
+   void registerError( Class* errorClass );
+
+   /** Unregister an error handler class.
+    *
+    * All the details given in Falcon::Error description.
+    */
+   void unregisterError( Class* errorClass );
+
+   /** Retrieves an error handler class.
+    *
+    * All the details given in Falcon::Error description.
+    */
+   Class* getError( const String& name ) const;
 
    /** Adds a transcoder to the engine.
     \param A new transcoder to be registered in the engine.
@@ -366,9 +377,12 @@ protected:
 
    MantraMap* m_mantras;
    PredefMap* m_predefs;
+
    
+   MantraMap* m_errHandlers;
+   mutable Mutex m_mtxEH;
+
    StdSteps* m_stdSteps;
-   StdErrors* m_stdErrors;
    StdHandlers* m_stdHandlers;
    StdStreamTraits* m_stdStreamTraits;
 

@@ -33,11 +33,7 @@
 #include <falcon/dynunloader.h>
 #include <falcon/textwriter.h>
 #include <falcon/stdsteps.h>
-
-
-#include <falcon/errors/codeerror.h>
-#include <falcon/errors/genericerror.h>
-#include <falcon/errors/linkerror.h>
+#include <falcon/stderrors.h>
 
 #include <stdexcept>
 #include <map>

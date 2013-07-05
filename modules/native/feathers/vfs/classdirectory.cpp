@@ -23,9 +23,7 @@
 #include <falcon/filestat.h>
 #include <falcon/stream.h>
 #include <falcon/path.h>
-
-#include <falcon/errors/paramerror.h>
-#include <falcon/errors/codeerror.h>
+#include <falcon/stderrors.h>
 
 #include "vfs.h"
 #include "classdirectory.h"

@@ -21,7 +21,7 @@
 #include <falcon/optoken.h>
 #include <falcon/falconclass.h>
 #include <falcon/falconinstance.h>
-#include <falcon/errors/codeerror.h>
+#include <falcon/stderrors.h>
 #include <falcon/stdhandlers.h>
 
 namespace Falcon {

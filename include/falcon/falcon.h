@@ -57,18 +57,7 @@
 
 //--- error headers ---
 #include <falcon/classes/classerror.h>
-
-#include <falcon/errors/accesserror.h>
-#include <falcon/errors/accesstypeerror.h>
-#include <falcon/errors/codeerror.h>
-#include <falcon/errors/genericerror.h>
-#include <falcon/errors/interruptederror.h>
-#include <falcon/errors/ioerror.h>
-#include <falcon/errors/operanderror.h>
-#include <falcon/errors/unsupportederror.h>
-#include <falcon/errors/syntaxerror.h>
-#include <falcon/errors/encodingerror.h>
-#include <falcon/errors/linkerror.h>
+#include <falcon/stderrors.h>
 
 
 #endif	/* FALCON_H */

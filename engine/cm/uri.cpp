@@ -26,9 +26,7 @@
 #include <falcon/datareader.h>
 #include <falcon/function.h>
 
-#include <falcon/errors/paramerror.h>
-#include <falcon/errors/codeerror.h>
-#include <falcon/errors/accesserror.h>
+#include <falcon/stderrors.h>
 
 namespace Falcon {
 namespace Ext {

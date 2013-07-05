@@ -25,7 +25,7 @@
 #include <falcon/stdhandlers.h>
 
 #include <falcon/error.h>
-#include <falcon/errors/accesstypeerror.h>
+#include <falcon/stderrors.h>
 
 #include <falcon/vm.h>
 #include <falcon/processor.h>

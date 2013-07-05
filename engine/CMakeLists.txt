@@ -318,24 +318,6 @@ add_library(falcon_engine SHARED
   classes/classsyntree.cpp
   classes/classsymbol.cpp
 
-  errors/accesserror.cpp
-  errors/accesstypeerror.cpp
-  errors/codeerror.cpp
-  errors/concurrencyerror.cpp
-  errors/encodingerror.cpp
-  errors/errorclasses.cpp
-  errors/genericerror.cpp
-  errors/interruptederror.cpp
-  errors/ioerror.cpp
-  errors/linkerror.cpp
-  errors/matherror.cpp
-  errors/operanderror.cpp
-  errors/paramerror.cpp
-  errors/syntaxerror.cpp
-  errors/typeerror.cpp
-  errors/unserializableerror.cpp
-  errors/unsupportederror.cpp
-
   tc/transcoderc.cpp
   tc/transcoderf16.cpp
   tc/transcoderf32.cpp
@@ -420,7 +402,6 @@ add_library(falcon_engine SHARED
   shared.cpp
   sourceref.cpp
   statement.cpp
-  stderrors.cpp
   stdhandlers.cpp
   stdsteps.cpp
   stdstreamtraits.cpp

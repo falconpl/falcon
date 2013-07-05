@@ -26,7 +26,7 @@
 #include <falcon/itemdict.h>
 
 #include <falcon/error.h>
-#include <falcon/errors/accesstypeerror.h>
+#include <falcon/stderrors.h>
 
 #include <falcon/sys.h>
 #include <falcon/processor.h>

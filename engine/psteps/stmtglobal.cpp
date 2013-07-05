@@ -30,7 +30,7 @@
 #include <falcon/function.h>
 #include <falcon/module.h>
 
-#include <falcon/errors/codeerror.h>
+#include <falcon/stderrors.h>
 
 #include <falcon/engine.h>
 #include <falcon/synclasses.h>

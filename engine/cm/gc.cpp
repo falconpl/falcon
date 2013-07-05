@@ -21,9 +21,7 @@
 #include <falcon/vm.h>
 #include <falcon/vmcontext.h>
 #include <falcon/path.h>
-#include <falcon/errors/paramerror.h>
-#include <falcon/errors/codeerror.h>
-#include <falcon/errors/accesserror.h>
+#include <falcon/stderrors.h>
 
 #include <falcon/datawriter.h>
 #include <falcon/datareader.h>

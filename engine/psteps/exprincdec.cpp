@@ -27,7 +27,7 @@
 
 
 #include <falcon/psteps/exprincdec.h>
-#include <falcon/errors/operanderror.h>
+#include <falcon/stderrors.h>
 
 namespace Falcon
 {

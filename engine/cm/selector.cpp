@@ -19,7 +19,7 @@
 #include <falcon/selector.h>
 #include <falcon/cm/selector.h>
 #include <falcon/stream.h>
-#include <falcon/errors/paramerror.h>
+#include <falcon/stderrors.h>
 #include <falcon/shared.h>
 #include <falcon/vm.h>
 

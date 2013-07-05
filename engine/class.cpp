@@ -24,11 +24,7 @@
 #include <falcon/vmcontext.h>
 #include <falcon/bom.h>
 #include <falcon/error.h>
-#include <falcon/errors/operanderror.h>
-#include <falcon/errors/unserializableerror.h>
-#include <falcon/errors/accesserror.h>
-#include <falcon/errors/accesstypeerror.h>
-#include <falcon/errors/paramerror.h>
+#include <falcon/stderrors.h>
 #include <falcon/stdhandlers.h>
 #include <falcon/extfunc.h>
 #include <falcon/textwriter.h>

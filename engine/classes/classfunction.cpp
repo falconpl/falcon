@@ -37,7 +37,7 @@
 #include <falcon/itemarray.h>
 #include <falcon/itemdict.h>
 
-#include <falcon/errors/paramerror.h>
+#include <falcon/stderrors.h>
 
 namespace Falcon {
 

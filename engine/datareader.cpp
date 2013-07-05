@@ -19,7 +19,7 @@
 #include <falcon/function.h>
 #include <falcon/datareader.h>
 #include <falcon/date.h>
-#include <falcon/errors/ioerror.h>
+#include <falcon/stderrors.h>
 
 #include <string.h>
 

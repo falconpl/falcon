@@ -28,8 +28,7 @@
 #include <falcon/pool.h>
 #include <falcon/log.h>
 #include <falcon/stdhandlers.h>
-
-#include <falcon/errors/codeerror.h>
+#include <falcon/stderrors.h>
 
 #include <falcon/classes/classnil.h>
 #include <falcon/classes/classbool.h>
@@ -78,7 +77,6 @@
 
 #include <falcon/prototypeclass.h>
 
-#include <falcon/stderrors.h>
 #include <falcon/modspace.h>
 #include <falcon/symbol.h>
 
@@ -259,13 +257,11 @@ Engine::Engine()
    //
    m_predefs = new PredefMap;
    m_stdSteps = new StdSteps;
-   m_stdErrors = new StdErrors; 
 
    //=====================================
    // Adding standard pseudo functions.
    //
    m_stdHandlers->subscribe( this );
-   m_stdErrors->subscribe(this);
    // We can now update the item init
    Item::init(this);
 
@@ -390,7 +386,6 @@ Engine::~Engine()
    //
    delete m_bom;
    delete m_stdSteps;
-   delete m_stdErrors;
 
    delete m_mtx;
    
@@ -649,6 +644,37 @@ Log* Engine::log() const
 {
    fassert( m_instance != 0 );
    return m_instance->m_log;
+}
+
+
+void Engine::registerError( Class* errorClass )
+{
+   m_mtxEH.lock();
+   (*m_errHandlers)[errorClass->name()] = errorClass;
+   m_mtxEH.unlock();
+}
+
+
+void Engine::unregisterError( Class* errorClass )
+{
+   m_mtxEH.lock();
+   m_errHandlers->erase(errorClass->name());
+   m_mtxEH.unlock();
+}
+
+
+Class* Engine::getError( const String& name ) const
+{
+   Class* err = 0;
+   m_mtxEH.lock();
+   MantraMap::const_iterator pos = m_errHandlers->find(name);
+   if( pos != m_errHandlers->end() )
+   {
+      err = static_cast<Class*>(pos->second);
+   }
+   m_mtxEH.unlock();
+
+   return err;
 }
 
 //=====================================================

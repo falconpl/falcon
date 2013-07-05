@@ -23,7 +23,7 @@
 #include <falcon/pseudofunc.h>
 #include <falcon/module.h>
 #include <falcon/class.h>
-#include <falcon/errors/codeerror.h>
+#include <falcon/stderrors.h>
 
 #include <map>
 

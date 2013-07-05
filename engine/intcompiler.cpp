@@ -36,13 +36,7 @@
 #include <falcon/hyperclass.h>
 #include <falcon/modloader.h>
 #include <falcon/stdsteps.h>
-
-#include <falcon/errors/genericerror.h>
-#include <falcon/errors/syntaxerror.h>
-#include <falcon/errors/codeerror.h>
-#include <falcon/errors/ioerror.h>
-#include <falcon/errors/linkerror.h>
-
+#include <falcon/stderrors.h>
 #include <falcon/vm.h>
 
 #include <falcon/psteps/exprvalue.h>

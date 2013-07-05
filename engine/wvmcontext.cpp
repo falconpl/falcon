@@ -19,7 +19,7 @@
 #include <falcon/pstep.h>
 #include <falcon/syntree.h>
 #include <falcon/psteps/stmttry.h>
-#include <falcon/errors/codeerror.h>
+#include <falcon/stderrors.h>
 #include <falcon/synfunc.h>
 #include <falcon/dyncompiler.h>
 

@@ -22,9 +22,7 @@
 #include <falcon/vmcontext.h>
 #include <falcon/itemdict.h>
 #include <falcon/stdhandlers.h>
-
-#include <falcon/errors/accesserror.h>
-#include <falcon/errors/paramerror.h>
+#include <falcon/stderrors.h>
 
 namespace Falcon {
 

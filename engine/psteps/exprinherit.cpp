@@ -20,7 +20,7 @@
 #include <falcon/class.h>
 #include <falcon/synclasses.h>
 #include <falcon/error.h>
-#include <falcon/errors/codeerror.h>
+#include <falcon/stderrors.h>
 #include <falcon/itemarray.h>
 #include <falcon/stdhandlers.h>
 #include <falcon/textwriter.h>

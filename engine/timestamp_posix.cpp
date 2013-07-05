@@ -22,7 +22,7 @@
 #include <string.h>
 
 #include <falcon/timestamp.h>
-#include <falcon/errors/interruptederror.h>
+#include <falcon/stderrors.h>
 
 namespace Falcon
 {

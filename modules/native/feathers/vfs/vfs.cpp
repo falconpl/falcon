@@ -19,7 +19,7 @@
 #include <falcon/symbol.h>
 #include <falcon/item.h>
 #include <falcon/vfsprovider.h>
-#include <falcon/errors/linkerror.h>
+#include <falcon/stderrors.h>
 
 #include "vfs.h"
 #include "vfs_ext.h"

@@ -19,11 +19,10 @@
 #include <falcon/famloader.h>
 #include <falcon/modspace.h>
 #include <falcon/stream.h>
-#include <falcon/errors/ioerror.h>
+#include <falcon/stderrors.h>
 #include <falcon/restorer.h>
 #include <falcon/module.h>
 #include <falcon/process.h>
-#include <falcon/errors/ioerror.h>
 #include <falcon/trace.h>
 #include <falcon/classes/classstream.h>
 #include <falcon/streambuffer.h>

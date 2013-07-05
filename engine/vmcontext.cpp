@@ -35,7 +35,7 @@
 #include <falcon/modspace.h>
 
 #include <falcon/storer.h>
-#include <falcon/errors/codeerror.h>
+#include <falcon/stderrors.h>
 #include <falcon/psteps/stmttry.h>      // for catch.
 
 #include <stdlib.h>
@@ -1088,7 +1088,7 @@ public:
 
 private:
    Error* m_error;
-   Class* m_errClass;
+   const Class* m_errClass;
 };
 
 

@@ -30,10 +30,7 @@
 #include <falcon/itemarray.h>
 #include <falcon/stdsteps.h>
 #include <falcon/function.h>
-
-
-#include <falcon/errors/paramerror.h>
-#include <falcon/errors/accesserror.h>
+#include <falcon/stderrors.h>
 
 #include <falcon/processor.h>
 

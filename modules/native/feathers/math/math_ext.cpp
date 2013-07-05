@@ -41,8 +41,7 @@
 #include <falcon/vmcontext.h>
 
 #include <falcon/error.h>
-#include <falcon/errors/paramerror.h>
-#include <falcon/errors/matherror.h>
+#include <falcon/stderrors.h>
 
 #include "math_ext.h"
 

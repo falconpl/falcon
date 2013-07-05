@@ -25,7 +25,7 @@
 #include <falcon/textwriter.h>
 #include <falcon/textreader.h>
 #include <falcon/mt.h>
-#include <falcon/errors/genericerror.h>
+#include <falcon/stderrors.h>
 
 #include <falcon/sys.h>
 

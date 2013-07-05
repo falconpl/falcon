@@ -18,7 +18,7 @@
 
 #include <falcon/stream.h>
 #include <falcon/vmcontext.h>
-#include <falcon/errors/paramerror.h>
+#include <falcon/stderrors.h>
 #include <falcon/stdhandlers.h>
 #include <falcon/function.h>
 

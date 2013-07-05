@@ -27,7 +27,7 @@
 #include <falcon/vmcontext.h>
 #include <falcon/contextgroup.h>
 #include <falcon/locationinfo.h>
-#include <falcon/errors/genericerror.h>
+#include <falcon/stderrors.h>
 #include <falcon/scheduler.h>
 
 #include <falcon/vm.h>

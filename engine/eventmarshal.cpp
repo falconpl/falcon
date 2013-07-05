@@ -26,7 +26,7 @@
 
 #include <falcon/messagequeue.h>
 #include <falcon/itemarray.h>
-#include <falcon/errors/accesserror.h>
+#include <falcon/stderrors.h>
 
 
 #define MARSHAL_PREFIX "on_"

@@ -14,8 +14,7 @@
 */
 
 #include <falcon/vfsiface.h>
-
-#include <falcon/errors/ioerror.h>
+#include <falcon/stderrors.h>
 
 namespace Falcon {
 

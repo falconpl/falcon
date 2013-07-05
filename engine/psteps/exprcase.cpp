@@ -34,8 +34,7 @@
 #include <falcon/stdhandlers.h>
 #include <falcon/textwriter.h>
 
-#include <falcon/errors/ioerror.h>
-#include <falcon/errors/linkerror.h>
+#include <falcon/stderrors.h>
 #include <falcon/module.h>
 
 #include <vector>

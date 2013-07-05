@@ -22,7 +22,7 @@
 #include <falcon/item.h>
 #include <falcon/string.h>
 #include <falcon/range.h>
-#include <falcon/errors/paramerror.h>
+#include <falcon/stderrors.h>
 #include <falcon/stdhandlers.h>
 
 #include <stdio.h>

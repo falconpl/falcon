@@ -15,7 +15,7 @@
 
 #define SRC "engine/textreader.cpp"
 
-#include <falcon/errors/paramerror.h>
+#include <falcon/stderrors.h>
 #include <falcon/cm/textreader.h>
 #include <falcon/transcoder.h>
 #include <falcon/vmcontext.h>

@@ -22,9 +22,7 @@
 #include <falcon/trace.h>
 
 #include <falcon/error.h>
-#include <falcon/errors/genericerror.h>
-#include <falcon/errors/syntaxerror.h>
-#include <falcon/errors/codeerror.h>
+#include <falcon/stderrors.h>
 
 #include "./parser_private.h"
 

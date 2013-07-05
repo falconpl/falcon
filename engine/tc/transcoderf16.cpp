@@ -14,7 +14,7 @@
 */
 
 #include <falcon/tc/transcoderf16.h>
-#include <falcon/errors/encodingerror.h>
+#include <falcon/stderrors.h>
 
 #include <string.h>
 

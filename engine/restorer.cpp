@@ -25,7 +25,7 @@
 #include <falcon/modspace.h>
 #include <falcon/symbol.h>
 #include <falcon/engine.h>
-#include <falcon/errors/unserializableerror.h>
+#include <falcon/stderrors.h>
 
 #include <falcon/vmcontext.h>
 #include <falcon/vm.h>

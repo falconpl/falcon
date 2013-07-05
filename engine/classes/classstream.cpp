@@ -19,19 +19,14 @@
 
 #include <falcon/vm.h>
 #include <falcon/vmcontext.h>
-#include <falcon/errors/paramerror.h>
-#include <falcon/errors/codeerror.h>
-
+#include <falcon/stderrors.h>
 #include <falcon/cm/uri.h>
 
 #include <falcon/classes/classstream.h>
-#include <falcon/errors/unsupportederror.h>
-#include <falcon/errors/ioerror.h>
 #include <falcon/stream.h>
 
 #include <falcon/streambuffer.h>
 #include <falcon/transcoder.h>
-#include <falcon/errors/encodingerror.h>
 
 #include <string.h>
 

@@ -22,7 +22,7 @@
 #include <falcon/string.h>
 #include <falcon/class.h>
 
-#include <falcon/errors/paramerror.h>
+#include <falcon/stderrors.h>
 
 namespace Falcon {
 namespace Ext {

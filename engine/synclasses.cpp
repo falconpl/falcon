@@ -22,10 +22,8 @@
 #include <falcon/treestep.h>
 #include <falcon/stdsteps.h>
 #include <falcon/stdhandlers.h>
-
 #include <falcon/synclasses_id.h>
-
-#include <falcon/errors/paramerror.h>
+#include <falcon/stderrors.h>
 
 #include <falcon/psteps/breakpoint.h>
 #include <falcon/psteps/exprarray.h>

@@ -18,8 +18,7 @@
 #include <falcon/expression.h>
 #include <falcon/syntree.h>
 #include <falcon/vm.h>
-
-#include <falcon/errors/codeerror.h>
+#include <falcon/stderrors.h>
 
 namespace Falcon
 {

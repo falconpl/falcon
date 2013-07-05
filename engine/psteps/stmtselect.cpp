@@ -25,7 +25,7 @@
 #include <falcon/stdhandlers.h>
 #include <falcon/textwriter.h>
 
-#include <falcon/errors/linkerror.h>
+#include <falcon/stderrors.h>
 
 #include <falcon/psteps/stmtselect.h>
 

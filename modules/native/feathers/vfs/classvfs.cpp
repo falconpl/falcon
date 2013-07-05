@@ -18,7 +18,7 @@
 
 #include <falcon/function.h>
 #include <falcon/vmcontext.h>
-#include <falcon/errors/paramerror.h>
+#include <falcon/stderrors.h>
 #include <falcon/uri.h>
 #include <falcon/cm/uri.h>
 #include <falcon/vfsprovider.h>

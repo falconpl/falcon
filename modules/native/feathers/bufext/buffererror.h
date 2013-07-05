@@ -2,21 +2,12 @@
 #define BUFFERERROR_H
 
 #include <falcon/error.h>
+#include <falcon/classes/classerror.h>
 #include "bufext_st.h"
 
 namespace Falcon {
 
-class BufferError: public Error
-{
-public:
-    BufferError() : Error( "BufferError" )
-    {}
-
-    BufferError( const ErrorParam &params ) 
-        : Error( "BufferError", params )
-    {}
-
-};
+FALCON_DECLARE_ERROR_CLASS( BufferError )
 
 } // end namespace Falcon
 

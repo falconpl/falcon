@@ -22,9 +22,7 @@
 #include <sys/poll.h>
 
 #include <falcon/fstream.h>
-#include <falcon/errors/ioerror.h>
-#include <falcon/errors/interruptederror.h>
-#include <falcon/errors/unsupportederror.h>
+#include <falcon/stderrors.h>
 
 #include <sys/types.h>
 #include <sys/stat.h>

@@ -22,9 +22,8 @@
 #include <falcon/module.h>
 #include <falcon/vmcontext.h>
 #include <falcon/modloader.h>
-#include <falcon/errors/linkerror.h>
+#include <falcon/stderrors.h>
 #include <falcon/itemarray.h>
-#include <falcon/errors/genericerror.h>
 #include <falcon/importdef.h>
 #include <falcon/pseudofunc.h>
 #include <falcon/process.h>
@@ -35,9 +34,6 @@
 #include <falcon/falconclass.h>
 #include <falcon/stdhandlers.h>
 #include <falcon/classes/classmodule.h>
-
-#include <falcon/errors/unserializableerror.h>
-#include <falcon/errors/ioerror.h>
 
 #include <map>
 #include <deque>

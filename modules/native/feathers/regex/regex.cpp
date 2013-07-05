@@ -175,7 +175,7 @@ public:
       //==================================================
       // Error class
 
-      addMantra(Falcon::Ext::ClassRegexError::singleton());
+      addMantra(new Falcon::Ext::ClassRegexError );
    }
    virtual ~RegexModule() {};
 };

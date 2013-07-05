@@ -21,8 +21,8 @@
 #include <falcon/trace.h>
 #include <falcon/module.h>
 #include "../module_private.h"
-#include "falcon/vmcontext.h"
-#include "falcon/errors/ioerror.h"
+#include <falcon/vmcontext.h>
+#include <falcon/stderrors.h>
 #include <falcon/symbol.h>
 #include <falcon/itemarray.h>
 #include <falcon/modrequest.h>
@@ -33,10 +33,6 @@
 
 #include <falcon/datawriter.h>
 #include <falcon/datareader.h>
-
-#include <falcon/errors/paramerror.h>
-#include <falcon/errors/ioerror.h>
-#include <falcon/errors/accesserror.h>
 
 #include <vector>
 

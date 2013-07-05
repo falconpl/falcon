@@ -31,8 +31,7 @@
 #include <falcon/stdhandlers.h>
 #include <falcon/function.h>
 
-#include <falcon/errors/paramerror.h>
-#include <falcon/errors/codeerror.h>
+#include <falcon/stderrors.h>
 
 namespace Falcon {
 namespace Ext {

@@ -21,9 +21,7 @@
 #include <falcon/itemid.h>
 #include <falcon/vmcontext.h>
 #include <falcon/optoken.h>
-#include <falcon/errors/accesserror.h>
-#include <falcon/errors/operanderror.h>
-#include <falcon/errors/paramerror.h>
+#include <falcon/stderrors.h>
 
 #include <falcon/itemarray.h>
 #include <falcon/function.h>

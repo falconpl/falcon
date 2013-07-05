@@ -16,7 +16,7 @@
 #ifndef _FALCON_PARANOID_H
 #define	_FALCON_PARANOID_H
 
-#include <falcon/errors/codeerror.h>
+#include <falcon/stderrors.h>
 
 #ifdef NDEBUG
 #ifndef FALCON_PARANOID

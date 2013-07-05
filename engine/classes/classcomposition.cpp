@@ -22,7 +22,7 @@
 #include <falcon/datawriter.h>
 #include <falcon/datareader.h>
 #include <falcon/itemarray.h>
-#include <falcon/errors/paramerror.h>
+#include <falcon/stderrors.h>
 #include <falcon/classes/classcomposition.h>
 
 namespace Falcon {

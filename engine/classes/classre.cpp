@@ -25,9 +25,7 @@
 #include <falcon/vmcontext.h>
 #include <falcon/optoken.h>
 #include <falcon/range.h>
-#include <falcon/errors/accesserror.h>
-#include <falcon/errors/paramerror.h>
-#include <falcon/errors/operanderror.h>
+#include <falcon/stderrors.h>
 #include <falcon/stdhandlers.h>
 
 #include <falcon/datareader.h>

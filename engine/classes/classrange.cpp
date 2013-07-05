@@ -22,9 +22,7 @@
 #include <falcon/vmcontext.h>
 #include <falcon/datawriter.h>
 #include <falcon/datareader.h>
-
-#include <falcon/errors/accesserror.h>
-#include <falcon/errors/accesstypeerror.h>
+#include <falcon/stderrors.h>
 
 namespace Falcon {
 

@@ -26,7 +26,7 @@
 #include <falcon/psteps/exprvalue.h>
 #include <falcon/psteps/exprlit.h>
 #include <falcon/importdef.h>
-#include <falcon/errors/codeerror.h>
+#include <falcon/stderrors.h>
 
 #include <falcon/symbol.h>
 #include <falcon/importdef.h>

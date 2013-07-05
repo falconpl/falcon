@@ -54,23 +54,36 @@ public:
 };
 
 
-Error::Error( Class* handler, const ErrorParam &params ):
+Error::Error( const String& name, const ErrorParam &params ):
    m_refCount( 1 ),
-   m_handler( handler ),
-   m_bHasRaised(false)
+   m_bHasRaised(false),
+   m_name( name ),
+   m_handler(0)
 {
    _p = new Error_p;
    set(params);
 }
 
 
-Error::Error( Class* handler ):
+Error::Error( const String& name ):
    m_refCount( 1 ),
-   m_handler( handler ),
-   m_bHasRaised(false)
+   m_bHasRaised(false),
+   m_name( name ),
+   m_handler(0)
 {
    _p = new Error_p;
 }
+
+Error::Error( const Class* handler ):
+   m_refCount( 1 ),
+   m_bHasRaised(false),
+   m_name( handler->name() ),
+   m_handler( handler )
+{
+   _p = new Error_p;
+}
+
+
 
 void Error::set( const ErrorParam& params )
 {
@@ -88,6 +101,7 @@ void Error::set( const ErrorParam& params )
    m_catchable= params.m_catchable ;
 }
 
+
 Error::~Error()
 {
    std::deque<Error*>::const_iterator iter = _p->m_subErrors.begin();
@@ -100,10 +114,12 @@ Error::~Error()
    delete _p;
 }
 
+
 void Error::incref() const
 {
    atomicInc( m_refCount );
 }
+
 
 void Error::decref()
 {
@@ -112,6 +128,7 @@ void Error::decref()
       delete this;
    }
 }
+
 
 void Error::describeTo( String &target, bool addSignature ) const
 {
@@ -234,6 +251,7 @@ String &Error::heading( String &target ) const
    return target;
 }
 
+
 void Error::addTrace( const TraceStep& tb )
 {
    _p->m_steps.push_back( tb );
@@ -248,12 +266,24 @@ void Error::appendSubError( Error *error )
 }
 
 
-
 void Error::scriptize( Item& tgt )
 {
    incref();
-   tgt.setUser( FALCON_GC_STORE( m_handler, this ) );
+   tgt.setUser( FALCON_GC_STORE( handler(), this ) );
 }
+
+
+const Class* Error::handler() const
+{
+   if ( m_handler == 0 )
+   {
+      m_handler = Engine::instance()->getError( m_name );
+      fassert( m_handler != 0 );
+   }
+
+   return m_handler;
+}
+
 
 void Error::enumerateSteps( Error::StepEnumerator &rator ) const
 {
@@ -286,13 +316,6 @@ Error* Error::getBoxedError() const
    return _p->m_subErrors.front();
 }
 
-/** Return the name of this error class.
- Set in the constructcor.
- */
-const String& Error::className() const
-{
-   return m_handler->name();
-}
 
 bool Error::hasTraceback() const
 {

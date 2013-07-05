@@ -24,9 +24,24 @@
 namespace Falcon {
 
 class Stream;
+class ErrorParam;
 
 /*# The base class of all the error class hierarchy.
  
+ Error classes have special meaning both on the script side and on the
+ C++/embedding side.
+
+ As any other scriptable entity, error classes are organized so that
+ there is an "instance" which is what is directly visible at inner/C++ level,
+ and a Class handler, which is the manipulator used by the VM and the script
+ to know the object.
+
+ This is the base class of all the handlers that should handle certain errors.
+
+ @see The Falcon::Error C++ class description for an in-depth of the internals
+ of this class.
+
+
    @prop code
    @prop description
    @prop extra
@@ -46,6 +61,10 @@ class Stream;
 class FALCON_DYN_SYM ClassError: public Class
 {
 public:
+
+   ClassError( const String& name, bool registerInEngine = true );
+
+
    virtual void dispose( void* self ) const;
    virtual void* clone( void* source ) const;
    virtual void* createInstance() const;
@@ -58,9 +77,6 @@ public:
    bool op_init( VMContext* ctx, void* instance, int32 pcount ) const;
    void op_toString( VMContext* ctx, void* self ) const;
    
-
-   ClassError( const String& name );
-
 protected:
    virtual ~ClassError();
 
@@ -91,6 +107,7 @@ protected:
     */
    bool invokeParams( VMContext* ctx, int pcount, ErrorParam& params, bool bThrow = true ) const;
 
+   bool m_bRegistered;
 };
 
 }

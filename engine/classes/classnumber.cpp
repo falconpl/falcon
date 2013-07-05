@@ -24,9 +24,7 @@
 #include <falcon/vmcontext.h>
 #include <falcon/datareader.h>
 #include <falcon/datawriter.h>
-
-#include <falcon/errors/paramerror.h>
-#include <falcon/errors/operanderror.h>
+#include <falcon/stderrors.h>
 
 #include <math.h>
 

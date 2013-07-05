@@ -23,8 +23,7 @@
 #include <falcon/vmcontext.h>
 #include <falcon/path.h>
 #include <falcon/processor.h>
-#include <falcon/errors/paramerror.h>
-#include <falcon/errors/codeerror.h>
+#include <falcon/stderrors.h>
 #include <falcon/itemarray.h>
 
 #include <falcon/datawriter.h>

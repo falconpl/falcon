@@ -25,8 +25,8 @@
 #include <falcon/engine.h>
 #include <falcon/itemarray.h>
 #include <falcon/stdhandlers.h>
+#include <falcon/stderrors.h>
 
-#include <falcon/errors/paramerror.h>
 
 #include <string.h>
 
@@ -1119,21 +1119,6 @@ void ClassRegex::Function_version::invoke( VMContext* ctx, int32 )
 
    See the Error class in the core module.
 */
-void* ClassRegexError::createInstance() const
-{
-   return new RegexError;
-}
-
-ClassRegexError* ClassRegexError::m_instance = NULL;
-
-ClassRegexError* ClassRegexError::singleton()
-{
-   if (m_instance == NULL)
-   {
-      m_instance = new ClassRegexError;
-   }
-   return m_instance;
-}
 
 }
 }

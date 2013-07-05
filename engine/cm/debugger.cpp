@@ -22,9 +22,7 @@
 #include <falcon/vmcontext.h>
 #include <falcon/process.h>
 #include <falcon/path.h>
-#include <falcon/errors/paramerror.h>
-#include <falcon/errors/codeerror.h>
-#include <falcon/errors/accesstypeerror.h>
+#include <falcon/stderrors.h>
 #include <falcon/stdhandlers.h>
 #include <falcon/processor.h>
 #include <falcon/modspace.h>

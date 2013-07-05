@@ -33,7 +33,7 @@
 
 #include <falcon/modspace.h>
 #include <falcon/pseudofunc.h>
-#include <falcon/errors/accesserror.h>
+#include <falcon/stderrors.h>
 
 namespace Falcon {
 

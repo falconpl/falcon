@@ -27,7 +27,7 @@
 #include <falcon/pstep.h>
 
 #include <falcon/engine.h>
-#include <falcon/errors/paramerror.h>
+#include <falcon/stderrors.h>
 
 #include <map>
 

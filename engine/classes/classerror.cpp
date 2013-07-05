@@ -19,7 +19,7 @@
 #include <falcon/classes/classerror.h>
 #include <falcon/vmcontext.h>
 #include <falcon/item.h>
-#include <falcon/errors/paramerror.h>
+#include <falcon/stderrors.h>
 #include <falcon/function.h>
 #include <falcon/module.h>
 
@@ -328,8 +328,9 @@ void Function_take::invoke( VMContext* ctx, int32 )
  method).
  
  */
-ClassError::ClassError( const String& name ):
-   Class(name)
+ClassError::ClassError( const String& name, bool registerInEngine ):
+   Class(name),
+   m_bRegistered( registerInEngine )
 {
    m_bIsErrorClass = true;
 
@@ -351,10 +352,19 @@ ClassError::ClassError( const String& name ):
    addProperty( "raised", &get_raised );
 
    addMethod( new Function_take );
+
+   if( registerInEngine )
+   {
+      Engine::instance()->registerError( this );
+   }
 }
 
 ClassError::~ClassError()
 {
+   if( m_bRegistered )
+   {
+      Engine::instance()->unregisterError( this );
+   }
 }
 
 void ClassError::dispose( void* self ) const
@@ -380,8 +390,7 @@ void* ClassError::createInstance() const
 
 bool ClassError::isDerivedFrom( const Class* cls ) const 
 {
-   static Class* stdError = Engine::instance()->stdErrors()->error();   
-   return cls == this || cls == stdError;
+   return cls->isErrorClass();
 }
 
 

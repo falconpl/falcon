@@ -23,8 +23,7 @@
 #include <falcon/vmcontext.h>
 #include <falcon/fassert.h>
 
-#include <falcon/errors/accesserror.h>
-#include <falcon/errors/operanderror.h>
+#include <falcon/stderrors.h>
 
 #include <cstring>
 

@@ -18,7 +18,7 @@
 #include <falcon/stream.h>
 #include <falcon/datawriter.h>
 #include <falcon/date.h>
-#include <falcon/errors/ioerror.h>
+#include <falcon/stderrors.h>
 
 #include <string.h>
 

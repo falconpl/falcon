@@ -19,7 +19,7 @@
 #include <falcon/trace.h>
 #include <falcon/vmcontext.h>
 #include <falcon/vm.h>
-#include <falcon/errors/operanderror.h>
+#include <falcon/stderrors.h>
 
 #include <falcon/synclasses.h>
 #include <falcon/engine.h>

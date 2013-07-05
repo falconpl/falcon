@@ -39,11 +39,7 @@
 #include <falcon/process.h>
 #include <falcon/processor.h>
 #include <falcon/messagequeue.h>
-
-#include <falcon/errors/codeerror.h>
-#include <falcon/errors/genericerror.h>
-
-#include <falcon/errors/unserializableerror.h>
+#include <falcon/stderrors.h>
 
 #include <map>
 #include <list>

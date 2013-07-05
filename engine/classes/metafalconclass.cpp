@@ -22,7 +22,7 @@
 #include <falcon/datawriter.h>
 #include <falcon/datareader.h>
 #include <falcon/storer.h>
-#include <falcon/errors/paramerror.h>
+#include <falcon/stderrors.h>
 #include <falcon/itemdict.h>
 #include <falcon/stdhandlers.h>
 

@@ -25,9 +25,7 @@
 #include <falcon/itemarray.h>
 #include <falcon/textwriter.h>
 
-#include <falcon/errors/accesserror.h>
-#include <falcon/errors/codeerror.h>
-#include <falcon/errors/typeerror.h>
+#include <falcon/stderrors.h>
 
 #include <falcon/psteps/stmtfor.h>
 #include <falcon/psteps/exprsym.h>

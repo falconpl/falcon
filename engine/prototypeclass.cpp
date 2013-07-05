@@ -19,10 +19,7 @@
 #include <falcon/prototypeclass.h>
 #include <falcon/flexydict.h>
 #include <falcon/vmcontext.h>
-
-#include <falcon/errors/accesserror.h>
-#include <falcon/errors/operanderror.h>
-#include <falcon/errors/paramerror.h>
+#include <falcon/stderrors.h>
 #include <falcon/stdhandlers.h>
 
 #include <map>
