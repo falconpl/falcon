@@ -28,6 +28,8 @@
 #include <falcon/pool.h>
 #include <falcon/log.h>
 #include <falcon/stdhandlers.h>
+#include <falcon/error.h>
+#include <falcon/classes/classerror.h>
 #include <falcon/stderrors.h>
 
 #include <falcon/classes/classnil.h>
@@ -213,6 +215,7 @@ Engine::Engine()
 
    m_mantras = new MantraMap;
    m_stdHandlers = new StdHandlers();
+   m_errHandlers = new MantraMap;
 
    //=====================================
    // Standard file systems.
@@ -325,6 +328,17 @@ Engine::Engine()
    // The Core Module
    //
    m_core  = new CoreModule;
+
+   //=====================================
+   // The standard errors
+   //
+
+   // need the base class ...
+   addMantra( registerError(new ClassError("Error", false) ) );
+
+   // and all the others...
+   #define FALCON_IMPLEMENT_ENGINE_ERRORS
+   #include <falcon/stderrors.h>
       
    MESSAGE( "Engine creation complete" );
 }
@@ -373,6 +387,7 @@ Engine::~Engine()
    }
    
    delete m_mantras;
+   delete m_errHandlers;
    
    // ===============================
    // delete builtin symbols
@@ -647,11 +662,12 @@ Log* Engine::log() const
 }
 
 
-void Engine::registerError( Class* errorClass )
+Class* Engine::registerError( Class* errorClass )
 {
    m_mtxEH.lock();
    (*m_errHandlers)[errorClass->name()] = errorClass;
    m_mtxEH.unlock();
+   return errorClass;
 }
 
 

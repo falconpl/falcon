@@ -423,7 +423,7 @@ protected:
    Item m_raised;
    bool m_bHasRaised;
 
-   const String& m_name;
+   String m_name;
 
 protected:
    /** Private destructor.
@@ -438,15 +438,29 @@ private:
 
 }
 
-#define FALCON_DECLARE_ERROR_CLASS( __name__ ) \
+#define FALCON_DECLARE_ERROR_CLASS_EX( __name__, __extra__ ) \
    class Class##__name__: public ::Falcon::ClassError \
    {\
    public:\
-      inline Class##__name__(): ::Falcon::ClassError( #__name__ ) {} \
-      inline Class##__name__( bool bInEngine ): ::Falcon::ClassError( #__name__, bInEngine ) {} \
+      inline Class##__name__(): ::Falcon::ClassError( #__name__ ) { __extra__; } \
+      inline Class##__name__( bool bInEngine ): ::Falcon::ClassError( #__name__, bInEngine ) { __extra__; } \
       inline virtual ~Class##__name__(){} \
       inline virtual void* createInstance() const { return new __name__(this); } \
    };
+
+#define FALCON_DECLARE_ERROR_CLASS( __name__ ) \
+         FALCON_DECLARE_ERROR_CLASS_EX( __name__, )
+
+#define  FALCON_DECLARE_ERROR_INSTANCE( __name__ ) \
+   class __name__ : public ::Falcon::Error\
+   {\
+   public:\
+      __name__ (): ::Falcon::Error( #__name__ ) {} \
+      __name__ ( const ErrorParam& ep ): ::Falcon::Error( #__name__, ep ) {} \
+      __name__ ( const Class* handler ): ::Falcon::Error( handler ) {} \
+       inline virtual ~__name__() {}\
+   };
+
 
 /** Macro used to declare an error class and it's related handler class.
  * \param __name__ The name of the error class as seen from the script.
@@ -455,16 +469,23 @@ private:
  * method override to make them functional.
  */
 #define FALCON_DECLARE_ERROR( __name__ ) \
-   class __name__ : public ::Falcon::Error\
-   {\
-   public:\
-      __name__ (): ::Falcon::Error( #__name__ ) {} \
-      __name__ ( const ErrorParam& ep ): ::Falcon::Error( #__name__, ep ) {} \
-      __name__ ( const Class* handler ): ::Falcon::Error( handler ) {} \
-       inline virtual ~__name__() {}\
-   };\
+   FALCON_DECLARE_ERROR_INSTANCE( __name__ ) \
    FALCON_DECLARE_ERROR_CLASS( __name__ )
 
+/** Macro used to declare a system level error class and it's related handler class.
+ * \param __name__ The name of the error class as seen from the script.
+ *
+ * This macro will define Class<name> and <name> classes, with minimal
+ * method override to make them functional.
+ *
+ * Also, the ClassXXX handler will be automatically placed in the engine,
+ * becoming a superglobal available to every Falcon script run in this
+ * engine.
+ *
+ */
+#define FALCON_DECLARE_SYS_ERROR( __name__ ) \
+   FALCON_DECLARE_ERROR_INSTANCE( __name__ ) \
+   FALCON_DECLARE_ERROR_CLASS_EX( __name__, ::Falcon::Engine::instance()->addMantra(this) )
 
 /**
  * Creates a signed error.

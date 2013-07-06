@@ -438,7 +438,7 @@ bool ClassError::invokeParams( VMContext* ctx, int pcount, ErrorParam& params, b
    else if ( pcount == 2 )
    {
       IerrId = ctx->opcodeParam(1);
-      Idesc = ctx->opcodeParam(2);
+      Idesc = ctx->opcodeParam(0);
    }
    else if( pcount >= 3 )
    {

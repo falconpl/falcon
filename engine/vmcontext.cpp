@@ -1170,7 +1170,7 @@ void VMContext::raiseItem( const Item& item )
       // reset the raised object, anyhow.
       m_raised.setNil();
 
-      CodeError* ce = new CodeError( ErrorParam( e_uncaught, __LINE__, SRC )
+      UncaughtError* ce = new UncaughtError( ErrorParam( e_uncaught, __LINE__, SRC )
          .origin(ErrorParam::e_orig_vm));
       ce->raised( item );
       raiseError( ce );
@@ -1184,7 +1184,7 @@ void VMContext::raiseItem( const Item& item )
 
 Error* VMContext::raiseError( Error* ce )
 {
-   // be sure to release the critical section no matter wat
+   // be sure to release the critical section no matter what
    releaseAcquired();
 
    if( m_lastRaised != 0 ) m_lastRaised->decref();

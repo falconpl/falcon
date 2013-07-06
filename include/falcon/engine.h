@@ -170,10 +170,11 @@ public:
    SynClasses* synclasses() const;
    
    /** Register an error handler class.
-    *
+    * \param The error class to be registered
+    * \return the same error class (useful in declaration chains).
     * All the details given in Falcon::Error description.
     */
-   void registerError( Class* errorClass );
+   Class* registerError( Class* errorClass );
 
    /** Unregister an error handler class.
     *

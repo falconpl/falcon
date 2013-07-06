@@ -41,7 +41,7 @@ private:
       ctx->resetCode( cst->m_compiler );
       if( ctx->thrownError() == 0 )
       {
-         CodeError* error = FALCON_SIGN_XERROR(CodeError, e_uncaught, .extra("Interactive"));
+         UncaughtError* error = FALCON_SIGN_XERROR(UncaughtError, e_uncaught, .extra("Interactive"));
          error->raised( ctx->raised() );
          cst->m_compiler->onError( error );
          error->decref();
