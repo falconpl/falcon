@@ -68,9 +68,6 @@ public:
    virtual void dispose( void* self ) const;
    virtual void* clone( void* source ) const;
    virtual void* createInstance() const;
-      
-   /** Grant that subclasses are considered derived from the standard engine Error class.*/
-   virtual bool isDerivedFrom( const Class* cls ) const;
 
    virtual void describe( void* instance, String& target, int depth = 3, int maxlen = 60 ) const;
    

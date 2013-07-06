@@ -442,8 +442,8 @@ private:
    class Class##__name__: public ::Falcon::ClassError \
    {\
    public:\
-      inline Class##__name__(): ::Falcon::ClassError( #__name__ ) { __extra__; } \
-      inline Class##__name__( bool bInEngine ): ::Falcon::ClassError( #__name__, bInEngine ) { __extra__; } \
+      inline Class##__name__(): ::Falcon::ClassError( #__name__ ) { setParent( Engine::instance()->getError("Error")); __extra__; } \
+      inline Class##__name__( bool bInEngine ): ::Falcon::ClassError( #__name__, bInEngine ) { setParent( Engine::instance()->getError("Error"));  __extra__; } \
       inline virtual ~Class##__name__(){} \
       inline virtual void* createInstance() const { return new __name__(this); } \
    };

@@ -388,12 +388,6 @@ void* ClassError::createInstance() const
 
 
 
-bool ClassError::isDerivedFrom( const Class* cls ) const 
-{
-   return cls->isErrorClass();
-}
-
-
 void ClassError::describe( void* instance, String& target, int, int maxlen ) const
 {
    Error* err = static_cast<Error*>(instance);
