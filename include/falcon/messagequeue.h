@@ -28,7 +28,7 @@ class Class;
 class Item;
 
 /**
-
+   Inner C++ class handling MessageQueue strctures for parallel scripts.
  */
 class FALCON_DYN_CLASS MessageQueue: public Shared
 {
@@ -41,7 +41,7 @@ public:
    const String& name() const { return m_name; }
 
    bool send( const Item& message );
-   bool sendEvent( const String& eventName, const Item& message );
+   virtual bool sendEvent( const String& eventName, const Item& message );
 
    bool subscribe(VMContext* ctx);
    bool unsubscribe(VMContext* ctx);
@@ -49,7 +49,7 @@ public:
    bool get( VMContext* ctx, Item& msg );
    bool peek( VMContext* ctx, Item& msg );
 
-   bool getEvent( VMContext* ctx, String& event, Item& msg );
+   virtual bool getEvent( VMContext* ctx, String& event, Item& msg );
 
    virtual int32 consumeSignal( VMContext* target, int32 count = 1 );
 

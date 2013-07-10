@@ -806,7 +806,7 @@ bool Module::addImport( ImportDef* def, Error*& error, int32 line )
       }
    }
 
-   return 0;
+   return error == 0;
 }
 
 

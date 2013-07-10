@@ -5,7 +5,7 @@
 ####################################################################
 
 # Creates the proper module file name from the project name.
-falcon_define_module( CURRENT_MODULE bufext )
+falcon_define_module( CURRENT_MODULE bitbuf )
 
 # Inclusion settings
 include_directories(
@@ -18,20 +18,17 @@ include_directories(
 
 # Sources files the module is built from.
 set(SRC_FILES 
-  bufext.cpp
-  bufext_ext.cpp
-  bufext_st.cpp
+  bitbuf.cpp
+  bitbuf_ext.cpp
+  bitbuf_mod.cpp
   # add more source files starting here:
 )
 
 # These are actually not needed by cmake to build. But if omitted they won't be
 # listed in the virtual file tree of Visual Studio.
 set(HDR_FILES
-  bufext_ext.h
-  bufext_st.h
-  bytebuf.h
-  bitbuf.h
-  endianswap.h
+  bitbuf_ext.h
+  bitbuf_mod.h
   buffererror.h
 )
 

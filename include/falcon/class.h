@@ -584,7 +584,7 @@ public:
     where needed.
     
     \note Flat instance classes will receive the item to be initialized
-    in the \b instance paramter.
+    in the \b instance parameter.
     
     */
    virtual bool op_init( VMContext* ctx, void* instance, int32 pcount ) const;
