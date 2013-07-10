@@ -1,0 +1,37 @@
+/*
+@name BitBuf simple read (aligned) via grab text
+@category Feathers-bitbuf
+
+@output
+Size of bitbuf: 88
+Byte 1: H -- still avail: 80
+Byte 2: e -- still avail: 72
+Byte 3: l -- still avail: 64
+Byte 4: l -- still avail: 56
+Byte 5: o -- still avail: 48
+Byte 6:   -- still avail: 40
+Byte 7: w -- still avail: 32
+Byte 8: o -- still avail: 24
+Byte 9: r -- still avail: 16
+Byte 10: l -- still avail: 8
+Byte 11: d -- still avail: 0
+Done.
+@endoutput
+*/
+
+load bitbuf
+
+text = "Hello world"
+
+x = BitBuf()
+
+x.write( text )
+> "Size of bitbuf: ", x.len
+count = 0
+while not x.eof
+   a = x.grab(8)
+   > "Byte ", ++count, ": ", a, " -- still avail: ", x.avail
+end
+
+> "Done."
+

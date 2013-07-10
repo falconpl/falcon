@@ -220,6 +220,111 @@ static void get_sysend( const Class*, const String&, void* instance, Item& value
    value.setInteger( buf->writeEndianity() );
 }
 
+/*#
+  @property avail BitBuf
+  @brief Number of bits still readable in the buffer.
+ */
+
+static void get_avail( const Class*, const String&, void* instance, Item& value )
+{
+   BitBuf* buf = static_cast<BitBuf*>(instance);
+   value.setInteger( buf->readable() );
+}
+
+/*#
+  @property eof BitBuf
+  @brief True if the read pointer is past the end of the stream.
+ */
+
+static void get_eof( const Class*, const String&, void* instance, Item& value )
+{
+   BitBuf* buf = static_cast<BitBuf*>(instance);
+   value.setBoolean( buf->eof() );
+}
+
+
+/*#
+  @property wpos BitBuf
+  @brief Position (in bits from the start) of the write pointer.
+
+  Can be changed to an arbitrary value. Changing the value will cause
+  the internal buffer to be consolidated. If changed to an out of range
+  value, a RangeError will be raised.
+
+  \note a negative position will move the pointer to a position relative
+  to the end of the bit buffer.
+ */
+static void get_wpos( const Class*, const String&, void* instance, Item& value )
+{
+   BitBuf* buf = static_cast<BitBuf*>(instance);
+   value.setInteger( buf->wpos() );
+}
+
+static void set_wpos( const Class*, const String&, void* instance, const Item& value )
+{
+   BitBuf* buf = static_cast<BitBuf*>(instance);
+
+   if( ! value.isOrdinal() )
+   {
+      throw FALCON_SIGN_XERROR( TypeError, e_param_type, .extra("N") );
+   }
+
+   int64 pos = value.forceInteger();
+   if( pos < 0 )
+   {
+      pos = buf->size()+pos;
+   }
+
+   if( pos < 0 || pos > buf->size() )
+   {
+      throw FALCON_SIGN_ERROR( RangeError, e_param_type );
+   }
+
+   buf->wpos( pos );
+}
+
+
+/*#
+  @property rpos BitBuf
+  @brief Position (in bits from the start) of the read pointer.
+
+  Can be changed to an arbitrary value. Changing the value will cause
+  the internal buffer to be consolidated. If changed to an out of range
+  value, a RangeError will be raised.
+
+  \note a negative position will move the pointer to a position relative
+  to the end of the bit buffer.
+ */
+static void get_rpos( const Class*, const String&, void* instance, Item& value )
+{
+   BitBuf* buf = static_cast<BitBuf*>(instance);
+   value.setInteger( buf->rpos() );
+}
+
+static void set_rpos( const Class*, const String&, void* instance, const Item& value )
+{
+   BitBuf* buf = static_cast<BitBuf*>(instance);
+
+   if( ! value.isOrdinal() )
+   {
+      throw FALCON_SIGN_XERROR( TypeError, e_param_type, .extra("N") );
+   }
+
+   int64 pos = value.forceInteger();
+   if( pos < 0 )
+   {
+      pos = buf->size()+pos;
+   }
+
+   if( pos < 0 || pos > buf->size() )
+   {
+      throw FALCON_SIGN_ERROR( RangeError, e_param_type );
+   }
+
+   buf->rpos( pos );
+}
+
+
 //============================================================================
 // Methods
 //============================================================================
@@ -285,12 +390,12 @@ FALCON_DEFINE_FUNCTION_P1( write )
 /*#
 @method read BitBuf
 @brief Reads bits from the buffer in a target string.
-@param target A target string (possibly pre-allocated)
+@param target A target string (mutable)
 @optparam count The count of bits to be read
 @return The count of bits actually read (will be less than count if there wasn't enough bits left).
 */
 
-FALCON_DECLARE_FUNCTION( read, "data:S,bitSize:[N],bitStart:[N]");
+FALCON_DECLARE_FUNCTION( read, "data:S,count:[N]");
 FALCON_DEFINE_FUNCTION_P1( read )
 {
    Item* i_source = ctx->param(0);
@@ -303,8 +408,13 @@ FALCON_DEFINE_FUNCTION_P1( read )
       throw paramError( __LINE__, SRC );
    }
 
-   BitBuf* buf = static_cast<BitBuf*>(ctx->self().asInst());
    String* source = i_source->asString();
+   if( source->isImmutable() )
+   {
+      throw FALCON_SIGN_XERROR( ParamError, e_param_type, .extra("Output string is immutable"));
+   }
+
+   BitBuf* buf = static_cast<BitBuf*>(ctx->self().asInst());
    int64 size;
    if( i_bitSize != 0 )
    {
@@ -318,8 +428,43 @@ FALCON_DEFINE_FUNCTION_P1( read )
 
    source->reserve(size);
    uint32 count = buf->readBits( source->getRawStorage(), size );
-   source->size(count);
+   source->size( count % 8 == 0 ? (count/8) : (count/8+1) );
    ctx->returnFrame((int64) count);
+}
+
+
+
+/*#
+@method grab BitBuf
+@brief Reads bits from the buffer returning them in a newly allocated string buffer.
+@param count The count of bits to be read
+@return The newly allocated string, or nil if the stream is at eof.
+*/
+
+FALCON_DECLARE_FUNCTION( grab, "count:[N]");
+FALCON_DEFINE_FUNCTION_P1( grab )
+{
+   Item* i_bitSize = ctx->param(0);
+
+   if( i_bitSize == 0 || ! i_bitSize->isOrdinal() )
+   {
+      throw paramError( __LINE__, SRC );
+   }
+
+   BitBuf* buf = static_cast<BitBuf*>(ctx->self().asInst());
+   if( buf->eof() )
+   {
+      ctx->returnFrame();
+      return;
+   }
+
+   int64 size = i_bitSize->forceInteger();
+
+   String* source = new String;
+   source->reserve(size);
+   uint32 count = buf->readBits( source->getRawStorage(), size );
+   source->size( count % 8 == 0 ? (count/8) : (count/8+1) );
+   ctx->returnFrame(FALCON_GC_HANDLE( source ));
 }
 
 
@@ -380,56 +525,7 @@ FALCON_DEFINE_FUNCTION_P1( toString )
 }
 
 
-/*#
-@method sizeBits BitBuf
-@brief Returns the buffer size, in bits
-@return The buffer size, in bits
 
-This function returns or sets the BitBuf size precisely, which can be calculated as
-(size() * 8) + X, where X is in [0...7].
-*/
-
-
-/*#
-@method rposBits BitBuf
-@brief Returns the read position, in bits
-@return The read position in bits if used as getter, otherwise the buffer itself
-
-This function returns or sets the BitBuf read position precisely, which can be calculated as
-(rpos() * 8) + X, where X is in [0...7].
-*/
-
-
-/*#
-@method wposBits BitBuf
-@brief Returns the write position, in bits
-@return The write position in bits if used as getter, otherwise the buffer itself
-
-This function returns the BitBuf write position precisely, which can be calculated as
-(wpos() * 8) + X, where X is in [0...7].
-*/
-
-
-/*#
-@method readableBits BitBuf
-@brief Returns the amount of bits left that can be read
-@return The remaining bits until the end of the BitBuf is reached
-
-This function returns the remaining bits precisely, which can be calculated as
-(readable() * 8) + X, where X is in [0...7].
-*/
-
-
-/*#
-@method bitsForInt BitBuf
-@brief Static. Returns the amount of bits required to store an integer of the given value
-@param n Integer to check
-@return The amount of bits required to store an integer of the given value
-
-Calculates how many bits are required to hold the value of the passed integer without losing data.
-
-@note A negative number can be 1 greater then its corresponding positive number, and yield the same result (-8 needs 3 bits, where +8 needs 4, for example)
-*/
 }
 
 //===============================================================
@@ -443,10 +539,15 @@ Class* init_classbitbuf()
    bitbuf->addProperty( "len", get_len );
    bitbuf->addProperty( "rend", get_rend, set_rend );
    bitbuf->addProperty( "wend", get_wend, set_wend );
+   bitbuf->addProperty( "wpos", get_wpos, set_wpos );
+   bitbuf->addProperty( "rpos", get_rpos, set_rpos);
+   bitbuf->addProperty( "eof", get_eof );
+   bitbuf->addProperty( "avail", get_avail );
    bitbuf->addProperty( "sysend", get_sysend, 0, true, false );
 
    bitbuf->addMethod( new CBitBuf::Function_write );
    bitbuf->addMethod( new CBitBuf::Function_read );
+   bitbuf->addMethod( new CBitBuf::Function_grab );
    bitbuf->addMethod( new CBitBuf::Function_toString );
 
    return bitbuf;

@@ -543,6 +543,7 @@ uint32 BitBuf::readBytes( byte* memory, uint32 count )
 
    byte* src = consolidate();
    memcpy( memory, src + m_readpos/8, count );
+   m_readpos += count*8;
 
    return count;
 }

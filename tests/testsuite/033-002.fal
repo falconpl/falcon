@@ -1,0 +1,37 @@
+/*
+@name BitBuf simple read (aligned) text
+@category Feathers-bitbuf
+
+@output
+Size of bitbuf: 88
+Byte 1: H
+Byte 2: e
+Byte 3: l
+Byte 4: l
+Byte 5: o
+Byte 6:  
+Byte 7: w
+Byte 8: o
+Byte 9: r
+Byte 10: l
+Byte 11: d
+Done.
+@endoutput
+*/
+
+load bitbuf
+
+text = "Hello world"
+
+x = BitBuf()
+x.write( text )
+> "Size of bitbuf: ", x.len
+
+count = 0
+a = m""
+while x.read(a,8)
+   > "Byte ", ++count, ": ", a
+end
+
+> "Done."
+
