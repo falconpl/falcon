@@ -111,6 +111,12 @@ public:
     bool read32( uint32& number );
     bool read64( uint64& number );
 
+    inline uint8 read8() { uint8 number = 0; read8(number); return number; }
+    inline uint16 read16() { uint16 number = 0; read16(number); return number; }
+    inline uint32 read32() { uint32 number = 0; read32(number); return number; }
+    inline uint64 read64() { uint64 number = 0; read64(number); return number; }
+
+
     uint32 readBytes( byte* memory, uint32 count );
     uint32 readBits( byte* memory, uint32 count );
 
@@ -166,34 +172,38 @@ public:
     static t_endianity sysEndianity();
 
     void toString( String& target, char_t chrOn='1', char_t chrOff='0' );
+
+    void writeNumberBits( uint64 number, int32 bits );
+    bool readNumberBits( uint64& number, int32 bits );
+
 private:
 
-    typedef struct tag_CHUNK
-     {
-        uint32 m_sizeBytes;
-        uint32 m_usedBits;
-        uint32 m_basePos;
-        tag_CHUNK* m_next;
-        VALTYPE m_memory[1];
-     }
-     Chunk;
+   typedef struct tag_CHUNK
+   {
+     uint32 m_sizeBytes;
+     uint32 m_usedBits;
+     uint32 m_basePos;
+     tag_CHUNK* m_next;
+     VALTYPE m_memory[1];
+   }
+   Chunk;
 
-     Chunk* m_first;
-     Chunk* m_last;
+   Chunk* m_first;
+   Chunk* m_last;
 
-     uint32 m_readpos;
-     uint32 m_writepos;
+   uint32 m_readpos;
+   uint32 m_writepos;
 
-     t_endianity m_write_endianity;
-     t_endianity m_read_endianity;
-     t_endianity m_sys_endianity;
+   t_endianity m_write_endianity;
+   t_endianity m_read_endianity;
+   t_endianity m_sys_endianity;
 
-     uint32 m_size;
+   uint32 m_size;
 
-     mutable Mutex m_mtx;
+   mutable Mutex m_mtx;
 
-     /** Initializes the buffer */
-     void init();
+   /** Initializes the buffer */
+   void init();
 
     void write16_little( uint16 number );
     void write32_little( uint32 number );
@@ -208,6 +218,12 @@ private:
     bool read16_big( uint16& number );
     bool read32_big( uint32& number );
     bool read64_big( uint64& number );
+
+    void writeNumberBits_little( uint64 number, int32 bits );
+    bool readNumberBits_little( uint64& number, int32 bits );
+
+    void writeNumberBits_big( uint64 number, int32 bits );
+    bool readNumberBits_big( uint64& number, int32 bits );
 
     // allocates an empty chunk of a given byte size.
     Chunk* allocChunk( uint32 byteSize );

@@ -1,0 +1,70 @@
+/*
+@name BitBuf unaligned read/write
+@category Feathers-bitbuf
+
+@output
+Size of bitbuf: 103
+Bit 0: 1
+Bit 1: 0
+Bit 2: 1
+Bit 3: 1
+Bit 4: 0
+Bit 5: 1
+Bit 6: 1
+Bit 7: 0
+Bit 8: 1
+Bit 9: 1
+Bit 10: 0
+Bit 11: 1
+Unaligned text: "Hello world"
+Bit 0: 1
+Bit 1: 0
+Bit 2: 1
+Done.
+@endoutput
+*/
+
+load bitbuf
+
+x = BitBuf()
+
+// writing 12 bits:
+x.wbit(1).wbit(0).wbit(1)
+x.wbit(1).wbit(0).wbit(1)
+x.wbit(1).wbit(0).wbit(1)
+x.wbit(1).wbit(0).wbit(1)
+
+
+// writing 88 bits.
+x.write( "Hello" ).w8(0x20) // space
+x.write( "world" )
+
+// some more bits.
+x.wbit(1).wbit(0).wbit(1)
+
+> "Size of bitbuf: ", x.len
+//> x.toString()
+
+for i = 0 to 11   
+   > @"Bit $i: ", x.rbit()
+end
+
+hail = x.grab(88)
+
+/*
+for char in hail
+   > char[*0]
+end
+*/
+
+> "Unaligned text: \"", hail, "\""
+
+// More unaligned bits
+for i = 0 to 2
+   > @"Bit $i: ", x.rbit()
+end
+
+if not x.eof: > "Fail: incomplete read."
+
+> "Done."
+

@@ -389,7 +389,7 @@ FALCON_DEFINE_FUNCTION_P1( write )
 
 /*#
 @method read BitBuf
-@brief Reads bits from the buffer in a target string.
+@brief Reads bits from the buffer in a target string.io
 @param target A target string (mutable)
 @optparam count The count of bits to be read
 @return The count of bits actually read (will be less than count if there wasn't enough bits left).
@@ -467,6 +467,187 @@ FALCON_DEFINE_FUNCTION_P1( grab )
    ctx->returnFrame(FALCON_GC_HANDLE( source ));
 }
 
+
+/*#
+@method wbit BitBuf
+@brief Writes a single bit to the bit buffer.
+@param bit A number, any non-zero number will be interpreted as 1.
+@return This same object.
+*/
+
+FALCON_DECLARE_FUNCTION( wbit, "bit:[N]");
+FALCON_DEFINE_FUNCTION_P1( wbit )
+{
+   Item* i_bit = ctx->param(0);
+
+   if( i_bit == 0 || ! i_bit->isOrdinal() )
+   {
+      throw paramError( __LINE__, SRC );
+   }
+
+   BitBuf* buf = static_cast<BitBuf*>(ctx->self().asInst());
+   int64 bit = i_bit->forceInteger();
+   buf->writeBit( bit != 0 );
+   ctx->returnFrame(ctx->self());
+}
+
+/*#
+@method rbit BitBuf
+@brief Reads a single bit from the bit buffer.
+@return 1 or 0.
+@raise AccessError if reading at eof.
+*/
+
+FALCON_DECLARE_FUNCTION( rbit, "" );
+FALCON_DEFINE_FUNCTION_P1( rbit )
+{
+   BitBuf* buf = static_cast<BitBuf*>(ctx->self().asInst());
+   bool bit = false;
+   if( ! buf->readBit( bit ) )
+   {
+      throw FALCON_SIGN_ERROR( AccessError, e_read_eof );
+   }
+   ctx->returnFrame( (int64) (bit?1:0) );
+}
+
+#define MAKE_WRITE_FUNC( __bits__ ) \
+         FALCON_DECLARE_FUNCTION( w##__bits__, "number:[N]"); \
+         FALCON_DEFINE_FUNCTION_P1( w## __bits__ ) \
+         {\
+            Item* i_number = ctx->param(0); \
+            if( i_number == 0 || ! i_number->isOrdinal() )\
+            {\
+               throw paramError( __LINE__, SRC );\
+            }\
+            BitBuf* buf = static_cast<BitBuf*>(ctx->self().asInst());\
+            int64 number = i_number->forceInteger();\
+            buf->write##__bits__( number );\
+            ctx->returnFrame(ctx->self());\
+         }
+
+#define MAKE_READ_FUNC( __bits__ ) \
+         FALCON_DECLARE_FUNCTION( r##__bits__, "" );\
+         FALCON_DEFINE_FUNCTION_P1( r##__bits__ )\
+         {\
+            BitBuf* buf = static_cast<BitBuf*>(ctx->self().asInst());\
+            if( buf->readable() < __bits__ )\
+            {\
+               throw FALCON_SIGN_ERROR( AccessError, e_read_eof );\
+            }\
+            ctx->returnFrame( (int64) buf->read##__bits__() );\
+         }\
+
+
+
+
+MAKE_WRITE_FUNC( 8 )
+MAKE_WRITE_FUNC( 16 )
+MAKE_WRITE_FUNC( 32 )
+MAKE_WRITE_FUNC( 64 )
+
+MAKE_READ_FUNC( 8 )
+MAKE_READ_FUNC( 16 )
+MAKE_READ_FUNC( 32 )
+MAKE_READ_FUNC( 64 )
+
+/*#
+@method w8 BitBuf
+@brief Writes a single byte to the bit buffer.
+@param number A number; will be truncated so that it's in 0-255 range.
+@return This same object.
+*/
+
+
+/*#
+@method r8 BitBuf
+@brief Reads a single byte from the bit buffer.
+@return A number in 0-255 range.
+@raise AccessError if reading at eof.
+@return This same object.
+*/
+
+/*#
+@method w16 BitBuf
+@brief Writes a 16 bit number to the bit buffer.
+@param number A number; will be truncated so that it's in 0-0xFFFF range.
+@return This same object.
+
+The bytes comprised in the number will be stored according to the @a BitBuf.wend
+setting. If this setting is LITTLE_ENDIAN, or SYSTEM_ENDIAN and the system endianity
+is little, the bytes will be stored in significance order (less significant last).
+Otherwise, they will be stored in reverse order.
+
+For example, if storing the number 0x0102 in little endian ordering, the resulting
+writes in bit buffers would be 00000001, 00000010. Storing this number in big endian
+order would result in writing the bits 00000010, 00000001.
+
+@note The @a BitBuf.wend property defaults to LITTLE_ENDIAN.
+*/
+
+/*#
+@method r16 BitBuf
+@brief Reads 16 bits from the buffer and convert them to a number.
+@return A number in range 0-0xFFFF.
+@return This same object.
+@raise AccessError if reading at eof.
+
+The bytes composing the number are interpreted as having little or big endian
+ordering depending on the setting of the @a BitBuf.rend property. The default
+value for this property is LITTLE_ENDIAN.
+
+Please, refer to @a BitBuf.w16 for a wider description.
+@see BitBuf.w16
+*/
+
+
+
+/*#
+@method w32 BitBuf
+@brief Writes a 32 bit number to the bit buffer.
+@param number A number; will be truncated so that it's in 0-0xFFFF-FFFF range.
+@return This same object.
+
+Please, refer to @a BitBuf.w16 for a wider description.
+*/
+
+/*#
+@method r32 BitBuf
+@brief Reads 32 bits from the buffer and convert them to a number.
+@return A number in range 0-0xFFFF-FFFF.
+@raise AccessError if reading at eof.
+
+Please, refer to @a BitBuf.r16 for a wider description.
+*/
+
+/*#
+@method w64 BitBuf
+@brief Writes a 64 bit number to the bit buffer.
+@param number A 64 bit number.
+@return This same object.
+
+In case the number is negative, the sign bit is interpreted as the 64th
+bit of an unsinged number.
+
+Please, refer to @a BitBuf.w16 for a wider description.
+*/
+
+/*#
+@method r64 BitBuf
+@brief Reads 64 bits from the buffer and convert them to a number.
+@return A number in range 0-0xFFFF-FFFF-FFFF-FFFF.
+@raise AccessError if reading at eof.
+
+The highest bit read from the stream and placed as 64th bit is interpreted
+by Falcon as a sign bit.
+
+@note All the bitwise operations in Falcon ignore the signedness of a number
+and consider the highest bit as simply the highest order bit, shifting it
+around as-is. If you want to preserve the sign across a bitwise operation,
+you should check the sign via a comparison, zero the highest bit and then
+restore the bit after the shift is done.
+
+Please, refer to @a BitBuf.r16 for a wider description.
+*/
 
 /*#
 @method toString BitBuf
@@ -550,6 +731,18 @@ Class* init_classbitbuf()
    bitbuf->addMethod( new CBitBuf::Function_grab );
    bitbuf->addMethod( new CBitBuf::Function_toString );
 
+   bitbuf->addMethod( new CBitBuf::Function_wbit );
+   bitbuf->addMethod( new CBitBuf::Function_rbit );
+
+   bitbuf->addMethod( new CBitBuf::Function_w8 );
+   bitbuf->addMethod( new CBitBuf::Function_w16 );
+   bitbuf->addMethod( new CBitBuf::Function_w32 );
+   bitbuf->addMethod( new CBitBuf::Function_w64 );
+
+   bitbuf->addMethod( new CBitBuf::Function_r8 );
+   bitbuf->addMethod( new CBitBuf::Function_r16 );
+   bitbuf->addMethod( new CBitBuf::Function_r32 );
+   bitbuf->addMethod( new CBitBuf::Function_r64 );
    return bitbuf;
 }
 

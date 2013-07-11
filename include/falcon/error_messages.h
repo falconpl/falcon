@@ -221,6 +221,7 @@ FAL_ERRORDECL( e_io_dup, 211, "Cannot duplicate the source file descriptor" );
 
 FAL_ERRORDECL( e_deser, 220, "Deserialization failed" );
 FAL_ERRORDECL( e_deser_eof, 221, "Hit EOF while deserializing" );
+FAL_ERRORDECL( e_read_eof, 222, "Reading at eof" );
 
 FAL_ERRORDECL( e_link_error, 250, "Generic link error");
 FAL_ERRORDECL( e_loaderror, 251, "Error in loading a module" );

@@ -239,7 +239,7 @@ void VMContext::pushBaseElements()
 bool VMContext::location( LocationInfo& infos ) const
 {
    // location is given by current function and its module plus current source line.
-   if( codeEmpty() )
+   if( codeEmpty() || callDepth() == 0 )
    {
       return false;
    }

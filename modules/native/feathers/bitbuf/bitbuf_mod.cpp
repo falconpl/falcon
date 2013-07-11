@@ -47,8 +47,8 @@ void BitBuf::init()
    m_readpos = 0;
    m_writepos = 0;
 
-   m_read_endianity = m_write_endianity = sysEndianity();
-   m_sys_endianity = sysEndianity();
+   m_read_endianity = m_write_endianity = e_endian_little;
+   m_sys_endianity = e_endian_little;
 
    m_size = 0;
 }
@@ -233,7 +233,7 @@ void BitBuf::writeBytes( const byte* memory, uint32 count )
       // nope, we must write unaligned bits.
       uint32 shift = 7;
       const byte* mempos = memory;
-      uint32 bitCount = 8;
+      uint32 bitCount = 8 * count;
       for( uint32 i = 0; i < bitCount; ++i )
       {
          bool bit = (*mempos & (0x1) << shift) != 0;
@@ -579,7 +579,8 @@ uint32 BitBuf::readBits( byte* memory, uint32 count )
       src += readCount;
    }
 
-   uint32 srcBitPos = 0;
+   uint32 srcBitPos = rest;
+   rest = 0;
    while(tbr > 0)
    {
       byte mask = *src & (0x1 << (7-srcBitPos));
@@ -604,7 +605,7 @@ uint32 BitBuf::readBits( byte* memory, uint32 count )
          memory++;
          rest = 0;
       }
-
+      --tbr;
    }
 
    m_readpos += count;
@@ -819,7 +820,6 @@ void BitBuf::store( DataWriter* target )
       target->write( (uint64) m_last->m_usedBits );
       target->writeRaw( memory, m_last->m_sizeBytes );
    }
-
 }
 
 void BitBuf::restore( DataReader* source )
@@ -849,6 +849,36 @@ void BitBuf::restore( DataReader* source )
       m_last->m_basePos = 0;
       m_last->m_next = 0;
    }
+}
+
+
+void BitBuf::writeNumberBits( uint64 number, int32 bits )
+{
+   while( bits > 0 )
+   {
+      writeBit( ((number >> bits) & 0x1) != 0 );
+      --bits;
+   }
+}
+
+
+bool BitBuf::readNumberBits( uint64& number, int32 bits )
+{
+   if( readable() < (uint32) bits )
+   {
+      return false;
+   }
+
+   number = 0;
+   while( bits > 0 )
+   {
+      bool bit = false;
+      readBit( bit );
+      number |= bit << bits;
+      --bits;
+   }
+
+   return true;
 }
 
 }} // Namespace Falcon::Ext
