@@ -595,7 +595,7 @@ Parsing::TokenInstance* SourceLexer::nextToken()
                case 'b': m_text.append('\b'); m_state = state_double_string; break;
                case 't': m_text.append('\t'); m_state = state_double_string; break;
                case 'r': m_text.append('\r'); m_state = state_double_string; break;
-               case 'x': case 'X': m_state = state_double_string_hex; break;
+               case 'x': case 'X': tempString.size(0); m_state = state_double_string_hex; break;
                case 'B': m_state = state_double_string_bin; break;
                case '0': case 'c': case 'C': m_state = state_double_string_octal; break;
                default:

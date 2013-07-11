@@ -1796,20 +1796,20 @@ bool String::parseHex( uint64 &target, length_t pos ) const
    while( endSub < len && (endSub - pos < 16) )
    {
       char_t chnext = getCharAt( endSub );
-      if ( chnext >= 0x30 && chnext <= 0x39 ) // 0 - 9
+      if ( chnext >= '0' && chnext <= '9' ) // 0 - 9
       {
          target <<= 4; //*16
-         target |=  chnext - 0x30;
+         target |=  chnext - '0';
       }
-      else if( chnext >= 0x41 && chnext <= 0x46 ) // A - F
+      else if( chnext >= 'A' && chnext <= 'F' ) // A - F
       {
          target <<= 4; //*16
-         target |=  chnext - 0x41 + 10;
+         target |=  chnext - 'A' + 10;
       }
-      else if( chnext >= 0x61 && chnext <= 0x66 ) // a - f
+      else if( chnext >= 'a' && chnext <= 'f' ) // a - f
       {
          target <<= 4; //*16
-         target |=  chnext - 0x61 + 10;
+         target |=  chnext - 'a' + 10;
       }
       endSub ++;
    }
