@@ -804,51 +804,85 @@ bool BitBuf::eof()
    return m_size == m_readpos;
 }
 
+
 void BitBuf::store( DataWriter* target )
 {
+   byte* stored = 0;
+
+   lock();
+
    byte rend = (byte) m_read_endianity;
    byte wend = (byte) m_write_endianity;
-   target->write( rend );
-   target->write( wend );
-
    byte* memory = consolidate();
+
    if( memory == 0 )
    {
-      target->write( (uint64) 0 );
+      unlock();
+
+      target->write( rend );
+      target->write( wend );
+      target->write(0);
+      return;
    }
-   else {
-      target->write( (uint64) m_last->m_usedBits );
-      target->writeRaw( memory, m_last->m_sizeBytes );
+
+   uint32 usedBits = (uint32) m_last->m_usedBits;
+   uint32 size = storageSize();
+   stored = new byte[size];
+   memcpy( stored, memory, size );
+   unlock();
+
+   try {
+      target->write( rend );
+      target->write( wend );
+      target->write( usedBits );
+      target->writeRaw( stored, size );
+      delete[] stored;
+   }
+   catch( ... )
+   {
+      delete[] stored;
+      throw;
    }
 }
 
+
 void BitBuf::restore( DataReader* source )
 {
-   clear();
-
    byte rend;
    byte wend;
    source->read(rend);
    source->read(wend);
 
-   m_read_endianity = (t_endianity) rend;
-   m_write_endianity = (t_endianity) wend;
-
    uint64 bitCount = 0;
    source->read(bitCount);
 
+   Chunk* chunk = 0;
    if( bitCount != 0 )
    {
       uint64 byteCount = bitCount/8;
       if( byteCount*8 != bitCount ) byteCount++;
-      m_first = m_last = allocChunk(byteCount);
-      source->read( m_last->m_memory, byteCount );
+      chunk = allocChunk(byteCount);
+      try {
+         source->read( chunk->m_memory, byteCount );
+      }
+      catch( ... )
+      {
+         delete chunk;
+         throw;
+      }
 
-      m_last->m_sizeBytes = byteCount;
-      m_last->m_usedBits = bitCount;
-      m_last->m_basePos = 0;
-      m_last->m_next = 0;
+      chunk->m_sizeBytes = byteCount;
+      chunk->m_usedBits = bitCount;
+      chunk->m_basePos = 0;
+      chunk->m_next = 0;
    }
+
+   lock();
+   m_read_endianity = (t_endianity) rend;
+   m_write_endianity = (t_endianity) wend;
+   m_first = m_last = chunk;
+   m_size = bitCount;
+   unlock();
 }
 
 
@@ -866,6 +900,7 @@ bool BitBuf::readNumberBits( uint64& number, uint32 bits )
 {
    if( readable() < bits )
    {
+      unlock();
       return false;
    }
 
