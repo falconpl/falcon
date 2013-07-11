@@ -1,0 +1,39 @@
+/*
+@name String octal escape
+@category Str-oct
+
+@output
+String octal escape
+OCT text: ABCDE
+More text: abcde
+Test nonprintable chars in 0-20 range: Pass.
+Test nonprintable chars in F0-FF range: Pass.
+Test nonprintable chars in 8F00-8FFF range: Pass.
+Done.
+@endoutput
+*/
+
+> "String octal escape"
+> "OCT text: \0101\0102\0103\0104\0105"
+> "More text: \0141\0142\0143\0144\0145"
+
+function test( string, base )
+   for i in [0:string.len]
+      if string[*i] != i + base
+         > "Octal failed at step ", i
+         return
+      end
+   end
+   > "Pass."
+end
+
+>> "Test nonprintable chars in 0-20 range: "
+test( "\00\01\02\03\04\05", 00 )
+
+>> "Test nonprintable chars in F0-FF range: "
+test(  "\0740\0741\0742\0743\0744\0745", 0740 )
+
+>> "Test nonprintable chars in 8F00-8FFF range: "
+test(  "\0107760\0107761\0107762\0107763\0107764\0107765", 0x8FF0 )
+
+> "Done."
