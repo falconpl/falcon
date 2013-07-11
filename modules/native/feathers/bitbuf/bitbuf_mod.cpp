@@ -526,6 +526,7 @@ void BitBuf::write( const BitBuf& other )
 
 uint32 BitBuf::readBytes( byte* memory, uint32 count )
 {
+   lock();
    if( count * 8  > readable() )
    {
       count = readable() / 8;
@@ -533,23 +534,27 @@ uint32 BitBuf::readBytes( byte* memory, uint32 count )
 
    if (count == 0 )
    {
+      unlock();
       return 0;
    }
 
    if( m_readpos % 8 != 0 )
    {
+      unlock();
       return readBits( memory, count *8 ) / 8 ;
    }
 
    byte* src = consolidate();
    memcpy( memory, src + m_readpos/8, count );
    m_readpos += count*8;
+   unlock();
 
    return count;
 }
 
 uint32 BitBuf::readBits( byte* memory, uint32 count )
 {
+   lock();
    if( count > readable() )
    {
       count = readable();
@@ -557,11 +562,13 @@ uint32 BitBuf::readBits( byte* memory, uint32 count )
 
    if( count == 0 )
    {
+      unlock();
       return 0;
    }
 
    if( count % 8 == 0 && m_readpos % 8 == 0)
    {
+      unlock();
       return readBytes(memory, count/8) * 8;
    }
 
@@ -609,6 +616,9 @@ uint32 BitBuf::readBits( byte* memory, uint32 count )
    }
 
    m_readpos += count;
+
+   unlock();
+
    return count;
 }
 
@@ -651,8 +661,10 @@ bool BitBuf::read64( uint64& number )
 
 bool BitBuf::readBit( bool& bit )
 {
+   lock();
    if( readable() == 0 )
    {
+      unlock();
       return false;
    }
 
@@ -661,6 +673,7 @@ bool BitBuf::readBit( bool& bit )
    uint32 rest = m_readpos - (pos*8);
    bit = (memory[pos] & (0x1 << (7-rest)));
    m_readpos++;
+   unlock();
 
    return true;
 }
@@ -776,32 +789,42 @@ bool BitBuf::read64_reverse( uint64& number )
 
 bool BitBuf::wpos(uint32 pos)
 {
+   lock();
    if( pos > m_size )
    {
+      unlock();
       return false;
    }
 
    consolidate();
    m_writepos = pos;
+   unlock();
    return true;
 }
 
 
 bool BitBuf::rpos(uint32 pos)
 {
+   lock();
    if( pos > m_size )
    {
+      unlock();
       return false;
    }
 
    consolidate();
    m_readpos = pos;
+   unlock();
    return true;
 }
 
 bool BitBuf::eof()
 {
-   return m_size == m_readpos;
+   lock();
+   bool status = m_size == m_readpos;
+   unlock();
+
+   return status;
 }
 
 
