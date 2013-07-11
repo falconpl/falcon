@@ -1,0 +1,39 @@
+/*
+@name String hex escape
+@category Str-hex
+
+@output
+String hex escape
+HEX text: ABCDE
+More text: abcde
+Test nonprintable chars in 0-20 range: Pass.
+Test nonprintable chars in F0-FF range: Pass.
+Test nonprintable chars in 8F00-8FFF range: Pass.
+Done.
+@endoutput
+*/
+
+> "String hex escape"
+> "HEX text: \x41\x42\x43\x44\x45"
+> "More text: \x61\x62\x63\x64\x65"
+
+function test( string, base )
+   for i in [0:string.len]
+      if string[*i] != i + base
+         > "Hex failed at step ", i
+         return
+      end
+   end
+   > "Pass."
+end
+
+>> "Test nonprintable chars in 0-20 range: "
+test( "\x00\x01\x02\x03\x04\x05", 0x0 )
+
+>> "Test nonprintable chars in F0-FF range: "
+test(  "\xF0\xF1\xF2\xF3\xF4\xF5", 0xF0 )
+
+>> "Test nonprintable chars in 8F00-8FFF range: "
+test(  "\x8FF0\x8FF1\x8FF2\x8FF3\x8FF4\x8FF5", 0x8FF0 )
+
+> "Done."
