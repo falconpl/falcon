@@ -597,7 +597,7 @@ Parsing::TokenInstance* SourceLexer::nextToken()
                case 'r': m_text.append('\r'); m_state = state_double_string; break;
                case 'x': case 'X': tempString.size(0); m_state = state_double_string_hex; break;
                case 'B': m_state = state_double_string_bin; break;
-               case '0': case 'c': case 'C': m_state = state_double_string_octal; break;
+               case '0': case 'c': case 'C': tempString.size(0); m_state = state_double_string_octal; break;
                default:
                   m_state = state_double_string;
                   addError(e_inv_esc_sequence);
