@@ -173,8 +173,8 @@ public:
 
     void toString( String& target, char_t chrOn='1', char_t chrOff='0' );
 
-    void writeNumberBits( uint64 number, int32 bits );
-    bool readNumberBits( uint64& number, int32 bits );
+    void writeNumberBits( uint64 number, uint32 bits );
+    bool readNumberBits( uint64& number, uint32 bits );
 
 private:
 
@@ -205,19 +205,19 @@ private:
    /** Initializes the buffer */
    void init();
 
-    void write16_little( uint16 number );
-    void write32_little( uint32 number );
-    void write64_little( uint64 number );
-    void write16_big( uint16 number );
-    void write32_big( uint32 number );
-    void write64_big( uint64 number );
+    void write16_direct( uint16 number );
+    void write32_direct( uint32 number );
+    void write64_direct( uint64 number );
+    void write16_reverse( uint16 number );
+    void write32_reverse( uint32 number );
+    void write64_reverse( uint64 number );
 
-    bool read16_little( uint16& number );
-    bool read32_little( uint32& number );
-    bool read64_little( uint64& number );
-    bool read16_big( uint16& number );
-    bool read32_big( uint32& number );
-    bool read64_big( uint64& number );
+    bool read16_direct( uint16& number );
+    bool read32_direct( uint32& number );
+    bool read64_direct( uint64& number );
+    bool read16_reverse( uint16& number );
+    bool read32_reverse( uint32& number );
+    bool read64_reverse( uint64& number );
 
     void writeNumberBits_little( uint64 number, int32 bits );
     bool readNumberBits_little( uint64& number, int32 bits );
@@ -238,11 +238,11 @@ private:
     byte* reserveEvenBytes( uint32 count );
 
     bool writeStraightBitOrder() {
-       return m_write_endianity == e_endian_little || (m_write_endianity == e_endian_same && m_sys_endianity == e_endian_little);
+       return m_write_endianity == m_sys_endianity || m_write_endianity == e_endian_same ;
     }
 
     bool readStraightBitOrder() {
-       return m_read_endianity == e_endian_little || (m_read_endianity == e_endian_same && m_sys_endianity == e_endian_little);
+       return m_read_endianity == m_sys_endianity || m_read_endianity == e_endian_same;
     }
 
     uint32 _gcMark;

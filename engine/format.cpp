@@ -831,7 +831,7 @@ void Format::formatInt( int64 number, String &target, bool bUseGroup )
    buffer[ pos+1 ] = 0; // allow room for post formatters
 
 
-   if ( number < 0 )
+   if ( number < 0 && m_numFormat == e_decimal )
    {
       number = - number;
    }
@@ -878,7 +878,17 @@ void Format::formatInt( int64 number, String &target, bool bUseGroup )
 
    while( number != 0 )
    {
-      uint32 cipher =(uint32) (number % base);
+      uint32 cipher;
+      if( base == 10 )
+      {
+         cipher = number % base;
+         number /= base;
+      }
+      else
+      {
+         cipher =  static_cast<uint64>(number)%static_cast<uint64>(base);
+         number = (int64) (static_cast<uint64>(number)/static_cast<uint64>(base));
+      }
       if ( cipher < 10 )
       {
          buffer[pos--] = (char) ( cipher + 0x30 );
@@ -887,7 +897,6 @@ void Format::formatInt( int64 number, String &target, bool bUseGroup )
       {
          buffer[pos--] = (char) ( (cipher-10) + baseHexChr );
       }
-      number /= base;
 
       if( number != 0 && bUseGroup && m_grouping != 0 )
       {
@@ -926,6 +935,16 @@ void Format::formatInt( int64 number, String &target, bool bUseGroup )
 void Format::applyNeg( String &target, int64 number )
 {
    // apply negative format
+   if( m_numFormat == e_binary
+            || m_numFormat == e_octal
+            || m_numFormat == e_hexLower
+            || m_numFormat == e_hexUpper
+            || m_numFormat == e_cHexUpper
+            || m_numFormat == e_cHexLower )
+   {
+      return;
+   }
+
    if ( number < 0 )
    {
       switch( m_negFormat )

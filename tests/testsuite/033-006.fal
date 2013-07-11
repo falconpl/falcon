@@ -1,0 +1,48 @@
+/*
+@name BitBuf numeric ops
+@category Feathers-bitbuf
+
+@output
+Unaligned numeric bits r/w
+Size of bitbuf: 91
+Bit 0: 1
+Bit 1: 0
+Bit 2: 1
+1: 0x3
+2: 0x36B1
+3: 0x6B1C3C0
+4: 0x1C0D2F3D1F2
+Done.
+@endoutput
+*/
+
+load bitbuf
+
+x = BitBuf()
+
+> "Unaligned numeric bits r/w"
+
+// writing 3 bits:
+x.wbit(1).wbit(0).wbit(1)
+x.wbits(0xA3,5)
+x.wbits(0xB6B1,14)
+x.wbits(0xB6B1C3C0,28)
+x.wbits(0x96B1C3C0D2F3D1F2,41)
+
+> "Size of bitbuf: ", x.len
+
+//> "Wrote bits: ", x.toString()
+
+for i = 0 to 2
+   > @"Bit $i: ", x.rbit()
+end
+
+> @"1: 0x$({x.rbits(5)}X)"
+> @"2: 0x$({x.rbits(14)}X)"
+> @"3: 0x$({x.rbits(28)}X)"
+> @"4: 0x$({x.rbits(41)}X)"
+
+if not x.eof: > "Fail: incomplete read."
+
+> "Done."
+

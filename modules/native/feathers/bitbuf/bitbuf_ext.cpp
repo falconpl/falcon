@@ -649,6 +649,87 @@ restore the bit after the shift is done.
 Please, refer to @a BitBuf.r16 for a wider description.
 */
 
+
+/*#
+@method wbits BitBuf
+@brief Writes up to 64 bits from a number.
+@param number The number to be written.
+@param bits The count of bits to be written in the buffer.
+@return This same object.
+
+This method writes an arbitrary number of least significant @b bits taken from the given
+@b number into the buffer.
+
+The endianity of the system or of the stream is not considered, as the most significant bit
+among those taken from the chosen @b number is always stored first.
+*/
+
+FALCON_DECLARE_FUNCTION( wbits, "number:[N], count:[N]");
+FALCON_DEFINE_FUNCTION_P1( wbits )
+{
+   Item* i_bit = ctx->param(0);
+   Item* i_count = ctx->param(1);
+
+   if( i_bit == 0 || ! i_bit->isOrdinal()
+    || i_count == 0 || ! i_count->isOrdinal()
+    )
+   {
+      throw paramError( __LINE__, SRC );
+   }
+
+   int64 count = i_count->forceInteger();
+   if( count < 0 || count > 64 )
+   {
+      throw FALCON_SIGN_XERROR( ParamError, e_param_range, .extra("0 <= count <= 64") );
+   }
+
+   BitBuf* buf = static_cast<BitBuf*>(ctx->self().asInst());
+   int64 bit = i_bit->forceInteger();
+   buf->writeNumberBits( bit, count );
+   ctx->returnFrame(ctx->self());
+}
+
+/*#
+@method rbits BitBuf
+@brief Reads up to 64 bits as a number.
+@param bits The count of bits to be taken from the buffer.
+@return The read number.
+
+This method reads an arbitrary number of bits from the stream, and treat them
+as a number, considering the first taken bit as the most significant bit of the
+read number.
+
+The endianity of the system or of the stream is not considered.
+
+*/
+
+
+FALCON_DECLARE_FUNCTION( rbits, "" );
+FALCON_DEFINE_FUNCTION_P1( rbits )
+{
+   Item* i_count = ctx->param(0);
+
+   if( i_count == 0 || ! i_count->isOrdinal())
+   {
+      throw paramError( __LINE__, SRC );
+   }
+
+   int64 count = i_count->forceInteger();
+   if( count < 0 || count > 64 )
+   {
+      throw FALCON_SIGN_XERROR( ParamError, e_param_range, .extra("0 <= count <= 64") );
+   }
+
+   BitBuf* buf = static_cast<BitBuf*>(ctx->self().asInst());
+   uint64 number;
+   if( ! buf->readNumberBits( number, count ) )
+   {
+      throw FALCON_SIGN_ERROR( AccessError, e_read_eof );
+   }
+   ctx->returnFrame( (int64) number );
+}
+
+
 /*#
 @method toString BitBuf
 @brief Converts the bit stream in a readable bit-oriented representation.
@@ -743,6 +824,10 @@ Class* init_classbitbuf()
    bitbuf->addMethod( new CBitBuf::Function_r16 );
    bitbuf->addMethod( new CBitBuf::Function_r32 );
    bitbuf->addMethod( new CBitBuf::Function_r64 );
+
+   bitbuf->addMethod( new CBitBuf::Function_wbits );
+   bitbuf->addMethod( new CBitBuf::Function_rbits );
+
    return bitbuf;
 }
 

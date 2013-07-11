@@ -1,0 +1,64 @@
+/*
+@name BitBuf numeric ops
+@category Feathers-bitbuf
+
+@output
+Unaligned endian-sensible numeric r/w
+Size of bitbuf: 123
+Bit 0: 1
+Bit 1: 0
+Bit 2: 1
+Direct endianity:
+1: 0xA3
+2: 0xB6B1
+3: 0xB6B1C3C0
+4: 0x96B1C3C0D2F3D1F2
+Reverse endianity:
+1: 0xA3
+2: 0xB1B6
+3: 0xC0C3B1B6
+4: 0xF2D1F3D2C0C3B196
+Done.
+@endoutput
+*/
+
+load bitbuf
+
+x = BitBuf()
+
+> "Unaligned endian-sensible numeric r/w"
+
+// writing 3 bits:
+x.wbit(1).wbit(0).wbit(1)
+x.wend = LITTLE_ENDIAN
+x.w8(0xA3)
+x.w16(0xB6B1)
+x.w32(0xB6B1C3C0)
+x.w64(0x96B1C3C0D2F3D1F2)
+
+> "Size of bitbuf: ", x.len
+
+//> "Wrote bits: ", x.toString()
+
+for i = 0 to 2
+   > @"Bit $i: ", x.rbit()
+end
+
+> "Direct endianity:"
+> @"1: 0x$({x.r8()}X)"
+> @"2: 0x$({x.r16()}X)"
+> @"3: 0x$({x.r32()}X)"
+> @"4: 0x$({x.r64()}X)"
+
+> "Reverse endianity:"
+x.rend = BIG_ENDIAN
+x.rpos = 3
+> @"1: 0x$({x.r8()}X)"
+> @"2: 0x$({x.r16()}X)"
+> @"3: 0x$({x.r32()}X)"
+> @"4: 0x$({x.r64()}X)"
+
+if not x.eof: > "Fail: incomplete read."
+
+> "Done."
+

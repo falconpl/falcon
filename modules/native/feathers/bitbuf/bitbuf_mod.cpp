@@ -159,25 +159,25 @@ byte* BitBuf::consolidate()
 }
 
 
-void BitBuf::write16_little( uint16 number )
+void BitBuf::write16_direct( uint16 number )
 {
    writeBytes( reinterpret_cast<byte*>(&number), 2 );
 }
 
 
-void BitBuf::write32_little( uint32 number )
+void BitBuf::write32_direct( uint32 number )
 {
    writeBytes( reinterpret_cast<byte*>(&number), 4 );
 }
 
 
-void BitBuf::write64_little( uint64 number )
+void BitBuf::write64_direct( uint64 number )
 {
    writeBytes( reinterpret_cast<byte*>(&number), 8 );
 }
 
 
-void BitBuf::write16_big( uint16 number )
+void BitBuf::write16_reverse( uint16 number )
 {
    byte* bits = (byte*) &number;
    write8( bits[1] );
@@ -185,7 +185,7 @@ void BitBuf::write16_big( uint16 number )
 }
 
 
-void BitBuf::write32_big( uint32 number )
+void BitBuf::write32_reverse( uint32 number )
 {
    byte* bits = (byte*) &number;
    write8( bits[3] );
@@ -194,7 +194,7 @@ void BitBuf::write32_big( uint32 number )
    write8( bits[0] );
 }
 
-void BitBuf::write64_big( uint64 number )
+void BitBuf::write64_reverse( uint64 number )
 {
    byte* bits = (byte*) &number;
    write8( bits[7] );
@@ -446,10 +446,10 @@ void BitBuf::write16( uint16 number )
 {
    if( writeStraightBitOrder() )
    {
-      write16_little(number);
+      write16_direct(number);
    }
    else {
-      write16_big(number);
+      write16_reverse(number);
    }
 }
 
@@ -458,10 +458,10 @@ void BitBuf::write32( uint32 number )
 {
    if( writeStraightBitOrder() )
    {
-      write32_little(number);
+      write32_direct(number);
    }
    else {
-      write32_big(number);
+      write32_reverse(number);
    }
 }
 
@@ -470,10 +470,10 @@ void BitBuf::write64( uint64 number )
 {
    if( writeStraightBitOrder() )
    {
-      write64_little(number);
+      write64_direct(number);
    }
    else {
-      write64_big(number);
+      write64_reverse(number);
    }
 }
 
@@ -617,10 +617,10 @@ bool BitBuf::read16( uint16& number )
 {
    if( readStraightBitOrder() )
    {
-      return read16_little(number);
+      return read16_direct(number);
    }
    else {
-      return read16_big(number);
+      return read16_reverse(number);
    }
 }
 
@@ -629,22 +629,22 @@ bool BitBuf::read32( uint32& number )
 {
    if( readStraightBitOrder() )
    {
-      return read32_little(number);
+      return read32_direct(number);
    }
    else {
-      return read32_big(number);
+      return read32_reverse(number);
    }
 }
 
 
 bool BitBuf::read64( uint64& number )
 {
-   if( writeStraightBitOrder() )
+   if( readStraightBitOrder() )
    {
-      return read64_little(number);
+      return read64_direct(number);
    }
    else {
-      return read64_big(number);
+      return read64_reverse(number);
    }
 }
 
@@ -679,7 +679,7 @@ bool BitBuf::read8( uint8 &bt )
 }
 
 
-bool BitBuf::read16_little( uint16& number )
+bool BitBuf::read16_direct( uint16& number )
 {
    if( readable() < 16 )
    {
@@ -690,7 +690,7 @@ bool BitBuf::read16_little( uint16& number )
    return true;
 }
 
-bool BitBuf::read32_little( uint32& number )
+bool BitBuf::read32_direct( uint32& number )
 {
    if( readable() < 32 )
    {
@@ -701,7 +701,7 @@ bool BitBuf::read32_little( uint32& number )
    return true;
 }
 
-bool BitBuf::read64_little( uint64& number )
+bool BitBuf::read64_direct( uint64& number )
 {
    if( readable() < 64 )
    {
@@ -712,7 +712,7 @@ bool BitBuf::read64_little( uint64& number )
    return true;
 }
 
-bool BitBuf::read16_big( uint16& number )
+bool BitBuf::read16_reverse( uint16& number )
 {
    if( readable() < 16 )
    {
@@ -730,7 +730,7 @@ bool BitBuf::read16_big( uint16& number )
 }
 
 
-bool BitBuf::read32_big( uint32& number )
+bool BitBuf::read32_reverse( uint32& number )
 {
    if( readable() < 32 )
    {
@@ -750,7 +750,7 @@ bool BitBuf::read32_big( uint32& number )
 }
 
 
-bool BitBuf::read64_big( uint64& number )
+bool BitBuf::read64_reverse( uint64& number )
 {
    if( readable() < 64 )
    {
@@ -852,19 +852,19 @@ void BitBuf::restore( DataReader* source )
 }
 
 
-void BitBuf::writeNumberBits( uint64 number, int32 bits )
+void BitBuf::writeNumberBits( uint64 number, uint32 bits )
 {
    while( bits > 0 )
    {
-      writeBit( ((number >> bits) & 0x1) != 0 );
       --bits;
+      writeBit( ((number >> bits) & 0x1) != 0 );
    }
 }
 
 
-bool BitBuf::readNumberBits( uint64& number, int32 bits )
+bool BitBuf::readNumberBits( uint64& number, uint32 bits )
 {
-   if( readable() < (uint32) bits )
+   if( readable() < bits )
    {
       return false;
    }
@@ -874,7 +874,8 @@ bool BitBuf::readNumberBits( uint64& number, int32 bits )
    {
       bool bit = false;
       readBit( bit );
-      number |= bit << bits;
+      number <<= 1;
+      number |= bit ? 1 : 0;
       --bits;
    }
 
