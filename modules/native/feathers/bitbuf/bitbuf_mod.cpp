@@ -583,11 +583,14 @@ uint32 BitBuf::readBits( byte* memory, uint32 count )
       tbr = count - readCount*8;
       src += readCount;
       memory += readCount;
-      *memory = 0;
    }
 
    uint32 srcBitPos = rest;
    rest = 0;
+   if ( tbr != 0 )
+   {
+      *memory = 0;
+   }
    while(tbr > 0)
    {
       byte mask = *src & (0x1 << (7-srcBitPos));
