@@ -225,7 +225,7 @@ void BitBuf::writeBytes( const byte* memory, uint32 count )
       m_writepos += count * 8;
       if( m_writepos > m_size )
       {
-         m_last->m_usedBits += count * 8;
+         m_last->m_usedBits = m_writepos - m_last->m_basePos;
          m_size = m_writepos;
       }
    }
@@ -271,15 +271,13 @@ byte* BitBuf::reserveEvenBytes( uint32 count )
    {
       // get a chunk large enough.
       Chunk* newChunk = allocChunk( count );
+      newChunk->m_basePos = m_writepos;
 
       if ( m_last != 0 )
       {
-         // we're better truncating off the chunk, and creating a new chunk that can host this data.
+         // we're better off truncating the chunk
          m_last->m_sizeBytes = woffsetBytes;
-         // might discard used bits, that would be overwritten anyhow.
-         m_last->m_usedBits = woffsetBytes * 8;
          m_last->m_next = newChunk;
-         m_last->m_basePos = m_writepos;
       }
       else {
          m_first = newChunk;
@@ -584,6 +582,8 @@ uint32 BitBuf::readBits( byte* memory, uint32 count )
       memcpy( memory, src, readCount );
       tbr = count - readCount*8;
       src += readCount;
+      memory += readCount;
+      *memory = 0;
    }
 
    uint32 srcBitPos = rest;
@@ -610,6 +610,7 @@ uint32 BitBuf::readBits( byte* memory, uint32 count )
       if( rest == 8 )
       {
          memory++;
+         *memory = 0;
          rest = 0;
       }
       --tbr;

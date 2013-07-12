@@ -368,29 +368,43 @@ void generic_apply_( const PStep* ps, VMContext* ctx )
          register Item *op2 = &ctx->opcodeParam(0);
          _cpr::swapper( *op1, *op2 );   
 
-         if ( _cpr::zeroCheck(*op2) )
-         {
-            throw new MathError( ErrorParam(e_div_by_zero, __LINE__, SRC )
-               .origin(ErrorParam::e_orig_vm) );
-         }
-
          // we dereference also op1 to help copy-on-write decisions from overrides
          switch ( op1->type() << 8 | op2->type() )
          {
          case FLC_ITEM_INT << 8 | FLC_ITEM_INT:
+            if ( _cpr::zeroCheck(*op2) )
+            {
+               throw new MathError( ErrorParam(e_div_by_zero, __LINE__, SRC )
+                  .origin(ErrorParam::e_orig_vm) );
+            }
             op1->content.data.val64 = _cpr::operate(op1->asInteger(), op2->asInteger());
             ctx->popData();
             break;
 
          case FLC_ITEM_INT << 8 | FLC_ITEM_NUM:
+            if ( _cpr::zeroCheck(*op2) )
+            {
+               throw new MathError( ErrorParam(e_div_by_zero, __LINE__, SRC )
+                  .origin(ErrorParam::e_orig_vm) );
+            }
             op1->setNumeric( _cpr::operaten((numeric)op1->asInteger(), op2->asNumeric()) );
             ctx->popData();
             break;
          case FLC_ITEM_NUM << 8 | FLC_ITEM_INT:
+            if ( _cpr::zeroCheck(*op2) )
+            {
+               throw new MathError( ErrorParam(e_div_by_zero, __LINE__, SRC )
+                  .origin(ErrorParam::e_orig_vm) );
+            }
             op1->content.data.number = _cpr::operaten(op1->asNumeric(), (numeric)op2->asInteger());
             ctx->popData();
             break;
          case FLC_ITEM_NUM << 8 | FLC_ITEM_NUM:
+            if ( _cpr::zeroCheck(*op2) )
+            {
+               throw new MathError( ErrorParam(e_div_by_zero, __LINE__, SRC )
+                  .origin(ErrorParam::e_orig_vm) );
+            }
             op1->content.data.number = _cpr::operaten(op1->asNumeric(), op2->asNumeric());
             ctx->popData();
             break;

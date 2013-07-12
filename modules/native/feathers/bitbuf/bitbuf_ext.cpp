@@ -369,12 +369,17 @@ FALCON_DEFINE_FUNCTION_P1( write )
    else
    {
       uint32 maxSize = source->size() * 8;
-      uint32 bitSize = static_cast<uint32>( i_bitSize == 0 ? maxSize: i_bitSize->forceInteger() );
+      int64 bitSize = i_bitSize == 0 ? maxSize: i_bitSize->forceInteger();
       uint32 bitStart = static_cast<uint32>( i_bitStart == 0 ? 0 : i_bitStart->forceInteger() );
 
       // sanitize input
       if( bitStart < maxSize )
       {
+         if( bitSize < 0 )
+         {
+            bitSize = maxSize;
+         }
+
          if( bitSize + bitStart > maxSize )
          {
             bitSize = maxSize - bitStart;

@@ -48,7 +48,7 @@ public:
     static const VALTYPE VAL_ALLBITS = 0xFF; // used in shift operations (VAL_ALLBITS >> X). must set all bits of VALTYPE.
 
     enum { VALBITS = sizeof(VALTYPE) * 8 };
-    enum { DEFAULT_CHUNK_SIZE = 7 };
+    enum { DEFAULT_CHUNK_SIZE = 128 };
 
     typedef enum {
        e_endian_little,

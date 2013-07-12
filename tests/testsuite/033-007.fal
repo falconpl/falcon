@@ -1,0 +1,66 @@
+/*
+@name BitBuf multi-buffer ops
+@category Feathers-bitbuf
+
+This test checks that the BitBuf class is able to generate and
+manage multiple chunks by adding more than 1024 bytes to the buffer
+(each chunk is normally 128 bytes long).
+
+Some chunks are larger than 128 bytes, to be sure that the addition
+algorithm is able to cope with larger data stored in a single chunk.
+
+@output
+Massive bitbuf alignment
+Buffer lenght: 20388
+Test 1: Pass
+Test 2: Pass
+Test 3: Pass
+Done.
+@endoutput
+*/
+
+load bitbuf
+
+memory = m""
+for i = 0 to 1023
+   memory %= i % 256
+end
+
+x = BitBuf()
+
+> "Massive bitbuf alignment"
+for i = 1 to 6
+   x.write( memory, 128*8-5 )
+end
+
+x.write( memory, 1020*8)
+
+for i = 1 to 6
+   x.write( memory, 128*8-5 )
+end
+
+
+> "Buffer lenght: ", x.len
+
+// read back and check it's allright.
+> "Test 1: ", test( x, 6, 128*8-5 )
+> "Test 2: ", test( x, 1, 1020*8 )
+> "Test 3: ", test( x, 6, 128*8-5 )
+
+function test( x, tests, count )
+   memory = m""
+   for i = 1 to tests
+      x.read( memory, count )
+      for l = 0 to memory.len -2 // skip the last         
+         if memory[*l] != l%256
+            return "Unaligned read at block "+ i+ " byte " + l, ": ",  memory[*l]
+         end
+      end
+   end
+   
+   return "Pass"
+end
+
+
+> "Done."
+
