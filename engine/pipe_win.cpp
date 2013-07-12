@@ -17,7 +17,7 @@
 #define SRC "engine/pipe.cpp"
 
 #include <falcon/pipe.h>
-#include <falcon/errors/ioerror.h>
+#include <falcon/stderrors.h>
 
 #include <windows.h>
 

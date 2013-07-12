@@ -21,8 +21,7 @@
 #include <falcon/selector.h>
 #include <falcon/fstream.h>
 
-#include <falcon/errors/genericerror.h>
-#include <falcon/errors/ioerror.h>
+#include <falcon/stderrors.h>
 
 #define POLL_THREAD_STACK_SIZE (32*1024)
 
