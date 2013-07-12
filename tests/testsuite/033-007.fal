@@ -53,7 +53,7 @@ function test( x, tests, count )
       x.read( memory, count )
       for l = 0 to memory.len -2 // skip the last         
          if memory[*l] != l%256
-            return "Unaligned read at block "+ i+ " byte " + l, ": ",  memory[*l]
+            return "Unaligned read at block "+ i+ " byte " + l + ": " +  memory[*l]
          end
       end
    end
