@@ -16,7 +16,7 @@
 
 #include <falcon/stdstreams.h>
 #include <falcon/filedata.h>
-#include <falcon/errors/ioerror.h>
+#include <falcon/stderrors.h>
 
 #include <windows.h>
 #include <io.h>
@@ -26,15 +26,15 @@ namespace Falcon {
 inline Sys::FileData* make_handle( HANDLE orig_handle, bool bDup )
 {
    HANDLE hTarget;
-   
+
    if ( bDup )
    {
       HANDLE curProc = GetCurrentProcess();
       BOOL bRes = ::DuplicateHandle(
-                    curProc, 
-                    orig_handle, 
                     curProc,
-                    &hTarget, 
+                    orig_handle,
+                    curProc,
+                    &hTarget,
                     0,
                     FALSE,
                     DUPLICATE_SAME_ACCESS);
@@ -55,8 +55,8 @@ inline Sys::FileData* make_handle( HANDLE orig_handle, bool bDup )
 
 StdInStream::StdInStream( bool bDup ):
 ReadOnlyFStream(make_handle(GetStdHandle(STD_INPUT_HANDLE), bDup ))
-{  
-   
+{
+
 }
 
 StdOutStream::StdOutStream( bool bDup ):

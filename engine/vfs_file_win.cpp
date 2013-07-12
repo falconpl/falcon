@@ -19,7 +19,7 @@
 #include <falcon/autocstring.h>
 #include <falcon/autowstring.h>
 #include <falcon/fstream.h>
-#include <falcon/errors/ioerror.h>
+#include <falcon/stderrors.h>
 #include <falcon/filestat.h>
 #include <falcon/directory.h>
 

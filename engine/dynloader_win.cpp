@@ -21,7 +21,7 @@
 #include <falcon/string.h>
 #include <falcon/path.h>
 #include <falcon/module.h>
-#include <falcon/errors/ioerror.h>
+#include <falcon/stderrors.h>
 
 #include <windows.h>
 
