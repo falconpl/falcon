@@ -90,7 +90,7 @@ bool ExprTree::addParam( const String& name )
       m_symbols = new SymbolMap;
    }
 
-   return m_symbols->insert(name);
+   return m_symbols->insert(name) >= 0;
 }
 
 

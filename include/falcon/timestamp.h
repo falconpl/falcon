@@ -509,9 +509,9 @@ public:
 
 
    /** Returns the adjustment for week-based year (According with ISO8601:2000)
-    * \param year the year of the date to be controlled
-    * \param month the month of the date to be controlled
-    * \param day the day of the date to be controlled
+    * \param year the year of the date to be checked
+    * \param month the month of the date to be checked
+    * \param day the day of the date to be checked
     * \reutrn 0 if the date doesn't need to be adjusted, -1 if this week goes in the previous year,
     *       +1 if it goes in the next year.
     *
@@ -526,7 +526,7 @@ public:
     * If December 29th, 30th, or 31st is a Monday, it and any following days are part of week 1 of the following year.
     *
     */
-   static int16 adjust_iso8601_2000( int64 year, int16 month, int64 day );
+   static int16 adjust_iso8601_2000( int64 year, int16 month, int16 day );
 
 
    void gcMark(uint32 mark ) { m_gcMark = mark; }

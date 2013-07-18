@@ -53,7 +53,7 @@ private:
 class StringStream::Buffer {
 public:
    String* m_str;
-   int32 m_refcount;
+   atomic_int m_refcount;
    Mutex m_mtx;
    
    typedef std::set<StringStream::MPX*> WaiterSet;

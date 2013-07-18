@@ -35,8 +35,7 @@ class FALCON_DYN_CLASS LoaderProcess: public Process
 public:
    LoaderProcess( VMachine* vm, ModSpace* ms );
 
-   void loadModule( const String& modUri, bool isUri, bool launchMain=false );
-   void linkModule( Module* mod, bool launchMain=false );
+   void loadModule( const String& modUri, bool isUri, bool launchMain=false );  
 
    ModSpace* modSpace() const { return m_ms; }
 

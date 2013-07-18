@@ -18,6 +18,7 @@
 #include <falcon/module.h>
 #include <falcon/engine.h>
 #include <falcon/synfunc.h>
+#include <falcon/modspace.h>
 
 namespace Falcon {
 
@@ -45,7 +46,7 @@ void LoaderProcess::loadModule( const String& modUri, bool isUri, bool launchMai
    m_context->call( m_loaderEntry );
    m_context->pushCode( &m_stepSetupMain );
 
-   m_ms->loadModule( modUri, isUri, m_context, launchMain );
+   m_ms->loadModule( modUri, isUri, false, launchMain );
    start();
 }
 
@@ -62,18 +63,6 @@ void LoaderProcess::setMainModule( Module* mod )
 
    m_mainModule = mod;
 }
-
-
-void LoaderProcess::linkModule( Module* mod, bool launchMain )
-{
-   m_context->reset();
-   m_context->callInternal( m_loaderEntry, 0 );
-   m_context->pushCode( &m_stepSetupMain );
-
-   m_ms->linkModule( mod, m_context, launchMain );
-   start();
-}
-
 
 
 void LoaderProcess::PStepSetupMain::apply_( const PStep* self, VMContext* ctx )
