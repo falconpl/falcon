@@ -341,7 +341,7 @@ namespace CBitBuf {
 
 @code
     bb = BitBuf()
-    bb.bitCount(3).write("abc",12).w16(5,2,3).write(m{0xF0},4) // write with variable bit sizes
+    bb.write("abc",12).w16(5).write(m{0xF0},4)
 @endcode
 */
 FALCON_DECLARE_FUNCTION( write, "data:S,bitSize:[N],bitStart:[N]");

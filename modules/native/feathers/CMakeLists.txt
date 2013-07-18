@@ -25,7 +25,6 @@ include_directories(
 unset(_project_targets)
 #
 add_subdirectory(bitbuf)
-#add_subdirectory(compiler)
 
 #add_subdirectory(confparser)
 
