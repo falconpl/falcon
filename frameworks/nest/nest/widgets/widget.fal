@@ -616,7 +616,12 @@ class Widget( id )
    function renderProps()
       rend = ""
       for key, value in self.props
-         rend += key + "=\"" + htmlEscape(toString(value)) + "\""
+         if value != nil
+            rend += key + "=\"" + htmlEscape(toString(value)) + "\""
+         else
+            rend += key + "=\"\""
+         end
+         
          formiddle: rend += " "
       end
       return rend
