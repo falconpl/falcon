@@ -17,17 +17,10 @@
    The confparser module - main file.
 */
 #include <falcon/module.h>
+#include <falcon/class.h>
 #include "confparser_ext.h"
-#include "confparser_mod.h"
-#include "confparser_st.h"
 
 #include "version.h"
-
-#include <falcon/srv/confparser_srv.h>
-
-//TODO: Use new dynamic allocation model
-static Falcon::ConfigFileService s_config_srv;
-
 
 /*#
    @module feathers.confparser Configuration file parser
@@ -132,56 +125,12 @@ FALCON_MODULE_DECL
 
    // setup DLL engine common data
 
-   Falcon::Module *self = new Falcon::Module();
-   self->name( "confparser" );
-   self->language( "en_US" );
-   self->engineVersion( FALCON_VERSION_NUM );
-   self->version( VERSION_MAJOR, VERSION_MINOR, VERSION_REVISION );
+   Falcon::Module *self = new Falcon::Module("confparser");
+   //self->engineVersion( FALCON_VERSION_NUM );
+   //self->version( VERSION_MAJOR, VERSION_MINOR, VERSION_REVISION );
 
-   //====================================
-   // Message setting
-   #include "confparser_st.h"
-
-
-   Falcon::Symbol *c_cparser = self->addClass( "ConfParser", Falcon::Ext::ConfParser_init );
-   //
-
-   self->addClassMethod( c_cparser, "read", Falcon::Ext::ConfParser_read ).asSymbol()->
-      addParam("stream");
-   self->addClassMethod( c_cparser, "write", Falcon::Ext::ConfParser_write ).asSymbol()->
-      addParam("stream");
-   self->addClassMethod( c_cparser, "get", Falcon::Ext::ConfParser_get ).asSymbol()->
-      addParam("key")->addParam("section");
-   self->addClassMethod( c_cparser, "getOne", Falcon::Ext::ConfParser_getOne ).asSymbol()->
-      addParam("key")->addParam("section");
-   self->addClassMethod( c_cparser, "getMultiple", Falcon::Ext::ConfParser_getMultiple ).asSymbol()->
-      addParam("key")->addParam("section");
-   self->addClassMethod( c_cparser, "getSections", Falcon::Ext::ConfParser_getSections );
-   self->addClassMethod( c_cparser, "getKeys", Falcon::Ext::ConfParser_getKeys ).asSymbol()->
-      addParam("section");
-   self->addClassMethod( c_cparser, "getCategoryKeys", Falcon::Ext::ConfParser_getCategoryKeys ).asSymbol()->
-      addParam("category")->addParam("section");
-   self->addClassMethod( c_cparser, "getCategory", Falcon::Ext::ConfParser_getCategory ).asSymbol()->
-      addParam("category")->addParam("section");
-   self->addClassMethod( c_cparser, "removeCategory", Falcon::Ext::ConfParser_removeCategory ).asSymbol()->
-      addParam("category")->addParam("section");
-   self->addClassMethod( c_cparser, "getDictionary", Falcon::Ext::ConfParser_getDictionary ).asSymbol()->
-      addParam("section");
-   self->addClassMethod( c_cparser, "add", Falcon::Ext::ConfParser_add ).asSymbol()->
-      addParam("key")->addParam("value")->addParam("section");
-   self->addClassMethod( c_cparser, "set", Falcon::Ext::ConfParser_set ).asSymbol()->
-      addParam("key")->addParam("value")->addParam("section");
-   self->addClassMethod( c_cparser, "remove", Falcon::Ext::ConfParser_remove ).asSymbol()->
-      addParam("key")->addParam("section");
-   self->addClassMethod( c_cparser, "addSection", Falcon::Ext::ConfParser_addSection ).asSymbol()->
-      addParam("section");
-   self->addClassMethod( c_cparser, "removeSection", Falcon::Ext::ConfParser_removeSection ).asSymbol()->
-      addParam("section");
-   self->addClassMethod( c_cparser, "clearMain", Falcon::Ext::ConfParser_clearMain );
-   self->addClassProperty( c_cparser, "errorLine" );
-   self->addClassProperty( c_cparser, "error" );
-
-   self->publishService( &s_config_srv );
+   Falcon::Class *c_cparser = Falcon::Ext::confparser_create();
+   self->addMantra(c_cparser);
 
    return self;
 }

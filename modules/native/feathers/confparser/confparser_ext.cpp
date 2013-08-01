@@ -28,14 +28,15 @@
 #include <falcon/transcoder.h>
 #include <falcon/stream.h>
 #include <falcon/textreader.h>
+#include <falcon/textwriter.h>
+#include <falcon/extfunc.h>
+#include <falcon/stdhandlers.h>
+#include <falcon/stderrors.h>
 
-#include <falcon/errors/paramerror.h>
-#include <falcon/errors/ioerror.h>
-#include <falcon/errors/syntaxerror.h>
+#include <falcon/stderrors.h>
 
 #include "confparser_ext.h"
 #include "confparser_mod.h"
-#include "confparser_st.h"
 
 /*#
    @beginmodule feathers.confparser
@@ -44,6 +45,58 @@
 namespace Falcon {
 namespace Ext {
 
+
+ClassConfParser::ClassConfParser():
+      Class("ConfParser")
+{
+}
+
+ClassConfParser::~ClassConfParser()
+{
+   // nothing to do
+}
+
+void ClassConfParser::dispose( void* instance ) const
+{
+   TRACE1( "ClassConfParser::dispose %p", instance );
+   ConfigFile* buffer = static_cast<ConfigFile*>(instance);
+   delete buffer;
+}
+
+void* ClassConfParser::clone( void* instance ) const
+{
+   TRACE1( "ClassConfParser::clone %p", instance );
+   ConfigFile* buffer = static_cast<ConfigFile*>(instance);
+   ConfigFile* copy = new ConfigFile( * buffer );
+   return copy;
+}
+
+void* ClassConfParser::createInstance() const
+{
+   MESSAGE1( "ClassConfParser::createInstance" );
+   ConfigFile* copy = new ConfigFile;
+   return copy;
+}
+
+
+void ClassConfParser::gcMarkInstance( void* instance, uint32 mark ) const
+{
+   TRACE1( "ClassConfParser::gcMarkInstance %p, %d", instance, mark );
+
+   ConfigFile* buffer = static_cast<ConfigFile*>(instance);
+   buffer->gcMark(mark);
+}
+
+
+bool ClassConfParser::gcCheckInstance( void* instance, uint32 mark ) const
+{
+   TRACE1( "ClassConfParser::gcCheckInstance %p, %d", instance, mark );
+
+   ConfigFile* buffer = static_cast<ConfigFile*>(instance);
+   return buffer->currentMark() >= mark;
+}
+
+
 // ==============================================
 // Class ConfParser
 // ==============================================
@@ -51,8 +104,6 @@ namespace Ext {
 /*#
    @class ConfParser
    @brief Interface to configuration files.
-   @optparam filename The name of the ini file to be parsed, if it exists.
-   @optparam encoding An optional non default encoding which is used for that file.
 
    The constructor of this class allows to set up a filename for the
    configuration file that is going to be read and/or written. If the name is not
@@ -196,128 +247,79 @@ namespace Ext {
    containing all the values.
 */
 
-FALCON_FUNC  ConfParser_init( ::Falcon::VMContext *ctx, int32 )
+FALCON_FUNC  ConfParser_init( ::Falcon::VMContext *, int32 )
 {
-   Item *i_fname = ctx->param(0);
-   Item *i_encoding = ctx->param(1);
-
-   if ( (i_fname != 0 && ! i_fname->isString()) || ( i_encoding != 0 && ! i_encoding->isString() ) )
-   {
-      throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).extra( "S, [S]" ) );
-      return;
-   }
-
-   String fname;
-   String encoding;
-
-   if ( i_fname != 0 )
-      fname = *i_fname->asString();
-
-   if ( i_encoding != 0 )
-      encoding = *i_encoding->asString();
-
-   ConfigFile *cfile = new ConfigFile( fname, encoding );
-   ctx->self().setUser(ctx->self().asClass(), cfile);
+   // nothing to do
 }
 
 
 /*#
    @method read ConfParser
    @brief Read the ini file.
-   @optparam stream An optional input stream from where to read the file.
+   @param stream The stream from which the data is read
    @optparam encoding An optional encoding used to read the data from the stream.
    @raise IoError on read error.
    @raise SyntaxError on invalid file format
 
    Parses a configuration file and prepares the object data that may be retrieved
-   with other methods. The @b read method may be provided with an opened and
-   readable Falcon stream. If not, the file name provided to the ConfParser
-   constructor will be opened and read. In case the name has not been given in the
-   constructor, the method raises an error. The method may also raise ParseError,
+   with other methods. The method may also raise SyntaxError,
    IoError or ParamError, with the "message" field set to a relevant explanation.
+
+   If the encoding is not given, the VM default encoding is used instead.
 */
 
 FALCON_FUNC  ConfParser_read( ::Falcon::VMContext *ctx, int32 )
 {
    static Class* clsStream = Engine::instance()->stdHandlers()->streamClass();
 
-   ConfigFile *cfile = (ConfigFile *) ctx->self().asInst();
    Item *i_stream = ctx->param(0);
    Item *i_tc = ctx->param(1);
 
-   bool bRes;
-
-   if( i_stream == 0 )
+   Class* cls = 0;
+   void* vstream = 0;
+   if( i_stream == 0 || ! i_stream->asClassInst(cls,vstream) || ! cls->isDerivedFrom(clsStream)
+       || ( i_tc != 0 && ! i_tc->isString() )
+      )
    {
-      bRes = cfile->load();
-   }
-   else {
-      bool bValid = false;
-      if ( i_stream->isUser() )
-      {
-         Class *streamClass = i_stream->asClass();
-         if ( streamClass->isDerivedFrom( clsStream ) )
-         {
-            Stream *base = (Stream *) i_stream->asInst();
-            Transcoder* tc = 0;
-
-            if( i_tc != 0 )
-            {
-               if( i_tc->isString() )
-               {
-                  i_tc = Engine::instance()->getTranscoder( *i_tc->asString() );
-               }
-               else {
-                  throw new ParamError(ErrorParam(e_inv_params, __LINE__, SRC ).extra("Stream,[S]"));
-               }
-            }
-
-
-            TextReader tr(base, tc);
-            bRes = cfile->load( &tr );
-            bValid = true;
-         }
-      }
-
-      if ( ! bValid )
-      {
-         throw new ParamError( ErrorParam( e_inv_params, __LINE__, SRC ).extra( "Stream,[S]" ) );
-         return;
-      }
+      throw ctx->currentFrame().m_function->paramError(__LINE__, SRC );
    }
 
-   if ( ! bRes )
+   ConfigFile *cfile = (ConfigFile *) ctx->self().asInst();
+   Stream* stream = static_cast<Stream*>(cls->getParentData( clsStream, vstream ));
+   TextReader tr( stream );
+   if( i_tc != 0 )
+   {
+      const String& tc = *i_tc->asString();
+      Transcoder* tcoder = Engine::instance()->getTranscoder( tc );
+      if( tcoder == 0 )
+      {
+         throw FALCON_SIGN_XERROR( ParamError, e_inv_params, .extra("Unknown encoding: " + tc ) );
+      }
+      tr.setEncoding(tcoder);
+   }
+
+   if( ! cfile->load( &tr ) )
    {
       // is this an I/O or a parsing error?
-      if ( cfile->fsError() != 0 )
-      {
-         throw new IoError( ErrorParam( e_loaderror, __LINE__, SRC ).
-            sysError( cfile->fsError() ).
-            extra( cfile->errorMessage() ) );
-      }
-      else {
-         String msg = cfile->errorMessage() + " at ";
-         msg.writeNumber( (int64) cfile->errorLine() );
-         throw new SyntaxError( ErrorParam( FALCP_ERR_INVFORMAT, __LINE__, SRC )
-            .desc( cp_msg_invformat )
-            .extra( msg ) );
-      }
+      String msg = cfile->errorMessage() + " at ";
+      msg.writeNumber( (int64) cfile->errorLine() );
+      throw new SyntaxError( ErrorParam( FALCP_ERR_INVFORMAT, __LINE__, SRC )
+         .desc( "Invalid format" )
+         .extra( msg ) );
    }
-
 }
 
 /*#
    @method write ConfParser
    @brief Write the INI file.
-   @optparam stream An optional output stream on which to write the configuration file.
+   @param stream An output stream on which to write the configuration file.
+   @optparam encoding An optional encoding used to read the data from the stream.
    @raise IoError on write error.
 
    Writes the content of a modified or entirely generated configuration file on the
-   given stream, that must be a valid Falcon stream opened for output. If a stream
-   is not given, then the file name provided to the ConfParser constructor is
-   opened for writing. In case the name has not been given in the constructor, the
-   method raises an error.
+   given stream, that must be a valid Falcon stream opened for output.
 
+   If the encoding is not given, the VM default encoding is used instead.
 */
 FALCON_FUNC  ConfParser_write( ::Falcon::VMContext *ctx, int32 )
 {
@@ -326,49 +328,61 @@ FALCON_FUNC  ConfParser_write( ::Falcon::VMContext *ctx, int32 )
    ConfigFile *cfile = (ConfigFile *) ctx->self().asInst();
 
    Item *i_stream = ctx->param(0);
+   Item *i_tc = ctx->param(1);
 
-   bool bRes;
-
-   if( i_stream == 0 )
+   Class* cls = 0;
+   void* vstream = 0;
+   if( i_stream == 0 || ! i_stream->asClassInst(cls,vstream) || ! cls->isDerivedFrom(clsStream)
+       || ( i_tc != 0 && ! i_tc->isString() )
+      )
    {
-      bRes = cfile->save();
+      throw ctx->currentFrame().m_function->paramError(__LINE__, SRC );
+   }
+
+   Stream* stream = static_cast<Stream*>(cls->getParentData( clsStream, vstream ));
+   TextWriter tw( stream );
+   if( i_tc != 0 )
+   {
+      const String& tc = *i_tc->asString();
+      Transcoder* tcoder = Engine::instance()->getTranscoder( tc );
+      if( tcoder == 0 )
+      {
+         throw FALCON_SIGN_XERROR( ParamError, e_inv_params, .extra("Unknown encoding: " + tc ) );
+      }
+      tw.setEncoding(tcoder);
+   }
+
+   // is this a file error?
+   cfile->save( &tw );
+}
+
+static ConfigSection* internal_getSection( ::Falcon::VMContext* ctx, String*& key )
+{
+   ConfigFile *cfile = (ConfigFile *) ctx->self().asInst();
+   Item *i_key = ctx->param(0);
+   Item *i_section = ctx->param(1);
+
+   if ( i_key == 0 || ! i_key->isString() ||
+        ( i_section != 0 && ! i_section->isString() && ! i_section->isNil() )
+      )
+   {
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ ) );
+   }
+
+   String value;
+   ConfigSection* section;
+
+   if ( i_section != 0 && ! i_section->isNil() )
+   {
+      String& sectName = *i_section->asString();
+      section = cfile->getSection(sectName);
    }
    else {
-      bool bValid = false;
-      if ( i_stream->isUser() )
-      {
-         Class *streamClass = i_stream->asClass();
-         if ( streamClass->isDerivedFrom( clsStream ) )
-         {
-            Stream *base = (Stream *) i_stream->asInst();
-            bRes = cfile->save( base );
-            bValid = true;
-         }
-      }
-
-      if ( ! bValid )
-      {
-         throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).extra( "Stream" ) );
-         return;
-      }
+      section = cfile->mainSection();
    }
 
-   if ( ! bRes )
-   {
-      // is this a file error?
-      if ( cfile->fsError() )
-      {
-         throw new IoError( ErrorParam( e_file_output, __LINE__ ).
-            sysError( cfile->fsError() ).
-            extra( cfile->errorMessage() ) );
-      }
-      else
-      {
-         // no -- it's a configuration file.d
-         throw new SyntaxError( ErrorParam( FALCP_ERR_STORE, __LINE__ ).
-            desc( cp_msg_errstore  ).extra( cfile->errorMessage() ) );
-      }
-   }
+   key = i_key->asString();
+   return section;
 }
 
 /*#
@@ -395,51 +409,44 @@ FALCON_FUNC  ConfParser_write( ::Falcon::VMContext *ctx, int32 )
 */
 FALCON_FUNC  ConfParser_get( ::Falcon::VMContext *ctx, int32 )
 {
-   ConfigFile *cfile = (ConfigFile *) ctx->self().asInst();
-   Item *i_key = ctx->param(0);
-   Item *i_section = ctx->param(1);
+   ConfigFile *cfile = static_cast<ConfigFile *>(ctx->self().asInst());
+   ConfigFile::locker locker( *cfile );
 
-   if ( i_key == 0 || ! i_key->isString() ||
-        ( i_section != 0 && ! i_section->isString() && ! i_section->isNil() )
-      )
+   String* pkey = 0;
+   ConfigSection* section = internal_getSection(ctx, pkey);
+   if( section == 0 )
    {
-      throw new ParamError( ErrorParam( e_inv_params, __LINE__ ) );
+      // return nil
+      return;
    }
 
+   const String& key = *pkey;
    String value;
-
-   if ( i_section != 0 && ! i_section->isNil() )
+   bool res =  section->getValue(key, value);
+   if( res )
    {
-      if ( ! cfile->getValue( *i_section->asString(), *i_key->asString(), value ) )
+      // we have at least one value. but do we have more?
+      String svalue;
+      res =  section->getNextValue(key, svalue);
+      if( res )
       {
-         ctx->retval();
-         return;
+         // More values -- return an array
+         ItemArray *array = new ItemArray();
+         array->reserve(5);
+         array->append( FALCON_GC_HANDLE(new String( value )) );
+         array->append( FALCON_GC_HANDLE(new String( svalue )) );
+         while( section->getNextValue(key, svalue ) )
+         {
+            array->append( FALCON_GC_HANDLE(new String( svalue )) );
+         }
+         ctx->retval( FALCON_GC_HANDLE(array));
+      }
+      else {
+         ctx->retval( FALCON_GC_HANDLE( new String(value) ) );
       }
    }
    else {
-      if ( ! cfile->getValue( *i_key->asString(), value ) )
-      {
-         ctx->retval();
-         return;
-      }
-   }
-
-   // we have at least one value. but do we have more?
-   String value1;
-   if ( cfile->getNextValue( value1 ) )
-   {
-      ItemArray *array = new ItemArray();
-      array->reserve(5);
-      array->append( FALCON_GC_HANDLE(new String( value )) );
-      array->append( FALCON_GC_HANDLE(new String( value1 )) );
-
-      while( cfile->getNextValue( value1 ) )
-         array->append( FALCON_GC_HANDLE(new String( value1 )) );
-
-      ctx->retval( FALCON_GC_HANDLE(array) );
-   }
-   else {
-      ctx->retval( FALCON_GC_HANDLE( new String(value) ) );
+      ctx->retval();
    }
 }
 
@@ -452,98 +459,79 @@ FALCON_FUNC  ConfParser_get( ::Falcon::VMContext *ctx, int32 )
 
    This method is equivalent to the @a ConfParser.get method, except for the fact that if more
    than one value has been given for the determined key in the configuration file,
-   only the last one among them is returned.
+   only the first one among them is returned.
 */
 FALCON_FUNC  ConfParser_getOne( ::Falcon::VMContext *ctx, int32 )
 {
-   ConfigFile *cfile = (ConfigFile *)  ctx->self().asInst();
-   Item *i_key = ctx->param(0);
-   Item *i_section = ctx->param(1);
+   ConfigFile *cfile = static_cast<ConfigFile *>(ctx->self().asInst());
+   ConfigFile::locker locker( *cfile );
 
-   if ( i_key == 0 || ! i_key->isString() ||
-        ( i_section != 0 && ! i_section->isString() && ! i_section->isNil() )
-      )
+   String* pkey = 0;
+   ConfigSection* section = internal_getSection(ctx, pkey);
+   if( section == 0 )
    {
-      throw new ParamError( ErrorParam( e_inv_params, __LINE__ ) );
+      // return nil
+      return;
    }
 
+   const String& key = *pkey;
    String value;
-
-   if ( i_section != 0 && ! i_section->isNil() )
+   bool res =  section->getValue(key, value);
+   if( res )
    {
-      if ( ! cfile->getValue( *i_section->asString(), *i_key->asString(), value ) )
-      {
-         ctx->retval();
-         return;
-      }
+      ctx->retval( FALCON_GC_HANDLE( new String(value) ) );
    }
    else {
-      if ( ! cfile->getValue( *i_key->asString(), value ) )
-      {
-         ctx->retval();
-         return;
-      }
+      ctx->retval();
    }
-
-   ctx->retval( FALCON_GC_HANDLE(new String(value)) );
 }
 
 /*#
-   @method getMultiple ConfParser
-   @brief Retreives the value associated with a key.
+   @method getAll ConfParser
+   @brief Retrieves the value associated with a key.
    @param key The key of which the value is to be read.
    @optparam section If provided, the section where the key is found.
    @return All the values of associated to the key, or nil if not found.
 
    This method is equivalent to @a ConfParser.get method, except for the fact that an array of
    values is always returned even if only one key is found. If there is no entry in
-   the configuration file coresponding to the given key, nil is returned.
+   the configuration file corresponding to the given key, nil is returned.
 */
-FALCON_FUNC  ConfParser_getMultiple( ::Falcon::VMContext *ctx, int32 )
+FALCON_FUNC  ConfParser_getAll( ::Falcon::VMContext *ctx, int32 )
 {
-   ConfigFile *cfile = (ConfigFile *) ctx->self().asInst();
-   Item *i_key = ctx->param(0);
-   Item *i_section = ctx->param(1);
+   ConfigFile *cfile = static_cast<ConfigFile *>(ctx->self().asInst());
+   ConfigFile::locker locker( *cfile );
 
-   if ( i_key == 0 || ! i_key->isString() ||
-        ( i_section != 0 && ! i_section->isString() && ! i_section->isNil() )
-      )
+   String* pkey = 0;
+   ConfigSection* section = internal_getSection(ctx, pkey);
+   if( section == 0 )
    {
-      throw new ParamError( ErrorParam( e_inv_params, __LINE__ ) );
+      // return nil
+      return;
    }
 
+   const String& key = *pkey;
    String value;
-   if ( i_section != 0 && ! i_section->isNil() )
+   bool res =  section->getValue(key, value);
+   if( res )
    {
-      if ( ! cfile->getValue( *i_section->asString(), *i_key->asString(), value ) )
+      ItemArray *array = new ItemArray( 5 );
+      array->append( FALCON_GC_HANDLE(new String( value )) );
+      while( section->getNextValue( key, value ) )
       {
-         ctx->retval();
-         return;
+         array->append( FALCON_GC_HANDLE(new String( value )) );
       }
-   }
-   else {
-      if ( ! cfile->getValue( *i_key->asString(), value ) )
-      {
-         ctx->retval();
-         return;
-      }
+      ctx->retval( FALCON_GC_HANDLE(array) );
    }
 
-   ItemArray *array = new ItemArray( 5 );
-   array->append( FALCON_GC_HANDLE(new String( value )) );
-
-   String value1;
-   while( cfile->getNextValue( value1 ) )
-      array->append( FALCON_GC_HANDLE(new String( value1 )) );
-
-   ctx->retval( FALCON_GC_HANDLE(array) );
+   // else retrurn nil
 }
 
 
 /*#
    @method getSections ConfParser
    @brief Enumerates the sections that are declared in the file managed by this object.
-   @return All the values of associated to the key, or nil if not found.
+   @return All the sections explicitly declared in the configuration file.
 
    If the object doesn't declare any section, the method returns an empty array.
 */
@@ -551,75 +539,104 @@ FALCON_FUNC  ConfParser_getSections( ::Falcon::VMContext *ctx, int32 )
 {
    ConfigFile *cfile = (ConfigFile *) ctx->self().asInst();
 
-   String section;
    ItemArray *ret = new ItemArray;
-
-   if( cfile->getFirstSection( section ) )
+   class Rator: public ConfigFile::SectionEnumerator
    {
-      ret->append( FALCON_GC_HANDLE(new String( section )) );
-      while( cfile->getNextSection( section ) )
-         ret->append( FALCON_GC_HANDLE(new String( section )) );
-   }
+   public:
+      Rator(ItemArray*& ret):m_ret(ret){};
+      virtual ~Rator(){}
+      virtual void operator() (const ConfigSection* sect)
+      {
+         m_ret->append( FALCON_GC_HANDLE(new String( sect->m_name )) );
+      }
+   private:
+      ItemArray*& m_ret;
+   };
+
+   Rator rator(ret);
+   ConfigFile::locker locker(*cfile);
+   cfile->enumerateSections( rator );
 
    ctx->retval( FALCON_GC_HANDLE(ret) );
 }
 
 /*#
-   @method getKeys ConfParser
-   @brief Retreives the value associated with a key.
+   @method enumerate ConfParser
+   @brief Gets all the keys and associated values in the main section or in the given section.
    @optparam section An optional section on which to operate.
-   @return All the keys listed in the given section, or in the main part.
+   @return A dictionary of key-value pairs.
 
-   This method returns an array of strings containing all the keys in the main
-   section, or if a section parameter is given and not nil, it returns all the keys
+   This method returns a dictionary of strings containing all the keys/value pairs
+   in the main section, or if a section parameter is given and not nil, it returns all the keys
    in the given section.
 
-   If the given section exists but it doesn't contain any key, an empty array is
+   If the given section exists but it doesn't contain any key, an empty dictionary is
    returned. If the section doesn't exist, the method returns nil.
 */
-FALCON_FUNC  ConfParser_getKeys( ::Falcon::VMContext *ctx, int32 )
+FALCON_FUNC  ConfParser_enumerate( ::Falcon::VMContext *ctx, int32 )
 {
    ConfigFile *cfile = (ConfigFile *) ctx->self().asInst();
    Item *i_section = ctx->param( 0 );
 
    if ( i_section != 0 && ! i_section->isString() && ! i_section->isNil() )
    {
-      throw new ParamError( ErrorParam( e_inv_params, __LINE__ ) );
-      return;
+      throw ctx->currentFrame().m_function->paramError(__LINE__,SRC);
    }
 
-   String key;
-   ItemArray *ret = new ItemArray;
-   bool next;
-
-   if ( i_section != 0 && ! i_section->isNil() ) {
-      next = cfile->getFirstKey( *i_section->asString(), "", key );
+   ConfigFile::locker locker( *cfile );
+   ConfigSection* section;
+   if( i_section->isString() )
+   {
+      const String& sectName = *i_section->asString();
+      section = cfile->getSection( sectName );
+      if( section == 0 )
+      {
+         // return nil
+         return;
+      }
    }
    else {
-      next = cfile->getFirstKey( "", key );
+      section = cfile->mainSection();
    }
 
-   while ( next )
+   class Rator: public ConfigSection::KeyEnumerator
    {
-      ret->append( FALCON_GC_HANDLE( new String( key ) ) );
-      next = cfile->getNextKey( key );
-   }
+   public:
+      Rator(ItemDict*& ret):m_ret(ret){};
+      virtual ~Rator(){}
+      virtual void operator() (const String& key, const String& value)
+      {
+         m_ret->insert( key, value );
+      }
+   private:
+      ItemDict*& m_ret;
+   };
 
+   ItemDict* ret = new ItemDict;
+   Rator rator(ret);
+   section->enumerateKeys(rator);
    ctx->retval( FALCON_GC_HANDLE(ret) );
 }
 
 /*#
-   @method getCategoryKeys ConfParser
-   @brief Get the keys filed under a given category.
+   @method ecat ConfParser
+   @brief Enumerate all the keys in a given category.
    @param category The category of which the key list is required
    @optparam section If provided, the section where the category is defined.
-   @return All the keys listed in the given category.
+   @return All the keys/value pairs listed in the given category.
 
-   This method returns a list of all the keys belonging to a certain category.
+   This method returns a dictionary containing all the key/value pairs
+   belonging to a given category. If the desired section is existing, but empty,
+   an empty dictionary is returned. If it doesn't exist, nil is returned.
+
+   If the @b category parameter terminates with an asterisk '*',
+   then the complete key, category included, is returned in the dictionary.
+   Otherwise, the dictionary key entries will have the category stripped.
+
 
    See the "Categorized keys" section in @a ConfParser.
 */
-FALCON_FUNC  ConfParser_getCategoryKeys( ::Falcon::VMContext *ctx, int32 )
+FALCON_FUNC  ConfParser_ecat( ::Falcon::VMContext *ctx, int32 )
 {
    ConfigFile *cfile = (ConfigFile *) ctx->self().asInst();
    Item *i_keyMask = ctx->param( 0 );
@@ -629,192 +646,52 @@ FALCON_FUNC  ConfParser_getCategoryKeys( ::Falcon::VMContext *ctx, int32 )
         ( i_section != 0 && ! i_section->isString() && ! i_section->isNil() )
       )
    {
-      throw new ParamError( ErrorParam( e_inv_params, __LINE__ ) );
-      return;
+      throw ctx->currentFrame().m_function->paramError(__LINE__,SRC);
    }
 
-   String key;
-   ItemArray *ret = new ItemArray;
-   bool next;
-
-   if ( i_section != 0 && ! i_section->isNil() ) {
-      next = cfile->getFirstKey( *i_section->asString(), *i_keyMask->asString(), key );
-   }
-   else {
-      next = cfile->getFirstKey( *i_keyMask->asString(), key );
-   }
-
-   while ( next )
+   String keyMask = *i_keyMask->asString();
+   bool trimCat = true;
+   if( keyMask.endsWith("*") )
    {
-      ret->append( FALCON_GC_HANDLE( new String( key, i_keyMask->asString()->length() + 1 ) ) );
-      next = cfile->getNextKey( key );
+      keyMask = keyMask.subString(0, keyMask.length()-1);
+      trimCat = false;
    }
 
-   ctx->returnFrame( FALCON_GC_HANDLE(ret) );
-}
-
-
-/*#
-   @method getCategory ConfParser
-   @brief Retreives keys and values given under a certain category.
-   @param category The category of which the values are required
-   @optparam section If provided, the section where the category is defined.
-   @return A dictionary containing a pair of key-values in the given category.
-
-   This method returns a dictionary of key-value pairs containing all the keys
-   and values in a certain category.
-
-   See the "Categorized keys" section in @a ConfParser.
-*/
-FALCON_FUNC  ConfParser_getCategory( ::Falcon::VMContext *ctx, int32 )
-{
-   ConfigFile *cfile = (ConfigFile *) ctx->self().asInst();
-   Item *i_keyMask = ctx->param( 0 );
-   Item *i_section = ctx->param( 1 );
-
-   if ( i_keyMask == 0 || ! i_keyMask->isString() ||
-        ( i_section != 0 && ! i_section->isString() && ! i_section->isNil() )
-      )
+   ConfigFile::locker locker( *cfile );
+   ConfigSection* section;
+   if( i_section->isString() )
    {
-      throw new ParamError( ErrorParam( e_inv_params, __LINE__ ) );
-   }
-
-   if ( i_section != 0 && i_section->isNil() )
-      i_section = 0;
-
-   String key, keymask;
-   ItemDict *ret = new ItemDict();
-   ItemDict *current = ret;
-   bool next;
-
-   bool stripNames;
-   keymask = *i_keyMask->asString();
-   if ( keymask.length() > 0 && keymask.getCharAt(keymask.length() - 1) == '*' )
-   {
-      stripNames = true;
-      keymask.size( keymask.size() - keymask.manipulator()->charSize() );
-   }
-   else
-      stripNames = false;
-
-   if ( keymask.length() > 0 && keymask.getCharAt(keymask.length() - 1) == '.' )
-      keymask.size( keymask.size() - keymask.manipulator()->charSize() );
-
-   if ( i_section != 0  ) {
-      next = cfile->getFirstKey( *i_section->asString(), keymask, key );
-   }
-   else {
-      next = cfile->getFirstKey( keymask, key );
-   }
-
-   while( next )
-   {
-      String value;
-
-      // seeking a value won't alter key iterators.
-      if( i_section != 0  )
-         cfile->getValue( *i_section->asString(), key, value );
-      else
-         cfile->getValue( key, value );
-
-
-      // we have at least one value. but do we have more?
-      String value1;
-      if ( cfile->getNextValue( value1 ) )
+      const String& sectName = *i_section->asString();
+      section = cfile->getSection( sectName );
+      if( section == 0 )
       {
-         ItemArray *array = new ItemArray( 5 );
-         array->append( FALCON_GC_HANDLE( new String( value ) ) );
-         array->append( FALCON_GC_HANDLE( new String( value1 ) ) );
-
-         while( cfile->getNextValue( value1 ) )
-            array->append( FALCON_GC_HANDLE( new String( value1 ) ) );
-
-         // we have used KEY; now what we want to save is just the non-category
-         if ( stripNames )
-            current->insert( FALCON_GC_HANDLE( new String( key, keymask.length()+ 1) ), FALCON_GC_HANDLE(array) );
-         else
-            current->insert( FALCON_GC_HANDLE( new String( key) ), FALCON_GC_HANDLE(array) );
+         // return nil
+         return;
       }
-      else {
-          if ( stripNames )
-            current->insert( FALCON_GC_HANDLE( new String( key, keymask.length()+ 1) ), FALCON_GC_HANDLE( new String( value ) ) );
-         else
-            current->insert(  FALCON_GC_HANDLE( new String( key) ) , FALCON_GC_HANDLE( new String( value ) ) );
-      }
-
-      next = cfile->getNextKey( key );
+   }
+   else {
+      section = cfile->mainSection();
    }
 
+   class Rator: public ConfigSection::KeyEnumerator
+   {
+   public:
+      Rator(ItemDict*& ret):m_ret(ret){};
+      virtual ~Rator(){}
+      virtual void operator() (const String& key, const String& value)
+      {
+         m_ret->insert( key, value );
+      }
+   private:
+      ItemDict*& m_ret;
+   };
+
+   ItemDict* ret = new ItemDict;
+   Rator rator(ret);
+   section->enumerateCategory(rator, keyMask, trimCat );
    ctx->retval( FALCON_GC_HANDLE(ret) );
 }
 
-
-/*#
-   @method getDictionary ConfParser
-   @brief Retreives keys and values given under a certain category.
-   @optparam section If given, the section from which to extract the dictionary.
-   @return A dictionary containing a pair of key-values in the given section.
-
-   This method retrieves all the pairs of key and values in the main section, or if
-   a non-nil section parameter is provided, from the given section. If the
-   requested section cannot be found, or if it doesn't contain any entry, an empty
-   dictionary is returned. If a key has multiple values, its element is set to an
-   array containing all the values.
-*/
-FALCON_FUNC  ConfParser_getDictionary( ::Falcon::VMContext *ctx, int32 )
-{
-   ConfigFile *cfile = (ConfigFile *) ctx->self().asInst();
-   Item *i_section = ctx->param( 0 );
-
-   if ( i_section != 0 && ! i_section->isString() )
-   {
-      throw new ParamError( ErrorParam( e_inv_params, __LINE__ ) );
-   }
-
-   String key;
-   ItemDict *ret = new ItemDict();
-   ItemDict *current = ret;
-   bool next;
-
-   if ( i_section != 0 ) {
-      next = cfile->getFirstKey( *i_section->asString(), "", key );
-   }
-   else {
-      next = cfile->getFirstKey( "", key );
-   }
-
-   while( next )
-   {
-      String value;
-
-      // seeking a value won't alter key iterators.
-      if( i_section != 0 )
-         cfile->getValue( *i_section->asString(), key, value );
-      else
-         cfile->getValue( key, value );
-
-      // we have at least one value. but do we have more?
-      String value1;
-      if ( cfile->getNextValue( value1 ) )
-      {
-         ItemArray *array = new ItemArray( 5 );
-         array->append( FALCON_GC_HANDLE( new String( value ) ) );
-         array->append( FALCON_GC_HANDLE( new String( value1 ) ) );
-
-         while( cfile->getNextValue( value1 ) )
-            array->append( FALCON_GC_HANDLE( new String( value1 ) ) );
-
-         current->insert( FALCON_GC_HANDLE( new String( key ) ), FALCON_GC_HANDLE(array) );
-      }
-      else {
-         current->insert( FALCON_GC_HANDLE( new String( key ) ), FALCON_GC_HANDLE( new String( value ) ) );
-      }
-
-      next = cfile->getNextKey( key );
-   }
-
-   ctx->retval( FALCON_GC_HANDLE(ret) );
-}
 
 /*#
    @method add ConfParser
@@ -825,6 +702,8 @@ FALCON_FUNC  ConfParser_getDictionary( ::Falcon::VMContext *ctx, int32 )
 
    This function adds a key/value pair to the main section, or if section parameter
    is given and not @b nil, to the specified section.
+
+   If the given section doesn't exist, it is created.
 
    If the key is already present, a multiple value is set.
 */
@@ -839,7 +718,22 @@ FALCON_FUNC  ConfParser_add( ::Falcon::VMContext *ctx, int32 )
         ( i_section != 0 && ! i_section->isString() && ! i_section->isNil() )
       )
    {
-      throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).extra( "S, S" ) );
+      throw ctx->currentFrame().m_function->paramError(__LINE__,SRC);
+   }
+
+   ConfigFile::locker locker(*cfile);
+   ConfigSection* section;
+   if( i_section->isString() )
+   {
+      const String& name = *i_section->asString();
+      section = cfile->getSection(name);
+      if( section == 0 )
+      {
+         section = cfile->addSection( name );
+      }
+   }
+   else {
+      section = cfile->mainSection();
    }
 
    String *value;
@@ -853,10 +747,8 @@ FALCON_FUNC  ConfParser_add( ::Falcon::VMContext *ctx, int32 )
       i_value->describe(temp);
    }
 
-   if( i_section == 0 || i_section->isNil() )
-      cfile->addValue( *i_key->asString(), *value );
-   else
-      cfile->addValue( *i_section->asString(), *i_key->asString(), *value );
+   const String& key = *i_key->asString();
+   section->addValue( key, *value );
 }
 
 /*#
@@ -880,19 +772,33 @@ FALCON_FUNC  ConfParser_set( ::Falcon::VMContext *ctx, int32 )
         ( i_section != 0 && ! i_section->isString() && ! i_section->isNil() )
       )
    {
-      throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).extra( "S, S" ) );
+      throw ctx->currentFrame().m_function->paramError(__LINE__,SRC);
    }
 
-   if ( i_section != 0 && i_section->isNil() )
-      i_section = 0;
+   ConfigFile::locker locker(*cfile);
+   ConfigSection* section;
 
+   if ( i_section->isString() )
+   {
+      const String& name = *i_section->asString();
+      section = cfile->getSection( name );
+      if( section == 0 )
+      {
+         section = cfile->addSection( name );
+      }
+   }
+   else {
+      section = cfile->mainSection();
+   }
+
+   const String& key = *i_key->asString();
    String *value;
    String temp;
 
    if( i_value->isArray() )
    {
       ItemArray *array = i_value->asArray();
-      bool first = true;
+      section->removeValue(key);
 
       for ( uint32 i = 0; i < array->length(); i ++ )
       {
@@ -907,41 +813,22 @@ FALCON_FUNC  ConfParser_set( ::Falcon::VMContext *ctx, int32 )
             itm.describe(temp);
          }
 
-         if ( first )
-         {
-            // setValue will remove every previous reference...
-            if( i_section == 0 )
-               cfile->setValue( *i_key->asString(), *value );
-            else
-               cfile->setValue( *i_section->asString(), *i_key->asString(), *value );
-
-            first = false;
-         }
-         else {
-            // ...then we can begin to add
-            if( i_section == 0 )
-               cfile->addValue( *i_key->asString(), *value );
-            else
-               cfile->addValue( *i_section->asString(), *i_key->asString(), *value );
-         }
+         section->addValue( key, *value );
+      }
+   }
+   else
+   {
+      if( i_value->isString() )
+      {
+         value = i_value->asString();
+      }
+      else {
+         i_value->describe(temp);
+         value = &temp;
       }
 
-      // we have no more business here
-      return;
+      section->setValue( key, *value );
    }
-   else if( i_value->isString() )
-   {
-      value = i_value->asString();
-   }
-   else {
-      i_value->describe(temp);
-      value = &temp;
-   }
-
-   if( i_section == 0 )
-      cfile->setValue( *i_key->asString(), *value );
-   else
-      cfile->setValue( *i_section->asString(), *i_key->asString(), *value );
 }
 
 /*#
@@ -971,18 +858,28 @@ FALCON_FUNC  ConfParser_remove( ::Falcon::VMContext *ctx, int32 )
       throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).extra( "S, S" ) );
    }
 
+   ConfigFile::locker locker(*cfile);
+   ConfigSection* section;
    if ( i_section == 0 || i_section->isNil() )
    {
-      cfile->removeValue( *i_key->asString() );
+      section = cfile->mainSection();
    }
    else
    {
-      cfile->removeValue( *i_section->asString(), *i_key->asString() );
+      const String& name = *i_section->asString();
+      section = cfile->getSection( name );
    }
+
+   if( section != 0 )
+   {
+      const String& key = *i_key->asString();
+      section->removeValue( key );
+   }
+   // do nothing if section is not found.
 }
 
 /*#
-   @method removeCategory ConfParser
+   @method rcat ConfParser
    @brief Remove a whole category from the configuration file..
    @param category The category to be removed.
    @optparam section If provided, the section where to remove the entry.
@@ -992,7 +889,7 @@ FALCON_FUNC  ConfParser_remove( ::Falcon::VMContext *ctx, int32 )
    nothing if given category, or given section, cannot be found.
 */
 
-FALCON_FUNC  ConfParser_removeCategory( ::Falcon::VMContext *ctx, int32 )
+FALCON_FUNC  ConfParser_rcat( ::Falcon::VMContext *ctx, int32 )
 {
    ConfigFile *cfile = (ConfigFile *) ctx->self().asInst();
    Item *i_category = ctx->param(0);
@@ -1005,15 +902,23 @@ FALCON_FUNC  ConfParser_removeCategory( ::Falcon::VMContext *ctx, int32 )
       throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).extra( "S, S" ) );
    }
 
+   ConfigFile::locker locker(*cfile);
+   ConfigSection* section;
    if ( i_section == 0 || i_section->isNil() )
    {
-      cfile->removeCategory( *i_category->asString() );
+      section = cfile->mainSection();
    }
    else
    {
-      cfile->removeCategory( *i_section->asString(), *i_category->asString() );
+      const String& name = *i_section->asString();
+      section = cfile->getSection( name );
    }
 
+   if( section != 0 )
+   {
+      section->removeCategory( *i_category->asString() );
+   }
+   // do nothing if section is not found.
 }
 
 /*#
@@ -1035,7 +940,13 @@ FALCON_FUNC  ConfParser_addSection( ::Falcon::VMContext *ctx, int32 )
       throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).extra( "S" ) );
    }
 
-   ctx->retval( (int64) ( cfile->addSection( *i_section->asString() ) == 0 ? 0: 1) );
+   bool success;
+   {
+      ConfigFile::locker locker(*cfile);
+      success = cfile->addSection( *i_section->asString() );
+   }
+
+   ctx->retval( static_cast<int64>(success ? 1 : 0) );
 }
 
 
@@ -1061,7 +972,13 @@ FALCON_FUNC  ConfParser_removeSection( ::Falcon::VMContext *ctx, int32 )
       throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).extra( "S" ) );
    }
 
-   ctx->retval( (int64) ( cfile->removeSection( *i_section->asString() ) ? 1: 0) );
+   bool success;
+   {
+      ConfigFile::locker locker(*cfile);
+      success = cfile->removeSection( *i_section->asString() );
+   }
+
+   ctx->retval( static_cast<int64>(success ? 1 : 0) );
 }
 
 
@@ -1075,7 +992,34 @@ FALCON_FUNC  ConfParser_removeSection( ::Falcon::VMContext *ctx, int32 )
 FALCON_FUNC  ConfParser_clearMain( ::Falcon::VMContext *ctx, int32 )
 {
    ConfigFile *cfile = (ConfigFile *) ctx->self().asInst();
-   cfile->clearMainSection();
+   ConfigFile::locker locker(*cfile);
+   cfile->mainSection()->clear();
+}
+
+
+Class* confparser_create()
+{
+   Class* cls = new ClassConfParser();
+
+   cls->setConstuctor( new ExtFunc("init", ConfParser_init) );
+
+   cls->addMethod( new ExtFunc("read", &ConfParser_read) );
+   cls->addMethod( new ExtFunc("write", &ConfParser_write) );
+   cls->addMethod( new ExtFunc("get", &ConfParser_get) );
+   cls->addMethod( new ExtFunc("getOne", &ConfParser_getOne) );
+   cls->addMethod( new ExtFunc("getAll", &ConfParser_getAll) );
+   cls->addMethod( new ExtFunc("getSections", &ConfParser_getSections) );
+   cls->addMethod( new ExtFunc("enumerate", &ConfParser_enumerate ) );
+   cls->addMethod( new ExtFunc("ecat", &ConfParser_ecat ) );
+   cls->addMethod( new ExtFunc("rcat", &ConfParser_rcat) );
+   cls->addMethod( new ExtFunc("add", &ConfParser_add) );
+   cls->addMethod( new ExtFunc("set", &ConfParser_set) );
+   cls->addMethod( new ExtFunc("remove", &ConfParser_remove) );
+   cls->addMethod( new ExtFunc("addSection", &ConfParser_addSection) );
+   cls->addMethod( new ExtFunc("removeSection", &ConfParser_removeSection) );
+   cls->addMethod( new ExtFunc("clearMain", &ConfParser_clearMain) );
+
+   return cls;
 }
 
 }

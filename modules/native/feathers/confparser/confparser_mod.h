@@ -17,12 +17,18 @@
     Configuration parser module -- module service classes
 */
 
-#ifndef flc_confparser_mod_H
-#define flc_confparser_mod_H
+#ifndef FALCON_CONFPARSER_MOD
+#define FALCON_CONFPARSER_MOD
 
-#include <falcon/stream.h>
+#include <falcon/setup.h>
+#include <falcon/string.h>
+#include <falcon/mt.h>
 
 namespace Falcon {
+
+class TextReader;
+class TextWriter;
+class ConfigFile;
 
 /** This class holds a configuration file line;
    Lines can be empty, they can contain a comment, a section indicator
@@ -33,7 +39,6 @@ namespace Falcon {
 */
 class ConfigFileLine
 {
-
 public:
 
    typedef enum {
@@ -43,48 +48,71 @@ public:
       t_comment
    } e_type;
 
-   e_type m_type;
 
-   /** Original line.
-      If the line is modified or created, this is destroyed.
-   */
-   String *m_original;
-
-   /** This string contains the key or the section declaration */
-   String *m_key;
-   /** This string contains the value in t_keyval lines */
-   String *m_value;
-   /** This string contains the comment that can be attached to any line */
-   String *m_comment;
-
-   ConfigFileLine( e_type t, String *original, String *key = 0, String *value = 0, String *comment = 0 );
-   ConfigFileLine( String *original );
+   ConfigFileLine( e_type t, const String& key, const String& value, const String& comment );
+   ConfigFileLine( const String& original );
    ~ConfigFileLine();
 
    bool parseLine();
-};
 
-void deletor_ConfigFileLine( void *memory );
+   void comment( const String& comment );
+   const String& comment() const { return m_comment; }
 
-/** Class containing objects needed by the configuration parser.
-   This class holds a pointer to the stream used by the config parser,
-   the last time it has been read and a cached pointer to the dir service.
-*/
+   /** Sets the key for this entry.
+       This changes the line type to a key-value pair.
+    */
+   void key( const String& k );
+   const String& key() const { return m_key; }
 
-class ConfigEntry
-{
-public:
-   /** Single entry, complete from root, i.e.
-      a.b.c = z  -> "a.b.c"
+   /** Sets the value for this entry.
+       This changes the line type to a key-value pair.
+    */
+   void value( const String& v );
+   const String& value() const { return m_value; }
+
+   /** Sets the key and value for this entry.
+       This changes the line type to a key-value pair.
+    */
+   void setKeyValue( const String& k, const String& v );
+
+   /** Sets this entry as a section header.
+       This changes the line type to a section header type.
+    */
+   void setSection( const String& name );
+
+   /** Original line.
+      If this line is synthesized or created, this value is empty.
    */
-   String m_entry;
+   const String& original() const { return m_original; }
 
-   /** List of pointers to the ConfigFileLine entries.
-      Actually, the entry points to the list ELEMENT containing the line,
-      so it is possible to remove it from the file line list.
-   */
-   List m_values;
+   /** Get the original line or synthetize a value.
 
+      If the line is modified or created, this value is
+      synthesized out of the key/value/comment triplet, with this format:
+
+      @code
+         key=value<tab>; comment
+      @endcode
+    */
+   void compose( String& target, char_t commentChar = '#' );
+
+private:
+   class Private;
+   Private* _p;
+
+
+   e_type m_type;
+
+   String m_original;
+
+   /** This string contains the key or the section declaration */
+   String m_key;
+   /** This string contains the value in t_keyval lines */
+   String m_value;
+   String m_comment;
+
+   friend class ConfigSection;
+   friend class ConfigFile;
 };
 
 
@@ -92,117 +120,109 @@ class ConfigSection
 {
 public:
    String m_name;
-   Map m_entries;
-   
-   virtual ~ConfigSection() {}
 
-   /** List element pointing to the file line where the section is declared.
-      Used to remove the whole section
-      Zero if undefined/beginning of the file.
-   */
-   ListElement *m_sectDecl;
+   ConfigSection( const String &name);
+   ConfigSection( ConfigFileLine* firstLine );
+   virtual ~ConfigSection();
 
-   /** List element pointing to the file lines where to put new entries
-   If zero, it means add to top of the file
-   */
-   ListElement *m_additionPoint;
+   bool addLine( ConfigFileLine* line );
 
-   ConfigSection( const String &name, ListElement *sectLine=0, ListElement *addPoint = 0 );
+   /** Gets the first value associated with a key or a category.
+    * \param key A key, or a category (if it ends with '.').
+    * \param value the value associated with the found key.
+    * \return True if found, false if not found.
+    */
+   bool getValue( const String &key, String &value );
+
+
+   /** Gets the more values associated with a key or a category.
+    * \param key A key, or a category (if it ends with '.').
+    * \param value the value associated with the found key.
+    * \return True if found, false if not found.
+    *
+    * Has undefined behavior if not called after a successful getValue()
+    */
+   bool getNextValue( const String &key, String& value );
+   void setValue( const String &key, String &value ) ;
+   void addValue( const String &key, String &value ) ;
+
+   bool removeValue( const String &key );
+   bool removeValue( const String &key, const String& value );
+
+   bool removeCategory( const String &category );
+
+   class KeyEnumerator {
+   public:
+      virtual ~KeyEnumerator(){}
+      virtual void operator() (const String& key, const String& value) = 0;
+   };
+
+   void enumerateKeys( KeyEnumerator& es ) const;
+   void enumerateCategory( KeyEnumerator& es, const String& category, bool trimCategory ) const;
+
+   void clear();
+private:
+   class Private;
+   Private* _p;
+   friend class ConfigFile;
+   friend class ConfigFileLine;
 };
 
-class ConfigFile: public FalconData
+
+class ConfigFile
 {
+public:
+   ConfigFile();
+   virtual ~ConfigFile();
+
+   bool load( TextReader *input );
+   bool save( TextWriter *output ) const;
+
+   const String &errorMessage() const { return m_errorMsg; }
+   uint32 errorLine() const { return m_errorLine; }
+
+   ConfigSection* mainSection() const;
+   ConfigSection* getSection( const String& name ) const;
+   ConfigSection *addSection( const String &section );
+   bool addSection( ConfigSection* section );
+   bool removeSection( const String& name );
+
+   void gcMark( uint32 mk ) { m_mark = mk; }
+   uint32 currentMark() const { return m_mark; }
+
+   void lock() const { m_mtx.lock(); }
+   void unlock() const { m_mtx.unlock(); }
+
+   class locker {
+   public:
+      locker( const ConfigFile& file ): m_file(file) { file.lock(); }
+      ~locker() { m_file.unlock(); }
+   private:
+      const ConfigFile& m_file;
+   };
+
+   class SectionEnumerator {
+   public:
+      virtual ~SectionEnumerator(){}
+      virtual void operator() (const ConfigSection* section) = 0;
+   };
+
+   void enumerateSections( SectionEnumerator& es ) const;
+
+private:
    String m_fileName;
-
-   /** List of phisical lines in the file lines */
-   List m_lines;
-
-   /** List of the keys in the main section
-      string* -> ConfigFileEntry
-   */
-   ConfigSection m_rootEntry;
-
-   /** Map of sections (excluding root) if present
-      string -> Map (of string*->Sections)
-   */
-   Map m_sections;
-   MapIterator m_sectionIter;
-
-   MapIterator m_keysIter;
    String m_keyMask;
 
    String m_errorMsg;
-   /** FileSystem error.
-      In case of FS errors while reading the file, this member is set.
-   */
-   long m_fsError;
-   String m_encoding;
-
-   ListElement *m_currentValue;
-
    uint32 m_errorLine;
+   uint32 m_mark;
    bool m_bUseUnixComments;
    bool m_bUseUnixSpecs;
 
-   bool getFirstKey_internal( ConfigSection *sect, const String &prefix, String &key );
-   void setValue_internal( ConfigSection *sect, const String &key, const String &value );
-   void addValue_internal( ConfigSection *sect, const String &key, const String &value );
-   bool removeValue_internal( ConfigSection *sect, const String &key );
-   bool removeCategory_internal( ConfigSection *sect, const String &key );
+   mutable Mutex m_mtx;
 
-public:
-   ConfigFile( const String &fileName, const String &encoding );
-   virtual ~ConfigFile();
-
-   void encoding( const String &encoding ) { m_encoding = encoding; }
-   const String &encoding() const { return m_encoding; }
-
-   bool load();
-   bool load( Stream *input );
-   bool save();
-   bool save( Stream *output );
-
-   const String &errorMessage() const { return m_errorMsg; }
-   long fsError() const { return m_fsError; }
-   uint32 errorLine() const { return m_errorLine; }
-
-   bool getValue( const String &key, String &value ) ;
-   bool getValue( const String &section, const String &key, String &value );
-
-   bool getNextValue( String &value );
-
-   bool getFirstSection( String &section );
-   bool getNextSection( String &nextSection );
-
-   bool getFirstKey( const String &prefix, String &key ) {
-      return getFirstKey_internal( &m_rootEntry, prefix, key );
-   }
-
-   /** Adds an empty section (at the bottom of the file).
-      \return the newly created section, or 0 if the section is already declared.
-   */
-   ConfigSection *addSection( const String &section );
-
-   bool getFirstKey( const String &section, const String &prefix, String &key );
-   bool getNextKey( String &key );
-
-   void setValue( const String &key, String &value ) ;
-   void setValue( const String &section, const String &key, const String &value );
-
-   void addValue( const String &key, const String &value );
-   void addValue( const String &section, const String &key, String value );
-
-   bool removeValue( const String &key );
-   bool removeValue( const String &section, const String &key );
-
-   bool removeCategory( const String &category );
-   bool removeCategory( const String &section, const String &category );
-
-   bool removeSection( const String &key );
-   void clearMainSection();
-
-   virtual void gcMark( uint32 mk ) {}
-   virtual FalconData *clone() const { return 0; }
+   class Private;
+   Private* _p;
 };
 
 }

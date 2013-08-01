@@ -39,27 +39,26 @@ namespace Ext {
 // ==============================================
 // Class ConfParser
 // ==============================================
-FALCON_FUNC  ConfParser_init( ::Falcon::VMachine *vm );
-FALCON_FUNC  ConfParser_read( ::Falcon::VMachine *vm );
-FALCON_FUNC  ConfParser_write( ::Falcon::VMachine *vm );
-FALCON_FUNC  ConfParser_get( ::Falcon::VMachine *vm );
-FALCON_FUNC  ConfParser_getOne( ::Falcon::VMachine *vm );
-FALCON_FUNC  ConfParser_getMultiple( ::Falcon::VMachine *vm );
-FALCON_FUNC  ConfParser_getSections( ::Falcon::VMachine *vm );
-FALCON_FUNC  ConfParser_getKeys( ::Falcon::VMachine *vm );
-FALCON_FUNC  ConfParser_getCategoryKeys( ::Falcon::VMachine *vm );
-FALCON_FUNC  ConfParser_getCategory( ::Falcon::VMachine *vm );
-FALCON_FUNC  ConfParser_removeCategory( ::Falcon::VMachine *vm );
-FALCON_FUNC  ConfParser_getDictionary( ::Falcon::VMachine *vm );
 
-FALCON_FUNC  ConfParser_add( ::Falcon::VMachine *vm );
-FALCON_FUNC  ConfParser_set( ::Falcon::VMachine *vm );
-FALCON_FUNC  ConfParser_remove( ::Falcon::VMachine *vm );
+class ClassConfParser: public ::Falcon::Class
+{
+public:
+   ClassConfParser();
+   virtual ~ClassConfParser();
 
-FALCON_FUNC  ConfParser_addSection( ::Falcon::VMachine *vm );
-FALCON_FUNC  ConfParser_removeSection( ::Falcon::VMachine *vm );
-FALCON_FUNC  ConfParser_clearMain( ::Falcon::VMachine *vm );
+   virtual void dispose( void* instance ) const;
+   virtual void* clone( void* instance ) const;
+   virtual void* createInstance() const;
 
+   virtual void gcMarkInstance( void* instance, uint32 mark ) const;
+   virtual bool gcCheckInstance( void* instance, uint32 mark ) const;
+
+   virtual void store( VMContext* ctx, DataWriter* stream, void* instance ) const;
+   virtual void restore( VMContext* ctx, DataReader* stream ) const;
+};
+
+
+Class* confparser_create();
 }
 }
 

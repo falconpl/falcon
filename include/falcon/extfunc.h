@@ -56,6 +56,14 @@ public:
       Function( name, owner, line ),
       m_func(func)
    {}
+
+   ExtFunc( const String& name, const String& desc, ext_func_t func, Module* owner = 0, int32 line = 0 ):
+      Function( name, owner, line ),
+      m_func(func)
+   {
+      parseDescription(desc);
+   }
+
    virtual ~ExtFunc() {}
    virtual void invoke( VMContext* ctx, int32 pCount = 0 );
 

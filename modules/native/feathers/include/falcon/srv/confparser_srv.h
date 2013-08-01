@@ -16,7 +16,6 @@
 #ifndef flc_confparser_srv_H
 #define flc_confparser_srv_H
 
-#include <falcon/service.h>
 #include <falcon/string.h>
 
 #define CONFIGFILESERVICE_NAME "ConfigFile"
