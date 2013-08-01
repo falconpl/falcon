@@ -1139,7 +1139,7 @@ bool TimeStamp::strftimeChar( int32 chr, String &target ) const
 }
 
 
-int16 TimeStamp::adjust_iso8601_2000( int64 year, int16 month, int64 day )
+int16 TimeStamp::adjust_iso8601_2000( int64 year, int16 month, int16 day )
 {
    if ( month == 1 )
    {

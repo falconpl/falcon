@@ -84,7 +84,7 @@ static int checkEnumParam( const Item& value, int max )
       throw FALCON_SIGN_XERROR( ParamError, e_inv_prop_value, .extra(String("0<=N<=").N(max)) );
    }
 
-   return v;
+   return static_cast<int>(v);
 }
 
 

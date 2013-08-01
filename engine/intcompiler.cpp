@@ -197,7 +197,7 @@ void IntCompiler::Context::onExport(const String& symName )
 
    Symbol* sym = Engine::getSymbol(symName);
    // do we have a module?
-   bool status = mod->globals().exportGlobal( sym );
+   bool status = mod->globals().exportGlobal( sym ) != 0;
 
    // already exported?
    if( ! status )

@@ -403,7 +403,7 @@ protected:
 
    Error( const Class* handler );
 
-   mutable int32 m_refCount;
+   mutable atomic_int m_refCount;
 
    int m_errorCode;
    String m_description;

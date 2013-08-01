@@ -1878,6 +1878,7 @@ void String::writeNumberHex( uint64 number, bool uppercase, int ciphers  )
    if ( number == 0 )
    {
       buffer[pos] = '0';
+      pos--;
    }
    else {
 
