@@ -15,7 +15,6 @@ include_directories(
 # Sources files the module is built from.
 set(SRC_FILES 
   math_extra.cpp
-  math_extra_mod.cpp
   math_extra_ext.cpp
 )
 
@@ -23,7 +22,6 @@ set(SRC_FILES
 # listed in the virtual file tree of Visual Studio.
 set(HDR_FILES
   math_extra_ext.h
-  math_extra_mod.h
 )
 
 # Builds and links from the source files

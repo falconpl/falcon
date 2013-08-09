@@ -54,7 +54,7 @@ namespace Falcon {
         FALCON_FUNC Func_atanh( ::Falcon::VMachine *vm ); 
         FALCON_FUNC Func_atan2( ::Falcon::VMachine *vm ); 
 
-        // Reciprocal trigonometric function        
+        // Reciprocal trigonometric function
         FALCON_FUNC Func_sec( ::Falcon::VMachine *vm );
         FALCON_FUNC Func_csc( ::Falcon::VMachine *vm );
         FALCON_FUNC Func_cotan( ::Falcon::VMachine *vm ); 

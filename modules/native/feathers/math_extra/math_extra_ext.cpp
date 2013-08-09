@@ -36,7 +36,6 @@
 
 #include <falcon/engine.h>
 #include "math_extra_ext.h"
-#include "math_extra_mod.h"
 
 namespace Falcon { 
     namespace Ext {
@@ -154,13 +153,13 @@ namespace Falcon {
           @brief Returns the hyperbolic cosine of the argument.
           @return The inverse hyperbolic cosine of the argument.
           @raise MathError If the argument is out of domain.
-          
+
           The function may raise an error if the value cannot
           be computed because of a domain or overflow error.
           */
         FALCON_FUNC Func_acosh( ::Falcon::VMachine *vm )
         {
-            Item *num1 = vm->param( 0 );         
+            Item *num1 = vm->param( 0 );
             if ( num1 == 0 || ! num1->isOrdinal() )
             {
                 throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ).extra("N") );
@@ -172,11 +171,11 @@ namespace Falcon {
             {
                 throw new MathError( ErrorParam( e_domain, __LINE__).origin( e_orig_runtime ) );
             }
-            else {                 
+            else {
                 vm->retval( res );
             }
         }
-        
+
         /*#
           @function asinh
           @brief Returns the hyperbolic sine of the argument.
