@@ -19,8 +19,6 @@ include_directories(
 set(SRC_FILES 
   hash.cpp
   hash_mod.cpp
-  hash_srv.cpp
-  hash_st.cpp
   hash_ext.cpp
   # add more source files starting here:
   adler32.cpp
@@ -39,11 +37,8 @@ set(SRC_FILES
 # These are actually not needed by cmake to build. But if omitted they won't be
 # listed in the virtual file tree of Visual Studio.
 set(HDR_FILES
-  hash_ext.inl  
   hash_ext.h
   hash_mod.h
-  hash_srv.h
-  hash_st.h
   ../include/version.h
   hash_defs.h 
   # add more header files starting here:

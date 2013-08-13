@@ -32,12 +32,10 @@
    Internal logic functions - declarations.
 */
 
-#ifndef hash_mod_H
-#define hash_mod_H
+#ifndef FALCON_FEATHERS_HASH_MOD_H
+#define FALCON_FEATHERS_HASH_MOD_H
 
 #include <falcon/types.h>
-#include <falcon/membuf.h>
-#include <falcon/falcondata.h>
 #include "adler32.h"
 #include "sha1.h"
 #include "sha256_sha224.h"
@@ -70,14 +68,18 @@
 #define MAX_USED_BLOCKSIZE 128
 
 namespace Falcon {
+
+class DataWriter;
+class DataReader;
+class Class;
+
 namespace Mod {
 
     class HashBase
     {
     public:
-        virtual ~HashBase();
+        virtual ~HashBase( );
         // these are the same for every hash function and should not be overloaded
-        void UpdateData(MemBuf *buf);
         void UpdateData(const String& str);
         inline bool IsFinalized(void) { return _finalized; }
 
@@ -94,40 +96,33 @@ namespace Mod {
         // can be overloaded optionally (but MUST be overloaded if DigestSize < 8)
         virtual uint64 AsInt(void);
 
-        // this is internally used and must be overloaded too, and return the class name exactly as used by Falcon
-        virtual const char *GetName(void) { return "HashBase"; }
+        // Resolves to taking the name of the handler class.
+        const String& GetName(void);
+
+        void gcMark( uint32 m ) {m_gcMark = m; }
+        uint32 currentMark() const { return m_gcMark; }
+
+        Class* handler() const { return m_handler; }
+
+        virtual void store( DataWriter* stream) const;
+        virtual void restore( DataReader* stream );
 
     protected:
         bool _finalized;
+        HashBase( Class* hldr );
+        HashBase( const HashBase& other );
+
+    private:
+        uint32 m_gcMark;
+        Class* m_handler;
     };
 
-    class HashBaseFalcon : public HashBase
-    {
-    public:
-        HashBaseFalcon();
-        virtual ~HashBaseFalcon();
-        virtual void UpdateData( const byte *ptr, uint32 size); // VM call to process() in overloaded falcon class
-        virtual void Finalize(void); // VM call to finalize() in overloaded falcon class
-        virtual uint32 DigestSize(void); // VM call to bytes() in overloaded falcon class
-        virtual byte *GetDigest(void); // VM call to toMemBuf() in overloaded falcon class
-        virtual uint64 AsInt(void);
-
-        inline void SetVM(Falcon::VMachine *vm) { _vm = vm; }
-        inline void SetSelf(Falcon::CoreObject *s) { _self = s; }
-
-    protected:
-        void _GetCallableMethod(Falcon::Item& item, const Falcon::String& name);
-        VMachine *_vm;
-        CoreObject *_self; // will be GC'd
-        uint32 _bytes; // caches bytes() value
-        byte *_digest; // stores a copy of toMemBuf() value once called
-        uint64 _intval; // caches toInt() value
-    };
 
     class CRC32 : public HashBase
     {
     public:
-        CRC32();
+        CRC32(Class* hldr);
+        CRC32(const CRC32 &other);
         virtual ~CRC32();
         void UpdateData(const byte *ptr, uint32 size);
         void Finalize(void);
@@ -135,8 +130,9 @@ namespace Mod {
         byte *GetDigest(void) { return _finalized ? &_digest[0] : NULL; }
         uint64 AsInt(void) { return _finalized ? _crc : 0; } // special for CRC32
         static void GenTab(void);
-        const char *GetName(void) { return "CRC32"; }
 
+        virtual void store( DataWriter* stream) const;
+        virtual void restore( DataReader* stream );
     private:
         uint32 _crc;
         byte _digest[CRC32_DIGEST_LENGTH];
@@ -146,15 +142,17 @@ namespace Mod {
     class Adler32 : public HashBase
     {
     public:
-        Adler32();
+        Adler32(Class* hldr);
+        Adler32(const Adler32& other);
         virtual ~Adler32();
         void UpdateData(const byte *ptr, uint32 size);
         void Finalize(void);
         uint32 DigestSize(void) { return ADLER32_DIGEST_LENGTH; }
         byte *GetDigest(void) { return _finalized ? &_digest[0] : NULL; }
         uint64 AsInt(void) { return _finalized ? _adler : 0; } // special for Adler32
-        const char *GetName(void) { return "Adler32"; }
 
+        virtual void store( DataWriter* stream) const;
+        virtual void restore( DataReader* stream );
     private:
         uint32 _adler;
         byte _digest[ADLER32_DIGEST_LENGTH];
@@ -163,14 +161,16 @@ namespace Mod {
     class SHA1Hash : public HashBase
     {
     public:
-        SHA1Hash();
+        SHA1Hash(Class* hldr);
+        SHA1Hash(const SHA1Hash& other);
         virtual ~SHA1Hash();
         void UpdateData(const byte *ptr, uint32 size);
         void Finalize(void);
         uint32 DigestSize(void) { return SHA1_DIGEST_LENGTH; }
         byte *GetDigest(void) { return _finalized ? &_digest[0] : NULL; }
-        const char *GetName(void) { return "SHA1Hash"; }
 
+        virtual void store( DataWriter* stream) const;
+        virtual void restore( DataReader* stream );
     private:
         sha_ctx _ctx;
         byte _digest[SHA1_DIGEST_LENGTH];
@@ -179,14 +179,16 @@ namespace Mod {
     class SHA224Hash : public HashBase
     {
     public:
-        SHA224Hash();
+        SHA224Hash(Class* hldr);
+        SHA224Hash(const SHA224Hash& other);
         virtual ~SHA224Hash();
         void UpdateData(const byte *ptr, uint32 size);
         void Finalize(void);
         uint32 DigestSize(void) { return SHA224_DIGEST_LENGTH; }
         byte *GetDigest(void) { return _finalized ? &_digest[0] : NULL; }
-        const char *GetName(void) { return "SHA224Hash"; }
 
+        virtual void store( DataWriter* stream) const;
+        virtual void restore( DataReader* stream );
     private:
         sha256_sha224_ctx _ctx;
         byte _digest[SHA224_DIGEST_LENGTH];
@@ -195,14 +197,16 @@ namespace Mod {
     class SHA256Hash : public HashBase
     {
     public:
-        SHA256Hash();
+        SHA256Hash(Class* hldr);
+        SHA256Hash(const SHA256Hash &other);
         virtual ~SHA256Hash();
         void UpdateData(const byte *ptr, uint32 size);
         void Finalize(void);
         uint32 DigestSize(void) { return SHA256_DIGEST_LENGTH; }
         byte *GetDigest(void) { return _finalized ? &_digest[0] : NULL; }
-        const char *GetName(void) { return "SHA256Hash"; }
 
+        virtual void store( DataWriter* stream) const;
+        virtual void restore( DataReader* stream );
     private:
         sha256_sha224_ctx _ctx;
         byte _digest[SHA256_DIGEST_LENGTH];
@@ -211,15 +215,17 @@ namespace Mod {
     class SHA384Hash : public HashBase
     {
     public:
-        SHA384Hash();
+        SHA384Hash(Class* hldr);
+        SHA384Hash( const SHA384Hash& other );
         virtual ~SHA384Hash();
         void UpdateData(const byte *ptr, uint32 size);
         void Finalize(void);
         uint32 DigestSize(void) { return SHA384_DIGEST_LENGTH; }
         byte *GetDigest(void) { return _finalized ? &_digest[0] : NULL; }
-        const char *GetName(void) { return "SHA384Hash"; }
         uint32 GetBlockSize(void) { return 128; }
 
+        virtual void store( DataWriter* stream) const;
+        virtual void restore( DataReader* stream );
     private:
         sha512_sha384_ctx _ctx;
         byte _digest[SHA384_DIGEST_LENGTH];
@@ -228,15 +234,17 @@ namespace Mod {
     class SHA512Hash : public HashBase
     {
     public:
-        SHA512Hash();
+        SHA512Hash(Class* hldr);
+        SHA512Hash( const SHA512Hash& other );
         virtual ~SHA512Hash();
         void UpdateData(const byte *ptr, uint32 size);
         void Finalize(void);
         uint32 DigestSize(void) { return SHA512_DIGEST_LENGTH; }
         byte *GetDigest(void) { return _finalized ? &_digest[0] : NULL; }
-        const char *GetName(void) { return "SHA512Hash"; }
         uint32 GetBlockSize(void) { return 128; }
 
+        virtual void store( DataWriter* stream) const;
+        virtual void restore( DataReader* stream );
     private:
         sha512_sha384_ctx _ctx;
         byte _digest[SHA512_DIGEST_LENGTH];
@@ -245,14 +253,16 @@ namespace Mod {
     class MD2Hash : public HashBase
     {
     public:
-        MD2Hash();
+        MD2Hash(Class* hldr);
+        MD2Hash( const MD2Hash& other );
         virtual ~MD2Hash();
         void UpdateData(const byte *ptr, uint32 size);
         void Finalize(void);
         uint32 DigestSize(void) { return MD2_DIGEST_LENGTH; }
         byte *GetDigest(void) { return _finalized ? &_digest[0] : NULL; }
-        const char *GetName(void) { return "MD2Hash"; }
 
+        virtual void store( DataWriter* stream) const;
+        virtual void restore( DataReader* stream );
     private:
         md2_ctx _ctx;
         byte _digest[MD2_DATA_SIZE];
@@ -261,14 +271,16 @@ namespace Mod {
     class MD4Hash : public HashBase
     {
     public:
-        MD4Hash();
+        MD4Hash(Class* hldr);
+        MD4Hash(const MD4Hash& other);
         virtual ~MD4Hash();
         void UpdateData(const byte *ptr, uint32 size);
         void Finalize(void);
         uint32 DigestSize(void) { return MD4_DIGEST_LENGTH; }
         byte *GetDigest(void) { return _finalized ? &_digest[0] : NULL; }
-        const char *GetName(void) { return "MD4Hash"; }
 
+        virtual void store( DataWriter* stream) const;
+        virtual void restore( DataReader* stream );
     private:
         MD4_CTX _ctx;
         byte _digest[MD4_DIGEST_LENGTH];
@@ -277,14 +289,16 @@ namespace Mod {
     class MD5Hash : public HashBase
     {
     public:
-        MD5Hash();
+        MD5Hash(Class* hldr);
+        MD5Hash( const MD5Hash& other );
         virtual ~MD5Hash();
         void UpdateData(const byte *ptr, uint32 size);
         void Finalize(void);
         uint32 DigestSize(void) { return MD5_DIGEST_LENGTH; }
         byte *GetDigest(void) { return _finalized ? &_digest[0] : NULL; }
-        const char *GetName(void) { return "MD5Hash"; }
 
+        virtual void store( DataWriter* stream) const;
+        virtual void restore( DataReader* stream );
     private:
         md5_state_t _ctx;
         byte _digest[MD5_DIGEST_LENGTH];
@@ -293,14 +307,16 @@ namespace Mod {
     class WhirlpoolHash : public HashBase
     {
     public:
-        WhirlpoolHash();
+        WhirlpoolHash(Class* hldr);
+        WhirlpoolHash(const WhirlpoolHash& other);
         virtual ~WhirlpoolHash();
         void UpdateData(const byte *ptr, uint32 size);
         void Finalize(void);
         uint32 DigestSize(void) { return WHIRLPOOL_DIGEST_LENGTH; }
         byte *GetDigest(void) { return _finalized ? &_digest[0] : NULL; }
-        const char *GetName(void) { return "WhirlpoolHash"; }
 
+        virtual void store( DataWriter* stream) const;
+        virtual void restore( DataReader* stream );
     private:
         whirlpool_ctx _ctx;
         byte _digest[WHIRLPOOL_DIGEST_LENGTH];
@@ -309,14 +325,16 @@ namespace Mod {
     class TigerHash : public HashBase
     {
     public:
-        TigerHash();
+        TigerHash(Class* hldr);
+        TigerHash(const TigerHash& other);
         virtual ~TigerHash();
         void UpdateData(const byte *ptr, uint32 size);
         void Finalize(void);
         uint32 DigestSize(void) { return TIGER_DIGEST_LENGTH; }
         byte *GetDigest(void) { return _finalized ? &_digest[0] : NULL; }
-        const char *GetName(void) { return "TigerHash"; }
 
+        virtual void store( DataWriter* stream) const;
+        virtual void restore( DataReader* stream );
     private:
         tiger_ctx _ctx;
         byte _digest[TIGER_DIGEST_LENGTH];
@@ -325,12 +343,19 @@ namespace Mod {
     class RIPEMDHashBase : public HashBase
     {
     public:
+
         virtual ~RIPEMDHashBase();
         void UpdateData(const byte *ptr, uint32 size);
         void Finalize(void);
         byte *GetDigest(void) { return _finalized ? &_digest[0] : NULL; }
 
+        virtual void store( DataWriter* stream) const;
+        virtual void restore( DataReader* stream );
+
     protected:
+        RIPEMDHashBase(Class* hldr);
+        RIPEMDHashBase( const RIPEMDHashBase& other );
+
         ripemd_ctx _ctx;
         byte _digest[RIPEMD320_DIGEST_LENGTH];
     };
@@ -338,62 +363,40 @@ namespace Mod {
     class RIPEMD128Hash : public RIPEMDHashBase
     {
     public:
-        RIPEMD128Hash();
+        RIPEMD128Hash(Class* hldr);
+        RIPEMD128Hash( const RIPEMD128Hash& other );
         virtual ~RIPEMD128Hash();
         uint32 DigestSize(void) { return RIPEMD128_DIGEST_LENGTH; }
-        const char *GetName(void) { return "RIPEMD128Hash"; }
+
     };
 
     class RIPEMD160Hash : public RIPEMDHashBase
     {
     public:
-        RIPEMD160Hash();
+        RIPEMD160Hash(Class* hldr);
+        RIPEMD160Hash(const RIPEMD160Hash& other);
         virtual ~RIPEMD160Hash();
         uint32 DigestSize(void) { return RIPEMD160_DIGEST_LENGTH; }
-        const char *GetName(void) { return "RIPEMD160Hash"; }
     };
 
     class RIPEMD256Hash : public RIPEMDHashBase
     {
     public:
-        RIPEMD256Hash();
+        RIPEMD256Hash(Class* hldr);
+        RIPEMD256Hash( const RIPEMD256Hash& other );
         virtual ~RIPEMD256Hash();
         uint32 DigestSize(void) { return RIPEMD256_DIGEST_LENGTH; }
-        const char *GetName(void) { return "RIPEMD256Hash"; }
     };
 
     class RIPEMD320Hash : public RIPEMDHashBase
     {
     public:
-        RIPEMD320Hash();
+        RIPEMD320Hash(Class* hldr);
+        RIPEMD320Hash( const RIPEMD320Hash& other );
         virtual ~RIPEMD320Hash();
         uint32 DigestSize(void) { return RIPEMD320_DIGEST_LENGTH; }
-        const char *GetName(void) { return "RIPEMD320Hash"; }
     };
 
-
-
-    template <class HASH> class HashCarrier : public FalconData
-    {
-    public:
-        HashCarrier() { hash = new HASH(); }
-        virtual ~HashCarrier() { delete hash; }
-        inline HASH *GetHash(void) { return hash; }
-        inline void Reset(void) { delete hash; hash = new HASH(); }
-
-        virtual HashCarrier<HASH> *clone() const { return NULL; } // not cloneable
-
-        virtual void gcMark( uint32 mark ) {}
-
-        virtual bool serialize( Stream *stream, bool bLive ) const { return false; }
-        virtual bool deserialize( Stream *stream, bool bLive ) { return false; }
-    private:
-        HASH *hash;
-    };
-
-
-    FalconData *GetHashByName(String *whichStr);
-    CoreString *ByteArrayToHex(byte *arr, uint32 size);
 }
 }
 

@@ -37,12 +37,9 @@
 #include <falcon/symbol.h>
 #include "hash_mod.h"
 #include "hash_ext.h"
-#include "hash_srv.h"
-#include "hash_st.h"
 
 #include "../include/version.h"
 
-#include "hash_ext.inl"
 
 /*#
     @module feathers.hash Hashing algorighms
@@ -280,10 +277,7 @@ Falcon::Module *hash_module_init(void)
     self->engineVersion( FALCON_VERSION_NUM );
     self->version( VERSION_MAJOR, VERSION_MINOR, VERSION_REVISION );
 
-    //============================================================
-    // Here declare the international string table implementation
-    //
-    #include "hash_st.h"
+
 
     //============================================================
     // API declarations

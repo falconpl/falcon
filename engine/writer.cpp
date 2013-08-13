@@ -154,7 +154,7 @@ void Writer::ensure( size_t size )
    }
 }
 
-bool Writer::writeRaw( byte* data, size_t size )
+bool Writer::writeRaw( const byte* data, size_t size )
 {
    m_mtx.lock();
    if( size + m_bufPos <= m_bufSize )

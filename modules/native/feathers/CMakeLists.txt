@@ -29,7 +29,7 @@ add_subdirectory(cmdline)
 add_subdirectory(confparser)
 
 ##add_subdirectory(funcext)
-#add_subdirectory(hash)
+add_subdirectory(hash)
 #add_subdirectory(json)
 #add_subdirectory(logging)
 add_subdirectory(math)

@@ -40,9 +40,10 @@ Interface extension functions
 #include <string.h>
 #include <falcon/engine.h>
 #include <falcon/autocstring.h>
+#include <falcon/datawriter.h>
+#include <falcon/datareader.h>
 
 #include "hash_mod.h"
-#include "hash_st.h"
 #include "hash_ext.h"
 
 
@@ -60,31 +61,30 @@ This function can be used to check if different versions of the module support a
 */
 FALCON_FUNC Func_GetSupportedHashes( ::Falcon::VMachine *vm )
 {
-    CoreArray *arr = new CoreArray(16);
-    arr->append(new CoreString("CRC32"));
-    arr->append(new CoreString("Adler32"));
-    arr->append(new CoreString("SHA1"));
-    arr->append(new CoreString("SHA224"));
-    arr->append(new CoreString("SHA256"));
-    arr->append(new CoreString("SHA384"));
-    arr->append(new CoreString("SHA512"));
-    arr->append(new CoreString("MD2"));
-    arr->append(new CoreString("MD4"));
-    arr->append(new CoreString("MD5"));
-    arr->append(new CoreString("Tiger"));
-    arr->append(new CoreString("Whirlpool"));
-    arr->append(new CoreString("RIPEMD128"));
-    arr->append(new CoreString("RIPEMD160"));
-    arr->append(new CoreString("RIPEMD256"));
-    arr->append(new CoreString("RIPEMD320"));
-    vm->retval(arr);
+    ItemArray *arr = new ItemArray(16);
+    arr->append(FALCON_GC_HANDLE(new String("CRC32")));
+    arr->append(FALCON_GC_HANDLE(new String("Adler32")));
+    arr->append(FALCON_GC_HANDLE(new String("SHA1")));
+    arr->append(FALCON_GC_HANDLE(new String("SHA224")));
+    arr->append(FALCON_GC_HANDLE(new String("SHA256")));
+    arr->append(FALCON_GC_HANDLE(new String("SHA384")));
+    arr->append(FALCON_GC_HANDLE(new String("SHA512")));
+    arr->append(FALCON_GC_HANDLE(new String("MD2")));
+    arr->append(FALCON_GC_HANDLE(new String("MD4")));
+    arr->append(FALCON_GC_HANDLE(new String("MD5")));
+    arr->append(FALCON_GC_HANDLE(new String("Tiger")));
+    arr->append(FALCON_GC_HANDLE(new String("Whirlpool")));
+    arr->append(FALCON_GC_HANDLE(new String("RIPEMD128")));
+    arr->append(FALCON_GC_HANDLE(new String("RIPEMD160")));
+    arr->append(FALCON_GC_HANDLE(new String("RIPEMD256")));
+    arr->append(FALCON_GC_HANDLE(new String("RIPEMD320")));
+    vm->retval(FALCON_GC_HANDLE(arr));
 }
 
 /*#
 @function hash
 @brief Convenience function that calculates a hash.
-@param raw If set to true, return a raw MemBuf instead of a string.
-@param which Hash that should be used
+@param which Hash instance (or name) that should be used
 @optparam data... Arbitrary amount of parameters that should be fed into the chosen hash function.
 @return A lowercase hexadecimal string with the output of the chosen hash if @i raw is false, or a 1-byte wide MemBuf if true.
 @raise ParamError in case @i which is a string and a hash with that name was not found; or if @i which is not a hash object.
@@ -92,62 +92,55 @@ FALCON_FUNC Func_GetSupportedHashes( ::Falcon::VMachine *vm )
 
 This function takes an arbitrary amount of parameters. See HashBase.update() for details.
 
-Param @i which can contain a String with the name of the hash, a hash class constructor, a not-finalized hash object,
-or a function that returns any of the latter.
+Param @i which can contain a String with the name of the hash or a not-finalized hash object.
 
 @note Use getSupportedHashes() to check which hash names are supported.
 @note If @i which is a hash object, it will be finalized by calling this function.
 */
-FALCON_FUNC Func_hash( ::Falcon::VMachine *vm )
+FALCON_DECLARE_FUNCTION(hash, "hash:Hash|S,data:S,...")
+FALCON_DEFINE_FUNCTION_P1(hash)
 {
-    if(vm->paramCount() < 2)
-    {
-        throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
-            .origin( e_orig_mod ).extra( "B, X, [, X...]" ) );
-    }
+   ModHash* mod = static_cast<ModHash*>(ctx->currentFrame().m_function->module());
+   if(ctx->paramCount() < 2)
+   {
+       throw paramError(__LINE__, SRC );
+   }
     
-    bool raw = vm->param(0)->asBoolean();
-    Item which = *(vm->param(1));
+    bool raw = ctx->param(0)->asBoolean();
+    Item which = *(ctx->param(1));
     
-    Mod::HashCarrier<Mod::HashBase> *carrier = NULL;
-
-    while(which.isCallable())
-    {
-        vm->callItemAtomic(which, 0);
-        which = vm->regA();
-    }
-
     bool ownCarrier = false;
+    Class* cls = 0;
+    void* data = 0;
 
     if(which.isString())
     {
-        carrier = (Mod::HashCarrier<Mod::HashBase>*)(Mod::GetHashByName(which.asString()));
+        cls = mod->getClass(*which.asString());
         ownCarrier = true;
-    }
-    else if(which.isObject())
-    {
-        CoreObject *co = which.asObject();
-        if(co->derivedFrom("HashBase"))
-            carrier = (Mod::HashCarrier<Mod::HashBase>*)(co->getUserData());
-    }
-
-    if(!carrier)
-    {
-        throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
-            .origin( e_orig_mod ).extra( FAL_STR(hash_not_found) ) );
-    }
-
-    Mod::HashBase *hash = carrier->GetHash();
-
-    for(uint32 i = 2; i < uint32(vm->paramCount()); i++)
-    {
-        Item *what = vm->param(i);
-        if (!what)
+        if( cls == 0 )
         {
-            throw new Falcon::ParamError( 
-                Falcon::ErrorParam( Falcon::e_inv_params, __LINE__ )
-                .extra( "A|S|M" ) );
+            throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
+               .extra( "Hash not found" ) );
         }
+    }
+    else if(which.asClassInst(cls, data))
+    {
+        if(! cls->isDerivedFrom( mod->m_baseHashCls ) )
+        {
+           throw paramError(__LINE__, SRC );
+        }
+    }
+    else {
+       throw paramError(__LINE__, SRC );
+    }
+
+
+    Mod::HashBase *hash = static_cast<Mod::HashBase*>(cls);
+
+    for(uint32 i = 2; i < uint32(ctx->paramCount()); i++)
+    {
+        Item *what = ctx->param(i);
+
         Hash_updateItem_internal(what, hash, vm, 0);
     }
 
@@ -160,11 +153,11 @@ FALCON_FUNC Func_hash( ::Falcon::VMachine *vm )
     {
         Falcon::MemBuf_1 *buf = new Falcon::MemBuf_1(size);
         memcpy(buf->data(), digest, size);
-        vm->retval(buf);
+        ctx->retval(buf);
     }
     else
     {
-        vm->retval(Mod::ByteArrayToHex(digest, size));
+        ctx->retval(Mod::ByteArrayToHex(digest, size));
     }
 
     if(ownCarrier)
@@ -503,6 +496,266 @@ void Hash_updateItem_internal(Item *what, Mod::HashBase *hash, ::Falcon::VMachin
     }
 }
 
+
+ModHash::ModHash():
+         Module("hash")
+{
+   m_baseHashCls = new Falcon::Mod::HashBase;
+   addMantra(m_baseHashCls);
+}
+
+
+ModHash::~ModHash()
+{
+}
+
+
+ClassHash::ClassHash():
+         Class("Hash")
+{}
+
+ClassHash::~ClassHash()
+{}
+
+void* ClassHash::createInstance() const
+{
+   return 0;
+}
+
+void* ClassHash::clone( void* ) const
+{
+   return 0;
+}
+
+void ClassHash::dispose( void* instance ) const
+{
+   Mod::HashBase* hb = static_cast<Mod::HashBase*>(hb);
+   delete hb;
+}
+
+void ClassHash::gcMarkInstance( void* instance, uint32 mark ) const
+{
+   Mod::HashBase* hb = static_cast<Mod::HashBase*>(hb);
+   hb->gcMark(mark);
+}
+
+bool ClassHash::gcCheckInstance( void* instance, uint32 mark ) const
+{
+   Mod::HashBase* hb = static_cast<Mod::HashBase*>(hb);
+   return hb->currentMark() >= mark;
+}
+
+
+void ClassHash::store( VMContext* , DataWriter* stream, void* instance ) const
+{
+   Mod::HashBase* hb = static_cast<Mod::HashBase*>(hb);
+   hb->store( stream );
+}
+
+
+void ClassHash::restore( VMContext* ctx, DataReader* stream ) const
+{
+   Mod::HashBase* hb = static_cast<Mod::HashBase*>(createInstance());
+   try
+   {
+      hb->restore(stream);
+      ctx->pushData( FALCON_GC_STORE(this,hb) );
+   }
+   catch(...)
+   {
+      delete hb;
+      throw;
+   }
+}
+
+
+//==========================================================================================
+
+class ClassCRC32 : public ClassHash
+{
+public:
+   ClassCRC32(Class* base);
+   virtual ~ClassCRC32();
+
+   virtual void* createInstance() const;
+   virtual void* clone( void* instance ) const;
+};
+
+
+class ClassAdler32 : public ClassHash
+{
+public:
+   ClassAdler32(Class* base);
+   virtual ~ClassAdler32();
+
+   virtual void* createInstance() const;
+   virtual void* clone( void* instance ) const;
+};
+
+
+class ClassSHA1Hash : public ClassHash
+{
+public:
+   ClassSHA1Hash(Class* base);
+   virtual ~ClassSHA1Hash();
+
+   virtual void* createInstance() const;
+   virtual void* clone( void* instance ) const;
+};
+
+
+class ClassSHA224Hash : public ClassHash
+{
+public:
+   ClassSHA224Hash(Class* base);
+   virtual ~ClassSHA224Hash();
+
+   virtual void* createInstance() const;
+   virtual void* clone( void* instance ) const;
+};
+
+
+class ClassSHA256Hash : public ClassHash
+{
+public:
+   ClassSHA256Hash(Class* base);
+   virtual ~ClassSHA256Hash();
+
+   virtual void* createInstance() const;
+   virtual void* clone( void* instance ) const;
+};
+
+
+class ClassSHA384Hash : public ClassHash
+{
+public:
+   ClassSHA384Hash(Class* base);
+   virtual ~ClassSHA384Hash();
+
+   virtual void* createInstance() const;
+   virtual void* clone( void* instance ) const;
+};
+
+
+class ClassSHA512Hash : public ClassHash
+{
+public:
+   ClassSHA512Hash(Class* base);
+   virtual ~ClassSHA512Hash();
+
+   virtual void* createInstance() const;
+   virtual void* clone( void* instance ) const;
+};
+
+
+class ClassMD2Hash : public ClassHash
+{
+public:
+   ClassMD2Hash(Class* base);
+   virtual ~ClassMD2Hash();
+
+   virtual void* createInstance() const;
+   virtual void* clone( void* instance ) const;
+};
+
+
+class ClassMD4Hash : public ClassHash
+{
+public:
+   ClassMD4Hash(Class* base);
+   virtual ~ClassMD4Hash();
+
+   virtual void* createInstance() const;
+   virtual void* clone( void* instance ) const;
+};
+
+
+class ClassMD5Hash : public ClassHash
+{
+public:
+   ClassMD5Hash(Class* base);
+   virtual ~ClassMD5Hash();
+
+   virtual void* createInstance() const;
+   virtual void* clone( void* instance ) const;
+};
+
+
+class ClassWhirlpoolHash : public ClassHash
+{
+public:
+   ClassWhirlpoolHash(Class* base);
+   virtual ~ClassWhirlpoolHash();
+
+   virtual void* createInstance() const;
+   virtual void* clone( void* instance ) const;
+};
+
+
+class ClassTigerHash : public ClassHash
+{
+public:
+   ClassTigerHash(Class* base);
+   virtual ~ClassTigerHash();
+
+   virtual void* createInstance() const;
+   virtual void* clone( void* instance ) const;
+};
+
+
+class ClassRIPEMDHashBase : public ClassHash
+{
+public:
+   ClassRIPEMDHashBase(Class* base);
+   virtual ~ClassRIPEMDHashBase();
+
+   virtual void* createInstance() const;
+   virtual void* clone( void* instance ) const;
+};
+
+
+class ClassRIPEMD128Hash : public ClassHash
+{
+public:
+   ClassRIPEMD128Hash(Class* base);
+   virtual ~ClassRIPEMD128Hash();
+
+   virtual void* createInstance() const;
+   virtual void* clone( void* instance ) const;
+};
+
+
+class ClassRIPEMD160Hash : public ClassHash
+{
+public:
+   ClassRIPEMD160Hash(Class* base);
+   virtual ~ClassRIPEMD160Hash();
+
+   virtual void* createInstance() const;
+   virtual void* clone( void* instance ) const;
+};
+
+
+class ClassRIPEMD256Hash : public ClassHash
+{
+public:
+   ClassRIPEMD256Hash(Class* base);
+   virtual ~ClassRIPEMD256Hash();
+
+   virtual void* createInstance() const;
+   virtual void* clone( void* instance ) const;
+};
+
+
+class ClassRIPEMD320Hash : public ClassHash
+{
+public:
+   ClassRIPEMD320Hash(Class* base);
+   virtual ~ClassRIPEMD320Hash();
+
+   virtual void* createInstance() const;
+   virtual void* clone( void* instance ) const;
+};
 
 }
 }
@@ -855,3 +1108,4 @@ The semantics are equal to:
 
 @see RIPEMD320Hash.update
 */
+

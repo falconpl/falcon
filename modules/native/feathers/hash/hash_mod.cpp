@@ -33,100 +33,48 @@
 */
 
 #include <falcon/engine.h>
+#include <falcon/class.h>
 #include <falcon/autocstring.h>
+#include <falcon/datawriter.h>
+#include <falcon/datareader.h>
 #include <string.h>
 #include "hash_mod.h"
-#include "hash_st.h"
 
 
 namespace Falcon {
 namespace Mod {
 
+HashBase::HashBase( Class* cls ):
+         _finalized(false),
+         m_gcMark(0),
+         m_handler(cls)
+{
+}
+
+HashBase::HashBase( const HashBase& other ):
+         _finalized( other._finalized ),
+         m_gcMark( other.m_gcMark ),
+         m_handler( other.m_handler )
+{
+}
+
+
 HashBase::~HashBase()
 {}
 
-// this is a helper function used by makeHash() and the hash() convenience function
-FalconData *GetHashByName(String *whichStr)
+void HashBase::store(DataWriter* stream) const
 {
-    if(!whichStr->compareIgnoreCase("crc32"))
-        return new Mod::HashCarrier<Mod::CRC32>();
-    else if(!whichStr->compareIgnoreCase("adler32"))
-        return new Mod::HashCarrier<Mod::Adler32>();
-    else if(!whichStr->compareIgnoreCase("md2"))
-        return new Mod::HashCarrier<Mod::MD2Hash>();
-    else if(!whichStr->compareIgnoreCase("md4"))
-        return new Mod::HashCarrier<Mod::MD4Hash>();
-    else if(!whichStr->compareIgnoreCase("md5"))
-        return new Mod::HashCarrier<Mod::MD5Hash>();
-    else if(!whichStr->compareIgnoreCase("sha1"))
-        return new Mod::HashCarrier<Mod::SHA1Hash>();
-    else if(!whichStr->compareIgnoreCase("sha224"))
-        return new Mod::HashCarrier<Mod::SHA224Hash>();
-    else if(!whichStr->compareIgnoreCase("sha256"))
-        return new Mod::HashCarrier<Mod::SHA256Hash>();
-    else if(!whichStr->compareIgnoreCase("sha384"))
-        return new Mod::HashCarrier<Mod::SHA384Hash>();
-    else if(!whichStr->compareIgnoreCase("sha512"))
-        return new Mod::HashCarrier<Mod::SHA512Hash>();
-    else if(!whichStr->compareIgnoreCase("tiger"))
-        return new Mod::HashCarrier<Mod::TigerHash>();
-    else if(!whichStr->compareIgnoreCase("whirlpool"))
-        return new Mod::HashCarrier<Mod::WhirlpoolHash>();
-    else if(!whichStr->compareIgnoreCase("ripemd128"))
-        return new Mod::HashCarrier<Mod::RIPEMD128Hash>();
-    else if(!whichStr->compareIgnoreCase("ripemd160"))
-        return new Mod::HashCarrier<Mod::RIPEMD160Hash>();
-    else if(!whichStr->compareIgnoreCase("ripemd256"))
-        return new Mod::HashCarrier<Mod::RIPEMD256Hash>();
-    else if(!whichStr->compareIgnoreCase("ripemd320"))
-        return new Mod::HashCarrier<Mod::RIPEMD320Hash>();
-
-    // note: when adding entries here, be sure to overload the hash's GetName() method accordingly!
-
-    return NULL;
+   stream->write( _finalized );
 }
 
-CoreString *ByteArrayToHex(byte *arr, uint32 size)
+void HashBase::restore( DataReader* stream )
 {
-    CoreString *str = new CoreString; // each byte will be encoded to 2 chars
-    str->reserve(size * 2);
-
-    for(uint32 i = 0; i < size; i++)
-    {
-        int hexlet = (arr[i] >> 4) & 0xf ;
-        str->append( hexlet < 10 ? '0' + hexlet : 'a' + (hexlet-10) );
-        hexlet = arr[i] & 0xf ;
-        str->append( hexlet < 10 ? '0' + hexlet : 'a' + (hexlet-10) );
-    }
-    return str;
+   stream->read(_finalized);
 }
 
-
-void HashBase::UpdateData(MemBuf *buf)
+const String& HashBase::GetName()
 {
-    uint32 ws = buf->wordSize();
-    switch(ws)
-    {
-        case 1:
-            UpdateData(buf->data() + buf->position(), buf->limit() - buf->position());
-            break;
-
-        case 2:
-        case 3:
-        case 4:
-            for(uint32 i = buf->position(); i < buf->limit(); i++)
-            {
-                int32 c = buf->get(i); // TODO: test this on big endian (conversion done in get(), but not sure if this is correct)
-                UpdateData((byte*)&c, ws);
-            }
-            break;
-
-        default:
-            throw new Falcon::TypeError(
-                Falcon::ErrorParam( Falcon::e_param_type, __LINE__ )
-                .extra( "Unsupported MemBuf word length" ) );
-
-    }
+   return m_handler->name();
 }
 
 void HashBase::UpdateData(const String &str)
@@ -149,144 +97,49 @@ uint64 HashBase::AsInt(void)
 }
 
 
-HashBaseFalcon::HashBaseFalcon()
-: _bytes(0), _digest(NULL), _intval(0)
-{
-    _finalized = false;
-}
-
-HashBaseFalcon::~HashBaseFalcon()
-{
-    if(_digest)
-        delete [] _digest;
-}
-
-void HashBaseFalcon::_GetCallableMethod(Falcon::Item& item, const Falcon::String& name)
-{
-    if(!_self->getMethod(name, item))
-    {
-        throw new Falcon::AccessError(
-            Falcon::ErrorParam( Falcon::e_miss_iface, __LINE__ )
-            .extra( name ) );
-    }
-    if(!item.isCallable())
-    {
-        throw new Falcon::AccessError(
-        Falcon::ErrorParam( Falcon::e_non_callable, __LINE__ )
-        .extra( name ) );
-    }
-}
-
-void HashBaseFalcon::Finalize(void)
-{
-    if(_finalized)
-        return;
-
-    Falcon::Item m;
-    _GetCallableMethod(m, "finalize");
-    _vm->callItemAtomic(m, 0);
-    _finalized = true; // assume success only if it didn't throw
-}
-
-uint32 HashBaseFalcon::DigestSize(void)
-{
-    if(!_bytes) // cache the byte count so the call has to be made only once
-    {
-        Falcon::Item m;
-        _GetCallableMethod(m, "bytes"); // this is safe since bytes() is overloaded
-        _vm->callItemAtomic(m, 0);
-        _bytes = Falcon::uint32(_vm->regA().forceIntegerEx()); // throws if returned not a number
-        if(!_bytes)
-        {
-            throw new Falcon::GenericError(
-                Falcon::ErrorParam( Falcon::e_prop_invalid, __LINE__ )
-                .extra(_vm->moduleString(hash_err_size)));
-        }
-    }
-    return _bytes;
-}
-
-byte *HashBaseFalcon::GetDigest(void)
-{
-    // if we have already cached our digest, return that
-    if(_digest)
-        return _digest;
-
-    // otherwise, calculate it
-    if(!IsFinalized())
-        Finalize();
-
-    Falcon::Item m;
-    _GetCallableMethod(m, "toMemBuf"); // this is safe since toMemBuf() is overloaded
-    _vm->callItemAtomic(m, 0);
-    Falcon::Item ret = _vm->regA(); // copy item, the check against DigestSize() might overwrite the reference otherwise
-    if( !(ret.isMemBuf() && ret.asMemBuf() && ret.asMemBuf()->wordSize() == 1) )
-    {
-        throw new Falcon::GenericError(
-            Falcon::ErrorParam( Falcon::e_prop_invalid, __LINE__ )
-            .extra(_vm->moduleString(hash_err_not_membuf_1)));
-    }
-
-    // this check is maybe not necessary, but enforces a more correct implementation of overloaded hash classes
-    uint32 s = DigestSize();
-    if( ret.asMemBuf()->length() != s )
-    {
-        throw new Falcon::GenericError(
-            Falcon::ErrorParam( Falcon::e_prop_invalid, __LINE__ )
-            .extra(_vm->moduleString(hash_err_membuf_length_differs)));
-    }
-
-    // copy the result, in case the GC eats up the MemBuf
-    _digest = new byte[s];
-    memcpy(_digest, ret.asMemBuf()->data(), s);
-    return _digest;
-}
-
-void HashBaseFalcon::UpdateData( const byte *ptr, uint32 size)
-{
-    if(!size)
-        return;
-    Falcon::Item m;
-    _GetCallableMethod(m, "process");
-    Falcon::MemBuf_1 *mb = new Falcon::MemBuf_1( (byte*)ptr, size, 0);
-    _vm->pushParam(mb);
-    _vm->callItemAtomic(m, 1);
-}
-
-uint64 HashBaseFalcon::AsInt(void)
-{
-    // cached?
-    if(_intval)
-        return _intval;
-
-    // HashBase::AsInt() expects the buffer to be at least 8 bytes long
-    uint32 s = DigestSize();
-    if(s >= sizeof(uint64))
-        return HashBase::AsInt();
-
-    // buffer is smaller, process manually
-    uint64 val = 0;
-    byte *valp = (byte*)&val;
-    byte *digest = GetDigest();
-    for(uint32 i = 0; i < s; ++i)
-        valp[i] = digest[i];
-    _intval = endianInt64(val);
-    return _intval;
-}
-
-
-
+//=========================================================================================
+// CRC32
+//=========================================================================================
 
 uint32 CRC32::_crcTab[256];
 
-CRC32::CRC32()
-: _crc(0xFFFFFFFF)
+CRC32::CRC32(Class* cls):
+      HashBase(cls),
+      _crc(0xFFFFFFFF)
 {
-    _finalized = false;
+}
+
+CRC32::CRC32(const CRC32& other):
+      HashBase(other),
+      _crc(other._crc)
+{
+   if( _finalized ) {
+      memcpy( _digest, other._digest, sizeof(_digest) );
+   }
 }
 
 CRC32::~CRC32()
 {}
+
+void CRC32::store(DataWriter* stream) const
+{
+   HashBase::store(stream);
+   stream->write(_crc);
+   if( _finalized )
+   {
+      stream->writeRaw( _digest, sizeof(_digest) );
+   }
+}
+
+void CRC32::restore( DataReader* stream )
+{
+   HashBase::restore(stream);
+   stream->read(_crc);
+   if( _finalized )
+   {
+      stream->read( _digest, sizeof(_digest) );
+   }
+}
 
 void CRC32::GenTab(void)
 {
@@ -324,14 +177,48 @@ void CRC32::UpdateData( const byte *ptr, uint32 size)
     }
 }
 
-Adler32::Adler32()
-: _adler(1)
+//=========================================================================================
+// Adler32
+//=========================================================================================
+
+
+Adler32::Adler32(Class* hdlr) :
+         HashBase(hdlr),
+         _adler(1)
 {
-    _finalized = false;
+}
+
+Adler32::Adler32(const Adler32& other) :
+         HashBase(other),
+         _adler(other._adler)
+{
+   if( _finalized ) {
+      memcpy( _digest, other._digest, sizeof(_digest) );
+   }
 }
 
 Adler32::~Adler32()
 {}
+
+void Adler32::store(DataWriter* stream) const
+{
+   HashBase::store(stream);
+   stream->write(_adler);
+   if( _finalized )
+   {
+      stream->writeRaw( _digest, sizeof(_digest) );
+   }
+}
+
+void Adler32::restore( DataReader* stream )
+{
+   HashBase::restore(stream);
+   stream->read(_adler);
+   if( _finalized )
+   {
+      stream->read( _digest, sizeof(_digest) );
+   }
+}
 
 void Adler32::Finalize(void)
 {
@@ -349,20 +236,73 @@ void Adler32::UpdateData( const byte *ptr, uint32 size)
     _adler = adler32(_adler, (char*)ptr, size);
 }
 
-SHA1Hash::SHA1Hash()
+//=========================================================================================
+// SHA1Hash
+//=========================================================================================
+
+SHA1Hash::SHA1Hash( Class* hdlr ):
+         HashBase(hdlr)
 {
-    _finalized = false;
     sha_init(&_ctx);
 }
 
+SHA1Hash::SHA1Hash( const SHA1Hash& other ):
+         HashBase(other)
+{
+    sha_copy(&_ctx, const_cast<sha_ctx*>(&other._ctx));
+    memcpy(&_digest, &other._digest, sizeof(_digest) );
+}
+
 SHA1Hash::~SHA1Hash()
-{}
+{
+}
+
+
+void SHA1Hash::store(DataWriter* stream) const
+{
+   HashBase::store(stream);
+   for( uint32 i = 0; i < SHA_DIGESTLEN; i++ )
+   {
+      stream->write(_ctx.digest[i]);
+   }
+
+   stream->write( _ctx.count_l );
+   stream->write( _ctx.count_h );
+   stream->writeRaw( _ctx.block, sizeof(_ctx.block) );
+   stream->write( _ctx.index );
+
+   if( _finalized )
+   {
+      stream->writeRaw( _digest, sizeof(_digest) );
+   }
+}
+
+void SHA1Hash::restore( DataReader* stream )
+{
+   HashBase::restore(stream);
+
+   for( uint32 i = 0; i < SHA_DIGESTLEN; i++ )
+   {
+      stream->read(_ctx.digest[i]);
+   }
+
+   stream->read( _ctx.count_l );
+   stream->read( _ctx.count_h );
+   stream->read( _ctx.block, sizeof(_ctx.block) );
+   stream->read( _ctx.index );
+
+   if( _finalized )
+   {
+      stream->read( static_cast<byte*>(_digest), sizeof(_digest) );
+   }
+}
 
 
 void SHA1Hash::UpdateData(const byte *ptr, uint32 size)
 {
     sha_update(&_ctx, ptr, size);
 }
+
 
 void SHA1Hash::Finalize(void)
 {
@@ -374,15 +314,65 @@ void SHA1Hash::Finalize(void)
     _finalized = true;
 }
 
-SHA224Hash::SHA224Hash()
+//=========================================================================================
+// SHA224Hash
+//=========================================================================================
+
+
+SHA224Hash::SHA224Hash( Class* hdlr ):
+         HashBase(hdlr)
 {
-    _finalized = false;
     sha224_init(&_ctx);
 }
 
+SHA224Hash::SHA224Hash( const SHA224Hash& other ):
+         HashBase(other)
+{
+    memcpy(&_ctx, &other._ctx, sizeof(_ctx));
+    memcpy(&_digest, &other._digest, sizeof(_digest) );
+}
 
 SHA224Hash::~SHA224Hash()
 {}
+
+
+void SHA224Hash::store(DataWriter* stream) const
+{
+   HashBase::store(stream);
+   for( uint32 i = 0; i < _SHA256_SHA224_DIGEST_LENGTH; i++ )
+   {
+      stream->write(_ctx.state[i]);
+   }
+
+   stream->write( _ctx.bitcount );
+   stream->writeRaw( _ctx.block, sizeof(_ctx.block) );
+   stream->write( _ctx.index );
+
+   if( _finalized )
+   {
+      stream->writeRaw( _digest, sizeof(_digest) );
+   }
+}
+
+void SHA224Hash::restore( DataReader* stream )
+{
+   HashBase::restore(stream);
+
+   for( uint32 i = 0; i < _SHA256_SHA224_DIGEST_LENGTH; i++ )
+   {
+      stream->read(_ctx.state[i]);
+   }
+
+   stream->read( _ctx.bitcount );
+   stream->read( _ctx.block, sizeof(_ctx.block) );
+   stream->read( _ctx.index );
+
+   if( _finalized )
+   {
+      stream->read( static_cast<byte*>(_digest), sizeof(_digest) );
+   }
+}
+
 
 void SHA224Hash::UpdateData(const byte *ptr, uint32 size)
 {
@@ -399,15 +389,67 @@ void SHA224Hash::Finalize(void)
     _finalized = true;
 }
 
-SHA256Hash::SHA256Hash()
+//=========================================================================================
+// SHA256Hash
+//=========================================================================================
+
+
+SHA256Hash::SHA256Hash( Class* hdlr ):
+         HashBase(hdlr)
 {
-    _finalized = false;
     sha256_init(&_ctx);
 }
 
-SHA256Hash::~SHA256Hash()
-{}
 
+SHA256Hash::SHA256Hash( const SHA256Hash& other ):
+         HashBase(other)
+{
+    memcpy(&_ctx, &other._ctx, sizeof(_ctx) );
+    memcpy(&_digest, &other._digest, sizeof(_digest) );
+}
+
+
+SHA256Hash::~SHA256Hash()
+{
+}
+
+
+void SHA256Hash::store(DataWriter* stream) const
+{
+   HashBase::store(stream);
+   for( uint32 i = 0; i < _SHA256_SHA224_DIGEST_LENGTH; i++ )
+   {
+      stream->write(_ctx.state[i]);
+   }
+
+   stream->write( _ctx.bitcount );
+   stream->writeRaw( _ctx.block, sizeof(_ctx.block) );
+   stream->write( _ctx.index );
+
+   if( _finalized )
+   {
+      stream->writeRaw( _digest, sizeof(_digest) );
+   }
+}
+
+void SHA256Hash::restore( DataReader* stream )
+{
+   HashBase::restore(stream);
+
+   for( uint32 i = 0; i < _SHA256_SHA224_DIGEST_LENGTH; i++ )
+   {
+      stream->read(_ctx.state[i]);
+   }
+
+   stream->read( _ctx.bitcount );
+   stream->read( _ctx.block, sizeof(_ctx.block) );
+   stream->read( _ctx.index );
+
+   if( _finalized )
+   {
+      stream->read( static_cast<byte*>(_digest), sizeof(_digest) );
+   }
+}
 
 void SHA256Hash::UpdateData(const byte *ptr, uint32 size)
 {
@@ -424,14 +466,70 @@ void SHA256Hash::Finalize(void)
     _finalized = true;
 }
 
-SHA384Hash::SHA384Hash()
+
+//=========================================================================================
+// SHA384Hash
+//=========================================================================================
+
+
+SHA384Hash::SHA384Hash( Class* hdlr ):
+         HashBase(hdlr)
 {
-    _finalized = false;
     sha384_init(&_ctx);
+}
+
+
+SHA384Hash::SHA384Hash( const SHA384Hash& other ):
+         HashBase(other)
+{
+    memcpy(&_ctx, &other._ctx, sizeof(_ctx) );
+    memcpy(&_digest, &other._digest, sizeof(_digest) );
 }
 
 SHA384Hash::~SHA384Hash()
 {}
+
+
+void SHA384Hash::store(DataWriter* stream) const
+{
+   HashBase::store(stream);
+   for( uint32 i = 0; i < _SHA512_SHA384_STATE_LENGTH; i++ )
+   {
+      stream->write(_ctx.state[i]);
+   }
+
+   stream->write( _ctx.bitcount_low );
+   stream->write( _ctx.bitcount_high );
+   stream->writeRaw( _ctx.block, sizeof(_ctx.block) );
+   stream->write( _ctx.index );
+
+   if( _finalized )
+   {
+      stream->writeRaw( _digest, sizeof(_digest) );
+   }
+}
+
+
+void SHA384Hash::restore( DataReader* stream )
+{
+   HashBase::restore(stream);
+
+   for( uint32 i = 0; i < _SHA512_SHA384_STATE_LENGTH; i++ )
+   {
+      stream->read(_ctx.state[i]);
+   }
+
+   stream->read( _ctx.bitcount_low );
+   stream->read( _ctx.bitcount_high );
+   stream->read( _ctx.block, sizeof(_ctx.block) );
+   stream->read( _ctx.index );
+
+   if( _finalized )
+   {
+      stream->read( static_cast<byte*>(_digest), sizeof(_digest) );
+   }
+}
+
 
 void SHA384Hash::UpdateData(const byte *ptr, uint32 size)
 {
@@ -448,14 +546,67 @@ void SHA384Hash::Finalize(void)
     _finalized = true;
 }
 
-SHA512Hash::SHA512Hash()
+//=========================================================================================
+// SHA384Hash
+//=========================================================================================
+
+SHA512Hash::SHA512Hash( Class* hdlr ):
+    HashBase(hdlr)
 {
-    _finalized = false;
     sha512_init(&_ctx);
+}
+
+SHA512Hash::SHA512Hash( const SHA512Hash& other ):
+         HashBase(other)
+{
+    memcpy(&_ctx, &other._ctx, sizeof(_ctx) );
+    memcpy(&_digest, &other._digest, sizeof(_digest) );
 }
 
 SHA512Hash::~SHA512Hash()
 {}
+
+
+void SHA512Hash::store(DataWriter* stream) const
+{
+   HashBase::store(stream);
+   for( uint32 i = 0; i < _SHA512_SHA384_STATE_LENGTH; i++ )
+   {
+      stream->write(_ctx.state[i]);
+   }
+
+   stream->write( _ctx.bitcount_low );
+   stream->write( _ctx.bitcount_high );
+   stream->writeRaw( _ctx.block, sizeof(_ctx.block) );
+   stream->write( _ctx.index );
+
+   if( _finalized )
+   {
+      stream->writeRaw( _digest, sizeof(_digest) );
+   }
+}
+
+
+void SHA512Hash::restore( DataReader* stream )
+{
+   HashBase::restore(stream);
+
+   for( uint32 i = 0; i < _SHA512_SHA384_STATE_LENGTH; i++ )
+   {
+      stream->read(_ctx.state[i]);
+   }
+
+   stream->read( _ctx.bitcount_low );
+   stream->read( _ctx.bitcount_high );
+   stream->read( _ctx.block, sizeof(_ctx.block) );
+   stream->read( _ctx.index );
+
+   if( _finalized )
+   {
+      stream->read( static_cast<byte*>(_digest), sizeof(_digest) );
+   }
+}
+
 
 void SHA512Hash::UpdateData(const byte *ptr, uint32 size)
 {
@@ -472,14 +623,57 @@ void SHA512Hash::Finalize(void)
     _finalized = true;
 }
 
-MD2Hash::MD2Hash()
+//=========================================================================================
+// MD2Hash
+//=========================================================================================
+
+MD2Hash::MD2Hash(Class* hdlr):
+         HashBase(hdlr)
 {
-    _finalized = false;
     md2_init(&_ctx);
+}
+
+MD2Hash::MD2Hash(const MD2Hash& other):
+         HashBase(other)
+{
+    memcpy(&_ctx, &other._ctx, sizeof(_ctx) );
+    memcpy(&_digest, &other._digest, sizeof(_digest) );
 }
 
 MD2Hash::~MD2Hash()
 {}
+
+
+void MD2Hash::store(DataWriter* stream) const
+{
+   HashBase::store(stream);
+
+   stream->writeRaw(_ctx.C, sizeof(_ctx.C));
+   stream->writeRaw(_ctx.X, sizeof(_ctx.X));
+   stream->writeRaw(_ctx.buffer, sizeof(_ctx.buffer));
+   stream->write( _ctx.index );
+
+   if( _finalized )
+   {
+      stream->writeRaw( _digest, sizeof(_digest) );
+   }
+}
+
+
+void MD2Hash::restore( DataReader* stream )
+{
+   HashBase::restore(stream);
+
+   stream->read(_ctx.C, sizeof(_ctx.C));
+   stream->read(_ctx.X, sizeof(_ctx.X));
+   stream->read(_ctx.buffer, sizeof(_ctx.buffer));
+   stream->read( _ctx.index );
+
+   if( _finalized )
+   {
+      stream->read( static_cast<byte*>(_digest), sizeof(_digest) );
+   }
+}
 
 
 void MD2Hash::UpdateData(const byte *ptr, uint32 size)
@@ -496,14 +690,70 @@ void MD2Hash::Finalize(void)
     md2_digest(&_ctx, _digest);
 }
 
-MD4Hash::MD4Hash()
+//=========================================================================================
+// MD4Hash
+//=========================================================================================
+
+MD4Hash::MD4Hash(Class* hdlr):
+         HashBase(hdlr)
 {
-    _finalized = false;
     MD4Init(&_ctx);
 }
 
+
+MD4Hash::MD4Hash(const MD4Hash& other):
+                  HashBase(other)
+{
+   memcpy(&_ctx, &other._ctx, sizeof(_ctx) );
+   memcpy(&_digest, &other._digest, sizeof(_digest) );
+}
+
+
 MD4Hash::~MD4Hash()
 {}
+
+
+void MD4Hash::store(DataWriter* stream) const
+{
+   HashBase::store(stream);
+
+   stream->write(_ctx.buf[0]);
+   stream->write(_ctx.buf[1]);
+   stream->write(_ctx.buf[2]);
+   stream->write(_ctx.buf[3]);
+
+   stream->write(_ctx.bits[0]);
+   stream->write(_ctx.bits[1]);
+
+   stream->writeRaw( _ctx.in, sizeof(_ctx.in) );
+
+   if( _finalized )
+   {
+      stream->writeRaw( _digest, sizeof(_digest) );
+   }
+}
+
+
+void MD4Hash::restore( DataReader* stream )
+{
+   HashBase::restore(stream);
+
+   stream->read(_ctx.buf[0]);
+   stream->read(_ctx.buf[1]);
+   stream->read(_ctx.buf[2]);
+   stream->read(_ctx.buf[3]);
+
+   stream->read(_ctx.bits[0]);
+   stream->read(_ctx.bits[1]);
+
+   stream->read( _ctx.in, sizeof(_ctx.in) );
+
+   if( _finalized )
+   {
+      stream->read( static_cast<byte*>(_digest), sizeof(_digest) );
+   }
+}
+
 
 void MD4Hash::UpdateData(const byte *ptr, uint32 size)
 {
@@ -519,14 +769,68 @@ void MD4Hash::Finalize(void)
     MD4Final(&_ctx, _digest);
 }
 
-MD5Hash::MD5Hash()
+//=========================================================================================
+// MD5Hash
+//=========================================================================================
+
+MD5Hash::MD5Hash(Class* hdlr):
+         HashBase(hdlr)
 {
-    _finalized = false;
     md5_init(&_ctx);
+}
+
+MD5Hash::MD5Hash(const MD5Hash& other):
+                  HashBase(other)
+{
+   memcpy(&_ctx, &other._ctx, sizeof(_ctx) );
+   memcpy(&_digest, &other._digest, sizeof(_digest) );
 }
 
 MD5Hash::~MD5Hash()
 {}
+
+
+void MD5Hash::store(DataWriter* stream) const
+{
+   HashBase::store(stream);
+
+   stream->write(_ctx.count[0]);
+   stream->write(_ctx.count[1]);
+
+   stream->write(_ctx.abcd[0]);
+   stream->write(_ctx.abcd[1]);
+   stream->write(_ctx.abcd[2]);
+   stream->write(_ctx.abcd[3]);
+
+   stream->writeRaw( _ctx.buf, sizeof(_ctx.buf) );
+
+   if( _finalized )
+   {
+      stream->writeRaw( _digest, sizeof(_digest) );
+   }
+}
+
+
+void MD5Hash::restore( DataReader* stream )
+{
+   HashBase::restore(stream);
+
+   stream->read(_ctx.count[0]);
+   stream->read(_ctx.count[1]);
+
+   stream->read(_ctx.abcd[0]);
+   stream->read(_ctx.abcd[1]);
+   stream->read(_ctx.abcd[2]);
+   stream->read(_ctx.abcd[3]);
+
+   stream->read( _ctx.buf, sizeof(_ctx.buf) );
+
+   if( _finalized )
+   {
+      stream->read( static_cast<byte*>(_digest), sizeof(_digest) );
+   }
+}
+
 
 void MD5Hash::UpdateData(const byte *ptr, uint32 size)
 {
@@ -542,15 +846,67 @@ void MD5Hash::Finalize(void)
     md5_finish(&_ctx, _digest);
 }
 
-WhirlpoolHash::WhirlpoolHash()
+//=========================================================================================
+// WhirlpoolHash
+//=========================================================================================
+
+WhirlpoolHash::WhirlpoolHash( Class* hdlr ):
+         HashBase(hdlr)
 {
-    _finalized = false;
     whirlpool_init(&_ctx);
+}
+
+
+WhirlpoolHash::WhirlpoolHash(const WhirlpoolHash& other):
+                  HashBase(other)
+{
+   memcpy(&_ctx, &other._ctx, sizeof(_ctx) );
+   memcpy(&_digest, &other._digest, sizeof(_digest) );
 }
 
 
 WhirlpoolHash::~WhirlpoolHash()
 {}
+
+
+void WhirlpoolHash::store(DataWriter* stream) const
+{
+   HashBase::store(stream);
+
+   stream->writeRaw(_ctx.bitLength, sizeof(_ctx.bitLength));
+   stream->writeRaw(_ctx.buffer, sizeof(_ctx.buffer));
+   stream->write(_ctx.bufferBits);
+   stream->write(_ctx.bufferPos);
+   for( uint32 i = 0; i < DIGESTBYTES/8; ++i )
+   {
+      stream->write(_ctx.hash[i]);
+   }
+
+   if( _finalized )
+   {
+      stream->writeRaw( _digest, sizeof(_digest) );
+   }
+}
+
+
+void WhirlpoolHash::restore( DataReader* stream )
+{
+   HashBase::restore(stream);
+
+   stream->read(_ctx.bitLength, sizeof(_ctx.bitLength));
+   stream->read(_ctx.buffer, sizeof(_ctx.buffer));
+   stream->read(_ctx.bufferBits);
+   stream->read(_ctx.bufferPos);
+   for( uint32 i = 0; i < DIGESTBYTES/8; ++i )
+   {
+      stream->read(_ctx.hash[i]);
+   }
+
+   if( _finalized )
+   {
+      stream->read( static_cast<byte*>(_digest), sizeof(_digest) );
+   }
+}
 
 
 void WhirlpoolHash::UpdateData(const byte *ptr, uint32 size)
@@ -567,14 +923,70 @@ void WhirlpoolHash::Finalize(void)
     whirlpool_finalize(&_ctx, _digest);
 }
 
-TigerHash::TigerHash()
+//=========================================================================================
+// TigerHash
+//=========================================================================================
+
+TigerHash::TigerHash( Class* hdlr ):
+    HashBase(hdlr)
 {
-    _finalized = false;
     tiger_init(&_ctx);
 }
 
+
+TigerHash::TigerHash(const TigerHash& other):
+                  HashBase(other)
+{
+   memcpy(&_ctx, &other._ctx, sizeof(_ctx) );
+   memcpy(&_digest, &other._digest, sizeof(_digest) );
+}
+
+
 TigerHash::~TigerHash()
 {}
+
+
+void TigerHash::store(DataWriter* stream) const
+{
+   HashBase::store(stream);
+
+   stream->write(_ctx.state[0]);
+   stream->write(_ctx.state[1]);
+   stream->write(_ctx.state[2]);
+
+   stream->write(_ctx.index);
+
+   stream->writeRaw(_ctx.block, sizeof(_ctx.block) );
+
+   stream->write(_ctx.blockcount);
+
+   if( _finalized )
+   {
+      stream->writeRaw( _digest, sizeof(_digest) );
+   }
+}
+
+
+void TigerHash::restore( DataReader* stream )
+{
+   HashBase::restore(stream);
+
+   stream->read(_ctx.state[0]);
+   stream->read(_ctx.state[1]);
+   stream->read(_ctx.state[2]);
+
+   stream->read(_ctx.index);
+
+   stream->read(_ctx.block, sizeof(_ctx.block) );
+
+   stream->read(_ctx.blockcount);
+
+   if( _finalized )
+   {
+      stream->read( static_cast<byte*>(_digest), sizeof(_digest) );
+   }
+}
+
 
 void TigerHash::UpdateData(const byte *ptr, uint32 size)
 {
@@ -591,6 +1003,20 @@ void TigerHash::Finalize(void)
     tiger_digest(&_ctx, _digest);
 }
 
+//=========================================================================================
+// RIPEMDHashBase
+//=========================================================================================
+
+RIPEMDHashBase::RIPEMDHashBase(Class* hldr):
+   HashBase(hldr)
+{}
+
+RIPEMDHashBase::RIPEMDHashBase( const RIPEMDHashBase& other ):
+   HashBase(other)
+{
+   memcpy(&_ctx, &other._ctx, sizeof(_ctx) );
+   memcpy(&_digest, &other._digest, sizeof(_digest) );
+}
 
 RIPEMDHashBase::~RIPEMDHashBase()
 {}
@@ -611,45 +1037,120 @@ void RIPEMDHashBase::Finalize(void)
     _finalized = true;
 }
 
-RIPEMD128Hash::RIPEMD128Hash()
+
+void RIPEMDHashBase::store(DataWriter* stream) const
 {
-    _finalized = false;
+   HashBase::store(stream);
+
+   for( uint32 i = 0; i < RIPEMD_STATESIZE; ++i )
+   {
+      stream->write(_ctx.digest[i]);
+   }
+
+   stream->write(_ctx.bitcount);
+   stream->writeRaw(_ctx.block, sizeof(_ctx.block));
+   stream->write(_ctx.index);
+   stream->write(_ctx.digest_len);
+
+   if( _finalized )
+   {
+      stream->writeRaw( _digest, sizeof(_digest) );
+   }
+}
+
+
+void RIPEMDHashBase::restore( DataReader* stream )
+{
+   HashBase::restore(stream);
+
+   for( uint32 i = 0; i < RIPEMD_STATESIZE; ++i )
+   {
+      stream->read(_ctx.digest[i]);
+   }
+
+   stream->read(_ctx.bitcount);
+   stream->read(_ctx.block, sizeof(_ctx.block));
+   stream->read(_ctx.index);
+   stream->read(_ctx.digest_len);
+
+   if( _finalized )
+   {
+      stream->read( static_cast<byte*>(_digest), sizeof(_digest) );
+   }
+}
+
+//=========================================================================================
+// RIPEMD128Hash
+//=========================================================================================
+
+RIPEMD128Hash::RIPEMD128Hash(Class* hldr):
+         RIPEMDHashBase(hldr)
+{
     ripemd128_init(&_ctx);
 }
+
+RIPEMD128Hash::RIPEMD128Hash( const RIPEMD128Hash& other ):
+         RIPEMDHashBase(other)
+{}
 
 RIPEMD128Hash::~RIPEMD128Hash()
 {}
 
-RIPEMD160Hash::RIPEMD160Hash()
+//=========================================================================================
+// RIPEMD160Hash
+//=========================================================================================
+
+RIPEMD160Hash::RIPEMD160Hash(Class* hldr):
+         RIPEMDHashBase(hldr)
 {
-    _finalized = false;
     ripemd160_init(&_ctx);
+}
+
+RIPEMD160Hash::RIPEMD160Hash(const RIPEMD160Hash& other ):
+         RIPEMDHashBase(other)
+{
 }
 
 RIPEMD160Hash::~RIPEMD160Hash()
 {}
 
-RIPEMD256Hash::RIPEMD256Hash()
+//=========================================================================================
+// RIPEMD160Hash
+//=========================================================================================
+
+RIPEMD256Hash::RIPEMD256Hash(Class* hldr):
+         RIPEMDHashBase(hldr)
 {
-    _finalized = false;
     ripemd256_init(&_ctx);
+}
+
+RIPEMD256Hash::RIPEMD256Hash(const RIPEMD256Hash& other ):
+         RIPEMDHashBase(other)
+{
 }
 
 RIPEMD256Hash::~RIPEMD256Hash()
 {}
 
-RIPEMD320Hash::RIPEMD320Hash()
+//=========================================================================================
+// RIPEMD160Hash
+//=========================================================================================
+
+RIPEMD320Hash::RIPEMD320Hash(Class* hldr):
+         RIPEMDHashBase(hldr)
 {
-    _finalized = false;
     ripemd320_init(&_ctx);
+}
+
+RIPEMD320Hash::RIPEMD320Hash(const RIPEMD320Hash& other ):
+         RIPEMDHashBase(other)
+{
 }
 
 RIPEMD320Hash::~RIPEMD320Hash()
 {}
 
-
 }
 }
-
 
 /* end of hash_mod.cpp */
