@@ -1764,6 +1764,41 @@ void VMContext::defineSymbol(Symbol* sym)
    newData->m_value->setNil();
 }
 
+Item* VMContext::resolveSymbol( const String& symname, bool forAssign )
+{
+   Symbol* sym = Engine::getSymbol(symname);
+   try
+   {
+      Item* res = resolveSymbol( sym, forAssign );
+      sym->decref();
+      return res;
+   }
+   catch( ... )
+   {
+      sym->decref();
+      throw;
+   }
+   return 0;
+}
+
+
+Item* VMContext::resolveGlobal( const String& symname, bool forAssign )
+{
+   Symbol* sym = Engine::getSymbol(symname);
+   try
+   {
+      Item* res = resolveGlobal( sym, forAssign );
+      sym->decref();
+      return res;
+   }
+   catch( ... )
+   {
+      sym->decref();
+      throw;
+   }
+   return 0;
+}
+
 
 Item* VMContext::resolveSymbol( Symbol* dyns, bool forAssign )
 {

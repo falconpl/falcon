@@ -1,0 +1,135 @@
+#!falcon
+/*
+   FALCON - Samples
+
+   FILE: cmdline_parser.fal
+
+   Demonstration of the CmdlineParser facility
+   Launch with the parameter -?
+   -------------------------------------------------------------------
+   Author: Giancarlo Niccolai
+   Begin: mer nov 3 2004
+
+   -------------------------------------------------------------------
+   (C) Copyright 2004: the FALCON developers (see list in AUTHORS file)
+
+   See LICENSE file for licensing details.
+*/
+
+import from cmdline in cl
+
+object MyParser from cl.Parser
+   freeParams = []
+   opt_d = nil
+   opt_l = nil
+   opt_m = nil
+   sw_k = 0
+   sw_n = 0
+   used = nil
+
+   function onOption( option )
+      self.used = true
+      switch option
+         case "?", "help"
+            self.usage()
+         case "d", "m", "l", "long"
+            self.expectValue()
+         case "k"
+            self.sw_k = 1
+         case "n"
+            self.sw_n = 1
+         case "v", "version"
+            printl( "argsParse.fal - version 1.0" );
+         case "z", "sleep"
+            self.terminate()
+         default
+            self.unrecognized( option )
+      end
+   end
+
+   function onValue( option, value )
+      switch option
+         case "d"
+            self.opt_d = value
+         case "m"
+            self.opt_m = value
+         case "l", "long"
+            self.opt_l = value
+      end
+      // can't be anything else, as this function call must
+      // be authorized from onOption
+   end
+
+   function onFree( param )
+      self.used = true
+      self.freeParams += param
+   end
+
+   function onSwitchOff( sw )
+      self.used = true
+      switch sw
+         case "k"
+            self.sw_k = 0
+         case "n"
+            self.sw_n = 0
+         default
+            self.unrecognized( sw )
+      end
+   end
+
+   function unrecognized( option )
+      printl( "Unrecognized option \"", option, "\"\n" );
+      self.usage()
+      quit(0)
+   end
+
+   function usage()
+      if not self.used
+         printl( "Provide some parameters to test this script.\n" )
+      end
+
+      printl('
+     -?,--help       Prints this help
+     -d <value>      Sets the D option
+     -m <value>      Sets the M option
+     -l <value>      Sets the L option
+     --long <value>  Long version of -l
+     -k              K switch on
+     -n              N switch on
+     -z,--sleep      Ignore the rest of the command
+   
+Single char option can be "chained" i.e. -knd <value>. When chaining more 
+than one option requiring a parameter, only the last one will actually be 
+considered. Switches can be turend off by appendig a "-" after them. Words 
+eneterd without being prepended by ''-'', or a ''-'' by itself, are 
+considered "free options", and will be listed separately. A "--" will be 
+interpreted as end of parse marker, and everything given after that mark 
+will be passed as free options.' )
+   end
+
+   function dump()
+      if self.opt_d: printl( "D option: ", self.opt_d )
+      if self.opt_l: printl( "L option: ", self.opt_l )
+      if self.opt_m: printl( "M option: ", self.opt_m )
+      printl( "K switch ", self.sw_k ? "ON" : "OFF" )
+      printl( "N switch ", self.sw_n ? "ON" : "OFF" )
+      for elem in self.freeParams
+         forfirst: >> "Free options: "
+         >> elem
+         formiddle: >> ", "
+         forlast: > "."
+      end
+   end
+end
+
+
+if not MyParser.parse() or not MyParser.used
+   > "Temp"
+   //MyParser.usage()
+   quit(0)
+end
+
+printl( "Option status: " )
+MyParser.dump()
+
+/* end */

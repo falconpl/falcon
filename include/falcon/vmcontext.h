@@ -1416,7 +1416,9 @@ public:
     \note Symbols marked as constant are returned by value; they aren't referenced.
     */
    Item* resolveSymbol( Symbol* dyns, bool forAssign );
+   Item* resolveSymbol( const String& symname, bool forAssign );
    Item* resolveGlobal( Symbol* name, bool forAssign );
+   Item* resolveGlobal( const String& symname, bool forAssign );
 
    /** Force the symbol to be defined as required.
     * \param sym The symbol to be defined.
