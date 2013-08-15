@@ -36,12 +36,19 @@ Interface extension functions
 @beginmodule feathers.hash
 */
 
+#define SRC "modules/native/feathers/hash_ext.cpp"
+
 #include <stdio.h>
 #include <string.h>
 #include <falcon/engine.h>
 #include <falcon/autocstring.h>
 #include <falcon/datawriter.h>
 #include <falcon/datareader.h>
+#include <falcon/stderrors.h>
+#include <falcon/extfunc.h>
+#include <falcon/itemarray.h>
+#include <falcon/vmcontext.h>
+#include <falcon/common.h>
 
 #include "hash_mod.h"
 #include "hash_ext.h"
@@ -50,6 +57,47 @@ Interface extension functions
 namespace Falcon {
 namespace Ext {
 
+// updateItem is a helper function to process the individual items passed to update()
+static void Hash_updateItem_internal(Item *what, Mod::HashBase *hash, ::Falcon::VMContext *vm, uint32 stackDepth)
+{
+    if(stackDepth > 256) // TODO: is this value safe? does it require adjusting for other platforms/OSes?
+    {
+        throw new Falcon::GenericError(
+            Falcon::ErrorParam( Falcon::e_stackof, __LINE__ )
+            .extra( "Too deep recursion, aborting" ) );
+    }
+
+    Item method;
+
+    if(what->isString())
+    {
+        hash->UpdateData(*what->asString());
+    }
+    else if( what->isOrdinal() )
+    {
+       byte b = static_cast<byte>(what->forceInteger());
+       hash->UpdateData(&b,1);
+    }
+    else if(what->isArray())
+    {
+        ItemArray *arr = what->asArray();
+        for(uint32 i = 0; i < arr->length(); ++i)
+        {
+            Hash_updateItem_internal(&arr->at(i), hash, vm, stackDepth + 1);
+        }
+    }
+    // skip nil, hashing it as string "Nil" would be useless and error-prone
+    else if(what->isNil())
+    {
+        return;
+    }
+
+    else // fallback - convert to string if nothing else works
+    {
+       throw FALCON_SIGN_XERROR( Falcon::ParamError, e_param_type,
+                   .extra( "Invalid type input in hashing function/method" ) );
+    }
+}
 
 
 /*#
@@ -59,7 +107,7 @@ namespace Ext {
 
 This function can be used to check if different versions of the module support a specific hash.
 */
-FALCON_FUNC Func_GetSupportedHashes( ::Falcon::VMachine *vm )
+FALCON_FUNC Func_GetSupportedHashes( ::Falcon::VMContext *ctx, int32 )
 {
     ItemArray *arr = new ItemArray(16);
     arr->append(FALCON_GC_HANDLE(new String("CRC32")));
@@ -78,91 +126,121 @@ FALCON_FUNC Func_GetSupportedHashes( ::Falcon::VMachine *vm )
     arr->append(FALCON_GC_HANDLE(new String("RIPEMD160")));
     arr->append(FALCON_GC_HANDLE(new String("RIPEMD256")));
     arr->append(FALCON_GC_HANDLE(new String("RIPEMD320")));
-    vm->retval(FALCON_GC_HANDLE(arr));
+    ctx->retval(FALCON_GC_HANDLE(arr));
 }
 
-/*#
-@function hash
-@brief Convenience function that calculates a hash.
-@param which Hash instance (or name) that should be used
-@optparam data... Arbitrary amount of parameters that should be fed into the chosen hash function.
-@return A lowercase hexadecimal string with the output of the chosen hash if @i raw is false, or a 1-byte wide MemBuf if true.
-@raise ParamError in case @i which is a string and a hash with that name was not found; or if @i which is not a hash object.
-@raise AccessError if @i which is a hash object that was already finalized.
 
-This function takes an arbitrary amount of parameters. See HashBase.update() for details.
-
-Param @i which can contain a String with the name of the hash or a not-finalized hash object.
-
-@note Use getSupportedHashes() to check which hash names are supported.
-@note If @i which is a hash object, it will be finalized by calling this function.
-*/
-FALCON_DECLARE_FUNCTION(hash, "hash:Hash|S,data:S,...")
-FALCON_DEFINE_FUNCTION_P1(hash)
+static void internal_hash( Function* caller, VMContext* ctx, int32 pcount, bool isRaw )
 {
-   ModHash* mod = static_cast<ModHash*>(ctx->currentFrame().m_function->module());
-   if(ctx->paramCount() < 2)
+   ModHash* mod = static_cast<ModHash*>(caller->module());
+   if( pcount < 2 )
    {
-       throw paramError(__LINE__, SRC );
+       throw caller->paramError(__LINE__, SRC );
    }
     
-    bool raw = ctx->param(0)->asBoolean();
     Item which = *(ctx->param(1));
     
-    bool ownCarrier = false;
     Class* cls = 0;
-    void* data = 0;
 
     if(which.isString())
     {
         cls = mod->getClass(*which.asString());
-        ownCarrier = true;
-        if( cls == 0 )
-        {
-            throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
-               .extra( "Hash not found" ) );
-        }
     }
-    else if(which.asClassInst(cls, data))
+    else if(which.isClass())
     {
-        if(! cls->isDerivedFrom( mod->m_baseHashCls ) )
-        {
-           throw paramError(__LINE__, SRC );
-        }
+       cls = static_cast<Class*>(which.asInst());
+       if(! cls->isDerivedFrom( mod->m_baseHashCls ) )
+       {
+          throw caller->paramError( "hash parameter is not a Hash class", __LINE__, SRC );
+       }
     }
     else {
-       throw paramError(__LINE__, SRC );
+       throw caller->paramError(__LINE__, SRC );
     }
 
+    Mod::HashBase *hash = static_cast<Mod::HashBase*>(cls->createInstance());
 
-    Mod::HashBase *hash = static_cast<Mod::HashBase*>(cls);
-
-    for(uint32 i = 2; i < uint32(ctx->paramCount()); i++)
+    try
     {
-        Item *what = ctx->param(i);
+       for( int32 i = 1; i < pcount; i++)
+       {
+           Item *what = ctx->param(i);
+           Hash_updateItem_internal(what, hash, ctx, 0);
+       }
 
-        Hash_updateItem_internal(what, hash, vm, 0);
+       hash->Finalize();
+
+       uint32 size = hash->DigestSize();
+       byte *digest = hash->GetDigest();
+
+       String* str = new String;
+       if( isRaw )
+       {
+          str->adoptMemBuf(digest,size,0);
+          str->bufferize(); // internally copy
+       }
+       else {
+          Mod::hashToString(*str, false, digest, size);
+          ctx->returnFrame();
+       }
+
+       ctx->returnFrame(FALCON_GC_HANDLE(str));
+       cls->dispose(hash);
     }
-
-    hash->Finalize();
-
-    uint32 size = hash->DigestSize();
-    byte *digest = hash->GetDigest();
-
-    if(raw)
+    catch( ... )
     {
-        Falcon::MemBuf_1 *buf = new Falcon::MemBuf_1(size);
-        memcpy(buf->data(), digest, size);
-        ctx->retval(buf);
+       cls->dispose(hash);
+       throw;
     }
-    else
-    {
-        ctx->retval(Mod::ByteArrayToHex(digest, size));
-    }
-
-    if(ownCarrier)
-        delete carrier;
 }
+/*#
+@function hash
+@brief Convenience function that calculates a hash.
+@param which Hash class (or hash name) that should be used.
+@optparam data... Arbitrary amount of parameters that should be fed into the chosen hash function.
+@return A lowercase hexadecimal string with the output of the chosen hash.
+@raise ParamError in case @b which is a string and a hash with that name was not found; or if @v which is not a hash class.
+
+The @b which parameter is either a hash class or the name of a hashing class provided by
+this module. A new instance of the hashing class is internally created, used and then disposed.
+
+This function takes an arbitrary amount of parameters. Each parameter past @b which is fed
+into the @a Hash.update method of the selected hash class.
+
+@note Use getSupportedHashes() to check which hash names are supported.
+
+@note To get the class of a hash instance use @a BOM.baseClass.
+*/
+FALCON_DECLARE_FUNCTION(hash, "hash:S|Class,data:S,...")
+FALCON_DEFINE_FUNCTION_P(hash)
+{
+   internal_hash( this, ctx, pCount, false );
+}
+
+/*#
+@function hash_r
+@brief Convenience function that calculates a hash.
+@param which Hash class (or hash name) that should be used.
+@optparam data... Arbitrary amount of parameters that should be fed into the chosen hash function.
+@return A memory buffer string with the output of the chosen hash.
+@raise ParamError in case @b which is a string and a hash with that name was not found; or if @v which is not a hash class.
+
+The @b which parameter is either a hash class or the name of a hashing class provided by
+this module. A new instance of the hashing class is internally created, used and then disposed.
+
+This function takes an arbitrary amount of parameters. Each parameter past @b which is fed
+into the @a Hash.update method of the selected hash class.
+
+@note Use getSupportedHashes() to check which hash names are supported.
+
+@note To get the class of a hash instance use @a BOM.baseClass.
+*/
+FALCON_DECLARE_FUNCTION(hash_r, "hash:S|Class,data:S,...")
+FALCON_DEFINE_FUNCTION_P(hash_r)
+{
+   internal_hash( this, ctx, pCount, false );
+}
+
 
 /*#
 @function makeHash
@@ -173,56 +251,156 @@ FALCON_DEFINE_FUNCTION_P1(hash)
 @raise ParamError in case a hash with that name was not found
 @note Use getSupportedHashes() to check which hash names are supported.
 */
-FALCON_FUNC Func_makeHash( ::Falcon::VMachine *vm )
+FALCON_DECLARE_FUNCTION(makeHash, "name:S,silent:[B]")
+FALCON_DEFINE_FUNCTION_P(makeHash)
 {
-    if(vm->paramCount() < 1 || !vm->param(0)->isString())
-    {
-        throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
-            .origin( e_orig_mod ).extra( "S" ) );
-    }
+   ModHash* mod = static_cast<ModHash*>(module());
+   if( pCount < 1 || !ctx->param(0)->isString())
+   {
+       throw paramError(__LINE__, SRC);
+   }
     
-    String *name = vm->param(0)->asString();
-    bool silent =  vm->paramCount() > 1 && vm->param(1)->asBoolean();
-    FalconData *fdata = Mod::GetHashByName(name);
-    Mod::HashCarrier<Mod::HashBase> *carrier = (Mod::HashCarrier<Mod::HashBase>*)(fdata);
-    if(!carrier)
+    String *name = ctx->param(0)->asString();
+    bool silent =  pCount > 1 && ctx->param(1)->isTrue();
+    Class *cls = mod->getClass(*name);
+
+    if(!cls)
     {
         if(silent)
         {
-            vm->retnil();
+            ctx->returnFrame();
             return;
         }
-        throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
-            .origin( e_orig_mod ).desc( FAL_STR(hash_not_found) ).extra(*name) );
+
+        throw paramError("Hash \"" + *name + "\" not found", __LINE__, SRC );
     }
 
-    Item *wki = vm->findWKI(carrier->GetHash()->GetName());
-    if(!wki)
-    {   // this should NOT happen.. most possibly a hash name was not set correctly
-        throw new GenericError( ErrorParam( e_noninst_cls, __LINE__ )
-            .origin( e_orig_mod ).extra( FAL_STR(hash_internal_error) ) );
-    }
-    CoreClass *cls = wki->asClass();
+    void* data = cls->createInstance();
+    ctx->returnFrame( FALCON_GC_STORE(cls,data) );
+}
 
-    FalconObject *obj = new FalconObject(cls);
-    obj->setUserData(carrier);
-    vm->retval(obj);
+
+static void internal_hmac( Function* caller, VMContext* ctx, bool raw )
+{
+   Item *i_which = ctx->param(0);
+   Item *i_key = ctx->param(1);
+   Item *i_data = ctx->param(2);
+   if(
+    !(i_which->isClass() || i_which->isString())
+    || !(i_key->isMemBuf() || i_key->isString())
+    || !(i_data->isMemBuf() || i_data->isString()) )
+   {
+       throw caller->paramError(__LINE__, SRC);
+   }
+
+   ModHash* mod = static_cast<ModHash*>(caller->module());
+   Class* hashCls;
+   if( i_which->isString() )
+   {
+      const String& name = *i_which->asString();
+      hashCls = mod->getClass(name);
+      if( hashCls == 0 )
+      {
+         throw caller->paramError("Hash \"" + name + "\" unknown", __LINE__, SRC);
+      }
+   }
+   else {
+      hashCls = static_cast<Class*>(i_which->asInst());
+   }
+
+   // first, get the 3 hash items to use
+   Mod::HashBase *hash[3] = {
+            static_cast<Mod::HashBase*>(hashCls->createInstance()),
+            static_cast<Mod::HashBase*>(hashCls->createInstance()),
+            static_cast<Mod::HashBase*>(hashCls->createInstance())
+   };
+
+   uint32 blocksize = hash[0]->GetBlockSize();
+   uint32 byteCount;
+
+   byte i_key_pad[MAX_USED_BLOCKSIZE];
+   byte o_key_pad[MAX_USED_BLOCKSIZE];
+
+   String *str = i_key->asString();
+   byteCount = str->size();
+
+   if(byteCount > blocksize) // key too large? hash it, so the resulting size will be equal to blocksize
+   {
+      hash[0]->UpdateData(*i_key->asString());
+      hash[0]->Finalize();
+      byte *digest = hash[0]->GetDigest();
+      uint32 digestSize = hash[0]->DigestSize();
+      memcpy(i_key_pad, digest, digestSize);
+      memcpy(o_key_pad, digest, digestSize);
+      if ( digestSize < blocksize )
+      {
+         memset(i_key_pad + digestSize, 0, blocksize - digestSize);
+         memset(o_key_pad + digestSize, 0, blocksize - digestSize);
+      }
+   }
+   else if(byteCount <= blocksize) // key too small? if the key has exactly blocksize bytes we can go this way too
+   {
+      // TODO: is the way the memory is accessed here ok? works on big endian? different char sizes in strings?
+      uint32 remain = blocksize - byteCount;
+      byte *memptr;
+      String *str = i_key->asString();
+      memptr = str->getRawStorage();
+      memcpy(i_key_pad, memptr, blocksize);
+      memcpy(o_key_pad, memptr, blocksize);
+      if(remain)
+      {
+         memset(i_key_pad + byteCount, 0, remain);
+         memset(o_key_pad + byteCount, 0, remain);
+      }
+    }
+
+    for(uint32 i = 0; i < blocksize; ++i)
+    {
+       o_key_pad[i] ^= 0x5C;
+       i_key_pad[i] ^= 0x36;
+    }
+
+    // inner hash
+    hash[1]->UpdateData(i_key_pad, blocksize);
+    hash[1]->UpdateData(*i_data->asString());
+    hash[1]->Finalize();
+
+    // outer hash
+    hash[2]->UpdateData(o_key_pad, blocksize);
+    hash[2]->UpdateData(hash[1]->GetDigest(), hash[1]->DigestSize());
+    hash[2]->Finalize();
+
+    uint32 size = hash[2]->DigestSize();
+    byte *digest = hash[2]->GetDigest();
+    String* result = new String;
+
+    if(raw)
+    {
+       result->adoptMemBuf( digest, size, 0 );
+       result->bufferize();
+    }
+    else
+    {
+       Mod::hashToString( *result, false, digest, size );
+    }
+
+    // cleanup
+    for(uint32 i = 0; i < 3; ++i)
+       hashCls->dispose(hash[i]);
+
+    ctx->returnFrame( FALCON_GC_HANDLE(result) );
 }
 
 /*#
 @function hmac
 @brief Provides HMAC authentication for a block of data
-@param raw If set to true, return a raw MemBuf instead of a string.
 @param which Hash that should be used
 @param key Secret authentication key
 @param data The data to be authenticated
-@return A lowercase hexadecimal string with the HMAC-result of the chosen hash if @i raw is false, or a 1-byte wide MemBuf if true.
-@raise ParamError in case @i which is a string and a hash with that name was not found; or if @i which does not evaluate to a hash object.
-@raise AccessError if @i which evaluates to a hash object that was already finalized.
+@return A lowercase hexadecimal string with the HMAC-result of the chosen hash.
+@raise ParamError in case @b which is a string and a hash with that name was not found; or if @b which does not evaluate to a hash object.
 
-Param @i key can be a String or a MemBuf.
-
-Param @i which can contain a String with the name of the hash, a hash class constructor, or a function that returns a useable hash object.
+Param @i which can contain a String with the name of the hash, a hash class constructor, or a function that returns a usable hash object.
 Unlike the hash() function, it is not possible to pass a hash object directly, because it would have to be used 3 times, which is not possible
 because of finalization.
 
@@ -230,289 +408,303 @@ In total, this function evaluates @i which 3 times, creating 3 hash objects inte
 
 @note Use getSupportedHashes() to check which hash names are supported.
 */
-FALCON_FUNC Func_hmac( ::Falcon::VMachine *vm )
+FALCON_DECLARE_FUNCTION(hmac, "which:S|Class,key:S,data:S")
+FALCON_DEFINE_FUNCTION_P1(hmac)
 {
-    Item *i_raw = vm->param(0);
-    Item *i_which = vm->param(1);
-    Item *i_key = vm->param(2);
-    Item *i_data = vm->param(3);
-    if( !(i_raw && i_which && i_key)
-     || !(i_which->isCallable() || i_which->isString())
-     || !(i_key->isMemBuf() || i_key->isString())
-     || !(i_data->isMemBuf() || i_data->isString()) )
-    {
-        throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
-            .origin( e_orig_mod ).extra( "B, X, X, [, X...]" ) );
-    }
+   internal_hmac(this, ctx, false);
+}
 
-    bool raw = i_raw->asBoolean();
+/*#
+@function hmac_r
+@brief Provides HMAC authentication for a block of data
+@param which Hash that should be used
+@param key Secret authentication key
+@param data The data to be authenticated
+@return A raw memory buffer string containing the required hash.
+@raise ParamError in case @b which is a string and a hash with that name was not found; or if @b which does not evaluate to a hash object.
 
-    // first, get the 3 hash items to use
-    Item hashItem[3];
-    bool ownCarrier[3] = { false, false, false };
-    Mod::HashCarrier<Mod::HashBase> *carrier[3] = { NULL, NULL, NULL };
-    Mod::HashBase *hash[3] = { NULL, NULL, NULL };
-    bool success = true;
-    for(uint32 i = 0; i < 3; ++i)
-    {
-        Item& itemRef = hashItem[i];
-        itemRef = *i_which;
-        while(itemRef.isCallable())
-        {
-            vm->callItemAtomic(itemRef, 0);
-            itemRef = vm->regA();
-        }
-        if(itemRef.isString())
-        {
-            carrier[i] = (Mod::HashCarrier<Mod::HashBase>*)(Mod::GetHashByName(itemRef.asString()));
-            ownCarrier[i] = true;
-        }
-        else if(itemRef.isObject())
-        {
-            CoreObject *co = itemRef.asObject();
-            if(co->derivedFrom("HashBase"))
-                carrier[i] = (Mod::HashCarrier<Mod::HashBase>*)(co->getUserData());
-        }
-        if(carrier[i])
-            hash[i] = carrier[i]->GetHash();
-        else
-            success = false;
-    }
+Param @i which can contain a String with the name of the hash, or a hash class.
 
-    if(success)
-    {
-        uint32 blocksize = hash[0]->GetBlockSize();
-        uint32 byteCount;
+In total, this function evaluates @i which 3 times, creating 3 hash objects internally.
 
-        byte i_key_pad[MAX_USED_BLOCKSIZE];
-        byte o_key_pad[MAX_USED_BLOCKSIZE];
-
-        if(i_key->isMemBuf())
-        {
-            MemBuf *buf = i_key->asMemBuf();
-            byteCount = buf->size();
-        }
-        else
-        {
-            String *str = i_key->asString();
-            byteCount = str->size();
-        }
-        
-        if(byteCount > blocksize) // key too large? hash it, so the resulting size will be equal to blocksize
-        {
-            if(i_key->isString())
-                hash[0]->UpdateData(*i_key->asString());
-            else
-                hash[0]->UpdateData(i_key->asMemBuf());
-            hash[0]->Finalize();
-            byte *digest = hash[0]->GetDigest();
-            uint32 digestSize = hash[0]->DigestSize();
-            memcpy(i_key_pad, digest, digestSize);
-            memcpy(o_key_pad, digest, digestSize);
-            if ( digestSize < blocksize )
-            {
-               memset(i_key_pad + digestSize, 0, blocksize - digestSize);
-               memset(o_key_pad + digestSize, 0, blocksize - digestSize);
-            }
-            
-        }
-        else if(byteCount <= blocksize) // key too small? if the key has exactly blocksize bytes we can go this way too
-        {
-            // TODO: is the way the memory is accessed here ok? works on big endian? different char sizes in strings?
-            uint32 remain = blocksize - byteCount;
-            byte *memptr;
-            if(i_key->isMemBuf()) // it's a MemBuf, copy into output buffers and pad with zeros
-            {
-                MemBuf *buf = i_key->asMemBuf();
-                memptr = buf->data();
-            }
-            else // it's a string, append zeros
-            {
-                String *str = i_key->asString();
-                memptr = str->getRawStorage();
-            }
-            memcpy(i_key_pad, memptr, blocksize);
-            memcpy(o_key_pad, memptr, blocksize);
-            if(remain)
-            {
-                memset(i_key_pad + byteCount, 0, remain);
-                memset(o_key_pad + byteCount, 0, remain);
-            }
-        }
-
-        for(uint32 i = 0; i < blocksize; ++i)
-        {
-            o_key_pad[i] ^= 0x5C;
-            i_key_pad[i] ^= 0x36;
-        }
-
-        // inner hash
-        hash[1]->UpdateData(i_key_pad, blocksize);
-        if(i_data->isString())
-            hash[1]->UpdateData(*i_data->asString());
-        else
-            hash[1]->UpdateData(i_data->asMemBuf());
-        hash[1]->Finalize();
-
-        // outer hash
-        hash[2]->UpdateData(o_key_pad, blocksize);
-        hash[2]->UpdateData(hash[1]->GetDigest(), hash[1]->DigestSize());
-        hash[2]->Finalize();
-
-        uint32 size = hash[2]->DigestSize();
-        byte *digest = hash[2]->GetDigest();
-
-        if(raw)
-        {
-            Falcon::MemBuf_1 *buf = new Falcon::MemBuf_1(size);
-            memcpy(buf->data(), digest, size);
-            vm->retval(buf);
-        }
-        else
-        {
-            vm->retval(Mod::ByteArrayToHex(digest, size));
-        }
-    }
-
-    // cleanup
-    for(uint32 i = 0; i < 3; ++i)
-        if(ownCarrier[i])
-            delete carrier[i];
-
-    if(!success)
-    {
-        throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
-            .origin( e_orig_mod ).extra( FAL_STR(hash_not_found) ) );
-    }
+@note Use getSupportedHashes() to check which hash names are supported.
+*/
+FALCON_DECLARE_FUNCTION(hmac_r, "which:S|Class,key:S,data:S")
+FALCON_DEFINE_FUNCTION_P1(hmac_r)
+{
+   internal_hmac(this, ctx, true);
 }
 
 
+//==============================================================================
+// Base Hash class handler
+//==============================================================================
 
-// updateItem is a helper function to process the individual items passed to update()
-void Hash_updateItem_internal(Item *what, Mod::HashBase *hash, ::Falcon::VMachine *vm, uint32 stackDepth)
+namespace CHash {
+
+/*#
+@method update Hash
+@brief Feeds data into the hash function.
+@param ...
+@raise AccessError if the hash is already finalized.
+@raise GenericError in case of a stack overflow. This can happen with self- or circular references inside objects.
+@return The object itself.
+
+This method accepts an @i arbitrary amount of parameters, each treated differently:
+- Strings are hashed with respect to their byte count (1, 2, or 4 byte strings) and endianess.
+- Arrays are traversed, each item being hashed.
+- Nil as parameter is always skipped, even if contained in a Sequence.- In all other cases, the parameter is converted to a string.
+- To hash integer values, use @b updateInt(), as it respects their memory layout. If put into @b update(), they will be hashed as SINGLE @b BYTE.
+- All parameters are hashed in the order they are passed.
+- Sequences can be nested.
+
+@note Multiple calls can be chained, e.g. hash.update(x).update(y).update(z)
+*/
+FALCON_DECLARE_FUNCTION(update, "...")
+FALCON_DEFINE_FUNCTION_P(update)
 {
-    if(stackDepth > 500) // TODO: is this value safe? does it require adjusting for other platforms/OSes?
+    Mod::HashBase *hash = static_cast<Mod::HashBase*>(ctx->self().asInst());
+    if(hash->IsFinalized())
     {
-        throw new Falcon::GenericError(
-            Falcon::ErrorParam( Falcon::e_stackof, __LINE__ )
-            .extra( "Too deep recursion, aborting" ) );
+        throw new Falcon::AccessError(
+            Falcon::ErrorParam( e_acc_forbidden, __LINE__ )
+            .extra("Already finalized hash"));
+    }
+    for(int32 i = 0; i < pCount; i++)
+    {
+        Item *what = ctx->param(i);
+        Hash_updateItem_internal(what, hash, ctx, 0);
     }
 
-    Item method;
-    if(what->isMemBuf())
-    {
-        hash->UpdateData(what->asMemBuf());
-    }
-    else if(what->isString())
-    {
-        hash->UpdateData(*what->asString());
-    }
-    else if(what->isArray())
-    {
-        CoreArray *arr = what->asArray();
-        for(uint32 i = 0; i < arr->length(); ++i)
-        {
-            Hash_updateItem_internal(&arr->at(i), hash, vm, stackDepth + 1);
-        }
-    }
-    else if(what->isDict())
-    {
-        CoreDict *dict = what->asDict();
-        Iterator iter(&dict->items());
-        while( iter.hasCurrent() )
-        {
-            Hash_updateItem_internal(&iter.getCurrent(), hash, vm, stackDepth + 1);
-            iter.next();
-        }
-    }
-    else if(what->isOfClass("List"))
-    {
-        ItemList *li = dyncast<ItemList *>( what->asObject()->getSequence() );
-        Iterator iter(li);
-        while( iter.hasCurrent() )
-        {
-            Hash_updateItem_internal(&iter.getCurrent(), hash, vm, stackDepth + 1);
-            iter.next();
-        }
-    }
-    // skip nil, hashing it as string "Nil" would be useless and error-prone
-    else if(what->isNil())
-    {
-        return;
-    }
-    else if(what->isObject() && what->asObject()->getMethod("toMemBuf", method) && method.isCallable())
-    {
-        vm->callItemAtomic(method, 0);
-        Item mb = vm->regA();
-        // whatever we got as result, hash it. it does not necessarily have to be a MemBuf for this to work.
-        Hash_updateItem_internal(&mb, hash, vm, stackDepth + 1);
-    }
-    /*else if(what->isOfClass("MPZ")) // direct conversion from MPZ to hash -- as soon as MPZ provide toMemBuf, this can be dropped
-    {
-        Item mpz;
-        // involve the VM to convert an MPZ to string in base 16
-        // and then convert that into the individual bytes beeing hashed (backwards, to represent the original number)
-        // i have checked it and the way this is done here is *correct*!
-        if(what->asObject()->getMethod("toString", mpz))
-        {
-            vm->pushParameter(16);
-            vm->callItemAtomic(mpz, 1);
-            String *hexstr = vm->regA().asString();
-            if(uint32 len = hexstr->length())
-            {
-                char tmp[3];
-                tmp[2] = 0;
-                uint32 maxlen = (len & 1) ? len - 1 : len; // skip leftmost byte if string length is uneven
-                byte b;
+    ctx->returnFrame(ctx->self());
+}
 
-                for(uint32 i = 0 ; i < maxlen ; i += 2)
-                {
-                    tmp[0] = hexstr->getCharAt((len - 1) - (i + 1));
-                    tmp[1] = hexstr->getCharAt((len - 1) - i);
-                    b = (byte)strtoul(tmp, NULL, 16); // converting max. 0xFF, this is safe
-                    hash->UpdateData(&b, 1);
-                }
-                if(len & 1) // something remaining? must be treated as if it was prepended by '0'
-                {
-                    tmp[0] = hexstr->getCharAt(0);
-                    tmp[1] = 0;
-                    b = (byte)strtoul(tmp, NULL, 16);
-                    hash->UpdateData(&b, 1);
-                }
-            }
-        }
-        else
-        {
-            throw new Falcon::AccessError(
-                Falcon::ErrorParam( Falcon::e_miss_iface, __LINE__ )
-                .extra( "MPZ does not provide toString, blame OmniMancer" ) );
-        }
-    }*/
-    else // fallback - convert to string if nothing else works
-    {
-        String str;
-        what->toString( str );
-        hash->UpdateData( str );
+/*#
+@method updateInt HashBase
+@brief Hashes an integer of a specified byte length.
+@param num The integer value to hash.
+@param bytes The amount of bytes to take.
+@raise ParamError if @b num is not a number or @b bytes is not in 1..8
+@raise AccessError if the hash is already finalized.
+@return The object itself.
+
+This method can be used to avoid creating a MemBuf to hash integer values.
+It supports 1 up to 8 bytes (uint64).
+
+All integers are internally converted to little-endian. Floating-point numbers are automatically converted to Integers, all other types raise an error.
+
+@note Multiple calls can be chained, e.g. hash.updateInt(x).updateInt(y).updateInt(z)
+*/
+FALCON_DECLARE_FUNCTION(updateInt, "...")
+FALCON_DEFINE_FUNCTION_P(updateInt)
+{
+   Mod::HashBase *hash = static_cast<Mod::HashBase*>(ctx->self().asInst());
+   if(hash->IsFinalized())
+   {
+        throw new Falcon::AccessError(
+            Falcon::ErrorParam( e_acc_forbidden, __LINE__ )
+            .extra("Already finalized hash"));
     }
+    if( pCount < 2)
+    {
+        throw new Falcon::ParamError(
+            Falcon::ErrorParam( Falcon::e_inv_params, __LINE__ )
+            .extra( "N, N" ) );
+    }
+    uint64 num = ctx->param(0)->forceIntegerEx();
+    uint8 bytes = (uint8)ctx->param(1)->forceIntegerEx();
+    if( !(bytes && bytes <= 8) )
+    {
+        throw new Falcon::ParamError(
+            Falcon::ErrorParam( Falcon::e_inv_params, __LINE__ )
+            .extra( "bytes must be in 1..8" ) );
+    }
+    num = endianInt64(num);
+    hash->UpdateData((byte*)&num, bytes);
+
+    ctx->returnFrame(ctx->self());
 }
 
 
-ModHash::ModHash():
-         Module("hash")
+/*#
+@method finalize Hash
+@brief Finalizes the hash.
+@return this same object.
+*/
+FALCON_DECLARE_FUNCTION(finalize, "")
+FALCON_DEFINE_FUNCTION_P1(finalize)
 {
-   m_baseHashCls = new Falcon::Mod::HashBase;
-   addMantra(m_baseHashCls);
+    Mod::HashBase *hash = static_cast<Mod::HashBase*>(ctx->self().asInst());
+    if(! hash->IsFinalized())
+    {
+       hash->Finalize();
+    }
+    ctx->returnFrame(ctx->self());
 }
 
 
-ModHash::~ModHash()
+/*#
+@property finalized HashBase
+@brief Checks if a hash is finalized.
+
+When a result from a hash is obtained, the hash will be finalized, making it impossible to add additional data.
+This method can be used if the finalization state of a hash is unknown.
+*/
+static void get_finalized( const Class*, const String&, void* instance, Item& target)
 {
+    Mod::HashBase* hb = static_cast<Mod::HashBase*>(instance);
+    target.setBoolean(hb->IsFinalized());
 }
 
+/*#
+@property bytes HashBase
+@brief Returns the byte length of the hash result.
+
+The amount of returned bytes is specific for each hash algorithm.
+*/
+static void get_bytes( const Class*, const String&, void* instance, Item& target)
+{
+    Mod::HashBase* hb = static_cast<Mod::HashBase*>(instance);
+    target.setInteger(hb->DigestSize());
+}
+
+
+/*#
+@property bits HashBase
+@brief Returns the bit length of the hash result.
+
+The bit length of a hash function is a rough indicator for its safety - long hashes take exponentially longer to find a collision,
+or to break them.
+
+@note This method is a shortcut for @b bytes() * 8
+*/
+static void get_bits( const Class*, const String&, void* instance, Item& target)
+{
+    Mod::HashBase* hb = static_cast<Mod::HashBase*>(instance);
+    target.setInteger(hb->DigestSize()*8);
+}
+
+
+static void internal_toString( Function*, VMContext* ctx, bool isRaw, bool isUpper )
+{
+   Mod::HashBase *hash = static_cast<Mod::HashBase*>(ctx->self().asInst());
+
+   if(!hash->IsFinalized())
+   {
+      hash->Finalize();
+   }
+
+   uint32 size = hash->DigestSize();
+   String *buf = new String(size);
+   if(byte *digest = hash->GetDigest())
+   {
+      if( isRaw )
+      {
+         buf->adoptMemBuf(digest, size, 0 );
+         buf->bufferize();
+      }
+      else
+      {
+         Mod::hashToString(*buf, isUpper, digest, size );
+      }
+      ctx->returnFrame( FALCON_GC_HANDLE(buf) );
+   }
+   else
+   {
+      throw new Falcon::AccessError(
+         Falcon::ErrorParam( e_acc_forbidden, __LINE__ )
+         .extra("Hash could not be finalized"));
+   }
+}
+
+/*#
+@method toMemBuf HashBase
+@brief Returns the hash result in a memory buffer string.
+@return The hash result, in a 1-byte wide memory buffer string.
+
+@note Calling this method will finalize the hash.
+*/
+FALCON_DECLARE_FUNCTION(toMemBuf, "")
+FALCON_DEFINE_FUNCTION_P1(toMemBuf)
+{
+   internal_toString( this, ctx, true, false );
+}
+
+
+/*#
+@method toString HashBase
+@brief Returns the hash result as a hexadecimal string.
+@return The hash result, as a lowercased hexadecimal string.
+
+@note Calling this method will finalize the hash.
+*/
+FALCON_DECLARE_FUNCTION(toString, "" )
+FALCON_DEFINE_FUNCTION_P1(toString)
+{
+   internal_toString( this, ctx, false, false );
+}
+
+/*#
+@method toString HashBase
+@brief Returns the hash result as a uppercase hexadecimal string.
+@return The hash result, as a uppercase hexadecimal string.
+
+@note Calling this method will finalize the hash.
+*/
+FALCON_DECLARE_FUNCTION(toUString, "" )
+FALCON_DEFINE_FUNCTION_P1(toUString)
+{
+   internal_toString( this, ctx, false, true );
+}
+
+
+/*#
+@method toInt HashBase
+@brief Returns the result as an Integer value.
+@return The checksum result, as an Integer.
+
+Converts up to 8 bytes from the actual hash result to an integer value and returns it, depending on its length.
+If the hash is longer, the 8 lowest bytes are taken.
+
+@note Calling this method will finalize the hash.
+@note The returned integer is in native endianness.
+*/
+FALCON_DECLARE_FUNCTION(toInt, "" )
+FALCON_DEFINE_FUNCTION_P1(toInt)
+{
+   Mod::HashBase *hash = static_cast<Mod::HashBase*>(ctx->self().asInst());
+
+   if(!hash->IsFinalized())
+   {
+      hash->Finalize();
+   }
+
+   ctx->returnFrame( Item().setInteger(hash->AsInt()) );
+}
+
+}
 
 ClassHash::ClassHash():
          Class("Hash")
-{}
+{
+   addProperty("finalized", &CHash::get_finalized );
+   addProperty("bytes", &CHash::get_bytes );
+   addProperty("bits", &CHash::get_bits );
+
+   addMethod( new CHash::Function_update );
+   addMethod( new CHash::Function_updateInt );
+   addMethod( new CHash::Function_toInt );
+   addMethod( new CHash::Function_toString );
+   addMethod( new CHash::Function_toUString );
+   addMethod( new CHash::Function_toMemBuf );
+   addMethod( new CHash::Function_finalize );
+}
+
+ClassHash::ClassHash( const String& name, Class* parent ):
+         Class(name)
+{
+   setParent(parent);
+}
 
 ClassHash::~ClassHash()
 {}
@@ -529,26 +721,26 @@ void* ClassHash::clone( void* ) const
 
 void ClassHash::dispose( void* instance ) const
 {
-   Mod::HashBase* hb = static_cast<Mod::HashBase*>(hb);
+   Mod::HashBase* hb = static_cast<Mod::HashBase*>(instance);
    delete hb;
 }
 
 void ClassHash::gcMarkInstance( void* instance, uint32 mark ) const
 {
-   Mod::HashBase* hb = static_cast<Mod::HashBase*>(hb);
+   Mod::HashBase* hb = static_cast<Mod::HashBase*>(instance);
    hb->gcMark(mark);
 }
 
 bool ClassHash::gcCheckInstance( void* instance, uint32 mark ) const
 {
-   Mod::HashBase* hb = static_cast<Mod::HashBase*>(hb);
+   Mod::HashBase* hb = static_cast<Mod::HashBase*>(instance);
    return hb->currentMark() >= mark;
 }
 
 
 void ClassHash::store( VMContext* , DataWriter* stream, void* instance ) const
 {
-   Mod::HashBase* hb = static_cast<Mod::HashBase*>(hb);
+   Mod::HashBase* hb = static_cast<Mod::HashBase*>(instance);
    hb->store( stream );
 }
 
@@ -570,7 +762,73 @@ void ClassHash::restore( VMContext* ctx, DataReader* stream ) const
 
 
 //==========================================================================================
+// Class handlers -- as they're similar, we use macros
+//==========================================================================================
+/*#
+@function crc32
+@ingroup checksums
+@brief Convenience function that calculates a 32 bits long CRC32 checksum
+@return A lowercase hexadecimal string with the crc32 checksum.
 
+This function takes an arbitrary amount of parameters. See HashBase.update() for details.
+
+The semantics are equal to:
+@code
+    function crc32(...)
+        hash = CRC32()
+        hash.update(...)
+        hash.finalize()
+        return hash.toString()
+    end
+@endcode
+
+@note This is a shortcut function that does neither require creation of a CRC32 object, nor finalization.
+
+@see CRC32.update
+*/
+
+// documentation for similar hash shortcut functions follows at the end of hash_ext.cpp
+
+template <class HASH> FALCON_FUNC Func_hashSimple( ::Falcon::VMContext *ctx, int32 pCount )
+{
+    HASH hash(0);
+
+    for(int32 i = 0; i < pCount; i++)
+    {
+        Item *what = ctx->param(i);
+        Hash_updateItem_internal(what, &hash, ctx, 0);
+    }
+
+    hash.Finalize();
+    String* str = new String;
+    Mod::hashToString(*str, false, hash.GetDigest(), hash.DigestSize());
+    ctx->retval(FALCON_GC_HANDLE(str));
+}
+
+
+#define HASH_CLASS_HANDLER(__name__) \
+         class Class##__name__: public ClassHash\
+         {\
+         public:\
+            Class##__name__(Class* base);\
+            virtual ~Class##__name__();\
+            virtual void* createInstance() const;\
+            virtual void* clone( void* instance ) const;\
+         };\
+            Class##__name__::Class##__name__( Class* base ):\
+            ClassHash( #__name__, base )\
+         {}\
+         void* Class##__name__::createInstance() const\
+         {\
+            return new Mod::__name__(this);\
+         }\
+         void* Class##__name__::clone( void* instance ) const\
+         {\
+            Mod::__name__* inst = static_cast<Mod::__name__*>(instance);\
+            return new Mod::__name__(*inst);\
+         }\
+         template void Func_hashSimple<Mod::__name__>( ::Falcon::VMContext *ctx, int32 pCount );
+/*
 class ClassCRC32 : public ClassHash
 {
 public:
@@ -581,181 +839,94 @@ public:
    virtual void* clone( void* instance ) const;
 };
 
+ClassCRC32::ClassCRC32( Class* base ):
+   ClassHash( "CRC32", base )
+{}
 
-class ClassAdler32 : public ClassHash
+void* ClassCRC32::createInstance() const
 {
-public:
-   ClassAdler32(Class* base);
-   virtual ~ClassAdler32();
+   return new Mod::CRC32(this);
+}
 
-   virtual void* createInstance() const;
-   virtual void* clone( void* instance ) const;
-};
-
-
-class ClassSHA1Hash : public ClassHash
+void* clone( void* instance ) const
 {
-public:
-   ClassSHA1Hash(Class* base);
-   virtual ~ClassSHA1Hash();
+   Mod::CRC32* inst = static_cast<Mod::CRC32>(instance);
+   return new Mod::CRC32(*inst);
+}
+*/
 
-   virtual void* createInstance() const;
-   virtual void* clone( void* instance ) const;
-};
+HASH_CLASS_HANDLER(CRC32)
+HASH_CLASS_HANDLER(Adler32)
+
+HASH_CLASS_HANDLER(SHA1Hash)
+HASH_CLASS_HANDLER(SHA224Hash)
+HASH_CLASS_HANDLER(SHA256Hash)
+HASH_CLASS_HANDLER(SHA384Hash)
+HASH_CLASS_HANDLER(SHA512Hash)
+
+HASH_CLASS_HANDLER(MD2Hash)
+HASH_CLASS_HANDLER(MD4Hash)
+HASH_CLASS_HANDLER(MD5Hash)
+
+HASH_CLASS_HANDLER(WhirlpoolHash)
+HASH_CLASS_HANDLER(TigerHash)
+
+HASH_CLASS_HANDLER(RIPEMD128Hash)
+HASH_CLASS_HANDLER(RIPEMD160Hash)
+HASH_CLASS_HANDLER(RIPEMD256Hash)
+HASH_CLASS_HANDLER(RIPEMD320Hash)
 
 
-class ClassSHA224Hash : public ClassHash
+
+ModHash::ModHash():
+         Module("hash")
 {
-public:
-   ClassSHA224Hash(Class* base);
-   virtual ~ClassSHA224Hash();
+   m_baseHashCls = new ClassHash;
+   addMantra(m_baseHashCls);
 
-   virtual void* createInstance() const;
-   virtual void* clone( void* instance ) const;
-};
+   addMantra( new ClassCRC32(m_baseHashCls) );
+   addMantra( new ClassAdler32(m_baseHashCls) );
+   addMantra( new ClassSHA1Hash(m_baseHashCls) );
+   addMantra( new ClassSHA224Hash(m_baseHashCls) );
+   addMantra( new ClassSHA256Hash(m_baseHashCls) );
+   addMantra( new ClassSHA384Hash(m_baseHashCls) );
+   addMantra( new ClassSHA512Hash(m_baseHashCls) );
+   addMantra( new ClassMD2Hash(m_baseHashCls) );
+   addMantra( new ClassMD4Hash(m_baseHashCls) );
+   addMantra( new ClassMD5Hash(m_baseHashCls) );
+   addMantra( new ClassTigerHash(m_baseHashCls) );
+   addMantra( new ClassWhirlpoolHash(m_baseHashCls) );
+   addMantra( new ClassRIPEMD128Hash(m_baseHashCls) );
+   addMantra( new ClassRIPEMD160Hash(m_baseHashCls) );
+   addMantra( new ClassRIPEMD256Hash(m_baseHashCls) );
+   addMantra( new ClassRIPEMD320Hash(m_baseHashCls) );
+
+   addMantra( new ExtFunc("crc32", "", &Func_hashSimple<Mod::CRC32>, this ) );
+   addMantra( new ExtFunc("adler32", "", &Func_hashSimple<Mod::Adler32>, this ) );
+   addMantra( new ExtFunc("sha1", "", &Func_hashSimple<Mod::SHA1Hash>, this ) );
+   addMantra( new ExtFunc("sha224", "", &Func_hashSimple<Mod::SHA224Hash>, this ) );
+   addMantra( new ExtFunc("sha256", "", &Func_hashSimple<Mod::SHA256Hash>, this ) );
+   addMantra( new ExtFunc("sha348", "", &Func_hashSimple<Mod::SHA384Hash>, this ) );
+   addMantra( new ExtFunc("sha512", "", &Func_hashSimple<Mod::SHA512Hash>, this ) );
+   addMantra( new ExtFunc("md2", "", &Func_hashSimple<Mod::MD2Hash>, this ) );
+   addMantra( new ExtFunc("md4", "", &Func_hashSimple<Mod::MD4Hash>, this ) );
+   addMantra( new ExtFunc("md5", "", &Func_hashSimple<Mod::MD5Hash>, this ) );
+   addMantra( new ExtFunc("whirlpool", "", &Func_hashSimple<Mod::WhirlpoolHash>, this ) );
+   addMantra( new ExtFunc("tiger", "", &Func_hashSimple<Mod::TigerHash>, this ) );
+   addMantra( new ExtFunc("ripmed128", "", &Func_hashSimple<Mod::RIPEMD128Hash>, this ) );
+   addMantra( new ExtFunc("ripmed160", "", &Func_hashSimple<Mod::RIPEMD160Hash>, this ) );
+   addMantra( new ExtFunc("ripmed256", "", &Func_hashSimple<Mod::RIPEMD256Hash>, this ) );
+   addMantra( new ExtFunc("ripmed320", "", &Func_hashSimple<Mod::RIPEMD320Hash>, this ) );
+
+   addMantra( new ExtFunc("getSupportedHashes", "", &Func_GetSupportedHashes, this ) );
+}
 
 
-class ClassSHA256Hash : public ClassHash
+ModHash::~ModHash()
 {
-public:
-   ClassSHA256Hash(Class* base);
-   virtual ~ClassSHA256Hash();
-
-   virtual void* createInstance() const;
-   virtual void* clone( void* instance ) const;
-};
+}
 
 
-class ClassSHA384Hash : public ClassHash
-{
-public:
-   ClassSHA384Hash(Class* base);
-   virtual ~ClassSHA384Hash();
-
-   virtual void* createInstance() const;
-   virtual void* clone( void* instance ) const;
-};
-
-
-class ClassSHA512Hash : public ClassHash
-{
-public:
-   ClassSHA512Hash(Class* base);
-   virtual ~ClassSHA512Hash();
-
-   virtual void* createInstance() const;
-   virtual void* clone( void* instance ) const;
-};
-
-
-class ClassMD2Hash : public ClassHash
-{
-public:
-   ClassMD2Hash(Class* base);
-   virtual ~ClassMD2Hash();
-
-   virtual void* createInstance() const;
-   virtual void* clone( void* instance ) const;
-};
-
-
-class ClassMD4Hash : public ClassHash
-{
-public:
-   ClassMD4Hash(Class* base);
-   virtual ~ClassMD4Hash();
-
-   virtual void* createInstance() const;
-   virtual void* clone( void* instance ) const;
-};
-
-
-class ClassMD5Hash : public ClassHash
-{
-public:
-   ClassMD5Hash(Class* base);
-   virtual ~ClassMD5Hash();
-
-   virtual void* createInstance() const;
-   virtual void* clone( void* instance ) const;
-};
-
-
-class ClassWhirlpoolHash : public ClassHash
-{
-public:
-   ClassWhirlpoolHash(Class* base);
-   virtual ~ClassWhirlpoolHash();
-
-   virtual void* createInstance() const;
-   virtual void* clone( void* instance ) const;
-};
-
-
-class ClassTigerHash : public ClassHash
-{
-public:
-   ClassTigerHash(Class* base);
-   virtual ~ClassTigerHash();
-
-   virtual void* createInstance() const;
-   virtual void* clone( void* instance ) const;
-};
-
-
-class ClassRIPEMDHashBase : public ClassHash
-{
-public:
-   ClassRIPEMDHashBase(Class* base);
-   virtual ~ClassRIPEMDHashBase();
-
-   virtual void* createInstance() const;
-   virtual void* clone( void* instance ) const;
-};
-
-
-class ClassRIPEMD128Hash : public ClassHash
-{
-public:
-   ClassRIPEMD128Hash(Class* base);
-   virtual ~ClassRIPEMD128Hash();
-
-   virtual void* createInstance() const;
-   virtual void* clone( void* instance ) const;
-};
-
-
-class ClassRIPEMD160Hash : public ClassHash
-{
-public:
-   ClassRIPEMD160Hash(Class* base);
-   virtual ~ClassRIPEMD160Hash();
-
-   virtual void* createInstance() const;
-   virtual void* clone( void* instance ) const;
-};
-
-
-class ClassRIPEMD256Hash : public ClassHash
-{
-public:
-   ClassRIPEMD256Hash(Class* base);
-   virtual ~ClassRIPEMD256Hash();
-
-   virtual void* createInstance() const;
-   virtual void* clone( void* instance ) const;
-};
-
-
-class ClassRIPEMD320Hash : public ClassHash
-{
-public:
-   ClassRIPEMD320Hash(Class* base);
-   virtual ~ClassRIPEMD320Hash();
-
-   virtual void* createInstance() const;
-   virtual void* clone( void* instance ) const;
-};
 
 }
 }

@@ -137,6 +137,16 @@ Error* Function::paramError(int line, const char* place, bool methodic ) const
    
 }
 
+Error* Function::paramError( const String& extra, int line, const char* place ) const
+{
+   String placeName = place == 0 ? (m_module == 0 ? "" : m_module->name() ) : place;
+   placeName.bufferize();
+   return new ParamError(
+           ErrorParam(e_inv_params, line == 0 ? m_sr.line(): line, placeName)
+           .extra( extra ) );
+
+}
+
 
 String Function::methodicSignature() const
 {

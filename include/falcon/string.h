@@ -557,12 +557,10 @@ public:
    /** Adopt a pre-allocated dynamic buffer as non-textual content.
      This function takes the content of the given buffer and sets it as the
      internal storage of the string. The buffer is considered dynamically
-     allocated with memAlloc(), and will be destroyed with memFree().
+     allocated with malloc(), and will be destroyed with free().
 
      This string is internally transformed in a raw buffer of non-text data;
      any previous content is destroyed.
-
-     String is considered a single byte char width string.
 
      \param buffer the buffer to be adopted
      \param size the size of the string contained in the buffer (in bytes)

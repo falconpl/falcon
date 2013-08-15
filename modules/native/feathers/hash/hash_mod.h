@@ -74,6 +74,8 @@ class DataReader;
 class Class;
 
 namespace Mod {
+    // utility function
+    void hashToString( String& target, bool bCase, byte* buffer, uint32 size );
 
     class HashBase
     {
@@ -84,7 +86,7 @@ namespace Mod {
         inline bool IsFinalized(void) { return _finalized; }
 
         // each hashing algorithm must overload DigestSize(), UpdateData(), Finalize(), and GetDigest()
-        virtual void UpdateData(const byte *ptr, uint32 size) {}
+        virtual void UpdateData(const byte *, uint32) {}
         virtual void Finalize(void) {}
         virtual uint32 DigestSize(void) { return 0; }
 
@@ -102,26 +104,26 @@ namespace Mod {
         void gcMark( uint32 m ) {m_gcMark = m; }
         uint32 currentMark() const { return m_gcMark; }
 
-        Class* handler() const { return m_handler; }
+        const Class* handler() const { return m_handler; }
 
         virtual void store( DataWriter* stream) const;
         virtual void restore( DataReader* stream );
 
     protected:
         bool _finalized;
-        HashBase( Class* hldr );
+        HashBase( const Class* hldr );
         HashBase( const HashBase& other );
 
     private:
         uint32 m_gcMark;
-        Class* m_handler;
+        const Class* m_handler;
     };
 
 
     class CRC32 : public HashBase
     {
     public:
-        CRC32(Class* hldr);
+        CRC32(const Class* hldr);
         CRC32(const CRC32 &other);
         virtual ~CRC32();
         void UpdateData(const byte *ptr, uint32 size);
@@ -142,7 +144,7 @@ namespace Mod {
     class Adler32 : public HashBase
     {
     public:
-        Adler32(Class* hldr);
+        Adler32(const Class* hldr);
         Adler32(const Adler32& other);
         virtual ~Adler32();
         void UpdateData(const byte *ptr, uint32 size);
@@ -161,7 +163,7 @@ namespace Mod {
     class SHA1Hash : public HashBase
     {
     public:
-        SHA1Hash(Class* hldr);
+        SHA1Hash(const Class* hldr);
         SHA1Hash(const SHA1Hash& other);
         virtual ~SHA1Hash();
         void UpdateData(const byte *ptr, uint32 size);
@@ -179,7 +181,7 @@ namespace Mod {
     class SHA224Hash : public HashBase
     {
     public:
-        SHA224Hash(Class* hldr);
+        SHA224Hash(const Class* hldr);
         SHA224Hash(const SHA224Hash& other);
         virtual ~SHA224Hash();
         void UpdateData(const byte *ptr, uint32 size);
@@ -197,7 +199,7 @@ namespace Mod {
     class SHA256Hash : public HashBase
     {
     public:
-        SHA256Hash(Class* hldr);
+        SHA256Hash(const Class* hldr);
         SHA256Hash(const SHA256Hash &other);
         virtual ~SHA256Hash();
         void UpdateData(const byte *ptr, uint32 size);
@@ -215,7 +217,7 @@ namespace Mod {
     class SHA384Hash : public HashBase
     {
     public:
-        SHA384Hash(Class* hldr);
+        SHA384Hash(const Class* hldr);
         SHA384Hash( const SHA384Hash& other );
         virtual ~SHA384Hash();
         void UpdateData(const byte *ptr, uint32 size);
@@ -234,7 +236,7 @@ namespace Mod {
     class SHA512Hash : public HashBase
     {
     public:
-        SHA512Hash(Class* hldr);
+        SHA512Hash(const Class* hldr);
         SHA512Hash( const SHA512Hash& other );
         virtual ~SHA512Hash();
         void UpdateData(const byte *ptr, uint32 size);
@@ -253,7 +255,7 @@ namespace Mod {
     class MD2Hash : public HashBase
     {
     public:
-        MD2Hash(Class* hldr);
+        MD2Hash(const Class* hldr);
         MD2Hash( const MD2Hash& other );
         virtual ~MD2Hash();
         void UpdateData(const byte *ptr, uint32 size);
@@ -271,7 +273,7 @@ namespace Mod {
     class MD4Hash : public HashBase
     {
     public:
-        MD4Hash(Class* hldr);
+        MD4Hash(const Class* hldr);
         MD4Hash(const MD4Hash& other);
         virtual ~MD4Hash();
         void UpdateData(const byte *ptr, uint32 size);
@@ -289,7 +291,7 @@ namespace Mod {
     class MD5Hash : public HashBase
     {
     public:
-        MD5Hash(Class* hldr);
+        MD5Hash(const Class* hldr);
         MD5Hash( const MD5Hash& other );
         virtual ~MD5Hash();
         void UpdateData(const byte *ptr, uint32 size);
@@ -307,7 +309,7 @@ namespace Mod {
     class WhirlpoolHash : public HashBase
     {
     public:
-        WhirlpoolHash(Class* hldr);
+        WhirlpoolHash(const Class* hldr);
         WhirlpoolHash(const WhirlpoolHash& other);
         virtual ~WhirlpoolHash();
         void UpdateData(const byte *ptr, uint32 size);
@@ -325,7 +327,7 @@ namespace Mod {
     class TigerHash : public HashBase
     {
     public:
-        TigerHash(Class* hldr);
+        TigerHash(const Class* hldr);
         TigerHash(const TigerHash& other);
         virtual ~TigerHash();
         void UpdateData(const byte *ptr, uint32 size);
@@ -353,7 +355,7 @@ namespace Mod {
         virtual void restore( DataReader* stream );
 
     protected:
-        RIPEMDHashBase(Class* hldr);
+        RIPEMDHashBase(const Class* hldr);
         RIPEMDHashBase( const RIPEMDHashBase& other );
 
         ripemd_ctx _ctx;
@@ -363,7 +365,7 @@ namespace Mod {
     class RIPEMD128Hash : public RIPEMDHashBase
     {
     public:
-        RIPEMD128Hash(Class* hldr);
+        RIPEMD128Hash(const Class* hldr);
         RIPEMD128Hash( const RIPEMD128Hash& other );
         virtual ~RIPEMD128Hash();
         uint32 DigestSize(void) { return RIPEMD128_DIGEST_LENGTH; }
@@ -373,7 +375,7 @@ namespace Mod {
     class RIPEMD160Hash : public RIPEMDHashBase
     {
     public:
-        RIPEMD160Hash(Class* hldr);
+        RIPEMD160Hash(const Class* hldr);
         RIPEMD160Hash(const RIPEMD160Hash& other);
         virtual ~RIPEMD160Hash();
         uint32 DigestSize(void) { return RIPEMD160_DIGEST_LENGTH; }
@@ -382,7 +384,7 @@ namespace Mod {
     class RIPEMD256Hash : public RIPEMDHashBase
     {
     public:
-        RIPEMD256Hash(Class* hldr);
+        RIPEMD256Hash(const Class* hldr);
         RIPEMD256Hash( const RIPEMD256Hash& other );
         virtual ~RIPEMD256Hash();
         uint32 DigestSize(void) { return RIPEMD256_DIGEST_LENGTH; }
@@ -391,7 +393,7 @@ namespace Mod {
     class RIPEMD320Hash : public RIPEMDHashBase
     {
     public:
-        RIPEMD320Hash(Class* hldr);
+        RIPEMD320Hash(const Class* hldr);
         RIPEMD320Hash( const RIPEMD320Hash& other );
         virtual ~RIPEMD320Hash();
         uint32 DigestSize(void) { return RIPEMD320_DIGEST_LENGTH; }

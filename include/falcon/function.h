@@ -117,6 +117,7 @@ public:
    String methodicSignature() const;
 
    Error* paramError( int line = 0, const char* modName = 0, bool methodic=false ) const;
+   Error* paramError( const String& extra, int line = 0, const char* modName = 0 ) const;
 
    /** Executes the call.
     \param ctx The Virtual Machine context on which the function is executed.

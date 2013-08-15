@@ -37,6 +37,7 @@
 #include <falcon/autocstring.h>
 #include <falcon/datawriter.h>
 #include <falcon/datareader.h>
+#include <falcon/common.h>
 #include <string.h>
 #include "hash_mod.h"
 
@@ -44,7 +45,45 @@
 namespace Falcon {
 namespace Mod {
 
-HashBase::HashBase( Class* cls ):
+inline uint32 hexDigitUpper( byte b )
+{
+   return b < 10 ? '0' + b : 'A' + (b-10);
+}
+
+inline uint32 hexDigitLower( byte b )
+{
+   return b < 10 ? '0' + b : 'a' + (b-10);
+}
+
+void hashToString( String& target, bool bCase, byte* buffer, uint32 size )
+{
+   target.size(0);
+   byte* end = buffer + size;
+   if( bCase )
+   {
+      for(; buffer != end ; ++buffer )
+      {
+         byte b = *buffer;
+         uint32 chr = hexDigitUpper( b & 0xf0 >> 4 );
+         target.append( chr );
+         chr = hexDigitUpper( b & 0xf );
+         target.append( chr );
+      }
+   }
+   else
+   {
+      for(; buffer != end ; ++buffer )
+      {
+         byte b = *buffer;
+         uint32 chr = hexDigitLower( b & 0xf0 >> 4 );
+         target.append( chr );
+         chr = hexDigitLower( b & 0xf );
+         target.append( chr );
+      }
+   }
+}
+
+HashBase::HashBase( const Class* cls ):
          _finalized(false),
          m_gcMark(0),
          m_handler(cls)
@@ -103,7 +142,7 @@ uint64 HashBase::AsInt(void)
 
 uint32 CRC32::_crcTab[256];
 
-CRC32::CRC32(Class* cls):
+CRC32::CRC32(const Class* cls):
       HashBase(cls),
       _crc(0xFFFFFFFF)
 {
@@ -182,7 +221,7 @@ void CRC32::UpdateData( const byte *ptr, uint32 size)
 //=========================================================================================
 
 
-Adler32::Adler32(Class* hdlr) :
+Adler32::Adler32(const Class* hdlr) :
          HashBase(hdlr),
          _adler(1)
 {
@@ -240,7 +279,7 @@ void Adler32::UpdateData( const byte *ptr, uint32 size)
 // SHA1Hash
 //=========================================================================================
 
-SHA1Hash::SHA1Hash( Class* hdlr ):
+SHA1Hash::SHA1Hash( const Class* hdlr ):
          HashBase(hdlr)
 {
     sha_init(&_ctx);
@@ -319,7 +358,7 @@ void SHA1Hash::Finalize(void)
 //=========================================================================================
 
 
-SHA224Hash::SHA224Hash( Class* hdlr ):
+SHA224Hash::SHA224Hash( const Class* hdlr ):
          HashBase(hdlr)
 {
     sha224_init(&_ctx);
@@ -394,7 +433,7 @@ void SHA224Hash::Finalize(void)
 //=========================================================================================
 
 
-SHA256Hash::SHA256Hash( Class* hdlr ):
+SHA256Hash::SHA256Hash( const Class* hdlr ):
          HashBase(hdlr)
 {
     sha256_init(&_ctx);
@@ -472,7 +511,7 @@ void SHA256Hash::Finalize(void)
 //=========================================================================================
 
 
-SHA384Hash::SHA384Hash( Class* hdlr ):
+SHA384Hash::SHA384Hash( const Class* hdlr ):
          HashBase(hdlr)
 {
     sha384_init(&_ctx);
@@ -550,7 +589,7 @@ void SHA384Hash::Finalize(void)
 // SHA384Hash
 //=========================================================================================
 
-SHA512Hash::SHA512Hash( Class* hdlr ):
+SHA512Hash::SHA512Hash( const Class* hdlr ):
     HashBase(hdlr)
 {
     sha512_init(&_ctx);
@@ -627,7 +666,7 @@ void SHA512Hash::Finalize(void)
 // MD2Hash
 //=========================================================================================
 
-MD2Hash::MD2Hash(Class* hdlr):
+MD2Hash::MD2Hash( const Class* hdlr):
          HashBase(hdlr)
 {
     md2_init(&_ctx);
@@ -694,7 +733,7 @@ void MD2Hash::Finalize(void)
 // MD4Hash
 //=========================================================================================
 
-MD4Hash::MD4Hash(Class* hdlr):
+MD4Hash::MD4Hash( const Class* hdlr):
          HashBase(hdlr)
 {
     MD4Init(&_ctx);
@@ -773,7 +812,7 @@ void MD4Hash::Finalize(void)
 // MD5Hash
 //=========================================================================================
 
-MD5Hash::MD5Hash(Class* hdlr):
+MD5Hash::MD5Hash( const Class* hdlr):
          HashBase(hdlr)
 {
     md5_init(&_ctx);
@@ -850,7 +889,7 @@ void MD5Hash::Finalize(void)
 // WhirlpoolHash
 //=========================================================================================
 
-WhirlpoolHash::WhirlpoolHash( Class* hdlr ):
+WhirlpoolHash::WhirlpoolHash( const Class* hdlr ):
          HashBase(hdlr)
 {
     whirlpool_init(&_ctx);
@@ -927,7 +966,7 @@ void WhirlpoolHash::Finalize(void)
 // TigerHash
 //=========================================================================================
 
-TigerHash::TigerHash( Class* hdlr ):
+TigerHash::TigerHash( const Class* hdlr ):
     HashBase(hdlr)
 {
     tiger_init(&_ctx);
@@ -1007,7 +1046,7 @@ void TigerHash::Finalize(void)
 // RIPEMDHashBase
 //=========================================================================================
 
-RIPEMDHashBase::RIPEMDHashBase(Class* hldr):
+RIPEMDHashBase::RIPEMDHashBase( const Class* hldr):
    HashBase(hldr)
 {}
 
@@ -1083,7 +1122,7 @@ void RIPEMDHashBase::restore( DataReader* stream )
 // RIPEMD128Hash
 //=========================================================================================
 
-RIPEMD128Hash::RIPEMD128Hash(Class* hldr):
+RIPEMD128Hash::RIPEMD128Hash(const Class* hldr):
          RIPEMDHashBase(hldr)
 {
     ripemd128_init(&_ctx);
@@ -1100,7 +1139,7 @@ RIPEMD128Hash::~RIPEMD128Hash()
 // RIPEMD160Hash
 //=========================================================================================
 
-RIPEMD160Hash::RIPEMD160Hash(Class* hldr):
+RIPEMD160Hash::RIPEMD160Hash(const Class* hldr):
          RIPEMDHashBase(hldr)
 {
     ripemd160_init(&_ctx);
@@ -1118,7 +1157,7 @@ RIPEMD160Hash::~RIPEMD160Hash()
 // RIPEMD160Hash
 //=========================================================================================
 
-RIPEMD256Hash::RIPEMD256Hash(Class* hldr):
+RIPEMD256Hash::RIPEMD256Hash(const Class* hldr):
          RIPEMDHashBase(hldr)
 {
     ripemd256_init(&_ctx);
@@ -1136,7 +1175,7 @@ RIPEMD256Hash::~RIPEMD256Hash()
 // RIPEMD160Hash
 //=========================================================================================
 
-RIPEMD320Hash::RIPEMD320Hash(Class* hldr):
+RIPEMD320Hash::RIPEMD320Hash(const Class* hldr):
          RIPEMDHashBase(hldr)
 {
     ripemd320_init(&_ctx);

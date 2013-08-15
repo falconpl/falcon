@@ -244,100 +244,10 @@
     @brief Calculates a 320 bits long RIPEMD-320 hash (RIPEMD family)
 */
 
-template <class HASH> Falcon::Symbol *SimpleRegisterHash(Falcon::Module *self, const char *name,
-                                                         Falcon::InheritDef *parent)
-{
-    Falcon::Symbol *cls = self->addClass(name, Falcon::Ext::Hash_init<HASH>);
-    self->addClassMethod(cls, "update", Falcon::Ext::Hash_update<HASH>);
-    self->addClassMethod(cls, "updateInt",   Falcon::Ext::Hash_updateInt<HASH>).asSymbol()->
-        addParam("num")->addParam("bytes");
-    self->addClassMethod(cls, "isFinalized",Falcon::Ext::Hash_isFinalized<HASH>);
-    self->addClassMethod(cls, "bytes", Falcon::Ext::Hash_bytes<HASH>);
-    self->addClassMethod(cls, "bits", Falcon::Ext::Hash_bits<HASH>);
-    self->addClassMethod(cls, "toMemBuf",  Falcon::Ext::Hash_toMemBuf<HASH>);
-    self->addClassMethod(cls, "toString",   Falcon::Ext::Hash_toString<HASH>);
-    self->addClassMethod(cls, "toInt", Falcon::Ext::Hash_toInt<HASH>);
-    self->addClassMethod(cls, "reset", Falcon::Ext::Hash_reset<HASH>);
-    cls->setWKS(true);
-
-    if(parent)
-        cls->getClassDef()->addInheritance(parent);
-
-    return cls;
-}
-
-Falcon::Module *hash_module_init(void)
-{
-    #define FALCON_DECLARE_MODULE self
-
-    // initialize the module
-    Falcon::Module *self = new Falcon::Module();
-    self->name( "hash" );
-    self->language( "en_US" );
-    self->engineVersion( FALCON_VERSION_NUM );
-    self->version( VERSION_MAJOR, VERSION_MINOR, VERSION_REVISION );
-
-
-
-    //============================================================
-    // API declarations
-    //
-    Falcon::Symbol *baseSym = SimpleRegisterHash<Falcon::Mod::HashBaseFalcon>(self, "HashBase", NULL);
-
-    SimpleRegisterHash<Falcon::Mod::CRC32>         (self, "CRC32"        , new Falcon::InheritDef(baseSym));
-    SimpleRegisterHash<Falcon::Mod::Adler32>       (self, "Adler32"      , new Falcon::InheritDef(baseSym));
-    SimpleRegisterHash<Falcon::Mod::SHA1Hash>      (self, "SHA1Hash"     , new Falcon::InheritDef(baseSym));
-    SimpleRegisterHash<Falcon::Mod::SHA224Hash>    (self, "SHA224Hash"   , new Falcon::InheritDef(baseSym));
-    SimpleRegisterHash<Falcon::Mod::SHA256Hash>    (self, "SHA256Hash"   , new Falcon::InheritDef(baseSym));
-    SimpleRegisterHash<Falcon::Mod::SHA384Hash>    (self, "SHA384Hash"   , new Falcon::InheritDef(baseSym));
-    SimpleRegisterHash<Falcon::Mod::SHA512Hash>    (self, "SHA512Hash"   , new Falcon::InheritDef(baseSym));
-    SimpleRegisterHash<Falcon::Mod::MD2Hash>       (self, "MD2Hash"      , new Falcon::InheritDef(baseSym));
-    SimpleRegisterHash<Falcon::Mod::MD4Hash>       (self, "MD4Hash"      , new Falcon::InheritDef(baseSym));
-    SimpleRegisterHash<Falcon::Mod::MD5Hash>       (self, "MD5Hash"      , new Falcon::InheritDef(baseSym));
-    SimpleRegisterHash<Falcon::Mod::WhirlpoolHash> (self, "WhirlpoolHash", new Falcon::InheritDef(baseSym));
-    SimpleRegisterHash<Falcon::Mod::TigerHash>     (self, "TigerHash"    , new Falcon::InheritDef(baseSym));
-    SimpleRegisterHash<Falcon::Mod::RIPEMD128Hash> (self, "RIPEMD128Hash", new Falcon::InheritDef(baseSym));
-    SimpleRegisterHash<Falcon::Mod::RIPEMD160Hash> (self, "RIPEMD160Hash", new Falcon::InheritDef(baseSym));
-    SimpleRegisterHash<Falcon::Mod::RIPEMD256Hash> (self, "RIPEMD256Hash", new Falcon::InheritDef(baseSym));
-    SimpleRegisterHash<Falcon::Mod::RIPEMD320Hash> (self, "RIPEMD320Hash", new Falcon::InheritDef(baseSym));
-
-    self->addExtFunc("crc32",      Falcon::Ext::Func_hashSimple<Falcon::Mod::CRC32>);
-    self->addExtFunc("adler32",    Falcon::Ext::Func_hashSimple<Falcon::Mod::Adler32>);
-    self->addExtFunc("md2",        Falcon::Ext::Func_hashSimple<Falcon::Mod::MD2Hash>);
-    self->addExtFunc("md4",        Falcon::Ext::Func_hashSimple<Falcon::Mod::MD4Hash>);
-    self->addExtFunc("md5",        Falcon::Ext::Func_hashSimple<Falcon::Mod::MD5Hash>);
-    self->addExtFunc("sha1",       Falcon::Ext::Func_hashSimple<Falcon::Mod::SHA1Hash>);
-    self->addExtFunc("sha224",     Falcon::Ext::Func_hashSimple<Falcon::Mod::SHA224Hash>);
-    self->addExtFunc("sha256",     Falcon::Ext::Func_hashSimple<Falcon::Mod::SHA256Hash>);
-    self->addExtFunc("sha384",     Falcon::Ext::Func_hashSimple<Falcon::Mod::SHA384Hash>);
-    self->addExtFunc("sha512",     Falcon::Ext::Func_hashSimple<Falcon::Mod::SHA512Hash>);
-    self->addExtFunc("tiger",      Falcon::Ext::Func_hashSimple<Falcon::Mod::TigerHash>);
-    self->addExtFunc("whirlpool",  Falcon::Ext::Func_hashSimple<Falcon::Mod::WhirlpoolHash>);
-    self->addExtFunc("ripemd128",  Falcon::Ext::Func_hashSimple<Falcon::Mod::RIPEMD128Hash>);
-    self->addExtFunc("ripemd160",  Falcon::Ext::Func_hashSimple<Falcon::Mod::RIPEMD160Hash>);
-    self->addExtFunc("ripemd256",  Falcon::Ext::Func_hashSimple<Falcon::Mod::RIPEMD256Hash>);
-    self->addExtFunc("ripemd320",  Falcon::Ext::Func_hashSimple<Falcon::Mod::RIPEMD320Hash>);
-
-    self->addExtFunc("hash", Falcon::Ext::Func_hash)
-        ->addParam("raw")->addParam("which");
-
-    self->addExtFunc("makeHash", Falcon::Ext::Func_makeHash)
-        ->addParam("name");
-
-    self->addExtFunc("hmac", Falcon::Ext::Func_hmac)
-        ->addParam("raw")->addParam("which")->addParam("key")->addParam("data");
-
-    self->addExtFunc("getSupportedHashes", Falcon::Ext::Func_GetSupportedHashes);
-
-    // generate CRC32 table
-    Falcon::Mod::CRC32::GenTab();
-
-    return self;
-}
 
 FALCON_MODULE_DECL
 {
-    return hash_module_init();
+    return new Falcon::Ext::ModHash;
 }
 
 /* end of hash.cpp */
