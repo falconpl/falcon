@@ -67,6 +67,8 @@ public:
    virtual void store( VMContext* ctx, DataWriter* stream, void* instance ) const;
    virtual void restore( VMContext* ctx, DataReader* stream ) const;
 
+   bool op_init( VMContext*, void*, int32 ) const;
+
 protected:
    ClassHash(const String& name, Class* parent);
 };

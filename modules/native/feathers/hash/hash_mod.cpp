@@ -64,7 +64,7 @@ void hashToString( String& target, bool bCase, byte* buffer, uint32 size )
       for(; buffer != end ; ++buffer )
       {
          byte b = *buffer;
-         uint32 chr = hexDigitUpper( b & 0xf0 >> 4 );
+         uint32 chr = hexDigitUpper( (b & 0xf0) >> 4 );
          target.append( chr );
          chr = hexDigitUpper( b & 0xf );
          target.append( chr );
@@ -75,7 +75,7 @@ void hashToString( String& target, bool bCase, byte* buffer, uint32 size )
       for(; buffer != end ; ++buffer )
       {
          byte b = *buffer;
-         uint32 chr = hexDigitLower( b & 0xf0 >> 4 );
+         uint32 chr = hexDigitLower( (b & 0xf0) >> 4 );
          target.append( chr );
          chr = hexDigitLower( b & 0xf );
          target.append( chr );

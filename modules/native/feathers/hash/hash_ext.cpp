@@ -709,6 +709,13 @@ ClassHash::ClassHash( const String& name, Class* parent ):
 ClassHash::~ClassHash()
 {}
 
+
+bool ClassHash::op_init( VMContext*, void*, int32 ) const
+{
+   // nothing to initialize
+   return false;
+}
+
 void* ClassHash::createInstance() const
 {
    return 0;
@@ -806,7 +813,7 @@ template <class HASH> FALCON_FUNC Func_hashSimple( ::Falcon::VMContext *ctx, int
 }
 
 
-#define HASH_CLASS_HANDLER(__name__) \
+#define HASH_CLASS_HANDLER(__name__, __publishName__ ) \
          class Class##__name__: public ClassHash\
          {\
          public:\
@@ -815,8 +822,10 @@ template <class HASH> FALCON_FUNC Func_hashSimple( ::Falcon::VMContext *ctx, int
             virtual void* createInstance() const;\
             virtual void* clone( void* instance ) const;\
          };\
-            Class##__name__::Class##__name__( Class* base ):\
-            ClassHash( #__name__, base )\
+         Class##__name__::Class##__name__( Class* base ):\
+            ClassHash( #__publishName__, base )\
+         {}\
+         Class##__name__::~Class##__name__()\
          {}\
          void* Class##__name__::createInstance() const\
          {\
@@ -855,26 +864,26 @@ void* clone( void* instance ) const
 }
 */
 
-HASH_CLASS_HANDLER(CRC32)
-HASH_CLASS_HANDLER(Adler32)
+HASH_CLASS_HANDLER(CRC32, CRC32)
+HASH_CLASS_HANDLER(Adler32, Adler32)
 
-HASH_CLASS_HANDLER(SHA1Hash)
-HASH_CLASS_HANDLER(SHA224Hash)
-HASH_CLASS_HANDLER(SHA256Hash)
-HASH_CLASS_HANDLER(SHA384Hash)
-HASH_CLASS_HANDLER(SHA512Hash)
+HASH_CLASS_HANDLER(SHA1Hash, SHA1)
+HASH_CLASS_HANDLER(SHA224Hash, SHA224)
+HASH_CLASS_HANDLER(SHA256Hash, SHA256)
+HASH_CLASS_HANDLER(SHA384Hash, SHA384)
+HASH_CLASS_HANDLER(SHA512Hash, SHA512)
 
-HASH_CLASS_HANDLER(MD2Hash)
-HASH_CLASS_HANDLER(MD4Hash)
-HASH_CLASS_HANDLER(MD5Hash)
+HASH_CLASS_HANDLER(MD2Hash, MD2)
+HASH_CLASS_HANDLER(MD4Hash, MD4)
+HASH_CLASS_HANDLER(MD5Hash, MD5)
 
-HASH_CLASS_HANDLER(WhirlpoolHash)
-HASH_CLASS_HANDLER(TigerHash)
+HASH_CLASS_HANDLER(WhirlpoolHash, Whirlpool)
+HASH_CLASS_HANDLER(TigerHash, Tiger)
 
-HASH_CLASS_HANDLER(RIPEMD128Hash)
-HASH_CLASS_HANDLER(RIPEMD160Hash)
-HASH_CLASS_HANDLER(RIPEMD256Hash)
-HASH_CLASS_HANDLER(RIPEMD320Hash)
+HASH_CLASS_HANDLER(RIPEMD128Hash, RIPEMD128)
+HASH_CLASS_HANDLER(RIPEMD160Hash, RIPEMD160)
+HASH_CLASS_HANDLER(RIPEMD256Hash, RIPEMD256)
+HASH_CLASS_HANDLER(RIPEMD320Hash, RIPEMD320)
 
 
 
@@ -913,10 +922,10 @@ ModHash::ModHash():
    addMantra( new ExtFunc("md5", "", &Func_hashSimple<Mod::MD5Hash>, this ) );
    addMantra( new ExtFunc("whirlpool", "", &Func_hashSimple<Mod::WhirlpoolHash>, this ) );
    addMantra( new ExtFunc("tiger", "", &Func_hashSimple<Mod::TigerHash>, this ) );
-   addMantra( new ExtFunc("ripmed128", "", &Func_hashSimple<Mod::RIPEMD128Hash>, this ) );
-   addMantra( new ExtFunc("ripmed160", "", &Func_hashSimple<Mod::RIPEMD160Hash>, this ) );
-   addMantra( new ExtFunc("ripmed256", "", &Func_hashSimple<Mod::RIPEMD256Hash>, this ) );
-   addMantra( new ExtFunc("ripmed320", "", &Func_hashSimple<Mod::RIPEMD320Hash>, this ) );
+   addMantra( new ExtFunc("ripemd128", "", &Func_hashSimple<Mod::RIPEMD128Hash>, this ) );
+   addMantra( new ExtFunc("ripemd160", "", &Func_hashSimple<Mod::RIPEMD160Hash>, this ) );
+   addMantra( new ExtFunc("ripemd256", "", &Func_hashSimple<Mod::RIPEMD256Hash>, this ) );
+   addMantra( new ExtFunc("ripemd320", "", &Func_hashSimple<Mod::RIPEMD320Hash>, this ) );
 
    addMantra( new ExtFunc("getSupportedHashes", "", &Func_GetSupportedHashes, this ) );
 }
