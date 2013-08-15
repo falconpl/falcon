@@ -2603,6 +2603,10 @@ void ClassString::describe( void* instance, String& target, int, int maxlen ) co
          ++pos;
       }
 
+      if(maxlen >0 && pos*3 >= (unsigned int) maxlen)
+      {
+         target.append( " ... " );
+      }
       target.append( '}' );
    }
 }

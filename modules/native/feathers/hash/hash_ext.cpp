@@ -177,7 +177,7 @@ static void internal_hash( Function* caller, VMContext* ctx, int32 pcount, bool 
        if( isRaw )
        {
           str->adoptMemBuf(digest,size,0);
-          str->bufferize(); // internally copy
+          str->toMemBuf(); // internally copy
        }
        else {
           Mod::hashToString(*str, false, digest, size);
@@ -377,7 +377,7 @@ static void internal_hmac( Function* caller, VMContext* ctx, bool raw )
     if(raw)
     {
        result->adoptMemBuf( digest, size, 0 );
-       result->bufferize();
+       result->toMemBuf();
     }
     else
     {
@@ -601,7 +601,7 @@ static void internal_toString( Function*, VMContext* ctx, bool isRaw, bool isUpp
       if( isRaw )
       {
          buf->adoptMemBuf(digest, size, 0 );
-         buf->bufferize();
+         buf->toMemBuf();
       }
       else
       {
