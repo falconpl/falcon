@@ -400,8 +400,8 @@ void Approp::invoke( VMContext* ctx, int32 )
          }
 
          Item copy = *m_ctx->local(1);
-         m_ctx->pushData(copy);
          m_ctx->pushData(value);
+         m_ctx->pushData(copy);
          m_ctx->pushData(key);
       }
 
