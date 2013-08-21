@@ -22,13 +22,11 @@
 #include <falcon/vm.h>
 #include <falcon/stream.h>
 #include <falcon/stringstream.h>
-#include <falcon/rosstream.h>
+#include <falcon/stderrors.h>
+#include <falcon/stdhandlers.h>
 
 #include "json_ext.h"
 #include "json_mod.h"
-#include "json_st.h"
-
-
 
 /*#
    @beginmodule feathers.json
@@ -38,9 +36,12 @@ namespace Falcon {
 namespace Ext {
 
 
+namespace CJSON {
+
+
 /*#
-   @function JSONencode
-   @brief Encode an item in JSON format.
+   @method encode JSON
+   @brief Encode an item in JSON format (static).
    @param item the item to be encoded in JSON format.
    @optparam stream A stream on which to send the encoded result.
    @optparam pretty Add spacing around separators and puntaction.
@@ -50,24 +51,24 @@ namespace Ext {
    @raise IoError in case of error on target stream.
 
 */
-
-FALCON_FUNC  JSONencode ( ::Falcon::VMachine *vm )
+FALCON_DECLARE_FUNCTION(encode, "item:X,stream:[Stream],pretty:[B],readable[B]")
+FALCON_DEFINE_FUNCTION_P1(encode)
 {
-   Item *i_item = vm->param(0);
-   Item *i_stream = vm->param(1);
-   Item *i_pretty = vm->param(2);
-   Item *i_readable = vm->param(3);
+   static Class* cstream = Engine::instance()->stdHandlers()->streamClass();
+
+   Item *i_item = ctx->param(0);
+   Item *i_stream = ctx->param(1);
+   Item *i_pretty = ctx->param(2);
+   Item *i_readable = ctx->param(3);
 
    Stream* target = 0;
    bool bDel;
 
    if ( i_item == 0 ||
-      (i_stream != 0 && ! i_stream->isNil() && ! i_stream->isOfClass( "Stream" ))
+      (i_stream != 0 && ! i_stream->isNil() && ! i_stream->isInstanceOf( cstream ))
         )
    {
-      throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).
-            origin( e_orig_runtime ).
-            extra("X, [Stream]") );
+      throw paramError(__LINE__, SRC);
    }
 
    if ( i_stream == 0 || i_stream->isNil() )
@@ -77,41 +78,42 @@ FALCON_FUNC  JSONencode ( ::Falcon::VMachine *vm )
    }
    else {
       bDel = false;
-      target = dyncast<Stream*>( i_stream->asObject()->getFalconData() );
+      target = static_cast<Stream*>( i_stream->asInst() );
    }
 
    bool bPretty = i_pretty != 0 && i_pretty->isTrue();
    bool bReadable = i_readable != 0 && i_readable->isTrue();
 
-   JSON encoder( bPretty, bReadable );
-   bool result =  encoder.encode( *i_item, target );
+   JSON encoder( target, bPretty, bReadable );
+
+   if ( bDel )
+   {
+      // let the encoder to destroy the stream.
+      target->decref();
+   }
+
+   String error;
+   bool result =  encoder.encode( *i_item, error );
 
    if( bDel )
    {
-      vm->retval( static_cast<StringStream*>(target)->closeToString() );
-      delete target;
+      ctx->returnFrame( FALCON_GC_HANDLE(static_cast<StringStream*>(target)->closeToString()) );
    }
-   else
-   {
-      if( ! target->good() )
-      {
-         throw new IoError(  ErrorParam( e_io_error, __LINE__ ).
-            origin( e_orig_runtime ).
-            sysError( target->lastError() ) );
-      }
+   else {
+      ctx->returnFrame();
    }
 
    if ( ! result )
    {
-      throw new JSONError( ErrorParam( FALCON_JSON_NOT_CODEABLE, __LINE__  )
-            .origin( e_orig_runtime )
-            .desc( FAL_STR(json_msg_non_codeable) ) );
+      throw new JSONError( ErrorParam( FALCON_JSON_NOT_CODEABLE, __LINE__, SRC  )
+            .desc( FALCON_JSON_NOT_CODEABLE_DESC )
+            .extra(error) );
    }
 
 }
 
 /*#
-   @function JSONdecode
+   @method decode JSON
    @brief Decode an item stored in JSON format.
    @param source A string or a stream from which to read the JSON data.
    @return a string containing the JSON string, if @b stream is nil
@@ -120,76 +122,91 @@ FALCON_FUNC  JSONencode ( ::Falcon::VMachine *vm )
 
 */
 
-FALCON_FUNC  JSONdecode ( ::Falcon::VMachine *vm )
+FALCON_DECLARE_FUNCTION(decode, "source:[S|Stream]")
+FALCON_DEFINE_FUNCTION_P1(decode)
 {
-   Item *i_source = vm->param(0);
+   static Class* cstream = Engine::instance()->stdHandlers()->streamClass();
+   Item *i_source = ctx->param(0);
 
    Stream* target = 0;
    bool bDel;
 
-   if ( i_source == 0 || ! (i_source->isString() || i_source->isOfClass( "Stream" ))
+   if ( i_source == 0 || ! (i_source->isString() || i_source->isInstanceOf( cstream ))
         )
    {
-      throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).
-            origin( e_orig_runtime ).
-            extra("S|Stream") );
+      throw paramError();
    }
 
    if ( i_source->isString() )
    {
       bDel = true;
-      target = new ROStringStream(*i_source->asString());
+      target = new StringStream(*i_source->asString());
    }
    else {
       bDel = false;
-      target = dyncast<Stream*>( i_source->asObject()->getFalconData() );
+      target = static_cast<Stream*>( i_source->asInst() );
    }
 
    Item item;
-   JSON encoder;
-   bool result = encoder.decode( item, target );
-
-   // ok also in case of error -- actually better, as it clears garbage
-   vm->retval( item );
-
+   JSON encoder( target );
    if( bDel )
    {
-      delete target;
+      // let the encoder to destroy the target
+      target->decref();
    }
-   else if( ! target->good() && ! target->eof() )
-   {
-      throw new IoError(  ErrorParam( e_io_error, __LINE__ ).
-         origin( e_orig_runtime ).
-         sysError( target->lastError() ) );
-   }
+
+   String error;
+   bool result = encoder.decode( item, error );
 
    if ( ! result )
    {
-      throw new JSONError( ErrorParam( FALCON_JSON_NOT_DECODABLE, __LINE__  )
-            .origin( e_orig_runtime )
-            .desc( FAL_STR(json_msg_non_decodable) ) );
+      throw new JSONError( ErrorParam( FALCON_JSON_NOT_DECODABLE, __LINE__, SRC  )
+            .desc( FALCON_JSON_NOT_DECODABLE_DESC )
+            .extra(error) );
    }
+
+   ctx->returnFrame( item );
+}
+
 }
 
 
-//=====================================================
-// JSON Error
+//====================================================================================================
+// Class definition
 //
-/*#
-   @class JSONError
-   @brief Error generated after error conditions on JSON operations.
-   @optparam code The error code
-   @optparam desc The description for the error code
-   @optparam extra Extra information specifying the error conditions.
-   @from Error( code, desc, extra )
-*/
-FALCON_FUNC  JSONError_init ( ::Falcon::VMachine *vm )
-{
-   CoreObject *einst = vm->self().asObject();
-   if( einst->getUserData() == 0 )
-      einst->setUserData( new JSONError );
 
-   ::Falcon::core::Error_init( vm );
+
+ClassJSON::ClassJSON():
+     Class("JSON")
+{
+   addMethod( new CJSON::Function_encode, true );
+   addMethod( new CJSON::Function_decode, true );
+}
+
+ClassJSON::~ClassJSON()
+{
+}
+
+int64 ClassJSON::occupiedMemory( void* ) const
+{
+   return 0;
+}
+
+void ClassJSON::dispose( void* ) const
+{
+   // do nothing; we're static
+}
+
+void* ClassJSON::clone( void* ) const
+{
+   // do nothing; we're static
+   return 0;
+}
+
+void* ClassJSON::createInstance() const
+{
+   // do nothing.
+   return 0;
 }
 
 }

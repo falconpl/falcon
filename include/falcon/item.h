@@ -711,6 +711,21 @@ public:
       return content.data.opaque.pOpaqueName;
    }
 
+   /** Checks if this item is an instance of the given class, or of a child class.
+    * @param cls A Falcon::Class instance.
+    * @return true if the check succeeds.
+    *
+    * This methods check if the given item is an instance (via isUser()), and then if
+    * the class of the instance is cls or a child of cls.
+    *
+    * This method will not work for flat objects (integers etc) unless the item
+    * has been previusly unflattened.
+    */
+   bool isInstanceOf( Class* cls )
+   {
+      return isUser() && asClass()->isDerivedFrom(cls);
+   }
+
    
    /** Gets the class and instance from any item.
      \param cls The class of this deep or user item.

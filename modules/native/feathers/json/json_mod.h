@@ -28,24 +28,42 @@
 
 namespace Falcon {
 
-class JSON: public BaseAlloc
+class TextWriter;
+class TextReader;
+
+class JSON
 {
 public:
-   JSON( bool bPretty=false, bool bReadale = false );
+   JSON( Stream* stream, bool bPretty=false, bool bReadale = false );
    ~JSON();
 
-   bool encode( const Item& source, Stream* tgt );
-   bool decode( Item& target, Stream* src ) const;
+   bool encode( const Item& source, String& error );
+   bool decode( Item& target, String& error );
 
+   void put( uint32 chr );
+   void putLine( uint32 chr );
 private:
-   void encode_string( const String& source, Stream* tgt ) const;
-   CoreArray* decodeArray( Stream* src ) const;
-   CoreDict* decodeDict( Stream* src ) const;
-   bool decodeKey( String& tgt, Stream* src ) const;
+
+   void encode_string( const String& source ) const;
+   bool decodeArray( Item& target, String& error );
+   bool decodeDict( Item& target, String& error );
+   bool decodeKey( String& tgt );
+   bool getChar( uint32& chr );
+   void ungetChar( uint32 chr );
+   void setError( const String& error, String& target ) const;
 
    bool m_bPretty;
    bool m_bReadable;
    int m_level;
+
+   Stream* m_stream;
+   TextReader* m_tr;
+   TextWriter* m_tw;
+
+   int32 m_charPos;
+   int32 m_oldCharPos;
+   int32 m_linePos;
+
 };
 
 }

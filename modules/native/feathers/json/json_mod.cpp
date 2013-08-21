@@ -13,202 +13,204 @@
    See LICENSE file for licensing details.
 */
 
-#include <falcon/engine.h>
+#include <falcon/stream.h>
+#include <falcon/item.h>
+#include <falcon/textwriter.h>
+#include <falcon/textreader.h>
+#include <falcon/itemarray.h>
+#include <falcon/itemdict.h>
+#include <falcon/stdhandlers.h>
 
 #include "json_mod.h"
 
 namespace Falcon {
 
-JSON::JSON( bool bPretty, bool bReadale ):
+JSON::JSON( Stream* stream, bool bPretty, bool bReadale ):
    m_bPretty( bPretty ),
    m_bReadable( bReadale ),
-   m_level(0)
-{}
+   m_level(0),
+   m_stream( stream )
+{
+   m_stream->incref();
+   m_tw = new TextWriter( m_stream );
+   m_tr = new TextReader( m_stream );
+   m_charPos = 0;
+   m_oldCharPos = 0;
+   m_linePos = 0;
+}
 
 JSON::~JSON()
-{}
+{
+   m_stream->decref();
+   m_tr->decref();
+   m_tw->decref();
+}
 
-bool JSON::encode( const Item& source, Stream* tgt  )
+bool JSON::encode( const Item& source, String& error )
 {
    String temp;
    for ( int i = 0; i < m_level; ++i )
-      tgt->put( ' ' );
+      m_tw->putChar( ' ' );
 
    switch ( source.type() )
    {
-   case FLC_ITEM_NIL: tgt->writeString( "null" ); break;
-   case FLC_ITEM_BOOL: tgt->writeString( source.asBoolean() ? "true" : "false" ); break;
-   case FLC_ITEM_INT: tgt->writeString( temp.N( source.asInteger() ) ); break;
-   case FLC_ITEM_NUM: tgt->writeString( temp.N( source.asNumeric() ) ); break;
-   case FLC_ITEM_STRING:
-      tgt->put( '"' );
-      encode_string( *source.asString(), tgt );
-      tgt->put( '"' );
+   case FLC_ITEM_NIL: m_tw->write( "null" ); break;
+   case FLC_ITEM_BOOL: m_tw->write( source.asBoolean() ? "true" : "false" ); break;
+   case FLC_ITEM_INT: m_tw->write( temp.N( source.asInteger() ) ); break;
+   case FLC_ITEM_NUM: m_tw->write( temp.N( source.asNumeric() ) ); break;
+   case FLC_CLASS_ID_STRING:
+      m_tw->putChar( '"' );
+      encode_string( *source.asString() );
+      m_tw->putChar( '"' );
       break;
 
-   case FLC_ITEM_ARRAY:
+   case FLC_CLASS_ID_ARRAY:
       {
          if( source.asArray()->length() == 0 )
          {
-            tgt->writeString( "[]" );
+            m_tw->write( "[]" );
          }
          else
          {
-            tgt->put( '[' );
+            m_tw->putChar( '[' );
             if( m_bReadable )
             {
-               tgt->put( '\n' );
+               m_tw->putChar( '\n' );
                m_level += 2;
             }
             else if ( m_bPretty )
-               tgt->put( ' ' );
+            {
+               m_tw->putChar( ' ' );
+            }
 
-            const ItemArray& ci = source.asArray()->items();
+            const ItemArray& ci = *source.asArray();
             for( uint32 i = 0; i < ci.length(); ++i )
             {
-               if( ! encode( ci[i], tgt ) )
+               if( ! encode( ci[i], error ) )
+               {
                   return false;
+               }
 
                if( i + 1 < ci.length() )
                {
-                  tgt->put( ',' );
+                  m_tw->putChar( ',' );
                   if( m_bReadable )
-                     tgt->put( '\n' );
+                  {
+                     m_tw->putChar( '\n' );
+                  }
                   else if ( m_bPretty )
-                     tgt->put( ' ' );
+                  {
+                     m_tw->putChar( ' ' );
+                  }
                }
             }
 
             if( m_bReadable )
             {
-               tgt->put( '\n' );
+               m_tw->putChar( '\n' );
                m_level -= 2;
                for ( int i = 0; i < m_level; ++i )
-                   tgt->put( ' ' );
+               {
+                  m_tw->putChar( ' ' );
+               }
             }
             else if ( m_bPretty )
-               tgt->put( ' ' );
+            {
+               m_tw->putChar( ' ' );
+            }
 
-            tgt->put( ']' );
+            m_tw->putChar( ']' );
          }
       }
       break;
 
-   case FLC_ITEM_DICT:
+   case FLC_CLASS_ID_DICT:
       {
-         if( source.asDict()->length() == 0 )
+         if( source.asDict()->empty() )
          {
-            tgt->writeString( "{}" );
+            m_tw->write( "{}" );
          }
          else
          {
-            tgt->put( '{' );
+            m_tw->putChar( '{' );
             if( m_bReadable )
             {
-               tgt->put( '\n' );
+               m_tw->putChar( '\n' );
                m_level += 2;
             }
             else if ( m_bPretty )
-               tgt->put( ' ' );
-
-
-            Iterator iter( &source.asDict()->items() );
-            while( iter.hasCurrent() )
             {
-               String name;
-               iter.getCurrentKey().toString( name );
-               tgt->put( '"' );
-               encode_string(name, tgt);
-               tgt->put( '"' );
-               tgt->put( ':' );
-               if ( m_bPretty || m_bReadable )
-                  tgt->put( ' ' );
+               m_tw->putChar( ' ' );
+            }
 
-               if( ! encode( iter.getCurrent(), tgt ) )
-                  return false;
-
-               iter.next();
-               if( iter.hasCurrent() )
+            ItemDict* dict = source.asDict();
+            class Rator: public ItemDict::Enumerator
+            {
+            public:
+               Rator( JSON* js ): m_js(js),  m_bFirst(true) {}
+               virtual ~Rator() {}
+               virtual void operator()( const Item& key, Item& value )
                {
-                  tgt->put( ',' );
-                  if( m_bReadable )
-                     tgt->put( '\n' );
-                  else if ( m_bPretty )
-                     tgt->put( ' ' );
+                  if( ! key.isString() )
+                  {
+                     Class* cls = 0;
+                     void* udata;
+                     key.forceClassInst(cls, udata);
+                     throw(String("Dictionary has key entry of class \"") + cls->name() + "\"");
+                  }
+
+                  if( m_bFirst )
+                  {
+                     m_bFirst = false;
+                  }
+                  else {
+                     m_js->putLine( ',' );
+                  }
+
+                  String error;
+                  if( ! m_js->encode( key, error ) )
+                  {
+                     throw error;
+                  }
+
+                  m_js->put( ':' );
+                  if( ! m_js->encode( value, error ) )
+                  {
+                     throw error;
+                  }
                }
 
+            private:
+               JSON* m_js;
+               bool m_bFirst;
+            }
+            rator( this );
+
+            try {
+               dict->enumerate(rator);
+            }
+            catch( String& err )
+            {
+               error = err;
+               return false;
             }
 
             if( m_bReadable )
             {
-               tgt->put( '\n' );
+               m_tw->putChar( '\n' );
                m_level -= 2;
                for ( int i = 0; i < m_level; ++i )
-                   tgt->put( ' ' );
-            }
-            else if ( m_bPretty )
-               tgt->put( ' ' );
-
-            tgt->put( '}' );
-         }
-      }
-      break;
-
-   case FLC_ITEM_OBJECT:
-      {
-         const CoreObject* obj = source.asObjectSafe();
-         const PropertyTable& tab = obj->generator()->properties();
-
-         tgt->put( '{' );
-         if( m_bReadable )
-         {
-            tgt->put( '\n' );
-            m_level += 2;
-         }
-         else if ( m_bPretty )
-            tgt->put( ' ' );
-
-         for ( uint32 i = 0; i < tab.added(); ++i )
-         {
-            Item prop;
-            if ( obj->getProperty( *tab.getKey(i), prop ) &&
-                  (prop.isNil() || prop.isOrdinal() || prop.isBoolean()
-                  || prop.isString() || prop.isDict() || prop.isArray() ))
-            {
-               tgt->put( '"' );
-               encode_string( *tab.getKey( i ), tgt);
-               tgt->put( '"' );
-
-               tgt->put( ':' );
-               if ( m_bPretty || m_bReadable )
-                  tgt->put( ' ' );
-
-               if( ! encode( prop, tgt ) )
-                  return false;
-
-               if( i+1 < tab.added() )
                {
-                  tgt->put( ',' );
-                  if( m_bReadable )
-                     tgt->put( '\n' );
-                  else if ( m_bPretty )
-                     tgt->put( ' ' );
+                  m_tw->putChar( ' ' );
                }
             }
+            else if ( m_bPretty )
+            {
+               m_tw->putChar( ' ' );
+            }
 
+            m_tw->putChar( '}' );
          }
-
-         if( m_bReadable )
-         {
-            tgt->put( '\n' );
-            m_level -= 2;
-            for ( int i = 0; i < m_level; ++i )
-                tgt->put( ' ' );
-         }
-         else if ( m_bPretty )
-            tgt->put( ' ' );
-
-         tgt->put( '}' );
       }
       break;
 
@@ -216,8 +218,34 @@ bool JSON::encode( const Item& source, Stream* tgt  )
    default: return false;
    }
 
+   m_tw->flush();
    return true;
 }
+
+void JSON::put( uint32 chr )
+{
+   if( m_tw != 0 )
+   {
+      m_tw->putChar( chr );
+      if ( m_bPretty || m_bReadable )
+      {
+         m_tw->putChar( ' ' );
+      }
+   }
+}
+
+void JSON::putLine( uint32 chr )
+{
+   if( m_tw != 0 )
+   {
+      m_tw->putChar( chr );
+      if( m_bReadable )
+         m_tw->putChar( '\n' );
+      else if ( m_bPretty )
+         m_tw->putChar( ' ' );
+   }
+}
+
 
 inline bool isterminal( char chr )
 {
@@ -231,7 +259,7 @@ inline bool isterminal( char chr )
 		|| chr == '\n';
 }
 
-void JSON::encode_string( const String &str, Stream* tgt ) const
+void JSON::encode_string( const String &str ) const
 {
    uint32 len = str.length();
    uint32 pos = 0;
@@ -241,29 +269,73 @@ void JSON::encode_string( const String &str, Stream* tgt ) const
       uint32 chat = str.getCharAt( pos );
       switch( chat )
       {
-         case '"': tgt->writeString( "\\\"" ); break;
-         case '\r': tgt->writeString( "\\r" ); break;
-         case '\n': tgt->writeString( "\\n" ); break;
-         case '\t': tgt->writeString( "\\t" ); break;
-         case '\f': tgt->writeString( "\\f" ); break;
-         case '\b': tgt->writeString( "\\b" ); break;
-         case '\\': tgt->writeString( "\\\\" ); break;
+         case '"': m_tw->write( "\\\"" ); break;
+         case '\r': m_tw->write( "\\r" ); break;
+         case '\n': m_tw->write( "\\n" ); break;
+         case '\t': m_tw->write( "\\t" ); break;
+         case '\f': m_tw->write( "\\f" ); break;
+         case '\b': m_tw->write( "\\b" ); break;
+         case '\\': m_tw->write( "\\\\" ); break;
          default:
             if ( chat < 32 || chat >127 ) {
                String temp = "\\u";
                temp.H( chat, true, 4 );
-               tgt->writeString( temp );
+               m_tw->write( temp );
             }
             else{
-               tgt->put( chat );
+               m_tw->putChar( chat );
             }
+            break;
       }
       pos++;
    }
 
 }
 
-bool JSON::decode( Item& target, Stream* src ) const
+bool JSON::getChar( uint32& chr )
+{
+   if( m_tr->eof() )
+   {
+      return false;
+   }
+
+   chr = m_tr->getChar();
+   if( chr == '\n' )
+   {
+      m_oldCharPos = m_charPos;
+      m_charPos = 0;
+      m_linePos++;
+   }
+   else {
+      m_charPos++;
+   }
+
+   return true;
+}
+
+void JSON::ungetChar( uint32 chr )
+{
+   if( chr == '\n' ) {
+      m_charPos = m_oldCharPos;
+      m_linePos --;
+   }
+   else {
+      m_charPos--;
+   }
+
+   m_tr->ungetChar(chr);
+}
+
+void JSON::setError( const String& desc, String& target ) const
+{
+   target = desc;
+   target += " at ";
+   target.N(m_linePos);
+   target.A(":");
+   target.N(m_charPos);
+}
+
+bool JSON::decode( Item& target, String& error )
 {
    String temp;
 
@@ -277,7 +349,7 @@ bool JSON::decode( Item& target, Stream* src ) const
 
    state = st_none;
    uint32 chr;
-   while( src->get( chr ) )
+   while( getChar(chr) )
    {
       switch( state )
       {
@@ -291,10 +363,14 @@ bool JSON::decode( Item& target, Stream* src ) const
                case '"': case '\'':
                   {
                      String str;
-                     src->unget(chr);
-                     if ( ! decodeKey( str, src ) )
+                     ungetChar(chr);
+
+                     if ( ! decodeKey( str ) )
+                     {
+                        setError( "Failed decoding of string", error );
                         return false;
-                     target = new CoreString( str );
+                     }
+                     target = FALCON_GC_HANDLE( new String(str) );
                      return true;
                   }
                   break;
@@ -306,58 +382,52 @@ bool JSON::decode( Item& target, Stream* src ) const
 
                // try to read true, false or null
                case 'n':
-                  if ( ! src->get( chr ) || chr != 'u' ) return false;
-                  if ( ! src->get( chr ) || chr != 'l' ) return false;
-                  if ( ! src->get( chr ) || chr != 'l' ) return false;
-                  if ( ! src->get( chr ) || ! isterminal( chr ) )
-                     return false;
+                  if ( ! getChar( chr ) || chr != 'u' ) goto invalid;
+                  if ( ! getChar( chr ) || chr != 'l' ) goto invalid;
+                  if ( ! getChar( chr ) || chr != 'l' ) goto invalid;
+                  if ( ! getChar( chr ) || ! isterminal( chr ) ) goto invalid;
 
                   target.setNil();
-                  src->unget( chr );
+                  ungetChar(chr);
                   return true;
 
                case 't':
-                  if ( ! src->get( chr ) || chr != 'r' ) return false;
-                  if ( ! src->get( chr ) || chr != 'u' ) return false;
-                  if ( ! src->get( chr ) || chr != 'e' ) return false;
-                  if ( ! src->get( chr ) || ! isterminal( chr ) )
-                        return false;
+                  if ( ! getChar( chr ) || chr != 'r' ) goto invalid;
+                  if ( ! getChar( chr ) || chr != 'u' ) goto invalid;
+                  if ( ! getChar( chr ) || chr != 'e' ) goto invalid;
+                  if ( ! getChar( chr ) || ! isterminal( chr ) ) goto invalid;
 
                   target.setBoolean( true );
-                  src->unget( chr );
+                  ungetChar(chr);
                   return true;
 
                case 'f':
-                  if ( ! src->get( chr ) || chr != 'a' ) return false;
-                  if ( ! src->get( chr ) || chr != 'l' ) return false;
-                  if ( ! src->get( chr ) || chr != 's' ) return false;
-                  if ( ! src->get( chr ) || chr != 'e' ) return false;
-                  if ( ! src->get( chr ) || ! isterminal( chr ) )
-                        return false;
+                  if ( ! getChar( chr ) || chr != 'a' ) goto invalid;
+                  if ( ! getChar( chr ) || chr != 'l' ) goto invalid;
+                  if ( ! getChar( chr ) || chr != 's' ) goto invalid;
+                  if ( ! getChar( chr ) || chr != 'e' ) goto invalid;
+                  if ( ! getChar( chr ) || ! isterminal( chr ) ) return false;
 
                   target.setBoolean( false );
-                  src->unget( chr );
+                  ungetChar( chr );
                   return true;
 
                case '{':
                {
-                  CoreDict* cd = decodeDict( src );
-                  if ( cd == 0 )
+                  if ( ! decodeDict( target, error ) )
                      return false;
-                  target = cd;
                }
                return true;
 
                case '[':
                {
-                  CoreArray* ca = decodeArray( src );
-                  if ( ca == 0 )
+                  if ( ! decodeArray( target, error ) )
                      return false;
-                  target = ca;
                }
                return true;
 
                default:
+                  setError( "Parsing failed", error );
                   return false;
             }
             break;
@@ -382,7 +452,7 @@ bool JSON::decode( Item& target, Stream* src ) const
             }
             else
             {
-               src->unget( chr );
+               ungetChar( chr );
                if ( state == st_float )
                {
                   numeric number;
@@ -407,7 +477,10 @@ bool JSON::decode( Item& target, Stream* src ) const
                state = st_exp;
             }
             else
+            {
+               setError("Invalid number format", error);
                return false;
+            }
          break;
 
          case st_exp:
@@ -418,12 +491,13 @@ bool JSON::decode( Item& target, Stream* src ) const
             }
             else
             {
-               src->unget( chr );
+               ungetChar( chr );
                numeric number;
                temp.parseDouble( number );
                target = number;
                return true;
             }
+            setError("Invalid number format", error);
             return false;
 
          break;
@@ -431,42 +505,46 @@ bool JSON::decode( Item& target, Stream* src ) const
       }
    }
 
+invalid:
+   setError( "Invalid value", error );
    return false;
 }
 
 
-CoreArray* JSON::decodeArray( Stream* src ) const
+bool JSON::decodeArray( Item& target, String& error )
 {
-   CoreArray* ca = new CoreArray;
+   ItemArray* ca = new ItemArray;
+   target = FALCON_GC_HANDLE(ca);
    uint32 chr;
 
    bool bComma = false;
-   while( src->get( chr ) )
+   while( getChar( chr ) )
    {
       if( chr == ' ' || chr == '\t' || chr == '\r' || chr == '\n' )
          continue;
 
       if ( chr == ']' )
-         return ca;
+         return true;
 
       if ( bComma )
       {
          if ( chr == ',' )
             bComma = false;
          else if ( chr == ']' )
-            return ca;
+            return true;
          else
-            return 0;
+         {
+            setError( "Invalid array format", error );
+            return false;
+         }
       }
       else
       {
          Item tmp;
-         src->unget( chr );
-         if( ! decode( tmp, src ) )
+         ungetChar( chr );
+         if( ! decode( tmp, error ) )
          {
-            // dispose all the data.
-            ca->gcMark(0);
-            return 0;
+            return false;
          }
          ca->append( tmp );
          bComma = true;
@@ -475,14 +553,14 @@ CoreArray* JSON::decodeArray( Stream* src ) const
 
    // decoding is incomplete
    // dispose all the data.
-   ca->gcMark(0);
-   return 0;
-
+   setError("Hit EOF while decoding array", error);
+   return false;
 }
 
-CoreDict* JSON::decodeDict( Stream* src ) const
+bool JSON::decodeDict( Item& target, String& error )
 {
-   LinearDict* cd = new LinearDict;
+   ItemDict* cd = new ItemDict;
+   target = FALCON_GC_HANDLE(cd);
    uint32 chr;
 
    enum {
@@ -497,7 +575,7 @@ CoreDict* JSON::decodeDict( Stream* src ) const
 
    Item key, value;
 
-   while( src->get( chr ) )
+   while( getChar( chr ) )
    {
       if( chr == ' ' || chr == '\t' || chr == '\r' || chr == '\n' )
          continue;
@@ -509,23 +587,21 @@ CoreDict* JSON::decodeDict( Stream* src ) const
             state = st_value;
          else
          {
-            cd->gcMark(0);
-            delete cd;
-            return 0;
+            setError( "Invalid dictionary format", error );
+            return false;
          }
          break;
 
       case st_comma:
          if ( chr == '}' )
-            return new CoreDict( cd );
+            return true;
 
          if ( chr == ',' )
             state = st_key;
          else
          {
-            cd->gcMark(0);
-            delete cd;
-            return 0;
+            setError( "Invalid dictionary format", error );
+            return false;
          }
          break;
 
@@ -533,71 +609,65 @@ CoreDict* JSON::decodeDict( Stream* src ) const
             // empty dict?
             if( chr == '}' )
             {
-               return new CoreDict( cd );
+               return true;
             }
             // else, fallthrough
+            /* no break */
             
          case st_key: 
-         src->unget( chr );
+         ungetChar( chr );
          {
             String sKey;
-            if( ! decodeKey( sKey, src ) || sKey.size() == 0 )
+            if( ! decodeKey( sKey ) || sKey.size() == 0 )
             {
-               // dispose all the data.
-               cd->gcMark(0);
-               delete cd;
-               return 0;
+               setError( "Invalid key in dictionary", error );
+               return false;
             }
-            key = new CoreString( sKey );
+            key = FALCON_GC_HANDLE(new String( sKey ));
          }
 
          state = st_colon;
          break;
 
       case st_value:
-         src->unget( chr );
-         if( ! decode( value, src ) )
+         ungetChar( chr );
+         if( ! decode( value, error ) )
          {
-            // dispose all the data.
-            cd->gcMark(0);
-            delete cd;
-            return 0;
+            return false;
          }
 
          state = st_comma;
-         cd->put( key, value );
+         cd->insert( key, value );
          break;
       }
    }
 
    // decoding is incomplete
-   // dispose all the data.
-   cd->gcMark(0);
-   delete cd;
-   return 0;
-
+   setError("Hit EOF while decoding dictionary", error);
+   return false;
 }
 
 
-bool JSON::decodeKey( String& tgt, Stream* src ) const
+bool JSON::decodeKey( String& tgt )
 {
    // a key may be a symbol or a string
 
    uint32 chr;
-   if ( ! src->get( chr ) )
+   if ( m_tr->eof() )
       return false;
 
+   chr = m_tr->getChar();
    if( chr == '"' || chr == '\'')
    {
       uint32 ch1 = chr;
       uint32 unicount = 4;
       uint32 unival = 0;
 
-      while( src->get( chr ) && chr != ch1 )
+      while( getChar( chr ) && chr != ch1 )
       {
          if ( chr == '\\' )
          {
-            src->get(chr);
+            getChar(chr);
             switch( chr )
             {
                case '\\': tgt.append( '\\' ); break;
@@ -650,11 +720,11 @@ bool JSON::decodeKey( String& tgt, Stream* src ) const
    {
       tgt.append( chr );
 
-      while( src->get( chr ) )
+      while( getChar( chr ) )
       {
          if ( chr == '\n' || chr == '\r' || chr == '\t' || chr == ' ' || chr == ',' || chr == ':')
          {
-            src->unget(chr);
+            ungetChar(chr);
             return true;
          }
          tgt.append( chr );

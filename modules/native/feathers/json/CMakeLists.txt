@@ -9,10 +9,8 @@ if(WIN32)
 endif()
 
 add_library(json_fm MODULE
-   json_st.cpp
    json_mod.cpp
    json_ext.cpp
-   json_srv.cpp
    json.cpp
    ${SYS_RC}
 )

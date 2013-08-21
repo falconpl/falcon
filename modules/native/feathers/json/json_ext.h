@@ -30,28 +30,42 @@
 #endif
 
 #define FALCON_JSON_NOT_CODEABLE    (FALCON_JSON_ERROR_BASE + 0)
+#define FALCON_JSON_NOT_CODEABLE_DESC "Given object cannot be rendered as json string"
+
 #define FALCON_JSON_NOT_DECODABLE   (FALCON_JSON_ERROR_BASE + 1)
+#define FALCON_JSON_NOT_DECODABLE_DESC "JSON Data not applicable to given object."
+
 #define FALCON_JSON_NOT_APPLY       (FALCON_JSON_ERROR_BASE + 2)
+#define FALCON_JSON_NOT_APPLY_DESC "Data is not in json format"
 
 namespace Falcon {
 namespace Ext {
 
-FALCON_FUNC  JSONencode ( ::Falcon::VMachine *vm );
-FALCON_FUNC  JSONdecode ( ::Falcon::VMachine *vm );
+/*#
+   @class JSONError
+   @brief Error generated after error conditions on JSON operations.
+   @optparam code The error code
+   @optparam desc The description for the error code
+   @optparam extra Extra information specifying the error conditions.
+   @from Error( code, desc, extra )
+*/
 
-class JSONError: public ::Falcon::Error
+FALCON_DECLARE_ERROR( JSONError )
+
+
+class ClassJSON: public Class
 {
 public:
-   JSONError():
-      Error( "JSONError" )
-   {}
+   ClassJSON();
+   virtual ~ClassJSON();
 
-   JSONError( const ErrorParam &params  ):
-      Error( "JSONError", params )
-      {}
+   virtual int64 occupiedMemory( void* instance ) const;
+   virtual void dispose( void* instance ) const;
+   virtual void* clone( void* instance ) const;
+   virtual void* createInstance() const;
+
+   // we don't have init: just static methods
 };
-
-FALCON_FUNC  JSONError_init ( ::Falcon::VMachine *vm );
 
 }
 }
