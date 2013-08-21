@@ -383,34 +383,41 @@ void Approp::invoke( VMContext* ctx, int32 )
 
    ItemDict* dict = i_dict->asDict();
    ctx->addLocals(2);
-   *ctx->local(0) = (int64) dict->size();
    *ctx->local(1) = *elem;
 
-   // prepare the stack
-   class Rator: public ItemDict::Enumerator
+   // guard against read changes.
    {
-   public:
-      Rator( VMContext* ctx ): m_ctx(ctx) {}
-      virtual ~Rator() {}
-      virtual void operator()( const Item& key, Item& value )
+      ConcurrencyGuard::Reader rg( ctx, dict->guard() );
+      *ctx->local(0) = (int64) dict->size();
+
+
+      // prepare the stack
+      class Rator: public ItemDict::Enumerator
       {
-         if( ! key.isString() )
+      public:
+         Rator( VMContext* ctx ): m_ctx(ctx) {}
+         virtual ~Rator() {}
+         virtual void operator()( const Item& key, Item& value )
          {
-            throw FALCON_SIGN_XERROR( ParamError, e_param_type, .extra("All the keys must be strings") );
+            if( ! key.isString() )
+            {
+               throw FALCON_SIGN_XERROR( ParamError, e_param_type, .extra("All the keys must be strings") );
+            }
+
+            Item copy = *m_ctx->local(1);
+            m_ctx->pushData(value);
+            m_ctx->pushData(copy);
+            m_ctx->pushData(key);
          }
 
-         Item copy = *m_ctx->local(1);
-         m_ctx->pushData(value);
-         m_ctx->pushData(copy);
-         m_ctx->pushData(key);
+      private:
+         VMContext* m_ctx;
       }
+      rator(ctx);
 
-   private:
-      VMContext* m_ctx;
+      dict->enumerate(rator);
    }
-   rator(ctx);
 
-   dict->enumerate(rator);
    // push a nil item as the first value to be discarded
    ctx->pushData(Item());
    ctx->stepIn(&stepAfterInvoke);

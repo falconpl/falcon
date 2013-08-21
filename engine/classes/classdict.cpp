@@ -235,6 +235,108 @@ void Function_find::invoke(VMContext* ctx, int32)
 
 
 /**
+ @method keysToString Dictionary
+ @brief Transforms all the keys of the dictionary via their toString method.
+ @return A new dictionary where all the keys are transformed into strings.
+
+ This method creates a new dictionary out of the existing one, ensuring that
+ all the keys of the new dictionary are strings. If a key is a string, it is
+ copied to the new dictionary without alteration. If it's anything else,
+ its toString() method gets called in order to obtain a string.
+
+ This method is particularly useful when a string-only key set is desired
+ as input of some particular function.
+*/
+FALCON_DECLARE_FUNCTION(keysToString,"");
+FALCON_DEFINE_FUNCTION_P1(keysToString)
+{
+   class PStepNext: public PStep
+   {
+   public:
+      PStepNext(){ apply = apply_; }
+      ~PStepNext() {}
+      virtual void describeTo( String& target ) const { target = "ItemDict::keysToString::Next"; }
+
+      static void apply_( const PStep*, VMContext* ctx )
+      {
+         int32& seqId = ctx->currentCode().m_seqId;
+         ItemDict* dict = ctx->local(0)->asDict();
+
+         while( seqId != 0 )
+         {
+            // prepare for next call
+            if( ctx->topData().isString() )
+            {
+               dict->insert( ctx->opcodeParam(0), ctx->opcodeParam(1) );
+               ctx->popData(2);
+               // reset the visited byte.
+               if( seqId < 0 )
+               {
+                  seqId = -seqId;
+               }
+               seqId--;
+            }
+            else {
+               Class* cls = 0;
+               void* udata = 0;
+               ctx->topData().forceClassInst(cls, udata);
+
+               // already tried to change it?
+               if( seqId < 0 )
+               {
+                  throw new CodeError(ErrorParam(e_call_loop, __LINE__, SRC ).extra(
+                           "Failed string conversion for item of type " + cls->name() )
+                           );
+               }
+
+               seqId = -seqId;
+               // don't change seq-id
+               cls->op_toString(ctx, udata);
+               return;
+            }
+         }
+
+         ctx->returnFrame(*ctx->local(0));
+      }
+   };
+
+   static PStepNext stepAfterInvoke;
+
+   ItemDict* dict = static_cast<ItemDict*>(ctx->self().asInst());
+   ctx->addLocals(1);
+   ItemDict* other = new ItemDict;
+   ctx->local(0)->setUser(FALCON_GC_HANDLE(other));
+
+   // prepare for concurrency.
+   {
+      ConcurrencyGuard::Reader rg( ctx, dict->guard() );
+
+      // prepare the stack
+      class Rator: public ItemDict::Enumerator
+      {
+      public:
+        Rator( VMContext* ctx ): m_ctx(ctx) {}
+        virtual ~Rator() {}
+        virtual void operator()( const Item& key, Item& value )
+        {
+              m_ctx->pushData(value);
+           m_ctx->pushData(key);
+        }
+
+      private:
+        VMContext* m_ctx;
+      }
+      rator(ctx);
+
+      dict->enumerate(rator);
+      ctx->pushCode( &stepAfterInvoke );
+      ctx->currentCode().m_seqId = (int32) dict->size();
+   }
+
+
+}
+
+/**
  @method remove Dictionary
  @brief Removes an entity from the dictionary.
  @param key The key item to be removed. 
@@ -310,6 +412,7 @@ void ClassDict::init()
    addMethod( new _classDictionary::Function_values );
    addMethod( new _classDictionary::Function_clone );
    addMethod( new _classDictionary::Function_clear );
+   addMethod( new _classDictionary::Function_keysToString );
 
    addMethod( new _classDictionary::Function_find );
    addMethod( new _classDictionary::Function_remove );
