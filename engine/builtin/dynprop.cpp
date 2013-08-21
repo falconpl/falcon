@@ -236,8 +236,6 @@ void Has::Invoke::apply_( const PStep*, VMContext* ctx )
 
 
 
-
-
 Properties::Properties():
    PseudoFunction( "properties", &m_invoke )
 {
@@ -304,6 +302,118 @@ void Properties::Invoke::apply_( const PStep*, VMContext* ctx )
    ItemDict* dict = internal_enumerate(i_elem);
    ctx->popCode();
    ctx->topData() = FALCON_GC_HANDLE(dict);
+}
+
+
+
+
+
+Approp::Approp():
+   Function( "approp" )
+{
+   signature("X");
+   addParam("item");
+}
+
+Approp::~Approp()
+{
+}
+
+void Approp::invoke( VMContext* ctx, int32 )
+{
+   class PStepNext: public PStep
+   {
+   public:
+      PStepNext(){ apply = apply_; }
+      ~PStepNext() {}
+      virtual void describeTo( String& target ) const { target = "Approp::PStepNext"; }
+
+      static void apply_( const PStep*, VMContext* ctx )
+      {
+         int64 count = ctx->local(0)->asInteger();
+         if( count == 0 )
+         {
+            ctx->returnFrame(*ctx->local(1));
+            return;
+         }
+
+         // prepare for next call
+         ctx->local(0)->setInteger(count-1);
+
+         // remove the result of the previous operation
+         ctx->popData();
+
+         // get the required property
+         String propName = *ctx->topData().asString();
+         ctx->popData();
+
+         // invoke set property of our item.
+         Item* elem = ctx->local(1);
+         Class* cls = 0;
+         void* udata = 0;
+         elem->forceClassInst( cls, udata );
+         cls->op_setProperty( ctx, udata, propName );
+      }
+
+   };
+
+   static PStepNext stepAfterInvoke;
+
+   Item *elem, *i_dict;
+
+   if ( ctx->isMethodic() )
+   {
+      elem = &ctx->self();
+      i_dict = ctx->param(0);
+   }
+   else
+   {
+      elem = ctx->param(0);
+      i_dict = ctx->param(1);
+      if( elem == 0 )
+      {
+         throw paramError(__LINE__, SRC);
+      }
+   }
+
+   if( i_dict == 0 || ! i_dict->isDict() )
+   {
+      throw paramError(__LINE__, SRC);
+   }
+
+   ItemDict* dict = i_dict->asDict();
+   ctx->addLocals(2);
+   *ctx->local(0) = (int64) dict->size();
+   *ctx->local(1) = *elem;
+
+   // prepare the stack
+   class Rator: public ItemDict::Enumerator
+   {
+   public:
+      Rator( VMContext* ctx ): m_ctx(ctx) {}
+      virtual ~Rator() {}
+      virtual void operator()( const Item& key, Item& value )
+      {
+         if( ! key.isString() )
+         {
+            throw FALCON_SIGN_XERROR( ParamError, e_param_type, .extra("All the keys must be strings") );
+         }
+
+         Item copy = *m_ctx->local(1);
+         m_ctx->pushData(copy);
+         m_ctx->pushData(value);
+         m_ctx->pushData(key);
+      }
+
+   private:
+      VMContext* m_ctx;
+   }
+   rator(ctx);
+
+   dict->enumerate(rator);
+   // push a nil item as the first value to be discarded
+   ctx->pushData(Item());
+   ctx->stepIn(&stepAfterInvoke);
 }
 
 

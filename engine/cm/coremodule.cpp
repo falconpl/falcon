@@ -31,6 +31,7 @@
 #include <falcon/cm/path.h>
 #include <falcon/cm/gc.h>
 #include <falcon/cm/generator.h>
+#include <falcon/cm/log.h>
 #include <falcon/cm/textstream.h>
 #include <falcon/cm/textwriter.h>
 #include <falcon/cm/textreader.h>
@@ -108,6 +109,7 @@ CoreModule::CoreModule():
       << new Ext::ClassVMContextBase
       << new Ext::ClassVMProcess
       << new Ext::ClassWaiter
+      << new Ext::ClassLog
       ;
 
    this->addObject( new Ext::ClassGC );

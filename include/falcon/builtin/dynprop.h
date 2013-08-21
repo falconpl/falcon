@@ -178,8 +178,8 @@ private:
    @brief Returns a dictionary with all the public properties of the given object.
    @return A dictionary containing all the public properties.
 
-   @see get
-   @see set
+   @see BOM.get
+   @see BOM.set
 */
 
 class FALCON_DYN_CLASS Properties: public PseudoFunction
@@ -201,6 +201,34 @@ private:
    };
 
    Invoke m_invoke;
+};
+
+
+
+/*#
+ @function approp
+ @brief Applies all the given properties to the entity.
+ @param entity The entity on which to apply the properties.
+ @param data A dictionary where each entry is a pair of property name => value.
+ @return this same entity.
+ @raise AccessError if any of the property indicated in @b data cannot be applied to this entity.
+ */
+
+
+/*#
+ @method approp BOM
+ @brief Applies all the given properties to the entity.
+ @param data A dictionary where each entry is a pair of property name => value.
+ @return this same entity.
+ @raise AccessError if any of the property indicated in @b data cannot be applied to this entity.
+ */
+
+class FALCON_DYN_CLASS Approp: public Function
+{
+public:
+   Approp();
+   virtual ~Approp();
+   virtual void invoke( VMContext* vm, int32 nParams );
 };
 
 

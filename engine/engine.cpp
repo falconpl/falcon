@@ -285,6 +285,7 @@ Engine::Engine()
    addMantra(new Ext::Set);
    addMantra(new Ext::Has);
    addMantra(new Ext::Properties);
+   addMantra(new Ext::Approp);
    addMantra(new Ext::Foreach);
 
    //============================================

@@ -67,13 +67,11 @@ namespace BOMH
 {
 void len(VMContext* ctx, const Class* cls, void* data);
 void baseClass(VMContext* ctx, const Class* cls, void* data);
-void bound(VMContext* ctx, const Class* cls, void* data);
 void className(VMContext* ctx, const Class* cls, void* data);
 void clone(VMContext* ctx, const Class* cls, void* data);
 void clone_(VMContext* ctx, const Class* cls, void* data);
 void describe(VMContext* ctx, const Class* cls, void* data);
 void isCallable(VMContext* ctx, const Class* cls, void* data);
-void ptr(VMContext* ctx, const Class* cls, void* data);
 void toString(VMContext* ctx, const Class* cls, void* data);
 void typeId(VMContext* ctx, const Class* cls, void* data);
 
@@ -83,6 +81,8 @@ void derivedFrom(VMContext* ctx, const Class* cls, void* data);
 
 void render(VMContext* ctx, const Class* cls, void* data);
 void foreach(VMContext* ctx, const Class* cls, void* data);
+void approp(VMContext* ctx, const Class* cls, void* data);
+void exprop(VMContext* ctx, const Class* cls, void* data);
 
 void get(VMContext* ctx, const Class* cls, void* data);
 void set(VMContext* ctx, const Class* cls, void* data);

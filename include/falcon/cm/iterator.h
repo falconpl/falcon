@@ -47,7 +47,7 @@ public:
 
    virtual void store( VMContext*, DataWriter* stream, void* instance ) const;
    virtual void restore( VMContext*, DataReader* stream ) const;
-   
+
    virtual void flatten( VMContext* ctx, ItemArray& subItems, void* instance ) const;
    virtual void unflatten( VMContext* ctx, ItemArray& subItems, void* instance ) const;
 
@@ -56,7 +56,7 @@ public:
    //
    virtual void* createInstance() const;   
    virtual bool op_init( VMContext* ctx, void* instance, int pcount ) const;
-   
+
    void op_iter( VMContext* ctx, void* instance ) const;
    void op_next( VMContext* ctx, void* instance ) const;
 
