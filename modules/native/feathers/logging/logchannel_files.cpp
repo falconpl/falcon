@@ -60,8 +60,11 @@ LogChannelFiles::LogChannelFiles( const String& path, const String &fmt, int lev
 
 LogChannelFiles::~LogChannelFiles()
 {
-   stop();
-   m_stream->decref();
+   close();
+   if( m_stream != 0 )
+   {
+      m_stream->decref();
+   }
 }
 
 
@@ -308,6 +311,22 @@ bool LogChannelFiles::encoding( const String& enc )
    m_mtx_open.lock();
    m_encoding = enc;
    m_mtx_open.unlock();
+   return true;
+}
+
+
+bool LogChannelFiles::close()
+{
+   if( ! LogChannel::close() )
+   {
+      return false;
+   }
+
+   m_stream->flush();
+   m_stream->underlying()->close();
+   m_stream->decref();
+   m_stream = 0;
+
    return true;
 }
 

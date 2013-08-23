@@ -31,6 +31,8 @@ public:
    LogChannelEngine( int level=LOGLEVEL_ALL );
    LogChannelEngine( const String &fmt, int level=LOGLEVEL_ALL );
 
+   virtual void close();
+
 protected:
    virtual void writeLogEntry( const String& entry, LogMessage* pOrigMsg );
    virtual ~LogChannelEngine();

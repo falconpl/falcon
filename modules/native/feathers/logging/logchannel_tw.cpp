@@ -47,8 +47,20 @@ void LogChannelTW::writeLogEntry( const String& entry, LogChannel::LogMessage* )
 
 LogChannelTW::~LogChannelTW()
 {
-   stop();
+   close();
    m_stream->decref();
+}
+
+bool LogChannelTW::close()
+{
+   if( ! LogChannel::close() )
+   {
+      return false;
+   }
+
+   m_stream->flush();
+   m_stream->underlying()->close();
+   return true;
 }
 
 }

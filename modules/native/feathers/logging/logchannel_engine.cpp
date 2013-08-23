@@ -33,7 +33,18 @@ void LogChannelEngine::writeLogEntry( const String& entry, LogChannel::LogMessag
 
 LogChannelEngine::~LogChannelEngine()
 {
+   close();
+}
+
+bool LogChannelEngine::close()
+{
+   if( ! LogChannel::close() )
+   {
+      return false;
+   }
+
    Engine::instance()->log()->log( Log::fac_script, Log::lvl_info, "Logging module -- engine log channel stopping" );
+   return true;
 }
 
 }

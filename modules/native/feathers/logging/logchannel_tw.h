@@ -34,6 +34,8 @@ public:
    inline bool flushAll() const { return m_bFlushAll; }
    inline void flushAll( bool b ) { m_bFlushAll = b; }
 
+   virtual bool close();
+
 protected:
    TextWriter* m_stream;
    bool m_bFlushAll;

@@ -26,10 +26,15 @@
 namespace Falcon {
 namespace Mod {
 
-LogChannelSyslog::~LogChannelSyslog()
+bool LogChannelSyslog::close()
 {
-   stop();
+   if( ! LogChannel::close() )
+   {
+      return false;
+   }
+
    CloseEventLog( (HANDLE) m_sysdata );
+   return true;
 }
 
 void LogChannelSyslog::init()

@@ -37,6 +37,12 @@ LogChannelSyslog::LogChannelSyslog( const String& identity, const String &fmt, u
    init();
 }
 
+LogChannelSyslog::~LogChannelSyslog()
+{
+   close();
+}
+
+
 }
 }
 

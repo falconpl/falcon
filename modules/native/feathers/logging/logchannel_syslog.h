@@ -38,6 +38,7 @@ protected:
 
    virtual void writeLogEntry( const String& entry, LogMessage* pOrigMsg );
    virtual void init();
+   virtual void close();
 
    virtual ~LogChannelSyslog();
 
