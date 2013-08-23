@@ -19,7 +19,7 @@
 namespace Falcon {
 
 TranscoderUTF8::TranscoderUTF8():
-   Transcoder( "utf8" )
+   Transcoder( FALCON_TRANSCODER_UTF8_NAME )
 {
 }
 

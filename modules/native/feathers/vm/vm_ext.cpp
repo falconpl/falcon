@@ -1,5 +1,5 @@
 /* FALCON - The Falcon Programming Language.
- * FILE: rnd_ext.cpp
+ * FILE: vm_ext.cpp
  * 
  * Interface to the virtual machine
  * Main module file, providing the module object to the Falcon engine.

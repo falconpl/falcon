@@ -19,6 +19,8 @@
 
 #include <falcon/transcoder.h>
 
+#define FALCON_TRANSCODER_UTF8_NAME "utf8"
+
 namespace Falcon {
 /** Text Decoder for the UTF-8 encoding. */
 class FALCON_DYN_CLASS TranscoderUTF8: public Transcoder

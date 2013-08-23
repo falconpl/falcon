@@ -19,34 +19,13 @@
 
 #include <falcon/setup.h>
 #include <falcon/error_base.h>
-#include <falcon/corecarrier.h>
-#include <falcon/srv/logging_srv.h>
 
 #ifndef FALCON_LOGGING_ERROR_BASE
    #define FALCON_LOGGING_ERROR_BASE         1200
 #endif
 
 #define FALCON_LOGGING_ERROR_OPEN  (FALCON_LOGGING_ERROR_BASE + 0)
-
-namespace Falcon
-{
-
-class LogChannelFilesCarrier: public CoreCarrier<LogChannelFiles>
-{
-public:
-   LogChannelFilesCarrier( const CoreClass* gen, LogChannelFiles *data );
-   LogChannelFilesCarrier( const LogChannelFilesCarrier& other );
-   virtual ~LogChannelFilesCarrier();
-
-   virtual bool setProperty( const String &prop, const Item &value );
-   virtual bool getProperty( const String &key, Item &ret ) const;
-   virtual LogChannelFilesCarrier *clone() const;
-
-};
-
-CoreObject* LogChannelFilesFactory( const CoreClass *cls, void *data, bool );
-
-}
+#define FALCON_LOGGING_ERROR_DESC  "Error opening the logging service"
 
 #endif
 

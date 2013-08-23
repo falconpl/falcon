@@ -63,7 +63,7 @@ template CoreObject* CoreCarrier_Factory<LogChannelSyslog>( const CoreClass *cls
    delivering them on final media, rendered as their internal rules dictate.
 
    The user application posts a log entry to an area, and the area dispatches
-   the entry to all the channels that are registered with. Channels can be
+   the entry to all the channels that are registered with that area. Channels can be
    registered with multiple areas, and they can be dynamically added to new
    areas or removed from areas they are currently connected to.
 
@@ -119,7 +119,7 @@ template CoreObject* CoreCarrier_Factory<LogChannelSyslog>( const CoreClass *cls
    @endcode
 
    In this case, creating the "rendered" log-friendly representation of the visitors
-   is quite slow, and so it's creating the log entry in the log() call.
+   is quite slow.
 
    If there isn't any channel registered with the GenericLog area, the message will
    be discarded, but the heaviest part of the job has already be done, and in waste.
@@ -131,7 +131,7 @@ template CoreObject* CoreCarrier_Factory<LogChannelSyslog>( const CoreClass *cls
 
    The @a LogArea.minlog method returns the minimum log level that is accepted
    by a registered channel (the @a gminlog function operates on the GeneralLog area),
-   providing a simple way to prevent logging useless data in runtime:
+   providing a simple way to prevent logging useless data at runtime:
 
    @code
       load logging
@@ -146,18 +146,6 @@ template CoreObject* CoreCarrier_Factory<LogChannelSyslog>( const CoreClass *cls
    @note Log levels appares in inverse order of severity; so LOGF (fatal) is a level
    numerically less than LOGD (debug).
 
-   @section feather_logging_service Service model
-
-   Falcon logging module is exposed to embedding application as a "service".
-   This means that embedding applications using the Falcon engine can dynamically
-   load the logging module and access the same functionalities available to
-   Falcon scripts directly from a C++ SDK interface.
-
-   Actually, LogChannel class hierarchy is directly visible in the scripts; so
-   embedding application could create log areas or ever log channels pointing
-   back to them, or sharing channels with the scripts to write joint logs (maybe
-   from different areas).
-
    @section feather_logging_extending Extending classes.
 
    All the classes in this module are highly reflective, and operate on the inner
@@ -169,6 +157,20 @@ template CoreObject* CoreCarrier_Factory<LogChannelSyslog>( const CoreClass *cls
    However, it is legal to extend the LogChannel classes; the overloaded log
    method can be used directly by the script even if it will be ignored by
    LogArea instances.
+
+   @section feather_logging_engine Integration with the engine logging facility
+
+   Falcon provides a simple logging facility that is meant to be used by the
+   command line interpreter or by various environment controllers (WOPI in web
+   servers, embedding applications etc).
+
+   A direct interface to this logging media is provided by the @a Log class in the
+   core module.
+
+   However, the engine facility can be transparently used by the server-grade logging
+   facility provided by this module through the @a LogChannelEngine class. The engine
+   logging facility is seen as a channel to which the log messages sent to subscribed
+   areas are marshaled.
 */
 
 /*#
@@ -180,15 +182,7 @@ FALCON_MODULE_DECL
 
    // setup DLL engine common data
 
-   Falcon::Module *self = new Falcon::Module();
-   self->name( "logging" );
-   self->language( "en_US" );
-   self->engineVersion( FALCON_VERSION_NUM );
-   self->version( VERSION_MAJOR, VERSION_MINOR, VERSION_REVISION );
-
-   //====================================
-   // Message setting
-   #include "logging_st.h"
+   Falcon::Module *self = new Falcon::Module("logging");
 
    //====================================
    // Some general constants

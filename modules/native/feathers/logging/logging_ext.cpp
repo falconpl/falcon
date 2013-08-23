@@ -19,17 +19,14 @@
 
 
 #include <falcon/fassert.h>
-#include <falcon/corecarrier.h>
 #include <falcon/vm.h>
 #include <falcon/string.h>
-#include <falcon/carray.h>
-#include <falcon/lineardict.h>
+#include <falcon/itemarray.h>
+#include <falcon/itemdict.h>
 #include <falcon/stream.h>
-#include <falcon/memory.h>
 
 #include "logging_ext.h"
 #include "logging_mod.h"
-#include "logging_st.h"
 
 /*#
    @beginmodule feathers.logging

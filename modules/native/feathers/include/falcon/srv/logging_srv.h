@@ -18,7 +18,7 @@
 #define flc_logging_srv_H
 
 #include <falcon/setup.h>
-#include <falcon/service.h>
+#include <falcon/textwriter.h>
 #include <falcon/string.h>
 #include <falcon/timestamp.h>
 #include <falcon/mt.h>
@@ -138,7 +138,7 @@ public:
 /** Area for logging.
  *
  */
-class LogArea: public BaseAlloc
+class LogArea
 {
    volatile int m_refCount;
    String m_name;
@@ -194,14 +194,14 @@ public:
 class LogChannelStream: public LogChannel
 {
 protected:
-   Stream* m_stream;
+   TextWriter* m_stream;
    bool m_bFlushAll;
    virtual void writeLogEntry( const String& entry, LogMessage* pOrigMsg );
    virtual ~LogChannelStream();
 
 public:
-   LogChannelStream( Stream* s, int level=LOGLEVEL_ALL );
-   LogChannelStream( Stream* s, const String &fmt, int level=LOGLEVEL_ALL );
+   LogChannelStream( TextWriter* s, int level=LOGLEVEL_ALL );
+   LogChannelStream( TextWriter* s, const String &fmt, int level=LOGLEVEL_ALL );
 
 
    inline bool flushAll() const { return m_bFlushAll; }
@@ -281,29 +281,6 @@ protected:
 public:
    LogChannelSyslog( const String& identity, uint32 facility = 0, int level=LOGLEVEL_ALL );
    LogChannelSyslog( const String& identity, const String &fmt, uint32 facility = 0, int level=LOGLEVEL_ALL );
-};
-
-
-#define LOGSERVICE_NAME "LogService"
-
-/** Publishes the Log system as "LogService".
- *
- */
-class LogService: public Service
-{
-public:
-   LogService();
-
-   virtual LogArea* makeLogArea( const String& name ) const;
-   virtual LogChannelStream* makeChnStream( Stream* s, int level=LOGLEVEL_ALL ) const;
-   virtual LogChannelStream* makeChnStream( Stream* s, const String &fmt, int level=LOGLEVEL_ALL ) const;
-
-   virtual LogChannelSyslog* makeChnSyslog( const String& identity, uint32 facility = 0, int level=LOGLEVEL_ALL ) const;
-   virtual LogChannelSyslog* makeChnSyslog( const String& identity, const String &fmt, uint32 facility = 0, int level=LOGLEVEL_ALL ) const;
-
-   virtual LogChannelFiles* makeChnlFiles( const String& path, int level=LOGLEVEL_ALL ) const;
-   virtual LogChannelFiles* makeChnFiles( const String& path, const String &fmt, int level=LOGLEVEL_ALL ) const;
-
 };
 
 }
