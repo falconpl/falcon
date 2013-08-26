@@ -140,8 +140,8 @@ public:
  */
 class LogArea
 {
-   volatile int m_refCount;
    String m_name;
+   uint32 m_mark;
 
    virtual ~LogArea();
 
@@ -163,8 +163,8 @@ class LogArea
 
 public:
    LogArea( const String& name ):
-      m_refCount(1),
       m_name( name ),
+      m_mark(0),
       m_head_chan( 0 )
    {}
 
@@ -184,10 +184,14 @@ public:
    virtual void decref();
 
    virtual const String& name() const { return m_name; }
+   void name(const String& n) const { m_name = n; }
 
    virtual void addChannel( LogChannel* chn );
    virtual void removeChannel( LogChannel* chn );
    virtual int minlog() const;
+
+   void gcMark( uint32 mark ) { m_mark = mark; }
+   uint32 currentMark() const { return m_mark; }
 };
 
 

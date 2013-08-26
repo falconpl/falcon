@@ -538,8 +538,11 @@ bool Class::op_init( VMContext* ctx, void* inst, int32 pCount ) const
 {
    if( _p->m_constructor != 0 )
    {
+      uint32 depth = ctx->codeDepth();
       ctx->callInternal( _p->m_constructor, pCount, Item(this,inst) );
-      return true;
+      // return true (processing of init complete) if the constructor didn't go deep.
+      // i.e. if it returned its frame.
+      return depth == ctx->codeDepth();
    }
 
    throw FALCON_SIGN_XERROR( OperandError, e_invop, .extra("init") );

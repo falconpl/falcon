@@ -35,56 +35,41 @@
 namespace Falcon {
 namespace Ext {
 
-static void s_log( LogArea* a, uint32 lev, VMachine* vm, const String& msg, uint32 code )
-{
-   StackFrame* sf = vm->currentFrame();
-
-   a->log( lev,
-         sf->m_module->module()->name(),
-         sf->m_symbol->name(),
-         msg,
-		 code );
-
-}
-
-FALCON_FUNC  GeneralLog_init( ::Falcon::VMachine *vm )
-{
-   CoreCarrier<LogArea>* cc = static_cast< CoreCarrier<LogArea>* >(vm->self().asObject());
-   cc->carried( new LogArea( "general" ) );
-}
-
 // ==============================================
-// Class LogArea
+// Class LogArea functions and properties
 // ==============================================
 
+namespace CLogArea {
 /*#
    @class LogArea
    @brief Collection of log channels.
    @param name The name of the area.
 */
 
-FALCON_FUNC  LogArea_init( ::Falcon::VMachine *vm )
+FALCON_DECLARE_FUNCTION( LogArea_init, "name:S" )
+FALCON_DEFINE_FUNCTION_P1( LogArea_init )
 {
-   CoreObject *self = vm->self().asObject();
-   Item *i_aname = vm->param(0);
+   Item *i_aname = ctx->param(0);
 
    if ( i_aname == 0 || ! i_aname->isString() )
    {
-      throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
-            .origin(e_orig_runtime)
-            .extra( "S" ) );
+      throw paramError( __LINE__, SRC );
    }
 
-   CoreCarrier<LogArea>* cc = static_cast< CoreCarrier<LogArea>* >(self);
-   cc->carried( new LogArea( *i_aname->asString() ) );
+   LogArea* la = static_cast<LogArea*>(ctx->self().asInst());
+   const String& name = *i_aname->asString();
+   la->name(name);
+   ctx->returnFrame(ctx->self());
 }
 
+
+
 /*#
-   @method minlog LogArea
+   @property minlog LogArea
    @brief Determines what is the minimum log severity active on this area.
    @return A number representing a log severity, or -1
 
-   This function returns the log level accepted by the registered channel
+   This property holds the log level accepted by the registered channel
    that is logging the least severe level.
 
    Notice that severity and numerical values of the logging levels are
@@ -95,40 +80,56 @@ FALCON_FUNC  LogArea_init( ::Falcon::VMachine *vm )
    by some of the registered channel, you have to:
 
    @code
-     if level <= GeneralLog.minlog()
+     if level <= GeneralLog.minlog
         // ok, someone will log my entry
         GeneralLog.log( level, "entry" )
      end
    @endcode
 
-   @see gminlog
+   @see minlog
 */
-FALCON_FUNC  LogArea_minlog( ::Falcon::VMachine *vm )
+static void get_minlog( const Class*, const String&, void* instance, Item& value )
 {
-   CoreCarrier<LogArea>* cc = static_cast< CoreCarrier<LogArea>* >(vm->self().asObject());
-   vm->retval( (int64) cc->carried()->minlog() );
+   LogArea* logArea = static_cast< LogArea* >(instance);
+   value.setInteger(logArea->minlog());
 }
 
+static void internal_add_remove( Function* func, VMContext* ctx, bool mode )
+{
+   LoggerModule* mod = static_cast<LoggerModule*>(func->module());
+   Class* clsChn = mod->classLogChannel();
+   Item *i_chn = ctx->param(0);
+
+   if ( i_chn == 0 || ! i_chn->isInstanceOf( clsChn ) )
+   {
+      throw func->paramError(__LINE__, SRC);
+   }
+
+   LogArea* la = static_cast<LogArea*>(ctx->self().asInst());
+   Class* cls = 0;
+   void* data = 0;
+   i_chn->asClassInst(cls,data);
+   LogChannel* chn = static_cast<LogChannel*>( cls->getParentData(clsChn, data) );
+
+   if( mode )
+   {
+      la->addChannel(chn);
+   }
+   else {
+      la->removeChannel(chn);
+   }
+   ctx->returnFrame();
+}
 
 /*#
    @method add LogArea
    @brief Adds a channel to this log area.
    @param channel The channel to be added.
 */
-FALCON_FUNC  LogArea_add( ::Falcon::VMachine *vm )
+FALCON_DECLARE_FUNCTION( add, "channel:LogChannel" )
+FALCON_DEFINE_FUNCTION_P1( add )
 {
-   Item *i_chn = vm->param(0);
-
-   if ( i_chn == 0 || ! i_chn->isOfClass( "LogChannel" ) )
-   {
-      throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
-            .origin(e_orig_runtime)
-            .extra( "LogChannel" ) );
-   }
-
-   CoreCarrier<LogArea>* cc = static_cast< CoreCarrier<LogArea>* >(vm->self().asObject());
-   CoreCarrier<LogChannel>* chn = static_cast< CoreCarrier<LogChannel>* >( i_chn->asObjectSafe() );
-   cc->carried()->addChannel( chn->carried() );
+   internal_add_remove(this,ctx, true);
 }
 
 /*#
@@ -137,33 +138,47 @@ FALCON_FUNC  LogArea_add( ::Falcon::VMachine *vm )
    @param channel The channel to be removed.
 */
 
-FALCON_FUNC  LogArea_remove( ::Falcon::VMachine *vm )
+FALCON_DECLARE_FUNCTION( remove, "channel:LogChannel" )
+FALCON_DEFINE_FUNCTION_P1( remove )
 {
-   Item *i_chn = vm->param(0);
+   internal_add_remove(this, ctx, false);
+}
 
-   if ( i_chn == 0 || ! i_chn->isOfClass( "LogChannel" ) )
+
+static void internal_log( uint32 level, VMContext* ctx, Function* func, Item* i_message, Item* i_code )
+{
+   if ( i_message == 0 || !i_message->isString()
+        || ( i_code != 0 && ! i_code->isOrdinal() ) )
    {
-      throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
-            .origin(e_orig_runtime)
-            .extra( "LogChannel" ) );
+      throw func->paramError( __LINE__, SRC );
    }
 
-   CoreCarrier<LogArea>* cc = static_cast< CoreCarrier<LogArea>* >(vm->self().asObject());
-   CoreCarrier<LogChannel>* chn = static_cast< CoreCarrier<LogChannel>* >( i_chn->asObjectSafe() );
-   cc->carried()->removeChannel( chn->carried() );
+
+   LogArea* la = static_cast< LogArea* >( ctx->self().asInst());
+   const String& message = *i_message->asString();
+   if( i_code != 0 )
+   {
+      uint32 code = i_code->forceInteger();
+      la->log(level, message, code );
+   }
+   else {
+      la->log( level, message );
+   }
+
+   ctx->returnFrame();
 }
 
 /*#
    @method log LogArea
-   @brief Sends a log entry to all the registred channels.
+   @brief Sends a log entry to all the registered channels.
    @param level The level of the log entry.
    @param message The message to be logged.
    @optparam code A numeric code representing an application specific message ID.
 
    The @b level parameter can be an integer number, or one of the following
-   conventional constants representing levels:
+   conventional constants (exposed in the module) representing levels:
 
-   - @b LOGF: failure; the application met a total failure condition and
+   - @b LOGC: critical; the application met a total failure condition and
               is going to halt.
    - @b LOGE: error; the application met an error condition, possibly dangerous
               enough to cause future termination or malfunction, but not
@@ -171,31 +186,266 @@ FALCON_FUNC  LogArea_remove( ::Falcon::VMachine *vm )
    - @b LOGW: warning; the application met an unusual condition that that should
               be noted and known by other applications, developers or users
               checking for possible problems.
-   - @b LOGI: infromation; the application wants to indicate that a normal or
+   - @b LOGI: information; the application wants to indicate that a normal or
               expected event actually happened.
-   - @b LOGD: debug; A message useful to track debugging and development information.
+   - @b LOGD: detail; more detailed information that can be considered superfluous in normal situations.
+   - @b LOGD0: A message useful to track debugging and development information.
    - @b LOGD1: lower debug; debug used for very low level, and specialized debugging.
    - @b LOGD2: still lower debug.
 */
-FALCON_FUNC  LogArea_log( ::Falcon::VMachine *vm )
+FALCON_DECLARE_FUNCTION( log, "level:N,message:S,code:[N]" )
+FALCON_DEFINE_FUNCTION_P1( log )
 {
-   Item *i_level = vm->param(0);
-   Item *i_message = vm->param(1);
-   Item *i_code = vm->param(2);
+   Item *i_level = ctx->param(0);
+   Item *i_message = ctx->param(1);
+   Item *i_code = ctx->param(2);
 
-   if ( i_level == 0 || ! i_level->isOrdinal()
-        || i_message == 0 || !i_message->isString()
-		|| ( i_code != 0 && ! i_code->isOrdinal() ) )
+   if ( i_level == 0 || ! i_level->isOrdinal() )
    {
-      throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
-            .origin(e_orig_runtime)
-			.extra( "N,S,[N]" ) );
+      throw paramError( __LINE__, SRC );
    }
 
-   CoreCarrier<LogArea>* cc = static_cast< CoreCarrier<LogArea>* >(vm->self().asObject());
-   uint32 code = (uint32) (i_code != 0 ? i_code->forceInteger() : 0);
-   s_log( cc->carried(), (uint32) i_level->forceInteger(), vm, *i_message->asString(), code );
+   uint32 level = i_level->forceInteger();
+   internal_log( level, ctx, this, i_message, i_code );
 }
+
+/*#
+   @method logc LogArea
+   @brief Sends a critical log entry to all the registered channels.
+   @param message The message to be logged.
+   @optparam code A numeric code representing an application specific message ID.
+
+   @see LogArea.log
+*/
+FALCON_DECLARE_FUNCTION( logc, "message:S,code:[N]" )
+FALCON_DEFINE_FUNCTION_P1( logc )
+{
+   Item *i_message = ctx->param(0);
+   Item *i_code = ctx->param(1);
+
+   internal_log( LOGLEVEL_C, ctx, this, i_message, i_code );
+}
+
+/*#
+   @method loge LogArea
+   @brief Sends a error level log entry to all the registered channels.
+   @param message The message to be logged.
+   @optparam code A numeric code representing an application specific message ID.
+
+   @see LogArea.log
+*/
+FALCON_DECLARE_FUNCTION( loge, "message:S,code:[N]" )
+FALCON_DEFINE_FUNCTION_P1( loge )
+{
+   Item *i_message = ctx->param(0);
+   Item *i_code = ctx->param(1);
+
+   internal_log( LOGLEVEL_E, ctx, this, i_message, i_code );
+}
+
+/*#
+   @method logw LogArea
+   @brief Sends a warn level log entry to all the registered channels.
+   @param message The message to be logged.
+   @optparam code A numeric code representing an application specific message ID.
+
+   @see LogArea.log
+*/
+FALCON_DECLARE_FUNCTION( logw, "message:S,code:[N]" )
+FALCON_DEFINE_FUNCTION_P1( logw )
+{
+   Item *i_message = ctx->param(0);
+   Item *i_code = ctx->param(1);
+
+   internal_log( LOGLEVEL_W, ctx, this, i_message, i_code );
+}
+
+/*#
+   @method logi LogArea
+   @brief Sends an information level log entry to all the registered channels.
+   @param message The message to be logged.
+   @optparam code A numeric code representing an application specific message ID.
+
+   @see LogArea.log
+*/
+FALCON_DECLARE_FUNCTION( logi, "message:S,code:[N]" )
+FALCON_DEFINE_FUNCTION_P1( logi )
+{
+   Item *i_message = ctx->param(0);
+   Item *i_code = ctx->param(1);
+
+   internal_log( LOGLEVEL_I, ctx, this, i_message, i_code );
+}
+
+/*#
+   @method logd LogArea
+   @brief Sends a detail information level log entry to all the registered channels.
+   @param message The message to be logged.
+   @optparam code A numeric code representing an application specific message ID.
+
+   @see LogArea.log
+*/
+FALCON_DECLARE_FUNCTION( logd, "message:S,code:[N]" )
+FALCON_DEFINE_FUNCTION_P1( logd )
+{
+   Item *i_message = ctx->param(0);
+   Item *i_code = ctx->param(1);
+
+   internal_log( LOGLEVEL_D, ctx, this, i_message, i_code );
+}
+
+/*#
+   @method logd0 LogArea
+   @brief Sends a debug information level log entry to all the registered channels.
+   @param message The message to be logged.
+   @optparam code A numeric code representing an application specific message ID.
+
+   @see LogArea.log
+*/
+FALCON_DECLARE_FUNCTION( logd0, "message:S,code:[N]" )
+FALCON_DEFINE_FUNCTION_P1( logd0 )
+{
+   Item *i_message = ctx->param(0);
+   Item *i_code = ctx->param(1);
+
+   internal_log( LOGLEVEL_D0, ctx, this, i_message, i_code );
+}
+
+/*#
+   @method logd1 LogArea
+   @brief Sends a detailed debug information level log entry to all the registered channels.
+   @param message The message to be logged.
+   @optparam code A numeric code representing an application specific message ID.
+
+   @see LogArea.log
+*/
+FALCON_DECLARE_FUNCTION( logd1, "message:S,code:[N]" )
+FALCON_DEFINE_FUNCTION_P1( logd1 )
+{
+   Item *i_message = ctx->param(0);
+   Item *i_code = ctx->param(1);
+
+   internal_log( LOGLEVEL_D1, ctx, this, i_message, i_code );
+}
+
+/*#
+   @method logd2 LogArea
+   @brief Sends a very detailed debug information level log entry to all the registered channels.
+   @param message The message to be logged.
+   @optparam code A numeric code representing an application specific message ID.
+
+   @see LogArea.log
+*/
+FALCON_DECLARE_FUNCTION( logd2, "message:S,code:[N]" )
+FALCON_DEFINE_FUNCTION_P1( logd2 )
+{
+   Item *i_message = ctx->param(0);
+   Item *i_code = ctx->param(1);
+
+   internal_log( LOGLEVEL_D2, ctx, this, i_message, i_code );
+}
+}
+
+// ==============================================
+// Class LogArea definition
+// ==============================================
+
+
+ClassLogArea::ClassLogArea( const String& name ):
+   Class(name)
+{
+   init();
+}
+
+ClassLogArea::ClassLogArea():
+   Class("LogArea")
+{
+   init();
+}
+
+void ClassLogArea::init()
+{
+   setConstuctor( new CLogArea::Function_LogArea_init );
+
+   addProperty( "minlog", &CLogArea::get_minlog );
+
+   addMethod( new CLogArea::Function_add );
+   addMethod( new CLogArea::Function_remove );
+   addMethod( new CLogArea::Function_log );
+
+   addMethod( new CLogArea::Function_logc );
+   addMethod( new CLogArea::Function_loge );
+   addMethod( new CLogArea::Function_logw );
+   addMethod( new CLogArea::Function_logi );
+   addMethod( new CLogArea::Function_logd );
+   addMethod( new CLogArea::Function_logd0 );
+   addMethod( new CLogArea::Function_logd1 );
+   addMethod( new CLogArea::Function_logd2 );
+}
+
+ClassLogArea::~ClassLogArea()
+{}
+
+void ClassLogArea::dispose( void* instance ) const
+{
+   LogArea* la = static_cast<LogArea*>(instance);
+   la->decref();
+}
+
+void* ClassLogArea::clone( void* instance ) const
+{
+   LogArea* la = static_cast<LogArea*>(instance);
+   la->incref();
+   return la;
+}
+
+void* ClassLogArea::createInstance() const
+{
+   LogArea* la = new LogArea("unnamed");
+   return la;
+}
+
+
+void ClassLogArea::gcMarkInstance( void* instance, uint32 mark ) const
+{
+   LogArea* la = static_cast<LogArea*>(instance);
+   la->gcMark( mark );
+}
+
+bool ClassLogArea::gcCheckInstance( void* instance, uint32 mark ) const
+{
+   LogArea* la = static_cast<LogArea*>(instance);
+   return la->currentMark() == mark;
+}
+
+
+// ==============================================
+// Singleton GenericLog
+// ==============================================
+
+
+ClassGeneralLogAreaObj::ClassGeneralLogAreaObj( Class* parent ):
+    ClassLogArea("%GeneralLog")
+{
+   setParent(parent);
+}
+
+ClassGeneralLogAreaObj::~ClassGeneralLogAreaObj()
+{
+}
+
+
+void* ClassGeneralLogAreaObj::createInstance() const
+{
+   // this is abstract.
+   return 0;
+};
+
+
+// ==============================================
+// Class LogChannel methods and properties
+// ==============================================
+
 
 /*#
    @class LogChannel
@@ -468,20 +718,6 @@ FALCON_FUNC  LogChannelSyslog_init( ::Falcon::VMachine *vm )
 }
 
 
-static CoreObject* s_getGenLog( VMachine* vm )
-{
-   LiveModule* lmod = vm->currentLiveModule();
-   if( lmod->userItems().length() == 0 )
-   {
-      Item* i_genlog = vm->findWKI( "GeneralLog" );
-      fassert( i_genlog != 0 );
-      fassert( i_genlog->isOfClass( "%GeneralLog" ) );
-      lmod->userItems().append( *i_genlog );
-      return i_genlog->asObjectSafe();
-   }
-
-   return lmod->userItems()[0].asObjectSafe();
-}
 
 //===============================================
 // LogChannelFiles
