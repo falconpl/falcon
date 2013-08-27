@@ -16,6 +16,8 @@
 #define SRC "falcon/modules/native/feathers/logging/logchannel_tw.cpp"
 #include "logchannel_tw.h"
 
+#include <falcon/textwriter.h>
+
 namespace Falcon {
 namespace Mod {
 

@@ -16,8 +16,11 @@
 #ifndef FALCON_FEATHERS_LOGCHANNEL_H
 #define FALCON_FEATHERS_LOGCHANNEL_H
 
+#include <falcon/setup.h>
+#include <falcon/string.h>
 #include <falcon/mt.h>
 #include <falcon/refcounter.h>
+#include <falcon/timestamp.h>
 
 namespace Falcon {
 namespace Mod {
@@ -51,7 +54,7 @@ public:
    inline void log( uint32 level, const String& msg, uint32 code = 0 ) { log( "", "", level, msg, code ); }
    inline void log( const String& tgt, const String& source, uint32 level, const String& msg, uint32 code = 0 )
    {
-      log( tgt, source, "", level, msg );
+      log( tgt, source, "", level, msg, code );
    }
    virtual void log( const String& tgt, const String& source, const String& function, uint32 level, const String& msg, uint32 code = 0 );
    virtual void* run();
@@ -116,6 +119,8 @@ protected:
    void start();
    void stop();
 
+   virtual ~LogChannel();
+
 private:
    static const int MAX_MSG_POOL=32;
 
@@ -146,7 +151,6 @@ private:
    }
 
    bool expandMessage( LogMessage* msg, const String& fmt, String& target );
-   virtual ~LogChannel();
 
    LogMessage* allocMessage(const String& areaName, const String& modname, const String& caller, int level, const String& msg, uint32 code = 0 );
    void disposeMessage(LogMessage* msg);

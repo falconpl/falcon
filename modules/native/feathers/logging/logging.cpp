@@ -17,28 +17,13 @@
    The confparser module - main file.
 */
 #include <falcon/module.h>
-#include <falcon/corecarrier.h>
 #include "logging_ext.h"
 #include "logging_mod.h"
-#include "logging_st.h"
+
+#include "logarea.h"
 
 #include "version.h"
 
-static Falcon::LogService s_theLogService;
-
-namespace Falcon {
-
-template class CoreCarrier<LogArea>;
-template class CoreCarrier<LogChannel>;
-template class CoreCarrier<LogChannelStream>;
-template class CoreCarrier<LogChannelSyslog>;
-
-template CoreObject* CoreCarrier_Factory<LogArea>( const CoreClass *cls, void *data, bool );
-template CoreObject* CoreCarrier_Factory<LogChannel>( const CoreClass *cls, void *data, bool );
-template CoreObject* CoreCarrier_Factory<LogChannelStream>( const CoreClass *cls, void *data, bool );
-template CoreObject* CoreCarrier_Factory<LogChannelSyslog>( const CoreClass *cls, void *data, bool );
-
-}
 
 /*#
    @module feathers.logging Logging facility
@@ -95,7 +80,7 @@ template CoreObject* CoreCarrier_Factory<LogChannelSyslog>( const CoreClass *cls
 
    @code
    load logging
-   glog( 2000, "A very low priority level, unlikely to be ever logged" )
+   log( 2000, "A very low priority level, unlikely to be ever logged" )
    @endcode
 
    Although there is a cost in calling the @a glog function (logging on the GenericLog
@@ -137,14 +122,14 @@ template CoreObject* CoreCarrier_Factory<LogChannelSyslog>( const CoreClass *cls
       load logging
       
       // want debug?
-      if LOGD <= gminlog()
+      if LOGD0 <= gminlog()
          // prepare an heavy log...
-         glogd( "Debug heavy log: " + ... )
+         logd0( "Debug heavy log: " + ... )
       end
    @endcode
 
-   @note Log levels appares in inverse order of severity; so LOGF (fatal) is a level
-   numerically less than LOGD (debug).
+   @note Log levels appares in inverse order of severity; so LOGC (fatal) is a level
+   numerically less than LOGD0 (debug).
 
    @section feather_logging_extending Extending classes.
 
@@ -162,145 +147,90 @@ template CoreObject* CoreCarrier_Factory<LogChannelSyslog>( const CoreClass *cls
 
    Falcon provides a simple logging facility that is meant to be used by the
    command line interpreter or by various environment controllers (WOPI in web
-   servers, embedding applications etc).
+   servers, embedding applications, etc).
 
    A direct interface to this logging media is provided by the @a Log class in the
    core module.
 
    However, the engine facility can be transparently used by the server-grade logging
    facility provided by this module through the @a LogChannelEngine class. The engine
-   logging facility is seen as a channel to which the log messages sent to subscribed
-   areas are marshaled.
+   logging facility is seen as a channel to which the log messages that are sent to subscribed
+   areas get marshaled.
 */
+
+
+namespace Falcon {
+namespace Ext {
+
+LoggingModule::LoggingModule():
+         Module("LoggingModule")
+{
+   this->addConstant( "LOGFMT_TRACE", "[%s %M.%f]\t%m");
+   this->addConstant( "LOGFMT_ERROR", "%T\t%L%C\t[%a]\t%m");
+   this->addConstant( "LOGFMT_ERRORP", "%T\t%L%C\t[%a:%M.%f]\t%m");
+   this->addConstant( "LOGFMT_ERRORT", "%T\t%L%C\t[%M.%f]\t%m");
+   this->addConstant( "LOGFMT_ENTRY", "%T\t(%L) %m");
+   this->addConstant( "LOGFMT_ENTRYP", "%T\t(%L) [%a]\t%m");
+
+   this->addConstant( "LVC", LOGLEVEL_C );
+   this->addConstant( "LVE", LOGLEVEL_E );
+   this->addConstant( "LVW", LOGLEVEL_W );
+   this->addConstant( "LVI", LOGLEVEL_I );
+   this->addConstant( "LVD", LOGLEVEL_D );
+   this->addConstant( "LVD0", LOGLEVEL_D0 );
+   this->addConstant( "LVD1", LOGLEVEL_D1 );
+   this->addConstant( "LVD2", LOGLEVEL_D2 );
+   this->addConstant( "LVALL", LOGLEVEL_ALL );
+
+   m_logArea = new ClassLogArea;
+   m_logChannel = new ClassLogChannel;
+   m_generalArea = new Mod::LogArea("General");
+
+   *this
+       << new Function_LOG
+       << new Function_LOGC
+       << new Function_LOGE
+       << new Function_LOGW
+       << new Function_LOGI
+       << new Function_LOGD
+       << new Function_LOGD0
+       << new Function_LOGD1
+       << new Function_LOGD2
+
+       << m_logArea
+       << m_logChannel
+
+       << new ClassLogChannelFiles( m_logChannel )
+       << new ClassLogChannelStream( m_logChannel )
+       << new ClassLogChannelStream( m_logChannel )
+       << new ClassLogChannelEngine( m_logChannel )
+   ;
+
+   ClassGeneralLogAreaObj* glog = new ClassGeneralLogAreaObj( m_logArea );
+   addObject( glog, false );
+}
+
+LoggingModule::~LoggingModule()
+{
+}
+
+}
+}
+
+/*# @object GeneralLog
+      @from LogArea
+      @brief General logging area.
+
+      This is the default log area used by the @a glog function.
+  */
+
 
 /*#
    @beginmodule feathers.logging
 */
 FALCON_MODULE_DECL
 {
-   #define FALCON_DECLARE_MODULE self
-
-   // setup DLL engine common data
-
-   Falcon::Module *self = new Falcon::Module("logging");
-
-   //====================================
-   // Some general constants
-   //
-   self->addConstant( "LOGFMT_TRACE", "[%s %M.%f]\t%m");
-   self->addConstant( "LOGFMT_ERROR", "%T\t%L%C\t[%a]\t%m");
-   self->addConstant( "LOGFMT_ERRORP", "%T\t%L%C\t[%a:%M.%f]\t%m");
-   self->addConstant( "LOGFMT_ERRORT", "%T\t%L%C\t[%M.%f]\t%m");
-   self->addConstant( "LOGFMT_ENTRY", "%T\t(%L) %m");
-   self->addConstant( "LOGFMT_ENTRYP", "%T\t(%L) [%a]\t%m");
-
-   //====================================
-   // Class Log Area
-   //
-
-   Falcon::Symbol *c_logarea = self->addClass( "LogArea", &Falcon::Ext::LogArea_init )
-         ->addParam("name");
-   c_logarea->getClassDef()->factory( &Falcon::CoreCarrier_Factory<Falcon::LogArea> );
-
-   self->addClassMethod( c_logarea, "add", &Falcon::Ext::LogArea_add ).asSymbol()->
-      addParam("channel");
-   self->addClassMethod( c_logarea, "remove", &Falcon::Ext::LogArea_remove ).asSymbol()->
-      addParam("channel");
-   self->addClassMethod( c_logarea, "log", &Falcon::Ext::LogArea_log ).asSymbol()->
-      addParam("level")->addParam("message");
-   self->addClassMethod( c_logarea, "minlog", &Falcon::Ext::LogArea_minlog );
-
-   //====================================
-   // General log area
-
-   /*# @object GeneralLog
-       @from LogArea
-       @brief General logging area.
-
-       This is the default log area used by the @a glog function.
-   */
-   Falcon::Symbol *o_genlog = self->addSingleton( "GeneralLog", &Falcon::Ext::GeneralLog_init, true );
-   o_genlog->getInstance()->getClassDef()->addInheritance( new Falcon::InheritDef( c_logarea) );
-   o_genlog->setWKS( true );
-
-   //====================================
-   // Class LogChannel
-
-   // Init prevents direct initialization. -- it's an abstract class.
-   Falcon::Symbol *c_logc = self->addClass( "LogChannel", &Falcon::Ext::LogChannel_init );
-
-   self->addClassMethod( c_logc, "level", &Falcon::Ext::LogChannel_level ).asSymbol()->
-      addParam("level");
-   self->addClassMethod( c_logc, "format", &Falcon::Ext::LogChannel_format ).asSymbol()->
-      addParam("format");
-
-   //====================================
-   // Class LogChannelStream
-   //
-   Falcon::Symbol *c_logcs = self->addClass( "LogChannelStream", &Falcon::Ext::LogChannelStream_init )
-         ->addParam("level")->addParam("format");
-   c_logcs->getClassDef()->factory( &Falcon::CoreCarrier_Factory<Falcon::LogChannelStream> );
-   c_logcs->getClassDef()->addInheritance( new Falcon::InheritDef(c_logc) );
-
-   self->addClassMethod( c_logcs, "flushAll", &Falcon::Ext::LogChannelStream_flushAll ).asSymbol()->
-      addParam("setting");
-
-   //====================================
-   // Class LogChannelSyslog
-   //
-   Falcon::Symbol *c_logsyslog = self->addClass( "LogChannelSyslog", &Falcon::Ext::LogChannelSyslog_init )
-         ->addParam("identity")->addParam("facility")->addParam("level")->addParam("format");
-   c_logsyslog->getClassDef()->factory( &Falcon::CoreCarrier_Factory<Falcon::LogChannelSyslog> );
-   c_logsyslog->getClassDef()->addInheritance( new Falcon::InheritDef(c_logc) );
-
-   //====================================
-   // Class LogChannelFiles
-   //
-   Falcon::Symbol *c_logfiles = self->addClass( "LogChannelFiles", &Falcon::Ext::LogChannelFiles_init )
-         ->addParam("path")->addParam("level")->addParam("format")
-         ->addParam("maxCount")->addParam("maxSize")->addParam("maxDays")
-         ->addParam("overwrite")->addParam("flushAll");
-
-   c_logfiles->getClassDef()->factory( &Falcon::LogChannelFilesFactory );
-   c_logfiles->getClassDef()->addInheritance( new Falcon::InheritDef(c_logc) );
-
-   self->addClassMethod( c_logfiles, "open", &Falcon::Ext::LogChannelFiles_open ).
-      setReadOnly(true);
-   self->addClassProperty( c_logfiles, "flushAll" );
-   self->addClassProperty( c_logfiles, "maxSize" );
-  self->addClassProperty( c_logfiles, "maxCount" );
-   self->addClassProperty( c_logfiles, "maxDays" );
-   self->addClassProperty( c_logfiles, "path" );
-   self->addClassProperty( c_logfiles, "overwrite" );
-
-   //====================================
-   // Generic log function
-   //
-   self->addExtFunc( "gminlog", &Falcon::Ext::gminlog );
-   self->addExtFunc( "glog", &Falcon::Ext::glog )->
-      addParam( "level" )->addParam( "message" );
-   self->addExtFunc( "glogf", &Falcon::Ext::glogf )->addParam( "message" );
-   self->addExtFunc( "gloge", &Falcon::Ext::gloge )->addParam( "message" );
-   self->addExtFunc( "glogw", &Falcon::Ext::glogw )->addParam( "message" );
-   self->addExtFunc( "glogi", &Falcon::Ext::glogi )->addParam( "message" );
-   self->addExtFunc( "glogd", &Falcon::Ext::glogd )->addParam( "message" );
-
-   //=====================================
-   // Constants
-   //
-   self->addConstant( "LOGF", (Falcon::int64) LOGLEVEL_FATAL );
-   self->addConstant( "LOGE", (Falcon::int64) LOGLEVEL_ERROR );
-   self->addConstant( "LOGW", (Falcon::int64) LOGLEVEL_WARN );
-   self->addConstant( "LOGI", (Falcon::int64) LOGLEVEL_INFO );
-   self->addConstant( "LOGD", (Falcon::int64) LOGLEVEL_DEBUG );
-   self->addConstant( "LOGD1", (Falcon::int64) LOGLEVEL_D1 );
-   self->addConstant( "LOGD2", (Falcon::int64) LOGLEVEL_D2 );
-
-   //======================================
-   // Subscribe the service
-   //
-   self->publishService( &s_theLogService );
-
+   Falcon::Module *self = new Falcon::Ext::LoggingModule;
    return self;
 }
 

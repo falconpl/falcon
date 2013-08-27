@@ -17,22 +17,84 @@
    Falcon VM interface to configuration parser module.
 */
 
+#define SRC "modules/native/feathers/logging/logging_ext.cpp"
 
 #include <falcon/fassert.h>
-#include <falcon/vm.h>
+#include <falcon/vmcontext.h>
 #include <falcon/string.h>
+#include <falcon/function.h>
+#include <falcon/item.h>
 #include <falcon/itemarray.h>
 #include <falcon/itemdict.h>
 #include <falcon/stream.h>
+#include <falcon/stdhandlers.h>
 
 #include "logging_ext.h"
 #include "logging_mod.h"
+
+#include "logarea.h"
+#include "logchannel_engine.h"
+#include "logchannel_files.h"
+#include "logchannel_syslog.h"
+#include "logchannel_tw.h"
+
 
 /*#
    @beginmodule feathers.logging
 */
 
+
+
 namespace Falcon {
+
+static void internal_log( uint32 level, VMContext* ctx, Function* func, Item* i_message, Item* i_code, ::Falcon::Mod::LogArea* la = 0 )
+{
+   if ( i_message == 0 || !i_message->isString()
+        || ( i_code != 0 && ! i_code->isOrdinal() ) )
+   {
+      throw func->paramError( __LINE__, SRC );
+   }
+
+
+   if( la == 0 )
+   {
+      la = static_cast< ::Falcon::Mod::LogArea* >( ctx->self().asInst());
+   }
+   const String& message = *i_message->asString();
+
+
+   String module, function;
+   if( ctx->callDepth() > 1 )
+   {
+      CallFrame& cf = ctx->callerFrame(1);
+      if ( cf.m_function != 0 )
+      {
+         function = cf.m_function->fullName();
+         if( cf.m_function->module() != 0 )
+         {
+            module = cf.m_function->module()->name();
+         }
+         else if( cf.m_function->methodOf() != 0 && cf.m_function->methodOf()->module() != 0 )
+         {
+            module = cf.m_function->methodOf()->module()->name();
+         }
+      }
+   }
+
+   if( i_code != 0 )
+   {
+      uint32 code = i_code->forceInteger();
+      la->log(level, module, function, message, code );
+
+   }
+   else {
+      la->log( level, module, function, message );
+   }
+
+   ctx->returnFrame();
+}
+
+
 namespace Ext {
 
 // ==============================================
@@ -56,7 +118,7 @@ FALCON_DEFINE_FUNCTION_P1( LogArea_init )
       throw paramError( __LINE__, SRC );
    }
 
-   LogArea* la = static_cast<LogArea*>(ctx->self().asInst());
+   Mod::LogArea* la = static_cast<Mod::LogArea*>(ctx->self().asInst());
    const String& name = *i_aname->asString();
    la->name(name);
    ctx->returnFrame(ctx->self());
@@ -90,13 +152,13 @@ FALCON_DEFINE_FUNCTION_P1( LogArea_init )
 */
 static void get_minlog( const Class*, const String&, void* instance, Item& value )
 {
-   LogArea* logArea = static_cast< LogArea* >(instance);
+   Mod::LogArea* logArea = static_cast< Mod::LogArea* >(instance);
    value.setInteger(logArea->minlog());
 }
 
 static void internal_add_remove( Function* func, VMContext* ctx, bool mode )
 {
-   LoggerModule* mod = static_cast<LoggerModule*>(func->module());
+   LoggingModule* mod = static_cast<LoggingModule*>(func->methodOf()->module());
    Class* clsChn = mod->classLogChannel();
    Item *i_chn = ctx->param(0);
 
@@ -105,11 +167,11 @@ static void internal_add_remove( Function* func, VMContext* ctx, bool mode )
       throw func->paramError(__LINE__, SRC);
    }
 
-   LogArea* la = static_cast<LogArea*>(ctx->self().asInst());
+   Mod::LogArea* la = static_cast<Mod::LogArea*>(ctx->self().asInst());
    Class* cls = 0;
    void* data = 0;
    i_chn->asClassInst(cls,data);
-   LogChannel* chn = static_cast<LogChannel*>( cls->getParentData(clsChn, data) );
+   Mod::LogChannel* chn = static_cast<Mod::LogChannel*>( cls->getParentData(clsChn, data) );
 
    if( mode )
    {
@@ -145,29 +207,6 @@ FALCON_DEFINE_FUNCTION_P1( remove )
 }
 
 
-static void internal_log( uint32 level, VMContext* ctx, Function* func, Item* i_message, Item* i_code )
-{
-   if ( i_message == 0 || !i_message->isString()
-        || ( i_code != 0 && ! i_code->isOrdinal() ) )
-   {
-      throw func->paramError( __LINE__, SRC );
-   }
-
-
-   LogArea* la = static_cast< LogArea* >( ctx->self().asInst());
-   const String& message = *i_message->asString();
-   if( i_code != 0 )
-   {
-      uint32 code = i_code->forceInteger();
-      la->log(level, message, code );
-   }
-   else {
-      la->log( level, message );
-   }
-
-   ctx->returnFrame();
-}
-
 /*#
    @method log LogArea
    @brief Sends a log entry to all the registered channels.
@@ -178,20 +217,20 @@ static void internal_log( uint32 level, VMContext* ctx, Function* func, Item* i_
    The @b level parameter can be an integer number, or one of the following
    conventional constants (exposed in the module) representing levels:
 
-   - @b LOGC: critical; the application met a total failure condition and
+   - @b LVC: critical; the application met a total failure condition and
               is going to halt.
-   - @b LOGE: error; the application met an error condition, possibly dangerous
+   - @b LVE: error; the application met an error condition, possibly dangerous
               enough to cause future termination or malfunction, but not
               dangerous enough to justify immediate exit.
-   - @b LOGW: warning; the application met an unusual condition that that should
+   - @b LVW: warning; the application met an unusual condition that that should
               be noted and known by other applications, developers or users
               checking for possible problems.
-   - @b LOGI: information; the application wants to indicate that a normal or
+   - @b LVI: information; the application wants to indicate that a normal or
               expected event actually happened.
-   - @b LOGD: detail; more detailed information that can be considered superfluous in normal situations.
-   - @b LOGD0: A message useful to track debugging and development information.
-   - @b LOGD1: lower debug; debug used for very low level, and specialized debugging.
-   - @b LOGD2: still lower debug.
+   - @b LVD: detail; more detailed information that can be considered superfluous in normal situations.
+   - @b LVD0: A message useful to track debugging and development information.
+   - @b LVD1: lower debug; debug used for very low level, and specialized debugging.
+   - @b LVD2: still lower debug.
 */
 FALCON_DECLARE_FUNCTION( log, "level:N,message:S,code:[N]" )
 FALCON_DEFINE_FUNCTION_P1( log )
@@ -351,16 +390,16 @@ FALCON_DEFINE_FUNCTION_P1( logd2 )
 // ==============================================
 
 
-ClassLogArea::ClassLogArea( const String& name ):
-   Class(name)
-{
-   init();
-}
-
 ClassLogArea::ClassLogArea():
    Class("LogArea")
 {
    init();
+}
+
+ClassLogArea::ClassLogArea( const String& name ):
+   Class(name)
+{
+   // no need to add properties for sublcasses
 }
 
 void ClassLogArea::init()
@@ -388,33 +427,33 @@ ClassLogArea::~ClassLogArea()
 
 void ClassLogArea::dispose( void* instance ) const
 {
-   LogArea* la = static_cast<LogArea*>(instance);
+   Mod::LogArea* la = static_cast<Mod::LogArea*>(instance);
    la->decref();
 }
 
 void* ClassLogArea::clone( void* instance ) const
 {
-   LogArea* la = static_cast<LogArea*>(instance);
+   Mod::LogArea* la = static_cast<Mod::LogArea*>(instance);
    la->incref();
    return la;
 }
 
 void* ClassLogArea::createInstance() const
 {
-   LogArea* la = new LogArea("unnamed");
+   Mod::LogArea* la = new Mod::LogArea("unnamed");
    return la;
 }
 
 
 void ClassLogArea::gcMarkInstance( void* instance, uint32 mark ) const
 {
-   LogArea* la = static_cast<LogArea*>(instance);
+   Mod::LogArea* la = static_cast<Mod::LogArea*>(instance);
    la->gcMark( mark );
 }
 
 bool ClassLogArea::gcCheckInstance( void* instance, uint32 mark ) const
 {
-   LogArea* la = static_cast<LogArea*>(instance);
+   Mod::LogArea* la = static_cast<Mod::LogArea*>(instance);
    return la->currentMark() == mark;
 }
 
@@ -438,74 +477,65 @@ ClassGeneralLogAreaObj::~ClassGeneralLogAreaObj()
 void* ClassGeneralLogAreaObj::createInstance() const
 {
    // this is abstract.
-   return 0;
+   return FALCON_CLASS_CREATE_AT_INIT;
 };
 
+
+bool ClassGeneralLogAreaObj::op_init( VMContext* ctx, void*, int32 ) const
+{
+   LoggingModule* mod = static_cast<LoggingModule*>( module() );
+   Mod::LogArea* genlog = mod->genericArea();
+   genlog->incref();
+   ctx->topData() = FALCON_GC_STORE( this, genlog );
+   return false;
+}
 
 // ==============================================
 // Class LogChannel methods and properties
 // ==============================================
 
 
+namespace CLogChannel {
+
+
 /*#
    @class LogChannel
    @brief Abstract class receiving log requests from log areas.
 
-   This class cannot directly instantiated. Calling it directlty
+   This class cannot directly instantiated. Calling it directly
    will generate a code error.
 */
-FALCON_FUNC  LogChannel_init( ::Falcon::VMachine *vm )
-{
-   CoreObject* self = vm->self().asObject();
 
-   if( self->generator()->symbol()->name() == "LogChannel" )
-   {
-      throw new CodeError( ErrorParam( e_noninst_cls, __LINE__ )
-            .origin( e_orig_runtime )
-            .extra( "LogChannel") );
-   }
-   // otherwise, we have nothing to do.
-}
 
 /*#
-   @method level LogChannel
-   @brief Gets or set the log level.
-   @optparam level a new log level to be set.
-   @return The current log level.
+   @property level LogChannel
+   @brief Logging level used on this channel
 
 */
-FALCON_FUNC  LogChannel_level( ::Falcon::VMachine *vm )
+static void get_level( const Class*, const String&, void* instance, Item& value )
 {
-   Item *i_level = vm->param(0);
-
-   CoreCarrier<LogChannel>* cc = (CoreCarrier<LogChannel>*)(vm->self().asObject());
-
-   // always save the level
-   vm->retval( (int64) cc->carried()->level() );
-
-   if( i_level != 0 )
-   {
-      if (! i_level->isOrdinal() )
-      {
-         throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
-               .origin(e_orig_runtime)
-               .extra( "N" ) );
-      }
-
-      // and eventually change it.
-      cc->carried()->level( (uint32) i_level->forceInteger() );
-   }
+   Mod::LogChannel* chn = static_cast< Mod::LogChannel* >(instance);
+   value.setInteger(chn->level());
 }
 
+static void set_level( const Class*, const String&, void* instance, const Item& value )
+{
+   Mod::LogChannel* chn = static_cast< Mod::LogChannel* >(instance);
+   if( ! value.isOrdinal() )
+   {
+      throw FALCON_SIGN_XERROR( AccessTypeError, e_inv_prop_value, .extra("N") );
+   }
+   chn->level( value.forceInteger());
+}
+
+
 /*#
-   @method format LogChannel
+   @property format LogChannel
    @brief Gets or set the log message formatting setting.
-   @optparam format the new format to set (a string).
-   @return The current log message format (a string).
 
    The message @b format is a template string filled with informations from
-   the logging system. Some loggin subsystems (as the MS-Windows Event Logger,
-   or as the Posix SYSLOG system) fill autonomously informations on behalf of
+   the logging system. Some logging subsystems (as the MS-Windows Event Logger,
+   or as the POSIX SYSLOG system) fill autonomously informations on behalf of
    the application, while others (file and stream based loggers) require a format
    to print meaningful informations as the timestamp.
 
@@ -559,99 +589,199 @@ FALCON_FUNC  LogChannel_level( ::Falcon::VMachine *vm )
    - @b LOGFMT_ENTRYP: "%T\t(%L)  [%a]%m" -- Like LOGFMT_ENTRY, but reporting
      also the log area.
 */
-FALCON_FUNC  LogChannel_format( ::Falcon::VMachine *vm )
+
+static void get_format( const Class*, const String&, void* instance, Item& value )
 {
-   Item *i_format = vm->param(0);
-   CoreCarrier<LogChannel>* cc = (CoreCarrier<LogChannel>*)(vm->self().asObject());
-
-   // always save the level
-   CoreString* ret = new CoreString();
-   cc->carried()->getFormat( *ret );
-   vm->retval( ret );
-
-   if( i_format != 0 )
-   {
-      if (! i_format->isString() )
-      {
-         throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
-               .origin(e_orig_runtime)
-               .extra( "S" ) );
-      }
-
-      // and eventually change it.
-      cc->carried()->setFormat( *i_format->asString() );
-   }
+   Mod::LogChannel* chn = static_cast< Mod::LogChannel* >(instance);
+   String* string = new String;
+   chn->getFormat(*string );
+   value = FALCON_GC_HANDLE( string );
 }
 
+
+static void set_format( const Class*, const String&, void* instance, const Item& value )
+{
+   Mod::LogChannel* chn = static_cast< Mod::LogChannel* >(instance);
+   if( ! value.isString() )
+   {
+      throw FALCON_SIGN_XERROR( AccessTypeError, e_inv_prop_value, .extra("S") );
+   }
+   const String& format = *value.asString();
+   chn->setFormat( format );
+}
+} /* end of namespace CLogChannel */
+
+
+ClassLogChannel::ClassLogChannel():
+         Class("LogChannel")
+{
+   init();
+}
+
+ClassLogChannel::ClassLogChannel( const String& name ):
+   Class( name )
+{
+   // no need to add properties for subclasses
+}
+
+ClassLogChannel::~ClassLogChannel()
+{
+}
+
+void ClassLogChannel::init()
+{
+   addProperty("format", &CLogChannel::get_format, &CLogChannel::set_format );
+   addProperty("level", &CLogChannel::get_level, &CLogChannel::set_level );
+}
+
+
+void ClassLogChannel::dispose( void* instance ) const
+{
+   Mod::LogChannel* chn = static_cast<Mod::LogChannel*>(instance);
+   chn->decref();
+}
+
+void* ClassLogChannel::clone( void* ) const
+{
+   // log channels are uncloneable.
+   return 0;
+}
+
+void* ClassLogChannel::createInstance() const
+{
+   // class is pure virtual
+   return 0;
+}
+
+ void ClassLogChannel::gcMarkInstance( void* instance, uint32 mark ) const
+ {
+    Mod::LogChannel* chn = static_cast<Mod::LogChannel*>(instance);
+    chn->gcMark( mark );
+ }
+
+ bool ClassLogChannel::gcCheckInstance( void* instance, uint32 mark ) const
+ {
+    Mod::LogChannel* chn = static_cast<Mod::LogChannel*>(instance);
+    return chn->currentMark() >= mark;
+ }
+
+
+// ==============================================
+// Class LogChannelStream methods and properties
+// ==============================================
+
+namespace CLogChannelStream {
 /*#
    @class LogChannelStream
    @brief Logs on an open stream.
-   @param stream the stream where to log.
-   @param level the log level.
+   @param stream the text writer where to send the log messages.
+   @param initial level the log level.
    @optparam format a format for the log.
+   @optparam encoding a text encoding for the log.
 
    If given, the @b format parameter is used to configure how each log entry
-   will look once rendered on the final stream. Seel @a LogChannel.format for
+   will look once rendered on the final stream. See @a LogChannel.format for
    a detailed description.
+
+   If not specified, the output format of the text sent to the log will be
+   "C" (untranslated).
 
    @see LogChannel.format
 */
-FALCON_FUNC  LogChannelStream_init( ::Falcon::VMachine *vm )
+FALCON_DECLARE_FUNCTION( init, "stream:Stream,level:N,format:[S],encoding:[S]" )
+FALCON_DEFINE_FUNCTION_P1( init )
 {
-   Item *i_stream = vm->param(0);
-   Item *i_level = vm->param(1);
-   Item *i_format = vm->param(2);
+   Item *i_stream = ctx->param(0);
+   Item *i_level = ctx->param(1);
+   Item *i_format = ctx->param(2);
+   Item *i_encoding = ctx->param(3);
 
-   if( i_stream == 0 || ! i_stream->isOfClass( "Stream" )
+   static Class* clsStream = Engine::instance()->stdHandlers()->streamClass();
+
+   if( i_stream == 0 || ! i_stream->isInstanceOf(clsStream)
        || i_level == 0 || ! i_level->isOrdinal()
-       || ( i_format != 0 && ! i_format->isString() )
+       || ( i_format != 0 && ! (i_format->isString()|| i_format->isNil()) )
+       || ( i_encoding != 0 && ! i_encoding->isString() )
        )
    {
-      throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
-            .origin(e_orig_runtime)
-            .extra( "Stream,N,[S]" ) );
+      throw paramError( __LINE__, SRC );
    }
 
-   CoreCarrier<LogChannelStream>* cc = (CoreCarrier<LogChannelStream>*)(vm->self().asObject());
-   Stream* s = static_cast<Stream*>(i_stream->asObjectSafe()->getFalconData());
+   Stream* s = static_cast<Stream*>(i_stream->asParentInst( clsStream ) );
    uint32 l = (uint32) i_level->forceInteger();
+   String encoding = i_encoding == 0 ? String("C") : *i_encoding->asString();
 
-   if( i_format == 0 )
+   Transcoder* tc = Engine::instance()->getTranscoder( encoding );
+   if( tc == 0 )
    {
-      cc->carried( new LogChannelStream(static_cast<Stream*>(s->clone()), l) );
+      throw paramError( "Unknown encoding \"" + encoding + "\"", __LINE__, SRC );
+   }
+
+   TextWriter* tw = new TextWriter( s, tc );
+   Mod::LogChannelTW* lcs;
+   if( i_format == 0 || i_format->isNil() )
+   {
+      lcs = new Mod::LogChannelTW(tw, l);
    }
    else
    {
-      cc->carried( new LogChannelStream(static_cast<Stream*>(s->clone()), *i_format->asString(), l) );
+      const String& format = *i_format->asString();
+      lcs = new Mod::LogChannelTW(tw, format, l);
    }
+
+   ctx->self() = FALCON_GC_STORE( methodOf(), lcs );
+   ctx->returnFrame(ctx->self());
 }
 
 /*#
-   @method flushAll LogChannelStream
+   @property flushAll LogChannelStream
    @brief Reads or set the flush all mode.
-   @optparam setting True to have the stream flushed at each write.
-   @return The current status setting.
 
    Stream based channels are usually writing data on buffered streams.
    The default behavior is that of flushing the buffer as soon as a log line is
    written. For some tasks where a large amount of log is written, this may
    be an overkill.
 */
-FALCON_FUNC  LogChannelStream_flushAll( ::Falcon::VMachine *vm )
+
+static void get_flushall( const Class*, const String&, void* instance, Item& value )
 {
-   Item *i_setting = vm->param(0);
-
-   CoreCarrier<LogChannelStream>* cc = (CoreCarrier<LogChannelStream>*)(vm->self().asObject());
-
-   // always save the level
-   vm->retval( cc->carried()->flushAll() );
-
-   if( i_setting != 0 )
-   {
-      // and eventually change it.
-      cc->carried()->flushAll( i_setting->asBoolean() );
-   }
+   Mod::LogChannelTW* chn = static_cast< Mod::LogChannelTW* >(instance);
+   value.setBoolean( chn->flushAll() );
 }
+
+
+static void set_flushall( const Class*, const String&, void* instance, const Item& value )
+{
+   Mod::LogChannelTW* chn = static_cast< Mod::LogChannelTW* >(instance);
+   chn->flushAll( value.isTrue() );
+}
+} /* end of namespace CLogChannelStream */
+
+ClassLogChannelStream::ClassLogChannelStream( Class* parent ):
+         ClassLogChannel( "LogChannelStream")
+{
+   setParent(parent);
+
+   setConstuctor( new CLogChannelStream::Function_init );
+
+   addProperty("flushall", &CLogChannelStream::get_flushall, &CLogChannelStream::set_flushall );
+}
+
+ClassLogChannelStream::~ClassLogChannelStream()
+{
+}
+
+void* ClassLogChannelStream::createInstance() const
+{
+   return FALCON_CLASS_CREATE_AT_INIT;
+}
+
+
+// ==============================================
+// Class LogChannelSyslog methods and properties
+// ==============================================
+
+namespace CLogChannelSyslog {
 
 /*#
    @class LogChannelSyslog
@@ -676,17 +806,18 @@ FALCON_FUNC  LogChannelStream_flushAll( ::Falcon::VMachine *vm )
    In doubt, it's safe to use 0.
 
    If given, the @b format parameter is used to configure how each log entry
-   will look once rendered on the final stream. Seel @a LogChannel.format for
+   will look once rendered on the final stream. See @a LogChannel.format for
    a detailed description.
 
    @see LogChannel.format
 */
-FALCON_FUNC  LogChannelSyslog_init( ::Falcon::VMachine *vm )
+FALCON_DECLARE_FUNCTION( init, "identity:S, facility:S, level:N,format:[S]" )
+FALCON_DEFINE_FUNCTION_P1( init )
 {
-   Item *i_identity = vm->param(0);
-   Item *i_facility = vm->param(1);
-   Item *i_level = vm->param(2);
-   Item *i_format = vm->param(3);
+   Item *i_identity = ctx->param(0);
+   Item *i_facility = ctx->param(1);
+   Item *i_level = ctx->param(2);
+   Item *i_format = ctx->param(3);
 
    if( i_identity == 0 || ! i_identity->isString()
 	   || i_facility == 0 || ! i_facility->isOrdinal()
@@ -694,46 +825,63 @@ FALCON_FUNC  LogChannelSyslog_init( ::Falcon::VMachine *vm )
        || ( i_format != 0 && ! i_format->isString() )
        )
    {
-      throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
-            .origin(e_orig_runtime)
-            .extra( "S,N,N,[S]" ) );
+      throw paramError( __LINE__, SRC );
    }
 
-   CoreCarrier<LogChannelSyslog>* cc = (CoreCarrier<LogChannelSyslog>*)(vm->self().asObject());
    uint32 f = (uint32) i_facility->forceInteger();
    uint32 l = (uint32) i_level->forceInteger();
 
    try
    {
-	   cc->carried( new LogChannelSyslog(*i_identity->asString(), f, l) );
+      Mod::LogChannelSyslog* lc = new Mod::LogChannelSyslog(*i_identity->asString(), f, l);
 
-       if( i_format != 0 )
-	      cc->carried()->setFormat( *i_format->asString() );
+      if( i_format != 0 )
+	      lc->setFormat( *i_format->asString() );
    }
    catch( Error* err )
    {
-	   err->errorDescription( FAL_STR( msg_log_openres ) );
-	  throw;
+	   err->errorDescription( "Error opening system log" );
+	   throw;
    }
 }
 
+} /* end of namespace CLogChannelSyslog */
+
+ClassLogChannelSyslog::ClassLogChannelSyslog( Class* parent ):
+         ClassLogChannel( "LogChannelSyslog")
+{
+   setParent(parent);
+
+   setConstuctor( new CLogChannelSyslog::Function_init );
+}
+
+ClassLogChannelSyslog::~ClassLogChannelSyslog()
+{
+}
+
+void* ClassLogChannelSyslog::createInstance() const
+{
+   return FALCON_CLASS_CREATE_AT_INIT;
+}
 
 
 //===============================================
 // LogChannelFiles
 //===============================================
 
+namespace CLogChannelFiles {
 /*#
    @class LogChannelFiles
    @brief Log channel sending logs to a set of (possibly) rotating local files.
    @param path The complete filename were the logs are to be sent.
-   @optparam level Minimum severity level logged by this channel.
+   @param level Minimum severity level logged by this channel.
    @optparam format Message formatting used by this channel.
    @optparam maxCount Number of maximum log files generated by this channel.
    @optparam maxSize Maximum size of each file.
    @optparam maxDays Maximum days of lifetime for each file.
    @optparam overwrite If true, overwrite the base log file on open, if found.
    @optparam flushAll If false, do NOT flush at every log entry.
+   @optparam encoding Text encoding used for output (defaults to "C" = no encoding).
 
    This log channel is meant to write to one local file, and to possibly swap it
    into spare files when some criterion are met.
@@ -768,7 +916,7 @@ FALCON_FUNC  LogChannelSyslog_init( ::Falcon::VMachine *vm )
    numbered 0.
 
    For example, files generated through the path "logs/my_app.%.log" with a
-   **maxCount** of 10 will be numbered as (oldest to newest):
+   **maxCount** of 10 will be numbered as (olde()st to newest):
    @code
    logs/my_app.10.log
    logs/my_app.09.log
@@ -803,16 +951,19 @@ FALCON_FUNC  LogChannelSyslog_init( ::Falcon::VMachine *vm )
    @b path parameter that is read-only.
 */
 
-FALCON_FUNC  LogChannelFiles_init( ::Falcon::VMachine *vm )
+FALCON_DECLARE_FUNCTION( init,
+         "path:S,level:N,format:[S],maxCount:[N],maxSize:[N],maxDays:[N],overwrite:[B],flushAll:[B],encoding:[S]" )
+FALCON_DEFINE_FUNCTION_P1( init )
 {
-   Item* i_path = vm->param(0);
-   Item* i_level = vm->param(1);
-   Item* i_format = vm->param(2);
-   Item* i_maxCount = vm->param(3);
-   Item* i_maxSize = vm->param(4);
-   Item* i_maxDays = vm->param(5);
-   Item* i_overwrite = vm->param(6);
-   Item* i_flushAll = vm->param(7);
+   Item* i_path = ctx->param(0);
+   Item* i_level = ctx->param(1);
+   Item* i_format = ctx->param(2);
+   Item* i_maxCount = ctx->param(3);
+   Item* i_maxSize = ctx->param(4);
+   Item* i_maxDays = ctx->param(5);
+   Item* i_overwrite = ctx->param(6);
+   Item* i_flushAll = ctx->param(7);
+   Item* i_encodingAll = ctx->param(8);
 
    if( i_path == 0 || ! i_path->isString()
       || ( i_level != 0 && ! ( i_level->isOrdinal() || i_level->isNil() ))
@@ -820,19 +971,18 @@ FALCON_FUNC  LogChannelFiles_init( ::Falcon::VMachine *vm )
       || ( i_maxCount != 0 && ! ( i_maxCount->isOrdinal() || i_maxCount->isNil() ))
       || ( i_maxSize != 0 && ! ( i_maxSize->isOrdinal() || i_maxSize->isNil() ))
       || ( i_maxDays != 0 && ! ( i_maxDays->isOrdinal() || i_maxDays->isNil() ))
+      || ( i_encodingAll != 0 && ! ( i_maxDays->isString() || i_encodingAll->isNil() ))
       )
    {
-      throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
-            .origin( e_orig_runtime )
-            .extra( "S,[N],[S],[N],[N],[N],[B],[B]"));
+      throw paramError( __LINE__, SRC );
    }
 
    uint32 level = i_level == 0 ? LOGLEVEL_ALL : (int32) i_level->forceInteger();
-   LogChannelFiles* lcf;
+   Mod::LogChannelFiles* lcf;
    if( i_format == 0 || i_format->isNil() )
-      lcf = new LogChannelFiles( *i_path->asString(), level );
+      lcf = new Mod::LogChannelFiles( *i_path->asString(), level );
    else
-      lcf = new LogChannelFiles(  *i_path->asString(), *i_format->asString(), level );
+      lcf = new Mod::LogChannelFiles(  *i_path->asString(), *i_format->asString(), level );
 
    if (i_maxCount != 0 && ! i_maxCount->isNil() )
       lcf->maxCount( (int32) i_maxCount->forceInteger() );
@@ -849,8 +999,8 @@ FALCON_FUNC  LogChannelFiles_init( ::Falcon::VMachine *vm )
    if (i_flushAll != 0 )
       lcf->flushAll( i_flushAll->isTrue() );
 
-   CoreCarrier<LogChannelFiles>* cc = static_cast< CoreCarrier<LogChannelFiles>* >( vm->self().asObject() );
-   cc->carried( lcf );
+   ctx->self() = FALCON_GC_STORE( methodOf(), lcf );
+   ctx->returnFrame( ctx->self() );
 }
 
 /*#
@@ -858,10 +1008,11 @@ FALCON_FUNC  LogChannelFiles_init( ::Falcon::VMachine *vm )
    @brief Opens the stream to the given main log file.
    @raise IoError if the file can't be opened.
 */
-FALCON_FUNC  LogChannelFiles_open( ::Falcon::VMachine *vm )
+FALCON_DECLARE_FUNCTION( open, "" )
+FALCON_DEFINE_FUNCTION_P1( open )
 {
-   CoreCarrier<LogChannelFiles>* cc = static_cast< CoreCarrier<LogChannelFiles>* >( vm->self().asObject() );
-   cc->carried()->open();
+   Mod::LogChannelFiles* cc = static_cast< Mod::LogChannelFiles* >( ctx->self().asInst() );
+   cc->open();
 }
 
 /*#
@@ -877,10 +1028,11 @@ FALCON_FUNC  LogChannelFiles_open( ::Falcon::VMachine *vm )
    This method also forces do discard all the pending messages
    that was queued for logging but still unwritten.
 */
-FALCON_FUNC  LogChannelFiles_reset( ::Falcon::VMachine *vm )
+FALCON_DECLARE_FUNCTION( reset, "" )
+FALCON_DEFINE_FUNCTION_P1( reset )
 {
-   CoreCarrier<LogChannelFiles>* cc = static_cast< CoreCarrier<LogChannelFiles>* >( vm->self().asObject() );
-   cc->carried()->reset();
+   Mod::LogChannelFiles* cc = static_cast< Mod::LogChannelFiles* >( ctx->self().asInst() );
+   cc->reset();
 }
 
 /*#
@@ -901,18 +1053,12 @@ FALCON_FUNC  LogChannelFiles_reset( ::Falcon::VMachine *vm )
    log file.
 
 */
-FALCON_FUNC  LogChannelFiles_rotate( ::Falcon::VMachine *vm )
+FALCON_DECLARE_FUNCTION( rotate, "" )
+FALCON_DEFINE_FUNCTION_P1( rotate )
 {
-   CoreCarrier<LogChannelFiles>* cc = static_cast< CoreCarrier<LogChannelFiles>* >( vm->self().asObject() );
-   cc->carried()->rotate();
+   Mod::LogChannelFiles* cc = static_cast< Mod::LogChannelFiles* >( ctx->self().asInst() );
+   cc->rotate();
 }
-
-/*#
-   @property flushAll LogChannelFiles
-   @brief When true, all the log operations cause an immediate flush of the
-   underlying stream.
-*/
-
 
 /*#
    @property path LogChannelFiles
@@ -921,12 +1067,34 @@ FALCON_FUNC  LogChannelFiles_rotate( ::Falcon::VMachine *vm )
    This property is read-only.
 */
 
+static void get_path( const Class*, const String&, void* instance, Item& value )
+{
+   Mod::LogChannelFiles* cc = static_cast< Mod::LogChannelFiles* >( instance );
+   value = FALCON_GC_HANDLE( new String(cc->path()) );
+}
+
+
 /*#
    @property maxSize LogChannelFiles
    @brief Maximum size of the main log file before being automatically rolled.
 
    Zero means disabled; that is, the size of the log file is unlimited.
 */
+static void get_maxSize( const Class*, const String&, void* instance, Item& value )
+{
+   Mod::LogChannelFiles* cc = static_cast< Mod::LogChannelFiles* >( instance );
+   value.setInteger( cc->maxSize() );
+}
+
+static void set_maxSize( const Class*, const String&, void* instance, const Item& value )
+{
+   Mod::LogChannelFiles* cc = static_cast< Mod::LogChannelFiles* >( instance );
+   if( ! value.isOrdinal() )
+   {
+      throw FALCON_SIGN_XERROR( AccessTypeError, e_inv_prop_value, .extra("N") );
+   }
+   cc->maxSize(value.forceInteger());
+}
 
 /*#
    @property maxCount LogChannelFiles
@@ -936,6 +1104,22 @@ FALCON_FUNC  LogChannelFiles_rotate( ::Falcon::VMachine *vm )
    it is truncated from the beginning and the log starts all over.
 */
 
+static void get_maxCount( const Class*, const String&, void* instance, Item& value )
+{
+   Mod::LogChannelFiles* cc = static_cast< Mod::LogChannelFiles* >( instance );
+   value.setInteger( cc->maxCount() );
+}
+
+static void set_maxCount( const Class*, const String&, void* instance, const Item& value )
+{
+   Mod::LogChannelFiles* cc = static_cast< Mod::LogChannelFiles* >( instance );
+   if( ! value.isOrdinal() )
+   {
+      throw FALCON_SIGN_XERROR( AccessTypeError, e_inv_prop_value, .extra("N") );
+   }
+   cc->maxCount(value.forceInteger());
+}
+
 /*#
    @property overwrite LogChannelFiles
    @brief If true, opening a non-empty log will delete it.
@@ -943,6 +1127,18 @@ FALCON_FUNC  LogChannelFiles_rotate( ::Falcon::VMachine *vm )
    The default for this property is false. This means that the default
    behavior is that to append log entries to the previously existing ones.
 */
+
+static void get_overwrite( const Class*, const String&, void* instance, Item& value )
+{
+   Mod::LogChannelFiles* cc = static_cast< Mod::LogChannelFiles* >( instance );
+   value.setBoolean( cc->overwrite() );
+}
+
+static void set_overwrite( const Class*, const String&, void* instance, const Item& value )
+{
+   Mod::LogChannelFiles* cc = static_cast< Mod::LogChannelFiles* >( instance );
+   cc->overwrite(value.isTrue());
+}
 
 
 /*#
@@ -952,26 +1148,100 @@ FALCON_FUNC  LogChannelFiles_rotate( ::Falcon::VMachine *vm )
    Zero means disabled.
 */
 
+
+static void get_maxDays( const Class*, const String&, void* instance, Item& value )
+{
+   Mod::LogChannelFiles* cc = static_cast< Mod::LogChannelFiles* >( instance );
+   value.setInteger( cc->maxDays() );
+}
+
+static void set_maxDays( const Class*, const String&, void* instance, const Item& value )
+{
+   Mod::LogChannelFiles* cc = static_cast< Mod::LogChannelFiles* >( instance );
+   if( ! value.isOrdinal() )
+   {
+      throw FALCON_SIGN_XERROR( AccessTypeError, e_inv_prop_value, .extra("N") );
+   }
+   cc->maxDays(value.forceInteger());
+}
+
+} /* end of namespace CLogChannelFiles */
+
+ClassLogChannelFiles::ClassLogChannelFiles( Class* parent ):
+    ClassLogChannel( "LogChannelFiles")
+{
+   setParent(parent);
+
+   setConstuctor( new CLogChannelFiles::Function_init );
+
+   addMethod( new CLogChannelFiles::Function_open );
+   addMethod( new CLogChannelFiles::Function_reset );
+   addMethod( new CLogChannelFiles::Function_rotate );
+
+   addProperty("path", &CLogChannelFiles::get_path );
+   addProperty("maxCount", &CLogChannelFiles::get_maxCount, &CLogChannelFiles::set_maxCount );
+   addProperty("maxDays", &CLogChannelFiles::get_maxDays, &CLogChannelFiles::set_maxDays );
+   addProperty("maxSize", &CLogChannelFiles::get_maxSize, &CLogChannelFiles::set_maxSize );
+   addProperty("overwrite", &CLogChannelFiles::get_overwrite, &CLogChannelFiles::set_overwrite );
+}
+
+ClassLogChannelFiles::~ClassLogChannelFiles()
+{
+}
+
+void* ClassLogChannelFiles::createInstance() const
+{
+   return FALCON_CLASS_CREATE_AT_INIT;
+}
+
+
+ClassLogChannelEngine::ClassLogChannelEngine( Class* parent ):
+    ClassLogChannel( "LogChannelEngine")
+{
+   setParent(parent);
+}
+
+//=================================================================
+// Class log channel engine
+//=================================================================
+
+ClassLogChannelEngine::~ClassLogChannelEngine()
+{
+}
+
+void* ClassLogChannelEngine::createInstance() const
+{
+   return new Mod::LogChannelEngine;
+}
+
+
+bool ClassLogChannelEngine::op_init( VMContext* , void* , int32 ) const
+{
+   // accept the created instance as-is
+   return false;
+}
+
 //=================================================================
 // Proxy log functions
 //=================================================================
 
 /*#
-   @function gminlog
+   @function minlog
    @brief Determines what is the minimum log severity active on the GeneircLog area.
    @return A number representing a log severity, or -1
 
    This function is actually a shortcut to @a LogArea.minlog applied on @a GeneralLog.
 */
-FALCON_FUNC  gminlog( ::Falcon::VMachine *vm )
+FALCON_DEFINE_FUNCTION_P1(minlog)
 {
-   LogArea* genlog = static_cast< CoreCarrier<LogArea>* >( s_getGenLog(vm) )->carried();
-   vm->retval( (int64) genlog->minlog() );
+   LoggingModule* mod = static_cast<LoggingModule*>( module() );
+   Mod::LogArea* genlog = static_cast< Mod::LogArea* >( mod->genericArea() );
+   ctx->returnFrame( (int64) genlog->minlog() );
 }
 
 
 /*#
-   @function glog
+   @function log
    @brief Shortcut to log on the generic area.
    @param level The level of the log entry.
    @param message The message to be logged.
@@ -985,66 +1255,52 @@ FALCON_FUNC  gminlog( ::Falcon::VMachine *vm )
    The @b level parameter can be an integer number, or one of the following
    conventional constants representing levels:
 
-   - @b LOGF: failure; the application met a total failure condition and
+   - @b LVC: failure; the application met a total failure condition and
               is going to halt.
-   - @b LOGE: error; the application met an error condition, possibly dangerous
+   - @b LVE: error; the application met an error condition, possibly dangerous
               enough to cause future termination or malfunction, but not
               dangerous enough to justify immediate exit.
-   - @b LOGW: warning; the application met an unusual condition that that should
+   - @b LVW: warning; the application met an unusual condition that that should
               be noted and known by other applications, developers or users
               checking for possible problems.
-   - @b LOGI: infromation; the application wants to indicate that a normal or
+   - @b LVI: information; the application wants to indicate that a normal or
               expected event actually happened.
-   - @b LOGD: debug; A message useful to track debugging and development information.
-   - @b LOGD1: lower debug; debug used for very low level, and specialized debugging.
-   - @b LOGD2: still lower debug.
-
+   - @b LVD: detail; More detailed information about a normal event.
+   - @b LVD0: debug; A message useful to track debugging and development information.
+   - @b LVD1: lower debug; debug used for very low level, and specialized debugging.
+   - @b LVD2: still lower debug.
 */
 
-FALCON_FUNC  glog( ::Falcon::VMachine *vm )
-{
-   Item *i_level = vm->param(0);
-   Item *i_message = vm->param(1);
-   Item *i_code = vm->param(2);
 
-   if ( i_level == 0 || ! i_level->isOrdinal()
-        || i_message == 0 || !i_message->isString()
-		|| (i_code != 0 && ! i_code->isOrdinal() )
-		)
+FALCON_DEFINE_FUNCTION_P1(LOG)
+{
+   LoggingModule* mod = static_cast<LoggingModule*>( module() );
+   Mod::LogArea* genlog = mod->genericArea();
+
+   Item *i_level = ctx->param(0);
+   Item *i_message = ctx->param(1);
+   Item *i_code = ctx->param(2);
+
+   if ( i_level == 0 || ! i_level->isOrdinal() )
    {
-      throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
-            .origin(e_orig_runtime)
-            .extra( "N,S" ) );
+      throw paramError(__LINE__, SRC);
    }
 
-   LogArea* genlog = static_cast< CoreCarrier<LogArea>* >( s_getGenLog(vm) )->carried();
-   uint32 code = (uint32)( i_code == 0 ? 0 : i_code->forceInteger() );
-   s_log( genlog, (uint32) i_level->forceInteger(), vm, *i_message->asString(), code );
-
+   internal_log( (uint32) i_level->forceInteger(), ctx, this, i_message, i_code, genlog );
 }
 
-void s_genericLog( VMachine* vm, uint32 level )
+
+static void s_genlog( uint32 lvl, VMContext* ctx, Function* func )
 {
-   Item *i_message = vm->param(0);
-   Item *i_code = vm->param(1);
-
-   if ( i_message == 0 || ! i_message->isString()
-	    || (i_code != 0 && ! i_code->isOrdinal() )
-	   )
-   {
-      throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
-            .origin(e_orig_runtime)
-            .extra( "S,[N]" ) );
-   }
-
-   LogArea* genlog = static_cast< CoreCarrier<LogArea>* >( s_getGenLog(vm) )->carried();
-   uint32 code = (uint32)( i_code == 0 ? 0 : i_code->forceInteger() );
-   s_log( genlog, level, vm, *i_message->asString(), code );
+   LoggingModule* mod = static_cast<LoggingModule*>( func->module() );
+   Item *i_message = ctx->param(0);
+   Item *i_code = ctx->param(1);
+   internal_log( lvl, ctx, func, i_message, i_code, mod->genericArea() );
 }
 
 /*#
-   @function glogf
-   @brief Shortcut to log a fatal error on the generic area.
+   @function LOGC
+   @brief Shortcut to log a critical error on the generic area.
    @param message The message to be logged at fatal level.
    @optparam code A numeric code representing an application specific message ID.
 
@@ -1054,13 +1310,13 @@ void s_genericLog( VMachine* vm, uint32 level )
    It is provided in this module for improved performance.
 */
 
-FALCON_FUNC  glogf( ::Falcon::VMachine *vm )
+FALCON_DEFINE_FUNCTION_P1(LOGC)
 {
-   s_genericLog( vm, LOGLEVEL_FATAL );
+   s_genlog( LOGLEVEL_C, ctx, this );
 }
 
 /*#
-   @function gloge
+   @function LOGE
    @optparam code A numeric code representing an application specific message ID.
    @brief Shortcut to log an error on the generic area.
    @param message The message to be logged at error level.
@@ -1070,14 +1326,14 @@ FALCON_FUNC  glogf( ::Falcon::VMachine *vm )
 
    It is provided in this module for improved performance.
 */
-
-FALCON_FUNC  gloge( ::Falcon::VMachine *vm )
+FALCON_DEFINE_FUNCTION_P1(LOGE)
 {
-   s_genericLog( vm, LOGLEVEL_ERROR );
+   s_genlog( LOGLEVEL_E, ctx, this );
 }
 
+
 /*#
-   @function glogw
+   @function LOGW
    @brief Shortcut to log a warning on the generic area.
    @param message The message to be logged at warn level.
    @optparam code A numeric code representing an application specific message ID.
@@ -1087,13 +1343,14 @@ FALCON_FUNC  gloge( ::Falcon::VMachine *vm )
 
    It is provided in this module for improved performance.
 */
-FALCON_FUNC  glogw( ::Falcon::VMachine *vm )
+FALCON_DEFINE_FUNCTION_P1(LOGW)
 {
-   s_genericLog( vm, LOGLEVEL_WARN );
+   s_genlog( LOGLEVEL_W, ctx, this );
 }
 
+
 /*#
-   @function glogi
+   @function LOGI
    @brief Shortcut to log an information message on the generic area.
    @param message The message to be logged at info level.
    @optparam code A numeric code representing an application specific message ID.
@@ -1103,13 +1360,29 @@ FALCON_FUNC  glogw( ::Falcon::VMachine *vm )
 
    It is provided in this module for improved performance.
 */
-FALCON_FUNC  glogi( ::Falcon::VMachine *vm )
+FALCON_DEFINE_FUNCTION_P1(LOGI)
 {
-   s_genericLog( vm, LOGLEVEL_INFO );
+   s_genlog( LOGLEVEL_I, ctx, this );
 }
 
 /*#
-   @function glogd
+   @function LOGD
+   @brief Shortcut to log a detail message on the generic area.
+   @param message The message to be logged at debug level.
+   @optparam code A numeric code representing an application specific message ID.
+
+   This method is equivalent to call @b log on the @a GeneralLog object,
+   that is, on the default log area, indicating the detail level.
+
+   It is provided in this module for improved performance.
+*/
+FALCON_DEFINE_FUNCTION_P1(LOGD)
+{
+   s_genlog( LOGLEVEL_D, ctx, this );
+}
+
+/*#
+   @function LOGD0
    @brief Shortcut to log a debug message on the generic area.
    @param message The message to be logged at debug level.
    @optparam code A numeric code representing an application specific message ID.
@@ -1119,11 +1392,43 @@ FALCON_FUNC  glogi( ::Falcon::VMachine *vm )
 
    It is provided in this module for improved performance.
 */
-FALCON_FUNC  glogd( ::Falcon::VMachine *vm )
+FALCON_DEFINE_FUNCTION_P1(LOGD0)
 {
-   s_genericLog( vm, LOGLEVEL_DEBUG );
+   s_genlog( LOGLEVEL_D0, ctx, this );
 }
 
+/*#
+   @function LOGD1
+   @brief Shortcut to log a low level debug message on the generic area.
+   @param message The message to be logged at debug level.
+   @optparam code A numeric code representing an application specific message ID.
+
+   This method is equivalent to call @b log on the @a GeneralLog object,
+   that is, on the default log area, indicating the debug-1 level.
+
+   It is provided in this module for improved performance.
+*/
+FALCON_DEFINE_FUNCTION_P1(LOGD1)
+{
+   s_genlog( LOGLEVEL_D1, ctx, this );
+}
+
+
+/*#
+   @function LOGD2
+   @brief Shortcut to log a low level debug message on the generic area.
+   @param message The message to be logged at debug level.
+   @optparam code A numeric code representing an application specific message ID.
+
+   This method is equivalent to call @b log on the @a GeneralLog object,
+   that is, on the default log area, indicating the debug-2 level.
+
+   It is provided in this module for improved performance.
+*/
+FALCON_DEFINE_FUNCTION_P1(LOGD2)
+{
+   s_genlog( LOGLEVEL_D2, ctx, this );
+}
 
 }
 }

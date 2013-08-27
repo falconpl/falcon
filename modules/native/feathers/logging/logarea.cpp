@@ -52,7 +52,8 @@ public:
 //==========================================================
 
 LogArea::LogArea( const String& name ):
-   m_name( name )
+   m_name( name ),
+   m_mark(0)
 {
    _p = new Private;
 }

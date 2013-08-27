@@ -15,17 +15,20 @@
 
 #define SRC "falcon/modules/native/feathers/logging/logchannel.cpp"
 #include "logchannel.h"
+#include "logarea.h"
+
+#include <falcon/sys.h>
 
 namespace Falcon {
 namespace Mod {
 
 LogChannel::LogChannel( uint32 l ):
-   m_pool(0),
-   m_poolSize(0),
-   m_terminate(false),
    m_level( l ),
    m_msg_head(0),
    m_msg_tail(0),
+   m_pool(0),
+   m_poolSize(0),
+   m_terminate(false),
    m_bClosed(false)
 {
    m_startedAt = Sys::_seconds();
@@ -33,16 +36,18 @@ LogChannel::LogChannel( uint32 l ):
 }
 
 LogChannel::LogChannel( const String &format, uint32 l ):
-   m_terminate(false),
    m_level( l ),
    m_format(format),
    m_msg_head(0),
    m_msg_tail(0),
+   m_pool(0),
+   m_poolSize(0),
+   m_terminate(false),
    m_bClosed(false)
-   {
-      m_startedAt = Sys::_seconds();
-      start();
-   }
+{
+   m_startedAt = Sys::_seconds();
+   start();
+}
 
 
 LogChannel::~LogChannel()
@@ -98,7 +103,8 @@ void LogChannel::log( const String& area, const String& mod, const String& func,
       LogMessage* lmsg = allocMessage( area, mod, func, l, msg, code );
 
       m_msg_mtx.lock();
-      if ( m_terminate || m_bClosed || l <= m_level )
+      // recheck level now.
+      if ( m_terminate || m_bClosed || l > m_level )
       {
          m_msg_mtx.unlock();
          disposeMessage( lmsg );
@@ -402,7 +408,8 @@ bool LogChannel::closed() const
 }
 
 
-LogMessage* LogChannel::allocMessage(const String& areaName, const String& modname, const String& caller, int level, const String& msg, uint32 code )
+LogChannel::LogMessage* LogChannel::allocMessage(
+         const String& areaName, const String& modname, const String& caller, int level, const String& msg, uint32 code )
 {
    LogMessage* logmsg = 0;
 

@@ -47,13 +47,18 @@ public:
    virtual void log( uint32 level, const String& source, const String& func, const String& msg, uint32 code = 0 ) const;
 
    virtual const String& name() const { return m_name; }
+   virtual void name( const String& n ){ m_name = n; }
 
    virtual void addChannel( LogChannel* chn );
    virtual void removeChannel( LogChannel* chn );
    virtual int minlog() const;
 
+   void gcMark( uint32 m ) { m_mark = m; }
+   uint32 currentMark() const { return m_mark; }
+
 private:
    String m_name;
+   uint32 m_mark;
 
    virtual ~LogArea();
    class Private;

@@ -29,10 +29,9 @@
 #define LOGLEVEL_D0  5
 #define LOGLEVEL_D1  6
 #define LOGLEVEL_D2  7
+#define LOGLEVEL_ALL  100
 
 namespace Falcon {
-
-
 namespace Ext {
 
 // ==============================================
@@ -60,13 +59,14 @@ private:
 };
 
 
-class ClassGeneralLogAreaObj: public Class
+class ClassGeneralLogAreaObj: public ClassLogArea
 {
 public:
    ClassGeneralLogAreaObj( Class* parent );
    virtual ~ClassGeneralLogAreaObj();
 
    virtual void* createInstance() const;
+   virtual bool op_init( VMContext* ctx, void* instance, int32 pcount ) const;
 };
 
 
@@ -84,53 +84,69 @@ public:
    virtual void* clone( void* instance ) const;
    virtual void* createInstance() const;
 
+   virtual void gcMarkInstance( void* instance, uint32 mark ) const;
+   virtual bool gcCheckInstance( void* instance, uint32 mark ) const;
+
 protected:
    ClassLogChannel( const String& name );
+
+private:
+   void init();
 };
 
 
-class ClassLogChannelTW: public Class
+class ClassLogChannelStream: public ClassLogChannel
 {
 public:
-   ClassLogChannelTW( Class* parent );
-   virtual ~ClassLogChannelTW();
-
-   virtual void* clone( void* instance ) const;
+   ClassLogChannelStream( Class* parent );
+   virtual ~ClassLogChannelStream();
    virtual void* createInstance() const;
 };
 
 
-class ClassLogChannelEngine: public Class
+class ClassLogChannelEngine: public ClassLogChannel
 {
 public:
    ClassLogChannelEngine( Class* parent );
    virtual ~ClassLogChannelEngine();
-
-   virtual void* clone( void* instance ) const;
    virtual void* createInstance() const;
+
+   virtual bool op_init( VMContext* ctx, void* instance, int32 pcount ) const;
 };
 
 
-class ClassLogChannelFiles: public Class
+class ClassLogChannelFiles: public ClassLogChannel
 {
 public:
    ClassLogChannelFiles( Class* parent );
    virtual ~ClassLogChannelFiles();
-
-   virtual void* clone( void* instance ) const;
    virtual void* createInstance() const;
 };
 
 
-class ClassLogChannelSyslog: public Class
+class ClassLogChannelSyslog: public ClassLogChannel
 {
 public:
    ClassLogChannelSyslog( Class* parent );
    virtual ~ClassLogChannelSyslog();
-
-   virtual void* clone( void* instance ) const;
    virtual void* createInstance() const;
 };
+
+//=================================================================
+// Proxy function for the general log area
+//=================================================================
+
+FALCON_DECLARE_FUNCTION( LOG, "level:N,message:S,code:[N]" )
+FALCON_DECLARE_FUNCTION( minlog, "" )
+FALCON_DECLARE_FUNCTION( LOGC, "message:S,code:[N]" )
+FALCON_DECLARE_FUNCTION( LOGE, "message:S,code:[N]" )
+FALCON_DECLARE_FUNCTION( LOGW, "message:S,code:[N]" )
+FALCON_DECLARE_FUNCTION( LOGI, "message:S,code:[N]" )
+FALCON_DECLARE_FUNCTION( LOGD, "message:S,code:[N]" )
+FALCON_DECLARE_FUNCTION( LOGD0, "message:S,code:[N]" )
+FALCON_DECLARE_FUNCTION( LOGD1, "message:S,code:[N]" )
+FALCON_DECLARE_FUNCTION( LOGD2, "message:S,code:[N]" )
+
 
 }
 }

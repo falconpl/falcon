@@ -50,6 +50,7 @@ class LogChannel: public Runnable
    Mutex m_msg_mtx;
    Event m_message_incoming;
    SysThread* m_thread;
+   uint32 m_mark;
 
 protected:
 
@@ -133,6 +134,8 @@ public:
    virtual void log( const String& tgt, const String& source, const String& function, uint32 level, const String& msg, uint32 code = 0 );
    virtual void* run();
 
+   void gcMark( uint32 m ) { m_mark = m; }
+   uint32 currentMark() const { return m_mark; }
 };
 
 /** Area for logging.

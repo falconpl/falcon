@@ -498,6 +498,36 @@ public:
    Class* asMethodClass() const { return content.mth.base; }
 
    void* asInst() const { return content.data.ptr.pInst; }
+
+   /** Shortcut to get the parent data of an instance.
+    * @param parent the parent base class.
+    * @return 0 if this item is not compatible with the given parent class, a valid
+    *         instance for the parent class on success.
+    *
+    * This method returns the base class data stored in a subclass-instance item.
+    * It's equivalent to call asClassInst() to get the class and instance stored
+    * in this item, and then use Class::getParentData to get the instance data
+    * as the parent knows it.
+    */
+   void* asParentInst( Class* parent );
+
+   /** Shortcut to get the parent data of an instance.
+    * @param parent the parent base class.
+    * @return 0 if this item is not compatible with the given parent class, a valid
+    *         instance for the parent class on success.
+    *
+    * This method returns the base class data stored in a subclass-instance item.
+    * It's equivalent to call forceParentInst() to get the class and instance stored
+    * in this item, and then use Class::getParentData to get the instance data
+    * as the parent knows it.
+    *
+    * @note The difference with respect to asParentInst() is that this version works
+    * with flat data. asParentInst() should be used with items known to be non-flat
+    * data only.
+    */
+   void* forceParentInst( Class* parent );
+
+
    Class* asClass() const { return content.data.ptr.pClass; }
 
    /** Convert current object into an integer.

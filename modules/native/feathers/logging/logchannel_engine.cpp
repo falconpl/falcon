@@ -16,6 +16,9 @@
 #define SRC "falcon/modules/native/feathers/logging/logchannel_engine.cpp"
 #include "logchannel_engine.h"
 
+#include <falcon/engine.h>
+#include <falcon/log.h>
+
 namespace Falcon {
 namespace Mod {
 
@@ -28,7 +31,7 @@ LogChannelEngine::LogChannelEngine( int level ):
 void LogChannelEngine::writeLogEntry( const String& entry, LogChannel::LogMessage* msg )
 {
    static Log* log = Engine::instance()->log();
-   log->log( Log::fac_script, msg->m_level, msg->m_msg );
+   log->log( Log::fac_script, msg->m_level, entry );
 }
 
 LogChannelEngine::~LogChannelEngine()

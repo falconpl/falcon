@@ -51,6 +51,8 @@ public:
    /** Perform a rollover. */
    virtual void rotate();
 
+   virtual bool close();
+
    inline LogChannelFiles& flushAll( bool b ) { m_bFlushAll = b; return *this;}
    inline LogChannelFiles& maxSize( int64 ms ) { m_maxSize = ms; return *this;}
    inline LogChannelFiles& maxCount( int32 mc ) { m_maxCount = mc; return *this;}
@@ -67,7 +69,7 @@ public:
    /** Gets the text encoding used on the log files..
     *
     */
-   const String& encoding() const;
+   String encoding() const;
 
    /** Sets the text encoding used on the log files..
     * @return true if the encoding is a known encoding name, false otherwise.
@@ -96,3 +98,11 @@ private:
 
    void inner_rotate();
 };
+
+}
+}
+
+#endif
+
+/* end of logchannel_files.h */
+

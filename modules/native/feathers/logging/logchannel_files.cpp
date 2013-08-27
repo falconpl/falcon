@@ -19,6 +19,7 @@
 #include <falcon/engine.h>
 #include <falcon/vfsiface.h>
 #include <falcon/stream.h>
+#include <falcon/textwriter.h>
 #include <falcon/tc/transcoderutf8.h>
 
 namespace Falcon {
@@ -111,9 +112,9 @@ void LogChannelFiles::open()
 
 
       // change the stream thread-wise
-      Stream* nstream = new TextReader(stream, tc);
+      TextWriter* nstream = new TextWriter(stream, tc);
       m_mtx_open.lock();
-      Stream* oldStream = m_stream;
+      TextWriter* oldStream = m_stream;
       m_stream = nstream;
       m_mtx_open.unlock();
 
@@ -276,8 +277,6 @@ void LogChannelFiles::inner_rotate()
          String from, into;
          expandPath( maxNum, from );
          expandPath( --maxNum, into );
-
-         int32 fsStatus;
          vfs->move( from, into );
       }
 
@@ -293,7 +292,7 @@ void LogChannelFiles::inner_rotate()
 }
 
 
-const String& LogChannelFiles::encoding() const
+String LogChannelFiles::encoding() const
 {
    m_mtx_open.lock();
    String temp = m_encoding;

@@ -19,6 +19,9 @@
 #include "logchannel.h"
 
 namespace Falcon {
+
+class TextWriter;
+
 namespace Mod {
 
 /** Logging channel writing text on a TextWriter
