@@ -301,6 +301,27 @@ bool Item::exactlyEqual( const Item& other ) const
 }
 
 
+void* Item::asParentInst( Class* parent )
+{
+   Class* cls = 0;
+   void* data = 0;
+   if( asClassInst(cls, data ) )
+   {
+      return cls->getParentData(parent, data);
+   }
+
+   return 0;
+}
+
+
+void* Item::forceParentInst( Class* parent )
+{
+   Class* cls = 0;
+   void* data = 0;
+   forceClassInst(cls, data );
+   return cls->getParentData(parent, data);
+}
+
 }
 
 /* end of item.cpp */
