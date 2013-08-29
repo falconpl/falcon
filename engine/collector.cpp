@@ -1455,23 +1455,29 @@ void Collector::onCreate( const Class* cls, void* data, const String& file, int 
    Private::HistoryMap::iterator iter = _p->m_hmap.find( data );
    if( iter != _p->m_hmap.end() )
    {
-      DataStatus& status = *iter->second;
-      if( status.m_bAlive )
+      if (! cls->hasSharedInstances() )
       {
-         m_mtx_history.unlock();
-         // ops, we lost the previous item.
-         String s;
-         s.A("While creating a GC token for 0x").H( (int64) data, true, 16)
-         .A(" of class ").A( cls->name() ).A( " from ").A( file ).A(":").N(line).A("\n");
-         s += "The item was already alive -- and we didn't reclaim it:\n";
-         s += status.dump();
+         DataStatus& status = *iter->second;
+         if( status.m_bAlive )
+         {
+            m_mtx_history.unlock();
+            // ops, we lost the previous item.
+            String s;
+            s.A("While creating a GC token for 0x").H( (int64) data, true, 16)
+            .A(" of class ").A( cls->name() ).A( " from ").A( file ).A(":").N(line).A("\n");
+            s += "The item was already alive -- and we didn't reclaim it:\n";
+            s += status.dump();
 
-         Engine::die( s );
+            Engine::die( s );
+         }
+         else
+         {
+            status.m_bAlive = true;
+            status.addEntry( new HECreate( file, line, cls->name() ) );
+            m_mtx_history.unlock();
+         }
       }
-      else
-      {
-         status.m_bAlive = true;
-         status.addEntry( new HECreate( file, line, cls->name() ) );
+      else {
          m_mtx_history.unlock();
       }
    }

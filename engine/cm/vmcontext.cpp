@@ -109,6 +109,7 @@ void Function_caller::invoke(VMContext* ctx, int32 )
 ClassVMContext::ClassVMContext():
    ClassVMContextBase("%VMContext")
 {   
+   m_bHasSharedInstances = true;
    addProperty( "params", &get_params );
    addMethod( new Function_caller );
 }

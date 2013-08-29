@@ -339,6 +339,8 @@ void Function_setTT::invoke( VMContext* ctx, int32 )
 ClassVMProcess::ClassVMProcess():
          Class("VMProcess")
 {
+   m_bHasSharedInstances = true;
+
    addProperty( "current", &get_current, 0, true ); //static
 
    addProperty( "stdIn", &get_stdIn, &set_stdIn );

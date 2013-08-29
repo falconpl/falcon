@@ -194,7 +194,7 @@ FalconClass::FalconClass( const String& name ):
    m_initExprStep( this )
 {
    _p = new Private;
-   m_bIsfalconClass = true;
+   m_bIsFalconClass = true;
    m_category = e_c_falconclass;
 }
 

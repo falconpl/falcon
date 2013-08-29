@@ -107,9 +107,10 @@ public:
 
 Class::Class( const String& name ):
    Mantra( name, 0, 0, 0 ),
-   m_bIsfalconClass( false ),
+   m_bIsFalconClass( false ),
    m_bIsErrorClass( false ),
    m_bIsFlatInstance(false),
+   m_bHasSharedInstances(false),
    m_userFlags(0),
    m_typeID( FLC_ITEM_USER ),
    m_clearPriority( 0 )
@@ -122,9 +123,10 @@ Class::Class( const String& name ):
 
 Class::Class( const String& name, int64 tid ):
    Mantra( name, 0, 0, 0 ),
-   m_bIsfalconClass( false ),
+   m_bIsFalconClass( false ),
    m_bIsErrorClass( false ),
    m_bIsFlatInstance(false),
+   m_bHasSharedInstances(false),
    m_userFlags(0),
    m_typeID( tid ),
    m_clearPriority( 0 )
@@ -137,7 +139,7 @@ Class::Class( const String& name, int64 tid ):
 
 Class::Class( const String& name, Module* module, int line, int chr ):
    Mantra( name, module, line, chr ),
-   m_bIsfalconClass( false ),
+   m_bIsFalconClass( false ),
    m_bIsErrorClass( false ),
    m_bIsFlatInstance(false),
    m_userFlags(0),
@@ -152,7 +154,7 @@ Class::Class( const String& name, Module* module, int line, int chr ):
 
 Class::Class( const String& name, int64 tid, Module* module, int line, int chr ):
    Mantra( name, module, line, chr ),
-   m_bIsfalconClass( false ),
+   m_bIsFalconClass( false ),
    m_bIsErrorClass( false ),
    m_bIsFlatInstance(false),
    m_userFlags(0),
