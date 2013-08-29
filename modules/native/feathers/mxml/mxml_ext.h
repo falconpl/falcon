@@ -32,60 +32,87 @@
 namespace Falcon {
 namespace Ext {
 
-FALCON_FUNC MXMLDocument_init( ::Falcon::VMachine *vm );
-FALCON_FUNC MXMLDocument_deserialize( ::Falcon::VMachine *vm );
-FALCON_FUNC MXMLDocument_serialize( ::Falcon::VMachine *vm );
-FALCON_FUNC MXMLDocument_style( ::Falcon::VMachine *vm );
-FALCON_FUNC MXMLDocument_top( ::Falcon::VMachine *vm );
-FALCON_FUNC MXMLDocument_root( ::Falcon::VMachine *vm );
-FALCON_FUNC MXMLDocument_find( ::Falcon::VMachine *vm );
-FALCON_FUNC MXMLDocument_findNext( ::Falcon::VMachine *vm );
-FALCON_FUNC MXMLDocument_findPath( ::Falcon::VMachine *vm );
-FALCON_FUNC MXMLDocument_findPathNext( ::Falcon::VMachine *vm );
-FALCON_FUNC MXMLDocument_save( ::Falcon::VMachine *vm );
-FALCON_FUNC MXMLDocument_load( ::Falcon::VMachine *vm );
-FALCON_FUNC MXMLDocument_setEncoding( ::Falcon::VMachine *vm );
-FALCON_FUNC MXMLDocument_getEncoding( ::Falcon::VMachine *vm );
 
-FALCON_FUNC MXMLNode_init( ::Falcon::VMachine *vm );
-FALCON_FUNC MXMLNode_deserialize( ::Falcon::VMachine *vm );
-FALCON_FUNC MXMLNode_serialize( ::Falcon::VMachine *vm );
-FALCON_FUNC MXMLNode_nodeType( ::Falcon::VMachine *vm );
-FALCON_FUNC MXMLNode_name( ::Falcon::VMachine *vm );
-FALCON_FUNC MXMLNode_data( ::Falcon::VMachine *vm );
-FALCON_FUNC MXMLNode_setAttribute( ::Falcon::VMachine *vm );
-FALCON_FUNC MXMLNode_getAttribute( ::Falcon::VMachine *vm );
-FALCON_FUNC MXMLNode_getAttribs( ::Falcon::VMachine *vm );
-FALCON_FUNC MXMLNode_getChildren( ::Falcon::VMachine *vm );
-FALCON_FUNC MXMLNode_unlink( ::Falcon::VMachine *vm );
-FALCON_FUNC MXMLNode_removeChild( ::Falcon::VMachine *vm );
-FALCON_FUNC MXMLNode_parent( ::Falcon::VMachine *vm );
-FALCON_FUNC MXMLNode_firstChild( ::Falcon::VMachine *vm );
-FALCON_FUNC MXMLNode_nextSibling( ::Falcon::VMachine *vm );
-FALCON_FUNC MXMLNode_prevSibling( ::Falcon::VMachine *vm );
-FALCON_FUNC MXMLNode_lastChild( ::Falcon::VMachine *vm );
-FALCON_FUNC MXMLNode_addBelow( ::Falcon::VMachine *vm );
-FALCON_FUNC MXMLNode_insertBelow( ::Falcon::VMachine *vm );
-FALCON_FUNC MXMLNode_insertBefore( ::Falcon::VMachine *vm );
-FALCON_FUNC MXMLNode_insertAfter( ::Falcon::VMachine *vm );
-FALCON_FUNC MXMLNode_depth( ::Falcon::VMachine *vm );
-FALCON_FUNC MXMLNode_path( ::Falcon::VMachine *vm );
-FALCON_FUNC MXMLNode_clone( ::Falcon::VMachine *vm );
+FALCON_DECLARE_ERROR( MXMLError );
 
 
-class MXMLError: public ::Falcon::Error
+class ClassNode: public Class
 {
 public:
-   MXMLError():
-      Error( "MXMLError" )
-   {}
+   ClassNode();
+   virtual ~ClassNode();
 
-   MXMLError( const ErrorParam &params  ):
-      Error( "MXMLError", params )
-      {}
+   virtual int64 occupiedMemory( void* instance ) const;
+   virtual void* createInstance() const;
+   virtual void dispose( void* instance ) const;
+   virtual void* clone( void* instance ) const;
+
+   virtual void gcMarkInstance( void* instance, uint32 mark ) const;
+   virtual bool gcCheckInstance( void* instance, uint32 mark ) const;
 };
 
-FALCON_FUNC  MXMLError_init ( ::Falcon::VMachine *vm );
+
+class ClassDocument: public Class
+{
+public:
+   ClassDocument();
+   virtual ~ClassDocument();
+
+   virtual int64 occupiedMemory( void* instance ) const;
+   virtual void* createInstance() const;
+   virtual void dispose( void* instance ) const;
+   virtual void* clone( void* instance ) const;
+
+   virtual void gcMarkInstance( void* instance, uint32 mark ) const;
+   virtual bool gcCheckInstance( void* instance, uint32 mark ) const;
+};
+
+
+class Enum: public Class
+{
+public:
+   Enum( const String& name );
+   virtual ~Enum();
+   virtual void* createInstance() const;
+   virtual void dispose( void* instance ) const;
+   virtual void* clone( void* instance ) const;
+};
+
+class ClassStyle: public Enum
+{
+public:
+   ClassStyle();
+   virtual ~ClassStyle();
+};
+
+class ClassNodeType: public Enum
+{
+public:
+   ClassNodeType();
+   virtual ~ClassNodeType();
+};
+
+class ClassErrorCode: public Enum
+{
+public:
+   ClassErrorCode();
+   virtual ~ClassErrorCode();
+};
+
+class MXMLModule: public Module
+{
+public:
+   MXMLModule();
+   virtual ~MXMLModule();
+
+   Class* classNode() const { return m_clsNode; }
+   Class* classDocument() const { return m_clsDoc; }
+
+private:
+
+   Class* m_clsNode;
+   Class* m_clsDoc;
+};
 
 }
 }

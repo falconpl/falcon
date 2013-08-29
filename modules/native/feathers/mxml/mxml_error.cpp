@@ -40,7 +40,7 @@ const Falcon::String Error::description() const
       case errWrongEntity: return "Escape/entity '&;' found";
       case errChildNotFound: return "Unexisting child request";
       case errAttrNotFound: return "Attribute name cannot be found";
-      case errHyerarcy: return "Node is not in a hierarcy - no parent";
+      case errHierarchy: return "Node is not in a hierarcy - no parent";
       case errCommentInvalid: return "Invalid comment ( -- sequence is not followed by '>')";
       case errMultipleXmlDecl: return "Multiple XML top node delcarations";
    }
@@ -58,7 +58,7 @@ void Error::toString( Falcon::String &stream ) const
       case malformedError: stream = "MXML::MalformedError"; break;
       case ioError: stream = "MXML::IOError"; break;
       case notFoundError: stream = "MXML::NotFoundError"; break;
-      default: stream = "MXML::Unknown error";
+      default: stream = "MXML::Unknown error"; break;
    }
    stream += " (";
    stream.writeNumber( (Falcon::int64) this->m_code );

@@ -17,7 +17,7 @@
 
 namespace MXML {
 
-Attribute::Attribute( Falcon::Stream &in, int style, int l, int p ):
+Attribute::Attribute( Falcon::TextReader &in, int style, int l, int p ):
    Element( l, p )
 {
    Falcon::uint32 chr, quotechr=0;
@@ -28,9 +28,9 @@ Attribute::Attribute( Falcon::Stream &in, int style, int l, int p ):
    m_value = "";
    m_name = "";
 
-   in.get( chr );
-   while ( iStatus < 6 && in.good() && ! in.eof() ) {
-      nextChar();
+   while ( iStatus < 6 && ! in.eof() )
+   {
+      chr = nextChar(in);
       //std::cout << "LINE: " << line() << "  POS: " << character() << std::endl;
       switch ( iStatus ) {
          // begin
@@ -39,7 +39,6 @@ Attribute::Attribute( Falcon::Stream &in, int style, int l, int p ):
             // node only if an attribute is to be read.
             fassert( chr != '>' && chr !='/');
             switch ( chr ) {
-               case MXML_LINE_TERMINATOR: nextLine(); break;
                // We repeat line terminator here for portability
                case MXML_SOFT_LINE_TERMINATOR: break;
                case ' ': case '\t':
@@ -54,6 +53,7 @@ Attribute::Attribute( Falcon::Stream &in, int style, int l, int p ):
                   else {
                      throw new MalformedError( Error::errInvalidAtt, this );
                   }
+                  break;
             }
          break;
 
@@ -63,7 +63,6 @@ Attribute::Attribute( Falcon::Stream &in, int style, int l, int p ):
                m_name += chr;
             }
             else if( chr == MXML_LINE_TERMINATOR ) {
-               nextLine();
                iStatus = 2; // waiting for a '='
             }
             // We repeat line terminator here for portability
@@ -83,9 +82,6 @@ Attribute::Attribute( Falcon::Stream &in, int style, int l, int p ):
             if ( chr == '=' ) {
                iStatus = 3;
             }
-            else if( chr == MXML_LINE_TERMINATOR ) {
-               nextLine() ;
-            }
             // We repeat line terminator here for portability
             else if ( chr == ' ' || chr == '\t' || chr == '\n' || chr == '\r' ) {
             }
@@ -99,9 +95,6 @@ Attribute::Attribute( Falcon::Stream &in, int style, int l, int p ):
             if ( chr == '\'' || chr == '"' ) {
                iStatus = 4;
                quotechr = chr;
-            }
-            else if( chr == MXML_LINE_TERMINATOR ) {
-               nextLine() ;
             }
             // We repeat line terminator here for portability
             else if ( chr == ' ' || chr == '\t' || chr == '\n' || chr == '\r' ) {
@@ -121,7 +114,6 @@ Attribute::Attribute( Falcon::Stream &in, int style, int l, int p ):
                entity = "";
             }
             else if( chr == MXML_LINE_TERMINATOR ) {
-               nextLine();
                m_value += chr;
             }
             else {
@@ -164,27 +156,25 @@ Attribute::Attribute( Falcon::Stream &in, int style, int l, int p ):
          break;
       }
       if ( iStatus < 6 )
-         in.get( chr );
+         chr = nextChar(in);
    }
-
-   if ( ! in.good() ) throw IOError( Error::errIo, this );
 
    if ( iStatus < 6 ) {
       throw MalformedError( Error::errMalformedAtt, this );
    }
 }
 
-void Attribute::write( Falcon::Stream &out, const int style ) const
+void Attribute::write( Falcon::TextWriter &out, const int style ) const
 {
-   out.writeString( m_name );
-   out.write( "=\"", 2 );
+   out.write( m_name );
+   out.write( "=\"" );
 
    if ( style & MXML_STYLE_NOESCAPE )
-      out.writeString( m_value );
+      out.write( m_value );
    else
       MXML::writeEscape( out, m_value );
 
-   out.put( '\"' );
+   out.putChar( '\"' );
 }
 
 }

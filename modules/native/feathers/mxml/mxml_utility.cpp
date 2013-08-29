@@ -8,14 +8,15 @@
 */
 
 #include <falcon/string.h>
-#include <falcon/stream.h>
+#include <falcon/textwriter.h>
+#include <falcon/textreader.h>
 
 namespace MXML {
 
 /** Escapes a string.
    \todo have this function to work...
 */
-Falcon::String escape( const Falcon::String &unescaped )
+Falcon::String escape( const Falcon::String & )
 {
    return "";
 }
@@ -35,7 +36,7 @@ Falcon::uint32 parseEntity( const Falcon::String &entity )
 }
 
 
-Falcon::Stream & writeEscape( Falcon::Stream &stream, const Falcon::String &src )
+Falcon::TextWriter& writeEscape( Falcon::TextWriter &stream, const Falcon::String &src )
 {
 
    for( Falcon::uint32 i = 0; i < src.length(); i++ ) {
@@ -45,9 +46,8 @@ Falcon::Stream & writeEscape( Falcon::Stream &stream, const Falcon::String &src 
          case '&': stream.write( "&amp;", 5 ); break;
          case '<': stream.write( "&lt;", 4 ); break;
          case '>': stream.write( "&gt;", 4 ); break;
-         default: stream.put( src[i] );
+         default: stream.putChar( src[i] ); break;
       }
-      if ( stream.bad() ) break;
    }
 
    return stream;

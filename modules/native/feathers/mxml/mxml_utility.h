@@ -11,11 +11,12 @@
 
 #include <iostream>
 #include <string>
+#include <falcon/textwriter.h>
 
 namespace MXML {
 
 Falcon::String escape( const Falcon::String &unescaped );
-Falcon::Stream & writeEscape( Falcon::Stream &stream, const Falcon::String &src );
+Falcon::Stream & writeEscape( Falcon::TextWriter &stream, const Falcon::String &src );
 Falcon::uint32 parseEntity( const Falcon::String &entity );
 
 }

@@ -17,31 +17,30 @@ Document::Document( const Falcon::String &encoding, const int style )
 {
    m_style = style;
    m_root = new Node(Node::typeDocument);
-   m_root->reserve();
+   m_root->m_doc = this;
 }
 
-Document::Document( Document &doc )
+Document::Document( const Document &doc ):
+   Element(doc)
 {
    m_style = doc.m_style;
    m_root = doc.m_root->clone();
+   m_root->m_doc = this;
    m_encoding = doc.m_encoding;
 }
 
-Document::Document( Falcon::Stream &in, const int style )
+Document::Document( Falcon::TextReader &in, const int style )
    throw( MalformedError )
 {
    m_style = style;
    m_root = new Node( Node::typeDocument );
-   m_root->reserve();
+   m_root->m_doc = this;
    read( in );
 }
 
 Document::~Document()
 {
-   if ( m_root->shell() == 0 )
-      delete m_root;
-   else
-      m_root->unreserve();
+   delete m_root;
 }
 
 Node *Document::main() const
@@ -52,28 +51,28 @@ Node *Document::main() const
    return ret;
 }
 
-void Document::write( Falcon::Stream &stream, const int style ) const
+void Document::write( Falcon::TextWriter &stream, const int style ) const
 {
-   stream.writeString( "<?xml version=\"1.0\" encoding=\"" + m_encoding + "\"?>\n");
-   m_root->write( stream, m_style );
+   stream.write( "<?xml version=\"1.0\" encoding=\"" + m_encoding + "\"?>\n");
+   m_root->write( stream, style );
 }
 
 
-void Document::read( Falcon::Stream &stream )
+void Document::read( Falcon::TextReader &stream )
    throw( MalformedError )
 {
    setPosition( 1, 1);
    if ( m_root->child() != 0 ) {
-      m_root->dispose();
+      // drop the old root
+      m_root->m_doc = 0;
       m_root = new Node( Node::typeDocument );
-      m_root->reserve();
    }
 
    // load the <?xml document declaration
 
    bool xmlDecl = false;
 
-   while ( stream.good() && ! stream.eof() )
+   while ( ! stream.eof() )
    {
       // ignore parameter style
       Node *child = new Node();
@@ -81,7 +80,7 @@ void Document::read( Falcon::Stream &stream )
       {
          child->read( stream, m_style, line(), character());
       }
-      catch( MalformedError )
+      catch( ... )
       {
          delete child;
          throw;
@@ -115,11 +114,16 @@ void Document::read( Falcon::Stream &stream )
       }
    }
 
-   if ( stream.bad() )
-   {
-      throw IOError( Error::errIo, m_root );
-   }
    //todo: validity checks
+}
+
+void Document::gcMark( Falcon::uint32 m )
+{
+   if ( m_mark != m )
+   {
+      m_mark = m;
+      m_root->gcMark(m);
+   }
 }
 
 }

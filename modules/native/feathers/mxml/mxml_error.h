@@ -12,7 +12,6 @@
 
 #include <mxml_element.h>
 #include <falcon/string.h>
-#include <falcon/falcondata.h>
 
 namespace MXML {
 
@@ -22,7 +21,7 @@ typedef enum {
    notFoundError
 } errorType;
 
-class Error: public Falcon::FalconData
+class Error
 {
 private:
    int m_code;
@@ -51,7 +50,7 @@ enum codes
    errWrongEntity,
    errChildNotFound,
    errAttrNotFound,
-   errHyerarcy,
+   errHierarchy,
    errCommentInvalid,
    errMultipleXmlDecl
 };
@@ -61,16 +60,13 @@ protected:
 
 public:
    virtual ~Error();
-   virtual const errorType type() const = 0;
+   virtual errorType type() const = 0;
    int numericCode() const;
    const Falcon::String description() const;
    void toString( Falcon::String &target ) const;
    void describeLine( Falcon::String &target ) const;
 
    const Falcon::String describeLine() const { Falcon::String s; describeLine(s); return s; }
-
-   virtual void gcMark( Falcon::uint32 mk ) {};
-   virtual Falcon::FalconData *clone() const { return 0; }
 };
 
 
@@ -79,7 +75,7 @@ class MalformedError: public Error
 public:
    MalformedError( const codes code, const Element *generator ):
       Error( code, generator ) {};
-   virtual const errorType type() const  { return malformedError; }
+   virtual errorType type() const  { return malformedError; }
 };
 
 class IOError: public Error
@@ -87,7 +83,7 @@ class IOError: public Error
 public:
    IOError( const codes code, const Element *generator  ):
       Error( code, generator ) {};
-   virtual const errorType type() const { return ioError; }
+   virtual errorType type() const { return ioError; }
 };
 
 class NotFoundError: public Error
@@ -95,7 +91,7 @@ class NotFoundError: public Error
 public:
    NotFoundError( const codes code, const Element *generator ):
       Error( code, generator ) {};
-   virtual const errorType type() const { return notFoundError; }
+   virtual errorType type() const { return notFoundError; }
 };
 
 }

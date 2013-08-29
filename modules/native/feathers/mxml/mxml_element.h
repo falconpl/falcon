@@ -10,9 +10,12 @@
 #ifndef MXML_ELEMENT_H
 #define MXML_ELEMENT_H
 
+#include <falcon/setup.h>
+#include <falcon/types.h>
 #include <falcon/stream.h>
 #include <falcon/string.h>
-#include <falcon/basealloc.h>
+#include <falcon/textreader.h>
+#include <falcon/textwriter.h>
 
 namespace MXML {
 
@@ -26,7 +29,7 @@ by the << operator).
 #if defined( _MSC_VER) && _MSC_VER <= 1300
 class Element
 #else
-class Element: virtual public Falcon::BaseAlloc
+class Element
 #endif
 {
 private:
@@ -38,6 +41,8 @@ private:
    int m_beginLine;
    /** Character in Line at which the current element begun */
    int m_beginChar;
+
+   int m_oldEndChar;
 
 protected:
    /* Fills current and initial line and character for the current element.
@@ -67,24 +72,48 @@ public:
 
    virtual ~Element() {}
 
-   /** Increments current processing line and set current position in line to 0 */
-   void nextLine() { m_line++; m_char = 0; }
    /** Increments current position in line by one. */
-   void nextChar() { m_char++; }
+   Falcon::uint32 nextChar( Falcon::TextReader& tr ) {
+      Falcon::uint32 chr = tr.getChar();
+      if( chr == '\n' ) {
+         m_line++;
+         m_oldEndChar = m_char;
+         m_char = 0;
+      }
+      else {
+         m_char++;
+      }
+
+      return chr;
+   }
+
+   void ungetChar( Falcon::TextReader& tr, Falcon::uint32 chr )
+   {
+      if( chr == '\n' ) {
+         m_line--;
+         m_char = m_oldEndChar;
+      }
+      else {
+         m_char--;
+      }
+      tr.ungetChar(chr);
+   }
+
    /** Set current position to the given value */
    void setPosition( const int line, const int character ) {
       m_line = line;
       m_char = character;
+      m_oldEndChar = m_char;
    }
    /** Returns current line in processing file, or last line processed by this object */
-   const int line() const { return m_line; }
+   int line() const { return m_line; }
    /** Returns current position in line in processing file, or last position processed by this object */
-   const int character() const { return m_char; }
+   int character() const { return m_char; }
 
    /** Returns the line where this object begun */
-   const int beginLine() const { return m_beginLine; }
+   int beginLine() const { return m_beginLine; }
    /** Returns the position in line where this object begun */
-   const int beginChar() const { return m_beginChar; }
+   int beginChar() const { return m_beginChar; }
 
    /** Marks current position as the begin of current item.
       The constructor caller will set a default starting line and position, but
@@ -106,7 +135,7 @@ public:
       @param style the style of the serialization
       @see MXML::Document::setStyle()
    */
-   virtual void write( Falcon::Stream &stream, const int style ) const = 0;
+   virtual void write( Falcon::TextWriter &stream, const int style ) const = 0;
 
 };
 

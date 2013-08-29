@@ -11,7 +11,8 @@
 #define MXML_ATTRIBUTE_H
 
 #include <falcon/string.h>
-#include <falcon/stream.h>
+#include <falcon/textreader.h>
+#include <falcon/textwriter.h>
 #include <mxml_element.h>
 
 namespace MXML {
@@ -40,7 +41,7 @@ public:
       @throws MXML::MalformedError if the attribute is invalid
       @throws MXML::IOError in case of hard errors on the stream
    */
-   Attribute( Falcon::Stream &in, int style=0, int line=1, int pos=0  );
+   Attribute( Falcon::TextReader &in, int style=0, int line=1, int pos=0  );
 
 
    /* Creates a new attribute
@@ -87,7 +88,7 @@ public:
       @param style the style of the serialization
 
    */
-   virtual void write( Falcon::Stream &out, const int style ) const;
+   virtual void write( Falcon::TextWriter &out, const int style ) const;
 };
 
 } // namespace

@@ -52,13 +52,14 @@ Node::Node( const type tp, const Falcon::String &name, const Falcon::String &dat
    m_name = name;
    m_data = data;
    m_lastFound = m_attrib.end();
-   m_objOwner = 0;
 
    m_child = m_last_child = m_prev = m_next = m_parent = 0;
+   m_mark = 0;
+   m_doc = 0;
 }
 
 
-void Node::read( Falcon::Stream &in, const int style, const int l, const int pos )
+void Node::read( Falcon::TextReader &in, const int style, const int l, const int pos )
    throw( MalformedError )
 {
    setPosition( l, pos );
@@ -73,11 +74,10 @@ void Node::read( Falcon::Stream &in, const int style, const int l, const int pos
    // defaults to data type: parents will ignore/destroy empty data elements
    m_type = typeData;
 
-   in.get( chr );
-   while ( iStatus >= 0 && in.good() && ! in.eof() ) {
-
+   while ( iStatus >= 0 && ! in.eof() )
+   {
       // resetting new node foundings
-      nextChar();
+      chr = nextChar(in);
 
       //std::cout << "CHR: " << chr << " - status: " << iStatus << std::endl;
 
@@ -85,7 +85,6 @@ void Node::read( Falcon::Stream &in, const int style, const int l, const int pos
 
          case STATUS_BEGIN:  // outside nodes
             switch ( chr ) {
-               case MXML_LINE_TERMINATOR: nextLine() ; break;
                // We repeat line terminator here for portability
                case MXML_SOFT_LINE_TERMINATOR: break;
                case ' ': case '\t': break;
@@ -95,6 +94,7 @@ void Node::read( Falcon::Stream &in, const int style, const int l, const int pos
                   m_type = typeData;
                   m_data = chr;
                   iStatus = STATUS_READ_DATA; // data
+                  break;
             }
          break;
 
@@ -208,8 +208,6 @@ void Node::read( Falcon::Stream &in, const int style, const int l, const int pos
                iStatus = STATUS_READ_CDATA_END0; // "]"
             }
             else {
-               if ( chr == MXML_LINE_TERMINATOR )
-                  nextLine();
                m_data += chr;
             }
          break;
@@ -242,8 +240,6 @@ void Node::read( Falcon::Stream &in, const int style, const int l, const int pos
                iStatus = STATUS_END_COMMENT1;
             }
             else {
-               if ( chr == MXML_LINE_TERMINATOR )
-                  nextLine();
                m_data += chr;
             }
          break;
@@ -276,7 +272,7 @@ void Node::read( Falcon::Stream &in, const int style, const int l, const int pos
             }
             else if ( chr == '<' && m_type == typeData ) {
                // done with data elements
-               in.unget( chr );
+               ungetChar( in, chr );
                iStatus = STATUS_DONE;
             }
             else {
@@ -287,8 +283,6 @@ void Node::read( Falcon::Stream &in, const int style, const int l, const int pos
                   entity = "";
                }
                else{
-                  if ( chr == MXML_LINE_TERMINATOR )
-                     nextLine();
                   m_data += chr;
                }
             }
@@ -341,8 +335,6 @@ void Node::read( Falcon::Stream &in, const int style, const int l, const int pos
             else if ( chr == ' ' || chr == '\t' || chr == MXML_SOFT_LINE_TERMINATOR ||
                   chr == MXML_LINE_TERMINATOR )
             {
-               if ( chr == MXML_LINE_TERMINATOR )
-                  nextLine();
                // check for xml PI.
                if ( m_type == typePI && m_name == "xml" ) {
                   m_type = typeXMLDecl;
@@ -377,11 +369,9 @@ void Node::read( Falcon::Stream &in, const int style, const int l, const int pos
             else if ( chr == MXML_LINE_TERMINATOR || chr == ' ' || chr == '\t'
                         || chr == MXML_SOFT_LINE_TERMINATOR )
             {
-               if ( chr == MXML_LINE_TERMINATOR )
-                  nextLine();
             }
             else {
-               in.unget( chr );
+               ungetChar( in, chr );
                setPosition( line(), character() -1 );
                Attribute *attrib = new Attribute( in, style, line(), character() );
                m_attrib.push_back( attrib );
@@ -390,8 +380,8 @@ void Node::read( Falcon::Stream &in, const int style, const int l, const int pos
          break;
 
          case STATUS_READ_SUBNODES:
-            in.unget( chr );
-            while ( in.good() ) {
+            ungetChar( in, chr );
+            while ( ! in.eof() ) {
                //std::cout << "Reading subnode" << std::endl;
                Node *child = new Node();
                try {
@@ -438,9 +428,6 @@ void Node::read( Falcon::Stream &in, const int style, const int l, const int pos
          break;
       } // switch
 
-      if ( iStatus >= 0 )
-         in.get( chr );
-
    } // while
 
    // now we do a little cleanup:
@@ -473,7 +460,6 @@ Node::Node( Node &src ) :
    m_type = src.m_type;
    m_name = src.m_name;
    m_data = src.m_data;
-   m_objOwner = 0;
    m_bReserve = false;
 
    AttribList::iterator iter = src.m_attrib.begin();
@@ -486,6 +472,8 @@ Node::Node( Node &src ) :
    iter = m_attrib.end();
 
    m_parent = m_child = m_last_child = m_next = m_prev = 0;
+   m_mark = 0;
+   m_doc = 0;
 }
 
 Node::~Node()
@@ -502,7 +490,7 @@ Node::~Node()
    while( child != 0 ) {
       Node *tmp = child;
       child = child->m_next;
-      tmp->dispose();  // may delete it if no falcon object is set as owner.
+      delete tmp;
    }
 }
 
@@ -553,7 +541,7 @@ void Node::removeChild( Node *child )
    throw( NotFoundError )
 {
    if (child->parent() != this )
-      throw NotFoundError( Error::errHyerarcy, this );
+      throw NotFoundError( Error::errHierarchy, this );
 
    if ( m_child == child )
       m_child = child->m_next;
@@ -684,6 +672,7 @@ Node *Node::clone()
       }
    }
 
+   copy->m_doc = 0;
    return copy;
 }
 
@@ -733,22 +722,22 @@ Node::path_iterator Node::find_path( const Falcon::String &path )
 * Write sections
 ************************************************/
 
-void Node::nodeIndent( Falcon::Stream &out, const int iDepth, const int style ) const
+void Node::nodeIndent( Falcon::TextWriter &out, const int iDepth, const int style ) const
 {
    int i;
 
    for ( i = 0; i < iDepth; i++ ) {
       if ( style & MXML_STYLE_TAB )
-         out.put( '\t' );
+         out.putChar( '\t' );
       else if (  style & MXML_STYLE_THREESPACES )
-         out.write( "   ", 3 );
+         out.write( "   " );
       else
-         out.put( ' ' );
+         out.putChar( ' ' );
    }
 
 }
 
-void Node::write( Falcon::Stream &out, const int style ) const
+void Node::write( Falcon::TextWriter &out, const int style ) const
 {
    Node *child;
    int iDepth = 0;
@@ -762,26 +751,26 @@ void Node::write( Falcon::Stream &out, const int style ) const
 
    switch( m_type ) {
       case typeTag:
-         out.put( '<' );
-         out.writeString( m_name );
+         out.putChar( '<' );
+         out.write( m_name );
 
          iter = m_attrib.begin();
          while( iter != m_attrib.end() ) {
-            out.put( ' ' );
+            out.putChar( ' ' );
             (*iter)->write( out, style ) ;
             iter++;
          }
 
          if ( m_data == "" && m_child == 0 ) {
-            out.writeString( "/>\n" );
+            out.write( "/>\n" );
          }
          else {
-            out.put( '>' );
+            out.putChar( '>' );
 
             child = m_child;
             if ( child != 0 ) {
                mustIndent = 1;
-               out.put( '\n' );
+               out.putChar( '\n' );
 
                while ( child != 0 ) {
                   child->write( out, style );
@@ -794,56 +783,61 @@ void Node::write( Falcon::Stream &out, const int style ) const
                   nodeIndent( out, iDepth+1, style );
 
                if ( style & MXML_STYLE_NOESCAPE )
-                  out.writeString( m_data );
+                  out.write( m_data );
                else
                   MXML::writeEscape( out, m_data );
 
-               if ( mustIndent ) out.put( '\n' );
+               if ( mustIndent )
+               {
+                  out.putChar( '\n' );
+               }
             }
 
             if ( mustIndent && ( style & MXML_STYLE_INDENT ))
+            {
                nodeIndent( out, iDepth, style );
+            }
 
-            out.write( "</", 2 );
-            out.writeString(m_name);
-            out.write( ">\n", 2 );
+            out.write( "</" );
+            out.write( m_name );
+            out.write( ">\n" );
          }
       break;
 
       case typeComment:
-            out.write( "<!-- ", 5 );
-            out.writeString(m_data);
-            out.write( " -->\n", 6 );
+            out.write( "<!-- " );
+            out.write( m_data );
+            out.write( " -->\n" );
       break;
 
       case typeData:
          if ( style & MXML_STYLE_NOESCAPE )
-            out.writeString( m_data );
+            out.write( m_data );
          else
             MXML::writeEscape( out, m_data );
-         out.put( '\n' );
+         out.putChar( '\n' );
       break;
 
       case typeCDATA:
-         out.write( "<![CDATA[", 9 );
-         out.writeString( m_data );
-         out.write( "]]>\n", 4);
+         out.write( "<![CDATA[" );
+         out.write( m_data );
+         out.write( "]]>\n" );
       break;
 
       case typeDirective:
-         out.write( "<!", 2);
-         out.writeString( m_name );
-         out.put( ' ' );
-         out.writeString( m_data );
-         out.write( ">\n", 2 );
+         out.write( "<!" );
+         out.write( m_name );
+         out.putChar( ' ' );
+         out.write( m_data );
+         out.write( ">\n" );
       break;
 
       case typePI:
-         out.write( "<?", 2);
-         out.writeString( m_name );
-         out.put( ' ' );
-         out.writeString( m_data );
-         out.write( ">\n", 2 );
+         out.write( "<?" );
+         out.write( m_name );
+         out.putChar( ' ' );
+         out.write( m_data );
+         out.write( ">\n" );
       break;
 
       case typeDocument:
@@ -852,13 +846,64 @@ void Node::write( Falcon::Stream &out, const int style ) const
             child->write( out, style );
             child = child->m_next;
          }
-         out.put( '\n' );
+         out.putChar( '\n' );
       break;
          
       default:
          break;
    }
 
+}
+
+
+void Node::setDownMark( Falcon::uint32 m )
+{
+   if( m_mark != m )
+   {
+      m_mark = m;
+      Node* child = m_child;
+      while( child != 0 )
+      {
+         child->setDownMark(m);
+         child = child->m_next;
+      }
+   }
+}
+
+
+void Node::gcMark( Falcon::uint32 m )
+{
+   if( m != m_mark )
+   {
+      if ( m_parent != 0 )
+      {
+         m_parent->gcMark( m );
+      }
+      else
+      {
+         setDownMark( m );
+         if( m_doc != 0 )
+         {
+            m_doc->gcMark(m);
+         }
+      }
+   }
+}
+
+
+void Node::dispose()
+{
+   if( m_parent != 0 )
+   {
+      m_parent->dispose();
+   }
+   else if( m_doc != 0 )
+   {
+      delete m_doc;
+   }
+   else {
+      delete this;
+   }
 }
 
 }

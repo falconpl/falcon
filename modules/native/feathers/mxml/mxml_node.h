@@ -12,7 +12,6 @@
 
 #include <falcon/string.h>
 #include <falcon/stream.h>
-#include <falcon/coreobject.h>
 #include <list>
 #include <cassert>
 
@@ -21,6 +20,8 @@
 
 namespace MXML
 {
+
+class Document;
 
 typedef std::list<Attribute *>   AttribList;
 typedef AttribList::iterator AttribListIter;
@@ -88,8 +89,10 @@ protected:
 
    virtual inline __iterator<__Node> &__next();
    virtual inline __iterator<__Node> &__prev();
+
 public:
    __deep_iterator( __Node *nd=0 ):__iterator< __Node>( nd ) {};
+   virtual ~__deep_iterator(){};
 };
 
 template <class __Node>
@@ -105,11 +108,14 @@ protected:
    friend class Node;
    __find_iterator( __Node *nd, const Falcon::String &name, const Falcon::String &attr,
                const Falcon::String &valatt, const Falcon::String &data);
+
    virtual inline __iterator<__Node> &__next();
    virtual inline __iterator<__Node> &__prev();
    virtual inline __iterator<__Node> &__find();
+
 public:
    __find_iterator( __Node *nd=0 );
+   virtual ~__find_iterator() {};
 
 };
 
@@ -122,11 +128,13 @@ class __path_iterator:public __iterator< __Node>
 protected:
    friend class Node;
    __path_iterator( __Node *nd, const Falcon::String &path );
+
    virtual inline __iterator<__Node> &__next();
    virtual inline __iterator<__Node> &__prev();
    virtual inline __iterator<__Node> &__find();
 public:
    __path_iterator( __Node *nd=0 );
+   virtual ~__path_iterator() {};
 };
 
 /** Implements an XML node.
@@ -198,7 +206,6 @@ private:
    Falcon::String m_data;
    AttribList m_attrib;
    AttribList::iterator m_lastFound;
-   Falcon::CoreObject *m_objOwner;
 
    Node *m_parent;
    Node *m_child;
@@ -206,10 +213,14 @@ private:
    Node *m_next;
    Node *m_prev;
 
-protected:
-   void nodeIndent( Falcon::Stream &out, const int depth, const int style ) const;
-   void readData( Falcon::Stream &in, const int iStyle );
+   Document* m_doc;
+   Falcon::uint32 m_mark;
 
+protected:
+   void nodeIndent( Falcon::TextWriter &out, const int depth, const int style ) const;
+   void readData( Falcon::TextReader &in, const int iStyle );
+
+   void setDownMark( Falcon::uint32 m );
 public:
 
    /* Creates a new node
@@ -233,7 +244,7 @@ public:
       @throws MXML::MalformedError if the node is invalid
       @throws MXML::IOError in case of hard errors on the stream
    */
-   void read( Falcon::Stream &in, const int style = 0, const int line=1, const int pos=0  )
+   void read( Falcon::TextReader &in, const int style = 0, const int line=1, const int pos=0  )
       throw( MalformedError );
 
    /** Copy constructor.
@@ -271,7 +282,9 @@ public:
    ~Node();
 
    /** Returns the type of this node */
-   const type nodeType() const { return m_type; }
+   type nodeType() const { return m_type; }
+
+   void nodeType( type t ) { m_type = t; }
 
    /** Returns current name of the node.
       If the name is not defined, it returns an empty string.
@@ -429,7 +442,7 @@ public:
       @param stream the stream where the object will be written
       @param style the style of the serialization
    */
-   virtual void write( Falcon::Stream &out, const int style ) const;
+   virtual void write( Falcon::TextWriter &out, const int style ) const;
 
 
    typedef __iterator<Node> iterator;
@@ -499,35 +512,15 @@ public:
     */
    path_iterator find_path( const Falcon::String &path );
 
-   Falcon::CoreObject *shell() const { return m_objOwner; }
-   void shell( Falcon::CoreObject *s ) { m_objOwner = s; }
-   Falcon::CoreObject *makeShell( Falcon::VMachine *vm );
-
-   Falcon::CoreObject *getShell( Falcon::VMachine *vm )
-   {
-      if ( m_objOwner != 0 )
-         return m_objOwner;
-      return makeShell( vm );
-   }
-
-   /** Falcon extension */
-   bool isReserved() const { return m_bReserve; }
-   /** Falcon extension */
-   void reserve() { m_bReserve = true; }
-   /** Falcon extension */
-   void unreserve() { m_bReserve = false; }
-
-   /** Falcon extension */
-   void dispose()
-   {
-      if ( m_objOwner != 0 )
-         unlink();
-      else
-         delete this;
-   }
-
    /** Falcon extension */
    const AttribList &attribs() const { return m_attrib; }
+
+   void gcMark( Falcon::uint32 m );
+   Falcon::uint32 currentMark() const { return m_mark; }
+   // delete all the nodes from the topmost.
+   void dispose();
+
+   friend class Document;
 };
 
 #include <mxml_iterator.h>

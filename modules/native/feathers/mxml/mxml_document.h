@@ -52,6 +52,7 @@ private:
    Node::find_iterator m_finditer;
    Node::path_iterator m_pathiter;
 
+   Falcon::uint32 m_mark;
 public:
 
    /** Creates the document object.
@@ -69,7 +70,7 @@ public:
    /** Creates a deep copy of the document.
       Each node of the original document is replicated into another separated tree.
    */
-   Document( Document &doc );
+   Document( const Document &doc );
 
    /** Creates the document object and reads it.
       The parsing may be unsuccesful, or the reading may be faulty for a
@@ -79,7 +80,7 @@ public:
       \param style the mode in which the document is read/written
       \see stylemacros
    */
-   Document( Falcon::Stream &in, const int style = 0 ) throw( MalformedError );
+   Document( Falcon::TextReader &in, const int style = 0 ) throw( MalformedError );
 
    /** Destroys the document.
       If you provided a stream at document creation, the stream is NOT colsed.
@@ -98,7 +99,7 @@ public:
    /** Returns the currently used encoding.
       \note Default encoding is "C"
    */
-   const Falcon::String encoding() const { return m_encoding; }
+   const Falcon::String& encoding() const { return m_encoding; }
 
    /** Sets the preferred encoding.
       \note Used to create the main xml node; the actual encoder depends on the stream being used.
@@ -119,9 +120,9 @@ public:
       status of the document will be faulty.
       \see Node::write()
    */
-   virtual void write( Falcon::Stream &stream, const int style ) const;
+   virtual void write( Falcon::TextWriter &stream, const int style ) const;
 
-   virtual void write( Falcon::Stream &stream ) const
+   virtual void write( Falcon::TextWriter &stream ) const
    {
       write( stream, style() );
    }
@@ -165,7 +166,7 @@ public:
       \param stream the input stream used for reading the data.
       \see Node::read()
    */
-   virtual void read( Falcon::Stream &stream ) throw(MalformedError);
+   virtual void read( Falcon::TextReader &stream ) throw(MalformedError);
 
    /** Falcon MXML extension. */
    Node *find( const Falcon::String &name, const Falcon::String &attr,
@@ -205,27 +206,9 @@ public:
          return &(*m_pathiter);
       return 0;
    }
-};
 
-class DocumentCarrier: public Falcon::FalconData
-{
-   Document *m_doc;
-public:
-
-   DocumentCarrier( Document *doc ):
-      m_doc( doc )
-   {
-   }
-
-   virtual ~DocumentCarrier()
-   {
-      delete m_doc;
-   }
-
-   virtual void gcMark( Falcon::uint32 mk )  {};
-   virtual Falcon::FalconData *clone() const { return 0; }
-
-   Document *document() const { return m_doc; }
+   void gcMark( Falcon::uint32 m );
+   Falcon::uint32 currentMark() const { return m_mark; }
 };
 
 }

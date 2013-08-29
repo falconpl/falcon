@@ -13,17 +13,24 @@
    See LICENSE file for licensing details.
 */
 
+#define SRC "modules/native/feathers/mxml/mxml_ext.cpp"
+
 /** \file
    MXML module main file - extension implementation.
 */
 
-#include <falcon/vm.h>
-#include <falcon/transcoding.h>
-#include <falcon/fstream.h>
-#include <falcon/lineardict.h>
+#include <falcon/vmcontext.h>
+#include <falcon/stream.h>
+#include <falcon/vfsiface.h>
+#include <falcon/engine.h>
+
+#include <falcon/stdhandlers.h>
+
+#include <falcon/item.h>
+#include <falcon/itemdict.h>
+#include <falcon/itemarray.h>
+
 #include "mxml_ext.h"
-#include "mxml_mod.h"
-#include "mxml_st.h"
 
 #include "mxml.h"
 
@@ -31,46 +38,28 @@
    @beginmodule feathers.mxml
 */
 
-namespace MXML {
-
-Falcon::CoreObject *Node::makeShell( Falcon::VMachine *vm )
-{
-   static Falcon::Item *node_class = 0;
-
-   if( m_objOwner != 0 )
-      return m_objOwner;
-
-   if( node_class == 0 )
-      node_class = vm->findWKI( "MXMLNode" );
-
-   fassert( node_class != 0 );
-
-   Falcon::CoreObject *co = node_class->asClass()->createInstance();
-   co->setUserData( new Falcon::Ext::NodeCarrier( this, co ) );
-   return co;
-}
-
-}
-
 namespace Falcon {
 namespace Ext {
 
-static MXML::Node *internal_getNodeParameter( VMachine *vm, int pid )
+static MXML::Node *internal_getNodeParameter( Function *func, VMContext* ctx, int pid )
 {
-   Item *i_child = vm->param(pid);
+   MXMLModule* mod = static_cast<MXMLModule*>(func->fullModule());
+   Class* clsNode = mod->classNode();
+   Item *i_child = ctx->param(pid);
 
-   if ( i_child == 0 || ! i_child->isObject() || ! i_child->asObject()->derivedFrom( "MXMLNode" ) )
+   if ( i_child == 0 || ! i_child->isInstanceOf(clsNode) )
    {
-      throw new  ParamError( ErrorParam( e_inv_params, __LINE__ ).
-         extra( "MXMLNode" ) );
-      return 0;
+      throw func->paramError(__LINE__, SRC);
    }
 
-   return static_cast<NodeCarrier *>( i_child->asObject()->getUserData() )->node();
+   return static_cast<MXML::Node*>( i_child->asParentInst( clsNode ) );
 }
 
+namespace CMXMLDocument {
+
+
 /*#
-   @class MXMLDocument
+   @class Document
    @brief Encapsulates a complete XML document.
    @optparam encoding Encoding suggested for document load or required for document write.
    @optparam style Style required in document write.
@@ -91,7 +80,7 @@ static MXML::Node *internal_getNodeParameter( VMachine *vm, int pid )
    writing the document. It can be overridden in the @a MXMLDocument.write method,
    and if not provided there, the default set in the constructor will be used.
 
-   The @b style parameter must be in @a MXMLStyle enumeration.
+   The @b style parameter must be in @a Style enumeration.
 
    @note It is not necessary to create and serialize a whole XML document to
    create just XML compliant data representations. Single nodes can be serialized
@@ -157,166 +146,76 @@ static MXML::Node *internal_getNodeParameter( VMachine *vm, int pid )
    be empty.
 */
 
-
-FALCON_FUNC MXMLDocument_init( ::Falcon::VMachine *vm )
+FALCON_DECLARE_FUNCTION( init, "encoding:[S],style:[N]" )
+FALCON_DEFINE_FUNCTION_P1( init )
 {
-   CoreObject *self = vm->self().asObject();
-   Item *i_encoding = vm->param(0);
-   Item *i_style = vm->param(1);
+   MXML::Document* doc = static_cast<MXML::Document*>(ctx->self().asInst());
+
+   Item *i_encoding = ctx->param(0);
+   Item *i_style = ctx->param(1);
 
    if ( ( i_encoding != 0 && ! i_encoding->isString() && ! i_encoding->isNil() ) ||
       ( i_style != 0 && ! i_style->isInteger()) )
    {
-       throw new  ParamError( ErrorParam( e_inv_params, __LINE__ ).
-         extra( "[S,I]" ) );
-      return;
+      throw paramError( __LINE__, SRC );
    }
 
    int style = i_style == 0 ? 0 : (int) i_style->forceInteger();
-   MXML::Document *doc;
-   if( i_encoding == 0 || i_encoding->isNil() )
-      doc = new MXML::Document( "C", style );
-   else
-      doc = new MXML::Document( *i_encoding->asString(), style );
+   doc->style(style);
 
-   self->setUserData( new MXML::DocumentCarrier( doc ) );
+   if( i_encoding != 0 && ! i_encoding->isNil() )
+   {
+      const String& encoding = *i_encoding->asString();
+      // check encoding
+      if( Engine::instance()->getTranscoder(encoding) == 0 )
+      {
+         throw FALCON_SIGN_XERROR( ParamError, e_param_range,
+                  .extra("Unknown encoding \""+ encoding +"\""));
+      }
+      doc->encoding( *i_encoding->asString() );
+   }
+   else {
+      doc->encoding("C");
+   }
+
+   ctx->returnFrame(ctx->self());
 }
 
-/*#
-   @method deserialize MXMLDocument
-   @brief Loads an XML document from a stream.
-   @param istream A Falcon Stream instance opened for input.
-   @raise MXMLError on load error.
-
-   Loads a document from a Falcon Stream. After a succesful call,
-   the document is ready for inspection and can be modified.
-
-   @see MXMLDocument.read
-*/
-
-FALCON_FUNC MXMLDocument_deserialize( ::Falcon::VMachine *vm )
-{
-   CoreObject *self = vm->self().asObject();
-   Item *i_stream = vm->param(0);
-
-   if ( i_stream == 0 || ! i_stream->isObject() || ! i_stream->asObject()->derivedFrom( "Stream" ) )
-   {
-      throw new  ParamError( ErrorParam( e_inv_params, __LINE__ ).
-         extra( "Stream" ) );
-      return;
-   }
-
-   Stream *stream = static_cast<Stream *>( i_stream->asObject()->getUserData() );
-   MXML::Document *doc = static_cast<MXML::DocumentCarrier *>( self->getUserData() )->document();
-
-   try
-   {
-      doc->read( *stream );
-      vm->retval( true );
-   }
-   catch( MXML::MalformedError &err )
-   {
-      throw new MXMLError( ErrorParam( FALCON_MXML_ERROR_BASE + err.numericCode(), __LINE__ )
-      .desc( err.description() )
-      .extra( err.describeLine() ) );
-   }
-   catch( MXML::IOError &err )
-   {
-      throw new IoError( ErrorParam( FALCON_MXML_ERROR_BASE + err.numericCode(), __LINE__ )
-      .desc( err.description() )
-      .extra( err.describeLine() ) );
-   }
-}
 
 /*#
-   @method serialize MXMLDocument
-   @brief Stores the document as an XML file.
-   @param ostream A Falcon Stream opened for output.
-   @raise MXMLError on write error.
-
-   This method stores an XML document created using the
-   three in this instance on the stream passed as parameter.
-
-   @see MXMLDocument.write
-*/
-FALCON_FUNC MXMLDocument_serialize( ::Falcon::VMachine *vm )
-{
-   CoreObject *self = vm->self().asObject();
-   Item *i_stream = vm->param(0);
-
-   if ( i_stream == 0 || ! i_stream->isObject() || ! i_stream->asObject()->derivedFrom( "Stream" ) )
-   {
-      throw new  ParamError( ErrorParam( e_inv_params, __LINE__ ).
-         extra( "Stream" ) );
-      return;
-   }
-
-   Stream *stream = static_cast<Stream *>( i_stream->asObject()->getUserData() );
-   MXML::Document *doc = static_cast<MXML::DocumentCarrier *>( self->getUserData() )->document();
-
-   try
-   {
-      doc->write( *stream, doc->style() );
-      vm->retval( true );
-   }
-   catch( MXML::MalformedError &err )
-   {
-      throw new MXMLError( ErrorParam( FALCON_MXML_ERROR_BASE + err.numericCode(), __LINE__ )
-      .desc( err.description() )
-      .extra( err.describeLine() ) );
-   }
-   catch( MXML::IOError &err )
-   {
-      throw new IoError( ErrorParam( FALCON_MXML_ERROR_BASE + err.numericCode(), __LINE__ )
-      .desc( err.description() )
-      .extra( err.describeLine() ) );
-   }
-}
-
-/*#
-   @method style MXMLDocument
+   @property style Document
    @brief Reads or changes the style applied to this XML document.
-   @optparam setting If given, changes the style.
-   @return The current style settings.
 
    This method allows to read or change the style used for serialization
    and deserialization of this document, which is usually set in the
    constructor.
 
-   The @b setting paramter must be in @a MXMLStyle enumeration.
+   The @b setting parameter must be in @a Style enumeration.
 
    The method returns the current style as a combination of the bitfields
-   from the @a MXMLStyle enumeration.
+   from the @a Style enumeration.
 
    @see MXMLDocument.init
 */
-FALCON_FUNC MXMLDocument_style( ::Falcon::VMachine *vm )
+static void get_style( const Class*, const String&, void* instance, Item& value )
 {
-   CoreObject *self = vm->self().asObject();
-   MXML::Document *doc = static_cast<MXML::DocumentCarrier *>( self->getUserData() )->document();
-   Item *i_style = vm->param(0);
+   MXML::Document *doc = static_cast<MXML::Document *>( instance );
+   value.setInteger( doc->style() );
+}
 
-   // read immediately the style, we always return it
-   vm->retval( (int64) doc->style() );
-   if ( i_style == 0 )
+static void set_style( const Class*, const String&, void* instance, const Item& value )
+{
+   MXML::Document *doc = static_cast<MXML::Document *>( instance );
+   if( ! value.isOrdinal() )
    {
-      return;
+      throw FALCON_SIGN_XERROR(AccessTypeError, e_inv_prop_value, .extra("N") );
    }
-
-   if ( i_style == 0 || ! i_style->isInteger() )
-   {
-      throw new  ParamError( ErrorParam( e_inv_params, __LINE__ ).
-         extra( "N" ) );
-      return;
-   }
-
-   doc->style( (int) i_style->asInteger() );
+   doc->style( value.forceInteger() );
 }
 
 /*#
-   @method top MXMLDocument
+   @property top Document
    @brief Retrieves the topmost node in the document.
-   @return The overall topmost node of the XML document.
 
    This method returns the topmost node of the document;
    this is actually an invisible node which is used as a
@@ -326,16 +225,17 @@ FALCON_FUNC MXMLDocument_style( ::Falcon::VMachine *vm )
    @see MXMLDocument.root
    @see MXMLDocument
 */
-FALCON_FUNC MXMLDocument_top( ::Falcon::VMachine *vm )
+static void get_top( const Class* cls, const String&, void* instance, Item& value )
 {
-   CoreObject *self = vm->self().asObject();
-   MXML::Document *doc = static_cast<MXML::DocumentCarrier *>( self->getUserData() )->document();
-   MXML::Node *root = doc->root();
-   vm->retval( root->getShell( vm ) );
+   MXML::Document *doc = static_cast<MXML::Document *>( instance );
+   MXMLModule* mod = static_cast<MXMLModule*>(cls->module());
+   fassert( mod != 0 );
+
+   value = FALCON_GC_STORE( mod->classNode(), doc->root() );
 }
 
 /*#
-   @method root MXMLDocument
+   @method root Document
    @brief Retrieves the root tag node in the document.
    @return The root tag node of the XML document.
 
@@ -354,10 +254,13 @@ FALCON_FUNC MXMLDocument_top( ::Falcon::VMachine *vm )
    @see MXMLDocument.top
    @see MXMLDocument
 */
-FALCON_FUNC MXMLDocument_root( ::Falcon::VMachine *vm )
+
+static void get_root( const Class* cls, const String&, void* instance, Item& value )
 {
-   CoreObject *self = vm->self().asObject();
-   MXML::Document *doc = static_cast<MXML::DocumentCarrier *>( self->getUserData() )->document();
+   MXML::Document *doc = static_cast<MXML::Document *>( instance );
+   MXMLModule* mod = static_cast<MXMLModule*>(cls->module());
+   fassert( mod != 0 );
+
    MXML::Node *root = doc->main();
    // if we don't have a root (main) node, create it.
    if ( root == 0 ) {
@@ -365,12 +268,11 @@ FALCON_FUNC MXMLDocument_root( ::Falcon::VMachine *vm )
       doc->root()->addBelow( root );
    }
 
-   vm->retval( root->getShell( vm ) );
+   value = FALCON_GC_STORE( mod->classNode(), root );
 }
 
-
 /*#
-   @method find MXMLDocument
+   @method find Document
    @brief Finds the first (tag) node matching a certain criterion.
    @param name Tag name of the searched node.
    @optparam attrib Name of one of the attributes of the searched node.
@@ -416,14 +318,13 @@ FALCON_FUNC MXMLDocument_root( ::Falcon::VMachine *vm )
 
    @see MXMLDocument.findNext
 */
-
-FALCON_FUNC MXMLDocument_find( ::Falcon::VMachine *vm )
+FALCON_DECLARE_FUNCTION( find, "name:S,attrib:[S],value:[S],data:[S]" )
+FALCON_DEFINE_FUNCTION_P1( find )
 {
-   Item *i_name = vm->param(0);
-   Item *i_attrib = vm->param(1);
-   Item *i_valattr = vm->param(2);
-   Item *i_data = vm->param(3);
-   CoreObject *self = vm->self().asObject();
+   Item *i_name = ctx->param(0);
+   Item *i_attrib = ctx->param(1);
+   Item *i_valattr = ctx->param(2);
+   Item *i_data = ctx->param(3);
 
    // parameter sanity check
    if( ( i_name == 0 || (! i_name->isString() && ! i_name->isNil() )) ||
@@ -432,9 +333,7 @@ FALCON_FUNC MXMLDocument_find( ::Falcon::VMachine *vm )
        ( i_data != 0 && (! i_data->isString() && ! i_data->isNil() ))
    )
    {
-      throw new  ParamError( ErrorParam( e_inv_params, __LINE__ ).
-         extra( "S,[S,S,S]" ) );
-      return;
+      throw paramError( __LINE__, SRC );
    }
 
    String dummy;
@@ -445,18 +344,22 @@ FALCON_FUNC MXMLDocument_find( ::Falcon::VMachine *vm )
    sValAttr = i_valattr == 0 || i_valattr->isNil() ? &dummy : i_valattr->asString();
    sData = i_data == 0 || i_data->isNil() ? &dummy : i_data->asString();
 
-   MXML::Document *doc = static_cast<MXML::DocumentCarrier *>( self->getUserData() )->document();
    // the real find
+   MXML::Document *doc = static_cast<MXML::Document *>( ctx->self().asInst() );
    MXML::Node *node = doc->find( *sName, *sValue, *sValAttr, *sData );
-   if ( node == 0 )
-      vm->retnil();
-   else
-      vm->retval( node->getShell( vm ) );
+   MXMLModule* mod = static_cast<MXMLModule*>( methodOf()->module() );
+
+   Item ret;
+   if ( node != 0 )
+   {
+      ret = FALCON_GC_STORE(mod->classNode(), node);
+   }
+   ctx->returnFrame(ret);
 }
 
 
 /*#
-   @method findNext MXMLDocument
+   @method findNext Document
    @brief Finds the next (tag) node matching a certain criterion.
    @return The next node matching the given criterion or nil if not found.
 
@@ -465,20 +368,22 @@ FALCON_FUNC MXMLDocument_find( ::Falcon::VMachine *vm )
 
    @see MXMLDocument.find
 */
-FALCON_FUNC MXMLDocument_findNext( ::Falcon::VMachine *vm )
+FALCON_DECLARE_FUNCTION( findNext, "" )
+FALCON_DEFINE_FUNCTION_P1( findNext )
 {
-   CoreObject *self = vm->self().asObject();
-   MXML::Document *doc = static_cast<MXML::DocumentCarrier *>( self->getUserData() )->document();
+   MXML::Document *doc = static_cast<MXML::Document *>( ctx->self().asInst() );
+   MXMLModule* mod = static_cast<MXMLModule*>( methodOf()->module() );
    // the real find
    MXML::Node *node = doc->findNext();
+
    if ( node == 0 )
-      vm->retnil();
+      ctx->returnFrame();
    else
-      vm->retval( node->getShell( vm ) );
+      ctx->returnFrame( FALCON_GC_STORE( mod->classNode(), node ) );
 }
 
 /*#
-   @method findPath MXMLDocument
+   @method findPath Document
    @brief Finds the first (tag) node matching a certain XML path.
    @param path The XML path to be searched.
    @return The next node matching the given criterion or nil if not found.
@@ -522,10 +427,12 @@ FALCON_FUNC MXMLDocument_findNext( ::Falcon::VMachine *vm )
 
    @see MXMLDocument.findPathNext
 */
-FALCON_FUNC MXMLDocument_findPath( ::Falcon::VMachine *vm )
+FALCON_DECLARE_FUNCTION( findPath, "path:[S]" )
+FALCON_DEFINE_FUNCTION_P1( findPath )
 {
-Item *i_name = vm->param(0);
-   CoreObject *self = vm->self().asObject();
+   Item *i_name = ctx->param(0);
+   MXML::Document *doc = static_cast<MXML::Document *>( ctx->self().asInst() );
+   MXMLModule* mod = static_cast<MXMLModule*>( methodOf()->module() );
 
    // parameter sanity check
    if( i_name == 0 || ! i_name->isString() )
@@ -535,17 +442,16 @@ Item *i_name = vm->param(0);
       return;
    }
 
-   MXML::Document *doc = static_cast<MXML::DocumentCarrier *>( self->getUserData() )->document();
    // the real find
    MXML::Node *node = doc->findPath( *i_name->asString() );
    if ( node == 0 )
-      vm->retnil();
+      ctx->returnFrame();
    else
-      vm->retval( node->getShell( vm ) );
+      ctx->returnFrame( FALCON_GC_STORE( mod->classNode(), node ) );
 }
 
 /*#
-   @method findPathNext MXMLDocument
+   @method findPathNext Document
    @brief Finds the next (tag) node matching a certain XML path.
    @return The next node matching the given criterion or nil if not found.
 
@@ -554,258 +460,212 @@ Item *i_name = vm->param(0);
 
    @see MXMLDocument.findPath
 */
-FALCON_FUNC MXMLDocument_findPathNext( ::Falcon::VMachine *vm )
+FALCON_DECLARE_FUNCTION( findPathNext, "" )
+FALCON_DEFINE_FUNCTION_P1( findPathNext )
 {
-  CoreObject *self = vm->self().asObject();
-   MXML::Document *doc = static_cast<MXML::DocumentCarrier *>( self->getUserData() )->document();
+   MXML::Document *doc = static_cast<MXML::Document *>( ctx->self().asInst() );
+   MXMLModule* mod = static_cast<MXMLModule*>( methodOf()->module() );
+
    // the real find
    MXML::Node *node = doc->findNextPath();
    if ( node == 0 )
-      vm->retnil();
+      ctx->returnFrame();
    else
-      vm->retval( node->getShell( vm ) );
+      ctx->returnFrame( FALCON_GC_STORE( mod->classNode(), node ) );
 }
 
 
 /*#
-   @method write MXMLDocument
-   @brief Stores a document to an XML file on a filesystem.
+   @method write Document
+   @brief Stores a document to an XML file on a stream.
    @param filename Name of the destination XML file.
+   @optparam sytle A syle overriding the default style used by this document.
    @raise MXMLError on error during the serialization.
 
    This method saves the XML document to a file on a
-   reachable filesystem. It takes care of opening a suitable
-   stream, transcoding it using the chosen encoding and
-   performing a complete serialization through
-   @a MXMLDocument.serialize.
+   stream.
 
    @see MXMLDocument.setEncoding
 */
-FALCON_FUNC MXMLDocument_save( ::Falcon::VMachine *vm )
+FALCON_DECLARE_FUNCTION( write, "stream:Stream, style:[N]" )
+FALCON_DEFINE_FUNCTION_P1( write )
 {
-   CoreObject *self = vm->self().asObject();
-   Item *i_uri = vm->param(0);
+   static Class* clsStream = Engine::instance()->stdHandlers()->streamClass();
 
-   if ( i_uri == 0 || ! i_uri->isString() )
+   Item *i_stream = ctx->param(0);
+   Item *i_style = ctx->param(1);
+   MXML::Document *doc = static_cast<MXML::Document *>( ctx->self().asInst() );
+
+   if ( i_stream == 0 || ! i_stream->isInstanceOf(clsStream)
+      || (i_style != 0 && !i_style->isOrdinal() )
+   )
    {
-      throw new  ParamError( ErrorParam( e_inv_params, __LINE__ ).
-         extra( "N" ) );
-      return;
+      throw paramError(__LINE__, SRC);
    }
-
-   String &uri = *i_uri->asString();
-   MXML::Document *doc = static_cast<MXML::DocumentCarrier *>( self->getUserData() )->document();
    
-   vm->idle();
-   //TODO: use parsing uri
-   FileStream out;
-   if ( out.create( uri, BaseFileStream::e_aUserRead | BaseFileStream::e_aUserWrite | BaseFileStream::e_aGroupRead | BaseFileStream::e_aOtherRead  ) )
-   {
+   Stream* tgt = static_cast<Stream*>(i_stream->asParentInst( clsStream ));
+   Transcoder* tc = Engine::instance()->getTranscoder( doc->encoding() );
+   // we have alreay filtered the transcoder when it was set.
+   fassert( tc != 0 );
+   int32 style = (int32) (i_style == 0 ? doc->style() : i_style->forceInteger() );
+   LocalRef<TextWriter> twr( new TextWriter(tgt,tc) );
+   doc->write( *twr, style );
 
-      Stream *output = &out;
-
-      if ( doc->encoding() != "C" )
-      {
-         output = TranscoderFactory( doc->encoding(), &out, false );
-         if ( output == 0 )
-         {
-            vm->unidle();
-            throw new MXMLError( ErrorParam( e_inv_params, __LINE__ )
-               .extra( "Invalid encoding " + doc->encoding() ) );
-            return;
-         }
-      }
-
-      try
-      {
-         doc->write( *output, doc->style() );
-         vm->unidle();
-         vm->retval( true );
-      }
-      catch( MXML::MalformedError &err )
-      {
-         vm->unidle();
-         throw new MXMLError( ErrorParam( FALCON_MXML_ERROR_BASE + err.numericCode(), __LINE__ )
-            .desc( err.description() )
-            .extra( err.describeLine() ) );
-      }
-      catch( MXML::IOError &err )
-      {
-         vm->unidle();
-         throw new IoError( ErrorParam( FALCON_MXML_ERROR_BASE + err.numericCode(), __LINE__ )
-         .desc( err.description() )
-         .extra( err.describeLine() ) );
-      }
-   }
-   else
-   {
-      vm->unidle();
-      throw new IoError( ErrorParam(
-         FALCON_MXML_ERROR_BASE + (int) MXML::Error::errIo , __LINE__ )
-         .desc( FAL_STR( MXML_ERR_IO ) ) );
-   }
+   ctx->returnFrame();
 }
 
 
 /*#
    @method read MXMLDocument
-   @brief Loads a document to an XML file on a filesystem.
+   @brief Loads a document to an XML file from a stream.
    @param filename Name of the source XML file.
    @raise MXMLError on error during the deserialization.
 
-   This method loads the XML document from a file on a
-   reachable filesystem. It takes care of opening a suitable
-   stream, transcoding it using the chosen encoding and
-   performing a complete deserialization through
-   @a MXMLDocument.deserialize.
+   This method loads the XML document from a file serialized
+   on a stream. The text transcoding is performed accordingly
+   to the @a MXMLDocument.transcoding setting.
 
    @see MXMLDocument.setEncoding
 */
-FALCON_FUNC MXMLDocument_load( ::Falcon::VMachine *vm )
+FALCON_DECLARE_FUNCTION( read, "stream:Stream" )
+FALCON_DEFINE_FUNCTION_P1( read )
 {
-   CoreObject *self = vm->self().asObject();
-   Item *i_uri = vm->param(0);
+   static Class* clsStream = Engine::instance()->stdHandlers()->streamClass();
 
-   if ( i_uri == 0 || ! i_uri->isString() )
+   Item *i_stream = ctx->param(0);
+
+   if ( i_stream == 0 || ! i_stream->isInstanceOf(clsStream) )
    {
-      throw new  ParamError( ErrorParam( e_inv_params, __LINE__ ).
-         extra( "S" ) );
-      return;
+      throw paramError(__LINE__, SRC);
    }
 
-   String &uri = *i_uri->asString();
-   MXML::Document *doc = static_cast<MXML::DocumentCarrier *>( self->getUserData() )->document();
-   
-   vm->idle();
-   
-   //TODO: use parsing uri
-   FileStream in;
-   if ( in.open( uri ) )
-   {
-      Stream *input = &in;
+   MXML::Document *doc = static_cast<MXML::Document *>( ctx->self().asInst() );
+   Stream* tgt = static_cast<Stream*>(i_stream->asParentInst( clsStream ));
+   Transcoder* tc = Engine::instance()->getTranscoder( doc->encoding() );
+   // we have alreay filtered the transcoder when it was set.
+   fassert( tc != 0 );
+   LocalRef<TextReader> twr( new TextReader(tgt,tc));
+   doc->read( *twr );
 
-      if ( doc->encoding() != "C" )
-      {
-         input = TranscoderFactory( doc->encoding(), &in, false );
-         if ( input == 0 )
-         {
-            vm->unidle();
-            throw new MXMLError( ErrorParam( e_inv_params, __LINE__ )
-               .extra( FAL_STR( MXML_ERR_INVENC ) + doc->encoding() ) );
-            return;
-         }
-
-      }
-
-      try
-      {
-         doc->read( *input );
-         vm->unidle();
-         vm->retval( true );
-      }
-      catch( MXML::MalformedError &err )
-      {
-         vm->unidle();
-         throw new MXMLError(
-            ErrorParam( FALCON_MXML_ERROR_BASE + err.numericCode(), __LINE__ )
-            .desc( err.description() )
-            .extra( err.describeLine() ) );
-      }
-      catch( MXML::IOError &err )
-      {
-         vm->unidle();
-         throw new IoError(
-            ErrorParam( FALCON_MXML_ERROR_BASE + err.numericCode(), __LINE__ )
-            .desc( err.description() )
-            .extra( err.describeLine() ) );
-      }
-
-      in.close();
-      return;
-   }
-   
-   if ( ! in.good() )
-   {
-      throw new IoError( ErrorParam(
-         FALCON_MXML_ERROR_BASE + (int) MXML::Error::errIo , __LINE__ )
-         .desc( FAL_STR( MXML_ERR_IO ) ) );
-   }
-
-   in.close();
+   ctx->returnFrame();
 }
 
 /*#
-   @method setEncoding MXMLDocument
-   @brief Changes the document encoding for stream operations.
-   @param encoding A valid falcon encoding name
-   @raise ParamError if the encoding name is unknown.
+   @proprty encoding Document
+   @brief Document encoding for stream operations.
+   @raise ParamError if the setting an unknown encoding name.
 
    This method sets the encoding used for I/O operations on this
    XML document. It also determines the value of the "encoding"
    attribute that will be set in the the special PI ?xml at
    document heading.
-
-   @see MXMLDocument.getEncoding
 */
-FALCON_FUNC MXMLDocument_setEncoding( ::Falcon::VMachine *vm )
+
+static void get_encoding( const Class*, const String&, void* instance, Item& value )
 {
-   CoreObject *self = vm->self().asObject();
-   Item *i_encoding = vm->param(0);
+   MXML::Document *doc = static_cast<MXML::Document *>( instance );
+   value = FALCON_GC_HANDLE( new String(doc->encoding()) );
+}
 
-   if ( i_encoding == 0 || ! i_encoding->isString() )
+static void set_encoding( const Class*, const String&, void* instance, const Item& value )
+{
+   MXML::Document *doc = static_cast<MXML::Document *>( instance );
+
+   if( ! value.isString() )
    {
-      throw new  ParamError( ErrorParam( e_inv_params, __LINE__ ).
-         extra( "S" ) );
-      return;
+      throw FALCON_SIGN_XERROR(AccessTypeError, e_inv_prop_value, .extra("N") );
    }
 
-   String &encoding = *i_encoding->asString();
-   Transcoder *tr = TranscoderFactory( encoding );
-   if ( tr == 0 )
+   const String& encoding = *value.asString();
+   if( Engine::instance()->getTranscoder( encoding ) == 0 )
    {
-      throw new  ParamError( ErrorParam( e_param_range, __LINE__ ).
-         extra( encoding ) );
-      return;
+      throw FALCON_SIGN_XERROR(AccessTypeError, e_inv_prop_value, .extra("Unknown encoding \"" + encoding + "\"" ) );
    }
-   delete tr;
 
-   MXML::Document *doc = static_cast<MXML::DocumentCarrier *>( self->getUserData() )->document();
    doc->encoding( encoding );
 }
 
 
-/*#
-   @method getEncoding MXMLDocument
-   @brief Returns the encoding for stream operations.
-   @return Previously set or read XML encoding.
+} // end of namespace CMXMLDocument
 
-   This method returns the encoding that has been previously set
-   either at document creation or through the @a MXMLDocument.setEncoding.
 
-   Also, after a succesful deserialization, this method will return the
-   value of the "encoding" attribute of the ?xml PI heading directive,
-   if provided.
-
-   If still unset, this method will return nil.
-
-   @see MXMLDocument.setEncoding
-*/
-FALCON_FUNC MXMLDocument_getEncoding( ::Falcon::VMachine *vm )
+ClassDocument::ClassDocument():
+         Class("Document")
 {
-   CoreObject *self = vm->self().asObject();
-   MXML::Document *doc = static_cast<MXML::DocumentCarrier *>( self->getUserData() )->document();
-   vm->retval( new CoreString( doc->encoding() ) );
+   setConstuctor( new CMXMLDocument::Function_init );
+
+   addProperty("encoding", &CMXMLDocument::get_encoding, &CMXMLDocument::set_encoding );
+   addProperty("root", &CMXMLDocument::get_root );
+   addProperty("top", &CMXMLDocument::get_top );
+   addProperty("style", &CMXMLDocument::get_style, &CMXMLDocument::set_style );
+
+   addMethod( new CMXMLDocument::Function_find );
+   addMethod( new CMXMLDocument::Function_findNext );
+   addMethod( new CMXMLDocument::Function_findPath );
+   addMethod( new CMXMLDocument::Function_findPathNext );
+   addMethod( new CMXMLDocument::Function_read );
+   addMethod( new CMXMLDocument::Function_write );
 }
 
+ClassDocument::~ClassDocument()
+{
+
+}
+
+int64 ClassDocument::occupiedMemory( void* ) const
+{
+   // actually should be the size of the sub-tree
+   return sizeof(MXML::Node) + 16;
+}
+
+void* ClassDocument::createInstance() const
+{
+   return new MXML::Document("C");
+}
+
+void ClassDocument::dispose( void* instance ) const
+{
+   // while there is 1 reference to any node, or to the doc
+   // there can't be any dispose invoked.
+   // When dispose on a node or on the document is invoked,
+   // all the tree must be disposed at once.
+   MXML::Document* doc = static_cast<MXML::Document*>(instance);
+   delete doc;
+}
+
+void* ClassDocument::clone( void* instance ) const
+{
+   MXML::Document* doc = static_cast<MXML::Document*>(instance);
+   MXML::Document* copy = new MXML::Document(*doc);
+   return copy;
+}
+
+void ClassDocument::gcMarkInstance( void* instance, uint32 mark ) const
+{
+   MXML::Document* doc = static_cast<MXML::Document*>(instance);
+   doc->gcMark(mark);
+}
+
+bool ClassDocument::gcCheckInstance( void* instance, uint32 mark ) const
+{
+   MXML::Document* doc = static_cast<MXML::Document*>(instance);
+   return doc->currentMark() >= mark;
+}
+
+//===============================================================================
+// MXML NODE
+//===============================================================================
+
+
 /*#
-   @class MXMLNode
-   @param type One of the node type defined by the @a MXMLType enumeration.
+   @class Node
+   @optparam type One of the node type defined by the @a Type enumeration.
    @optparam name Name of the node, if this is a tag node.
    @optparam data Optional data content attached to this node..
    @brief Minimal entity of the XML document.
    @raise ParamError if the type is invalid.
 
-   This class encapsulates a minimal adressable entity in an XML document.
+   This class encapsulates a minimal addressable entity in an XML document.
    Nodes can be of different types, some of which, like CDATA, tag and comment nodes
    can have a simple textual data attached to them (equivalent to a single data node
    being their only child).
@@ -817,7 +677,7 @@ FALCON_FUNC MXMLDocument_getEncoding( ::Falcon::VMachine *vm )
    database storage, template filling etc., without the need to build a whole XML
    document and writing the ?xml heading declarator.
 
-   The @b type must be one of the @a MXMLType enumeration elements.
+   The @b type must be one of the @a Type enumeration elements.
    The @b name of the node is relevant only for Processing Instruction
    nodes and tag node, while data can be specified for comment, tag and
    data nodes.
@@ -827,185 +687,200 @@ FALCON_FUNC MXMLDocument_getEncoding( ::Falcon::VMachine *vm )
 
 */
 
+namespace CMXMLNode {
 
-FALCON_FUNC MXMLNode_init( ::Falcon::VMachine *vm )
+FALCON_DECLARE_FUNCTION( init, "type:[N],name:[S],data:[S]" )
+FALCON_DEFINE_FUNCTION_P1( init )
 {
-   CoreObject *self = vm->self().asObject();
-   Item *i_type = vm->param(0);
-   Item *i_name = vm->param(1);
-   Item *i_data = vm->param(2);
+   Item *i_type = ctx->param(0);
+   Item *i_name = ctx->param(1);
+   Item *i_data = ctx->param(2);
+
+   MXML::Node* node = static_cast<MXML::Node*>( ctx->self().asInst() );
 
    if ( ( i_type != 0 && ! i_type->isInteger() ) ||
       ( i_name != 0 && ! (i_name->isString() || i_name->isNil()) ) ||
       ( i_data != 0 && ! i_data->isString() )  )
    {
-      throw new  ParamError( ErrorParam( e_inv_params, __LINE__ ).
-         extra( "[N,S,S]" ) );
-      return;
+      throw paramError(__LINE__, SRC);
    }
 
    // verify type range
-   int type = i_type != 0 ? (int) i_type->asInteger() : 0;
+   int type = i_type != 0 ? (int) i_type->asInteger() : ((int)MXML::Node::typeComment) ;
 
    if ( type < 0 || type > (int) MXML::Node::typeFakeClosing )
    {
-      throw new  ParamError( ErrorParam( e_inv_params, __LINE__ ).
-         extra( "Invalid type" ) );
-      return;
+      throw FALCON_SIGN_XERROR( ParamError, e_param_range, .extra( "Invalid type" ) );
    }
 
-   String dummy;
-   String *name = i_name == 0 || i_name->isNil() ? &dummy : i_name->asString();
-   String *data = i_data == 0 ? &dummy : i_data->asString();
+   node->nodeType((MXML::Node::type) type);
+   if( i_name != 0 )
+   {
+      node->name( *i_name->asString() );
+   }
 
-   MXML::Node *node = new MXML::Node( (MXML::Node::type) type, *name, *data );
-   self->setUserData( new NodeCarrier( node, self ) );
+   if( i_data != 0 )
+   {
+      node->data( *i_data->asString() );
+   }
+   ctx->returnFrame(ctx->self());
+}
+
+static void internal_read_write( Function* func, VMContext* ctx, bool bRead )
+{
+   static Class* clsStream = Engine::instance()->stdHandlers()->streamClass();
+
+   Item *i_stream = ctx->param(0);
+   Item *i_encoding = ctx->param(1);
+
+   if ( i_stream == 0 || ! i_stream->isInstanceOf(clsStream)
+     || (i_encoding != 0 && ! i_encoding->isString() )
+   )
+   {
+      throw func->paramError( __LINE__, SRC );
+   }
+
+   Stream *stream = static_cast<Stream *>( i_stream->asParentInst( clsStream ) );
+   MXML::Node *node = static_cast< MXML::Node *>( ctx->self().asInst() );
+
+   String encoding = i_encoding == 0 ? "C" : *i_encoding->asString();
+   Transcoder* tc = Engine::instance()->getTranscoder( encoding );
+   if( tc == 0 )
+   {
+      throw FALCON_SIGN_XERROR(ParamError, e_param_range, .extra("Unknown encoding \"" + encoding + "\"") );
+   }
+
+   try
+   {
+      if( bRead )
+      {
+         LocalRef<TextReader> tr( new TextReader(stream) );
+         node->read( *tr, 0 );
+      }
+      else {
+         LocalRef<TextWriter> tw( new TextWriter(stream) );
+         node->write( *tw, 0 );
+      }
+   }
+   catch( MXML::MalformedError &err )
+   {
+      throw new MXMLError(
+        ErrorParam( FALCON_MXML_ERROR_BASE + err.numericCode(), __LINE__, SRC )
+         .desc( err.description() )
+         .extra( err.describeLine() ) );
+   }
+
+   ctx->returnFrame();
 }
 
 /*#
-   @method serialize MXMLNode
+   @method write MXMLNode
    @brief Stores an XML node on a stream.
-   @raise MXMLError If the serialization failed.
+   @param stream The stream where to store the node.
+   @optparam encoding The name of the text encoding to be used.
+
+   This method allows the storage of a single node and all its
+   children in an XML format. The resulting data
+   is an valid XML fragment that may be included verbatim in
+   an XML document.
+
+   If not given, the encoding will be "C" (untranslated)
+*/
+FALCON_DECLARE_FUNCTION( write, "stream:Stream,encoding:[S]" )
+FALCON_DEFINE_FUNCTION_P1( write )
+{
+   internal_read_write( this, ctx, false );
+}
+
+/*#
+   @method read MXMLNode
+   @brief Stores an XML node on a stream.
+   @param stream The stream from which to read the node.
+   @optparam encoding The name of the text encoding to be used.
+   @raise MXMLError If the deseerialization failed.
 
    This method allows the storage of a single node and all its
    children in an XML compliant format. The resulting data
    is an valid XML fragment that may be included verbatim in
    an XML document.
 */
-FALCON_FUNC MXMLNode_serialize( ::Falcon::VMachine *vm )
+FALCON_DECLARE_FUNCTION( read, "stream:Stream,encoding:[S]" )
+FALCON_DEFINE_FUNCTION_P1( read )
 {
-   CoreObject *self = vm->self().asObject();
-   Item *i_stream = vm->param(0);
-
-   if ( i_stream == 0 || ! i_stream->isObject() || ! i_stream->asObject()->derivedFrom( "Stream" ) )
-   {
-      throw new  ParamError( ErrorParam( e_inv_params, __LINE__ ).
-         extra( "Stream" ) );
-      return;
-   }
-
-   Stream *stream = static_cast<Stream *>( i_stream->asObject()->getUserData() );
-   MXML::Node *node = static_cast<NodeCarrier *>( self->getUserData() )->node();
-
-   try
-   {
-      node->write( *stream, 0 );
-      vm->retval( true );
-   }
-   catch( MXML::MalformedError &err )
-   {
-      throw new MXMLError(
-      ErrorParam( FALCON_MXML_ERROR_BASE + err.numericCode(), __LINE__ )
-         .desc( err.description() )
-         .extra( err.describeLine() ) );
-   }
-   catch( MXML::IOError &err )
-   {
-      throw new MXMLError(
-         ErrorParam( FALCON_MXML_ERROR_BASE + err.numericCode(), __LINE__ )
-         .desc( err.description() )
-         .extra( err.describeLine() ) );
-   }
-
+   internal_read_write( this, ctx, true );
 }
 
-/*#
-   @method deserialize MXMLNode
-   @brief Stores an XML node on a stream.
-   @raise MXMLError If the serialization failed.
 
-   This method allows the storage of a single node and all its
-   children in an XML compliant format. The resulting data
-   is an valid XML fragment that may be included verbatim in
-   an XML document.
+/*#
+   @property type Node
+   @brief the type of this node.
+
+   This property can be used to change the type of a node once it has been created.
 */
-FALCON_FUNC MXMLNode_deserialize( ::Falcon::VMachine *vm )
+
+static void get_type( const Class*, const String&, void* instance, Item& value )
 {
-   CoreObject *self = vm->self().asObject();
-   Item *i_stream = vm->param(0);
+   MXML::Node *node = static_cast<MXML::Node *>( instance );
+   value.setInteger( node->nodeType() );
+}
 
-   if ( i_stream == 0 || ! i_stream->isObject() || ! i_stream->asObject()->derivedFrom( "Stream" ) )
+static void set_type( const Class*, const String&, void* instance, const Item& value )
+{
+   MXML::Node *node = static_cast<MXML::Node *>( instance );
+   if( ! value.isOrdinal() )
    {
-      throw new  ParamError( ErrorParam( e_inv_params, __LINE__ ).
-         extra( "Stream" ) );
-      return;
+      throw FALCON_SIGN_XERROR( AccessTypeError, e_inv_prop_value, .extra("N") );
    }
 
-   Stream *stream = static_cast<Stream *>( i_stream->asObject()->getUserData() );
-   delete static_cast<NodeCarrier *>( self->getUserData() );
+   int type = value.asInteger();
+   if ( type < 0 || type > (int) MXML::Node::typeFakeClosing )
+   {
+      throw FALCON_SIGN_XERROR( AccessTypeError, e_inv_prop_value, .extra( "Invalid XML node type" ) );
+   }
 
-   MXML::Node *node = new MXML::Node();
-
-   try
-   {
-      node->read( *stream );
-      self->setUserData( new NodeCarrier( node, self ) );
-      vm->retval( self );
-   }
-   catch( MXML::MalformedError &err )
-   {
-      throw new MXMLError(
-         ErrorParam( FALCON_MXML_ERROR_BASE + err.numericCode(), __LINE__ )
-         .desc( err.description() )
-         .extra( err.describeLine() ) );
-      delete node;
-   }
-   catch( MXML::IOError &err )
-   {
-      throw new MXMLError(
-         ErrorParam( FALCON_MXML_ERROR_BASE + err.numericCode(), __LINE__ )
-         .desc( err.description() )
-         .extra( err.describeLine() ) );
-      delete node;
-   }
+   node->nodeType(static_cast<MXML::Node::type>(type));
 }
 
 
 /*#
-   @method nodeType MXMLNode
-   @brief Returns the type of this node.
-   @return A value in @a MXMLType enumeration.
-*/
-FALCON_FUNC MXMLNode_nodeType( ::Falcon::VMachine *vm )
-{
-   CoreObject *self = vm->self().asObject();
-   MXML::Node *node = static_cast<NodeCarrier *>( self->getUserData() )->node();
-   vm->retval( (int64)node->nodeType() );
-}
-
-
-/*#
-   @method name MXMLNode
+   @property name Node
    @brief Set and/or return the name of this node.
-   @optparam name If provided, the new name of this node.
-   @return If a new @b name is not given, the current node name.
 
    A name can be assigned to any node, but it will be meaningful only
    for tag and PI nodes.
-*/
-FALCON_FUNC MXMLNode_name( ::Falcon::VMachine *vm )
-{
-   Item *i_name = vm->param(0);
 
-   if ( i_name != 0 && ! i_name->isString() )
+   The name assigned to a node cannot be empty.
+
+   @note Each access to this properties creates a new mutable copy of the
+   string representing the name of this node. If used repeatedly, it's advisable
+   to cache the node name in a local variable.
+*/
+static void get_name( const Class*, const String&, void* instance, Item& value )
+{
+   MXML::Node *node = static_cast<MXML::Node *>( instance );
+   value = FALCON_GC_HANDLE( new String( node->name()) );
+}
+
+static void set_name( const Class*, const String&, void* instance, const Item& value )
+{
+   MXML::Node *node = static_cast<MXML::Node *>( instance );
+   if( ! value.isString() )
    {
-      throw new  ParamError( ErrorParam( e_inv_params, __LINE__ ).
-         extra( "[S]" ) );
-      return;
+      throw FALCON_SIGN_XERROR( AccessTypeError, e_inv_prop_value, .extra("N") );
    }
 
-   CoreObject *self = vm->self().asObject();
-   MXML::Node *node = static_cast<NodeCarrier *>( self->getUserData() )->node();
+   const String& name = *value.asString();
+   if ( name.empty() )
+   {
+      throw FALCON_SIGN_XERROR( AccessTypeError, e_inv_prop_value, .extra( "Invalid XML node name" ) );
+   }
 
-   if ( i_name == 0 )
-      vm->retval( new CoreString( node->name() ) );
-   else
-      node->name( *i_name->asString() );
+   node->name( name );
 }
 
 
 /*#
-   @method data MXMLNode
+   @proprty data Node
    @brief Set and/or return the content of this node.
    @optparam data If provided, the new data of this node.
    @return If a new @b data is not given, the current node data.
@@ -1014,31 +889,34 @@ FALCON_FUNC MXMLNode_name( ::Falcon::VMachine *vm )
    for data, tag, comment and CDATA nodes. Moreover, tag nodes can have
    also other children; in this case, the data set with this method will
    be serialized as if it was a first child data node.
-*/
-FALCON_FUNC MXMLNode_data( ::Falcon::VMachine *vm )
-{
-   Item *i_data = vm->param(0);
 
-   if ( i_data != 0 && ! i_data->isString() )
+   @note Each access to this properties creates a new mutable copy of the
+   string representing the data of this node. If used repeatedly, it's advisable
+   to cache the node name in a local variable.
+*/
+static void get_data( const Class*, const String&, void* instance, Item& value )
+{
+   MXML::Node *node = static_cast<MXML::Node *>( instance );
+   value = FALCON_GC_HANDLE( new String( node->data()) );
+}
+
+static void set_data( const Class*, const String&, void* instance, const Item& value )
+{
+   MXML::Node *node = static_cast<MXML::Node *>( instance );
+   if( ! value.isString() )
    {
-      throw new  ParamError( ErrorParam( e_inv_params, __LINE__ ).
-         extra( "[S]" ) );
-      return;
+      throw FALCON_SIGN_XERROR( AccessTypeError, e_inv_prop_value, .extra("N") );
    }
 
-   CoreObject *self = vm->self().asObject();
-   MXML::Node *node = static_cast<NodeCarrier *>( self->getUserData() )->node();
-   if ( i_data == 0 )
-      vm->retval( new CoreString( node->data() ) );
-   else
-      node->data( *i_data->asString() );
+   const String& data = *value.asString();
+   node->data( data );
 }
 
 /*#
-   @method setAttribute MXMLNode
+   @method setAttribute Node
    @brief Sets an XML attribute of this node to a given value.
    @param attribute The XML attribute to be set.
-   @param value The value for this XML attribute.
+   @param value The value for this XML attribute (as a string).
 
    This method sets the value for an XML attribute of the node.
    Attributes can be assigned to PI, Tag and DOCTYPE nodes.
@@ -1052,86 +930,74 @@ FALCON_FUNC MXMLNode_data( ::Falcon::VMachine *vm )
 
    @note Don't confuse XML attributes with Falcon attributes.
 */
-FALCON_FUNC MXMLNode_setAttribute( ::Falcon::VMachine *vm )
+FALCON_DECLARE_FUNCTION( setAttribute, "attribute:S,value:S" )
+FALCON_DEFINE_FUNCTION_P1( setAttribute )
 {
-   CoreObject *self = vm->self().asObject();
-   MXML::Node *node = static_cast<NodeCarrier *>( self->getUserData() )->node();
-
-   Item *i_attrName = vm->param(0);
-   Item *i_attrValue = vm->param(1);
+   Item *i_attrName = ctx->param(0);
+   Item *i_attrValue = ctx->param(1);
 
    if ( i_attrName == 0 || ! i_attrName->isString() ||
-        i_attrValue == 0
+        i_attrValue == 0 || ! i_attrName->isString()
       )
    {
-      throw new  ParamError( ErrorParam( e_inv_params, __LINE__ ).
-         extra( "S,X" ) );
-      return;
+      throw paramError(__LINE__, SRC);
    }
 
-   String content;
-   String *value;
-   if ( i_attrValue->isString() )
-   {
-      value = i_attrValue->asString();
-   }
-   else {
-      vm->itemToString( content, i_attrValue );
-      value = &content;
-   }
-
-   const String &attrName = *i_attrName->asString();
+   const String& value = * i_attrValue->asString();
+   const String& attrName = *i_attrName->asString();
+   MXML::Node *node = static_cast<MXML::Node *>( ctx->self().asInst() );
    if( ! node->hasAttribute( attrName ) )
    {
-      node->addAttribute( new MXML::Attribute( attrName, *value ) );
+      node->addAttribute( new MXML::Attribute( attrName, value ) );
+   }
+   else {
+      node->setAttribute( attrName, value );
    }
 
-   node->setAttribute( attrName, *value );
+   ctx->returnFrame();
 }
 
 /*#
-   @method getAttribute MXMLNode
+   @method getAttribute Node
    @brief Gets the value of an XML attribute of this node.
    @param attribute The XML attribute to be read.
    @return The value for this XML attribute (as a string).
 
-   This method retreives the value for an XML attribute of the node.
+   This method retrieves the value for an XML attribute of the node.
    Attributes can be assigned to PI, Tag and DOCTYPE nodes.
 
    If the attribute doesn't exist, nil is returned.
 
    @note Don't confuse XML attributes with Falcon attributes.
 */
-FALCON_FUNC MXMLNode_getAttribute( ::Falcon::VMachine *vm )
+FALCON_DECLARE_FUNCTION( getAttribute, "attribute:S,value:S" )
+FALCON_DEFINE_FUNCTION_P1( getAttribute )
 {
-   CoreObject *self = vm->self().asObject();
-   MXML::Node *node = static_cast<NodeCarrier *>( self->getUserData() )->node();
-
-   Item *i_attrName = vm->param(0);
+   Item *i_attrName = ctx->param(0);
 
    if ( i_attrName == 0 || ! i_attrName->isString() )
    {
-      throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).
-         extra( "S" ) );
-      return;
+      throw paramError(__LINE__, SRC);
    }
 
-   if ( ! node->hasAttribute( *i_attrName->asString() ) )
+   const String& attrName = *i_attrName->asString();
+   MXML::Node *node = static_cast<MXML::Node *>( ctx->self().asInst() );
+   if( node->hasAttribute( attrName ) )
    {
-      vm->retnil();
-      return;
+      const String& value = node->getAttribute(attrName);
+      ctx->returnFrame( FALCON_GC_HANDLE( new String(value) )  );
    }
-
-   const String &val = node->getAttribute( *i_attrName->asString() );
-   vm->retval( new CoreString( val ) );
+   else {
+      ctx->returnFrame();
+   }
 }
 
 /*#
-   @method getAttribs MXMLNode
+   @property attributes Node
    @brief Gets the all the XML attributes of this node.
    @return A dictionary containing all the XML attributes and their values.
 
-   This method retreives all the attributes of the node, and stores them
+   This method retrieves all the attributes of the node, and stores them
    in a dictionary as a pair of key => value strings.
 
    Attributes can be assigned to PI, Tag and DOCTYPE nodes.
@@ -1143,32 +1009,71 @@ FALCON_FUNC MXMLNode_getAttribute( ::Falcon::VMachine *vm )
    but this won't change the values of the original XML attributes in
    the source node.
 
-   @note Don't confuse XML attributes with Falcon attributes.
+   @note Don't confuse XML attributes with Falcon attributes, accessed via the
+   @a BOM.attribs proeprty.
 */
-FALCON_FUNC MXMLNode_getAttribs( ::Falcon::VMachine *vm )
+static void get_attributes( const Class*, const String&, void* instance, Item& value )
 {
-   CoreObject *self = vm->self().asObject();
-   MXML::Node *node = static_cast<NodeCarrier *>( self->getUserData() )->node();
+   MXML::Node *node = static_cast<MXML::Node *>( instance );
 
    const MXML::AttribList &attribs = node->attribs();
-
-   LinearDict *dict = new LinearDict( attribs.size() );
-
    MXML::AttribList::const_iterator iter = attribs.begin();
+
+   ItemDict* dict = new ItemDict;
    while( iter != attribs.end() )
    {
-      dict->put( new CoreString( (*iter)->name()),
-         new CoreString( (*iter)->value()) );
+      const String& name = (*iter)->name();
+      const String& value = (*iter)->value();
+      dict->insert( FALCON_GC_HANDLE(new String(name)), FALCON_GC_HANDLE(new String(value)) );
       ++iter;
    }
 
-   vm->retval( new CoreDict(dict) );
+   value = FALCON_GC_HANDLE(dict);
+}
+
+static void set_attributes( const Class*, const String&, void* instance, const Item& value )
+{
+   MXML::Node *node = static_cast<MXML::Node *>( instance );
+   if( ! value.isDict() )
+   {
+      throw FALCON_SIGN_XERROR( AccessTypeError, e_inv_prop_value, .extra("D:S=>S") );
+   }
+
+   class Rator: public ItemDict::Enumerator
+   {
+   public:
+      Rator( MXML::Node* node ): m_node(node) {}
+      virtual ~Rator() {}
+      virtual void operator()( const Item& key, Item& value )
+      {
+         if (! key.isString() || ! value.isString() )
+         {
+            throw FALCON_SIGN_XERROR( AccessTypeError, e_inv_prop_value, .extra("D:S=>S") );
+         }
+
+         const String& skey = *key.asString();
+         const String& svalue = *value.asString();
+
+         if( ! m_node->hasAttribute( skey ) )
+         {
+            m_node->addAttribute( new MXML::Attribute( skey, svalue ) );
+         }
+         else {
+            m_node->setAttribute( skey, svalue );
+         }
+      }
+   private:
+      MXML::Node* m_node;
+   };
+
+   Rator rator(node);
+   ItemDict* dict = value.asDict();
+   dict->enumerate( rator );
 }
 
 /*#
-   @method getChildren MXMLNode
+   @property children Node
    @brief Gets the all the children nodes of this node.
-   @return An array containing all the children node.
 
    This method stores all the children of an XML node in an
    array.
@@ -1179,26 +1084,28 @@ FALCON_FUNC MXMLNode_getAttribs( ::Falcon::VMachine *vm )
    The array is read-only; it is possible to change it but
    inserting or removing nodes from it won't change the children
    list of the source node.
+
+   @note This property is read-only.
 */
-FALCON_FUNC MXMLNode_getChildren( ::Falcon::VMachine *vm )
+
+static void get_children( const Class* clsNode, const String&, void* instance, Item& value )
 {
-   CoreObject *self = vm->self().asObject();
-   MXML::Node *node = static_cast<NodeCarrier *>( self->getUserData() )->node();
+   MXML::Node *node = static_cast<MXML::Node *>( instance );
 
-   CoreArray *arr = new CoreArray;
-
+   ItemArray* arr = new ItemArray;
    node = node->child();
    while( node != 0 )
    {
-      arr->append( node->getShell( vm ) );
+      arr->append( FALCON_GC_STORE( clsNode, node ) );
       node = node->next();
    }
 
-   vm->retval( arr );
+   value = FALCON_GC_HANDLE(arr);
 }
 
+
 /*#
-   @method unlink MXMLNode
+   @method unlink Node
    @brief Removes a node from its parent tree.
 
    This method removes a node from the list of node of
@@ -1215,16 +1122,16 @@ FALCON_FUNC MXMLNode_getChildren( ::Falcon::VMachine *vm )
    kept elsewhere (i.e. in a script maintained dictionary) for
    later usage.
 */
-FALCON_FUNC MXMLNode_unlink( ::Falcon::VMachine *vm )
+FALCON_DECLARE_FUNCTION( unlink, "" )
+FALCON_DEFINE_FUNCTION_P1( unlink )
 {
-   CoreObject *self = vm->self().asObject();
-   MXML::Node *node = static_cast<NodeCarrier *>( self->getUserData() )->node();
-
+   MXML::Node *node = static_cast<MXML::Node *>( ctx->self().asInst() );
    node->unlink();
+   ctx->returnFrame();
 }
 
 /*#
-   @method removeChild MXMLNode
+   @method removeChild Node
    @brief Removes a child from its parent tree.
    @param child The child node to be removed.
    @return True if the @b child node is actually a child of this node, false otherwise.
@@ -1236,59 +1143,59 @@ FALCON_FUNC MXMLNode_unlink( ::Falcon::VMachine *vm )
    If the @b child parameter is really a child of this node it is unlinked and the
    method returns true, otherwise the node is untouched and the method returns false.
 */
-FALCON_FUNC MXMLNode_removeChild( ::Falcon::VMachine *vm )
-{
-   MXML::Node *child = internal_getNodeParameter( vm, 0 );
-   if ( child == 0 )
-      return;
 
-   CoreObject *self = vm->self().asObject();
-   MXML::Node *node = static_cast<NodeCarrier *>( self->getUserData() )->node();
+FALCON_DECLARE_FUNCTION( removeChild, "child:Node" )
+FALCON_DEFINE_FUNCTION_P1( removeChild )
+{
+   MXML::Node *child = internal_getNodeParameter( this, ctx, 0 );
+   MXML::Node *node = static_cast<MXML::Node *>( ctx->self().asInst() );
 
    try {
       node->removeChild( child );
-      vm->retval(true);
+      ctx->returnFrame(Item().setBoolean(true));
    }
    catch( ... )
    {
-      vm->retval( false );
+      ctx->returnFrame(Item().setBoolean(false));
+   }
+   ctx->returnFrame();
+}
+
+/*#
+   @property parent Node
+   @brief Return the parent node of this node.
+
+   This property holds the node that is currently
+   parent of this node in the XML tree.
+
+   The property returns nil if the node hasn't a parent; this may mean
+   that this node is the topmost node in an XMLDocument (the node
+   returned by @a Document.top ) or if it has not still been added
+   to a tree, or if it has been removed with @a MXMLNode.removeChild or
+   @a Node.unlink.
+
+   @note This property is read-only
+*/
+static void get_parent( const Class* cls, const String&, void* instance, Item& value )
+{
+   MXML::Node *node = static_cast<MXML::Node *>( instance );
+   if( node->parent() != 0 )
+   {
+      value = FALCON_GC_STORE( cls, node->parent() );
+   }
+   else {
+      value.setNil();
    }
 }
 
-/*#
-   @method parent MXMLNode
-   @brief Return the parent node of this node.
-   @return The parent node or nil if this node has no parents.
-
-   This method returns the node that is currently
-   parent of this node in the XML tree.
-
-   The method returns nil if the node hasn't a parent; this may mean
-   that this node is the topmost node in an XMLDocument (the node
-   returned by @a MXMLDocument.top ) or if it has not still been added
-   to a tree, or if it has been removed with @a MXMLNode.removeChild or
-   @a MXMLNode.unlink.
-*/
-FALCON_FUNC MXMLNode_parent( ::Falcon::VMachine *vm )
-{
-   CoreObject *self = vm->self().asObject();
-   MXML::Node *node = static_cast<NodeCarrier *>( self->getUserData() )->node();
-   MXML::Node *parent = node->parent();
-   if ( parent != 0 )
-      vm->retval( parent->getShell( vm ) );
-   else
-      vm->retnil();
-}
-
 
 /*#
-   @method firstChild MXMLNode
+   @property firstChild Node
    @brief Return the first child of a node.
-   @return The first child of this node or nil if the node hasn't any child.
 
-   This method returns the first child of a node; it's the node that will
+   This property returns the first child of a node; it's the node that will
    be delivered for first in the rendering of the final XML document, and that
-   will appare on the topmost postition between the nodes below the current
+   will appear on the topmost position between the nodes below the current
    one.
 
    To iterate through all the child nodes of a node, it is possible to
@@ -1296,28 +1203,31 @@ FALCON_FUNC MXMLNode_parent( ::Falcon::VMachine *vm )
    until it returns nil. In example:
 
    @code
-      // node is an MXMLNode...
-      child = node.firstChild()
+      // node is an Node...
+      child = node.firstChild
       while child != nil
          > "Child of ", node.name(), ": ", child.name()
-         child = child.nextSibling()
+         child = child.nextSibling
       end
    @endcode
-*/
-FALCON_FUNC MXMLNode_firstChild( ::Falcon::VMachine *vm )
-{
-   CoreObject *self = vm->self().asObject();
-   MXML::Node *node = static_cast<NodeCarrier *>( self->getUserData() )->node();
-   MXML::Node *child = node->child();
 
-   if ( child != 0 )
-      vm->retval( child->getShell( vm ) );
-   else
-      vm->retnil();
+   @note This property is read-only
+   @see Node.insertBelow
+*/
+static void get_firstChild( const Class* cls, const String&, void* instance, Item& value )
+{
+   MXML::Node *node = static_cast<MXML::Node *>( instance );
+   if( node->child() != 0 )
+   {
+      value = FALCON_GC_STORE( cls, node->child() );
+   }
+   else {
+      value.setNil();
+   }
 }
 
 /*#
-   @method nextSibling MXMLNode
+   @property nextSibling MXMLNode
    @brief Return the next node child of the same parent.
    @return The next node at the same level, or nil.
 
@@ -1325,128 +1235,123 @@ FALCON_FUNC MXMLNode_firstChild( ::Falcon::VMachine *vm )
    the rendered XML document right after this one, at the same level.
    If such node doesn't exist, it returns nil.
 
-   @see MXMLNode.firstChild
+   @see Node.firstChild
+   @note This property is read-only
 */
-FALCON_FUNC MXMLNode_nextSibling( ::Falcon::VMachine *vm )
+static void get_nextSibling( const Class* cls, const String&, void* instance, Item& value )
 {
-   CoreObject *self = vm->self().asObject();
-   MXML::Node *node = static_cast<NodeCarrier *>( self->getUserData() )->node();
-   MXML::Node *sibling = node->next();
-
-   if ( sibling != 0 )
-      vm->retval( sibling->getShell( vm ) );
-   else
-      vm->retnil();
+   MXML::Node *node = static_cast<MXML::Node *>( instance );
+   if( node->next() != 0 )
+   {
+      value = FALCON_GC_STORE( cls, node->next() );
+   }
+   else {
+      value.setNil();
+   }
 }
 
 /*#
-   @method prevSibling MXMLNode
+   @property prevSibling Node
    @brief Return the previous node child of the same parent.
-   @return The previous node at the same level, or nil.
 
    This method returns the previous node that would be found in
    the rendered XML document right after this one, at the same level.
    If such node doesn't exist, it returns nil.
 
-   @see MXMLNode.lastChild
+   @see Node.lastChild
+   @note This property is read-only
 */
-FALCON_FUNC MXMLNode_prevSibling( ::Falcon::VMachine *vm )
+static void get_prevSibling( const Class* cls, const String&, void* instance, Item& value )
 {
-   CoreObject *self = vm->self().asObject();
-   MXML::Node *node = static_cast<NodeCarrier *>( self->getUserData() )->node();
-   MXML::Node *sibling = node->prev();
-
-   if ( sibling != 0 )
-      vm->retval( sibling->getShell( vm ) );
-   else
-      vm->retnil();
+   MXML::Node *node = static_cast<MXML::Node *>( instance );
+   if( node->prev() != 0 )
+   {
+      value = FALCON_GC_STORE( cls, node->prev() );
+   }
+   else {
+      value.setNil();
+   }
 }
 
-
 /*#
-   @method lastChild MXMLNode
+   @property lastChild MXMLNode
    @brief Return the last child of a node.
-   @return The last child of this node or nil if the node hasn't any child.
 
    This method returns the last child of a node; it's the node that will
    be delivered for last in the rendering of the final XML document, and that
-   will appare on the lowermost postition between the nodes below the current
+   will appear on the lowest position between the nodes below the current
    one.
 
    To iterate through all the child nodes of a node in reverse order,
    it is possible to get the last child and the iteratively
-   @a MXMLNode.prevSibling
-   until it returns nil. In example:
+   @a Node.prevSibling
+   until it returns nil. For example:
 
    @code
       // node is an MXMLNode...
-      child = node.lastChild()
+      child = node.lastChild
       while child != nil
          > "Child of ", node.name(), " reverse: ", child.name()
-         child = child.prevSibling()
+         child = child.prevSibling
       end
    @endcode
 */
-FALCON_FUNC MXMLNode_lastChild( ::Falcon::VMachine *vm )
-{
-   CoreObject *self = vm->self().asObject();
-   MXML::Node *node = static_cast<NodeCarrier *>( self->getUserData() )->node();
-   MXML::Node *sibling = node->lastChild();
 
-   if ( sibling != 0 )
-      vm->retval( sibling->getShell( vm ) );
-   else
-      vm->retnil();
+static void get_lastChild( const Class* cls, const String&, void* instance, Item& value )
+{
+   MXML::Node *node = static_cast<MXML::Node *>( instance );
+   if( node->lastChild() != 0 )
+   {
+      value = FALCON_GC_STORE( cls, node->lastChild() );
+   }
+   else {
+      value.setNil();
+   }
 }
 
 /*#
-   @method addBelow MXMLNode
+   @method addBelow Node
    @brief Adds a node below this one.
    @param node The node to be added below this one.
 
    This method appends the given @b node as the last child
-   of this node, eventually removing it from a prevuious tree
+   of this node, eventually removing it from a previous tree
    structure to which it was linked if needed.
 
-   After this method returns, @b node can be retreived calling the
-   @a MXMLNode.lastChild on this node, until another @b addBelow
+   After this method returns, @b node can be retrieved calling the
+   @a Node.lastChild on this node, until another @b addBelow
    adds another node at the end of the children list.
 */
-FALCON_FUNC MXMLNode_addBelow( ::Falcon::VMachine *vm )
+FALCON_DECLARE_FUNCTION( addBelow, "child:Node" )
+FALCON_DEFINE_FUNCTION_P1( addBelow )
 {
-   MXML::Node *child = internal_getNodeParameter( vm, 0 );
-   if ( child == 0 )
-      return;
-
-   CoreObject *self = vm->self().asObject();
-   MXML::Node *node = static_cast<NodeCarrier *>( self->getUserData() )->node();
+   MXML::Node *child = internal_getNodeParameter( this, ctx, 0 );
+   MXML::Node *node = static_cast<MXML::Node *>( ctx->self().asInst() );
 
    // just to be sure
    child->unlink();
    node->addBelow( child );
+   ctx->returnFrame();
 }
 
 /*#
-   @method insertBelow MXMLNode
+   @method prependBelow Node
    @brief Inserts a node below this one.
    @param node The node to be added below this one.
 
    This method prepends the given @b node as the first child
-   of this node, eventually removing it from a prevuious tree
+   of this node, eventually removing it from a previous tree
    structure to which it was linked if needed.
 
-   After this method returns, @b node can be retreived calling the
-   @a MXMLNode.firstChild on this node, until another @b insertBelow
+   After this method returns, @b node can be retrieved calling the
+   @a Node.firstChild on this node, until another @b insertBelow
    adds another node at the beginning of the children list.
 */
-FALCON_FUNC MXMLNode_insertBelow( ::Falcon::VMachine *vm )
+FALCON_DECLARE_FUNCTION( prependBelow, "child:Node" )
+FALCON_DEFINE_FUNCTION_P1( prependBelow )
 {
-   MXML::Node *child = internal_getNodeParameter( vm, 0 );
-   if ( child == 0 )
-      return;
-
-   CoreObject *self = vm->self().asObject();
-   MXML::Node *node = static_cast<NodeCarrier *>( self->getUserData() )->node();
+   MXML::Node *child = internal_getNodeParameter( this, ctx, 0 );
+   MXML::Node *node = static_cast<MXML::Node *>( ctx->self().asInst() );
 
    // just to be sure
    child->unlink();
@@ -1454,12 +1359,12 @@ FALCON_FUNC MXMLNode_insertBelow( ::Falcon::VMachine *vm )
 }
 
 /*#
-   @method insertBefore MXMLNode
+   @method insertBefore Node
    @brief Inserts a node before this one.
    @param node The node to be added before this one.
 
    This method prepends the given @b node in front of this one
-   in the list of sibling nodes, eventually removing it from a prevuious tree
+   in the list of sibling nodes, eventually removing it from a previous tree
    structure to which it was linked if needed. This is equivalent to inserting
    the node exactly before this one, at the same level, in the final
    XML document.
@@ -1467,28 +1372,25 @@ FALCON_FUNC MXMLNode_insertBelow( ::Falcon::VMachine *vm )
    If this node was the first child of its parent, the inserted node
    becomes the new first child.
 */
-FALCON_FUNC MXMLNode_insertBefore( ::Falcon::VMachine *vm )
+FALCON_DECLARE_FUNCTION( insertBefore, "child:Node" )
+FALCON_DEFINE_FUNCTION_P1( insertBefore )
 {
-   MXML::Node *child = internal_getNodeParameter( vm, 0 );
-   if ( child == 0 )
-      return;
-
-   CoreObject *self = vm->self().asObject();
-   MXML::Node *node = static_cast<NodeCarrier *>( self->getUserData() )->node();
-
+   MXML::Node *child = internal_getNodeParameter( this, ctx, 0 );
+   MXML::Node *node = static_cast<MXML::Node *>( ctx->self().asInst() );
    // just to be sure
    child->unlink();
    node->insertBefore( child );
+   ctx->returnFrame();
 }
 
 
 /*#
-   @method insertAfter MXMLNode
+   @method insertAfter Node
    @brief Inserts a node after this one.
    @param node The node to be added after this one.
 
    This method prepends the given @b node after of this one
-   in the list of sibling nodes, eventually removing it from a prevuious tree
+   in the list of sibling nodes, eventually removing it from a previous tree
    structure to which it was linked if needed. This is equivalent to inserting
    the node exactly after this one, at the same level, in the final
    XML document.
@@ -1496,43 +1398,38 @@ FALCON_FUNC MXMLNode_insertBefore( ::Falcon::VMachine *vm )
    If this node was the last child of its parent, the inserted node
    becomes the new last child.
 */
-FALCON_FUNC MXMLNode_insertAfter( ::Falcon::VMachine *vm )
+FALCON_DECLARE_FUNCTION( insertAfter, "child:Node" )
+FALCON_DEFINE_FUNCTION_P1( insertAfter )
 {
-   MXML::Node *child = internal_getNodeParameter( vm, 0 );
-   if ( child == 0 )
-      return;
-
-   CoreObject *self = vm->self().asObject();
-   MXML::Node *node = static_cast<NodeCarrier *>( self->getUserData() )->node();
+   MXML::Node *child = internal_getNodeParameter( this, ctx, 0 );
+   MXML::Node *node = static_cast<MXML::Node *>( ctx->self().asInst() );
 
    // just to be sure
    child->unlink();
    node->insertAfter( child );
+   ctx->returnFrame();
 }
 
 /*#
-   @method depth MXMLNode
+   @property depth Node
    @brief Calculates the depth of this node.
-   @return The depth of this node.
 
-   This method returns the number of steps needed to find a
+   This property returns the number of steps needed to find a
    node without parents in the parent hierarchy of this node.
 
-   The dept for a topmost tree node is 0, for a root node in a tree
+   The depth for a topmost tree node is 0, for a root node in a tree
    is 1 and for its direct child is 2.
 */
-FALCON_FUNC MXMLNode_depth( ::Falcon::VMachine *vm )
+static void get_depth( const Class*, const String&, void* instance, Item& value )
 {
-   CoreObject *self = vm->self().asObject();
-   MXML::Node *node = static_cast<NodeCarrier *>( self->getUserData() )->node();
-   vm->retval( (int64) node->depth() );
+   MXML::Node *node = static_cast<MXML::Node *>( instance );
+   value.setInteger( (int64) node->depth() );
 }
 
 
 /*#
-   @method path MXMLNode
-   @brief Returns the path from the root to this node.
-   @return The path of this node in its XML document tree.
+   @property path Node
+   @brief The path from the root to this node.
 
    The path of a node is the list of parent node names separated
    by a slash "/", starting from the root node (or from the first
@@ -1550,26 +1447,98 @@ FALCON_FUNC MXMLNode_depth( ::Falcon::VMachine *vm )
 
    @see MXMLDocument.findPath
 */
-FALCON_FUNC MXMLNode_path( ::Falcon::VMachine *vm )
+static void get_path( const Class*, const String&, void* instance, Item& value )
 {
-   CoreObject *self = vm->self().asObject();
-   MXML::Node *node = static_cast<NodeCarrier *>( self->getUserData() )->node();
-   CoreString *gs = new CoreString( node->path() );
-   gs->bufferize();
-   vm->retval( gs );
+   MXML::Node *node = static_cast<MXML::Node *>( instance );
+   value = FALCON_GC_HANDLE( new String(node->path()) );
 }
 
 /*#
-   @method clone MXMLNode
-   @brief Clones a whole XML hierarcy starting from this node.
+   @method clone Node
+   @brief Clones a whole XML hierarchy starting from this node.
    @return A copy of this node, with all its children copied.
 */
-FALCON_FUNC MXMLNode_clone( ::Falcon::VMachine *vm )
-{
-   CoreObject *self = vm->self().asObject();
-   MXML::Node *node = static_cast<NodeCarrier *>( self->getUserData() )->node();
-   vm->retval( node->clone()->getShell( vm ) );
 }
+
+
+ClassNode::ClassNode():
+         Class("Node")
+{
+   m_bHasSharedInstances = true;
+   setConstuctor( new CMXMLNode::Function_init );
+
+   addProperty("attributes", &CMXMLNode::get_attributes, &CMXMLNode::set_attributes );
+   addProperty("name", &CMXMLNode::get_name, &CMXMLNode::set_name );
+   addProperty("data", &CMXMLNode::get_data, &CMXMLNode::set_data );
+   addProperty("type", &CMXMLNode::get_type, &CMXMLNode::set_type );
+   addProperty("children", &CMXMLNode::get_children );
+   addProperty("firstChild", &CMXMLNode::get_firstChild );
+   addProperty("lastChild", &CMXMLNode::get_lastChild );
+   addProperty("prevSibling", &CMXMLNode::get_prevSibling );
+   addProperty("nextSibling", &CMXMLNode::get_nextSibling );
+   addProperty("depth", &CMXMLNode::get_depth );
+   addProperty("parent", &CMXMLNode::get_parent );
+   addProperty("path", &CMXMLNode::get_path );
+
+   addMethod( new CMXMLNode::Function_addBelow );
+   addMethod( new CMXMLNode::Function_prependBelow );
+   addMethod( new CMXMLNode::Function_insertAfter );
+   addMethod( new CMXMLNode::Function_insertBefore );
+   addMethod( new CMXMLNode::Function_removeChild );
+   addMethod( new CMXMLNode::Function_unlink );
+
+   addMethod( new CMXMLNode::Function_getAttribute );
+   addMethod( new CMXMLNode::Function_setAttribute );
+
+   addMethod( new CMXMLNode::Function_read );
+   addMethod( new CMXMLNode::Function_write );
+
+}
+
+ClassNode::~ClassNode()
+{
+
+}
+
+int64 ClassNode::occupiedMemory( void* ) const
+{
+   // actually should be the size of the sub-tree
+   return sizeof(MXML::Node) + 16;
+}
+
+void* ClassNode::createInstance() const
+{
+   return new MXML::Node;
+}
+
+void ClassNode::dispose( void* instance ) const
+{
+   // When dispose on a node or on the document is invoked,
+   // all the tree must be disposed at once.
+
+   MXML::Node* node = static_cast<MXML::Node*>(instance);
+   // this finds the topmost node and destroys it.
+   node->dispose();
+}
+
+void* ClassNode::clone( void* instance ) const
+{
+   MXML::Node *node = static_cast<MXML::Node *>( instance );
+   return node->clone();
+}
+
+void ClassNode::gcMarkInstance( void* instance, uint32 mark ) const
+{
+   MXML::Node* node = static_cast<MXML::Node*>(instance);
+   node->gcMark(mark);
+}
+
+bool ClassNode::gcCheckInstance( void* instance, uint32 mark ) const
+{
+   MXML::Node* node = static_cast<MXML::Node*>(instance);
+   return node->currentMark() >= mark;
+}
+
 
 //=======================================================================
 // MXML error class
@@ -1585,17 +1554,210 @@ FALCON_FUNC MXMLNode_clone( ::Falcon::VMachine *vm )
 
    An instance of this class is raised whenever some problem is
    found. The error codes generated by this module are in the
-   @a MXMLErrorCode enumeration.
+   @a ErrorCode enumeration.
 */
 
-FALCON_FUNC  MXMLError_init ( ::Falcon::VMachine *vm )
-{
-   CoreObject *einst = vm->self().asObject();
-   if( einst->getUserData() == 0 )
-      einst->setUserData( new MXMLError );
+//=======================================================================
+// MXML module class
+//
 
-   ::Falcon::core::Error_init( vm );
+Enum::Enum( const String& name ):
+         Class(name)
+{}
+
+Enum::~Enum()
+{}
+
+void* Enum::createInstance() const
+{
+   return 0;
 }
+
+void Enum::dispose( void* ) const
+{
+   // do nothing
+}
+
+void* Enum::clone( void* ) const
+{
+   return 0;
+}
+
+/*#
+  @enum Style
+  @brief Document serialization options.
+
+  This enumeration contains fields that can be combined through
+  the OR bitwise operator (||) and that define the style that
+  is used in document serialization.
+
+  - @b INDENT: indent each node with a single space.
+  - @b TAB: indent each node with a tab character (\\t).
+  - @b THREESPACES: indents the nodes with three spaces.
+  - @b NOESCAPE: Doesn't escape the XML characters while reading
+     or writing. This is useful if the application wants to process
+     escapeable sequences on its own, or if it knows that the code
+     that is going to be written is not containing any escapeable
+     sequence.
+*/
+ClassStyle::ClassStyle():
+         Enum("Style")
+{
+   addConstant("INDENT", MXML_STYLE_INDENT);
+   addConstant("TAB", MXML_STYLE_TAB);
+   addConstant("THREESPACES", MXML_STYLE_THREESPACES);
+   addConstant("NOESCAPE", MXML_STYLE_NOESCAPE);
+}
+
+ClassStyle::~ClassStyle()
+{}
+
+/*#
+    @enum NodeType
+    @brief Node types.
+
+    This enumeration contains the types used to determine the
+    appearance and significance of XML nodes.
+
+    - tag: This node is a "standard" tag node. It's one of the declarative
+       nodes which define the content of the document.
+    - comment: The node contains a comment.
+    - PI: The node is a "processing instruction"; a node starting with a
+       question mark defines an instruction for the processor (i.e. escape
+       to another language). The PI "?xml" is reserved and is not passed
+       to the document parser.
+    - directive: The node is a directive as i.e. DOCTYPE. Directive nodes
+       start with a bang.
+    - data: The node is an anonymous node containing only textual data.
+    - CDATA: The node is an anonymous contains binary data
+       (properly escaped as textual elements when serialized).
+    - XMLDECL xml declaration ("?xml") on top of an XML document.
+ */
+ClassNodeType::ClassNodeType():
+         Enum("NodeType")
+{
+   addConstant("comment", (int) MXML::Node::typeComment );
+   addConstant("CDATA", (int) MXML::Node::typeCDATA );
+   addConstant("data", (int) MXML::Node::typeData );
+   addConstant("directive", (int) MXML::Node::typeDirective );
+   addConstant("DOCUMENT", (int) MXML::Node::typeDocument );
+   addConstant("XMLDECL", (int) MXML::Node::typeXMLDecl );
+   addConstant("tag", (int) MXML::Node::typeTag );
+   addConstant("PI", (int) MXML::Node::typePI );
+}
+
+ClassNodeType::~ClassNodeType()
+{}
+
+/*#
+   @enum ErrorCode
+   @brief Enumeration listing the possible numeric error codes raised by MXML.
+
+   This enumeration contains error codes which are set as values for the
+   code field of the MXMLError raised in case of processing or I/O error.
+
+   - @b IO: the operation couldn't be completed because of a physical error
+      on the underlying stream (in case the Stream class didn't throw an
+      exception itself).
+   - @b NoMem: MXML couldn't allocate enough memory to complete the operation.
+   - @b OutChar: Invalid characters found between tags.
+   - @b InvalidNode: The node name contains invalid characters.
+   - @b InvalidAtt: The attribute name contains invalid characters.
+   - @b MalformedAtt: The attribute declaration doesn't conform XML standard.
+   - @b InvalidChar: Character invalid in a certain context.
+   - @b Unclosed: A node was open but not closed.
+   - @b UnclosedEntity: The '&' entity escape was not balanced by a ';' closing it.
+   - @b WrongEntity: Invalid entity name.
+   - @b AttrNotFound: Searched attribute was not found.
+   - @b ChildNotFound: Searched child node was not found.
+   - @b Hierarchy: Broken hierarchy; given node is not in a valid tree.
+   - @b CommentInvalid: The comment node is not correctly closed by a --> sequence.
+   - @b MultipleXmlDecl: the PI ?xml is declared more than once, or after another node.
+*/
+
+ClassErrorCode::ClassErrorCode():
+         Enum("ErrorCode")
+{
+   addConstant("None", FALCON_MXML_ERROR_BASE + (int) MXML::Error::errNone );
+   addConstant("IO", FALCON_MXML_ERROR_BASE + (int) MXML::Error::errIo );
+   addConstant("NoMem", FALCON_MXML_ERROR_BASE + (int) MXML::Error::errNomem );
+   addConstant("InvalidNode", FALCON_MXML_ERROR_BASE + (int) MXML::Error::errInvalidNode );
+   addConstant("InvalidAtt", FALCON_MXML_ERROR_BASE + (int) MXML::Error::errInvalidAtt );
+   addConstant("MalformedAtt", FALCON_MXML_ERROR_BASE + (int) MXML::Error::errMalformedAtt );
+   addConstant("InvalidChar", FALCON_MXML_ERROR_BASE + (int) MXML::Error::errInvalidChar );
+   addConstant("Unclosed", FALCON_MXML_ERROR_BASE + (int) MXML::Error::errUnclosed );
+   addConstant("UnclosedEntity", FALCON_MXML_ERROR_BASE + (int) MXML::Error::errUnclosedEntity );
+   addConstant("WrongEntity", FALCON_MXML_ERROR_BASE + (int) MXML::Error::errWrongEntity );
+   addConstant("ChildNotFound", FALCON_MXML_ERROR_BASE + (int) MXML::Error::errChildNotFound );
+   addConstant("AttrNotFound", FALCON_MXML_ERROR_BASE + (int) MXML::Error::errAttrNotFound );
+   addConstant("Hierarchy", FALCON_MXML_ERROR_BASE + (int) MXML::Error::errHierarchy );
+   addConstant("CommentInvalid", FALCON_MXML_ERROR_BASE + (int) MXML::Error::errCommentInvalid );
+   addConstant("MultipleXmlDecl", FALCON_MXML_ERROR_BASE + (int) MXML::Error::errMultipleXmlDecl );
+}
+
+ClassErrorCode::~ClassErrorCode()
+{}
+
+//=======================================================================================
+// The XML Module
+//=======================================================================================
+
+
+/*#
+   @module feathers.mxml  Minimal XML support.
+   @brief Minimal XML support.
+
+   The @b mxml module is a very simple, fast and powerful XML parser
+   and generator. It's not designed to be DOM compliant;
+   W3C DOM compliance requires some constraints that slows down
+   the implementation and burden the interface.
+
+   In this version, the module has one important limitation:
+   it is not able to self-detect the encoding of the XML document.
+   It must be fed with a stream already instructed to use the
+   proper encoding. Self-detection of document encoding will be
+   added in the next release.
+
+   MXML has also two major design limitations: it doesn't handle
+   XML namespaces and it doesn't provide schema validation. This
+   module is meant to be a very simple and slim interface to
+   XML documents, and those features are rarely, if ever, needed in
+   the application domain which this module is aimed to cover.
+
+   @note In case of need, it is possible to set namespaced node name
+      by including ":" in their definition. Just, MXML doesn't provide
+      a separate and specific management of namespaces, while it allows
+      to define and maintain namespaces at application level.
+
+   Apart from this limitations, the support for XML files is complete and
+   features as advanced search patterns, node retrieval through XML paths, and
+   comment node management are provided.
+
+   To access the functionalities of this module, load it with the instruction
+   @code
+      import from mxml in mxml
+   @endcode
+*/
+
+MXMLModule::MXMLModule():
+         Module("mxml")
+{
+   m_clsNode =  new ClassNode;
+   m_clsDoc = new ClassDocument;
+
+   addMantra( m_clsDoc );
+   addMantra( m_clsNode );
+
+   addMantra( new ClassMXMLError );
+   addMantra( new ClassErrorCode );
+   addMantra( new ClassNodeType );
+   addMantra( new ClassStyle );
+}
+
+MXMLModule::~MXMLModule()
+{
+}
+
 
 }
 }

@@ -172,7 +172,7 @@ public:
 
     This flag is true for FalconClass instances and (eventually) derived classes.
     */
-   bool isFalconClass() const { return m_bIsfalconClass; }
+   bool isFalconClass() const { return m_bIsFalconClass; }
 
    /**
     * Render the class back as source code.
@@ -1150,10 +1150,30 @@ public:
    */
    virtual void gcMark( uint32 mark );
 
+   /** True if this class has shared instances.
+    The GC tracer (optionally activated in debug mode only) keeps track of every
+    item stored in the GC, and throws an assert in case some error condition is
+    detected.
+
+    One of the error conditions is storing an already known data a second time
+    in the GC, as this is probably an error that will cause a double-delete at
+    a later time.
+
+    However, some classes handle regularly multiple copies of the same instance
+    to the GC, using some internal reference count or other mechanism to avoid
+    just deleting the deep instance when the GC detects an unused item.
+
+    If this class handles shared instances, the m_bHasSharedInstances member
+    should be turned on by the subclass constructor;
+    this method will then return true.
+    */
+    bool hasSharedInstances() const { return m_bHasSharedInstances; }
+
 protected:
-   bool m_bIsfalconClass;
+   bool m_bIsFalconClass;
    bool m_bIsErrorClass;
    bool m_bIsFlatInstance;
+   bool m_bHasSharedInstances;
 
    /** This flags are at disposal of subclasses for special purpose (i.e. cast conversions). */
    int32 m_userFlags;
