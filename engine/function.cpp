@@ -159,6 +159,11 @@ String Function::methodicSignature() const
    return m_signature.subString( comma+1 );
 }
 
+Module* Function::fullModule() const
+{
+   return (m_methodOf != 0 ? m_methodOf->module() : module());
+}
+
 void Function::render( TextWriter* tgt, int32 depth ) const
 {
    if( depth > 0 ) {

@@ -235,6 +235,9 @@ public:
    /** True if this function is used as main (global scope) for a module. */
    void setMain( bool m ) { m_bMain = m; }
 
+   /** Return the module of this function, or of its class if this is a method. */
+   Module* fullModule() const;
+
 protected:
    SymbolMap m_params;
    SymbolMap m_locals;
