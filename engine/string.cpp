@@ -317,7 +317,7 @@ void Byte::bufferize( String *str, const String *strOrig ) const
       
       if ( str->m_allocated != 0 )
       {
-free( str->m_storage );
+         free( str->m_storage );
       }
    }
    else 
@@ -970,6 +970,12 @@ String &String::adopt( char *buffer, length_t size, length_t allocated )
    return *this;
 }
 
+void String::clear()
+{
+   m_size = 0;
+   m_class = allocated() > 0 ? static_cast<csh::Base*>(&csh::handler_buffer) :
+            static_cast<csh::Base*>(&csh::handler_static);
+}
 
 String &String::adoptMemBuf( byte *buffer, length_t size, length_t allocated )
 {

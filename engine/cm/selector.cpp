@@ -79,7 +79,7 @@ static void internal_selector_add( VMContext* ctx, int32, bool bAdd )
   @method add Selector
   @brief Adds a stream to the selector with a given mode
   @param stream The stream to be added
-  @optparam mode Mode of read-write all.
+  @optparam mode Mode of read-write.
 
  */
 FALCON_DECLARE_FUNCTION( selector_add, "stream:Stream, mode:[N]" );

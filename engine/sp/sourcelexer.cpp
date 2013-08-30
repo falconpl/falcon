@@ -87,7 +87,7 @@ Parsing::TokenInstance* SourceLexer::readOutscape()
    state;
 
    // clear string
-   m_text.size( 0 );
+   m_text.clear();
 
    // in outscape mode, everything up to an escape (or at EOF) is a "fast print" statement.
    char_t chr;
@@ -139,7 +139,7 @@ Parsing::TokenInstance* SourceLexer::readOutscape()
                m_outscape = false;
                // generate a >> "text" EOL >>  sequence
                _p->m_nextTokens.push_back( makeString() );
-               m_text.size(0);
+               m_text.clear();
                _p->m_nextTokens.push_back( m_parser->T_EOL.makeInstance(m_line, -1) ); // fake one
 
                if( chr == '=') {
@@ -193,7 +193,7 @@ Parsing::TokenInstance* SourceLexer::readOutscape()
                m_outscape = false;
                // Return now > and a string, that will be considered a > "..." statement.
                _p->m_nextTokens.push_back( makeString() );
-               m_text.size(0);
+               m_text.clear();
                _p->m_nextTokens.push_back( m_parser->T_EOL.makeInstance(m_line, -1) ); // fake one
                return parser->T_Greater.makeInstance(m_sline, m_schr);
             }
@@ -211,7 +211,7 @@ Parsing::TokenInstance* SourceLexer::readOutscape()
    if( m_text.size() != 0 )
    {
       _p->m_nextTokens.push_back( makeString() );
-      m_text.size(0);
+      m_text.clear();
       _p->m_nextTokens.push_back( m_parser->T_EOL.makeInstance(m_line, -1) ); // fake one
       return parser->T_Greater.makeInstance(m_sline, m_schr);
    }
@@ -355,7 +355,7 @@ Parsing::TokenInstance* SourceLexer::nextToken()
             // anything will start from here.
             m_sline = m_line;
             m_schr = m_chr;
-            m_text.size(0);
+            m_text.clear();
 
             switch(chr) {
                case ' ': case '\t': case '\r': /* do nothng */ break;
@@ -473,7 +473,7 @@ Parsing::TokenInstance* SourceLexer::nextToken()
                case '*': m_state = state_blockComment; break;
                default:
                   // it was a simple '/'
-                  m_text.size(0); m_text.append('/');
+                  m_text.clear(); m_text.append('/');
                   unget(chr);
                   // sline might be ok, but not if we're here from state none.
                   // neutralize next character
@@ -827,7 +827,7 @@ Parsing::TokenInstance* SourceLexer::nextToken()
                // we're done
                m_chr++;
                resetState();
-               Parsing::TokenInstance* ti = m_parser->T_String.makeInstance( m_sline, m_schr, m_text );
+               Parsing::TokenInstance* ti = parser->T_MString.makeInstance( m_sline, m_schr, m_text );
                ti->asString()->toMemBuf();
                return ti;
             }
@@ -997,14 +997,14 @@ Parsing::TokenInstance* SourceLexer::nextToken()
                {
                   m_chr++;
                   resetState();
-                  m_text.size(0);
+                  m_text.clear();
                   return parser->T_OpenProto.makeInstance( m_sline, m_schr );
                }
                else if( m_text == "m" && chr == '{' )
                {
                   m_chr++;
                   m_state = state_membuf;
-                  m_text.size(0);
+                  m_text.clear();
                   break;
                }
                else if( (m_text == "i" || m_text == "m" || m_text == "r" || m_text == "R" ) && (chr == '"' || chr == '\'') )
@@ -1024,7 +1024,7 @@ Parsing::TokenInstance* SourceLexer::nextToken()
                   m_stringML = false;
                   m_stringStart = true;
                   m_state = chr == '"' ? state_double_string : state_single_string;
-                  m_text.size(0);
+                  m_text.clear();
                   m_chr++;
                   break;
                }
@@ -1121,7 +1121,7 @@ Parsing::TokenInstance* SourceLexer::nextToken()
                m_chr++;
                resetState();
                m_outscape = true;
-               m_text.size(0);
+               m_text.clear();
                // generate a fake EOL to exit cleanly from parsing
                return parser->T_EOL.makeInstance(m_sline, -1 );
             }

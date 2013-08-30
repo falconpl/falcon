@@ -86,6 +86,7 @@ CoreModule::CoreModule():
       << new Ext::Function_filter
       << new Ext::Function_reduce
       << new Ext::Function_cascade
+      << new Ext::Function_perform
       << ffor
 
       // Standard classes
