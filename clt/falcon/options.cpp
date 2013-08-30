@@ -28,8 +28,8 @@ FalconOptions::FalconOptions():
    input( "" ),
    output( "" ),
    load_path( "" ),
-   io_encoding( "" ),
-   source_encoding( "" ),
+   io_encoding( "C" ),
+   source_encoding( "C" ),
    module_language( "" ),
    log_file("%"),
 

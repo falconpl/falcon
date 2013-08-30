@@ -306,11 +306,18 @@ void FalconApp::configureVM( VMachine& vm, Process* prc, Log* log )
    prc->setBreakCallback(&m_dbg);
    vm.setProcessorCount( m_options.num_processors );
    vm.setStdEncoding( m_options.io_encoding );
+   if( ! prc->setStdEncoding( m_options.io_encoding ) )
+   {
+      throw FALCON_SIGN_XERROR(EncodingError, e_unknown_encoding, .extra(m_options.io_encoding));
+   }
 
    // Ok, we opened the file; prepare the space (and most important, the loader)
    ModSpace* ms = prc->modSpace();
    ModLoader* loader = ms->modLoader();
-   loader->sourceEncoding( m_options.io_encoding );
+   if ( ! loader->sourceEncoding( m_options.source_encoding ) )
+   {
+      throw FALCON_SIGN_XERROR(EncodingError, e_unknown_encoding, .extra(m_options.source_encoding));
+   }
 
    // do we have a load path?
    loader->setSearchPath(".");

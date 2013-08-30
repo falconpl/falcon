@@ -22,6 +22,8 @@
 #include <falcon/psteps/pstep_compile.h>
 #include <falcon/psteps/stmtreturn.h>
 
+#include <falcon/stderrors.h>
+
 using namespace Falcon;
 
 IntMode::IntMode( FalconApp* owner ):
@@ -38,6 +40,12 @@ void IntMode::run()
 #endif
 
    VMachine& vm = m_vm;
+
+   if( ! vm.setStdEncoding( m_owner->m_options.io_encoding) )
+   {
+      throw FALCON_SIGN_XERROR( EncodingError, e_unknown_encoding, .extra(m_owner->m_options.io_encoding));
+   }
+
    vm.textOut()->write( "Welcome to Falcon.\n" );
    
    Process* process = vm.createProcess();
