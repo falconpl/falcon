@@ -651,6 +651,9 @@ public:
    */
    void size( length_t s ) { m_size = s; }
 
+   /** Resets the string to 0 size and charlenght 1, without destroying the allocated memory */
+   void clear();
+
    /** Efficient check for string emptyness.
     * \return true if the string is empty.
     */
