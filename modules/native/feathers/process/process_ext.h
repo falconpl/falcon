@@ -36,7 +36,8 @@
 #define FALPROC_ERR_WAIT      (FALCON_PROCESS_ERROR_BASE + 4)
 #define FALPROC_ERR_TERM      (FALCON_PROCESS_ERROR_BASE + 5)
 
-namespace Falcon { namespace Ext {
+namespace Falcon {
+namespace Ext {
 
 FALCON_FUNC  process_system ( VMachine *vm );
 FALCON_FUNC  process_systemCall ( VMachine *vm );
@@ -48,7 +49,7 @@ FALCON_FUNC  process_processKill ( VMachine *vm );
 /**
    Process( command, [sinkin, sinkout, sinkerr, mergeerr, background] )
 */
-struct Process
+
 {
    static FALCON_FUNC  init ( VMachine *vm );
    static FALCON_FUNC  wait ( VMachine *vm );
@@ -61,7 +62,6 @@ struct Process
    static CoreObject* factory(const CoreClass* cls, void* user_data, bool );
 };
 
-struct ProcessEnum
 {
    static FALCON_FUNC  init  ( VMachine *vm );
    static FALCON_FUNC  next  ( VMachine *vm );
@@ -70,20 +70,7 @@ struct ProcessEnum
    static CoreObject* factory(const CoreClass* cls, void* user_data, bool );
 };
 
-struct ProcessError : Falcon::Error
-{
-   ProcessError():
-      Error( "ProcessError" )
-   { }
-
-   ProcessError( const ErrorParam &params  ):
-      Error( "ProcessError", params )
-   { }
-
-   static FALCON_FUNC  init ( VMachine *vm );
-   static void registerExtensions( Module* );
-};
-
+FALCON_DECLARE_ERROR(ProcessError);
 
 }} // ns Falcon::Ext
 
