@@ -5,9 +5,9 @@
 ####################################################################
 
 if(UNIX)
-   set(SYS_SPECIFIC sys/process_posix.cpp)
+   set(SYS_SPECIFIC process_mod_posix.cpp)
 else()
-   set(SYS_SPECIFIC sys/process_win.cpp process.rc)
+   set(SYS_SPECIFIC process_mod_win.cpp process.rc)
    set_source_files_properties(sys/process_win.cpp PROPERTIES
       COMPILE_DEFINITIONS "UNICODE"
    )
@@ -15,9 +15,8 @@ endif()
 
 add_library(process_fm MODULE
    process.cpp
-   ext/process.cpp
-   mod/process.cpp
-   process_st.cpp
+   process_ext.cpp
+   process_mod.cpp
    ${SYS_SPECIFIC}
 )
 

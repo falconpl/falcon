@@ -1,0 +1,83 @@
+/*************************************************************
+* Asynchronous process read.
+* 
+* Runs the program passed in the command line and asyncronously
+* reads/writes it's output
+*
+* For lots of fun, on POSIX/bash pass this parameter.
+*  'for i in 1 2 3 4 5; do echo "Message ... $i..."; sleep 1; done'
+*
+**************************************************************/
+
+load process
+
+// global data
+rotor = .['|' '/' '-' "\\"]
+
+// our sync sturctures
+done = Barrier()
+p = Process()
+// this mutex is used to avoid overwriting prints in I/O
+outputMtx = Mutex()
+
+// start the required process
+// (we won't sending any input, better to tell the child)
+p.open( " ".merge(args), Process.USE_SHELL ^| Process.SINK_INPUT )
+
+// launch our parallel program.
+pc = Parallel( showProgress, readProcess )
+pc.launch()
+// end of main...
+> "Done -- exit status:", p.exitValue
+
+//========================================
+// Function reading the process output
+//========================================
+function readProcess()
+   w = Waiter()
+   // the process will be signaled when terminated
+   w.add(p)
+   
+   // the selector is in charge of sensing stream activity
+   sel = Selector()
+   sel.addRead( p.output )
+   sel.addRead( p.aux )
+   // react to activity invoking this callback.
+   w.add(sel, {sel =>
+         outputMtx.locked({[]
+		 >> "\rGetting text: "
+		 // get the ready stream
+		 stream = sel.getRead()  
+		 // and read from it
+	         >> stream.grab(1024)
+         })
+      }) 
+      
+   // will wait till p (that has been added with no callback) is signaled.
+   w.wait()
+
+   // we're done: say so to the rest of the program.
+   done.open()
+end
+
+//========================================
+// Function doing something while reading
+//========================================
+
+function showProgress()
+   w = Waiter().add(done)
+   count = 0
+   
+   // while our barrier is closed...
+   while w.wait(100) == nil
+        // show some action each 100ms
+ 	showRotor(count++)
+   end
+   > "[-] -----          "
+end
+
+function showRotor( count )     
+   outputMtx.locked({[] >> "\r[", rotor[count % rotor.len], "] ", count})
+end
+
+

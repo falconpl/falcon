@@ -18,9 +18,9 @@
 
 #include <falcon/pipe.h>
 #include <falcon/stderrors.h>
-#include <falcon/fstream.h>
 #include <falcon/filedatampx.h>
 #include <falcon/selector.h>
+#include <falcon/pipestreams.h>
 
 namespace Falcon {
 namespace Sys {
@@ -39,25 +39,25 @@ void Pipe::close()
 }
 
 
-ReadOnlyFStream* Pipe::getReadStream()
+Stream* Pipe::getReadStream()
 {
    if( m_readSide != 0 )
    {
       FileData* fd = m_readSide;
       m_readSide = 0;
-      return new ReadOnlyFStream( fd );
+      return new ReadPipeStream( fd );
    }
    return 0;
 }
 
 
-WriteOnlyFStream* Pipe::getWriteStream()
+Stream* Pipe::getWriteStream()
 {
    if( m_writeSide != 0 )
    {
       FileData* fd = m_writeSide;
       m_writeSide = 0;
-      return new WriteOnlyFStream( fd );
+      return new WritePipeStream( fd );
    }
    return 0;
 }

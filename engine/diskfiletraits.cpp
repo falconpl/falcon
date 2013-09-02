@@ -56,9 +56,6 @@ void DiskFileTraits::MPX::addStream( Stream* stream, int mode )
       // always readable
       onReadyRead(stream);
    }
-
-   // disk files never have extra/error/exceptional data.
-   stream->decref();
 }
 
 
