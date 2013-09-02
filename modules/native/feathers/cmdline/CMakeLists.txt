@@ -4,7 +4,7 @@
 # CMake configuration file for module ConfParser
 ####################################################################
 
-if(WIN32)
+if(WIN32 AND NOT MINGW)
    set( SYS_RC cmdline.rc )
 endif(WIN32)
 

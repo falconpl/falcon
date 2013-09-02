@@ -8,7 +8,7 @@ include_directories(
   ${CMAKE_CURRENT_SOURCE_DIR}
 )
 
-if(WIN32)
+if(WIN32 AND NOT MINGW)
    set(SYS_SPECIFIC  mxml.rc)
 endif()
 
