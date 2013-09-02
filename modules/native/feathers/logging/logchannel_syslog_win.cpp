@@ -44,7 +44,7 @@ void LogChannelSyslog::init()
 
    if ( m_sysdata == 0 )
    {
-      throw new IoError( ErrorParam( FALCON_LOGGING_ERROR_OPEN, __LINE__, SRC )
+      throw new IOError( ErrorParam( FALCON_LOGGING_ERROR_OPEN, __LINE__, SRC )
         .desc(FALCON_LOGGING_ERROR_DESC)
         .sysError( GetLastError() ) );
    }
