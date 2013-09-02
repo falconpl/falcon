@@ -30,7 +30,7 @@
 #include "process_mod.h"
 #include "process_ext.h"
 
-#include <falcon/fstream.h>
+#include <falcon/pipestreams.h>
 #include <falcon/autocstring.h>
 #include <falcon/filedata_posix.h>
 
@@ -392,7 +392,7 @@ void Process::sys_open( const String& cmd, int params )
       // save the system-specific file streams, if not sunk
       if ( (params & SINK_INPUT) == 0 )
       {
-         m_stdIn = new WriteOnlyFStream( new Sys::FileData(_p->m_file_des_in[1]) );
+         m_stdIn = new WritePipeStream( new Sys::FileData(_p->m_file_des_in[1]) );
       }
       else {
          ::close( _p->m_file_des_in[1] );
@@ -400,7 +400,7 @@ void Process::sys_open( const String& cmd, int params )
 
       if ( (params & SINK_OUTPUT) == 0 )
       {
-         m_stdOut = new ReadOnlyFStream( new Sys::FileData(_p->m_file_des_out[0]) );
+         m_stdOut = new ReadPipeStream( new Sys::FileData(_p->m_file_des_out[0]) );
       }
       else
       {
@@ -409,7 +409,7 @@ void Process::sys_open( const String& cmd, int params )
 
       if ( (params & (SINK_AUX|MERGE_AUX) ) == 0 )
       {
-         m_stdErr = new ReadOnlyFStream( new Sys::FileData(_p->m_file_des_err[0]) );
+         m_stdErr = new ReadPipeStream( new Sys::FileData(_p->m_file_des_err[0]) );
       }
       else
       {

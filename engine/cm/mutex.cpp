@@ -128,8 +128,7 @@ void Function_lock::invoke(VMContext* ctx, int32 )
    else
    {
       // first of all check that we're clear to go with pending events.
-      ctx->releaseAcquired();
-      if( ctx->events() != 0 )
+      if( ctx->releaseAcquired() )
       {
          // i'll be called again, but next time events should be 0.
          ctx->pushCode( &stepInvoke );
@@ -155,6 +154,7 @@ void Function_lock::invoke(VMContext* ctx, int32 )
 void Function_locked::invoke(VMContext* ctx, int32 )
 {
    static const PStep& stepInvoke = Engine::instance()->stdSteps()->m_reinvoke;
+   static const PStep& stepReturn = Engine::instance()->stdSteps()->m_returnFrame;
 
    Item* i_param = ctx->param(0);
    if( i_param == 0 )
@@ -164,32 +164,37 @@ void Function_locked::invoke(VMContext* ctx, int32 )
 
    SharedMutex* mtx = static_cast<SharedMutex*>(ctx->self().asInst());
 
-   if( ctx->acquired() == mtx )
-   {
-      // adds a reentrant lock.
-      mtx->addLock();
-   }
-   else
+   if( ctx->acquired() != mtx )
    {
       // first of all check that we're clear to go with pending events.
-      ctx->releaseAcquired();
-      if( ctx->events() != 0 )
+      if( ctx->releaseAcquired()  )
       {
          // i'll be called again, but next time events should be 0.
          ctx->pushCode( &stepInvoke );
          return;
       }
+   }
 
-      // prepare the locked call.
+   // prepare the locked call.
+   // When we're back, either now or later, we'll have the item locked.
+   if( ctx->acquired() != mtx )
+   {
       ctx->pushCode( &static_cast<ClassMutex*>(methodOf())->m_stepUnlockAndReturn );
+   }
+   else
+   {
+      ctx->pushCode( &stepReturn );
+   }
 
-      Class* cls =0;
-      void* inst=0;
-      i_param->forceClassInst( cls, inst );
-      ctx->pushData( *i_param );
-      cls->op_call(ctx,0, inst);
+   Class* cls =0;
+   void* inst=0;
+   i_param->forceClassInst( cls, inst );
+   ctx->pushData( *i_param );
+   cls->op_call(ctx,0, inst);
 
-      // When we're back, either now or later, we'll have the item locked.
+   // When we're back, either now or later, we'll have the item locked.
+   if( ctx->acquired() != mtx )
+   {
       ctx->initWait();
       ctx->addWait(mtx);
       ctx->engageWait( -1 );
@@ -287,6 +292,7 @@ bool ClassMutex::op_init( VMContext* ctx, void*, int pcount ) const
 
 void ClassMutex::PStepUnlockAndReturn::apply_( const PStep*, VMContext* ctx )
 {
+   //SharedMutex* mtx = static_cast<SharedMutex*>(ctx->self().asInst());
    ctx->releaseAcquired();
    ctx->returnFrame(ctx->topData());
 }
