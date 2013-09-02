@@ -123,17 +123,28 @@ private:
 /** Class used to enumerate the running processes. */
 class ProcessEnum
 {
-   void *m_sysdata;
-
 public:
    ProcessEnum();
    virtual ~ProcessEnum();
 
    /** Get next entry in the enum.
-      \return -1 on error, 0 on done, 1 on next available.
+      \return
    */
-   int next( String &name, uint64 &pid, uint64 &ppid, String &cmdLine );
-   bool close();
+   bool next();
+   void close();
+
+   const String& name() const { return m_name; }
+   const String& cmdLine() const { return m_commandLine; }
+   int32 pid() const { return m_pid; }
+   int32 ppid() const { return m_ppid; }
+
+private:
+   void *m_sysdata;
+
+   String m_name;
+   String m_commandLine;
+   int32 m_pid;
+   int32 m_ppid;
 };
 
 uint64 processId();

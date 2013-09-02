@@ -51,6 +51,22 @@ public:
    bool op_init( VMContext* ctx, void* instance, int32 pcount ) const;
 };
 
+
+class ClassProcessEnum: public ClassShared
+{
+public:
+   ClassProcessEnum();
+   virtual ~ClassProcessEnum();
+
+   virtual void* createInstance() const;
+   virtual void* clone( void* source ) const;
+   virtual void dispose( void* self ) const;
+   virtual void describe( void* instance, String& target, int, int ) const;
+
+   bool op_init( VMContext* ctx, void* instance, int32 pcount ) const;
+};
+
+
 FALCON_DECLARE_ERROR(ProcessError);
 
 

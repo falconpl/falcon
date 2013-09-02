@@ -442,6 +442,14 @@ bool processTerminate( uint64 id )
 ProcessEnum::ProcessEnum()
 {
    m_sysdata = opendir( "/proc" );
+
+   if ( m_sysdata == 0 )
+   {
+      throw FALCON_SIGN_XERROR( ::Falcon::Ext::ProcessError, FALCON_PROCESS_ERROR_ERRLIST3,
+               .desc(FALCON_PROCESS_ERROR_ERRLIST3_MSG )
+               .sysError((uint32) errno));
+   }
+
 }
 
 ProcessEnum::~ProcessEnum()
@@ -449,10 +457,8 @@ ProcessEnum::~ProcessEnum()
    this->close();
 }
 
-int ProcessEnum::next( String &name, uint64 &pid, uint64 &ppid, String &commandLine )
+bool ProcessEnum::next()
 {
-   if ( m_sysdata == 0 )
-      return -1;
 
    DIR* procdir = static_cast<DIR*>(m_sysdata);
    struct dirent* de;
@@ -464,12 +470,17 @@ int ProcessEnum::next( String &name, uint64 &pid, uint64 &ppid, String &commandL
       if ( de->d_name[0] >= '0' && de->d_name[0] <= '9' )
          break;
    }
-   if ( !de ) return 0; // EOF
+   if ( !de ) return false; // EOF
    
    char statent[ 64 ];
    ::snprintf( statent, 64, "/proc/%s/stat", de->d_name );
    FILE* fp = fopen( statent, "r" );
-   if ( !fp ) return -1;
+   if ( !fp )
+   {
+      throw FALCON_SIGN_XERROR( ::Falcon::Ext::ProcessError, FALCON_PROCESS_ERROR_ERRLIST4,
+                           .desc(FALCON_PROCESS_ERROR_ERRLIST4_MSG )
+                           );
+   }
    
    int32 p_pid, p_ppid;
    char status;
@@ -477,20 +488,24 @@ int ProcessEnum::next( String &name, uint64 &pid, uint64 &ppid, String &commandL
    if ( ::fscanf( fp, "%d %s %c %d", &p_pid, szName, &status, &p_ppid ) != 4 )
    {
       ::fclose( fp );
-      return -1;
+      throw FALCON_SIGN_XERROR( ::Falcon::Ext::ProcessError, FALCON_PROCESS_ERROR_ERRLIST4,
+                     .desc(FALCON_PROCESS_ERROR_ERRLIST4_MSG )
+                     );
    }
    
-   pid = (int64) p_pid;
-   ppid = (int64) p_ppid;
+   m_pid = (int64) p_pid;
+   m_ppid = (int64) p_ppid;
    ::fclose(fp);
 
    if ( szName[0] == '(' )
    {
       szName[ strlen( szName ) -1] = '\0';
-      name.bufferize( szName + 1 );
+      m_name.bufferize( szName + 1 );
    }
    else
-      name.bufferize( szName );
+   {
+      m_name.bufferize( szName );
+   }
 
    // read also the command line, which may be missing.
    ::snprintf( statent, sizeof(statent), "/proc/%s/cmdline", de->d_name );
@@ -498,24 +513,29 @@ int ProcessEnum::next( String &name, uint64 &pid, uint64 &ppid, String &commandL
    if ( !fp || fscanf( fp, "%s", szName ) != 1 )
    {
       szName[0] = 0;
-      return 1;
+      return true;
    }
 
    ::fclose( fp );
-   commandLine.bufferize( szName );
+   m_commandLine.bufferize( szName );
 
-   return 1;
+   return true;
 }
 
-bool ProcessEnum::close()
+
+void ProcessEnum::close()
 {
    if ( m_sysdata != 0 )
    {
-      closedir( static_cast<DIR*>(m_sysdata) );
+      if( ::closedir( static_cast<DIR*>(m_sysdata) ) != 0 )
+      {
+         throw FALCON_SIGN_XERROR( ::Falcon::Ext::ProcessError, FALCON_PROCESS_ERROR_ERRLIST2,
+                             .desc(FALCON_PROCESS_ERROR_ERRLIST2_MSG )
+                             .sysError( (uint32) errno )
+                             );
+      }
       m_sysdata = 0;
-      return true;
    }
-   return false;
 }
 
 }} // ns Falcon::Mod

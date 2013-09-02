@@ -592,8 +592,7 @@ void ClassProcess::describe( void* instance, String& target, int, int maxlen ) c
 // Process enumeration
 //=====================================================================
 
-
-#if 0
+namespace CProcessEnum {
 /*#
    @class ProcessEnum
    @brief Provides a list of currently executed process.
@@ -625,12 +624,6 @@ void ClassProcess::describe( void* instance, String& target, int, int maxlen ) c
       returned before the parent is listed.
 */
 
-FALCON_FUNC  ProcessEnum::init( VMachine* vm ) { }
-
-CoreObject* ProcessEnum::factory(const CoreClass* cls, void* user_data, bool )
-{
-   return new Mod::ProcessEnum(cls);
-}
 
 /*#
    @method next ProcessEnum
@@ -645,32 +638,22 @@ CoreObject* ProcessEnum::factory(const CoreClass* cls, void* user_data, bool )
    properties are changed.
 */
 
-FALCON_FUNC  ProcessEnum::next( VMachine* vm )
+FALCON_DECLARE_FUNCTION( next, "" )
+FALCON_DEFINE_FUNCTION_P1( next )
 {
-   Mod::ProcessEnum* self = Falcon::dyncast<Mod::ProcessEnum*>( vm->self().asObject() );
-   CoreString *name = new CoreString;
-   CoreString *commandLine = new CoreString;
-   uint64 pid, ppid;
-
-   int64 res = (int64) self->handle()->next( *name, pid, ppid, *commandLine );
+   Mod::ProcessEnum* self = static_cast<Mod::ProcessEnum*>( ctx->self().asInst() );
+   int64 res = (int64) self->next();
 
    if ( res != 1 )
    {
       if ( res == -1 )
       {
-         throw new ProcessError( ErrorParam( FALPROC_ERR_READLIST, __LINE__ )
-            .desc( FAL_STR(proc_msg_errlist) ) );
+         throw FALCON_SIGN_XERROR( ProcessError, FALCON_PROCESS_ERROR_ERRLIST,
+            .desc( FALCON_PROCESS_ERROR_ERRLIST_MSG ) );
       }
    }
-   else
-   {
-      self->setProperty( "name", name );
-      self->setProperty( "cmdLine", commandLine );
-      self->setProperty( "pid", (int64) pid );
-      self->setProperty( "parentPid", (int64) ppid );
-   }
 
-   vm->retval(res);
+   ctx->returnFrame(res);
 }
 
 
@@ -681,29 +664,88 @@ FALCON_FUNC  ProcessEnum::next( VMachine* vm )
    Disposes the data associated with this item without waiting
    for the garbage collector to reclaim them.
 */
-FALCON_FUNC  ProcessEnum::close( VMachine* vm )
+FALCON_DECLARE_FUNCTION( close, "" )
+FALCON_DEFINE_FUNCTION_P1( close )
 {
-   Mod::ProcessEnum* self = Falcon::dyncast<Mod::ProcessEnum*>( vm->self().asObject() );
-   if ( ! self->handle()->close() )
-   {
-      throw new ProcessError( ErrorParam( FALPROC_ERR_CLOSELIST, __LINE__ )
-            .desc( FAL_STR( proc_msg_errlist2 ) ) );
-   }
+   Mod::ProcessEnum* self = static_cast<Mod::ProcessEnum*>( ctx->self().asInst() );
+   self->close();
 }
 
-void ProcessEnum::registerExtensions( Module* self )
+static void get_pid( const Class*, const String&, void* instance, Item& value )
 {
-   Falcon::Symbol *pe_class = self->addClass( "ProcessEnum", ProcessEnum::init );
-   pe_class->getClassDef()->factory(&ProcessEnum::factory);
-   self->addClassProperty( pe_class, "name" );
-   self->addClassProperty( pe_class, "pid" );
-   self->addClassProperty( pe_class, "parentPid" );
-   self->addClassProperty( pe_class, "cmdLine" );
-
-   self->addClassMethod( pe_class, "next", ProcessEnum::next );
-   self->addClassMethod( pe_class, "close", ProcessEnum::close );
+   Mod::ProcessEnum* self = static_cast<Mod::ProcessEnum*>( instance );
+   value.setInteger( (int64) self->pid() );
 }
-#endif
+
+static void get_ppid( const Class*, const String&, void* instance, Item& value )
+{
+   Mod::ProcessEnum* self = static_cast<Mod::ProcessEnum*>( instance );
+   value.setInteger( (int64) self->ppid() );
+}
+
+static void get_cmdLine( const Class*, const String&, void* instance, Item& value )
+{
+   Mod::ProcessEnum* self = static_cast<Mod::ProcessEnum*>( instance );
+   value = FALCON_GC_HANDLE( new String(self->cmdLine()) );
+}
+
+static void get_name( const Class*, const String&, void* instance, Item& value )
+{
+   Mod::ProcessEnum* self = static_cast<Mod::ProcessEnum*>( instance );
+   value = FALCON_GC_HANDLE( new String(self->name()) );
+}
+
+}
+
+
+ClassProcessEnum::ClassProcessEnum()
+{
+   setParent(Engine::instance()->stdHandlers()->sharedClass());
+
+   addProperty( "name", &CProcessEnum::get_name );
+   addProperty( "cmdLine", &CProcessEnum::get_cmdLine );
+   addProperty( "pid", &CProcessEnum::get_pid );
+   addProperty( "ppid", &CProcessEnum::get_ppid );
+
+   addMethod( new CProcessEnum::Function_next );
+   addMethod( new CProcessEnum::Function_close );
+
+}
+
+ClassProcessEnum::~ClassProcessEnum()
+{
+}
+
+void* ClassProcessEnum::createInstance() const
+{
+   return new Mod::ProcessEnum;
+}
+
+
+bool ClassProcessEnum::op_init( VMContext* , void* , int32  ) const
+{
+   return false;
+}
+
+void* ClassProcessEnum::clone( void* ) const
+{
+   return 0;
+}
+
+void ClassProcessEnum::dispose( void* instance ) const
+{
+   Mod::ProcessEnum* self = static_cast<Mod::ProcessEnum*>(instance );
+   delete self;
+}
+
+void ClassProcessEnum::describe( void*, String& target, int, int ) const
+{
+   target = "ProcessEnum";
+}
+
+//=================================================================
+// Process error
+//=================================================================
 
 /*#
    @class ProcessError
@@ -715,6 +757,10 @@ void ProcessEnum::registerExtensions( Module* self )
 
    See the Error class in the core module.
 */
+
+//=================================================================
+// Process module
+//=================================================================
 
 ProcessModule::ProcessModule():
          Module("process")
@@ -730,6 +776,7 @@ ProcessModule::ProcessModule():
          << new ::Falcon::Ext::Function_preadCall
          << m_classProcess
          << new ::Falcon::Ext::ClassProcessError
+         << new ::Falcon::Ext::ClassProcessEnum
       ;
 }
 

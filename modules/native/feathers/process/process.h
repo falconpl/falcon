@@ -33,10 +33,18 @@
 #define FALCON_PROCESS_ERROR_TERMINATE (FALCON_PROCESS_ERROR_BASE+3)
 #define FALCON_PROCESS_ERROR_TERMINATE_MSG "Cannot terminate process"
 
+#define FALCON_PROCESS_ERROR_ERRLIST       (FALCON_PROCESS_ERROR_BASE+4)
+#define FALCON_PROCESS_ERROR_ERRLIST_MSG   "Error while reading the process list"
 
-#define FALCON_PROCESS_MSG_errlist   "Error while reading the process list"
-#define FALCON_PROCESS_MSG_errlist2  "Error while closing the process list"
-#define FALCON_PROCESS_MSG_errlist3  "Error while creating the process list"
+#define FALCON_PROCESS_ERROR_ERRLIST2      (FALCON_PROCESS_ERROR_BASE+4)
+#define FALCON_PROCESS_ERROR_ERRLIST2_MSG  "Error while closing the process list"
+
+#define FALCON_PROCESS_ERROR_ERRLIST3      (FALCON_PROCESS_ERROR_BASE+5)
+#define FALCON_PROCESS_ERROR_ERRLIST3_MSG  "Error while creating the process list"
+
+#define FALCON_PROCESS_ERROR_ERRLIST4      (FALCON_PROCESS_ERROR_BASE+6)
+#define FALCON_PROCESS_ERROR_ERRLIST4_MSG  "Internal error while reading process entries"
+
 #define FALCON_PROCESS_MSG_allstr    "All the elements in the first parameter must be strings"
 #define FALCON_PROCESS_MSG_prccreate "Can't open the process"
 #define FALCON_PROCESS_MSG_waitfail  "Wait failed"
