@@ -17,12 +17,13 @@
 #include <errno.h>
 #include <unistd.h>
 #include <signal.h>
-#include <sys/stat.h>
-#include <sys/types.h>
 #include <dirent.h>
 #include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
+
+#include <sys/stat.h>
+#include <sys/types.h>
 #include <sys/wait.h>
 
 #include "process.h"
@@ -34,6 +35,8 @@
 #include <falcon/filedata_posix.h>
 
 #include <string.h>
+
+#include <vector>
 
 namespace Falcon {
 namespace Mod {
@@ -102,12 +105,16 @@ struct LocalizedArgv
 
          case state_word:
             {
-            case '\\': addParam(temp); state = state_escape; break;
-            case '"': addParam(temp); state = state_doublequote; break;
-            case '\'': addParam(temp); state = state_singlequote; break;
-            case ' ': case '\t': case '\r': case '\n': addParam(temp); state= state_ws; break;
-            default: temp.append(chr); break;
+               switch( chr )
+               {
+               case '\\': addParam(temp); state = state_escape; break;
+               case '"': addParam(temp); state = state_doublequote; break;
+               case '\'': addParam(temp); state = state_singlequote; break;
+               case ' ': case '\t': case '\r': case '\n': addParam(temp); state= state_ws; break;
+               default: temp.append(chr); break;
+               }
             }
+            break;
 
          case state_escape:
            temp.append(chr);
@@ -138,11 +145,16 @@ struct LocalizedArgv
          }
       }
 
-      std::vector::size_type size = tempVector.size();
+      if( !temp.empty() )
+      {
+         tempVector.push_back( temp );
+      }
+
+      uint32 size = tempVector.size();
       p = new char*[size + 1];
       p[size] = 0;
 
-      for(std::vector::size_type i = 0; i < size; i++ )
+      for(uint32 i = 0; i < size; i++ )
       {
          const String& arg = tempVector[i];
          size_t nBytes = arg.length() * 4+1;
@@ -183,6 +195,11 @@ public:
 };
 
 
+void Process::sys_close()
+{
+  // nothing needed on POSIX -- all done by wait and closing streams.
+}
+
 void Process::sys_init()
 {
    _p = new Private();
@@ -216,51 +233,54 @@ bool Process::terminate( bool severe )
    return false;
 }
 
+int64 Process::pid() const
+{
+   return (int64) _p->m_pid;
+}
 
+
+
+void Process::sys_wait()
+{
+   int status = 0;
+   while( ::waitpid(_p->m_pid, &status, 0 ) < 0 && errno == EINTR)
+      /* try again */
+      ;
+
+   m_exitval = -1;
+   if( WIFEXITED( status ) )
+   {
+      // force > 0.
+      m_exitval = (int) static_cast<unsigned int>(WEXITSTATUS(status));
+   }
+}
 
 void Process::sys_open( const String& cmd, int params )
 {
    // step 1: prepare the needed pipes
-   if ( (params & SINK_INPUT) != 0 )
+   if ( pipe( _p->m_file_des_in ) < 0 )
    {
-      _p->m_file_des_in[1] = -1;
-   }
-   else
-   {
-      if ( pipe( _p->m_file_des_in ) < 0 )
-      {
-         throw FALCON_SIGN_XERROR( ::Falcon::Ext::ProcessError,
-                  FALCON_PROCESS_ERROR_OPEN_PIPE,
-                  .desc( FALCON_PROCESS_ERROR_OPEN_PIPE_MSG )
-                  .extra("IN pipe")
-                  .sysError((unsigned int) errno) );
-      }
+      throw FALCON_SIGN_XERROR( ::Falcon::Ext::ProcessError,
+               FALCON_PROCESS_ERROR_OPEN_PIPE,
+               .desc( FALCON_PROCESS_ERROR_OPEN_PIPE_MSG )
+               .extra("IN pipe")
+               .sysError((unsigned int) errno) );
    }
 
-   if ( (params & SINK_OUTPUT) != 0 )
+   if ( pipe( _p->m_file_des_out ) < 0 )
    {
-      _p->m_file_des_out[0] = -1;
-   }
-   else
-   {
-      if ( pipe( _p->m_file_des_out ) < 0 )
-      {
-         throw FALCON_SIGN_XERROR( ::Falcon::Ext::ProcessError,
-                           FALCON_PROCESS_ERROR_OPEN_PIPE,
-                           .desc( FALCON_PROCESS_ERROR_OPEN_PIPE_MSG )
-                           .extra("OUT pipe")
-                           .sysError((unsigned int) errno));
-      }
+      throw FALCON_SIGN_XERROR( ::Falcon::Ext::ProcessError,
+                        FALCON_PROCESS_ERROR_OPEN_PIPE,
+                        .desc( FALCON_PROCESS_ERROR_OPEN_PIPE_MSG )
+                        .extra("OUT pipe")
+                        .sysError((unsigned int) errno));
    }
 
 
-   if ( (params & SINK_AUX) != 0 )
-   {
-      _p->m_file_des_err[0] = -1;
-   }
-   else if ( (params & MERGE_AUX) != 0 )
+   if ( (params & MERGE_AUX) != 0 )
    {
       _p->m_file_des_err[0] = _p->m_file_des_out[0];
+      _p->m_file_des_err[1] = _p->m_file_des_out[1];
    }
    else
    {
@@ -284,7 +304,10 @@ void Process::sys_open( const String& cmd, int params )
       // close unused pipe ends
       ::close( _p->m_file_des_in[1] );
       ::close( _p->m_file_des_out[0] );
-      ::close( _p->m_file_des_err[0] );
+      if( (params & MERGE_AUX) == 0 )
+      {
+         ::close( _p->m_file_des_err[0] );
+      }
 
       // do we need to sink?
       if ( (params & (SINK_INPUT|SINK_OUTPUT|SINK_AUX)) != 0 )
@@ -312,13 +335,15 @@ void Process::sys_open( const String& cmd, int params )
       }
 
 
-      if( (params & SINK_AUX) != 0 )
+      // sink if explicitly requested, or if merged with output, but output is being sunk
+      if( (params & SINK_AUX) != 0 ||
+          ((params & (MERGE_AUX|SINK_OUTPUT)) == (MERGE_AUX|SINK_OUTPUT)) )
       {
          dup2( hNull, STDERR_FILENO );
       }
       else if( (params & MERGE_AUX) != 0 )
       {
-         dup2( _p->m_file_des_out[1], STDERR_FILENO );
+         dup2( _p->m_file_des_out[1], STDOUT_FILENO );
       }
       else
       {
@@ -328,14 +353,14 @@ void Process::sys_open( const String& cmd, int params )
       // Launch the EXECVP procedure.
       if( (params & USE_SHELL) != 0 )
       {
-         char* const argv[4];
+         const char* argv[] = {0,0,0,0};
          AutoCString strCommand(cmd);
          argv[0] = shellName();
          argv[1] = "-c";
          argv[2] = strCommand.c_str();
          argv[3] = 0;
 
-         ::execv( argv[0], argv ); // never returns.
+         ::execv( argv[0], (char* const*) argv ); // never returns.
       }
       else
       {
@@ -359,12 +384,37 @@ void Process::sys_open( const String& cmd, int params )
       // close unused pipe ends
       ::close( _p->m_file_des_in[0] );
       ::close( _p->m_file_des_out[1] );
-      ::close( _p->m_file_des_err[1] );
+      if( (params & MERGE_AUX) == 0 )
+      {
+         ::close( _p->m_file_des_err[1] );
+      }
 
-      // save the system-specific file streams.
-      m_stdIn = new WriteOnlyFStream( new Sys::FileData(_p->m_file_des_in[1]) );
-      m_stdOut = new ReadOnlyFStream( new Sys::FileData(_p->m_file_des_out[0]) );
-      m_stdErr = new ReadOnlyFStream( new Sys::FileData(_p->m_file_des_err[0]) );
+      // save the system-specific file streams, if not sunk
+      if ( (params & SINK_INPUT) == 0 )
+      {
+         m_stdIn = new WriteOnlyFStream( new Sys::FileData(_p->m_file_des_in[1]) );
+      }
+      else {
+         ::close( _p->m_file_des_in[1] );
+      }
+
+      if ( (params & SINK_OUTPUT) == 0 )
+      {
+         m_stdOut = new ReadOnlyFStream( new Sys::FileData(_p->m_file_des_out[0]) );
+      }
+      else
+      {
+         ::close( _p->m_file_des_out[0] );
+      }
+
+      if ( (params & (SINK_AUX|MERGE_AUX) ) == 0 )
+      {
+         m_stdErr = new ReadOnlyFStream( new Sys::FileData(_p->m_file_des_err[0]) );
+      }
+      else
+      {
+         ::close( _p->m_file_des_err[0] );
+      }
    }
 
 }

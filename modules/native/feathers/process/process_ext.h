@@ -18,59 +18,53 @@
    This is the module declaration file.
 */
 
-#ifndef flc_process_ext_H
-#define flc_process_ext_H
+#ifndef FALCON_FEATHERS_PROCESS_EXT_H
+#define FALCON_FEATHERS_PROCESS_EXT_H
 
 #include <falcon/module.h>
 #include <falcon/error.h>
 #include <falcon/error_base.h>
-
-#ifndef FALCON_PROCESS_ERROR_BASE
-   #define FALCON_PROCESS_ERROR_BASE        1140
-#endif
-
-#define FALPROC_ERR_READLIST  (FALCON_PROCESS_ERROR_BASE + 0)
-#define FALPROC_ERR_CLOSELIST  (FALCON_PROCESS_ERROR_BASE + 1)
-#define FALPROC_ERR_CREATLIST  (FALCON_PROCESS_ERROR_BASE + 2)
-#define FALPROC_ERR_CREATPROC  (FALCON_PROCESS_ERROR_BASE + 3)
-#define FALPROC_ERR_WAIT      (FALCON_PROCESS_ERROR_BASE + 4)
-#define FALPROC_ERR_TERM      (FALCON_PROCESS_ERROR_BASE + 5)
+#include <falcon/classes/classshared.h>
+#include <falcon/module.h>
 
 namespace Falcon {
 namespace Ext {
 
-FALCON_FUNC  process_system ( VMachine *vm );
-FALCON_FUNC  process_systemCall ( VMachine *vm );
-FALCON_FUNC  process_pread ( VMachine *vm );
-FALCON_FUNC  process_exec ( VMachine *vm );
-FALCON_FUNC  process_processId ( VMachine *vm );
-FALCON_FUNC  process_processKill ( VMachine *vm );
+FALCON_DECLARE_FUNCTION( pid, "" );
+FALCON_DECLARE_FUNCTION( kill, "pid:N,severe:[B]" );
+FALCON_DECLARE_FUNCTION( system, "command:S,background:[B]" );
+FALCON_DECLARE_FUNCTION( systemCall, "command:S,background:[B],usePath:[B]" );
+FALCON_DECLARE_FUNCTION( pread, "command:S,background:[B],grabAux:[B]" );
+FALCON_DECLARE_FUNCTION( preadCall, "command:S,background:[B],grabAux:[B],usePath:[B]" );
 
-/**
-   Process( command, [sinkin, sinkout, sinkerr, mergeerr, background] )
-*/
-
+class ClassProcess: public ClassShared
 {
-   static FALCON_FUNC  init ( VMachine *vm );
-   static FALCON_FUNC  wait ( VMachine *vm );
-   static FALCON_FUNC  terminate ( VMachine *vm );
-   static FALCON_FUNC  value ( VMachine *vm );
-   static FALCON_FUNC  getInput ( VMachine *vm );
-   static FALCON_FUNC  getOutput ( VMachine *vm );
-   static FALCON_FUNC  getAux ( VMachine *vm );
-   static void registerExtensions( Module* );
-   static CoreObject* factory(const CoreClass* cls, void* user_data, bool );
-};
+public:
+   ClassProcess();
+   virtual ~ClassProcess();
 
-{
-   static FALCON_FUNC  init  ( VMachine *vm );
-   static FALCON_FUNC  next  ( VMachine *vm );
-   static FALCON_FUNC  close  ( VMachine *vm );
-   static void registerExtensions( Module* );
-   static CoreObject* factory(const CoreClass* cls, void* user_data, bool );
+   virtual void* createInstance() const;
+   virtual void* clone( void* source ) const;
+   virtual void dispose( void* self ) const;
+   virtual void describe( void* instance, String& target, int, int ) const;
+
+   bool op_init( VMContext* ctx, void* instance, int32 pcount ) const;
 };
 
 FALCON_DECLARE_ERROR(ProcessError);
+
+
+class ProcessModule: public Module
+{
+public:
+   ProcessModule();
+   virtual ~ProcessModule();
+
+   Class* classProcess() const { return m_classProcess; }
+
+private:
+   Class* m_classProcess;
+};
 
 }} // ns Falcon::Ext
 

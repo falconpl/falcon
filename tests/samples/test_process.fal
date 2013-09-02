@@ -1,0 +1,48 @@
+load process
+
+done = Barrier()
+p = Process()
+
+p.open( " ".merge(args), Process.USE_SHELL ^| Process.SINK_INPUT )
+outputMtx = Mutex()
+
+function readProcess()
+   w = Waiter()
+   w.add(p)
+   
+   sel = Selector()
+   sel.addRead( p.output )
+   sel.addRead( p.aux )
+   w.add(sel, {sel =>
+         >
+         >> "Getting text: "
+         // get the ready stream
+         stream = sel.getRead()         
+         // and read from it
+         > stream.grab(1024)
+      }) 
+      
+   w.wait()
+   done.open()
+end
+
+function showProgress()
+   w = Waiter().add(done)
+   count = 0
+   while w.wait(100) == nil
+      count = showRotor(count)
+   end
+end
+
+rotor = .['|' '/' '-' "\\"]
+
+function showRotor( count )   
+   >> "[", rotor[count++], "]\r"
+   if count >= rotor.len: count = 0
+   return count
+end
+
+pc = Parallel( showProgress, readProcess )
+pc.launch()
+> "Done."
+

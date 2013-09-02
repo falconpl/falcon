@@ -67,24 +67,11 @@
 
 FALCON_MODULE_DECL
 {
-   #define FALCON_DECLARE_MODULE self
-
    // initialize the module
-   Falcon::Module *self = new Falcon::Module();
-   self->name( "process" );
-
-   //============================================================
-   // Add the process attribute constants
-   self->addConstant( "SINK_INPUT", (Falcon::int64) 0x1 );
-   self->addConstant( "SINK_OUTPUT", (Falcon::int64) 0x2 );
-   self->addConstant( "SINK_AUX", (Falcon::int64) 0x4 );
-   self->addConstant( "MERGE_AUX", (Falcon::int64) 0x8 );
-   self->addConstant( "BACKGROUND", (Falcon::int64) 0x10 );
-   self->addConstant( "USE_SHELL", (Falcon::int64) 0x20 );
+   Falcon::Module *self = new Falcon::Ext::ProcessModule();
 
    return self;
 }
 
 
 /* end of process.cpp */
-

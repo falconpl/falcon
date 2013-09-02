@@ -30,6 +30,7 @@
 namespace Falcon {
 namespace Ext {
 
+   namespace {
 
 static void internal_selector_add( VMContext* ctx, int32, bool bAdd )
 {
@@ -82,7 +83,7 @@ static void internal_selector_add( VMContext* ctx, int32, bool bAdd )
   @optparam mode Mode of read-write.
 
  */
-FALCON_DECLARE_FUNCTION( selector_add, "stream:Stream, mode:[N]" );
+FALCON_DECLARE_FUNCTION( add, "stream:Stream, mode:[N]" );
 
 /*#
   @method update Selector
@@ -91,28 +92,28 @@ FALCON_DECLARE_FUNCTION( selector_add, "stream:Stream, mode:[N]" );
   @param mode Mode of read-write.
 
  */
-FALCON_DECLARE_FUNCTION( selector_update, "stream:Stream, mode:N" );
+FALCON_DECLARE_FUNCTION( update, "stream:Stream, mode:N" );
 
 /*#
   @method addRead Selector
   @brief Adds a stream to the selector for read operations
   @param stream The stream to be added for reading.
  */
-FALCON_DECLARE_FUNCTION( selector_addRead, "stream:Stream" );
+FALCON_DECLARE_FUNCTION( addRead, "stream:Stream" );
 
 /*#
   @method addWrite Selector
   @brief Adds a stream to the selector for write operations
   @param stream The stream to be added for writing.
  */
-FALCON_DECLARE_FUNCTION( selector_addWrite, "stream:Stream" );
+FALCON_DECLARE_FUNCTION( addWrite, "stream:Stream" );
 
 /*#
   @method addWrite Selector
   @brief Adds a stream to the selector for errors and out-of-band operations
   @param stream The stream to be added for errors or out of band data.
  */
-FALCON_DECLARE_FUNCTION( selector_addErr, "stream:Stream" );
+FALCON_DECLARE_FUNCTION( addErr, "stream:Stream" );
 
 
 
@@ -132,7 +133,7 @@ FALCON_DECLARE_FUNCTION( selector_addErr, "stream:Stream" );
   Also, the method will return nil if the wait successful for other
   operations.
  */
-FALCON_DECLARE_FUNCTION( selector_getRead, "" );
+FALCON_DECLARE_FUNCTION( getRead, "" );
 
 /*#
   @method getWrite Selector
@@ -150,7 +151,7 @@ FALCON_DECLARE_FUNCTION( selector_getRead, "" );
   Also, the method will return nil if the wait successful for other
   operations.
  */
-FALCON_DECLARE_FUNCTION( selector_getWrite, "" );
+FALCON_DECLARE_FUNCTION( getWrite, "" );
 
 /*#
   @method getErr Selector
@@ -168,7 +169,7 @@ FALCON_DECLARE_FUNCTION( selector_getWrite, "" );
   Also, the method will return nil if the wait successful for other
   operations.
  */
-FALCON_DECLARE_FUNCTION( selector_getErr, "" );
+FALCON_DECLARE_FUNCTION( getErr, "" );
 
 
 /*#
@@ -196,18 +197,18 @@ FALCON_DECLARE_FUNCTION( selector_getErr, "" );
   Also, the method will return nil if the wait successful for other
   operations.
  */
-FALCON_DECLARE_FUNCTION( selector_get, "" );
+FALCON_DECLARE_FUNCTION( get, "" );
 
 
 
 
-void Function_selector_add::invoke(VMContext* ctx, int32 pCount )
+void Function_add::invoke(VMContext* ctx, int32 pCount )
 {
    internal_selector_add(ctx, pCount, true );
 }
 
 
-void Function_selector_update::invoke(VMContext* ctx, int32 pCount )
+void Function_update::invoke(VMContext* ctx, int32 pCount )
 {
    internal_selector_add(ctx, pCount, false );
 }
@@ -234,26 +235,26 @@ static void internal_add_mode( VMContext* ctx, int32, int32 mode )
 }
 
 
-void Function_selector_addRead::invoke(VMContext* ctx, int32 pCount )
+void Function_addRead::invoke(VMContext* ctx, int32 pCount )
 
 {
    internal_add_mode( ctx, pCount, Selector::mode_read );
 }
 
 
-void Function_selector_addWrite::invoke(VMContext* ctx, int32 pCount )
+void Function_addWrite::invoke(VMContext* ctx, int32 pCount )
 {
    internal_add_mode( ctx, pCount, Selector::mode_write );
 }
 
 
-void Function_selector_addErr::invoke(VMContext* ctx, int32 pCount )
+void Function_addErr::invoke(VMContext* ctx, int32 pCount )
 {
    internal_add_mode( ctx, pCount, Selector::mode_err );
 }
 
 
-void Function_selector_getRead::invoke(VMContext* ctx, int32 )
+void Function_getRead::invoke(VMContext* ctx, int32 )
 {
    Selector* sel = static_cast<Selector*>(ctx->self().asInst());
    Stream* stream = sel->getNextReadyRead();
@@ -268,7 +269,7 @@ void Function_selector_getRead::invoke(VMContext* ctx, int32 )
 }
 
 
-void Function_selector_getWrite::invoke(VMContext* ctx, int32 )
+void Function_getWrite::invoke(VMContext* ctx, int32 )
 {
    Selector* sel = static_cast<Selector*>(ctx->self().asInst());
    Stream* stream = sel->getNextReadyWrite();
@@ -283,7 +284,7 @@ void Function_selector_getWrite::invoke(VMContext* ctx, int32 )
 }
 
 
-void Function_selector_getErr::invoke(VMContext* ctx, int32 )
+void Function_getErr::invoke(VMContext* ctx, int32 )
 {
    Selector* sel = static_cast<Selector*>(ctx->self().asInst());
    Stream* stream = sel->getNextReadyErr();
@@ -298,7 +299,7 @@ void Function_selector_getErr::invoke(VMContext* ctx, int32 )
 }
 
 
-void Function_selector_get::invoke(VMContext* ctx, int32 )
+void Function_get::invoke(VMContext* ctx, int32 )
 {
    Selector* sel = static_cast<Selector*>(ctx->self().asInst());
    Stream* stream = sel->getNextReadyErr();
@@ -315,7 +316,7 @@ void Function_selector_get::invoke(VMContext* ctx, int32 )
    }
 }
 
-
+   }
 
 //=========================================================
 //
@@ -328,16 +329,16 @@ ClassSelector::ClassSelector():
    static Class* shared = Engine::handlers()->sharedClass();
    setParent( shared );
 
-   addMethod( new Function_selector_add);
-   addMethod( new Function_selector_update);
-   addMethod( new Function_selector_addRead);
-   addMethod( new Function_selector_addWrite);
-   addMethod( new Function_selector_addErr);
+   addMethod( new Function_add);
+   addMethod( new Function_update);
+   addMethod( new Function_addRead);
+   addMethod( new Function_addWrite);
+   addMethod( new Function_addErr);
 
-   addMethod( new Function_selector_getRead);
-   addMethod( new Function_selector_getWrite);
-   addMethod( new Function_selector_getErr);
-   addMethod( new Function_selector_get);
+   addMethod( new Function_getRead);
+   addMethod( new Function_getWrite);
+   addMethod( new Function_getErr);
+   addMethod( new Function_get);
 }
 
 

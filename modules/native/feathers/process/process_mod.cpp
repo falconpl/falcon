@@ -19,6 +19,9 @@
 #include "process_mod.h"
 #include <falcon/string.h>
 #include <falcon/mt.h>
+#include <falcon/stream.h>
+#include <falcon/vmcontext.h>
+#include <falcon/vm.h>
 
 #include <falcon/stderrors.h>
 
@@ -26,8 +29,9 @@
 namespace Falcon {
 namespace Mod {
 
-Process::Process():
-    m_bOpen( true ),
+Process::Process( VMContext* ctx, const Class* handler ):
+    Shared(&ctx->vm()->contextManager(), handler, false, 0),
+    m_bOpen( false ),
     m_done(false),
     m_exitval( 0 ),
     m_twThread( 0 ),
@@ -80,13 +84,30 @@ void Process::open( const String& args, int mode, bool async )
       throw;
    }
 
+   m_cmd = args;
    if( async )
    {
       m_twThread = new SysThread( &m_tw );
       incref();
       // the thread will take care of itself -- start detached.
-      m_twThread->start(ThreadParams().stackSize(8096).detached(true));
+      if ( ! m_twThread->start(ThreadParams().stackSize(1024*20).detached(true)) )
+      {
+         throw FALCON_SIGN_XERROR(CodeError, e_binstartup, .extra("Thread startup") );
+      }
    }
+}
+
+int32 Process::consumeSignal( VMContext*, int32 )
+{
+   int32 count = signalCount() > 0 ? 1 : 0;
+   return count;
+}
+
+
+int Process::lockedConsumeSignal( VMContext*, int )
+{
+   int32 count = lockedSignalCount() > 0 ? 1 : 0;
+   return count;
 }
 
 
@@ -117,16 +138,23 @@ bool Process::exitValue(int &value) const
 }
 
 
-int Process::waitTermination()
+void Process::waitTermination()
 {
-   int result = sys_wait();
+   sys_wait();
 
    m_mtx.lock();
    m_done = true;
-   m_exitval = result;
    m_mtx.unlock();
+}
 
-   return result;
+void Process::close()
+{
+   // close the streams, but don't decref them
+   if(m_stdIn != 0 ) { m_stdIn->close(); }
+   if(m_stdOut != 0 ) { m_stdOut->close(); }
+   if(m_stdErr != 0 ) { m_stdErr->close(); }
+
+   sys_close();
 }
 
 
@@ -145,10 +173,11 @@ Process::TermWaiter::~TermWaiter()
 
 void* Process::TermWaiter::run()
 {
-   int result = m_process->waitTermination();
+   m_process->waitTermination();
 
    // free the resources (in case it's needed).
-   m_process->close();
+   // of course -- don't close the streams, we need them
+   m_process->sys_close();
 
    m_process->signal(1);
 

@@ -20,11 +20,14 @@
 #include <falcon/setup.h>
 #include <falcon/string.h>
 #include <falcon/mt.h>
+#include <falcon/shared.h>
 
 #include "process.h"
 
 namespace Falcon {
 class Stream;
+class VMContext;
+class Class;
 
 namespace Mod {
 
@@ -33,7 +36,7 @@ class Process: public Shared
 {
 
 public:
-   Process();
+   Process( VMContext* ctx, const Class* handler );
    virtual ~Process();
 
    static const int SINK_INPUT = 0x1;
@@ -59,8 +62,19 @@ public:
    /** Returns true if the process is terminated. */
    bool exitValue( int& value ) const;
 
-   int waitTermination();
+   void waitTermination();
    void close();
+
+   /** Command started by this process, if any */
+   const String& cmd() const { return m_cmd; }
+
+   int64 pid() const;
+   int32 exitValue() const { return m_exitval; }
+
+   // Redefine consume-signal as processes are always signaled when finished.
+   int32 consumeSignal( VMContext*, int32 count );
+   // Redefine consume-signal as processes are always signaled when finished.
+   int lockedConsumeSignal( VMContext*, int count );
 
 private:
    bool m_bOpen;
@@ -75,9 +89,11 @@ private:
    Stream* m_stdOut;
    Stream* m_stdErr;
 
+   String m_cmd;
 
    class TermWaiter: public Runnable
    {
+   public:
       TermWaiter( Process* owner );
       virtual ~TermWaiter();
       virtual void* run();
@@ -99,7 +115,8 @@ private:
 
    // system-level open
    void sys_open( const String& cmd, int openParams );
-   int sys_wait();
+   void sys_wait();
+   void sys_close();
 };
 
 

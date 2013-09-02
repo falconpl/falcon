@@ -19,6 +19,11 @@
 
 #include <falcon/error_base.h>
 
+#ifndef FALCON_PROCESS_ERROR_BASE
+   #define FALCON_PROCESS_ERROR_BASE        1140
+#endif
+
+
 #define FALCON_PROCESS_ERROR_ALREADY_OPEN (FALCON_PROCESS_ERROR_BASE+1)
 #define FALCON_PROCESS_ERROR_ALREADY_OPEN_MSG "Process already open"
 
