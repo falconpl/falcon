@@ -1,0 +1,9 @@
+/*
+  Test for Process Enum
+*/
+
+enum = ProcessEnum()
+
+while enum.next()
+   > enum.name, " - ", enum.cmdLine, ": ", enum.pid, " ( child of ", enum.ppid, ")"
+end
