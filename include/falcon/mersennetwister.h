@@ -67,7 +67,7 @@
 
 #include <falcon/mt.h>
 
-class FALCON_DYN_CLASS MTRand {
+class MTRand {
 // Data
 public:
     typedef Falcon::uint32 uint32;
@@ -147,7 +147,7 @@ protected:
 };
 
 
-class FALCON_DYN_CLASS MTRand_interlocked: public MTRand
+class MTRand_interlocked: public MTRand
 {
 
 //Methods
