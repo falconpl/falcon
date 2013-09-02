@@ -7,7 +7,7 @@
 struct MD4_CTX {
 	word32 buf[4];
 	word32 bits[2];
-	byte  in[64];
+	union {byte bytes[64]; word32 words[16];}  in;
 };
 
 void MD4Init(struct MD4_CTX *context);

@@ -764,7 +764,7 @@ void MD4Hash::store(DataWriter* stream) const
    stream->write(_ctx.bits[0]);
    stream->write(_ctx.bits[1]);
 
-   stream->writeRaw( _ctx.in, sizeof(_ctx.in) );
+   stream->writeRaw( _ctx.in.bytes, sizeof(_ctx.in) );
 
    if( _finalized )
    {
@@ -785,7 +785,7 @@ void MD4Hash::restore( DataReader* stream )
    stream->read(_ctx.bits[0]);
    stream->read(_ctx.bits[1]);
 
-   stream->read( _ctx.in, sizeof(_ctx.in) );
+   stream->read( _ctx.in.bytes, sizeof(_ctx.in) );
 
    if( _finalized )
    {

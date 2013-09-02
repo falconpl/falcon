@@ -211,7 +211,7 @@ void tiger_update(tiger_ctx *ctx, const byte *buffer, word32 len)
 void tiger_finalize(tiger_ctx *ctx)
 {
     register word64 i, j;
-    byte temp[64];
+    union {byte bytes[64]; word64 words[8];} temp;
     i = ctx->index;
 #ifdef BIG_ENDIAN
     for(j=0; j<i; j++)
@@ -223,24 +223,24 @@ void tiger_finalize(tiger_ctx *ctx)
         temp[j^7] = 0;
 #else
     for(j=0; j<i; j++)
-        temp[j] = ctx->block[j];
+        temp.bytes[j] = ctx->block[j];
 
-    temp[j++] = 0x01;
+    temp.bytes[j++] = 0x01;
     for(; j&7; j++)
-        temp[j] = 0;
+        temp.bytes[j] = 0;
 #endif
     if(j>56)
     {
         for(; j<64; j++)
-            temp[j] = 0;
-        tiger_compress(((word64*)temp), ctx->state);
+            temp.bytes[j] = 0;
+        tiger_compress(((word64*)temp.words), ctx->state);
         j=0;
     }
 
     for(; j<56; j++)
-        temp[j] = 0;
-    ((word64*)(&(temp[56])))[0] = (ctx->blockcount << 9) + (ctx->index << 3);
-    tiger_compress(((word64*)temp), ctx->state);
+        temp.bytes[j] = 0;
+    ((word64*)(&(temp.words[56])))[0] = (ctx->blockcount << 9) + (ctx->index << 3);
+    tiger_compress(((word64*)temp.words), ctx->state);
 }
 
 /* the output as presented at http://www.cs.technion.ac.il/~biham/Reports/Tiger/testresults.html */
