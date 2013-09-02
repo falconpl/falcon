@@ -52,7 +52,7 @@ public:
 };
 
 
-class ClassProcessEnum: public ClassShared
+class ClassProcessEnum: public Class
 {
 public:
    ClassProcessEnum();

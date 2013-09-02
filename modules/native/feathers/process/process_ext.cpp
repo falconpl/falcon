@@ -607,7 +607,7 @@ namespace CProcessEnum {
    enum = ProcessEnum()
 
    while enum.next()
-      > enum.name, ":", enum.pid, "( child of ", enum.parentPid, ")"
+      > enum.name, " - ", enum.cmdLine, ": ", enum.pid, " ( child of ", enum.ppid, ")"
    end
    @endcode
 
@@ -698,7 +698,8 @@ static void get_name( const Class*, const String&, void* instance, Item& value )
 }
 
 
-ClassProcessEnum::ClassProcessEnum()
+ClassProcessEnum::ClassProcessEnum():
+         Class("ProcessEnum")
 {
    setParent(Engine::instance()->stdHandlers()->sharedClass());
 
