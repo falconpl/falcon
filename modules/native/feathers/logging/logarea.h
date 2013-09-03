@@ -64,7 +64,7 @@ private:
    class Private;
    Private* _p;
 
-   FALCON_REFERENCECOUNT_DECLARE_INCDEC(LogArea);
+   FALCON_REFERENCECOUNT_DECLARE_INCDEC_NOEXPORT(LogArea);
 };
 
 }

@@ -156,7 +156,7 @@ private:
    void disposeMessage(LogMessage* msg);
 
 private:
-   FALCON_REFERENCECOUNT_DECLARE_INCDEC(LogChannel);
+   FALCON_REFERENCECOUNT_DECLARE_INCDEC_NOEXPORT(LogChannel);
 };
 
 }

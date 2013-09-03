@@ -75,6 +75,30 @@ private:
    mutable atomic_int m_count;
 };
 
+template<class __T>
+class RefCounter_noexport
+{
+public:
+   /** Creates the reference counter.
+    \param owner The instance that will be destroyed as reference count hits 0.
+    \param initCount Initial reference count (usually 1).
+    */
+   RefCounter_noexport( int32 initCount=1 ):
+      m_count( initCount )
+   {}
+
+   /** Increments the reference count by one. */
+   void inc() const { atomicInc(m_count); }
+
+   /** Decrements the reference count by one.
+    \this method may destroy the owner of the reference counter (and this item with it).
+    */
+   void dec(__T* data) { if( atomicDec(m_count)<= 0) delete data; }
+
+private:
+   mutable atomic_int m_count;
+};
+
 /**
  * Class localizing in a local stack a reference counted entity.
  *
@@ -117,6 +141,15 @@ private:
    void incref() { m_refcounter_##clsname.inc(); }\
    void decref() { m_refcounter_##clsname.dec(this); }\
    friend class RefCounter<clsname>;\
+   private:
+
+#define FALCON_REFERENCECOUNT_DECLARE_INCDEC_NOEXPORT(clsname) \
+   private:\
+      RefCounter_noexport<clsname> m_refcounter_##clsname; \
+   public:\
+   void incref() { m_refcounter_##clsname.inc(); }\
+   void decref() { m_refcounter_##clsname.dec(this); }\
+   friend class RefCounter_noexport<clsname>;\
    private:
 
 }
