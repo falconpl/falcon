@@ -16,7 +16,7 @@
 namespace MXML {
 
 Falcon::String escape( const Falcon::String &unescaped );
-Falcon::Stream & writeEscape( Falcon::TextWriter &stream, const Falcon::String &src );
+Falcon::TextWriter & writeEscape( Falcon::TextWriter &stream, const Falcon::String &src );
 Falcon::uint32 parseEntity( const Falcon::String &entity );
 
 }

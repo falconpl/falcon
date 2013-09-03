@@ -53,8 +53,6 @@ public:
    virtual void gcMarkInstance( void* instance, uint32 mark ) const;
    virtual bool gcCheckInstance( void* instance, uint32 mark ) const;
 
-   virtual void store( VMContext* ctx, DataWriter* stream, void* instance ) const;
-   virtual void restore( VMContext* ctx, DataReader* stream ) const;
 };
 
 

@@ -262,7 +262,7 @@ void Selector::gcMark( uint32 mark )
             oldVersion = _p->m_mpxVersion;
          }
          else {
-            ++item;
+            ++mpi;
          }
       }
       _p->m_mtxMultiplex.unlock();

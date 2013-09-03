@@ -3,9 +3,9 @@
 /*
  *    Copyright (C) 2001 Nikos Mavroyanopoulos
  *
- *    This library is free software; you can redistribute it and/or modify it 
- *    under the terms of the GNU Library General Public License as published 
- *    by the Free Software Foundation; either version 2 of the License, or 
+ *    This library is free software; you can redistribute it and/or modify it
+ *    under the terms of the GNU Library General Public License as published
+ *    by the Free Software Foundation; either version 2 of the License, or
  *    (at your option) any later version.
  *
  *    This library is distributed in the hope that it will be useful,
@@ -19,7 +19,7 @@
  *    Boston, MA 02111-1307, USA.
  */
 
-/* 
+/*
  * The algorithm is due to Ron Rivest.  This code is based on code
  * written by Colin Plumb in 1993.
  */
@@ -48,7 +48,7 @@ inline word32 *word32nswap(word32 *buf, word32 n)
     return buf;
 }
 
- 
+
 
 /*
  * This code implements the MD4 message-digest algorithm.
@@ -91,7 +91,7 @@ void MD4Update(struct MD4_CTX *ctx, const byte *buf, word32 len)
 	/* Handle any leading odd-sized chunks */
 
 	if (t) {
-		byte *p = (byte *) ctx->in + t;
+		byte *p = (byte *) ctx->in.bytes + t;
 
 		t = 64 - t;
 		if (len < t) {
@@ -99,28 +99,28 @@ void MD4Update(struct MD4_CTX *ctx, const byte *buf, word32 len)
 			return;
 		}
 		memcpy(p, buf, t);
-		word32nswap((word32 *) ctx->in, 16);
-		MD4Transform(ctx->buf, (word32 *) ctx->in);
+		word32nswap((word32 *) ctx->in.words, 16);
+		MD4Transform(ctx->buf, (word32 *) ctx->in.words);
 		buf += t;
 		len -= t;
 	}
 	/* Process data in 64-byte chunks */
 
 	while (len >= 64) {
-		memcpy(ctx->in, buf, 64);
-		word32nswap((word32 *) ctx->in, 16);
-		MD4Transform(ctx->buf, (word32 *) ctx->in);
+		memcpy(ctx->in.bytes, buf, 64);
+		word32nswap((word32 *) ctx->in.words, 16);
+		MD4Transform(ctx->buf, (word32 *) ctx->in.words);
 		buf += 64;
 		len -= 64;
 	}
 
 	/* Handle any remaining bytes of data. */
 
-	memcpy(ctx->in, buf, len);
+	memcpy(ctx->in.bytes, buf, len);
 }
 
 /*
- * Final wrapup - pad to 64-byte boundary with the bit pattern 
+ * Final wrapup - pad to 64-byte boundary with the bit pattern
  * 1 0* (64-bit count of bits processed, MSB-first)
  */
 void MD4Final(struct MD4_CTX *ctx, byte *digest)
@@ -133,7 +133,7 @@ void MD4Final(struct MD4_CTX *ctx, byte *digest)
 
 	/* Set the first char of padding to 0x80.  This is safe since there is
 	   always at least one byte free */
-	p = ctx->in + count;
+	p = ctx->in.bytes + count;
 	*p++ = 0x80;
 
 	/* Bytes of padding needed to make 64 bytes */
@@ -143,24 +143,24 @@ void MD4Final(struct MD4_CTX *ctx, byte *digest)
 	if (count < 8) {
 		/* Two lots of padding:  Pad the first block to 64 bytes */
 		memset(p, 0, count);
-		word32nswap((word32 *) ctx->in, 16);
-		MD4Transform(ctx->buf, (word32 *) ctx->in);
+		word32nswap((word32 *) ctx->in.words, 16);
+		MD4Transform(ctx->buf, (word32 *) ctx->in.words);
 
 		/* Now fill the next block with 56 bytes */
-		memset(ctx->in, 0, 56);
+		memset(ctx->in.bytes, 0, 56);
 	} else {
 		/* Pad block to 56 bytes */
 		memset(p, 0, count - 8);
 	}
-	word32nswap((word32 *) ctx->in, 14);
+	word32nswap((word32 *) ctx->in.words, 14);
 
 	/* Append length in bits and transform */
-	((word32 *) ctx->in)[14] = ctx->bits[0];
-	((word32 *) ctx->in)[15] = ctx->bits[1];
+	((word32 *) ctx->in.words)[14] = ctx->bits[0];
+	((word32 *) ctx->in.words)[15] = ctx->bits[1];
 
-	MD4Transform(ctx->buf, (word32 *) ctx->in);
+	MD4Transform(ctx->buf, (word32 *) ctx->in.words);
 	word32nswap((word32 *) ctx->buf, 4);
-	
+
 	if (digest!=NULL)
 		memcpy(digest, ctx->buf, 16);
 	memset(ctx, 0, sizeof(MD4_CTX));	/* In case it's sensitive */

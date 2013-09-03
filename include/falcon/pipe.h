@@ -22,11 +22,10 @@
 #include <falcon/filedata.h>
 #include <falcon/streamtraits.h>
 
+#include <falcon/fstream.h>
+#include <falcon/stdstreamtraits.h>
+
 namespace Falcon {
-
-   class ReadOnlyFStream;
-   class WriteOnlyFStream;
-
 namespace Sys {
 
 /** System independent abstraction for linked inter-process sockets.
@@ -76,7 +75,7 @@ public:
     * won't be accessible through the readSide() method, and closing
     * this Pipe won't close the read side.
     */
-   ReadOnlyFStream* getReadStream();
+   Stream* getReadStream();
 
    /** Create a write-only stream out of the write side of the pipe.
     * The write-side stream data is passed on the newly created read stream;
@@ -84,7 +83,7 @@ public:
     * won't be accessible through the writeSide() method, and closing
     * this Pipe won't close the write side.
     */
-   WriteOnlyFStream* getWriteStream();
+   Stream* getWriteStream();
 
    /** Traits for streams that can be interpreted as directional, piped FileData.
     */

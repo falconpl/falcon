@@ -6,7 +6,9 @@
 
 
 if(WIN32)
-   set( SYS_RC logging.rc )
+   if (NOT MINGW)
+      set( SYS_RC logging.rc )
+   endif()
    set( SYS_SRC logchannel_syslog_win.cpp  )
 else()
    set( SYS_SRC logchannel_syslog_posix.cpp )
