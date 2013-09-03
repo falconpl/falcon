@@ -229,8 +229,7 @@ bool Process::terminate( bool severe )
                .sysError((unsigned int) errno ) );
    }
 
-
-   return false;
+   return true;
 }
 
 int64 Process::pid() const
@@ -275,7 +274,6 @@ void Process::sys_open( const String& cmd, int params )
                         .extra("OUT pipe")
                         .sysError((unsigned int) errno));
    }
-
 
    if ( (params & MERGE_AUX) != 0 )
    {

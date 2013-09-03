@@ -17,6 +17,10 @@ add_library(process_fm MODULE
    process.cpp
    process_ext.cpp
    process_mod.cpp
+   
+   process.h
+   process_ext.h
+   process_mod.h
    ${SYS_SPECIFIC}
 )
 

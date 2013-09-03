@@ -45,10 +45,11 @@
 #define FALCON_PROCESS_ERROR_ERRLIST4      (FALCON_PROCESS_ERROR_BASE+6)
 #define FALCON_PROCESS_ERROR_ERRLIST4_MSG  "Internal error while reading process entries"
 
-#define FALCON_PROCESS_MSG_allstr    "All the elements in the first parameter must be strings"
-#define FALCON_PROCESS_MSG_prccreate "Can't open the process"
-#define FALCON_PROCESS_MSG_waitfail  "Wait failed"
-#define FALCON_PROCESS_MSG_termfail  "Terminate failed"
+#define FALCON_PROCESS_ERROR_WAITFAIL      (FALCON_PROCESS_ERROR_BASE+7)
+#define FALCON_PROCESS_ERROR_WAITFAIL_MSG  "Wait failed"
+
+#define FALCON_PROCESS_ERROR_OPEN          ( FALCON_PROCESS_ERROR_BASE+8 )
+#define FALCON_PROCESS_ERROR_OPEN_MSG      "Failed to open the process"
 
 #include <falcon/setup.h>
 #include <falcon/string.h>

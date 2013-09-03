@@ -17,13 +17,18 @@
    MS-Windows specific implementation of openProcess
 */
 
-#include <falcon/fstream_sys_win.h>
-#include <falcon/memory.h>
+#include <falcon/stream.h>
+#include <falcon/vmcontext.h>
+#include <falcon/pipestreams.h>
 
-#include "process_win.h"
+#include "process_mod.h"
+#include "process_ext.h"
+#include "process.h"
 
-namespace Falcon { namespace Sys {
+#include <tlhelp32.h>
 
+namespace Falcon { 
+namespace Mod {
 
 namespace {
 
@@ -49,19 +54,29 @@ struct AutoBuf
 };
 
 
-String s_fullCommand(String& command)
+static void s_fullCommand(const String& command, String& finalCmd)
 {
-   String finalCmd;
-   
-   AutoBuf fileNameBuf(command);
+   Falcon::length_t pos = command.find(' ');
+   if( pos != String::npos )
+   {
+      finalCmd = command.subString(0, pos );
+   }
+   else
+   {
+      finalCmd = command;
+   }
+
+   AutoBuf fileNameBuf(finalCmd);
    TCHAR fullCommand[1024];
    TCHAR* filePart;
-   if ( ! SearchPath( NULL, fileNameBuf.buf, NULL, 1024, fullCommand, &filePart ) )
-      finalCmd.bufferize(fileNameBuf.buf);
+   if ( SearchPath( NULL, fileNameBuf.buf, NULL, 1024, fullCommand, &filePart ) > 0)
+   {
+      finalCmd.bufferize(fileNameBuf.buf) + command.subString(pos);
+   }
    else
-      finalCmd.bufferize(fullCommand);
-
-   return finalCmd;
+   {
+      finalCmd = command;
+   }
 }
 
 } // anonymous namespace
@@ -99,18 +114,36 @@ bool processTerminate( uint64 id )
 
 //====================================================================
 // Process enumerator
+//====================================================================
+
+namespace {
+class WIN_PROC_HANDLE
+{
+public:
+   HANDLE hSnap;
+   PROCESSENTRY32 process;
+};
+}
+
+
 ProcessEnum::ProcessEnum()
 {
    WIN_PROC_HANDLE *ph = new WIN_PROC_HANDLE;
    ph->hSnap = CreateToolhelp32Snapshot( TH32CS_SNAPPROCESS, 0 );
    ph->process.dwSize = sizeof( ph->process );
    if ( Process32First( ph->hSnap, &ph->process ) )
+   {
       m_sysdata = ph;
+   }
    else
    {
       CloseHandle( ph->hSnap );
       delete ph;
       m_sysdata = 0;
+
+       throw FALCON_SIGN_XERROR( ::Falcon::Ext::ProcessError, FALCON_PROCESS_ERROR_ERRLIST3,
+               .desc(FALCON_PROCESS_ERROR_ERRLIST3_MSG )
+               .sysError((uint32) GetLastError() ));
    }
 }
 
@@ -119,220 +152,109 @@ ProcessEnum::~ProcessEnum()
    this->close();
 }
 
-int ProcessEnum::next( String &name, uint64 &pid, uint64 &ppid, String &path )
+bool ProcessEnum::next()
 {
    if ( m_sysdata == 0 )
-      return 0;
+   {
+      return false;
+   }
    
    WIN_PROC_HANDLE *ph = reinterpret_cast<WIN_PROC_HANDLE*>( m_sysdata );
-   pid = ph->process.th32ProcessID;
-   ppid = ph->process.th32ParentProcessID;
-   path.bufferize( ph->process.szExeFile );
-   name.bufferize( ph->process.szExeFile );
+   m_pid = ph->process.th32ProcessID;
+   m_ppid = ph->process.th32ParentProcessID;
+   m_commandLine.bufferize( ph->process.szExeFile );
+   m_name.bufferize( ph->process.szExeFile );
    
    if ( ! Process32Next( ph->hSnap, &ph->process ) )
    {
       CloseHandle( ph->hSnap );
       delete ph;
       m_sysdata = 0;
+      DWORD dwLastError = GetLastError();
+      if( dwLastError != ERROR_NO_MORE_FILES )
+      {
+         throw FALCON_SIGN_XERROR( ::Falcon::Ext::ProcessError, FALCON_PROCESS_ERROR_ERRLIST4,
+                  .desc(FALCON_PROCESS_ERROR_ERRLIST4_MSG )
+                  .sysError( dwLastError )
+                  );
+      }
+
+      // no more files.
+      return false;
    }
-   
-   return 1;
+
+   return true;
 }
 
-bool ProcessEnum::close()
+
+void ProcessEnum::close()
 {
    if ( ! m_sysdata  )
-      return true;
+   {
+      return;
+   }
 
    WIN_PROC_HANDLE *ph = (WIN_PROC_HANDLE *) m_sysdata;
    if ( ! CloseHandle( ph->hSnap ) )
    {
       delete ph;
       m_sysdata = 0;
-      return false;
+      throw FALCON_SIGN_XERROR( ::Falcon::Ext::ProcessError, 
+               FALCON_PROCESS_ERROR_ERRLIST2,
+                 .desc(FALCON_PROCESS_ERROR_ERRLIST2_MSG )
+                 .sysError( (uint32) GetLastError )
+                 );
    }
    delete ph;
    m_sysdata = 0;
-
-   return true;
 }
 
 //====================================================================
 // Generic system interface.
+//====================================================================
 
-bool spawn(String** argv, bool overlay, bool background, int *returnValue )
+
+class Process::Private
 {
-   String finalCmd = s_fullCommand(*argv[0]);
-   
-   // build the complete string
-   for(size_t i = 1; argv[ i ] != 0; i++)
-   {
-      finalCmd.append( ' ' );
-      finalCmd.append( *argv[i] );
+public:
+   HANDLE hPipeInRd;
+   HANDLE hPipeInWr;
+   HANDLE hPipeOutRd;
+   HANDLE hPipeOutWr;
+   HANDLE hPipeErrRd;
+   HANDLE hPipeErrWr;
+
+   HANDLE hChildProcess;
+   DWORD hChildProcID;
+
+   Private() {
+      hChildProcess = INVALID_HANDLE_VALUE;
+      
+      hPipeInRd = INVALID_HANDLE_VALUE;
+      hPipeInWr = INVALID_HANDLE_VALUE;
+      hPipeOutRd = INVALID_HANDLE_VALUE;
+      hPipeOutWr = INVALID_HANDLE_VALUE;
+      hPipeErrRd = INVALID_HANDLE_VALUE;
+      hPipeErrWr = INVALID_HANDLE_VALUE;
    }
 
-   PROCESS_INFORMATION proc;
-   STARTUPINFO si;             
-   memset( &si, 0, sizeof( si ) );
-   si.cb = sizeof( si );
+   ~Private() {
    
-   DWORD iFlags = 0;      
-   if( background )
-   {
-      iFlags = DETACHED_PROCESS;
-      si.dwFlags = STARTF_USESHOWWINDOW;
-      si.wShowWindow = SW_HIDE;
    }
-      
-   if( overlay )
+
+   void closeAll()
    {
-      si.hStdInput = GetStdHandle( STD_INPUT_HANDLE );
-      si.hStdOutput = GetStdHandle( STD_OUTPUT_HANDLE );
-      si.hStdError = GetStdHandle( STD_ERROR_HANDLE );
-      si.dwFlags |= STARTF_USESTDHANDLES;
+      if( hPipeInRd != INVALID_HANDLE_VALUE ) { CloseHandle( hPipeInRd ); }
+      if( hPipeInWr != INVALID_HANDLE_VALUE ) { CloseHandle( hPipeInWr ); }
+      if( hPipeOutRd != INVALID_HANDLE_VALUE ) { CloseHandle( hPipeOutRd ); }
+      if( hPipeOutWr != INVALID_HANDLE_VALUE ) { CloseHandle( hPipeOutWr ); }
+      if( hPipeErrRd != INVALID_HANDLE_VALUE ) { CloseHandle( hPipeErrRd ); }
+      if( hPipeErrWr != INVALID_HANDLE_VALUE ) { CloseHandle( hPipeErrWr ); }
    }
-   
-   AutoBuf cmdbuf(finalCmd);
-   if ( ! CreateProcess( NULL,
-                         cmdbuf.buf,
-                         NULL,
-                         NULL,
-                         TRUE, //Inerhit handles!
-                         iFlags,
-                         NULL,
-                         NULL,
-                         &si,
-                         &proc
-                         ) )
-   {
-      *returnValue = GetLastError();
-      return false;
-   }
-      
-   // we have to change our streams with the ones of the process.
-   WaitForSingleObject( proc.hProcess, INFINITE );
-   DWORD iRet;
-   GetExitCodeProcess( proc.hProcess, &iRet );
-   //free( completeCommand );
-   if ( overlay )
-      _exit(iRet);
-   
-   CloseHandle( proc.hProcess );
-   CloseHandle( proc.hThread );
-   *returnValue = iRet;
-   return (int) true;
-}
+};
 
 
-bool spawn_read( String **argv, bool overlay, bool background, int *returnValue, String *sOut )
-{
-   String finalCmd = s_fullCommand(*argv[0]);
-   
-   // build the complete string
-   for(size_t i = 1; argv[ i ] != 0; i++)
-   {
-      finalCmd.append( ' ' );
-      finalCmd.append( *argv[i] );
-   }
-   HANDLE hRead = INVALID_HANDLE_VALUE;
-   HANDLE hWrite = INVALID_HANDLE_VALUE;
-   
-   SECURITY_ATTRIBUTES secatt;
-   secatt.nLength = sizeof( secatt );
-   secatt.lpSecurityDescriptor = NULL;
-   secatt.bInheritHandle = TRUE;
-   
-   if ( !CreatePipe( &hRead, &hWrite, &secatt, 0 ) )
-   {
-      *returnValue = GetLastError();
-      return false;
-   }
-   
-   PROCESS_INFORMATION proc;
-   STARTUPINFO si;
-   memset( &si, 0, sizeof( si ) );
-   si.cb = sizeof( si );
-   
-   DWORD iFlags = 0;
-   if( background )
-   {
-      iFlags = DETACHED_PROCESS;
-      si.dwFlags = STARTF_USESHOWWINDOW; //| //STARTF_USESTDHANDLES
-      si.wShowWindow = SW_HIDE;
-   }
-   
-   if( overlay )
-   {
-      si.hStdInput = GetStdHandle( STD_INPUT_HANDLE );
-      si.hStdError = GetStdHandle( STD_ERROR_HANDLE );
-   }
-      
-   si.dwFlags |= STARTF_USESTDHANDLES;
-   si.hStdOutput = hWrite;
-   
-   AutoBuf cmdbuf(finalCmd);
-   if ( ! CreateProcess( NULL,
-                         cmdbuf.buf,
-                         NULL,
-                         NULL,
-                         TRUE, //Inerhit handles!
-                         iFlags,
-                         NULL,
-                         NULL,
-                         &si,
-                         &proc
-                         ) )     
-   {
-      *returnValue = GetLastError();
-      return false;
-   }   
-   
-   // read from the input handle
-   char buffer[4096];
-   DWORD readin;
-   BOOL peek;
-   bool signaled;
-   
-   do
-   {
-      signaled = WaitForSingleObject( proc.hProcess, 10 ) == WAIT_OBJECT_0;
-      
-      // nothing to read?
-      peek = PeekNamedPipe( hRead, NULL, 0,  NULL, &readin, NULL );
-      
-      if ( readin > 0 )
-      {
-         ReadFile( hRead, buffer, readin, &readin, false );
-         if ( readin != 0 )
-         {
-            String temp;
-            temp.adopt( buffer, readin, 0 );
-            sOut->append( temp );
-         }
-      }
-      
-   }
-   while( readin > 0 || ! signaled );
-   
-   CloseHandle( hRead );
-   DWORD iRet;
-   // we have to change our streams with the ones of the process.
-   GetExitCodeProcess( proc.hProcess, &iRet );
-   //free( completeCommand );
-   if ( overlay )
-   {
-      _exit(iRet);
-   }
-   
-   CloseHandle( proc.hProcess );
-   CloseHandle( proc.hThread );
-   *returnValue = iRet;
-   return (int) true;
-}
-
-
-const char *shellName()
+static const char *shellName()
 {
    char *shname = getenv("ComSpec");
    if ( shname == 0 ) {
@@ -346,69 +268,138 @@ const char *shellName()
    return shname;
 }
 
-const char *shellParam()
+static const char *shellParam()
 {
    return "/C";
 }
 
-bool openProcess(Process* _ph, String **argv, bool sinkIn, bool sinkOut, bool sinkErr, bool mergeErr, bool bg )
+bool Process::terminate( bool )
 {
-   WinProcess* ph = static_cast<WinProcess*>(_ph);
+   m_mtx.lock();
+   if( (! m_bOpen) || m_done )
+   {
+      m_mtx.unlock();
+      return false;
+   }
+   m_mtx.unlock();
+
+   if( ! CloseHandle( _p->hChildProcess ) )
+   {
+      throw FALCON_SIGN_XERROR(::Falcon::Ext::ProcessError,
+               FALCON_PROCESS_ERROR_TERMINATE,
+               .desc(FALCON_PROCESS_ERROR_TERMINATE_MSG)
+               .sysError((unsigned int) GetLastError() ) );
+   }
+
+   return true;
+}
+
+void Process::sys_init()
+{
+   _p = new Private();
    
-   ph->hPipeInRd = INVALID_HANDLE_VALUE;
-   ph->hPipeInWr = INVALID_HANDLE_VALUE;
-   ph->hPipeOutRd = INVALID_HANDLE_VALUE;
-   ph->hPipeOutWr = INVALID_HANDLE_VALUE;
-   ph->hPipeErrRd = INVALID_HANDLE_VALUE;
-   ph->hPipeErrWr = INVALID_HANDLE_VALUE;
+}
+
+
+void Process::sys_destroy()
+{
+   delete _p;
+}
+
    
+void Process::sys_wait()
+{
+   if( WaitForSingleObject( _p->hChildProcess, INFINITE ) == WAIT_FAILED )
+   {
+      throw FALCON_SIGN_XERROR( ::Falcon::Ext::ProcessError, FALCON_PROCESS_ERROR_WAITFAIL, 
+         .desc(FALCON_PROCESS_ERROR_WAITFAIL_MSG)
+         .sysError( (uint32) GetLastError() ) );
+   }
+
+   m_exitval = -1;
+   DWORD dwExitCode = 0;
+   GetExitCodeProcess( _p->hChildProcess, &dwExitCode );
+
+   if( dwExitCode )
+   {
+      m_exitval = (int) static_cast<unsigned int>(dwExitCode);
+   }
+}
+
+
+void Process::sys_close()
+{
+   if( _p->hChildProcess != INVALID_HANDLE_VALUE ) 
+   {
+      CloseHandle(_p->hChildProcess);
+      _p->hChildProcess = INVALID_HANDLE_VALUE;
+   }
+}
+
+
+void Process::sys_open( const String& cmd, int params )
+{      
    // prepare security attributes
    SECURITY_ATTRIBUTES secAtt;
    secAtt.nLength = sizeof( secAtt );
    secAtt.lpSecurityDescriptor = NULL;
    secAtt.bInheritHandle = TRUE;
    
-   if ( ! sinkIn )
-      if ( !CreatePipe( &ph->hPipeInRd, &ph->hPipeInWr, &secAtt, 0 ) )
-      {
-         ph->lastError( GetLastError() );
-         return false;
-      }
-   
-   if ( ! sinkOut )
+   try
    {
-      if ( ! CreatePipe( &ph->hPipeOutRd, &ph->hPipeOutWr, &secAtt, 0 ) )
+      if ( !CreatePipe( &_p->hPipeInRd, &_p->hPipeInWr, &secAtt, 0 ) )
       {
-         ph->lastError( GetLastError() );
-         CloseHandle( ph->hPipeInRd );
-         CloseHandle( ph->hPipeInWr );
-         return false;
+         throw FALCON_SIGN_XERROR( ::Falcon::Ext::ProcessError,
+               FALCON_PROCESS_ERROR_OPEN_PIPE,
+               .desc( FALCON_PROCESS_ERROR_OPEN_PIPE_MSG )
+               .extra("IN pipe")
+               .sysError(GetLastError()) );
       }
-      
-      if ( mergeErr )
+
+      if ( ! CreatePipe( &_p->hPipeOutRd, &_p->hPipeOutWr, &secAtt, 0 ) )
       {
-         ph->hPipeErrRd = ph->hPipeOutRd;
-         ph->hPipeErrWr = ph->hPipeOutWr;
+         throw FALCON_SIGN_XERROR( ::Falcon::Ext::ProcessError,
+               FALCON_PROCESS_ERROR_OPEN_PIPE,
+               .desc( FALCON_PROCESS_ERROR_OPEN_PIPE_MSG )
+               .extra("OUT pipe")
+               .sysError(GetLastError()) );
+      }
+          
+      if ( (params & MERGE_AUX) != 0 )
+      {
+         _p->hPipeErrRd = _p->hPipeOutRd;
+         _p->hPipeErrWr = _p->hPipeOutWr;
+      }
+      else
+      {
+         if ( !CreatePipe( &_p->hPipeErrRd, &_p->hPipeErrWr, &secAtt, 0 ) )
+         {
+            throw FALCON_SIGN_XERROR( ::Falcon::Ext::ProcessError,
+                  FALCON_PROCESS_ERROR_OPEN_PIPE,
+                  .desc( FALCON_PROCESS_ERROR_OPEN_PIPE_MSG )
+                  .extra("AUX pipe")
+                  .sysError(GetLastError()) );
+         }
       }
    }
-   
-   if ( ! sinkErr && ! mergeErr )
-      if ( !CreatePipe( &ph->hPipeErrRd, &ph->hPipeErrWr, &secAtt, 0 ) )
-      {
-         ph->lastError( GetLastError() );
-         CloseHandle( ph->hPipeInRd );
-         CloseHandle( ph->hPipeInWr );
-         CloseHandle( ph->hPipeOutRd );
-         CloseHandle( ph->hPipeOutWr );
-         return false;
-      }
-   
-   String finalCmd = s_fullCommand(*argv[0]);
-   // build the complete string
-   for(size_t i = 1; argv[ i ] != 0; i++)
+   catch(...)
    {
-      finalCmd.append( ' ' );
-      finalCmd.append( *argv[i] );
+      _p->closeAll();
+      throw;
+   }
+
+   String fullCmd;
+   if( (params & USE_PATH) != 0 )
+   {
+      s_fullCommand( cmd, fullCmd );
+   }
+   else {
+      fullCmd = cmd;
+   }
+
+   if( (params & USE_SHELL) != 0 )
+   {
+      fullCmd = String(shellName()) + " " + shellParam() + fullCmd;
    }
 
    STARTUPINFO si;
@@ -417,23 +408,19 @@ bool openProcess(Process* _ph, String **argv, bool sinkIn, bool sinkOut, bool si
    memset( &si, 0, sizeof( si ) );
    si.cb = sizeof( si );
    
-   if ( ! bg )
-   {
-      // using show_hide AND using invalid handlers for unused streams
-      si.dwFlags = STARTF_USESTDHANDLES;
-      
-      si.hStdInput = ph->hPipeInRd;
-      si.hStdOutput = ph->hPipeOutWr;
-      si.hStdError = ph->hPipeErrWr;
-   }
-   else
+   si.dwFlags = STARTF_USESTDHANDLES;
+   si.hStdInput = _p->hPipeInRd;
+   si.hStdOutput = _p->hPipeOutWr;
+   si.hStdError = _p->hPipeErrWr;
+   
+   if( (params & BACKGROUND) != 0 )
    {
       si.dwFlags |= STARTF_USESHOWWINDOW;
       si.wShowWindow = SW_HIDE;
       iFlags |= DETACHED_PROCESS;
    }
 
-   AutoBuf cmdbuf(finalCmd);
+   AutoBuf cmdbuf(fullCmd);
    if ( ! CreateProcess( NULL,
                          cmdbuf.buf,
                          NULL,
@@ -446,123 +433,60 @@ bool openProcess(Process* _ph, String **argv, bool sinkIn, bool sinkOut, bool si
                          &proc
                          ) )
    {
-      ph->lastError( GetLastError() );
-      CloseHandle( ph->hPipeInWr );
-      CloseHandle( ph->hPipeOutRd );
-      CloseHandle( ph->hPipeErrRd );
+      _p->closeAll();
+
+      throw FALCON_SIGN_XERROR( ::Falcon::Ext::ProcessError,
+                  FALCON_PROCESS_ERROR_OPEN,
+                  .desc( FALCON_PROCESS_ERROR_OPEN_MSG )
+                  .sysError(GetLastError()) );
    }
    else
    {
-     ph->m_procId = proc.dwProcessId;
-     ph->m_procHandle = proc.hProcess;
+     _p->hChildProcID = proc.dwProcessId;
+     _p->hChildProcess = proc.hProcess;
      
      CloseHandle( proc.hThread ); // unused
+
+      // close unused pipe ends
+      CloseHandle( _p->hPipeInRd );
+      CloseHandle( _p->hPipeOutWr );
+      if( (params & MERGE_AUX) == 0 )
+      {
+         CloseHandle( _p->hPipeErrWr );
+      }
+
+      // save the system-specific file streams, if not sunk
+      if ( (params & SINK_INPUT) == 0 )
+      {
+         m_stdIn = new WritePipeStream( new Sys::FileData(_p->hPipeInWr) );
+      }
+      else {
+         CloseHandle( _p->hPipeInWr );
+      }
+
+      if ( (params & SINK_OUTPUT) == 0 )
+      {
+         m_stdOut = new ReadPipeStream( new Sys::FileData(_p->hPipeOutRd) );
+      }
+      else
+      {
+         CloseHandle( _p->hPipeOutRd );
+      }
+
+      if ( (params & (SINK_AUX|MERGE_AUX) ) == 0 )
+      {
+         m_stdErr = new ReadPipeStream( new Sys::FileData(_p->hPipeErrRd) );
+      }
+      else
+      {
+         CloseHandle( _p->hPipeErrRd );
+      }
    }
-   
-   
-   return true;
 }
 
-//====================================================================
-// WinProcess system area.
-
-WinProcess::WinProcess() :
-   Process()
-{ }
-
-WinProcess::~WinProcess()
+int64 Process::pid() const
 {
-   if ( ! done() )
-   {
-      close();
-      terminate( true );
-      wait( true );
-   }
-}
-
-
-bool WinProcess::wait( bool block )
-{
-   DWORD dw;
-
-   if ( block ) {
-      dw = WaitForSingleObject( m_procHandle, INFINITE );
-   }
-   else {
-      dw = WaitForSingleObject( m_procHandle, 0 );
-   }
-
-   if ( dw == WAIT_OBJECT_0 ) {
-      done( true );
-      GetExitCodeProcess( m_procHandle, &dw );
-      processValue( dw );
-      CloseHandle( m_procHandle );
-      return true;
-   }
-   else if ( dw == WAIT_TIMEOUT ) {
-      done( false );
-      return true;
-   }
-
-   lastError( GetLastError() );
-   return false;
-}
-
-bool WinProcess::close()
-{
-   if ( hPipeInWr != INVALID_HANDLE_VALUE )
-      CloseHandle( hPipeInWr );
-   if ( hPipeOutRd != INVALID_HANDLE_VALUE )
-      CloseHandle( hPipeOutRd  );
-   if ( hPipeErrRd != INVALID_HANDLE_VALUE  )
-      CloseHandle( hPipeErrRd );
-   return true;
-}
-
-bool WinProcess::terminate( bool )
-{
-   if( TerminateProcess( m_procHandle, 0 ) ) {
-      done( true );
-      return true;
-   }
-
-   lastError( GetLastError() );
-   return false;
-}
-
-::Falcon::Stream *WinProcess::inputStream()
-{
-   if( hPipeInWr == INVALID_HANDLE_VALUE || done() )
-      return 0;
-
-   WinFileSysData *data = new WinFileSysData( hPipeInWr, 0, false, WinFileSysData::e_dirOut, true );
-   return new FileStream( data );
-}
-
-::Falcon::Stream *WinProcess::outputStream()
-{
-   if( hPipeOutRd == INVALID_HANDLE_VALUE || done() )
-      return 0;
-
-   WinFileSysData *data = new WinFileSysData( hPipeOutRd, 0, false, WinFileSysData::e_dirIn, true );
-
-   return new FileStream( data );
-}
-
-::Falcon::Stream *WinProcess::errorStream()
-{
-   if( hPipeErrRd == INVALID_HANDLE_VALUE || done() )
-      return 0;
-
-   WinFileSysData *data = new WinFileSysData( hPipeErrRd, 0, false, WinFileSysData::e_dirIn, true );
-
-   return new FileStream( data );
-
-}
-
-Process* Process::factory()
-{
-   return new WinProcess();
+   return (int64) _p->hChildProcID;
 }
 
 }} // ns Falcon::Sys

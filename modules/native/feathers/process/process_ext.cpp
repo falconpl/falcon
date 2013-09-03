@@ -103,10 +103,10 @@ static void internal_system( Function* func, VMContext* ctx, int mode, String* o
 
    if( out != 0 )
    {
-      Stream* stdout = prc->outputStream();
+      Stream* streamOut = prc->outputStream();
       int count;
       char buffer[1024];
-      while( (count = stdout->read(buffer,1024) ) > 0 )
+      while( (count = streamOut->read(buffer,1024) ) > 0 )
       {
          String temp;
          temp.adopt( buffer, count, 0 );

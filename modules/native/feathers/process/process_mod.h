@@ -21,11 +21,11 @@
 #include <falcon/string.h>
 #include <falcon/mt.h>
 #include <falcon/shared.h>
+#include <falcon/stream.h>
 
 #include "process.h"
 
 namespace Falcon {
-class Stream;
 class VMContext;
 class Class;
 
@@ -47,9 +47,9 @@ public:
    static const int USE_SHELL = 0x20;
    static const int USE_PATH = 0x40;
 
-   Stream* inputStream() const;
-   Stream* outputStream() const;
-   Stream* errorStream() const;
+   ::Falcon::Stream* inputStream() const;
+   ::Falcon::Stream* outputStream() const;
+   ::Falcon::Stream* errorStream() const;
 
    void open( const String& args, int openMode, bool async = true );
 
