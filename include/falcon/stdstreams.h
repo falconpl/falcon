@@ -18,7 +18,7 @@
 #define _FALCON_STDSTREAMS_H_
 
 #include <falcon/fstream.h>
-#include <falcon/stdstreamtraits.h>
+#include <falcon/stdmpxfactories.h>
 
 namespace Falcon {
 
@@ -37,9 +37,9 @@ class FALCON_DYN_CLASS StdInStream: public ReadOnlyFStream
 public:
    StdInStream( bool bDup = true );
    virtual ~StdInStream() {}
-   virtual StreamTraits* traits() const
+   virtual const Multiplex::Factory* multiplexFactory() const
    {
-      return Engine::streamTraits()->readPipeTraits();
+      return Engine::mpxFactories()->readPipeMpxFact();
    }
 };
 
@@ -63,9 +63,9 @@ public:
     */
    StdOutStream( bool bDup = true);
    virtual ~StdOutStream() {}
-   virtual StreamTraits* traits() const
+   virtual const Multiplex::Factory* multiplexFactory() const
    {
-      return Engine::streamTraits()->writePipeTraits();
+      return Engine::mpxFactories()->writePipeMpxFact();
    }
 };
 
@@ -89,9 +89,9 @@ public:
     */
    StdErrStream( bool bDup = true );
    virtual ~StdErrStream() {}
-   virtual StreamTraits* traits() const
+   virtual const Multiplex::Factory* multiplexFactory() const
    {
-      return Engine::streamTraits()->writePipeTraits();
+      return Engine::mpxFactories()->writePipeMpxFact();
    }
 };
 

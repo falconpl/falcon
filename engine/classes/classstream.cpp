@@ -28,6 +28,8 @@
 #include <falcon/streambuffer.h>
 #include <falcon/transcoder.h>
 
+#include <falcon/selectable.h>
+
 #include <string.h>
 
 namespace Falcon {
@@ -487,6 +489,34 @@ void* ClassStream::createInstance() const
 {
    // never really called
    return 0;
+}
+
+
+namespace {
+   class StreamSelectable: public Selectable
+   {
+   public:
+      StreamSelectable( const Class* cls, Stream* inst ):
+         Selectable( cls, inst )
+      {
+         inst->incref();
+      }
+
+      virtual ~StreamSelectable() {
+         static_cast<Stream*>(instance())->decref();
+      }
+
+      const Multiplex::Factory* factory() const {
+         return static_cast<Stream*>(instance())->multiplexFactory();
+      }
+   };
+}
+
+
+Selectable* ClassStream::getSelectableInterface( void* instance ) const
+{
+   Stream* stream = static_cast<Stream*>(instance);
+   return new StreamSelectable( this, stream );
 }
 
 }

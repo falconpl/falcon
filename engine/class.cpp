@@ -532,6 +532,11 @@ void Class::delegate( void*, Item*, const String& ) const
    throw FALCON_SIGN_ERROR( AccessError, e_non_delegable );
 }
 
+
+Selectable* Class::getSelectableInterface( void* ) const
+{
+   return 0;
+}
 //=====================================================================
 // VM Operator override.
 //

@@ -34,17 +34,18 @@ namespace Ext {
 
 static void internal_selector_add( VMContext* ctx, int32, bool bAdd )
 {
-   static Class* streamClass = Engine::handlers()->streamClass();
    Item* i_stream = ctx->param(0);
    Item* i_mode = ctx->param(1);
 
    Class* cls = 0;
    void* data = 0;
-   if( i_stream == 0 || ! i_stream->asClassInst(cls,data) || ! cls->isDerivedFrom(streamClass)
+   Selectable* resource = 0;
+   if( i_stream == 0 || ! i_stream->asClassInst(cls,data)
+       || ( resource = cls->getSelectableInterface(data) ) == 0
        || (i_mode != 0 && ! i_mode->isOrdinal() )
        )
    {
-      throw new ParamError(ErrorParam(e_inv_params, __LINE__, SRC).extra( "stream:Stream, mode:[N]") );
+      throw new ParamError(ErrorParam(e_inv_params, __LINE__, SRC).extra( "resource:Selectable, mode:[N]") );
    }
 
    int32 mode;
@@ -62,13 +63,12 @@ static void internal_selector_add( VMContext* ctx, int32, bool bAdd )
    }
 
    Selector* sel = static_cast<Selector*>(ctx->self().asInst());
-   Stream* sc = static_cast<Stream*>( cls->getParentData(streamClass,data) );
    if( bAdd )
    {
-      sel->add( sc, mode );
+      sel->add( resource, mode );
    }
    else {
-      sel->update( sc, mode );
+      sel->update( resource, mode );
    }
 
    ctx->returnFrame();
@@ -79,41 +79,41 @@ static void internal_selector_add( VMContext* ctx, int32, bool bAdd )
 /*#
   @method add Selector
   @brief Adds a stream to the selector with a given mode
-  @param stream The stream to be added
+  @param resource The stream to be added
   @optparam mode Mode of read-write.
 
  */
-FALCON_DECLARE_FUNCTION( add, "stream:Stream, mode:[N]" );
+FALCON_DECLARE_FUNCTION( add, "resource:<selectable>, mode:[N]" );
 
 /*#
   @method update Selector
   @brief Changes the stream selection mode.
-  @param stream The stream to be updated
+  @param resource The stream to be updated
   @param mode Mode of read-write.
 
  */
-FALCON_DECLARE_FUNCTION( update, "stream:Stream, mode:N" );
+FALCON_DECLARE_FUNCTION( update, "resource:<selectable>, mode:N" );
 
 /*#
   @method addRead Selector
   @brief Adds a stream to the selector for read operations
-  @param stream The stream to be added for reading.
+  @param resource The stream to be added for reading.
  */
-FALCON_DECLARE_FUNCTION( addRead, "stream:Stream" );
+FALCON_DECLARE_FUNCTION( addRead, "resource:<selectable>" );
 
 /*#
   @method addWrite Selector
   @brief Adds a stream to the selector for write operations
-  @param stream The stream to be added for writing.
+  @param resource The stream to be added for writing.
  */
-FALCON_DECLARE_FUNCTION( addWrite, "stream:Stream" );
+FALCON_DECLARE_FUNCTION( addWrite, "resource:<selectable>" );
 
 /*#
   @method addWrite Selector
   @brief Adds a stream to the selector for errors and out-of-band operations
-  @param stream The stream to be added for errors or out of band data.
+  @param resource The stream to be added for errors or out of band data.
  */
-FALCON_DECLARE_FUNCTION( addErr, "stream:Stream" );
+FALCON_DECLARE_FUNCTION( addErr, "resource:<selectable>" );
 
 
 
@@ -217,19 +217,19 @@ void Function_update::invoke(VMContext* ctx, int32 pCount )
 
 static void internal_add_mode( VMContext* ctx, int32, int32 mode )
 {
-   static Class* streamClass = Engine::handlers()->streamClass();
    Item* i_stream = ctx->param(0);
 
    Class* cls = 0;
    void* data = 0;
-   if( i_stream == 0 || ! i_stream->asClassInst(cls,data) || ! cls->isDerivedFrom(streamClass) )
+   Selectable* resource = 0;
+   if( i_stream == 0 || ! i_stream->asClassInst(cls,data)
+            || ( resource = cls->getSelectableInterface(data) ) == 0 )
    {
-      throw new ParamError(ErrorParam(e_inv_params, __LINE__, SRC).extra( "stream:Stream") );
+      throw new ParamError(ErrorParam(e_inv_params, __LINE__, SRC).extra( "resource:Selectable") );
    }
 
    Selector* sel = static_cast<Selector*>(ctx->self().asInst());
-   Stream* sc = static_cast<Stream*>( cls->getParentData(streamClass,data) );
-   sel->add( sc, mode );
+   sel->add( resource, mode );
 
    ctx->returnFrame();
 }
@@ -257,14 +257,14 @@ void Function_addErr::invoke(VMContext* ctx, int32 pCount )
 void Function_getRead::invoke(VMContext* ctx, int32 )
 {
    Selector* sel = static_cast<Selector*>(ctx->self().asInst());
-   Stream* stream = sel->getNextReadyRead();
-   if( stream == 0 )
+   Selectable* resource = sel->getNextReadyRead();
+   if( resource == 0 )
    {
       ctx->returnFrame();
    }
    else
    {
-      ctx->returnFrame( Item(stream->handler(), stream) );
+      ctx->returnFrame( Item(resource->handler(), resource->instance()) );
    }
 }
 
@@ -272,14 +272,14 @@ void Function_getRead::invoke(VMContext* ctx, int32 )
 void Function_getWrite::invoke(VMContext* ctx, int32 )
 {
    Selector* sel = static_cast<Selector*>(ctx->self().asInst());
-   Stream* stream = sel->getNextReadyWrite();
-   if( stream == 0 )
+   Selectable* resource = sel->getNextReadyWrite();
+   if( resource == 0 )
    {
       ctx->returnFrame();
    }
    else
    {
-      ctx->returnFrame( Item(stream->handler(), stream) );
+      ctx->returnFrame( Item(resource->handler(), resource->instance()) );
    }
 }
 
@@ -287,14 +287,14 @@ void Function_getWrite::invoke(VMContext* ctx, int32 )
 void Function_getErr::invoke(VMContext* ctx, int32 )
 {
    Selector* sel = static_cast<Selector*>(ctx->self().asInst());
-   Stream* stream = sel->getNextReadyErr();
-   if( stream == 0 )
+   Selectable* resource = sel->getNextReadyErr();
+   if( resource == 0 )
    {
       ctx->returnFrame();
    }
    else
    {
-      ctx->returnFrame( Item(stream->handler(), stream) );
+      ctx->returnFrame( Item(resource->handler(), resource->instance()) );
    }
 }
 
@@ -302,17 +302,17 @@ void Function_getErr::invoke(VMContext* ctx, int32 )
 void Function_get::invoke(VMContext* ctx, int32 )
 {
    Selector* sel = static_cast<Selector*>(ctx->self().asInst());
-   Stream* stream = sel->getNextReadyErr();
-   if( stream == 0 ) stream = sel->getNextReadyRead();
-   if( stream == 0 ) stream = sel->getNextReadyWrite();
+   Selectable* resource = sel->getNextReadyErr();
+   if( resource == 0 ) resource = sel->getNextReadyRead();
+   if( resource == 0 ) resource = sel->getNextReadyWrite();
 
-   if( stream == 0 )
+   if( resource == 0 )
    {
       ctx->returnFrame();
    }
    else
    {
-      ctx->returnFrame( Item(stream->handler(), stream) );
+      ctx->returnFrame( Item(resource->handler(), resource->instance()) );
    }
 }
 

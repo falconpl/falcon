@@ -1,8 +1,8 @@
 /*
    FALCON - The Falcon Programming Language.
-   FILE: stdstreamtraits.h
+   FILE: stdmpxfactories.h
 
-   Traits for the streams declared in the engine.
+   Multiplex factories for the streams declared in the engine.
    -------------------------------------------------------------------
    Author: Giancarlo Niccolai
    Begin: Thu, 28 Feb 2013 18:18:29 +0100
@@ -14,25 +14,25 @@
 */
 
 #undef SRC
-#define SRC "engine/stdstreamtraits.cpp"
+#define SRC "engine/stdmpxfactories.cpp"
 
-#include <falcon/stdstreamtraits.h>
+#include <falcon/stdmpxfactories.h>
 #include <falcon/stringstream.h>
-#include <falcon/diskfiletraits.h>
+#include <falcon/diskmpxfactory.h>
 #include <falcon/pipe.h>
 
 namespace Falcon
 {
 
-StdStreamTraits::StdStreamTraits()
+StdMpxFactories::StdMpxFactories()
 {
-   m_stringStreamTraits = new StringStream::Traits;
-   m_diskFileTraits = new DiskFileTraits;
-   m_readPipeTraits = new Sys::Pipe::Traits(true);
-   m_writePipeTraits = new Sys::Pipe::Traits(false);
+   m_stringStreamTraits = new StringStream::MpxFactory;
+   m_diskFileTraits = new DiskMpxFactory;
+   m_readPipeTraits = new Sys::Pipe::MpxFactory(true);
+   m_writePipeTraits = new Sys::Pipe::MpxFactory(false);
 }
 
-StdStreamTraits::~StdStreamTraits()
+StdMpxFactories::~StdMpxFactories()
 {
    delete m_stringStreamTraits;
    delete m_diskFileTraits;
@@ -42,4 +42,4 @@ StdStreamTraits::~StdStreamTraits()
 
 }
 
-/* end of stdstreamtraits.cpp */
+/* end of stdmpxfactories.cpp */

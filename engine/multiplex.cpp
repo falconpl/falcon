@@ -24,29 +24,18 @@
 namespace Falcon
 {
 
-void Multiplex::gcMark( uint32 mark )
-{
-   if( m_mark != mark )
-   {
-      m_mark = mark;
-      if( m_module != 0 ) {
-         m_module->gcMark(mark);
-      }
-   }
-}
 
-
-void Multiplex::onReadyRead( Stream* stream )
+void Multiplex::onReadyRead( Selectable* stream )
 {
    m_selector->pushReadyRead( stream );
 }
 
-void Multiplex::onReadyWrite( Stream* stream )
+void Multiplex::onReadyWrite( Selectable* stream )
 {
    m_selector->pushReadyWrite( stream );
 }
 
-void Multiplex::onReadyErr( Stream* stream )
+void Multiplex::onReadyErr( Selectable* stream )
 {
    m_selector->pushReadyErr( stream );
 }

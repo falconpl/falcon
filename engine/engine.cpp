@@ -84,7 +84,7 @@
 
 #include <falcon/item.h>         // for builtin
 
-#include <falcon/stdstreamtraits.h>
+#include <falcon/stdmpxfactories.h>
 
 #include <falcon/paranoid.h>
 #include <map>
@@ -323,7 +323,7 @@ Engine::Engine()
    //=====================================
    // File/stream i/o
    //
-   m_stdStreamTraits = new StdStreamTraits;
+   m_stdStreamTraits = new StdMpxFactories;
 
    //=====================================
    // The Core Module
@@ -711,7 +711,7 @@ StdHandlers* Engine::handlers()
    return m_instance->m_stdHandlers;
 }
 
-StdStreamTraits* Engine::streamTraits()
+StdMpxFactories* Engine::mpxFactories()
 {
    fassert( m_instance != 0 );
    return m_instance->m_stdStreamTraits;

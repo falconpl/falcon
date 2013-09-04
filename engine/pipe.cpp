@@ -66,53 +66,52 @@ Stream* Pipe::getWriteStream()
 // Pipe Traits
 //======================================================
 
-class Pipe::Traits::ReadMPX: public Sys::FileDataMPX
+class Pipe::MpxFactory::ReadMPX: public Sys::FileDataMPX
 {
 public:
-   ReadMPX( const StreamTraits* generator, Selector* master ):
+   ReadMPX( const Multiplex::Factory* generator, Selector* master ):
       FileDataMPX( generator, master )
    {}
 
    virtual ~ReadMPX() {}
 
-   virtual void addStream( Stream* stream, int mode )
+   virtual void add( Selectable* stream, int mode )
    {
       if( (mode & Selector::mode_read) != 0 )
       {
-         FileDataMPX::addStream(stream, Selector::mode_read);
+         FileDataMPX::add(stream, Selector::mode_read);
       }
    }
 };
 
-class Pipe::Traits::WriteMPX: public Sys::FileDataMPX
+class Pipe::MpxFactory::WriteMPX: public Sys::FileDataMPX
 {
 public:
-   WriteMPX( const StreamTraits* generator, Selector* master ):
+   WriteMPX( const Multiplex::Factory* generator, Selector* master ):
       FileDataMPX( generator, master )
    {}
 
    virtual ~WriteMPX() {}
 
    // This is system specific
-   virtual void addStream( Stream* stream, int mode )
+   virtual void add( Selectable* stream, int mode )
    {
       if( (mode & Selector::mode_write) != 0 )
       {
-         FileDataMPX::addStream(stream, Selector::mode_write);
+         FileDataMPX::add(stream, Selector::mode_write);
       }
    }
 };
 
 
-Pipe::Traits::Traits( bool readDirection ):
-      StreamTraits("Pipe::Traits", 0),
+Pipe::MpxFactory::MpxFactory( bool readDirection ):
       m_bReadDirection(readDirection)
 {}
 
-Pipe::Traits::~Traits()
+Pipe::MpxFactory::~MpxFactory()
 {}
 
-Multiplex* Pipe::Traits::multiplex( Selector* master ) const
+Multiplex* Pipe::MpxFactory::create( Selector* master ) const
 {
    if( m_bReadDirection )
    {

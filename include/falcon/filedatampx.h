@@ -47,15 +47,18 @@ namespace Sys {
 class FALCON_DYN_CLASS FileDataMPX: public Multiplex
 {
 public:
-   FileDataMPX( const StreamTraits* generator, Selector* master );
+   FileDataMPX( const Multiplex::Factory* generator, Selector* master );
    virtual ~FileDataMPX();
 
-   virtual void addStream( Stream* stream, int mode );
-   virtual void removeStream( Stream* stream );
+   virtual void add( Selectable* stream, int mode );
+   virtual void remove( Selectable* stream );
+   virtual uint32 size() const;
 
 private:
    class Private;
    Private* _p;
+
+   uint32 m_size;
 };
 
 }

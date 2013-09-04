@@ -14,7 +14,7 @@
 */
 
 
-#include <falcon/diskfiletraits.h>
+#include <falcon/diskmpxfactory.h>
 #include <falcon/multiplex.h>
 #include <falcon/selector.h>
 #include <falcon/stream.h>
@@ -22,28 +22,33 @@
 namespace Falcon
 {
 
-class DiskFileTraits::MPX: public Multiplex
+class DiskMpxFactory::MPX: public Multiplex
 {
 public:
-   MPX( const StreamTraits* generator, Selector* master );
+   MPX( const DiskMpxFactory* generator, Selector* master );
    virtual ~MPX();
 
-   virtual void addStream( Stream* stream, int mode );
-   virtual void removeStream( Stream* stream );
+   virtual void add( Selectable* stream, int mode );
+   virtual void remove( Selectable* stream );
+   virtual uint32 size() const { return m_size; }
+
+private:
+   uint32 m_size;
 };
 
 
-DiskFileTraits::MPX::MPX( const StreamTraits* generator, Selector* master ):
-         Multiplex( generator, master )
+DiskMpxFactory::MPX::MPX( const DiskMpxFactory* generator, Selector* master ):
+         Multiplex( generator, master ),
+         m_size(0)
 {
 }
 
-DiskFileTraits::MPX::~MPX()
+DiskMpxFactory::MPX::~MPX()
 {
 }
 
 
-void DiskFileTraits::MPX::addStream( Stream* stream, int mode )
+void DiskMpxFactory::MPX::add( Selectable* stream, int mode )
 {
    if( (mode & Selector::mode_write) != 0)
    {
@@ -56,19 +61,22 @@ void DiskFileTraits::MPX::addStream( Stream* stream, int mode )
       // always readable
       onReadyRead(stream);
    }
+
+   m_size++;
 }
 
 
-void DiskFileTraits::MPX::removeStream( Stream* )
+void DiskMpxFactory::MPX::remove( Selectable* )
 {
    // do nothing.
+   m_size--;
 }
 
 //=================================================================
 // Base DiskFileTraits
 //=================================================================
 
-Multiplex* DiskFileTraits::multiplex( Selector* master ) const
+Multiplex* DiskMpxFactory::create( Selector* master ) const
 {
    return new MPX( this, master );
 }

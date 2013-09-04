@@ -345,7 +345,7 @@ add_library(falcon_engine SHARED
   debugger.cpp
   delegatemap.cpp
   directory.cpp
-  diskfiletraits.cpp
+  diskmpxfactory.cpp
   dyncompiler.cpp
   dynloader.cpp
   engine.cpp
@@ -405,8 +405,8 @@ add_library(falcon_engine SHARED
   sourceref.cpp
   statement.cpp
   stdhandlers.cpp
+  stdmpxfactories.cpp
   stdsteps.cpp
-  stdstreamtraits.cpp
   storer.cpp
   stream.cpp
   streambuffer.cpp

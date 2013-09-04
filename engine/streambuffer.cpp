@@ -380,9 +380,9 @@ bool StreamBuffer::resizeBuffer( uint32 size )
 }
 
 
-StreamTraits* StreamBuffer::traits() const
+const Multiplex::Factory* StreamBuffer::multiplexFactory() const
 {
-   return m_stream->traits();
+   return m_stream->multiplexFactory();
 }
 
 }

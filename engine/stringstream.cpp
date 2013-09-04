@@ -19,7 +19,7 @@
 #include <falcon/stringstream.h>
 #include <falcon/selector.h>
 #include <falcon/stdhandlers.h>
-#include <falcon/stdstreamtraits.h>
+#include <falcon/stdmpxfactories.h>
 
 #include <cstring>
 #include <string.h>
@@ -32,20 +32,24 @@
 
 namespace Falcon {
 
-
+/*
+ A strange muiltiplex: we'll have actually many of these for a single StringStream.
+ */
 class StringStream::MPX: public Multiplex
 {
 public:
-   MPX( const StreamTraits* generator, Selector* master );
+   MPX( const Multiplex::Factory* generator, Selector* master );
    virtual ~MPX();
 
-   virtual void addStream( Stream* stream, int mode );
-   virtual void removeStream( Stream* stream );
+   virtual void add( Selectable* stream, int mode );
+   virtual void remove( Selectable* stream );
+   virtual uint32 size() const { return m_size; }
 
-   void onStringStreamReady( StringStream*ss );
+   void onStringStreamReady( StringStream* ss );
+
 private:
-
    FALCON_REFERENCECOUNT_DECLARE_INCDEC(MPX);
+   uint32 m_size;
 };
 
 
@@ -83,7 +87,8 @@ StringStream::StringStream( int32 size ):
    m_posRead(0),
    m_posWrite(0),
    m_bPipeMode(false),
-   m_b( new Buffer )
+   m_b( new Buffer ),
+   m_selectable(0)
 {
    if ( size <= 0 )
       size = 32;
@@ -96,7 +101,8 @@ StringStream::StringStream( const String &strbuf ):
    m_posRead(0),
    m_posWrite(0),
    m_bPipeMode(false),
-   m_b( new Buffer )
+   m_b( new Buffer ),
+   m_selectable(0)
 {
    *m_b->m_str = strbuf;
    m_b->m_str->bufferize();
@@ -106,7 +112,8 @@ StringStream::StringStream( const StringStream &strbuf ):
    Stream( strbuf ),
    m_posRead( strbuf.m_posRead ),
    m_posWrite( strbuf.m_posWrite ),
-   m_bPipeMode(strbuf.m_bPipeMode)
+   m_bPipeMode(strbuf.m_bPipeMode),
+   m_selectable(0)
 {
    strbuf.m_b->incref();
    m_b = strbuf.m_b;
@@ -116,6 +123,8 @@ StringStream::StringStream( const StringStream &strbuf ):
 StringStream::~StringStream()
 {
    m_b->decref();
+   // we can't be destroyed with a selectable active
+   fassert( m_selectable == 0 );
 }
 
 
@@ -457,18 +466,18 @@ StringStream *StringStream::clone() const
 }
 
 
-StreamTraits* StringStream::traits() const
+const Multiplex::Factory* StringStream::multiplexFactory() const
 {
-   static StreamTraits* gen = Engine::streamTraits()->stringStreamTraits();
+   static const Multiplex::Factory* gen = Engine::mpxFactories()->stringStreamMpxFact();
    return gen;
 }
 
 
 
-StringStream::Traits::~Traits()
+StringStream::MpxFactory::~MpxFactory()
 {}
 
-Multiplex* StringStream::Traits::multiplex( Selector* master ) const
+Multiplex* StringStream::MpxFactory::create( Selector* master ) const
 {
    return new MPX(this, master);
 }
@@ -478,8 +487,9 @@ Multiplex* StringStream::Traits::multiplex( Selector* master ) const
 //
 //====================================================================================
 
-StringStream::MPX::MPX( const StreamTraits* generator, Selector* master ):
-         Multiplex( generator, master )
+StringStream::MPX::MPX( const Multiplex::Factory* generator, Selector* master ):
+         Multiplex( generator, master ),
+         m_size(0)
 {
 }
 
@@ -488,14 +498,14 @@ StringStream::MPX::~MPX()
 }
 
 
-void StringStream::MPX::addStream( Stream* stream, int mode )
+void StringStream::MPX::add( Selectable* resource, int mode )
 {
-   StringStream* ss = static_cast<StringStream*>(stream);
+   StringStream* ss = static_cast<StringStream*>(resource->instance());
 
    if( (mode & Selector::mode_write) != 0)
    {
       // always writeable
-      onReadyWrite(stream);
+      onReadyWrite(resource);
    }
 
    if( (mode & Selector::mode_read) != 0)
@@ -505,8 +515,7 @@ void StringStream::MPX::addStream( Stream* stream, int mode )
       if ( bsize > ss->m_posRead )
       {
          ss->m_b->m_mtx.unlock();
-         onReadyRead( stream );
-         stream->decref();
+         onReadyRead( resource );
          return;
       }
 
@@ -515,15 +524,22 @@ void StringStream::MPX::addStream( Stream* stream, int mode )
 
       if( bNew )
       {
+         if( ss->m_selectable != 0 )
+         {
+            ss->m_selectable->decref();
+         }
+         ss->m_selectable = resource;
+         resource->incref();
          incref();
+         m_size++;
       }
    }
 }
 
 
-void StringStream::MPX::removeStream( Stream* stream )
+void StringStream::MPX::remove( Selectable* resource )
 {
-   StringStream* ss = static_cast<StringStream*>(stream);
+   StringStream* ss = static_cast<StringStream*>(resource->instance());
 
    ss->m_b->m_mtx.unlock();
    bool bRemoved = ss->m_b->m_waiters.erase(this) > 0;
@@ -531,13 +547,20 @@ void StringStream::MPX::removeStream( Stream* stream )
 
    if( bRemoved )
    {
+      if( ss->m_selectable != 0 )
+      {
+         ss->m_selectable->decref();
+         ss->m_selectable = 0;
+      }
       decref();
+      m_size--;
    }
 }
 
 void StringStream::MPX::onStringStreamReady( StringStream* ss )
 {
-   onReadyRead( ss );
+   fassert( ss->m_selectable != 0  );
+   onReadyRead( ss->m_selectable );
    decref();
 }
 

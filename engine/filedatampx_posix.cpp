@@ -59,7 +59,7 @@ public:
       virtual void* run();
 
    private:
-      typedef std::map<int, std::pair<Stream*, int> > StreamMap;
+      typedef std::map<int, std::pair<Selectable*, int> > StreamMap;
       StreamMap m_streams;
 
       FileDataMPX* m_master;
@@ -73,7 +73,7 @@ public:
    {
       int32 type; // 0 = quit, 1 = add, 2=remove
       int32 mode;
-      Stream* stream;
+      Selectable* resource;
    };
 
    SysThread* m_thread;
@@ -112,7 +112,7 @@ public:
       {
          throw new GenericError( ErrorParam(e_io_error, __LINE__, SRC)
                   .extra("Cannot close control pipe" )
-                  .sysError(errno) );
+                  .sysError((uint32)errno) );
       }
 
       void* dummy = 0;
@@ -122,8 +122,9 @@ public:
 
 
 
-FileDataMPX::FileDataMPX( const StreamTraits* generator, Selector* master ):
-         Multiplex( generator, master )
+FileDataMPX::FileDataMPX( const Multiplex::Factory* generator, Selector* master ):
+         Multiplex( generator, master ),
+         m_size(0)
 {
    _p = new Private( this );
    _p->m_thread->start(ThreadParams().stackSize(POLL_THREAD_STACK_SIZE));
@@ -136,39 +137,47 @@ FileDataMPX::~FileDataMPX()
    delete _p;
 }
 
-void FileDataMPX::addStream( Stream* stream, int mode )
+void FileDataMPX::add( Selectable* resource, int mode )
 {
    Private::Msg msg;
    msg.type = 1; // add
    msg.mode = mode;
-   msg.stream = stream;
-   stream->incref();
+   msg.resource = resource;
+   resource->incref();
 
    int res = ::write( _p->m_ctrl, &msg, sizeof(msg) );
    if( res < 0 )
    {
       throw new GenericError( ErrorParam(e_io_error, __LINE__, SRC)
                .extra("Cannot close control pipe" )
-               .sysError(errno) );
+               .sysError((uint32)errno) );
    }
+
+   m_size++;
 }
 
-void FileDataMPX::removeStream( Stream* stream )
+void FileDataMPX::remove( Selectable* resource )
 {
    Private::Msg msg;
    msg.type = 2; // remove
-   msg.stream = stream;
-   stream->incref();
+   msg.resource = resource;
+   resource->incref();
 
    int res = ::write( _p->m_ctrl, &msg, sizeof(msg) );
    if( res < 0 )
    {
       throw new GenericError( ErrorParam(e_io_error, __LINE__, SRC)
                .extra("Cannot close control pipe" )
-               .sysError(errno) );
+               .sysError((uint32)errno) );
    }
+
+   m_size--;
 }
 
+uint32 FileDataMPX::size() const
+{
+   return m_size;
+}
 
 void* FileDataMPX::Private::MPXThread::run()
 {
@@ -230,7 +239,7 @@ void* FileDataMPX::Private::MPXThread::run()
 
          throw new IOError( ErrorParam(e_io_error, __LINE__, SRC)
                   .extra("During poll")
-                  .sysError(errno)
+                  .sysError((uint32)errno)
                   );
       }
 
@@ -248,31 +257,31 @@ void* FileDataMPX::Private::MPXThread::run()
       while( signaled > 0 )
       {
          pollfd& current = fds[count++];
-         Stream* stream = m_streams[current.fd].first;
+         Selectable* resource = m_streams[current.fd].first;
 
          bool bSignaled = false;
          if( (current.revents & (POLLIN | POLLERR| POLLHUP)) != 0 )
          {
-            m_master->onReadyRead(stream);
+            m_master->onReadyRead(resource);
             bSignaled = true;
          }
 
          if( (current.revents & (POLLOUT)) != 0 )
          {
-            m_master->onReadyWrite(stream);
+            m_master->onReadyWrite(resource);
             bSignaled = true;
          }
 
          if( (current.revents & (POLLPRI)) != 0 )
          {
-            m_master->onReadyErr(stream);
+            m_master->onReadyErr(resource);
             bSignaled = true;
          }
 
          if( bSignaled )
          {
             --signaled;
-            stream->decref();
+            resource->decref();
             m_streams.erase( current.fd );
          }
       }
@@ -306,21 +315,21 @@ bool FileDataMPX::Private::MPXThread::processMessage()
       count += res;
    }
 
-   FStream* fs = static_cast<FStream*>(msg.stream);
+   FStream* fs = static_cast<FStream*>(msg.resource->instance());
    switch( msg.type )
    {
    case 0:
       return false;
 
    case 1:
-      m_streams[fs->fileData()->fdFile] = std::make_pair( fs, msg.mode );
+      m_streams[fs->fileData()->fdFile] = std::make_pair( msg.resource, msg.mode );
       return true;
 
    case 2:
       m_streams.erase( fs->fileData()->fdFile );
       fs->decref();
       // yep, it's the same, but we have an extra ref in the message...
-      msg.stream->decref();
+      msg.resource->decref();
       return true;
    }
 

@@ -215,12 +215,12 @@ void tiger_finalize(tiger_ctx *ctx)
     i = ctx->index;
 #ifdef BIG_ENDIAN
     for(j=0; j<i; j++)
-        temp[j^7] = ctx->block[j];
+        temp.bytes[(j^7)] = ctx->block[j];
 
-    temp[j^7] = 0x01;
+    temp.bytes[j^7] = 0x01;
     j++;
     for(; j&7; j++)
-        temp[j^7] = 0;
+        temp.bytes[j^7] = 0;
 #else
     for(j=0; j<i; j++)
         temp.bytes[j] = ctx->block[j];

@@ -22,9 +22,8 @@
 namespace Falcon
 {
 
-class Stream;
+class Selectable;
 class Selector;
-class StreamTraits;
 
 /**
  * Stream multiplexer.
@@ -45,18 +44,15 @@ class FALCON_DYN_CLASS Multiplex
 public:
    virtual ~Multiplex(){}
 
-   virtual void gcMark( uint32 mark );
-   uint32 currentMark() const { return m_mark; }
-
-   /** Adds a stream to the multiplexing.
+   /** Adds a resource to the multiplexing.
     *
-    * \param Stream stream to be added (or modified).
-    * \param mode A read/write/error poll mode as bitfield according to Selector::mode_*
+    * \param resource The resource to be added (or modified).
+    * \param mode A read/write/error poll mode as bit-field according to Selector::mode_*
     *
     */
-   virtual void addStream( Stream* stream, int mode ) = 0;
+   virtual void add( Selectable* resource, int mode ) = 0;
 
-   /** Removes a stream from multiplexing (as soon as possible).
+   /** Removes a resource from multiplexing (as soon as possible).
     *
     * \param Stream stream to be removed.
     *
@@ -69,45 +65,60 @@ public:
     * \param Management of refcounts for streams is up to the multiplex instance;
     * the selector has its own counts.
     */
-   virtual void removeStream( Stream* stream ) = 0 ;
+   virtual void remove( Selectable* resource ) = 0 ;
 
-   const StreamTraits* generator() const { return m_generator; }
+   /** Returns the count of resources waited upon by this multiplex.
+    It is important that this number is accurate, to allow selectors to
+    properly unload the multiplex when all the resources are removed from it.
+    */
+   virtual uint32 size() const = 0;
 
    Selector* selector() const { return m_selector; }
 
+   class Factory
+   {
+   public:
+      virtual ~Factory() {}
+      virtual Multiplex* create( Selector* selector ) const = 0;
+   };
+
+   /** Return the factory that can be used to create new multiplex */
+   const Factory* factory() const { return m_factory; }
+
 protected:
+
    /** Creates the multiplex on a selector.
     * The module is used for back-reference and keep alive marks.
     */
-   Multiplex( const StreamTraits* generator, Selector* master,  Module* mod = 0 ):
-      m_generator(generator),
+   Multiplex( const Factory* factory, Selector* master ):
       m_selector(master),
-      m_module(mod),
-      m_mark(0)
+      m_factory( factory )
    {}
 
+   friend class Factory;
+
    /**
-    * Invoked when a stream is ready for read.
+    * Invoked when a resource is ready for read.
     * \param stream The stream now ready for read.
     *
     * Call this back when a stream is found ready for read.
     * \note This function increments the reference count for the stream;
     * the count is decremented as the stream is dequeued by the Selector's user.
     */
-   void onReadyRead( Stream* stream );
+   virtual void onReadyRead( Selectable* resource );
 
    /**
-    * Invoked when a stream is ready for write.
+    * Invoked when a resource is ready for write.
     * \param stream The stream now ready for write.
     *
     * Call this back when a stream is found ready for write.
     * \note This function increments the reference count for the stream;
     * the count is decremented as the stream is dequeued by the Selector's user.
     */
-   void onReadyWrite( Stream* stream );
+   virtual void onReadyWrite( Selectable* resource );
 
    /**
-    * Invoked when a stream is found having an error signal active.
+    * Invoked when a resource is found having an error signal active.
     * \param stream The stream has an error signal active.
     *
     * Call this back when a stream line has an error, high priority
@@ -116,13 +127,13 @@ protected:
     * \note This function increments the reference count for the stream;
     * the count is decremented as the stream is dequeued by the Selector's user.
     */
-   void onReadyErr( Stream* stream );
+   virtual void onReadyErr( Selectable* resource );
 
-   const StreamTraits* m_generator;
    Selector* m_selector;
-   Module* m_module;
-   uint32 m_mark;
+   const Factory* m_factory;
 };
+
+
 
 }
 

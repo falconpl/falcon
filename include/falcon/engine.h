@@ -52,7 +52,7 @@ class Item;
 
 class VMContext;
 
-class StdStreamTraits;
+class StdMpxFactories;
 class StdHandlers;
 class StdErrors;
 
@@ -151,12 +151,12 @@ public:
    /**
     * The global handler class collection.
     */
-   StdStreamTraits* stdStreamTraits() const { return m_stdStreamTraits; }
+   StdMpxFactories* stdStreamTraits() const { return m_stdStreamTraits; }
 
    /**
     * The global handler class collection.
     */
-   static StdStreamTraits* streamTraits();
+   static StdMpxFactories* mpxFactories();
 
    /** Returns the collection of standard syntactic tree classes.
    \return the Engine instance of the SynClasses class collection.
@@ -385,7 +385,7 @@ protected:
 
    StdSteps* m_stdSteps;
    StdHandlers* m_stdHandlers;
-   StdStreamTraits* m_stdStreamTraits;
+   StdMpxFactories* m_stdStreamTraits;
 
    Symbol* m_baseSymbol;
    Symbol* m_ruleBaseSymbol;

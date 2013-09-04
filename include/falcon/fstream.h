@@ -19,7 +19,7 @@
 
 #include <falcon/stream.h>
 #include <falcon/filedata.h>
-#include <falcon/streamtraits.h>
+#include <falcon/multiplex.h>
 
 namespace Falcon {
 
@@ -57,7 +57,7 @@ public:
 
    virtual FStream* clone() const;
 
-   virtual StreamTraits* traits() const;
+   virtual const Multiplex::Factory* multiplexFactory() const;
 
    /** Returns the underlying system specific file data.
     *\return the underlying system specific file data.
