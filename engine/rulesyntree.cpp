@@ -51,7 +51,7 @@ void RuleSynTree::rapply_( const PStep* ps, VMContext* ctx )
 {
    const RuleSynTree* self = static_cast<const RuleSynTree*>(ps);
    CodeFrame& cf = ctx->currentCode();
-   TRACE( "RuleSynTree::apply_ at line %d step %d/%d", self->line(), cf.m_seqId , self->size() );
+   TRACE( "RuleSynTree::apply_ at line %d step %d/%d", self->line(), cf.m_seqId ,(int) self->size() );
 
    // prepare the first step
    if( self->size() == 0 )
