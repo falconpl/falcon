@@ -31,18 +31,39 @@
 #endif
 
 #define FALSOCK_ERR_GENERIC  (FALCON_SOCKET_ERROR_BASE + 0)
+#define FALSOCK_ERR_GENERIC_MSG "Generic network error"
 #define FALSOCK_ERR_RESOLV  (FALCON_SOCKET_ERROR_BASE + 1)
+#define FALSOCK_ERR_RESOLV_MSG "Network error during address resolution"
 #define FALSOCK_ERR_CREATE  (FALCON_SOCKET_ERROR_BASE + 2)
+#define FALSOCK_ERR_CREATE_MSG "Network error creating a socket"
 #define FALSOCK_ERR_CONNECT  (FALCON_SOCKET_ERROR_BASE + 3)
+#define FALSOCK_ERR_CONNECT_MSG "Network error during connection"
 #define FALSOCK_ERR_SEND  (FALCON_SOCKET_ERROR_BASE + 4)
+#define FALSOCK_ERR_SEND_MSG "Network error during send"
 #define FALSOCK_ERR_RECV  (FALCON_SOCKET_ERROR_BASE + 5)
+#define FALSOCK_ERR_RECV_MSG "Network error during receive"
 #define FALSOCK_ERR_CLOSE  (FALCON_SOCKET_ERROR_BASE + 6)
+#define FALSOCK_ERR_CLOSE_MSG "Network error during close"
 #define FALSOCK_ERR_BIND  (FALCON_SOCKET_ERROR_BASE + 7)
+#define FALSOCK_ERR_BIND_MSG "Network error during bind"
 #define FALSOCK_ERR_ACCEPT  (FALCON_SOCKET_ERROR_BASE + 8)
+#define FALSOCK_ERR_ACCEPT_MSG "Network error during accept"
+
+#define FALSOCK_ERR_INCOMPATIBLE       (FALCON_SOCKET_ERROR_BASE + 9)
+#define FALSOCK_ERR_INCOMPATIBLE_MSG   "Socket already configured"
+
+#define FALSOCK_ERR_UNRESOLVED         (FALCON_SOCKET_ERROR_BASE + 10)
+#define FALSOCK_ERR_UNRESOLVED_MSG     "Unresolved address used in operation"
+
+#define FALSOCK_ERR_FCNTL              (FALCON_SOCKET_ERROR_BASE + 11)
+#define FALSOCK_ERR_FCNTL_MSG          "Error in FCNTL set/get"
+
+#define FALSOCK_ERR_LISTEN             (FALCON_SOCKET_ERROR_BASE + 12)
+#define FALSOCK_ERR_LISTEN_MSG         "Network error during listen"
 
 #if WITH_OPENSSL
-#define FALSOCK_ERR_SSLCONFIG (FALCON_SOCKET_ERROR_BASE + 10)
-#define FALSOCK_ERR_SSLCONNECT (FALCON_SOCKET_ERROR_BASE + 11)
+#define FALSOCK_ERR_SSLCONFIG (FALCON_SOCKET_ERROR_BASE + 15)
+#define FALSOCK_ERR_SSLCONNECT (FALCON_SOCKET_ERROR_BASE + 16)
 #endif
 
 namespace Falcon {
@@ -56,66 +77,7 @@ FALCON_FUNC  resolveAddress( ::Falcon::VMachine *vm );
 FALCON_FUNC  socketErrorDesc( ::Falcon::VMachine *vm );
 FALCON_FUNC  falcon_haveSSL( ::Falcon::VMachine *vm );
 
-// ==============================================
-// Class Socket
-// ==============================================
-FALCON_FUNC  Socket_init( ::Falcon::VMachine *vm );
-FALCON_FUNC  Socket_setTimeout( ::Falcon::VMachine *vm );
-FALCON_FUNC  Socket_getTimeout( ::Falcon::VMachine *vm );
-FALCON_FUNC  Socket_dispose( ::Falcon::VMachine *vm );
-FALCON_FUNC  Socket_readAvailable( ::Falcon::VMachine *vm );
-FALCON_FUNC  Socket_writeAvailable( ::Falcon::VMachine *vm );
-FALCON_FUNC  Socket_getHost( ::Falcon::VMachine *vm );
-FALCON_FUNC  Socket_getService( ::Falcon::VMachine *vm );
-FALCON_FUNC  Socket_getPort( ::Falcon::VMachine *vm );
-
-// ==============================================
-// Class TCPSocket
-// ==============================================
-FALCON_FUNC  TCPSocket_init( ::Falcon::VMachine *vm );
-FALCON_FUNC  TCPSocket_connect( ::Falcon::VMachine *vm );
-FALCON_FUNC  TCPSocket_isConnected( ::Falcon::VMachine *vm );
-FALCON_FUNC  TCPSocket_send( ::Falcon::VMachine *vm );
-FALCON_FUNC  TCPSocket_recv( ::Falcon::VMachine *vm );
-FALCON_FUNC  TCPSocket_closeRead( ::Falcon::VMachine *vm );
-FALCON_FUNC  TCPSocket_closeWrite( ::Falcon::VMachine *vm );
-FALCON_FUNC  TCPSocket_close( ::Falcon::VMachine *vm );
-#if WITH_OPENSSL
-FALCON_FUNC  TCPSocket_sslConfig( ::Falcon::VMachine *vm );
-FALCON_FUNC  TCPSocket_sslClear( ::Falcon::VMachine *vm );
-FALCON_FUNC  TCPSocket_sslConnect( ::Falcon::VMachine *vm );
-#endif
-
-// ==============================================
-// Class UDPSocket
-// ==============================================
-FALCON_FUNC  UDPSocket_init( ::Falcon::VMachine *vm );
-FALCON_FUNC  UDPSocket_broadcast( ::Falcon::VMachine *vm );
-FALCON_FUNC  UDPSocket_sendTo( ::Falcon::VMachine *vm );
-FALCON_FUNC  UDPSocket_recv( ::Falcon::VMachine *vm );
-
-// ==============================================
-// Class TCPServer
-// ==============================================
-
-FALCON_FUNC  TCPServer_init( ::Falcon::VMachine *vm );
-FALCON_FUNC  TCPServer_dispose( ::Falcon::VMachine *vm );
-FALCON_FUNC  TCPServer_bind( ::Falcon::VMachine *vm );
-FALCON_FUNC  TCPServer_accept( ::Falcon::VMachine *vm );
-
-class NetError: public ::Falcon::Error
-{
-public:
-   NetError():
-      Error( "NetError" )
-   {}
-
-   NetError( const ErrorParam &params  ):
-      Error( "NetError", params )
-      {}
-};
-
-FALCON_FUNC  NetError_init ( ::Falcon::VMachine *vm );
+FALCON_DECLARE_ERROR( NetError );
 
 }
 }

@@ -29,6 +29,7 @@
 #include <falcon/transcoder.h>
 
 #include <falcon/selectable.h>
+#include <falcon/fstream.h>
 
 #include <string.h>
 
@@ -493,11 +494,11 @@ void* ClassStream::createInstance() const
 
 
 namespace {
-   class StreamSelectable: public Selectable
+   class StreamSelectable: public FDSelectable
    {
    public:
       StreamSelectable( const Class* cls, Stream* inst ):
-         Selectable( cls, inst )
+         FDSelectable( cls, inst )
       {
          inst->incref();
       }
@@ -508,6 +509,21 @@ namespace {
 
       const Multiplex::Factory* factory() const {
          return static_cast<Stream*>(instance())->multiplexFactory();
+      }
+
+      // we're using FD files on POXSIX only. On windows, we're using handles,
+      // and the windows file multiplexer uses the base Selectable interface.
+      // Also, getFD is called only by those multiplex that know they're handling
+      // fstreams or sublcasses (it's the stream that creates the multiplex!)
+      virtual int getFd() const
+      {
+         #ifdef FALCON_SYSTEM_WIN
+         return 0;
+         #else
+         // warning: not all streams are fstreams!. Let the multiplex only
+         // call this function!
+         return static_cast<FStream*>(instance())->fileData()->fdFile;
+         #endif
       }
    };
 }

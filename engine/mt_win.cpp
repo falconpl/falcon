@@ -127,13 +127,22 @@ bool SysThread::start( const ThreadParams &params )
 {
    m_sysdata->hThread = (HANDLE) _beginthreadex( 0, params.stackSize(), &run_a_thread, this, 0, &m_sysdata->nThreadID );
    if ( m_sysdata->hThread == INVALID_HANDLE_VALUE )
+   {
+      m_sysdata->m_lastError = GetLastError();
       return false;
+   }
 
    if ( params.detached() )
       detach();
 
    return true;
 }
+
+uint32 SysThread::lastError() const
+{
+   return (uint32) m_sysdata->m_lastError;
+}
+
 
 void SysThread::detach()
 {

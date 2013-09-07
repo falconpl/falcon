@@ -315,20 +315,19 @@ bool FileDataMPX::Private::MPXThread::processMessage()
       count += res;
    }
 
-   FStream* fs = static_cast<FStream*>(msg.resource->instance());
+   FDSelectable* fdsel = static_cast<FDSelectable*>( msg.resource );
+   int fd = fdsel->getFd();
    switch( msg.type )
    {
    case 0:
       return false;
 
    case 1:
-      m_streams[fs->fileData()->fdFile] = std::make_pair( msg.resource, msg.mode );
+      m_streams[fd] = std::make_pair( msg.resource, msg.mode );
       return true;
 
    case 2:
-      m_streams.erase( fs->fileData()->fdFile );
-      fs->decref();
-      // yep, it's the same, but we have an extra ref in the message...
+      m_streams.erase( fd );
       msg.resource->decref();
       return true;
    }

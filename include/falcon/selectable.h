@@ -66,6 +66,26 @@ private:
    FALCON_REFERENCECOUNT_DECLARE_INCDEC(Selectable);
 };
 
+/**
+ * Utility class used by multiplexers that know about the File Descriptor nature of the selectable classes.
+ *
+ * Some multiplexers can assume that all the selectable entities that are fed on that have an underlying
+ * POSIX file descriptor somewhere in the selected instance.
+ *
+ * This pure virtual class is derived into concrete sublcasses that return the file descriptor held
+ * by the Falcon instances they receive.
+ */
+class FDSelectable: public Selectable
+{
+public:
+   FDSelectable( const Class* cls, void* inst ):
+      Selectable( cls, inst )
+   {}
+
+   virtual ~FDSelectable() {};
+
+   virtual int getFd() const = 0;
+};
 }
 
 #endif /* SELECTABLE_H_ */
