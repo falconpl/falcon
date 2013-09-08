@@ -1,14 +1,14 @@
 /*
    FALCON - The Falcon Programming Language.
-   FILE: socket_sys.h
+   FILE: inet_mod.h
 
-   System dependant module specifications for socket module
+   Module specifications for inet module
    -------------------------------------------------------------------
    Author: Giancarlo Niccolai
-   Begin: 2006-05-09 15:50
+   Begin: Sun, 08 Sep 2013 13:47:28 +0200
 
    -------------------------------------------------------------------
-   (C) Copyright 2004: the FALCON developers (see list in AUTHORS file)
+   (C) Copyright 2013: the FALCON developers (see list in AUTHORS file)
 
    See LICENSE file for licensing details.
 */
@@ -25,6 +25,8 @@
 #include <falcon/refcounter.h>
 #include <falcon/mt.h>
 #include <falcon/shared.h>
+#include <falcon/multiplex.h>
+#include <falcon/selectable.h>
 
 #if WITH_OPENSSL
 #include <openssl/bio.h>
@@ -44,6 +46,7 @@ namespace Mod {
    \return true on success, false on failure.
 */
 bool init_system();
+bool shutdown_system();
 
 #if WITH_OPENSSL
 /** Initialize SSL subsystem.
@@ -88,19 +91,23 @@ public:
       m_mark(0)
       {}
 
-   void set( const String &host )
+   Address( const String& addr );
+   Address( const String& host, const String& service );
+   Address( const String& host, int32 port );
+   Address( const Address& other );
+
+   size_t occupiedMemory() const;
+   void clear();
+
+   void set( const String &host, const String &service );
+
+   void setHost( const String &host )
    {
+      clear();
       m_host = host;
    }
 
-   void set( const String &host, const String &service )
-   {
-      m_host.bufferize( host );
-      m_service.bufferize( service );
-   }
-
-
-   bool getAddress( String &address ) const
+   bool getHost( String &address ) const
    {
       if ( m_host.size() ) {
          address = m_host;
@@ -119,6 +126,8 @@ public:
    }
 
    int32 getPort() const { return m_port; }
+
+   bool parse( const String& addr );
 
    /** Synchronously resolve an address.
     @param useNameResolver if true, performs a synchronous query to the DNS system (if necessary).
@@ -181,6 +190,7 @@ public:
 
    void errorDesc( String& target );
 
+   void toString( String& target ) const;
 protected:
 
 private:
@@ -382,6 +392,14 @@ public:
       }
    }
 
+   t_type type() const
+   {
+      return m_type;
+   }
+
+
+   /** Get the internal socket descriptor */
+   FALCON_SOCKET descriptor() const { return m_skt; }
 
    void gcMark( uint32 mk ) { m_mark = mk; }
    uint32 currentMark() const { return m_mark; }
@@ -420,7 +438,7 @@ public:
    Socket *accept();
 
    int32 recv( byte *buffer, int32 size, Address *source=0 );
-   int32 send( byte *buffer, int32 size, Address *target=0 );
+   int32 send( const byte *buffer, int32 size, Address *target=0 );
 
    /** Throws net error on error. */
    void getBoolOption( int level, int option, bool& value );
@@ -485,7 +503,7 @@ protected:
 protected:
    t_type m_type;
    Address* m_address;
-   bool m_bConnected;
+   mutable bool m_bConnected;
    FALCON_SOCKET m_skt;
    bool m_ipv6;
    int32 m_boundFamily;
@@ -509,13 +527,13 @@ private:
 /**
  Selectable interface for the Socket class.
  */
-class SocketSelectable: public Selectable
+class SocketSelectable: public FDSelectable
 {
 public:
    SocketSelectable( const Class* cls, Socket* inst );
    virtual ~SocketSelectable();
    virtual const Multiplex::Factory* factory() const;
-
+   virtual int getFd() const;
 };
 
 }
@@ -523,4 +541,4 @@ public:
 
 #endif
 
-/* end of socket_sys.h */
+/* end of inet_mod.h */

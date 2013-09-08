@@ -37,12 +37,14 @@ public:
    const Multiplex::Factory* diskFileMpxFact() const { return m_diskFileTraits; }
    const Multiplex::Factory* readPipeMpxFact() const { return m_readPipeTraits; }
    const Multiplex::Factory* writePipeMpxFact() const { return m_writePipeTraits; }
+   const Multiplex::Factory* fileDataMpxFact() const { return m_fileDataTraits; }
 
 private:
    const Multiplex::Factory* m_stringStreamTraits;
    const Multiplex::Factory* m_diskFileTraits;
    const Multiplex::Factory* m_readPipeTraits;
    const Multiplex::Factory* m_writePipeTraits;
+   const Multiplex::Factory* m_fileDataTraits;
 };
 
 }

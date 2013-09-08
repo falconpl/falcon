@@ -1,0 +1,96 @@
+//=================================
+// Sync
+//=================================
+
+load inet
+
+/*
+addr = Address("www.falconpl.org:http")
+addr.resolve()
+addr.addresses.foreach(printl)
+
+x = Socket()
+str = m""
+x.connect(addr)
+x.send("GET / HTTP/1.0\r\nHost: www.falconpl.org\r\n\r\n")
+while x.recv(str, 10000)
+   str.isText = true
+   > str
+end
+
+x.close()
+*/
+
+//=================================
+// Async
+//=================================
+
+//queue = SyncQueue()
+complete = Barrier()
+
+function getData( address, tgt )
+   // ready to select on the socket.   
+   sel = Selector()
+   skt = Socket()
+   
+   addr = Address(address)
+   resolver = addr.resolve(true)
+   w = Waiter().add(sel).add(resolver)
+   
+   tmp = m{}
+   loop
+      res = w.wait()
+      // Something is complete
+      if res == resolver
+         // it was the resolver -- we have the address
+         // connect asyncrhonousy        
+         skt.connect(addr, true)
+         sel.add(skt)         
+      else 
+         // selector was excited
+         if sel.getWrite()  //... in write?
+            skt.send( @"GET / HTTP/1.0\r\nHost: ${addr.host}\r\n\r\n")
+         else //.. in read?
+            // eof?
+            count = skt.recv(tmp, 512)
+            
+            if count == 0
+               skt.close()
+               complete.open()
+               return  
+            elif count > 0
+               // save the data.
+               tgt.buffer += tmp               
+            end
+            // -1 is a eagain which we may get even if we're sync.
+         end
+      end
+   end   
+end
+
+
+function control( buf )
+   w = Waiter().add(complete)
+   frullo = .[ "\\" '|' '/' '-' ]
+   count  = 0
+   currentSize = 0
+   
+   while w.wait(50) == nil
+      currentSize = buf.buffer.len
+      >> "Reading...[", frullo[ count % frullo.len], @"] $currentSize\r"
+      count++
+   end
+   
+   > "Complete with size: ", buf.buffer.len, "                         "
+   buf.buffer.isText = true
+   > "=" * 60
+   > buf.buffer
+   > "=" * 60
+end
+
+
+buf = p{ buffer = m{} }
+
+prc = Parallel( .[getData "www.falconpl.org:80" buf], .[control buf] )
+prc.launch()
+

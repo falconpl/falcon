@@ -31,9 +31,9 @@ BEGIN
             VALUE "CompanyName", "Falcon Committee"
             VALUE "FileDescription", "TCP/UDP networking support feather module"
             VALUE "FileVersion", FALCON_MAKE_VERSION_STRING_RC( VERSION_MAJOR, VERSION_MINOR, VERSION_REVISION, 0 )
-            VALUE "InternalName", "socket"
+            VALUE "InternalName", "inet"
             VALUE "LegalCopyright", "The Falcon Programming Language License"
-            VALUE "OriginalFilename", "socket.dll"
+            VALUE "OriginalFilename", "inet_fm.dll"
             VALUE "ProductName", "The Falcon Programming Language"
             VALUE "ProductVersion", FALCON_VERSION_RCINFO
         END

@@ -151,7 +151,7 @@ public:
    /**
     * The global handler class collection.
     */
-   StdMpxFactories* stdStreamTraits() const { return m_stdStreamTraits; }
+   StdMpxFactories* stdMpxFactories() const { return m_stdStreamTraits; }
 
    /**
     * The global handler class collection.

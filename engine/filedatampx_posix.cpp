@@ -35,6 +35,11 @@
 namespace Falcon {
 namespace Sys {
 
+//================================================================
+// Factory for FileDataMPX
+//================================================================
+
+
 class FileDataMPX::Private
 {
 public:
@@ -316,17 +321,19 @@ bool FileDataMPX::Private::MPXThread::processMessage()
    }
 
    FDSelectable* fdsel = static_cast<FDSelectable*>( msg.resource );
-   int fd = fdsel->getFd();
+   int fd = 0;
    switch( msg.type )
    {
    case 0:
       return false;
 
    case 1:
+      fd = fdsel->getFd();
       m_streams[fd] = std::make_pair( msg.resource, msg.mode );
       return true;
 
    case 2:
+      fd = fdsel->getFd();
       m_streams.erase( fd );
       msg.resource->decref();
       return true;

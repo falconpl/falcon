@@ -23,13 +23,11 @@
 #include <sys/socket.h>
 #include <sys/poll.h>
 #include <unistd.h>
-#include <falcon/vm_sys_posix.h>
 
 #include <netdb.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <string.h>
-#include "socket_sys.h"
 
 // Sun doesn't provide strerror_r
 #if ( defined (__SUNPRO_CC) && __SUNPRO_CC <= 0x580 )

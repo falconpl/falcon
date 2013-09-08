@@ -20,6 +20,7 @@
 #include <falcon/stringstream.h>
 #include <falcon/diskmpxfactory.h>
 #include <falcon/pipe.h>
+#include <falcon/filedatampx.h>
 
 namespace Falcon
 {
@@ -28,6 +29,7 @@ StdMpxFactories::StdMpxFactories()
 {
    m_stringStreamTraits = new StringStream::MpxFactory;
    m_diskFileTraits = new DiskMpxFactory;
+   m_fileDataTraits = new Sys::FileDataMPXFactory;
    m_readPipeTraits = new Sys::Pipe::MpxFactory(true);
    m_writePipeTraits = new Sys::Pipe::MpxFactory(false);
 }
@@ -38,6 +40,7 @@ StdMpxFactories::~StdMpxFactories()
    delete m_diskFileTraits;
    delete m_readPipeTraits;
    delete m_writePipeTraits;
+   delete m_fileDataTraits;
 }
 
 }

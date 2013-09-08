@@ -1,14 +1,14 @@
 /*
    FALCON - The Falcon Programming Language.
-   FILE: socket_sys_win.cpp
+   FILE: inet_mod.cpp
 
-   UNIX/BSD system specific interface to sockets.
+   BSD socket generic basic support
    -------------------------------------------------------------------
    Author: Giancarlo Niccolai
-   Begin: 2006-05-09 15:50
+   Begin: Sun, 08 Sep 2013 13:47:28 +0200
 
    -------------------------------------------------------------------
-   (C) Copyright 2004: the FALCON developers (see list in AUTHORS file)
+   (C) Copyright 2013: the FALCON developers (see list in AUTHORS file)
 
    See LICENSE file for licensing details.
 */
@@ -23,14 +23,20 @@
 #include <sys/socket.h>
 #include <sys/poll.h>
 #include <unistd.h>
-#include <falcon/stderrors.h>
 
 #include <netdb.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <string.h>
-#include "socket_mod.h"
-#include "socket_ext.h"
+#include "inet_mod.h"
+#include "inet_ext.h"
+
+
+#include <falcon/stderrors.h>
+#include <falcon/autocstring.h>
+#include <falcon/engine.h>
+#include <falcon/stdmpxfactories.h>
+
 
 namespace Falcon {
 namespace Mod {
@@ -44,6 +50,10 @@ bool init_system()
    return true;
 }
 
+bool shutdown_system()
+{
+   return true;
+}
 
 bool isIPV4( const String &ipv4__ )
 {
@@ -131,7 +141,7 @@ void Resolver::startResolving( Address* address )
    }
 }
 
-virtual Resolver::~Resolver()
+Resolver::~Resolver()
 {
    if( m_address != 0 )
    {
@@ -151,7 +161,7 @@ Resolver::TH::~TH()
    m_res->decref();
 }
 
-virtual void* Resolver::TH::run()
+void* Resolver::TH::run()
 {
    m_res->address()->resolve();
    m_res->signal();
@@ -166,11 +176,192 @@ virtual void* Resolver::TH::run()
 
 Address::~Address()
 {
-   if ( m_systemData ) {
-      struct addrinfo *res = (struct addrinfo *) m_systemData;
-      freeaddrinfo( res );
+   clear();
+}
+
+Address::Address( const String& addr )
+{
+   if( ! parse(addr) )
+   {
+      throw FALCON_SIGN_XERROR(Ext::NetError, FALSOCK_ERR_ADDRESS, .desc(FALSOCK_ERR_ADDRESS_MSG));
    }
 }
+
+Address::Address( const String& host, const String& service ):
+      m_systemData(0),
+      m_resolvCount(0),
+      m_activeHostId(-1),
+      m_mark(0)
+{
+   m_host = host;
+   m_service = service;
+   int64 port = 0;
+   if( service.parseInt(port) )
+   {
+      m_port = (int) port;
+   }
+}
+
+Address::Address( const String& host, int32 port ):
+      m_systemData(0),
+      m_resolvCount(0),
+      m_activeHostId(-1),
+      m_mark(0)
+{
+   m_host = host;
+   m_port = port;
+   m_service.N(port);
+}
+
+Address::Address( const Address& other ):
+      m_systemData(0),
+      m_resolvCount(0),
+      m_activeHostId(-1),
+      m_mark(0)
+{
+   m_host = other.m_host;
+   m_port = other.m_port;
+   m_service = other.m_service;
+}
+
+
+void Address::clear()
+{
+   if( m_systemData != 0 )
+   {
+      struct addrinfo *res = (struct addrinfo *) m_systemData;
+      ::freeaddrinfo(res);
+      m_systemData = 0;
+
+   }
+   m_resolvCount = 0;
+   m_activeHostId = -1;
+}
+
+size_t Address::occupiedMemory() const
+{
+   return sizeof( Mod::Address ) + 16
+            + (getResolvedCount() * sizeof(struct sockaddr_in) );
+}
+
+void Address::set( const String &host, const String &service )
+{
+   clear();
+   m_host.bufferize( host );
+   m_service.bufferize( service );
+   int64 port;
+   if( m_service.parseInt(port) )
+   {
+      m_port = port;
+   }
+   else {
+      port = 0;
+   }
+}
+
+
+bool Address::parse( const String& tgt )
+{
+   int64 portValue = 0;
+
+   if( m_systemData != 0 )
+   {
+      struct addrinfo *res = (struct addrinfo *) m_systemData;
+      ::freeaddrinfo(res);
+      m_systemData = 0;
+   }
+
+   m_port = 0;
+   if( tgt.empty() )
+   {
+      m_host.clear();
+      m_service.clear();
+      return true;
+   }
+
+   // remove extra spaces
+   const String *addr;
+   String temp;
+   if( String::isWhiteSpace(tgt.getCharAt(0)) || String::isWhiteSpace(tgt.getCharAt(tgt.length()-1)) )
+   {
+      temp = tgt;
+      addr = &temp;
+      temp.trim();
+   }
+   else {
+      addr = &tgt;
+   }
+
+   // dot/quad or host:port format?
+   length_t pos = addr->find('[');
+   if( pos == String::npos )
+   {
+      // one ":" accepted only
+      pos = addr->find(':');
+      length_t pos1 = addr->rfind(':');
+      if( pos != pos1 || pos == addr->length() )
+      {
+         return false;
+      }
+
+      // just an host?
+      if( pos == String::npos )
+      {
+         m_host = *addr;
+         m_service.clear();
+      }
+      else {
+         m_host = addr->subString(0,pos);
+         m_service = addr->subString(pos+1);
+
+         // actually not needed, but it's nice to have.
+         if( m_service.parseInt(portValue) )
+         {
+            m_port = (int) portValue;
+         }
+      }
+      return true;
+   }
+
+   // in ipv6, [...] must be at beginning.
+   if( pos != 0 )
+   {
+      return false;
+   }
+
+   // ipv6 [...]:...
+   length_t posEnd = addr->find(']');
+   length_t posService = addr->rfind(':');
+   if( posEnd == String::npos )
+   {
+      return false;
+   }
+
+   // do we have just the host? "[...]"
+   if( posEnd +1 == addr->length() )
+   {
+      // ipv6 host only
+      m_host = addr->subString(1,addr->length()-2);
+      m_service.clear();
+      return true;
+   }
+
+   // the last : must be right after the ] "[...]:service"
+   if( posService != posEnd + 1 )
+   {
+      return false;
+   }
+
+   m_host = addr->subString(1,posEnd-1);
+   m_service = addr->subString(posService + 1);
+   // actually not needed, but it's nice to have.
+   if( m_service.parseInt(portValue) )
+   {
+      m_port = (int) portValue;
+   }
+   return true;
+}
+
 
 bool Address::resolve( bool useNameResolver )
 {
@@ -271,6 +462,27 @@ bool Address::isResolved() const
    return this->getResolvedCount() != 0;
 }
 
+
+void Address::toString( String& str ) const
+{
+   if( m_host.find(':') != String::npos )
+   {
+      str = "[" + m_host + "]";
+   }
+   else {
+      str = m_host;
+   }
+
+   if( ! m_service.empty() )
+   {
+      str +=":" +m_service;
+   }
+   else if ( m_port != 0 )
+   {
+      str += ":";
+      str.N(m_port);
+   }
+}
 
 //================================================
 // Socket
@@ -373,7 +585,7 @@ void Socket::close()
 {
    if( m_skt >= 0 )
    {
-      if ( ::shutdown( (int) m_skt, SHUT_RDWR ) == 0 )
+      if ( ::close( (int) m_skt ) == 0 )
       {
          ::close(m_skt); // for safety
          m_skt = -1;
@@ -387,6 +599,41 @@ void Socket::close()
    }
 }
 
+void Socket::closeWrite()
+{
+   if( m_skt >= 0 )
+   {
+      if ( ::shutdown( (int) m_skt, SHUT_WR ) == 0 )
+      {
+         ::close(m_skt); // for safety
+         m_skt = -1;
+         m_type = e_type_none;
+      }
+      else {
+         throw FALCON_SIGN_XERROR( Ext::NetError,
+                       FALSOCK_ERR_CLOSE, .desc(FALSOCK_ERR_CLOSE_MSG)
+                       .sysError((uint32) errno ));
+      }
+   }
+}
+
+void Socket::closeRead()
+{
+   if( m_skt >= 0 )
+   {
+      if ( ::shutdown( (int) m_skt, SHUT_RD ) == 0 )
+      {
+         ::close(m_skt); // for safety
+         m_skt = -1;
+         m_type = e_type_none;
+      }
+      else {
+         throw FALCON_SIGN_XERROR( Ext::NetError,
+                       FALSOCK_ERR_CLOSE, .desc(FALSOCK_ERR_CLOSE_MSG)
+                       .sysError((uint32) errno ));
+      }
+   }
+}
 
 void Socket::connect( Address* where, bool async )
 {
@@ -440,6 +687,7 @@ void Socket::connect( Address* where, bool async )
    */
 
    int32 oldflags = 0;
+   m_skt = skt;
    if( async )
    {
       oldflags = getFcntl(F_GETFL);
@@ -456,6 +704,7 @@ void Socket::connect( Address* where, bool async )
       if( error != EINPROGRESS )
       {
          ::close( skt );
+         m_skt = -1;
          throw FALCON_SIGN_XERROR( Ext::NetError,
                        FALSOCK_ERR_CREATE, .desc(FALSOCK_ERR_CREATE_MSG)
                        .sysError( error ));
@@ -473,6 +722,10 @@ void Socket::connect( Address* where, bool async )
       setFcntl(F_SETFL, oldflags);
    }
 
+   if( m_type != e_type_dgram )
+   {
+      m_type = e_type_stream;
+   }
 }
 
 bool Socket::isConnected() const
@@ -758,12 +1011,6 @@ Socket *Socket::accept()
    return s;
 }
 
-//===============================================
-// UDP Socket
-//===============================================
-
-
-
 int32 Socket::recv( byte *buffer, int32 size, Address *data )
 {
    if( m_type == e_type_server || m_type == e_type_none )
@@ -803,6 +1050,11 @@ int32 Socket::recv( byte *buffer, int32 size, Address *data )
 
    if( retsize < 0 )
    {
+      if( errno == EWOULDBLOCK || errno == EAGAIN )
+      {
+         return -1;
+      }
+
       throw FALCON_SIGN_XERROR( Ext::NetError,
                  FALSOCK_ERR_RECV, .desc(FALSOCK_ERR_RECV_MSG)
                  .sysError((uint32) errno ));
@@ -812,7 +1064,7 @@ int32 Socket::recv( byte *buffer, int32 size, Address *data )
 }
 
 
-int32 Socket::send( byte *buffer, int32 size, Address *where )
+int32 Socket::send( const byte *buffer, int32 size, Address *where )
 {
    if( m_type == e_type_server || m_type == e_type_none )
    {
@@ -872,7 +1124,7 @@ int32 Socket::send( byte *buffer, int32 size, Address *where )
 
 
 SocketSelectable::SocketSelectable( const Class* cls, Socket* inst ):
-      Selectable(cls, inst)
+      FDSelectable(cls, inst)
 {
    inst->incref();
 }
@@ -885,7 +1137,13 @@ SocketSelectable::~SocketSelectable()
 
 const Multiplex::Factory* SocketSelectable::factory() const
 {
+   return Engine::instance()->stdMpxFactories()->fileDataMpxFact();
+}
 
+int SocketSelectable::getFd() const
+{
+   Socket* socket = static_cast<Socket*>(instance());
+   return socket->descriptor();
 }
 
 
@@ -923,7 +1181,7 @@ SSLData::ssl_error_t Socket::sslConfig( bool asServer,
                                            const char* pkeyFile,
                                            const char* certAuthFile )
 {
-   Falcon::Sys::ssl_init();
+   Falcon::Mod::ssl_init();
 
    if ( d.m_iSystemData <= 0 ) // no socket to attach
       return SSLData::notready_error;
@@ -1122,4 +1380,4 @@ SSLData::~SSLData()
 } // namespace
 }
 
-/* end of socket_sys_win.cpp */
+/* end of inet_mod.cpp */

@@ -1,14 +1,14 @@
 /*
    FALCON - The Falcon Programming Language.
-   FILE: socket_ext.cpp
+   FILE: inet_ext.cpp
 
-   Falcon VM interface to socket module -- header.
+   Falcon VM interface to inet module -- header.
    -------------------------------------------------------------------
    Author: Giancarlo Niccolai
-   Begin: 2006-05-09 15:50
+   Begin: Sun, 08 Sep 2013 13:47:28 +0200
 
    -------------------------------------------------------------------
-   (C) Copyright 2004: the FALCON developers (see list in AUTHORS file)
+   (C) Copyright 2013: the FALCON developers (see list in AUTHORS file)
 
    See LICENSE file for licensing details.
 */
@@ -18,13 +18,15 @@
 */
 
 
-#ifndef FLC_SOCKET_EXT_H
-#define FLC_SOCKET_EXT_H
+#ifndef _FALCON_INET_EXT_H_
+#define _FALCON_INET_EXT_H_
 
 #include <falcon/setup.h>
 #include <falcon/module.h>
 #include <falcon/error.h>
 #include <falcon/error_base.h>
+
+#include <falcon/classes/classshared.h>
 
 #ifndef FALCON_SOCKET_ERROR_BASE
    #define FALCON_SOCKET_ERROR_BASE        1170
@@ -50,7 +52,7 @@
 #define FALSOCK_ERR_ACCEPT_MSG "Network error during accept"
 
 #define FALSOCK_ERR_INCOMPATIBLE       (FALCON_SOCKET_ERROR_BASE + 9)
-#define FALSOCK_ERR_INCOMPATIBLE_MSG   "Socket already configured"
+#define FALSOCK_ERR_INCOMPATIBLE_MSG   "Socket not correctly configured"
 
 #define FALSOCK_ERR_UNRESOLVED         (FALCON_SOCKET_ERROR_BASE + 10)
 #define FALSOCK_ERR_UNRESOLVED_MSG     "Unresolved address used in operation"
@@ -61,13 +63,88 @@
 #define FALSOCK_ERR_LISTEN             (FALCON_SOCKET_ERROR_BASE + 12)
 #define FALSOCK_ERR_LISTEN_MSG         "Network error during listen"
 
+#define FALSOCK_ERR_ADDRESS            (FALCON_SOCKET_ERROR_BASE + 13)
+#define FALSOCK_ERR_ADDRESS_MSG        "Malformed network address"
+
 #if WITH_OPENSSL
-#define FALSOCK_ERR_SSLCONFIG (FALCON_SOCKET_ERROR_BASE + 15)
-#define FALSOCK_ERR_SSLCONNECT (FALCON_SOCKET_ERROR_BASE + 16)
+#define FALSOCK_ERR_SSLCONFIG          (FALCON_SOCKET_ERROR_BASE + 15)
+#define FALSOCK_ERR_SSLCONFIG_MSG      "Error during SSL configuration"
+#define FALSOCK_ERR_SSLCONNECT         (FALCON_SOCKET_ERROR_BASE + 16)
+#define FALSOCK_ERR_SSLCONNECT_MSG     "Error during SSL negotiation"
 #endif
 
 namespace Falcon {
 namespace Ext {
+
+class ClassResolver: public ClassShared
+{
+public:
+   ClassResolver();
+   virtual ~ClassResolver();
+
+   virtual int64 occupiedMemory( void* instance ) const;
+
+   virtual void dispose( void* instance ) const;
+   virtual void* clone( void* instance ) const;
+   virtual void* createInstance() const;
+
+   virtual void describe( void* instance, String& target, int depth = 3, int maxlen = 60 ) const;
+};
+
+
+class ClassAddress: public Class
+{
+public:
+   ClassAddress();
+   virtual ~ClassAddress();
+
+   virtual int64 occupiedMemory( void* instance ) const;
+
+   virtual void dispose( void* instance ) const;
+   virtual void* clone( void* instance ) const;
+   virtual void* createInstance() const;
+
+   virtual void describe( void* instance, String& target, int depth = 3, int maxlen = 60 ) const;
+
+   virtual bool op_init( VMContext* ctx, void* instance, int32 pcount ) const;
+};
+
+
+class ClassSocket: public Class
+{
+public:
+   ClassSocket();
+   virtual ~ClassSocket();
+
+   virtual int64 occupiedMemory( void* instance ) const;
+
+   virtual void dispose( void* instance ) const;
+   virtual void* clone( void* instance ) const;
+   virtual void* createInstance() const;
+
+   virtual Selectable* getSelectableInterface( void* instance ) const;
+
+   virtual bool op_init( VMContext* ctx, void* instance, int32 pcount ) const;
+};
+
+
+
+class ModuleInet: public Module
+{
+public:
+   ModuleInet();
+   virtual ~ModuleInet();
+
+   Class* addressClass() const { return m_clsAddress; }
+   Class* socketClass() const { return m_clsSocket; }
+   Class* resolverClass() const { return m_clsResolver; }
+
+public:
+   Class* m_clsAddress;
+   Class* m_clsSocket;
+   Class* m_clsResolver;
+};
+
 
 // =============================================
 // Generic Functions
