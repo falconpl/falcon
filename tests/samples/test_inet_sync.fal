@@ -1,6 +1,6 @@
 load inet
 
-addr = Address("www.ckdb.ch:https")
+addr = Address("www.google.com:https")
 addr.resolve()
 addr.addresses.foreach(printl)
 
@@ -11,7 +11,7 @@ x.setOpt(SOL_SOCKET, SO_REUSEADDR, true)
 x.connect(addr)
 x.sslConnect()
 
-x.send("GET / HTTP/1.0\r\nHost: www.ckdb.ch\r\n\r\n")
+x.send("GET / HTTP/1.0\r\nHost: www.google.com\r\n\r\n")
 while x.recv(str, 10000)
    str.isText = true
    > str
