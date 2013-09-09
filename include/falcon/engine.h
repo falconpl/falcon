@@ -23,6 +23,7 @@
 
 #include <falcon/vfsprovider.h>
 #include <falcon/mantra.h>
+#include <falcon/mersennetwister.h>
 
 namespace Falcon
 {
@@ -323,12 +324,17 @@ public:
    static void refSymbol(Symbol* sym);
    static void releaseSymbol( Symbol* sym );
 
+   /** Engine-level logging facility */
    Log* log() const;
+
+   /** Engine-level random number generator facility */
+   MTRand_interlocked& mtrand() const { return m_rand; }
 
 protected:
    Engine();
    ~Engine();
 
+   mutable MTRand_interlocked m_rand;
    static Engine* m_instance;
    Mutex* m_mtx;
    Collector* m_collector;

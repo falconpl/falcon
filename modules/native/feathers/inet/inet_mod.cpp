@@ -404,6 +404,43 @@ bool Address::resolve( bool useNameResolver )
    return true;
 }
 
+void Address::convertToIPv6( void *vai, void* vsock6, socklen_t& sock6len )
+{
+   struct addrinfo *ai = (struct addrinfo *) vai;
+
+   char host[256];
+   strcpy(host, "::ffff:");
+   char serv[32];
+   int res = ::getnameinfo( ai->ai_addr, ai->ai_addrlen, host+7, 255-7, serv, 31, NI_NUMERICHOST | NI_NUMERICSERV );
+
+   if ( res != 0 )
+   {
+      const char* ed = gai_strerror(res);
+      throw FALCON_SIGN_XERROR(Ext::NetError, FALSOCK_ERR_RESOLV, .desc(FALSOCK_ERR_RESOLV_MSG)
+               .extra(String("").N(res).A(": ").A(ed)) );
+   }
+
+   struct addrinfo *resolved = 0;
+   struct addrinfo hints;
+   memset(&hints, 0, sizeof(hints) );
+   hints.ai_family = AF_INET6;
+   hints.ai_flags = AI_NUMERICHOST | AI_NUMERICSERV | AI_PASSIVE;
+
+   res = ::getaddrinfo( host, serv, &hints, &resolved );
+   if ( res != 0 )
+   {
+      const char* ed = gai_strerror(res);
+      throw FALCON_SIGN_XERROR(Ext::NetError, FALSOCK_ERR_RESOLV, .desc(FALSOCK_ERR_RESOLV_MSG)
+               .extra(String("").N(res).A(": ").A(ed)) );
+   }
+
+   sock6len = resolved->ai_addrlen;
+   memcpy( vsock6, resolved->ai_addr, resolved->ai_addrlen );
+   ::freeaddrinfo( resolved );
+}
+
+
+
 bool Address::getResolvedEntry( int32 count, String &entry, String &service, int32 &port )
 {
    m_lastError = 0;
@@ -451,6 +488,22 @@ void *Address::getHostSystemData( int id ) const
 }
 
 
+void* Address::getRandomHostSystemData() const
+{
+   int32 count = this->getResolvedCount();
+   if( count == 0 )
+   {
+      return 0;
+   }
+   else if (count == 1 )
+   {
+      return getHostSystemData(0);
+   }
+
+   count = Engine::instance()->mtrand().randInt() % count;
+   return getHostSystemData(count);
+}
+
 void Address::errorDesc( String& target )
 {
    const char* ed = gai_strerror((int) m_lastError);
@@ -488,6 +541,64 @@ void Address::toString( String& str ) const
 // Socket
 //================================================
 
+Socket::Socket():
+     m_type(-1),
+     m_address(0),
+     m_bConnected( false ),
+     m_mark(0)
+     #if WITH_OPENSSL
+     ,m_sslData( 0 )
+     #endif
+{
+   m_skt = -1;
+}
+
+
+Socket::Socket(int type):
+     m_type(-1),
+     m_address(0),
+     m_bConnected( false ),
+     m_mark(0)
+     #if WITH_OPENSSL
+     ,m_sslData( 0 )
+     #endif
+{
+   m_skt = -1;
+   create(type);
+}
+
+Socket::Socket( FALCON_SOCKET socket, int type, Address* remote ):
+     m_type(type),
+     m_address( remote ),
+     m_bConnected( true ),
+     m_skt(socket),
+     m_mark(0)
+     #if WITH_OPENSSL
+     ,m_sslData( 0 )
+     #endif
+{
+  if( remote != 0 )
+  {
+     remote->incref();
+  }
+}
+
+void Socket::create( int type )
+{
+   if( m_skt != -1 )
+   {
+      throw FALCON_SIGN_XERROR( Ext::NetError, FALSOCK_ERR_INCOMPATIBLE, .desc(FALSOCK_ERR_INCOMPATIBLE_MSG));
+   }
+
+   m_type = type;
+   m_skt = ::socket(AF_INET6, type, 0);
+   if( m_skt == -1 )
+   {
+      throw FALCON_SIGN_XERROR( Ext::NetError, FALSOCK_ERR_CREATE, .desc(FALSOCK_ERR_CREATE_MSG));
+   }
+
+}
+
 Socket::~Socket()
 {
    this->close();
@@ -502,14 +613,8 @@ Socket::~Socket()
 }
 
 
-void Socket::bind( Address *addr, bool dgram )
+void Socket::bind( Address *addr )
 {
-   if ( m_type != e_type_none )
-   {
-      throw FALCON_SIGN_XERROR(Ext::NetError,
-               FALSOCK_ERR_INCOMPATIBLE, .desc(FALSOCK_ERR_INCOMPATIBLE_MSG));
-   }
-
    // has the address to be resolved?
    if( ! addr->isResolved() ) {
       if( ! addr->resolve(false) ) {
@@ -519,51 +624,24 @@ void Socket::bind( Address *addr, bool dgram )
    }
 
    // try to bind to the resovled host
-   struct addrinfo *ai = 0;
-   int skt = -1;
+   struct addrinfo *ai = (struct addrinfo *)addr->getRandomHostSystemData();
+   fassert(ai != 0);
+
+   struct addrinfo ai6;
+   struct sockaddr_storage storage;
+   if( ai->ai_family == AF_INET )
+   {
+      Address::convertToIPv6( ai, &storage, ai6.ai_addrlen );
+      ai6.ai_addr = (struct sockaddr*) &storage;
+      ai = &ai6;
+   }
+
    // find a suitable address.
-   int entryId;
-   int type = m_type == dgram ? SOCK_DGRAM: SOCK_STREAM;
-
-   for ( entryId = 0; entryId < addr->getResolvedCount(); entryId++ )
-   {
-      ai = (struct addrinfo *)addr->getHostSystemData( entryId );
-      if ( m_ipv6 || ai->ai_family == AF_INET ) {
-         skt = socket( ai->ai_family, type, ai->ai_protocol );
-         if ( skt > 0 ) {
-            break;
-         }
-      }
-   }
-
-   if ( skt == -1 ) {
-      throw FALCON_SIGN_XERROR( Ext::NetError,
-                              FALSOCK_ERR_CREATE, .desc(FALSOCK_ERR_CREATE_MSG)
-                              .sysError((uint32) errno ));
-   }
-
-   // always useful
-   {
-      int iOpt = 1;
-      int res = ::setsockopt( skt, SOL_SOCKET, SO_REUSEADDR, (const char *) &iOpt, sizeof( iOpt ));
-      if (res != 0)
-      {
-         throw FALCON_SIGN_XERROR( Ext::NetError,
-                                 FALSOCK_ERR_GENERIC, .desc(FALSOCK_ERR_GENERIC_MSG)
-                                 .extra("setsockopt")
-                                 .sysError((uint32) errno ));
-
-      }
-   }
-
-   int res = ::bind( skt, ai->ai_addr, ai->ai_addrlen );
+   int res = ::bind( m_skt, ai->ai_addr, ai->ai_addrlen );
 
    if ( res == 0 )
    {
       // success!!!
-      m_type = dgram ? e_type_dgram : e_type_server;
-      m_skt = skt;
-      m_boundFamily = ai->ai_family;
       if( m_address != 0 )
       {
          // shouldn't happen, however...
@@ -573,12 +651,12 @@ void Socket::bind( Address *addr, bool dgram )
       m_address = addr;
       addr->incref();
    }
-
-   throw FALCON_SIGN_XERROR( Ext::NetError,
+   else {
+      throw FALCON_SIGN_XERROR( Ext::NetError,
                FALSOCK_ERR_BIND, .desc(FALSOCK_ERR_BIND_MSG)
                .sysError((uint32) errno ));
+   }
 }
-
 
 
 void Socket::close()
@@ -589,7 +667,7 @@ void Socket::close()
       {
          ::close(m_skt); // for safety
          m_skt = -1;
-         m_type = e_type_none;
+         m_type = -1;
       }
       else {
          throw FALCON_SIGN_XERROR( Ext::NetError,
@@ -607,7 +685,6 @@ void Socket::closeWrite()
       {
          ::close(m_skt); // for safety
          m_skt = -1;
-         m_type = e_type_none;
       }
       else {
          throw FALCON_SIGN_XERROR( Ext::NetError,
@@ -617,15 +694,30 @@ void Socket::closeWrite()
    }
 }
 
+
+bool Socket::broadcasting() const
+{
+   bool mode = false;
+   this->getBoolOption( PF_INET, SO_BROADCAST, mode );
+   return mode;
+}
+
+
+void Socket::broadcasting( bool mode )
+{
+   this->setBoolOption( PF_INET, SO_BROADCAST, mode );
+}
+
+
 void Socket::closeRead()
 {
    if( m_skt >= 0 )
    {
-      if ( ::shutdown( (int) m_skt, SHUT_RD ) == 0 )
+      if ( ::shutdown( (int) m_skt, SHUT_RD ) != 0 )
       {
          ::close(m_skt); // for safety
          m_skt = -1;
-         m_type = e_type_none;
+         m_type = -1;
       }
       else {
          throw FALCON_SIGN_XERROR( Ext::NetError,
@@ -637,14 +729,6 @@ void Socket::closeRead()
 
 void Socket::connect( Address* where, bool async )
 {
-   if ( m_type == e_type_server )
-   {
-      throw FALCON_SIGN_XERROR(Ext::NetError,
-               FALSOCK_ERR_INCOMPATIBLE,
-               .desc(FALSOCK_ERR_INCOMPATIBLE_MSG)
-               );
-   }
-
    int flags = 0;
 
    // let's try to connect the addresses in where.
@@ -657,37 +741,21 @@ void Socket::connect( Address* where, bool async )
       }
    }
 
-   struct addrinfo *ai = 0;
-   int skt = -1;
    // find a suitable address.
-   int entryId;
-   for ( entryId = 0; entryId < where->getResolvedCount(); entryId++ )
+   struct addrinfo *ai = (struct addrinfo *)where->getRandomHostSystemData();
+   fassert(ai != 0);
+
+   struct addrinfo ai6;
+   struct sockaddr_storage storage;
+   if( ai->ai_family == AF_INET )
    {
-      ai = (struct addrinfo *)where->getHostSystemData( entryId );
-      if ( m_ipv6 || ai->ai_family == AF_INET ) {
-         skt = socket( ai->ai_family, SOCK_STREAM, ai->ai_protocol );
-         if ( skt < 0 )
-         {
-            throw FALCON_SIGN_XERROR( Ext::NetError,
-                          FALSOCK_ERR_CREATE, .desc(FALSOCK_ERR_CREATE_MSG)
-                          .sysError((uint32) errno ));
-         }
-        break;
-      }
+      Address::convertToIPv6( ai, &storage, ai6.ai_addrlen );
+      ai6.ai_addr = (struct sockaddr*) &storage;
+      ai = &ai6;
    }
 
-   // set keepalive
-   /*
-   int bOptVal = 1;
-   if ( setsockopt( skt, SOL_SOCKET, SO_KEEPALIVE, (char *) &bOptVal, sizeof( int ) ) < 0 )
-   {
-      m_lastError = errno;
-      return false;
-   }
-   */
 
    int32 oldflags = 0;
-   m_skt = skt;
    if( async )
    {
       oldflags = getFcntl(F_GETFL);
@@ -696,14 +764,14 @@ void Socket::connect( Address* where, bool async )
    }
 
    m_bConnected = false;
-   int res = ::connect( skt, ai->ai_addr, ai->ai_addrlen );
+   int res = ::connect( m_skt, ai->ai_addr, ai->ai_addrlen );
 
    if ( res < 0 )
    {
       int error = errno;
       if( error != EINPROGRESS )
       {
-         ::close( skt );
+         ::close( m_skt );
          m_skt = -1;
          throw FALCON_SIGN_XERROR( Ext::NetError,
                        FALSOCK_ERR_CREATE, .desc(FALSOCK_ERR_CREATE_MSG)
@@ -714,17 +782,11 @@ void Socket::connect( Address* where, bool async )
       m_bConnected = true;
    }
 
-   m_skt = skt;
    // if the connection is VERY fast, we may get connected even if we were async.
    if( async )
    {
       // reset the non-blocking status
       setFcntl(F_SETFL, oldflags);
-   }
-
-   if( m_type != e_type_dgram )
-   {
-      m_type = e_type_stream;
    }
 }
 
@@ -734,7 +796,7 @@ bool Socket::isConnected() const
    {
       return m_bConnected;
    }
-   else if(m_type == e_type_stream )
+   else
    {
       if( ::connect(m_skt, 0, 0) == EAGAIN )
       {
@@ -801,15 +863,16 @@ void Socket::setNonBlocking( bool mode ) const
    this->setFcntl(F_SETFL, flags);
 }
 
+bool Socket::isNonBlocking() const
+{
+   int flags = this->getFcntl( F_GETFL );
+   return (flags & O_NONBLOCK) != 0;
+}
+
 
 /** Throws net error on error. */
-void Socket::getBoolOption( int level, int option, bool& value )
+void Socket::getBoolOption( int level, int option, bool& value ) const
 {
-   if ( m_type == e_type_none )
-   {
-      throw FALCON_SIGN_XERROR(Ext::NetError,
-               FALSOCK_ERR_INCOMPATIBLE, .desc(FALSOCK_ERR_INCOMPATIBLE_MSG));
-   }
 
    int res = 0;
    unsigned int len = 0;
@@ -826,14 +889,8 @@ void Socket::getBoolOption( int level, int option, bool& value )
 }
 
 
-void Socket::getIntOption( int level, int option, int& value )
+void Socket::getIntOption( int level, int option, int& value ) const
 {
-   if ( m_type == e_type_none )
-   {
-      throw FALCON_SIGN_XERROR(Ext::NetError,
-               FALSOCK_ERR_INCOMPATIBLE, .desc(FALSOCK_ERR_INCOMPATIBLE_MSG));
-   }
-
    value = 0;
    unsigned int len = 0;
 
@@ -847,14 +904,8 @@ void Socket::getIntOption( int level, int option, int& value )
 }
 
 
-void Socket::getStringOption( int level, int option, String& value )
+void Socket::getStringOption( int level, int option, String& value ) const
 {
-   if ( m_type == e_type_none )
-   {
-      throw FALCON_SIGN_XERROR(Ext::NetError,
-               FALSOCK_ERR_INCOMPATIBLE, .desc(FALSOCK_ERR_INCOMPATIBLE_MSG));
-   }
-
    char buffer[512];
    unsigned int len = 512;
 
@@ -869,15 +920,25 @@ void Socket::getStringOption( int level, int option, String& value )
    value.fromUTF8( buffer, len );
 }
 
+
+void Socket::getDataOption( int level, int option, void* data, size_t& data_len ) const
+{
+   socklen_t len = (socklen_t) data_len;
+
+   if( ::getsockopt( m_skt, level, option, data, &len ) != 0 )
+   {
+      throw FALCON_SIGN_XERROR( Ext::NetError,
+           FALSOCK_ERR_GENERIC, .desc(FALSOCK_ERR_GENERIC_MSG)
+           .extra("getsockopt")
+           .sysError((uint32) errno ));
+   }
+
+   data_len = (size_t) len;
+}
+
 /** Throws net error on error. */
 void Socket::setBoolOption( int level, int option, bool value )
 {
-   if ( m_type == e_type_none )
-   {
-      throw FALCON_SIGN_XERROR(Ext::NetError,
-               FALSOCK_ERR_INCOMPATIBLE, .desc(FALSOCK_ERR_INCOMPATIBLE_MSG));
-   }
-
    int res = value ? 1 : 0;
    socklen_t len = sizeof(int);
 
@@ -893,12 +954,6 @@ void Socket::setBoolOption( int level, int option, bool value )
 /** Throws net error on error. */
 void Socket::setIntOption( int level, int option, int value )
 {
-   if ( m_type == e_type_none )
-   {
-      throw FALCON_SIGN_XERROR(Ext::NetError,
-               FALSOCK_ERR_INCOMPATIBLE, .desc(FALSOCK_ERR_INCOMPATIBLE_MSG));
-   }
-
    socklen_t len = sizeof(int);
 
    if( ::setsockopt( m_skt, level, option, &value, len ) != 0 )
@@ -913,12 +968,6 @@ void Socket::setIntOption( int level, int option, int value )
 
 void Socket::setStringOption( int level, int option, const String& value )
 {
-   if ( m_type == e_type_none )
-   {
-      throw FALCON_SIGN_XERROR(Ext::NetError,
-               FALSOCK_ERR_INCOMPATIBLE, .desc(FALSOCK_ERR_INCOMPATIBLE_MSG));
-   }
-
    AutoCString cval(value);
    socklen_t len = cval.length();
 
@@ -932,66 +981,59 @@ void Socket::setStringOption( int level, int option, const String& value )
 }
 
 
-//================================================
-// Server
-//================================================
-
-void Socket::setServerMode( Address* local, int listenBacklog )
+void Socket::setDataOption( int level, int option, const void* data, size_t data_len )
 {
-   if ( m_type != e_type_none )
+   if( ::setsockopt( m_skt, level, option, data, (socklen_t) data_len ) != 0 )
    {
-      throw FALCON_SIGN_XERROR(Ext::NetError,
-               FALSOCK_ERR_INCOMPATIBLE, .desc(FALSOCK_ERR_INCOMPATIBLE_MSG));
+      throw FALCON_SIGN_XERROR( Ext::NetError,
+            FALSOCK_ERR_GENERIC, .desc(FALSOCK_ERR_GENERIC_MSG)
+            .extra("setsockopt")
+            .sysError((uint32) errno ));
    }
+}
 
+
+
+void Socket::listen( int listenBacklog )
+{
    if( listenBacklog < 0 )
    {
       listenBacklog = SOMAXCONN;
    }
-
-   bind(local, false);
 
    if ( ::listen( m_skt, SOMAXCONN ) != 0 )
    {
       uint32 error = errno;
       ::close(m_skt);
       m_skt = -1;
-      m_type = e_type_none;
+      m_type = -1;
 
       throw FALCON_SIGN_XERROR(Ext::NetError,
                      FALSOCK_ERR_LISTEN, .desc(FALSOCK_ERR_LISTEN_MSG)
                      .sysError(error));
    }
-
-   m_type = e_type_server;
 }
 
 
 Socket *Socket::accept()
 {
-   if ( m_type != e_type_server )
-   {
-      throw FALCON_SIGN_XERROR(Ext::NetError,
-               FALSOCK_ERR_INCOMPATIBLE, .desc(FALSOCK_ERR_INCOMPATIBLE_MSG));
-   }
-
    socklen_t addrlen;
    struct sockaddr *address;
    struct sockaddr_in6 addrIn6;
-   struct sockaddr_in addrIn;
-   // where is this socket bound?
-   if( m_boundFamily == AF_INET ) {
-      address = (struct sockaddr *) &addrIn;
-      addrlen = sizeof( addrIn );
-   }
-   else {
-      address = (struct sockaddr *) &addrIn6;
-      addrlen = sizeof( addrIn6 );
-   }
+
+   address = (struct sockaddr *) &addrIn6;
+   addrlen = sizeof( addrIn6 );
+
 
    int skt = ::accept( m_skt, address, &addrlen );
    if( skt < 0 )
    {
+      // account for spurious wakeups
+      if( errno == EAGAIN || errno == EINPROGRESS )
+      {
+         return 0;
+      }
+
       throw FALCON_SIGN_XERROR(Ext::NetError,
                      FALSOCK_ERR_ACCEPT, .desc(FALSOCK_ERR_ACCEPT_MSG)
                      .sysError((uint32) errno));
@@ -1005,7 +1047,7 @@ Socket *Socket::accept()
       ask->set(hostName,servName);
    }
 
-   Socket *s = new Socket( skt, ask, m_boundFamily == AF_INET6 );
+   Socket *s = new Socket( skt, SOCK_STREAM, ask );
    ask->decref();
 
    return s;
@@ -1013,13 +1055,6 @@ Socket *Socket::accept()
 
 int32 Socket::recv( byte *buffer, int32 size, Address *data )
 {
-   if( m_type == e_type_server || m_type == e_type_none )
-   {
-      throw FALCON_SIGN_XERROR( Ext::NetError,
-                 FALSOCK_ERR_INCOMPATIBLE, .desc(FALSOCK_ERR_INCOMPATIBLE_MSG)
-                 .sysError((uint32) errno ));
-   }
-
    int32 retsize = 0;
 
    if( data != 0 )
@@ -1050,6 +1085,7 @@ int32 Socket::recv( byte *buffer, int32 size, Address *data )
 
    if( retsize < 0 )
    {
+      // account for spurious wake ups in multiplexers
       if( errno == EWOULDBLOCK || errno == EAGAIN )
       {
          return -1;
@@ -1066,13 +1102,6 @@ int32 Socket::recv( byte *buffer, int32 size, Address *data )
 
 int32 Socket::send( const byte *buffer, int32 size, Address *where )
 {
-   if( m_type == e_type_server || m_type == e_type_none )
-   {
-      throw FALCON_SIGN_XERROR( Ext::NetError,
-                 FALSOCK_ERR_INCOMPATIBLE, .desc(FALSOCK_ERR_INCOMPATIBLE_MSG)
-                 .sysError((uint32) errno ));
-   }
-
    int32 retsize = 0;
 
    // let's try to connect the addresses in where.
@@ -1087,20 +1116,17 @@ int32 Socket::send( const byte *buffer, int32 size, Address *where )
          }
       }
 
-      struct addrinfo *ai = 0;
+      struct addrinfo *ai = (struct addrinfo *)where->getRandomHostSystemData();
+      fassert(ai != 0);
 
-      // find a suitable address.
-      int entryId;
-      for ( entryId = 0; entryId < where->getResolvedCount(); entryId++ )
+      struct addrinfo ai6;
+      struct sockaddr_storage storage;
+      if( ai->ai_family == AF_INET )
       {
-         ai = (struct addrinfo *)where->getHostSystemData( entryId );
-         if ( m_ipv6 || ai->ai_family == AF_INET ) {
-            break;
-         }
+         Address::convertToIPv6( ai, &storage, ai6.ai_addrlen );
+         ai6.ai_addr = (struct sockaddr*) &storage;
+         ai = &ai6;
       }
-
-      // quite impossible but...
-      fassert( entryId != where->getResolvedCount() );
 
       retsize = ::sendto( m_skt, buffer, size, 0, ai->ai_addr, ai->ai_addrlen );
    }
@@ -1110,6 +1136,12 @@ int32 Socket::send( const byte *buffer, int32 size, Address *where )
 
    if( retsize < 0 )
    {
+      // account for spurious wakeups
+      if( errno == EAGAIN || errno == EINPROGRESS )
+      {
+         return -1;
+      }
+
       throw FALCON_SIGN_XERROR( Ext::NetError,
                  FALSOCK_ERR_SEND, .desc(FALSOCK_ERR_SEND_MSG)
                  .sysError((uint32) errno ));

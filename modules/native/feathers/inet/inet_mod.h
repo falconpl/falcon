@@ -28,6 +28,13 @@
 #include <falcon/multiplex.h>
 #include <falcon/selectable.h>
 
+#ifdef FALCON_SYS_WIN
+#include <windows.h>
+#include <Winsock2.h>
+#else
+#include <sys/socket.h>
+#endif
+
 #if WITH_OPENSSL
 #include <openssl/bio.h>
 #include <openssl/err.h>
@@ -95,6 +102,8 @@ public:
    Address( const String& host, const String& service );
    Address( const String& host, int32 port );
    Address( const Address& other );
+
+   static void convertToIPv6( void *vai, void* vsock6, socklen_t& sock6len );
 
    size_t occupiedMemory() const;
    void clear();
@@ -181,6 +190,8 @@ public:
       sockaddr_in or sockaddr_in6.
    */
    void *getHostSystemData( int id ) const;
+   void* getRandomHostSystemData() const;
+
 
    uint32 lastError() const { return m_lastError; }
    void lastError( uint32 err ) {m_lastError = err; }
@@ -352,47 +363,13 @@ class Socket
 
 public:
 
-   typedef enum {
-      e_type_none,
-      e_type_dgram,
-      e_type_stream,
-      e_type_server
-   }
-   t_type;
+   Socket();
+   Socket(int type);
+   Socket( FALCON_SOCKET socket, int type, Address* remote );
 
-   Socket():
-      m_type(e_type_none),
-      m_address(0),
-      m_bConnected( false ),
-      m_skt(-1),
-      m_ipv6(false),
-      m_boundFamily(0),
-      m_mark(0)
-      #if WITH_OPENSSL
-      ,m_sslData( 0 )
-      #endif
-   {
-   }
+   void create( int type );
 
-   Socket( FALCON_SOCKET socket, Address* remote, bool ipv6 = false ):
-      m_type(e_type_stream),
-      m_address( remote ),
-      m_bConnected( true ),
-      m_skt(socket),
-      m_ipv6(ipv6 ),
-      m_boundFamily(0),
-      m_mark(0)
-      #if WITH_OPENSSL
-      ,m_sslData( 0 )
-      #endif
-   {
-      if( remote != 0 )
-      {
-         remote->incref();
-      }
-   }
-
-   t_type type() const
+   int type() const
    {
       return m_type;
    }
@@ -404,13 +381,15 @@ public:
    void gcMark( uint32 mk ) { m_mark = mk; }
    uint32 currentMark() const { return m_mark; }
 
-   Address* address() const { return m_address; }
+   /** Activate datagram type */
+   void setDatagramType();
+
+   bool broadcasting() const;
+   void broadcasting( bool mode );
 
    void closeRead();
    void closeWrite();
    void close();
-
-   void setServerMode( Address* local, int listenBacklog = -1 );
 
    /** Connect to a server.
       Return false means error. Return true does not mean that
@@ -428,7 +407,15 @@ public:
 
       @note modal operation
    */
-   void bind( Address *addr, bool dgram );
+   void bind( Address *addr );
+
+   void listen( int32 backlog = -1 );
+
+   /** Set broadcast mode on the socket.
+     Also, set datagram type if not previously set.
+     Will throw if the socket type is incompatible.
+    */
+   void setBroadcastMode( bool mode );
 
    /** Accepts incoming calls.
       Returns a TCP socket on success, null if no new incoming data is arriving.
@@ -441,11 +428,14 @@ public:
    int32 send( const byte *buffer, int32 size, Address *target=0 );
 
    /** Throws net error on error. */
-   void getBoolOption( int level, int option, bool& value );
+   void getBoolOption( int level, int option, bool& value ) const;
    /** Throws net error on error. */
-   void getIntOption( int level, int option, int& value );
+   void getIntOption( int level, int option, int& value ) const;
    /** Throws net error on error. */
-   void getStringOption( int level, int option, String& value );
+   void getStringOption( int level, int option, String& value ) const;
+
+   /** Throws net error on error. */
+   void getDataOption( int level, int option, void* data, size_t& data_len ) const;
 
    /** Throws net error on error. */
    void setBoolOption( int level, int option, bool value );
@@ -454,13 +444,19 @@ public:
    /** Throws net error on error. */
    void setStringOption( int level, int option, const String& value );
 
+   void setDataOption( int level, int option, const void* data, size_t data_len );
+
    bool isConnected() const;
 
    int getFcntl( int option ) const;
    int setFcntl( int option, int value ) const;
    void fcntlFlagsOn( int flags ) const;
    void fcntlFlagsOff( int flags ) const;
+
    void setNonBlocking( bool mode ) const;
+   bool isNonBlocking() const;
+
+   Address* address() const {return m_address;}
 
    #if WITH_OPENSSL
       SSLData* ssl() const { return m_sslData; }
@@ -501,12 +497,10 @@ protected:
 #endif // WITH_OPENSSL
 
 protected:
-   t_type m_type;
+   int m_type;
    Address* m_address;
    mutable bool m_bConnected;
    FALCON_SOCKET m_skt;
-   bool m_ipv6;
-   int32 m_boundFamily;
 
    uint32 m_mark;
 

@@ -123,12 +123,23 @@ FALCON_DEFINE_FUNCTION_P1(haveSSL)
 namespace CSocket {
 /*#
    @class Socket
-   @brief TCP/IP networking base class.
+   @optparam type Socket type.
+   @brief IP networking base class.
+   @raise NetError if the socket creation fails.
 
-   The Socket class is the base class for both UDP and TCP socket.
-   It provides common methods and properties,
-   and so it should not be directly instantiated.
+   The Socket class implements a system level, network-oriented
+   socket implementation.
 
+   The default type of the socket is  STREAM, suitable to create
+   TCP/IP client and server sockets. Available types are:
+
+   - Socket.DGRAM: Creates a datagram-oriented (UDP) socket.
+   - Socket.STREAM: Creates a stateful connection oriented (TCP) socket.
+   - Socket.RAW: Creates a raw IP socket.
+   - Socket.SEQPACKET: Available on some POSIX systems only, creates
+                       a reliable sequence datagram-oriented protocol.
+                       Where not available, this constant assumes the
+                       value of -1
 */
 
 /*#
@@ -683,6 +694,72 @@ FALCON_DEFINE_FUNCTION_P1(close)
    ctx->returnFrame();
 }
 
+
+/*#
+   @property broadcasting Socket
+   @brief Activates broadcasting and multicasting abilities on this UDP socket.
+   @raise NetError on system error.
+
+   @note This is normally set to false.
+   The socket must have already be bound as datagram socket with @a Socket.bind
+   to activate broadcasting.
+*/
+void get_broadcasting(const Class*, const String&, void* instance, Item& value )
+{
+   Mod::Socket* sock = static_cast<Mod::Socket*>(instance);
+   value.setBoolean( sock->broadcasting() );
+}
+
+
+void set_broadcasting(const Class*, const String&, void* instance, Item& value )
+{
+   Mod::Socket* sock = static_cast<Mod::Socket*>(instance);
+   sock->broadcasting(value.isTrue());
+}
+
+/*#
+   @property nonblocking Socket
+   @brief Check or set nonblocking mode on this socket.
+   @raise NetError on system error.
+*/
+void get_nonblocking(const Class*, const String&, void* instance, Item& value )
+{
+   Mod::Socket* sock = static_cast<Mod::Socket*>(instance);
+   value.setBoolean( sock->isNonBlocking() );
+}
+
+
+void set_nonblocking(const Class*, const String&, void* instance, Item& value )
+{
+   Mod::Socket* sock = static_cast<Mod::Socket*>(instance);
+   sock->setNonBlocking(value.isTrue());
+}
+
+
+/*#
+   @method bind Socket
+   @brief Specify the address and port at which this server will be listening.
+   @param address Address at which this server will be listening.
+   @optparam dgram Sets the socket to be a datagram-oriented socket.
+   @raise NetError on system error.
+
+   This method binds the socket to an address, possibly preparing the socket
+   to send and receive datagram packets via the UDP protocol
+
+
+   In case the system cannot bind the required address, a NetError is raised.
+   After a successful @b bind call, the socket might be further configured with
+   access to the @a Socket.broadcasting property, or via @a Socket.connect.
+
+   If the socket is set as datagram, Socket.connect will have the effect of setting a
+   default target address for the socket, so that every @a Socket.send operation
+   will be addressed to that remote interface.
+*/
+FALCON_FUNC  TCPServer_bind(  )
+{
+
+}
+
 #if WITH_OPENSSL
 /*#
    @method sslConfig TCPSocket
@@ -791,10 +868,13 @@ ClassSocket::ClassSocket():
 {
    this->m_bHasSharedInstances = true;
 
-   addConstant("NONE", (int64) Mod::Socket::e_type_none );
-   addConstant("DGRAM", (int64) Mod::Socket::e_type_dgram );
-   addConstant("STREAM", (int64) Mod::Socket::e_type_stream );
-   addConstant("SERVER", (int64) Mod::Socket::e_type_server );
+   addConstant("NONE", (int64) -1 );
+   addConstant("DGRAM", (int64) SOCK_DGRAM );
+   addConstant("STREAM", (int64) SOCK_STREAM );
+   addConstant("RAW", (int64) SOCK_RAW );
+#ifdef SOCK_SEQPACKET
+   addConstant("SEQPACKET", (int64) SOCK_SEQPACKET );
+#endif
 
    addProperty("address",&CSocket::get_address);
    addProperty("descriptor",&CSocket::get_descriptor);
@@ -854,55 +934,29 @@ Selectable* ClassSocket::getSelectableInterface( void* instance ) const
    return new Mod::SocketSelectable(this, sock);
 }
 
-bool ClassSocket::op_init( VMContext*, void*, int32 ) const
+bool ClassSocket::op_init( VMContext* ctx, void* instance, int32 pCount ) const
 {
    MESSAGE1( "ClassSocket::init()" );
-   // nothing to do, just tell the Meta that's all ok
+   Mod::Socket* sock = static_cast<Mod::Socket*>(instance);
+   if( pCount == 0 )
+   {
+      sock->create( SOCK_STREAM );
+   }
+   else {
+      Item& i_type = ctx->opcodeParam(pCount - 1);
+      if( i_type.isNumeric() )
+      {
+         sock->create( i_type.forceInteger() );
+      }
+      else {
+         throw FALCON_SIGN_XERROR(ParamError, e_inv_params, .extra("[N]") );
+      }
+   }
    return false;
 }
 
 
 
-
-/*#
-   @method broadcast UDPSocket
-   @brief Activates broadcasting and multicasting abilities on this UDP socket.
-   @raise NetError on system error.
-
-   This is provided as a method separated from the socket constructor as,
-   on some systems, this call  requires administrator privileges to be successful.
-*/
-FALCON_FUNC  UDPSocket_broadcast(  )
-{
-}
-
-
-
-/*#
-   @method bind TCPServer
-   @brief Specify the address and port at which this server will be listening.
-   @param addrOrService Address at which this server will be listening.
-   @optparam service If an address is given, service or port number (as a string) where to listen.
-   @raise NetError on system error.
-
-   This method binds the server port and start listening for incoming connections.
-   If passing two parameters, the first one is considered to be one of the address
-   that are available on local interfaces; the second one is the port or service
-   name where the server will open a listening port.
-
-   If an address is not provided, that is, if only one parameter is passed,
-   the server will listen on all the local interfaces. It is possible to
-   specify jolly IPv4 or IPv6 addresses (i.e. "0.0.0.0") to listen on
-   all the interfaces.
-
-   In case the system cannot bind the required address, a NetError is raised.
-   After a successful @b bind call, @a TCPServer.accept may be called to create TCPSocket that
-   can serve incoming connections.
-*/
-FALCON_FUNC  TCPServer_bind(  )
-{
-
-}
 
 /*#
    @method accept TCPServer
@@ -1032,15 +1086,16 @@ void get_addresses(const Class*, const String&, void* instance, Item& value )
          }
          else
          {
-            if( ! service.empty() && service != "0")
-            {
-               *res = host + ":" + service;
-            }
-            else if( port != 0 )
+            if( port != 0 )
             {
                *res = host + ":";
                res->N(port);
             }
+            else if( ! service.empty() && service != "0")
+            {
+               *res = host + ":" + service;
+            }
+
             else {
                *res = host;
             }

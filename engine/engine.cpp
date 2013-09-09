@@ -85,6 +85,7 @@
 #include <falcon/item.h>         // for builtin
 
 #include <falcon/stdmpxfactories.h>
+#include <falcon/sys.h>
 
 #include <falcon/paranoid.h>
 #include <map>
@@ -208,6 +209,7 @@ Engine::Engine()
    }   
    m_instance = this; // modules need the engine.
 
+   m_rand.seed( (int32) Sys::_milliseconds() );
    m_mtx = new Mutex;
    m_log = new Log;
 
