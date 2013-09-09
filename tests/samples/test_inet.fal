@@ -1,29 +1,4 @@
-//=================================
-// Sync
-//=================================
-
 load inet
-
-/*
-addr = Address("www.falconpl.org:http")
-addr.resolve()
-addr.addresses.foreach(printl)
-
-x = Socket()
-str = m""
-x.connect(addr)
-x.send("GET / HTTP/1.0\r\nHost: www.falconpl.org\r\n\r\n")
-while x.recv(str, 10000)
-   str.isText = true
-   > str
-end
-
-x.close()
-*/
-
-//=================================
-// Async
-//=================================
 
 //queue = SyncQueue()
 complete = Barrier()
@@ -32,6 +7,7 @@ function getData( address, tgt )
    // ready to select on the socket.   
    sel = Selector()
    skt = Socket()
+   skt.setOpt(SOL_SOCKET, SO_KEEPALIVE, true )
    
    addr = Address(address)
    resolver = addr.resolve(true)

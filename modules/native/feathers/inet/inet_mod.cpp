@@ -745,9 +745,7 @@ void Socket::closeWrite()
 
 bool Socket::broadcasting() const
 {
-   bool mode = false;
-   this->getBoolOption( PF_INET, SO_BROADCAST, mode );
-   return mode;
+   return this->getBoolOption( PF_INET, SO_BROADCAST );
 }
 
 
@@ -899,11 +897,10 @@ bool Socket::isNonBlocking() const
 
 
 /** Throws net error on error. */
-void Socket::getBoolOption( int level, int option, bool& value ) const
+bool Socket::getBoolOption( int level, int option) const
 {
-
    int res = 0;
-   unsigned int len = 0;
+   unsigned int len = sizeof(int);
 
    if( ::getsockopt( m_skt, level, option, &res, &len ) != 0 )
    {
@@ -913,14 +910,14 @@ void Socket::getBoolOption( int level, int option, bool& value ) const
             .sysError((uint32) errno ));
    }
 
-   value = (res != 0);
+   return res != 0;
 }
 
 
-void Socket::getIntOption( int level, int option, int& value ) const
+int  Socket::getIntOption( int level, int option ) const
 {
-   value = 0;
-   unsigned int len = 0;
+   int value = 0;
+   unsigned int len = sizeof(int);
 
    if( ::getsockopt( m_skt, level, option, &value, &len ) != 0 )
    {
@@ -929,6 +926,8 @@ void Socket::getIntOption( int level, int option, int& value ) const
             .extra("getsockopt")
             .sysError((uint32) errno ));
    }
+
+   return value;
 }
 
 
@@ -1158,6 +1157,216 @@ int32 Socket::send( const byte *buffer, int32 size, Address *where )
 
    return retsize;
 }
+
+Socket::t_option_type Socket::getOptionType( int level, int option )
+{
+   t_option_type param_type = param_unknown;
+
+   switch( level )
+   {
+   case SOL_SOCKET:
+      switch(option)
+      {
+      case SO_DEBUG: param_type = param_bool; break;
+      case SO_REUSEADDR: param_type = param_bool; break;
+      case SO_TYPE: param_type = param_int; break;
+      case SO_ERROR : param_type = param_int; break;
+      case SO_DONTROUTE: param_type = param_bool; break;
+      case SO_BROADCAST: param_type = param_bool; break;
+      case SO_SNDBUF: param_type = param_int; break;
+      case SO_RCVBUF: param_type = param_int; break;
+      case SO_KEEPALIVE: param_type = param_bool; break;
+      case SO_OOBINLINE: param_type = param_bool; break;
+      case SO_LINGER: param_type = param_linger; break;
+      case SO_RCVLOWAT: param_type = param_int; break;
+      case SO_SNDLOWAT: param_type = param_int; break;
+      case SO_RCVTIMEO: param_type = param_int; break;
+      case SO_SNDTIMEO: param_type = param_int; break;
+      }
+      break;
+
+   case IPPROTO_IP:
+      switch(option)
+      {
+
+      }
+      break;
+
+   case IPPROTO_IPV6:
+       switch(option)
+       {
+       case IPV6_JOIN_GROUP: param_type = param_data; break;
+       case IPV6_LEAVE_GROUP: param_type = param_data; break;
+       case IPV6_MULTICAST_HOPS: param_type = param_int; break;
+       case IPV6_MULTICAST_IF: param_type = param_string; break;
+       case IPV6_MULTICAST_LOOP: param_type = param_bool; break;
+       case IPV6_UNICAST_HOPS: param_type = param_int; break;
+       case IPV6_V6ONLY: param_type = param_bool; break;
+       }
+       break;
+
+   case IPPROTO_RAW:
+        switch(option)
+        {
+
+        }
+        break;
+
+   case IPPROTO_TCP:
+       switch(option)
+       {
+
+       }
+       break;
+
+   case IPPROTO_UDP:
+      switch(option)
+      {
+
+      }
+      break;
+   }
+
+   return param_type;
+}
+
+void Socket::setOption( int level, int option, const Item& value)
+{
+   t_option_type param_type = Socket::getOptionType(level, option);
+
+   switch( param_type )
+   {
+   case param_bool: setBoolOption( level, option, value.isTrue() ); break;
+
+   case param_int:
+      if( ! value.isOrdinal() )
+      {
+         throw FALCON_SIGN_XERROR( ParamError, e_param_type,
+                  .extra("Level/option combination requires an integer value"));
+      }
+      setIntOption( level, option, value.forceInteger() );
+      break;
+
+   case param_string:
+      if( ! value.isString() )
+      {
+         throw FALCON_SIGN_XERROR( ParamError, e_param_type,
+                  .extra("Level/option combination requires a string value"));
+      }
+      setStringOption( level, option, *value.asString() );
+      break;
+
+   case param_data:
+      if( ! value.isString() && ! value.isNil() )
+      {
+         throw FALCON_SIGN_XERROR( ParamError, e_param_type,
+                  .extra("Level/option combination requires a string or nil value"));
+      }
+
+      if( value.isNil() )
+      {
+         setDataOption( level, option, 0, 0 );
+      }
+      else {
+         setDataOption( level, option, value.asString()->getRawStorage(), value.asString()->size() );
+      }
+      break;
+
+   case param_linger:
+      if( ! value.isInteger() )
+      {
+         throw FALCON_SIGN_XERROR( ParamError, e_param_type,
+                  .extra("Linger option requires an integer value"));
+      }
+      else {
+         struct linger ling;
+         int64 vl = (int) value.asInteger();
+         if( vl < 0 )
+         {
+            ling.l_onoff = 0;
+            ling.l_linger = 0;
+         }
+         else {
+            ling.l_onoff = 1;
+            ling.l_linger = (int) vl;
+         }
+         setDataOption( level, option, &ling, sizeof(ling) );
+      }
+      break;
+
+   case param_unknown:
+      if( ! value.isInteger() && ! value.isBoolean() && ! value.isNil() )
+      {
+         throw FALCON_SIGN_XERROR( ParamError, e_param_type,
+                  .extra("Unknown level/option combination requires an integer, boolean or nil value"));
+      }
+      else
+      {
+         int fv = 0;
+         if( value.isInteger() ) {
+            fv = value.isInteger();
+         }
+         else if( value.isTrue() )
+         {
+            fv = 1;
+         }
+         setIntOption( level, option, fv );
+      }
+      break;
+   }
+}
+
+void Socket::getOption( int level, int option, Item& value ) const
+{
+   t_option_type param_type = Socket::getOptionType(level, option);
+
+   switch( param_type )
+   {
+   case param_bool: value.setBoolean(getBoolOption( level, option )); break;
+
+   case param_int:
+   case param_unknown:
+      value.setInteger( getIntOption( level, option ) );
+      break;
+
+   case param_string:
+      {
+         String* string = new String;
+         getStringOption( level, option, *string );
+         value = FALCON_GC_HANDLE( string );
+      }
+      break;
+
+   case param_data:
+      {
+         String* string = new String;
+         string->reserve(512);
+         length_t len = 512;
+         getDataOption( level, option, string->getRawStorage(), len );
+         string->size(len);
+         value = FALCON_GC_HANDLE( string );
+      }
+      break;
+
+   case param_linger:
+      {
+         struct linger ling;
+         ling.l_onoff = 0;
+         ling.l_linger = 0;
+         length_t len = sizeof(ling);
+         getDataOption( level, option, &ling, len );
+         if( ling.l_onoff == 0 )
+         {
+            value.setInteger( -1 );
+         }
+         else {
+            value.setInteger( (int64) ling.l_linger );
+         }
+      }
+      break;
+   }
+}
+
 
 //===============================================
 // Socket Selectable Socket

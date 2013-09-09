@@ -33,6 +33,7 @@
 #include <Winsock2.h>
 #else
 #include <sys/socket.h>
+#include <netinet/in.h>
 #endif
 
 #if WITH_OPENSSL
@@ -416,9 +417,9 @@ public:
    int32 send( const byte *buffer, int32 size, Address *target=0 );
 
    /** Throws net error on error. */
-   void getBoolOption( int level, int option, bool& value ) const;
+   bool getBoolOption( int level, int option ) const;
    /** Throws net error on error. */
-   void getIntOption( int level, int option, int& value ) const;
+   int getIntOption( int level, int option ) const;
    /** Throws net error on error. */
    void getStringOption( int level, int option, String& value ) const;
 
@@ -433,6 +434,9 @@ public:
    void setStringOption( int level, int option, const String& value );
 
    void setDataOption( int level, int option, const void* data, size_t data_len );
+
+   void setOption( int level, int option, const Item& value);
+   void getOption( int level, int option, Item& value ) const;
 
    bool isConnected() const;
 
@@ -501,6 +505,18 @@ protected:
    uint32 m_mark;
 
    virtual ~Socket();
+
+   typedef enum {
+         param_bool,
+         param_int,
+         param_string,
+         param_data,
+         param_linger,
+         param_unknown,
+   }
+   t_option_type;
+
+   static t_option_type getOptionType( int level, int option );
 
 private:
    #if WITH_OPENSSL

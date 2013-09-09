@@ -29,17 +29,16 @@
 #include <errno.h>
 
 /*#
-   @beginmodule feathers.socket
+   @beginmodule feathers.inet
 */
 
 namespace Falcon {
 
-static Mod::Address* internal_read_address( Function* func, Item* i_address, bool& made )
+static Mod::Address* internal_read_address( Function* func, Item* i_address )
 {
    static Class* clsAddress = static_cast<Ext::ModuleInet*>(func->fullModule())->addressClass();
 
    Mod::Address* target = 0;
-   made = false;
    if( i_address != 0 )
    {
       if( i_address->isString() )
@@ -47,12 +46,12 @@ static Mod::Address* internal_read_address( Function* func, Item* i_address, boo
          const String& sTarget = *i_address->asString();
          // this might throw
          target = new Mod::Address(sTarget);
-         made = true;
       }
       else
       {
          // might return 0
          target = static_cast<Mod::Address*>(i_address->asParentInst( clsAddress ));
+         target->incref();
       }
    }
 
@@ -69,7 +68,7 @@ namespace Ext {
 namespace {
 /*#
    @function getHostName
-   @brief Retreives the host name of the local machine.
+   @brief Retrieves the host name of the local machine.
    @return A string containing the local machine name.
    @raise NetError if the host name can't be determined.
 
@@ -123,23 +122,47 @@ FALCON_DEFINE_FUNCTION_P1(haveSSL)
 namespace CSocket {
 /*#
    @class Socket
+   @brief Networking socket class.
+   @optparam family Address family used by this socket.
    @optparam type Socket type.
-   @brief IP networking base class.
+   @optparam protocol Protocol used by the socket.
    @raise NetError if the socket creation fails.
 
    The Socket class implements a system level, network-oriented
    socket implementation.
 
-   The default type of the socket is  STREAM, suitable to create
-   TCP/IP client and server sockets. Available types are:
+   Family, type and protocol parameters can assume any value
+   understood by the underlying system implementation of the
+   socket interface.
 
-   - Socket.DGRAM: Creates a datagram-oriented (UDP) socket.
-   - Socket.STREAM: Creates a stateful connection oriented (TCP) socket.
-   - Socket.RAW: Creates a raw IP socket.
-   - Socket.SEQPACKET: Available on some POSIX systems only, creates
-                       a reliable sequence datagram-oriented protocol.
-                       Where not available, this constant assumes the
-                       value of -1
+   Some commonly used macros are provided by the host module,
+   and have names identical to the macros declared by the POSIX
+   standards. Check the module documentation for further details.
+
+   When @b family is not specified or nil, it defaults to AF_INET6,
+   if natively provided by the system. Otherwise, it defaults to
+   AF_INET.
+
+   When @b type is not specified or nil, it defaults to SOCK_STREAM.
+
+   When @b protocol is not specified or nil, it defaults to 0; this means
+   that the protocol is selected bsed on the address family/type
+   combination.
+
+   @note The default Socket() constructor is suitable to create server and
+   client TCP sockets.
+
+   @section Automatic IPv4 upgrade.
+
+   On those systems where IPv6 is natively handled by the underlying system,
+   if the socket address family is set to IPv6, IPv4 addresses are automatically
+   translated by this class in IPv6 prior any address-sensible operation:
+   - bind
+   - connect
+   - send (when specifying a target address).
+
+   This means that @a Address instances resolved by the name resolution system
+   as IPv4 entries don't need any form of manual conversion.
 */
 
 /*#
@@ -165,6 +188,39 @@ void get_type(const Class*, const String&, void* instance, Item& value )
    TRACE1( "Socket.type for %p", instance );
    Mod::Socket* sock = static_cast<Mod::Socket*>(instance);
    value.setInteger( static_cast<int64>(sock->type()) );
+}
+
+/*#
+@property closed Socket
+@brief True if this socket was closed.
+*/
+void get_closed(const Class*, const String&, void* instance, Item& value )
+{
+   TRACE1( "Socket.closed for %p", instance );
+   Mod::Socket* sock = static_cast<Mod::Socket*>(instance);
+   value.setBoolean( sock->descriptor() == -1 );
+}
+
+/*#
+@property family Socket
+@brief Address family of this socket
+*/
+void get_family(const Class*, const String&, void* instance, Item& value )
+{
+   TRACE1( "Socket.family for %p", instance );
+   Mod::Socket* sock = static_cast<Mod::Socket*>(instance);
+   value.setInteger( static_cast<int64>(sock->family()) );
+}
+
+/*#
+@property protocol Socket
+@brief Network protocol set at creation of this socket
+*/
+void get_protocol(const Class*, const String&, void* instance, Item& value )
+{
+   TRACE1( "Socket.protocol for %p", instance );
+   Mod::Socket* sock = static_cast<Mod::Socket*>(instance);
+   value.setInteger( static_cast<int64>(sock->protocol()) );
 }
 
 /*#
@@ -284,7 +340,7 @@ FALCON_DEFINE_FUNCTION_P1(init)
    system error, in which case a NetError is raised.
 
    The connection attempt may timeout if it takes more than the time specified
-   in @a Socket.setTimeout method. In that case, the @a TCPSocket.isConnected method may check if the
+   in @a Socket.setTimeout method. In that case, the @a Socket.isConnected method may check if the
    connection has been established at a later moment. So, it is possible to set the
    socket timeout to 0, and then check periodically for connection success without
    never blocking the VM.
@@ -298,8 +354,7 @@ FALCON_DECLARE_FUNCTION(connect, "address:S|Address,async:[B]")
 FALCON_DEFINE_FUNCTION_P1(connect)
 {
    TRACE1( "Socket.Connect(%d params) for %p", ctx->paramCount(), ctx->self().asInst() );
-   bool made = false;
-   Mod::Address* target = internal_read_address(this, ctx->param(0), made);
+   Mod::Address* target = internal_read_address(this, ctx->param(0) );
    Item* i_async = ctx->param(1);
 
    // resolve the address -- lightly if async, fully if sync
@@ -313,18 +368,11 @@ FALCON_DEFINE_FUNCTION_P1(connect)
    Mod::Socket* sock = static_cast<Mod::Socket*>(ctx->self().asInst());
    try {
       sock->connect( target, bAsync );
-      // decref if we created the target address.
-      if( made )
-      {
-         target->decref();
-      }
+      target->decref();
    }
    catch( ... )
    {
-      if( made )
-      {
-         target->decref();
-      }
+      target->decref();
       throw;
    }
 
@@ -333,14 +381,14 @@ FALCON_DEFINE_FUNCTION_P1(connect)
 
 
 /*#
-   @method isConnected TCPSocket
-   @brief Check if this TCPSocket is currently connected with a remote host.
+   @method isConnected Socket
+   @brief Check if this Socket is currently connected with a remote host.
    @return True if the socket is currently connected, false otherwise.
    @raise NetError if a the connection process caused an error in the meanwhile.
 
-   This method checks if this TCPSocket is currently connected with a remote host.
+   This method checks if this Socket is currently connected with a remote host.
 
-   @see TCPSocket.connect
+   @see Socket.connect
 */
 FALCON_DECLARE_FUNCTION(isConnected, "")
 FALCON_DEFINE_FUNCTION_P1(isConnected)
@@ -403,7 +451,7 @@ static void internal_send( Function* caller, VMContext* ctx, Mod::Address* to )
 
 
 /*#
-   @method send TCPSocket
+   @method send Socket
    @brief Send data on the network connection.
    @param buffer The buffer containing the data to be sent.
    @optparam start Begin position in the buffer (in bytes).
@@ -458,7 +506,7 @@ FALCON_DEFINE_FUNCTION_P1(send)
    @optparam start Begin position in the buffer.
    @raise NetError on network error.
 
-   This method works as the TCPSocket.send method, with the
+   This method works as the Socket.send method, with the
    main difference that the outgoing datagram can be directed towards a
    specified @b host, and that a whole datagram is always completely
    filled before being sent, provided that the specified size
@@ -502,27 +550,23 @@ FALCON_DEFINE_FUNCTION_P1(send)
 FALCON_DECLARE_FUNCTION(sendTo, "address:S|Address,buffer:S,start:[N],count:[N]")
 FALCON_DEFINE_FUNCTION_P1(sendTo)
 {
-   bool made = false;
-   Mod::Address* address = internal_read_address(this, ctx->param(0), made);
+   Mod::Address* address = internal_read_address(this, ctx->param(0));
 
    try {
       internal_send( this, ctx, address );
-      if( made ) {
-         address->decref();
-      }
+      address->decref();
    }
    catch( ... )
    {
-      if( made ) {
-         address->decref();
-      }
+      address->decref();
+      throw;
    }
 }
 
 
 
 /*#
-   @method recv TCPSocket
+   @method recv Socket
    @brief Reads incoming data.
    @param buffer A (possibly pre-allocated)  buffer to fill.
    @optparam size Maximum size in bytes to be read.
@@ -636,9 +680,8 @@ FALCON_DEFINE_FUNCTION_P1(recvFrom)
 }
 
 /*#
-   @method closeRead TCPSocket
+   @method closeRead Socket
    @brief Closes a socket read side.
-   @return False if timed out, true if successful
    @raise NetError in case of underlying connection error during the closing phase.
 
    Closes the socket read side, discarding incoming messages and notifying
@@ -666,9 +709,8 @@ FALCON_DEFINE_FUNCTION_P1(closeRead)
 
 
 /*#
-   @method closeWrite TCPSocket
+   @method closeWrite Socket
    @brief Closes a socket write side.
-   @return False if timed out, true if succesful
    @raise NetError in case of underlying connection error during the closing phase.
 
    Closes the socket write side, discarding incoming messages and notifying the
@@ -696,9 +738,8 @@ FALCON_DEFINE_FUNCTION_P1(closeWrite)
 
 
 /*#
-   @method close TCPSocket
+   @method close Socket
    @brief Closes the socket.
-   @return False if timed out, true if succesful
    @raise NetError in case of underlying connection error during the closing phase.
 
    Closes the socket, discarding incoming messages and notifying the remote side
@@ -720,6 +761,179 @@ FALCON_DEFINE_FUNCTION_P1(close)
 
 
 /*#
+   @method setOpt Socket
+   @brief Sets a socket option.
+   @param level The option level.
+   @param option The option.
+   @param value The new value.
+   @raise NetError in case error setting the option.
+
+   This method configures the given option at the given protocol
+   level for this socket.
+
+   Some well-known options are supported, and the type of the
+   option is checked prior being set. If an unknown level/option
+   combination is set, an integer value only will be allowed.
+
+   The list of the known levels and options is given in the
+   module description.
+
+   @note The SOL_SOCKET/SO_LINGER option is treated specially.
+   It takes an integer value; if its less than zero, the linger
+   option is disabled. If it's zero or greater, the linger option
+   is enabled and the given value is set as linger value.
+
+*/
+FALCON_DECLARE_FUNCTION(setOpt, "level:N,option:N,value:X")
+FALCON_DEFINE_FUNCTION_P1(setOpt)
+{
+   Item* i_level = ctx->param(0);
+   Item* i_option = ctx->param(1);
+   Item* i_value = ctx->param(2);
+
+   if( i_level == 0 || ! i_level->isOrdinal()
+      || i_option == 0 || ! i_option->isOrdinal()
+      || i_value == 0
+   )
+   {
+      throw paramError(__LINE__, SRC );
+   }
+
+   int32 level = (int32) i_level->forceInteger();
+   int32 option = (int32) i_option->forceInteger();
+   Mod::Socket* sock = static_cast<Mod::Socket*>(ctx->self().asInst());
+
+   sock->setOption( level, option, *i_value );
+   ctx->returnFrame();
+}
+
+/*#
+   @method getOpt Socket
+   @brief Gets a socket option.
+   @param level The option level.
+   @param option The option.
+   @return The current value of the option.
+   @raise NetError in case error setting the option.
+
+   This method reads the current value of the given option at the given protocol
+   level for this socket.
+
+   Some well-known options are supported, and the type of the
+   option is specially mangled prior being returned.
+   If an unknown level/option
+   combination is get, the resulting value will always be an integer.
+
+   The list of the known levels and options is given in the
+   module description.
+
+   @note The SOL_SOCKET/SO_LINGER option is treated specially.
+   if the linger is disabled, the method returns -1; if it's
+   enabled, it returns the linger size (which might be 0).
+*/
+FALCON_DECLARE_FUNCTION(getOpt, "level:N,option:N")
+FALCON_DEFINE_FUNCTION_P1(getOpt)
+{
+   Item* i_level = ctx->param(0);
+   Item* i_option = ctx->param(1);
+
+   if( i_level == 0 || ! i_level->isOrdinal()
+      || i_option == 0 || ! i_option->isOrdinal()
+   )
+   {
+      throw paramError(__LINE__, SRC );
+   }
+
+   int32 level = (int32) i_level->forceInteger();
+   int32 option = (int32) i_option->forceInteger();
+   Mod::Socket* sock = static_cast<Mod::Socket*>(ctx->self().asInst());
+
+   Item result;
+   sock->getOption( level, option, result );
+   ctx->returnFrame(result);
+}
+
+
+/*#
+   @method bind Socket
+   @brief Binds this socket to the given address.
+   @param addr A string representing an address or an @a Address class instance.
+   @raise NetError If the socket cannot be bound to the given address.
+
+*/
+FALCON_DECLARE_FUNCTION(bind, "addr:S|Address")
+FALCON_DEFINE_FUNCTION_P1(bind)
+{
+   Mod::Address* target = internal_read_address(this, ctx->param(0));
+   Mod::Socket* sock = static_cast<Mod::Socket*>(ctx->self().asInst());
+
+   try {
+      sock->bind(target);
+      target->decref();
+   }
+   catch(...)
+   {
+      target->decref();
+      throw;
+   }
+}
+
+/*#
+   @method listen Socket
+   @brief Declares a socket ready to accept connections.
+   @optparam size Number of pending connection allowed before refusing a new one.
+   @raise NetError If the socket cannot be put in listen status.
+
+*/
+FALCON_DECLARE_FUNCTION(listen, "size:[N]")
+FALCON_DEFINE_FUNCTION_P1(listen)
+{
+   Mod::Socket* sock = static_cast<Mod::Socket*>(ctx->self().asInst());
+   Item* i_size = ctx->param(0);
+   if( i_size != 0 && ! i_size->isOrdinal() )
+   {
+      throw paramError( __LINE__, SRC );
+   }
+
+   int size = (int) i_size->forceInteger();
+   sock->listen( size );
+}
+
+/*#
+   @method accept Socket
+   @brief Dequeues an incoming client that is being connected.
+   @return a new Socket that has been accepted, or 0 if no socket could be dequeued.
+   @raise NetError If the socket is not in listen status, or if there are other network error.
+
+   This method will wait till a new client files a connection to this socket; if this
+   has already happened, the method will return immediately the new client.
+
+   A socket in listen state might be put in a selector to detect when it has new clients
+   incoming. The socket will be signaled ready for write when this happens.
+
+   If this socket is non-blocking, or if it was waken up during a spurious wakeup in a
+   selector, the method might return nil; this is not to be considered an error. When
+   this happens, the owner should check if the socket has been closed asynchronously
+   by accessing the closed property.
+*/
+FALCON_DECLARE_FUNCTION(accept, "")
+FALCON_DEFINE_FUNCTION_P1(accept)
+{
+   Mod::Socket* sock = static_cast<Mod::Socket*>(ctx->self().asInst());
+
+   Mod::Socket* newSkt = sock->accept();
+   if( newSkt == 0 )
+   {
+      ctx->returnFrame();
+   }
+   else
+   {
+      ModuleInet* mod = static_cast<ModuleInet*>(fullModule());
+      ctx->returnFrame( FALCON_GC_STORE(mod->socketClass(), newSkt ) );
+   }
+}
+
+
+/*#
    @property broadcasting Socket
    @brief Activates broadcasting and multicasting abilities on this UDP socket.
    @raise NetError on system error.
@@ -735,7 +949,7 @@ void get_broadcasting(const Class*, const String&, void* instance, Item& value )
 }
 
 
-void set_broadcasting(const Class*, const String&, void* instance, Item& value )
+void set_broadcasting(const Class*, const String&, void* instance, const Item& value )
 {
    Mod::Socket* sock = static_cast<Mod::Socket*>(instance);
    sock->broadcasting(value.isTrue());
@@ -753,40 +967,16 @@ void get_nonblocking(const Class*, const String&, void* instance, Item& value )
 }
 
 
-void set_nonblocking(const Class*, const String&, void* instance, Item& value )
+void set_nonblocking(const Class*, const String&, void* instance, const Item& value )
 {
    Mod::Socket* sock = static_cast<Mod::Socket*>(instance);
    sock->setNonBlocking(value.isTrue());
 }
 
 
-/*#
-   @method bind Socket
-   @brief Specify the address and port at which this server will be listening.
-   @param address Address at which this server will be listening.
-   @optparam dgram Sets the socket to be a datagram-oriented socket.
-   @raise NetError on system error.
-
-   This method binds the socket to an address, possibly preparing the socket
-   to send and receive datagram packets via the UDP protocol
-
-
-   In case the system cannot bind the required address, a NetError is raised.
-   After a successful @b bind call, the socket might be further configured with
-   access to the @a Socket.broadcasting property, or via @a Socket.connect.
-
-   If the socket is set as datagram, Socket.connect will have the effect of setting a
-   default target address for the socket, so that every @a Socket.send operation
-   will be addressed to that remote interface.
-*/
-FALCON_FUNC  TCPServer_bind(  )
-{
-
-}
-
 #if WITH_OPENSSL
 /*#
-   @method sslConfig TCPSocket
+   @method sslConfig Socket
    @brief Prepare a socket for SSL operations.
    @param serverSide True for a server-side socket, false for a client-side socket.
    @optparam version SSL method (one of SSLv2, SSLv3, SSLv23, TLSv1, DTLSv1 ). Default SSLv3
@@ -796,10 +986,10 @@ FALCON_FUNC  TCPServer_bind(  )
 
    Must be called after socket is really created, that is after connect() is called.
  */
-FALCON_FUNC TCPSocket_sslConfig( ::Falcon::VMachine* vm )
+FALCON_FUNC Socket_sslConfig( ::Falcon::VMachine* vm )
 {
    CoreObject *self = vm->self().asObject();
-   Sys::TCPSocket *tcps = (Sys::TCPSocket *) self->getUserData();
+   Sys::Socket *tcps = (Sys::Socket *) self->getUserData();
 
    Item* i_asServer = vm->param( 0 );
    Item* i_sslVer = vm->param( 1 );
@@ -847,16 +1037,16 @@ FALCON_FUNC TCPSocket_sslConfig( ::Falcon::VMachine* vm )
 
 
 /*#
-   @method sslConnect TCPSocket
+   @method sslConnect Socket
    @brief Negotiate an SSL connection.
 
    Must be called after socket is connected and has been properly configured for
    SSL operations.
  */
-FALCON_FUNC TCPSocket_sslConnect( ::Falcon::VMachine* vm )
+FALCON_FUNC Socket_sslConnect( ::Falcon::VMachine* vm )
 {
    CoreObject *self = vm->self().asObject();
-   Sys::TCPSocket *tcps = (Sys::TCPSocket *) self->getUserData();
+   Sys::Socket *tcps = (Sys::Socket *) self->getUserData();
 
    Sys::SSLData::ssl_error_t res = tcps->sslConnect();
 
@@ -870,15 +1060,15 @@ FALCON_FUNC TCPSocket_sslConnect( ::Falcon::VMachine* vm )
 
 
 /*#
-   @method sslClear TCPSocket
+   @method sslClear Socket
    @brief Free resources taken by SSL contexts.
 
    Useful if you want to reuse a socket.
  */
-FALCON_FUNC TCPSocket_sslClear( ::Falcon::VMachine *vm )
+FALCON_FUNC Socket_sslClear( ::Falcon::VMachine *vm )
 {
    CoreObject *self = vm->self().asObject();
-   Sys::TCPSocket *tcps = (Sys::TCPSocket *) self->getUserData();
+   Sys::Socket *tcps = (Sys::Socket *) self->getUserData();
 
    tcps->sslClear();
    vm->retnil();
@@ -894,23 +1084,26 @@ ClassSocket::ClassSocket():
 
    setConstuctor( new CSocket::Function_init );
 
-   addConstant("NONE", (int64) -1 );
-   addConstant("DGRAM", (int64) SOCK_DGRAM );
-   addConstant("STREAM", (int64) SOCK_STREAM );
-   addConstant("RAW", (int64) SOCK_RAW );
-#ifdef SOCK_SEQPACKET
-   addConstant("SEQPACKET", (int64) SOCK_SEQPACKET );
-#endif
-
    addProperty("address",&CSocket::get_address);
    addProperty("descriptor",&CSocket::get_descriptor);
    addProperty("host",&CSocket::get_host);
    addProperty("service",&CSocket::get_service);
    addProperty("port",&CSocket::get_port);
+   addProperty("closed",&CSocket::get_closed);
+
+   addProperty("broadcasting", &CSocket::get_broadcasting, &CSocket::set_broadcasting );
+   addProperty("nonblocking", &CSocket::get_nonblocking, &CSocket::set_nonblocking );
+
+   addProperty("family",&CSocket::get_family);
    addProperty("type",&CSocket::get_type);
+   addProperty("protocol",&CSocket::get_protocol);
 
    addMethod( new CSocket::Function_connect );
    addMethod( new CSocket::Function_isConnected );
+
+   addMethod( new CSocket::Function_bind );
+   addMethod( new CSocket::Function_listen );
+   addMethod( new CSocket::Function_accept );
 
    addMethod( new CSocket::Function_recv );
    addMethod( new CSocket::Function_recvFrom );
@@ -920,6 +1113,8 @@ ClassSocket::ClassSocket():
    addMethod( new CSocket::Function_closeWrite );
    addMethod( new CSocket::Function_close );
 
+   addMethod( new CSocket::Function_getOpt );
+   addMethod( new CSocket::Function_setOpt );
 }
 
 ClassSocket::~ClassSocket()
@@ -967,10 +1162,10 @@ Selectable* ClassSocket::getSelectableInterface( void* instance ) const
    @method accept TCPServer
    @brief Waits for incoming connections.
    @optparam timeout Optional wait time.
-   @return A new TCPSocket after a successful connection.
+   @return A new Socket after a successful connection.
    @raise NetError on system error.
 
-   This method accepts incoming connection and creates a TCPSocket object that
+   This method accepts incoming connection and creates a Socket object that
    can be used to communicate with the remote host. Before calling accept(), it is
    necessary to have successfully called bind() to bind the listening application to
    a certain local address.
@@ -978,17 +1173,12 @@ Selectable* ClassSocket::getSelectableInterface( void* instance ) const
    If a timeout is not specified, the function will block until a TCP connection is
    received. If it is specified, is a number of millisecond that will be waited
    before returning a nil. Setting the timeout to zero will cause accept to return
-   immediately, providing a valid TCPSocket as return value only if an incoming
+   immediately, providing a valid Socket as return value only if an incoming
    connection was already pending.
 
    The wait blocks the VM, and thus, also the other coroutines.
    If a system error occurs during the wait, a NetError is raised.
 */
-FALCON_FUNC  TCPServer_accept(  )
-{
-
-}
-
 
 /*#
    @class NetError
@@ -1194,6 +1384,9 @@ FALCON_DEFINE_FUNCTION_P1(resolve)
 }
 
 
+
+
+
 } /* end of NS CAddress */
 
 ClassAddress::ClassAddress():
@@ -1347,7 +1540,6 @@ ModuleInet::ModuleInet():
    m_clsSocket = new ClassSocket;
    m_clsResolver = new ClassResolver;
 
-
    *this
       << m_clsAddress
       << m_clsSocket
@@ -1360,11 +1552,22 @@ ModuleInet::ModuleInet():
 
    /*#
       @module inet
-      @brief Network failure error categories.
+      @brief Advanced wrapping of the BSD Socket networking library.
 
-      This error codes define macro-categories of network errors that
-      have appened. Details are available by reading the system specific
-      net-error.
+      This module wraps the BSD Socket networking library, and adds
+      additional support to help the integration of networking code
+      into Falcon parallel programming.
+
+      It provides mainly three classes:
+      - Socket: wrapping a BSD socket entity.
+      - Address: Representing a concrete instance of a network address,
+                 and providing support for address resolution.
+      - NetError: Error raised by various network-related functions.
+
+      @section inet_error_codes Error codes
+
+      The following error codes are returned as @a Error.code in NetError
+      raised by this module.
 
       - @b ERR_GENERIC: A generic failure prevented the network layer to work
                      altogether. I.e. it was not possible to initialize
@@ -1392,6 +1595,74 @@ ModuleInet::ModuleInet():
       - @b ERR_UNRESOLVED:
       - @b ERR_SSLCONFIG:
       - @b ERR_SSLCONNECT:
+      - @b ERR_ALREADY_CREATED:
+
+    @section inet_af_macros Address Family constants
+
+       The following constants can be used as address family for socket creation,
+       and are returned when querying the socket type.
+
+       - AF_INET
+       - AF_INET6
+       - AF_IPX
+       - AF_UNIX
+       - AF_LOCAL
+
+       Although this module provides this macros, any integer value can be used
+       as long as this is known by the underlying system socket() function.
+
+    @section inet_sock_macros Socket type constants.
+
+        The following macros can be used as socket type for socket creation;
+
+       - SOCK_DGRAM
+       - SOCK_STREAM
+       - SOCK_RAW
+       - SOCK_SEQPACKET (on system where this feature is available).
+
+       Moreover, a SOCK_NONE macro is provided, and returned by @a Socket.type
+       for closed or non correctly configured sockets.
+
+       Although this module provides this macros, any integer value can be used
+       as long as this is known by the underlying system socket() function.
+
+    @section inet_opts_macros Socket option constants
+       The module defines the following options for the "option level" parameter
+       in @a Socket.getOpt and @a Socket.setOpt.
+
+      - SOL_SOCKET
+      - IPPROTO_IP
+      - IPPROTO_IPV6
+      - IPPROTO_RAW
+      - IPPROTO_TCP
+      - IPPROTO_UDP
+
+      The following constants are defined and can be used as "option value"
+      parameter in @a Socket.getOpt and @a Socket.setOpt, when SOL_SOCKET is
+      used as level. Depending on the
+      option/level type, different values types are returned by @a Socket.getOpt,
+      and different types are accepted as option value in @a Socket.setOpt.
+
+       - SO_DEBUG: boolean
+       - SO_REUSEADDR: boolean
+       - SO_TYPE: integer
+       - SO_ERROR: integer
+       - SO_DONTROUTE: boolean
+       - SO_BROADCAST: boolean
+       - SO_KEEPALIVE: boolean
+       - SO_RCVBUF: integer
+       - SO_OOBINLINE: integer
+       - SO_LINGER: integer -- see remarks on linger options in Socket.setOpt
+       - SO_RCVLOWAT: integer
+       - SO_SNDLOWAT: integer
+       - SO_RCVTIMEO: integer
+       - SO_SNDTIMEO: integer
+
+      However, any combination of level/option is accepted, and passed to the
+      underlying BSD socket setSockOption/getSockOption implementation.
+
+      When an unknown option is set, numeric parameters only are accepted. When
+      an option is read, the value is returned as a numeric parameter.
    */
    this->addConstant( "ERR_GENERIC", FALSOCK_ERR_GENERIC );
    this->addConstant( "ERR_ACCEPT", FALSOCK_ERR_ACCEPT );
@@ -1414,6 +1685,45 @@ ModuleInet::ModuleInet():
    this->addConstant( "ERR_SSLCONNECT", FALSOCK_ERR_SSLCONNECT );
 #endif
 
+   this->addConstant("SOCK_NONE", (int64) -1 );
+   this->addConstant("SOCK_DGRAM", (int64) SOCK_DGRAM );
+   this->addConstant("SOCK_STREAM", (int64) SOCK_STREAM );
+   this->addConstant("SOCK_RAW", (int64) SOCK_RAW );
+#ifdef SOCK_SEQPACKET
+   this->addConstant("SOCK_SEQPACKET", (int64) SOCK_SEQPACKET );
+#endif
+
+   this->addConstant("AF_INET", (int64) AF_INET );
+   this->addConstant("AF_INET6", (int64) AF_INET6 );
+   this->addConstant("AF_IPX", (int64) AF_IPX );
+   this->addConstant("AF_UNIX", (int64) AF_UNIX );
+   this->addConstant("AF_LOCAL", (int64) AF_LOCAL );
+
+   this->addConstant("SO_DEBUG", (int64) SO_DEBUG );
+   this->addConstant("SO_REUSEADDR", (int64) SO_REUSEADDR );
+   this->addConstant("SO_TYPE", (int64) SO_TYPE );
+   this->addConstant("SO_ERROR", (int64) SO_ERROR );
+   this->addConstant("SO_DONTROUTE", (int64) SO_DONTROUTE );
+   this->addConstant("SO_BROADCAST", (int64) SO_BROADCAST );
+   this->addConstant("SO_KEEPALIVE", (int64) SO_KEEPALIVE );
+   this->addConstant("SO_RCVBUF", (int64) SO_RCVBUF );
+   this->addConstant("SO_OOBINLINE", (int64) SO_OOBINLINE );
+   this->addConstant("SO_LINGER", (int64) SO_LINGER );
+   this->addConstant("SO_RCVLOWAT", (int64) SO_RCVLOWAT );
+   this->addConstant("SO_SNDLOWAT", (int64) SO_SNDLOWAT );
+   this->addConstant("SO_RCVTIMEO", (int64) SO_RCVTIMEO );
+   this->addConstant("SO_SNDTIMEO", (int64) SO_SNDTIMEO );
+
+   this->addConstant("SOL_SOCKET",  (int64) SOL_SOCKET );
+   this->addConstant("IPPROTO_IP",  (int64) IPPROTO_IP );
+#ifdef IPPROTO_IPV6
+   this->addConstant("IPPROTO_IPV6", (int64) IPPROTO_IPV6 );
+#endif
+#ifdef IPPROTO_RAW
+   this->addConstant("IPPROTO_RAW", (int64) IPPROTO_RAW );
+#endif
+   this->addConstant("IPPROTO_TCP", (int64) IPPROTO_TCP );
+   this->addConstant("IPPROTO_UDP", (int64) IPPROTO_UDP );
 }
 
 ModuleInet::~ModuleInet()
