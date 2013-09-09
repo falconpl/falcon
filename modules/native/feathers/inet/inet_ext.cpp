@@ -1534,11 +1534,19 @@ void ClassResolver::describe( void* instance, String& target, int , int  ) const
    target = "Resolver{" + str + "}";
 }
 
+static void get_socket(const Class* cls, const String&, void* instance, Item& value )
+{
+   Mod::SocketStream* res = static_cast<Mod::SocketStream*>(instance);
+   ModuleInet* mod = static_cast<ModuleInet*>(cls->module());
+   // of course, the socket already exists in the GC, as it created us.
+   value.setUser(mod->addressClass(), res->skt() );
+}
 
 ClassSocketStream::ClassSocketStream():
          ClassStream("SocketStream")
 {
    setParent( Engine::instance()->stdHandlers()->streamClass() );
+   addProperty("socket", &get_socket );
 }
 
 ClassSocketStream::~ClassSocketStream()
