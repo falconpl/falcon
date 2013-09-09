@@ -86,6 +86,7 @@ class Address
 
    uint32 m_lastError;
 
+
    uint32 m_mark;
 
 public:
@@ -100,7 +101,6 @@ public:
 
    Address( const String& addr );
    Address( const String& host, const String& service );
-   Address( const String& host, int32 port );
    Address( const Address& other );
 
    static void convertToIPv6( void *vai, void* vsock6, socklen_t& sock6len );
@@ -172,7 +172,7 @@ public:
       \param port on success, the numeric port value.
       \return true on success
    */
-   bool getResolvedEntry( int32 count, String &entry, String &service, int32 &port );
+   bool getResolvedEntry( int32 count, String &entry, String &service, int32 &port, int32& family );
 
    int32 activeHostID() const { return m_activeHostId; }
 
@@ -190,7 +190,7 @@ public:
       sockaddr_in or sockaddr_in6.
    */
    void *getHostSystemData( int id ) const;
-   void* getRandomHostSystemData() const;
+   void* getRandomHostSystemData( int32 family ) const;
 
 
    uint32 lastError() const { return m_lastError; }
@@ -362,27 +362,21 @@ class Socket
 {
 
 public:
-
    Socket();
-   Socket(int type);
-   Socket( FALCON_SOCKET socket, int type, Address* remote );
+   Socket( int family, int type, int protocol );
+   Socket( FALCON_SOCKET socket, int family, int type, int protocol, Address* remote );
 
-   void create( int type );
+   void create( int family, int type, int protocol );
 
-   int type() const
-   {
-      return m_type;
-   }
-
+   int family() const{ return m_family; }
+   int type() const { return m_type; }
+   int protocol() const { return m_protocol; }
 
    /** Get the internal socket descriptor */
    FALCON_SOCKET descriptor() const { return m_skt; }
 
    void gcMark( uint32 mk ) { m_mark = mk; }
    uint32 currentMark() const { return m_mark; }
-
-   /** Activate datagram type */
-   void setDatagramType();
 
    bool broadcasting() const;
    void broadcasting( bool mode );
@@ -410,12 +404,6 @@ public:
    void bind( Address *addr );
 
    void listen( int32 backlog = -1 );
-
-   /** Set broadcast mode on the socket.
-     Also, set datagram type if not previously set.
-     Will throw if the socket type is incompatible.
-    */
-   void setBroadcastMode( bool mode );
 
    /** Accepts incoming calls.
       Returns a TCP socket on success, null if no new incoming data is arriving.
@@ -458,6 +446,11 @@ public:
 
    Address* address() const {return m_address;}
 
+   /**
+    * Gets a system-resolved address that is suitable to be used by this socket.
+    */
+   void* getValidAddress( Address* addr ) const;
+
    #if WITH_OPENSSL
       SSLData* ssl() const { return m_sslData; }
    #endif
@@ -497,7 +490,10 @@ protected:
 #endif // WITH_OPENSSL
 
 protected:
+   int m_family;
    int m_type;
+   int m_protocol;
+
    Address* m_address;
    mutable bool m_bConnected;
    FALCON_SOCKET m_skt;

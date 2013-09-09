@@ -179,7 +179,7 @@ Address::~Address()
    clear();
 }
 
-Address::Address( const String& addr )
+Address::Address( const String& addr)
 {
    if( ! parse(addr) )
    {
@@ -202,16 +202,6 @@ Address::Address( const String& host, const String& service ):
    }
 }
 
-Address::Address( const String& host, int32 port ):
-      m_systemData(0),
-      m_resolvCount(0),
-      m_activeHostId(-1),
-      m_mark(0)
-{
-   m_host = host;
-   m_port = port;
-   m_service.N(port);
-}
 
 Address::Address( const Address& other ):
       m_systemData(0),
@@ -441,7 +431,7 @@ void Address::convertToIPv6( void *vai, void* vsock6, socklen_t& sock6len )
 
 
 
-bool Address::getResolvedEntry( int32 count, String &entry, String &service, int32 &port )
+bool Address::getResolvedEntry( int32 count, String &entry, String &service, int32 &port, int32& family )
 {
    m_lastError = 0;
 
@@ -463,13 +453,18 @@ bool Address::getResolvedEntry( int32 count, String &entry, String &service, int
    int error = getnameinfo( res->ai_addr, res->ai_addrlen, host, 255, serv, 31, NI_NUMERICHOST );
    // try with the service number.
    if ( error != 0 )
+   {
       error = getnameinfo( res->ai_addr, res->ai_addrlen, host, 255, serv, 31, NI_NUMERICHOST | NI_NUMERICSERV );
-   if ( error == 0 ) {
+   }
+
+   if ( error == 0 )
+   {
       entry.bufferize( host );
       service.bufferize( serv );
       // port is in the same position for ip and ipv6
       struct sockaddr_in *saddr = (struct sockaddr_in *)res->ai_addr;
       port = ntohs( saddr->sin_port );
+      family = saddr->sin_family;
       return true;
    }
 
@@ -488,21 +483,46 @@ void *Address::getHostSystemData( int id ) const
 }
 
 
-void* Address::getRandomHostSystemData() const
+void* Address::getRandomHostSystemData( int32 family ) const
 {
-   int32 count = this->getResolvedCount();
+   int32 count = 0;
+
+   struct addrinfo *res = (struct addrinfo *) m_systemData;
+   while( res != 0 )
+   {
+     if( family == AF_UNSPEC || res->ai_family == family )
+     {
+        ++count;
+     }
+     res = res->ai_next;
+   }
+
    if( count == 0 )
    {
       return 0;
    }
-   else if (count == 1 )
+
+   if( count > 1 )
    {
-      return getHostSystemData(0);
+      count = (Engine::instance()->mtrand().randInt() % count)+1;
    }
 
-   count = Engine::instance()->mtrand().randInt() % count;
-   return getHostSystemData(count);
+   res = (struct addrinfo *) m_systemData;
+   while( res != 0 )
+   {
+     if( family == AF_UNSPEC || res->ai_family == family )
+     {
+        if( --count == 0 )
+        {
+           break;
+        }
+     }
+     res = res->ai_next;
+   }
+
+   return res;
 }
+
 
 void Address::errorDesc( String& target )
 {
@@ -542,7 +562,10 @@ void Address::toString( String& str ) const
 //================================================
 
 Socket::Socket():
+     m_family(-1),
      m_type(-1),
+     m_protocol(-1),
+
      m_address(0),
      m_bConnected( false ),
      m_mark(0)
@@ -554,8 +577,11 @@ Socket::Socket():
 }
 
 
-Socket::Socket(int type):
+Socket::Socket(int family, int type, int protocol):
+     m_family(-1),
      m_type(-1),
+     m_protocol(-1),
+
      m_address(0),
      m_bConnected( false ),
      m_mark(0)
@@ -564,11 +590,13 @@ Socket::Socket(int type):
      #endif
 {
    m_skt = -1;
-   create(type);
+   create(family, type, protocol);
 }
 
-Socket::Socket( FALCON_SOCKET socket, int type, Address* remote ):
+Socket::Socket( FALCON_SOCKET socket, int family, int type, int protocol, Address* remote ):
+     m_family(family),
      m_type(type),
+     m_protocol(protocol),
      m_address( remote ),
      m_bConnected( true ),
      m_skt(socket),
@@ -583,15 +611,18 @@ Socket::Socket( FALCON_SOCKET socket, int type, Address* remote ):
   }
 }
 
-void Socket::create( int type )
+void Socket::create( int family, int type, int protocol )
 {
    if( m_skt != -1 )
    {
-      throw FALCON_SIGN_XERROR( Ext::NetError, FALSOCK_ERR_INCOMPATIBLE, .desc(FALSOCK_ERR_INCOMPATIBLE_MSG));
+      throw FALCON_SIGN_XERROR( Ext::NetError, FALSOCK_ERR_ALREADY_CREATED, .desc(FALSOCK_ERR_ALREADY_CREATED_MSG));
    }
 
+
+   m_family = family;
    m_type = type;
-   m_skt = ::socket(AF_INET6, type, 0);
+   m_protocol = protocol;
+   m_skt = ::socket(family, type, protocol);
    if( m_skt == -1 )
    {
       throw FALCON_SIGN_XERROR( Ext::NetError, FALSOCK_ERR_CREATE, .desc(FALSOCK_ERR_CREATE_MSG));
@@ -613,7 +644,7 @@ Socket::~Socket()
 }
 
 
-void Socket::bind( Address *addr )
+void* Socket::getValidAddress( Address* addr ) const
 {
    // has the address to be resolved?
    if( ! addr->isResolved() ) {
@@ -623,18 +654,35 @@ void Socket::bind( Address *addr )
       }
    }
 
-   // try to bind to the resovled host
-   struct addrinfo *ai = (struct addrinfo *)addr->getRandomHostSystemData();
-   fassert(ai != 0);
-
-   struct addrinfo ai6;
-   struct sockaddr_storage storage;
-   if( ai->ai_family == AF_INET )
+   struct addrinfo *ai = (struct addrinfo *)addr->getRandomHostSystemData( m_family );
+   // upgrade ipv4 addresses into ipv6.
+   if( ai == 0 && m_family == AF_INET6 )
    {
-      Address::convertToIPv6( ai, &storage, ai6.ai_addrlen );
-      ai6.ai_addr = (struct sockaddr*) &storage;
-      ai = &ai6;
+      ai = (struct addrinfo *)addr->getRandomHostSystemData( AF_INET );
+      if ( ai != 0 )
+      {
+         struct addrinfo ai6;
+         struct sockaddr_storage storage;
+
+         Address::convertToIPv6( ai, &storage, ai6.ai_addrlen );
+         ai6.ai_addr = (struct sockaddr*) &storage;
+         ai = &ai6;
+      }
    }
+
+   if( ai == 0 )
+   {
+      throw FALCON_SIGN_XERROR(Ext::NetError,
+                              FALSOCK_ERR_INCOMPATIBLE, .desc(FALSOCK_ERR_INCOMPATIBLE_MSG));
+   }
+
+   return ai;
+}
+
+void Socket::bind( Address *addr )
+{
+   // try to bind to the resolved host
+   struct addrinfo *ai = (struct addrinfo *) getValidAddress( addr );
 
    // find a suitable address.
    int res = ::bind( m_skt, ai->ai_addr, ai->ai_addrlen );
@@ -731,29 +779,9 @@ void Socket::connect( Address* where, bool async )
 {
    int flags = 0;
 
-   // let's try to connect the addresses in where.
-   if ( ! where->isResolved() )
-   {
-      if( ! where->resolve(false) )
-      {
-            throw FALCON_SIGN_XERROR(Ext::NetError,
-                     FALSOCK_ERR_UNRESOLVED, .desc(FALSOCK_ERR_UNRESOLVED_MSG));
-      }
-   }
-
-   // find a suitable address.
-   struct addrinfo *ai = (struct addrinfo *)where->getRandomHostSystemData();
+   // try to bind to the resolved host
+   struct addrinfo *ai = (struct addrinfo *) getValidAddress( where );
    fassert(ai != 0);
-
-   struct addrinfo ai6;
-   struct sockaddr_storage storage;
-   if( ai->ai_family == AF_INET )
-   {
-      Address::convertToIPv6( ai, &storage, ai6.ai_addrlen );
-      ai6.ai_addr = (struct sockaddr*) &storage;
-      ai = &ai6;
-   }
-
 
    int32 oldflags = 0;
    if( async )
@@ -1019,7 +1047,7 @@ Socket *Socket::accept()
 {
    socklen_t addrlen;
    struct sockaddr *address;
-   struct sockaddr_in6 addrIn6;
+   struct sockaddr_storage addrIn6;
 
    address = (struct sockaddr *) &addrIn6;
    addrlen = sizeof( addrIn6 );
@@ -1047,7 +1075,7 @@ Socket *Socket::accept()
       ask->set(hostName,servName);
    }
 
-   Socket *s = new Socket( skt, SOCK_STREAM, ask );
+   Socket *s = new Socket( skt, address->sa_family, SOCK_STREAM, m_protocol, ask );
    ask->decref();
 
    return s;
@@ -1107,27 +1135,8 @@ int32 Socket::send( const byte *buffer, int32 size, Address *where )
    // let's try to connect the addresses in where.
    if ( where != 0 )
    {
-      if( ! where->isResolved() )
-      {
-         if ( ! where->resolve(false) ) {
-            throw FALCON_SIGN_XERROR( Ext::NetError,
-                  FALSOCK_ERR_UNRESOLVED, .desc(FALSOCK_ERR_UNRESOLVED_MSG)
-               );
-         }
-      }
-
-      struct addrinfo *ai = (struct addrinfo *)where->getRandomHostSystemData();
+      struct addrinfo *ai = (struct addrinfo *) getValidAddress( where );
       fassert(ai != 0);
-
-      struct addrinfo ai6;
-      struct sockaddr_storage storage;
-      if( ai->ai_family == AF_INET )
-      {
-         Address::convertToIPv6( ai, &storage, ai6.ai_addrlen );
-         ai6.ai_addr = (struct sockaddr*) &storage;
-         ai = &ai6;
-      }
-
       retsize = ::sendto( m_skt, buffer, size, 0, ai->ai_addr, ai->ai_addrlen );
    }
    else {

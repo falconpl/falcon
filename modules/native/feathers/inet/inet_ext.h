@@ -52,7 +52,7 @@
 #define FALSOCK_ERR_ACCEPT_MSG "Network error during accept"
 
 #define FALSOCK_ERR_INCOMPATIBLE       (FALCON_SOCKET_ERROR_BASE + 9)
-#define FALSOCK_ERR_INCOMPATIBLE_MSG   "Socket not correctly configured"
+#define FALSOCK_ERR_INCOMPATIBLE_MSG   "Address incompatible for this kind of socket"
 
 #define FALSOCK_ERR_UNRESOLVED         (FALCON_SOCKET_ERROR_BASE + 10)
 #define FALSOCK_ERR_UNRESOLVED_MSG     "Unresolved address used in operation"
@@ -65,6 +65,9 @@
 
 #define FALSOCK_ERR_ADDRESS            (FALCON_SOCKET_ERROR_BASE + 13)
 #define FALSOCK_ERR_ADDRESS_MSG        "Malformed network address"
+
+#define FALSOCK_ERR_ALREADY_CREATED    (FALCON_SOCKET_ERROR_BASE + 14)
+#define FALSOCK_ERR_ALREADY_CREATED_MSG "Already created"
 
 #if WITH_OPENSSL
 #define FALSOCK_ERR_SSLCONFIG          (FALCON_SOCKET_ERROR_BASE + 15)
@@ -123,8 +126,6 @@ public:
    virtual void* createInstance() const;
 
    virtual Selectable* getSelectableInterface( void* instance ) const;
-
-   virtual bool op_init( VMContext* ctx, void* instance, int32 pcount ) const;
 };
 
 

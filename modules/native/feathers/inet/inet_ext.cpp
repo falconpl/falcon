@@ -248,6 +248,30 @@ void get_descriptor(const Class*, const String&, void* instance, Item& value )
    value = (int64) socket->descriptor();
 }
 
+FALCON_DECLARE_FUNCTION(init, "family:[N],type:[N],protocol:[N]")
+FALCON_DEFINE_FUNCTION_P1(init)
+{
+   TRACE1( "ClassSocket::init(%d)", ctx->paramCount() );
+   Item* i_family = ctx->param(0);
+   Item* i_type = ctx->param(1);
+   Item* i_protocol = ctx->param(2);
+
+   Mod::Socket* sock = static_cast<Mod::Socket*>( ctx->self().asInst() );
+   if( (i_family != 0 && !( i_family->isOrdinal() || i_family->isNil() ))
+       ||(i_type != 0 && !( i_type->isOrdinal() || i_type->isNil() ))
+       || (i_protocol != 0 && !( i_protocol->isOrdinal() || i_protocol->isNil() ))
+   )
+   {
+      throw paramError(__LINE__, SRC );
+   }
+
+   int family = i_family == 0 || i_family->isNil() ? AF_INET6 : (int) i_family->forceInteger();
+   int type = i_type == 0 || i_type->isNil() ? SOCK_STREAM : (int) i_type->forceInteger();
+   int protocol = i_protocol == 0 || i_protocol->isNil() ? 0 : (int) i_protocol->forceInteger();
+
+   sock->create( family, type, protocol );
+   ctx->returnFrame(ctx->self());
+}
 
 /*#
    @method connect Socket
@@ -868,6 +892,8 @@ ClassSocket::ClassSocket():
 {
    this->m_bHasSharedInstances = true;
 
+   setConstuctor( new CSocket::Function_init );
+
    addConstant("NONE", (int64) -1 );
    addConstant("DGRAM", (int64) SOCK_DGRAM );
    addConstant("STREAM", (int64) SOCK_STREAM );
@@ -932,27 +958,6 @@ Selectable* ClassSocket::getSelectableInterface( void* instance ) const
    TRACE1( "ClassSocket::getSelectableInterface(%p)", instance );
    Mod::Socket* sock = static_cast<Mod::Socket*>(instance);
    return new Mod::SocketSelectable(this, sock);
-}
-
-bool ClassSocket::op_init( VMContext* ctx, void* instance, int32 pCount ) const
-{
-   MESSAGE1( "ClassSocket::init()" );
-   Mod::Socket* sock = static_cast<Mod::Socket*>(instance);
-   if( pCount == 0 )
-   {
-      sock->create( SOCK_STREAM );
-   }
-   else {
-      Item& i_type = ctx->opcodeParam(pCount - 1);
-      if( i_type.isNumeric() )
-      {
-         sock->create( i_type.forceInteger() );
-      }
-      else {
-         throw FALCON_SIGN_XERROR(ParamError, e_inv_params, .extra("[N]") );
-      }
-   }
-   return false;
 }
 
 
@@ -1079,7 +1084,8 @@ void get_addresses(const Class*, const String&, void* instance, Item& value )
          String *res = new String;
          String host, service;
          int port = 0;
-         addr->getResolvedEntry( i, host, service, port );
+         int family = 0;
+         addr->getResolvedEntry( i, host, service, port, family );
          if( host.find(':') != String::npos )
          {
             *res = "[" + host + "]:" + service;
@@ -1401,6 +1407,7 @@ ModuleInet::ModuleInet():
    this->addConstant( "ERR_RESOLV", FALSOCK_ERR_RESOLV );
    this->addConstant( "ERR_SEND", FALSOCK_ERR_SEND );
    this->addConstant( "ERR_UNRESOLVED", FALSOCK_ERR_UNRESOLVED );
+   this->addConstant( "ERR_ALREADY_CREATED", FALSOCK_ERR_ALREADY_CREATED );
 
 #if WITH_OPENSSL
    this->addConstant( "ERR_SSLCONFIG", FALSOCK_ERR_SSLCONFIG );
