@@ -1425,19 +1425,25 @@ void ssl_fini()
 }
 
 
-SSLData::ssl_error_t Socket::sslConfig( bool asServer,
-                                           SSLData::sslVersion_t sslVer,
-                                           const char* certFile,
-                                           const char* pkeyFile,
-                                           const char* certAuthFile )
+void Socket::sslConfig( bool asServer,
+                   SSLData::sslVersion_t sslVer,
+                   String* certFile,
+                   String* pkeyFile,
+                   String* certAuthFile )
 {
    Falcon::Mod::ssl_init();
 
-   if ( d.m_iSystemData <= 0 ) // no socket to attach
-      return SSLData::notready_error;
+   if ( m_skt < 0 ) // no socket to attach
+   {
+      throw new Ext::NetError( ErrorParam( FALSOCK_ERR_SSLCONFIG, __LINE__, SRC )
+           .desc( FALSOCK_ERR_SSLCONFIG_MSG )
+           .extra( "Not ready" ) );
+   }
 
-   if ( m_sslData ) // called before?
-      return SSLData::no_error;
+   // called before?
+   if ( m_sslData ) {
+      return;
+   }
 
    int i;
    SSLData* sslD = new SSLData;
@@ -1457,83 +1463,92 @@ SSLData::ssl_error_t Socket::sslConfig( bool asServer,
    default: sslD->sslMethod = (SSL_METHOD*) SSLv3_method();
    }
 
-   // create context
-   sslD->sslContext = SSL_CTX_new( sslD->sslMethod );
-   if ( !sslD->sslContext )
+   try
+   {
+      // create context
+      sslD->sslContext = SSL_CTX_new( sslD->sslMethod );
+      if ( !sslD->sslContext )
+      {
+         throw new Ext::NetError( ErrorParam( FALSOCK_ERR_SSLCONFIG, __LINE__, SRC )
+                         .desc( FALSOCK_ERR_SSLCONFIG_MSG )
+                         .extra( "Cannot create the SSL context" ) );
+      }
+
+      // certificate file
+      if ( certFile && ! certFile->empty() )
+      {
+         AutoCString scf(*certFile);
+         if ( ( i = SSL_CTX_use_certificate_file( sslD->sslContext, scf.c_str(),
+             SSL_FILETYPE_PEM ) != 1 ) )
+         {
+            throw new Ext::NetError( ErrorParam( FALSOCK_ERR_SSLCONFIG, __LINE__, SRC )
+                 .desc( FALSOCK_ERR_SSLCONFIG_MSG )
+                 .extra( "Failed to use certificate file" ) );
+
+         }
+         sslD->certFile.bufferize(*certFile);
+      }
+
+      // private key file
+      if ( pkeyFile && ! pkeyFile->empty() )
+      {
+         AutoCString scf(*pkeyFile);
+         if ( ( i = SSL_CTX_use_PrivateKey_file( sslD->sslContext, scf.c_str(),
+             SSL_FILETYPE_PEM ) != 1 ) )
+         {
+            throw new Ext::NetError( ErrorParam( FALSOCK_ERR_SSLCONFIG, __LINE__, SRC )
+                          .desc( FALSOCK_ERR_SSLCONFIG_MSG )
+                          .extra( "Failed to use key file" ) );
+         }
+         sslD->keyFile.bufferize(*pkeyFile);
+      }
+
+      // certificates authorities
+      if ( certAuthFile && ! certAuthFile->empty() )
+      {
+         AutoCString scf(*certAuthFile);
+         STACK_OF( X509_NAME ) *cert_names;
+         cert_names = SSL_load_client_CA_file( scf.c_str() );
+         if ( cert_names != 0 )
+         {
+            SSL_CTX_set_client_CA_list( sslD->sslContext, cert_names );
+         }
+         else
+         {
+            throw new Ext::NetError( ErrorParam( FALSOCK_ERR_SSLCONFIG, __LINE__, SRC )
+                                   .desc( FALSOCK_ERR_SSLCONFIG_MSG )
+                                   .extra( "Failed to use certificate authority file" ) );
+         }
+         sslD->caFile.bufferize(*certAuthFile);
+      }
+
+      // ssl handle
+      sslD->sslHandle = SSL_new( sslD->sslContext );
+      if ( !sslD->sslHandle )
+      {
+         throw new Ext::NetError( ErrorParam( FALSOCK_ERR_SSLCONFIG, __LINE__, SRC )
+                          .desc( FALSOCK_ERR_SSLCONFIG_MSG )
+                          .extra( "Cannot create SSL Handle" ) );
+      }
+
+      // attach file descriptor
+      if ( ( i = SSL_set_fd( sslD->sslHandle, m_skt ) ) != 1 )
+      {
+         throw new Ext::NetError( ErrorParam( FALSOCK_ERR_SSLCONFIG, __LINE__, SRC )
+                          .desc( FALSOCK_ERR_SSLCONFIG_MSG )
+                          .extra( "Failed to use attach the file descriptor" ) );
+      }
+
+      // done
+      m_sslData = sslD;
+   }
+   catch(...)
    {
       delete sslD;
-      return SSLData::ctx_error;
    }
-
-   // certificate file
-   if ( certFile && certFile[0] != '\0' )
-   {
-      if ( ( i = SSL_CTX_use_certificate_file( sslD->sslContext, certFile,
-          SSL_FILETYPE_PEM ) != 1 ) )
-      {
-         delete sslD;
-         m_lastError = i;
-         return SSLData::cert_error;
-      }
-      sslD->certFile = certFile;
-      sslD->certFile.bufferize();
-   }
-
-   // private key file
-   if ( pkeyFile && pkeyFile[0] != '\0' )
-   {
-      if ( ( i = SSL_CTX_use_PrivateKey_file( sslD->sslContext, pkeyFile,
-          SSL_FILETYPE_PEM ) != 1 ) )
-      {
-         delete sslD;
-         m_lastError = i;
-         return SSLData::pkey_error;
-      }
-      sslD->keyFile = pkeyFile;
-      sslD->keyFile.bufferize();
-   }
-
-   // certificates authorities
-   if ( certAuthFile && certAuthFile[0] != '\0' )
-   {
-      STACK_OF( X509_NAME ) *cert_names;
-      cert_names = SSL_load_client_CA_file( certAuthFile );
-      if ( cert_names != 0 )
-      {
-         SSL_CTX_set_client_CA_list( sslD->sslContext, cert_names );
-      }
-      else
-      {
-         delete sslD;
-         m_lastError = i;
-         return SSLData::ca_error;
-      }
-      sslD->caFile = certAuthFile;
-      sslD->caFile.bufferize();
-   }
-
-   // ssl handle
-   sslD->sslHandle = SSL_new( sslD->sslContext );
-   if ( !sslD->sslHandle )
-   {
-      delete sslD;
-      return SSLData::handle_error;
-   }
-
-   // attach file descriptor
-   if ( ( i = SSL_set_fd( sslD->sslHandle, m_skt ) ) != 1 )
-   {
-      delete sslD;
-      m_lastError = i;
-      return SSLData::fd_error;
-   }
-
-   // done
-   m_sslData = sslD;
-   return SSLData::no_error;
 }
 
-void TCPSocket::sslClear()
+void Socket::sslClear()
 {
    if ( m_sslData )
    {
@@ -1542,21 +1557,34 @@ void TCPSocket::sslClear()
    }
 }
 
-SSLData::ssl_error_t Socket::sslConnect()
+void Socket::sslConnect()
 {
    //int flags = 0;
    int i;
 
    // need ssl context
    if ( !m_sslData )
-      return SSLData::notready_error;
+   {
+      throw FALCON_SIGN_XERROR( Ext::NetError, FALSOCK_ERR_SSLCONNECT,
+                    .desc(FALSOCK_ERR_SSLCONNECT_MSG)
+                    .extra( "SSL not configured on this socket" ));
+   }
+
+
    // no need to call several times
    if ( m_sslData->handshakeState != SSLData::handshake_todo )
-      return SSLData::already_error;
-   // socket needs to be connected
-   if ( !m_connected )
    {
-      return SSLData::notconnected_error;
+      throw FALCON_SIGN_XERROR( Ext::NetError, FALSOCK_ERR_SSLCONNECT,
+                    .desc(FALSOCK_ERR_SSLCONNECT_MSG)
+                    .extra( "SSL handshake already performed" ));
+   }
+
+   // socket needs to be connected
+   if ( ! isConnected() )
+   {
+      throw FALCON_SIGN_XERROR( Ext::NetError, FALSOCK_ERR_SSLCONNECT,
+                          .desc(FALSOCK_ERR_SSLCONNECT_MSG)
+                          .extra( "SSL not connected" ));
    }
 
    if ( m_sslData->asServer ) // server-side socket
@@ -1570,15 +1598,24 @@ SSLData::ssl_error_t Socket::sslConnect()
 
    if ( i != 1 )
    {
-      m_sslData->lastSysError = SSL_get_error( m_sslData->sslHandle, i );
-      m_sslData->lastSslError = SSLData::handshake_failed;
-      m_lastError = m_sslData->lastSysError;
-      m_sslData->handshakeState = SSLData::handshake_bad;
-      return SSLData::handshake_failed;
+      int32 error = SSL_get_error( m_sslData->sslHandle, i );
+      if( error == SSL_ERROR_SYSCALL && errno != 0 )
+      {
+         throw FALCON_SIGN_XERROR( Ext::NetError, FALSOCK_ERR_RECV,
+                              .desc(FALSOCK_ERR_RECV_MSG)
+                              .sysError((uint32) errno) );
+      }
+      else if (  error == SSL_ERROR_SSL )
+      {
+         char buffer[512];
+         ERR_error_string_n(error, buffer, 512);
+         throw FALCON_SIGN_XERROR( Ext::NetError, FALSOCK_ERR_RECV,
+                     .desc(FALSOCK_ERR_RECV_MSG)
+                     .extra( String("SSL ").A(buffer)) );
+      }
    }
 
    m_sslData->handshakeState = SSLData::handshake_ok;
-   return SSLData::no_error;
 }
 
 int32 Socket::sslWrite( const byte* buf, int32 sz )
@@ -1586,10 +1623,21 @@ int32 Socket::sslWrite( const byte* buf, int32 sz )
    int i = SSL_write( m_sslData->sslHandle, buf, sz );
    if ( i <= 0 )
    {
-      m_sslData->lastSysError = SSL_get_error( m_sslData->sslHandle, i );
-      m_sslData->lastSslError = SSLData::write_error;
-      m_lastError = m_sslData->lastSysError;
-      return -1;
+      int error = SSL_get_error( m_sslData->sslHandle, i );
+      if( error == SSL_ERROR_SYSCALL && errno != 0 )
+      {
+         throw FALCON_SIGN_XERROR( Ext::NetError, FALSOCK_ERR_RECV,
+                              .desc(FALSOCK_ERR_RECV_MSG)
+                              .sysError((uint32) errno) );
+      }
+      else if (  error == SSL_ERROR_SSL )
+      {
+         char buffer[512];
+         ERR_error_string_n(error, buffer, 512);
+         throw FALCON_SIGN_XERROR( Ext::NetError, FALSOCK_ERR_RECV,
+                     .desc(FALSOCK_ERR_RECV_MSG)
+                     .extra( String("SSL ").A(buffer)) );
+      }
    }
    return i;
 }
@@ -1599,10 +1647,23 @@ int32 Socket::sslRead( byte* buf, int32 sz )
    int i = SSL_read( m_sslData->sslHandle, buf, sz );
    if ( i <= 0 )
    {
-      m_sslData->lastSysError = SSL_get_error( m_sslData->sslHandle, i );
-      m_sslData->lastSslError = SSLData::read_error;
-      m_lastError = m_sslData->lastSysError;
-      return -1;
+      int error = SSL_get_error( m_sslData->sslHandle, i );
+      if( error == SSL_ERROR_SYSCALL && errno != 0 )
+      {
+         throw FALCON_SIGN_XERROR( Ext::NetError, FALSOCK_ERR_RECV,
+                              .desc(FALSOCK_ERR_RECV_MSG)
+                              .sysError((uint32) errno) );
+      }
+      else if (  error == SSL_ERROR_SSL )
+      {
+         char buffer[512];
+         ERR_error_string_n(error, buffer, 512);
+         throw FALCON_SIGN_XERROR( Ext::NetError, FALSOCK_ERR_RECV,
+                     .desc(FALSOCK_ERR_RECV_MSG)
+                     .extra( String("SSL ").A(buffer)) );
+      }
+
+      return 0;
    }
    return i;
 }

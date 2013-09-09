@@ -4,14 +4,14 @@
 # CMake configuration file for module Socket
 ####################################################################
 
-#find_package( OpenSSL )
-#if ( OPENSSL_FOUND )
-#    add_definitions( -DWITH_OPENSSL=1 )
-#    include_directories( BEFORE ${OPENSSL_INCLUDE_DIR} )
-#else()
-#    add_definitions( -DWITH_OPENSSL=0 )
-#    set( OPENSSL_LIBRARIES "" )
-#endif()
+find_package( OpenSSL )
+if ( OPENSSL_FOUND )
+    add_definitions( -DWITH_OPENSSL=1 )
+    include_directories( BEFORE ${OPENSSL_INCLUDE_DIR} )
+else()
+    add_definitions( -DWITH_OPENSSL=0 )
+    set( OPENSSL_LIBRARIES "" )
+endif()
 
 if(UNIX OR MAC)
    set(SYS_SPECIFIC inet_sys_posix.cpp)

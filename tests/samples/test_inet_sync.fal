@@ -1,17 +1,20 @@
 load inet
 
-addr = Address("www.falconpl.org:http")
+addr = Address("www.ckdb.ch:https")
 addr.resolve()
 addr.addresses.foreach(printl)
 
-x = Socket()
+x = Socket(AF_INET)
 str = m""
+x.sslConfig( false, SSLv3 )
 x.setOpt(SOL_SOCKET, SO_REUSEADDR, true)
 x.connect(addr)
-x.send("GET / HTTP/1.0\r\nHost: www.falconpl.org\r\n\r\n")
+x.sslConnect()
+
+x.send("GET / HTTP/1.0\r\nHost: www.ckdb.ch\r\n\r\n")
 while x.recv(str, 10000)
    str.isText = true
    > str
 end
-
+> "Done."
 x.close()

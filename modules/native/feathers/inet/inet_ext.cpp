@@ -445,7 +445,19 @@ static void internal_send( Function* caller, VMContext* ctx, Mod::Address* to )
    const byte* data = dataStr->getRawStorage();
 
    Mod::Socket *tcps = static_cast<Mod::Socket*>( ctx->self().asInst() );
+#if WITH_OPENSSL
+   int64 res = 0;
+   if( tcps->ssl() != 0 )
+   {
+      res = (int64) tcps->sslWrite( data + start, (int) count );
+   }
+   else
+   {
+       res = (int64) tcps->send( data + start, (int) count, to );
+   }
+#else
    int64 res = (int64) tcps->send( data + start, (int) count, to );
+#endif
    ctx->returnFrame(res);
 }
 
@@ -639,7 +651,19 @@ FALCON_DEFINE_FUNCTION_P1(recv)
    buffer->reserve( size );
    buffer->toMemBuf();
 
+#if WITH_OPENSSL
+   int64 res = 0;
+   if( sock->ssl() != 0 )
+   {
+      res = (int64) sock->sslRead( buffer->getRawStorage(), size );
+   }
+   else
+   {
+      res = (int64) sock->recv( buffer->getRawStorage(), size, 0 );
+   }
+#else
    int64 res = (int64) sock->recv( buffer->getRawStorage(), size, 0 );
+#endif
    buffer->size(res);
    ctx->returnFrame( res );
 }
@@ -979,23 +1003,23 @@ void set_nonblocking(const Class*, const String&, void* instance, const Item& va
    @method sslConfig Socket
    @brief Prepare a socket for SSL operations.
    @param serverSide True for a server-side socket, false for a client-side socket.
-   @optparam version SSL method (one of SSLv2, SSLv3, SSLv23, TLSv1, DTLSv1 ). Default SSLv3
+   @param version SSL method (one of SSLv2, SSLv3, SSLv23, TLSv1, DTLSv1 ). Default SSLv3
    @optparam cert Certificate file
    @optparam pkey Private key file
    @optparam ca Certificate authorities file
 
    Must be called after socket is really created, that is after connect() is called.
  */
-FALCON_FUNC Socket_sslConfig( ::Falcon::VMachine* vm )
+FALCON_DECLARE_FUNCTION(sslConfig, "serverSide:B,version:S,cert:[S],pkey:[S],ca:[S]")
+FALCON_DEFINE_FUNCTION_P1(sslConfig)
 {
-   CoreObject *self = vm->self().asObject();
-   Sys::Socket *tcps = (Sys::Socket *) self->getUserData();
+   Mod::Socket *tcps = static_cast<Mod::Socket *>( ctx->self().asInst() );
 
-   Item* i_asServer = vm->param( 0 );
-   Item* i_sslVer = vm->param( 1 );
-   Item* i_cert = vm->param( 2 );
-   Item* i_pkey = vm->param( 3 );
-   Item* i_ca = vm->param( 4 );
+   Item* i_asServer = ctx->param( 0 );
+   Item* i_sslVer = ctx->param( 1 );
+   Item* i_cert = ctx->param( 2 );
+   Item* i_pkey = ctx->param( 3 );
+   Item* i_ca = ctx->param( 4 );
 
    if ( !i_asServer || !( i_asServer->isBoolean() )
       || !i_sslVer || !( i_sslVer->isInteger() )
@@ -1007,32 +1031,14 @@ FALCON_FUNC Socket_sslConfig( ::Falcon::VMachine* vm )
          extra( "B,I,[S,S,S]" ) );
    }
 
-   AutoCString s_cert( "" );
-   if ( i_cert && !i_cert->isNil() )
-   {
-      s_cert.set( i_cert->asString() );
-   }
-   AutoCString s_pkey( "" );
-   if ( i_pkey && !i_pkey->isNil() )
-   {
-      s_pkey.set( i_pkey->asString() );
-   }
-   AutoCString s_ca( "" );
-   if ( i_ca && !i_ca->isNil() )
-   {
-      s_ca.set( i_ca->asString() );
-   }
+   String* s_cert = i_cert && !i_cert->isNil() ? i_cert->asString() : 0;
+   String* s_pkey = i_pkey && !i_pkey->isNil() ? i_pkey->asString() : 0;
+   String* s_ca = i_ca && !i_ca->isNil() ? i_ca->asString() : 0;
 
-   Sys::SSLData::ssl_error_t res = tcps->sslConfig( i_asServer->asBoolean(),
-                        (Sys::SSLData::sslVersion_t) i_sslVer->asInteger(),
-                        s_cert.c_str(), s_pkey.c_str(), s_ca.c_str() );
-
-   if ( res != Sys::SSLData::no_error )
-   {
-      throw new NetError( ErrorParam( FALSOCK_ERR_SSLCONFIG, __LINE__ )
-         .desc( FAL_STR( sk_msg_errsslconfig ) )
-         .sysError( (uint32) res ) );
-   }
+   tcps->sslConfig( i_asServer->asBoolean(),
+                        (Mod::SSLData::sslVersion_t) i_sslVer->asInteger(),
+                        s_cert, s_pkey, s_ca );
+   ctx->returnFrame();
 }
 
 
@@ -1043,19 +1049,12 @@ FALCON_FUNC Socket_sslConfig( ::Falcon::VMachine* vm )
    Must be called after socket is connected and has been properly configured for
    SSL operations.
  */
-FALCON_FUNC Socket_sslConnect( ::Falcon::VMachine* vm )
+FALCON_DECLARE_FUNCTION(sslConnect, "")
+FALCON_DEFINE_FUNCTION_P1(sslConnect)
 {
-   CoreObject *self = vm->self().asObject();
-   Sys::Socket *tcps = (Sys::Socket *) self->getUserData();
-
-   Sys::SSLData::ssl_error_t res = tcps->sslConnect();
-
-   if ( res != Sys::SSLData::no_error )
-   {
-      throw new NetError( ErrorParam( FALSOCK_ERR_SSLCONNECT, __LINE__ )
-         .desc( FAL_STR( sk_msg_errsslconnect ) )
-         .sysError( (uint32) tcps->lastError() ) );
-   }
+   Mod::Socket *tcps = static_cast<Mod::Socket *>( ctx->self().asInst() );
+   tcps->sslConnect();
+   ctx->returnFrame();
 }
 
 
@@ -1065,13 +1064,12 @@ FALCON_FUNC Socket_sslConnect( ::Falcon::VMachine* vm )
 
    Useful if you want to reuse a socket.
  */
-FALCON_FUNC Socket_sslClear( ::Falcon::VMachine *vm )
+FALCON_DECLARE_FUNCTION(sslClear, "")
+FALCON_DEFINE_FUNCTION_P1(sslClear)
 {
-   CoreObject *self = vm->self().asObject();
-   Sys::Socket *tcps = (Sys::Socket *) self->getUserData();
-
+   Mod::Socket *tcps = static_cast<Mod::Socket *>( ctx->self().asInst() );
    tcps->sslClear();
-   vm->retnil();
+   ctx->returnFrame();
 }
 #endif // WITH_OPENSSL
 
@@ -1115,6 +1113,12 @@ ClassSocket::ClassSocket():
 
    addMethod( new CSocket::Function_getOpt );
    addMethod( new CSocket::Function_setOpt );
+
+#if WITH_OPENSSL
+   addMethod( new CSocket::Function_sslConfig );
+   addMethod( new CSocket::Function_sslConnect );
+   addMethod( new CSocket::Function_sslClear );
+#endif
 }
 
 ClassSocket::~ClassSocket()
@@ -1278,7 +1282,15 @@ void get_addresses(const Class*, const String&, void* instance, Item& value )
          addr->getResolvedEntry( i, host, service, port, family );
          if( host.find(':') != String::npos )
          {
-            *res = "[" + host + "]:" + service;
+            *res = "[" + host + "]:";
+            if( port != 0 )
+            {
+               res->N(port);
+            }
+            else if( ! service.empty() && service != "0")
+            {
+               *res += service;
+            }
          }
          else
          {
@@ -1382,9 +1394,6 @@ FALCON_DEFINE_FUNCTION_P1(resolve)
       ctx->returnFrame();
    }
 }
-
-
-
 
 
 } /* end of NS CAddress */
@@ -1724,10 +1733,27 @@ ModuleInet::ModuleInet():
 #endif
    this->addConstant("IPPROTO_TCP", (int64) IPPROTO_TCP );
    this->addConstant("IPPROTO_UDP", (int64) IPPROTO_UDP );
+
+#if WITH_OPENSSL
+#ifndef OPENSSL_NO_SSL2
+   this->addConstant("SSLv2", (int64) Mod::SSLData::SSLv2 );
+#endif
+   this->addConstant("SSLv23", (int64) Mod::SSLData::SSLv23 );
+   this->addConstant("SSLv3", (int64) Mod::SSLData::SSLv3 );
+   this->addConstant("TLSv1", (int64) Mod::SSLData::TLSv1 );
+   this->addConstant("DTLSv1", (int64) Mod::SSLData::DTLSv1 );
+
+
+   Mod::ssl_init();
+
+#endif
 }
 
 ModuleInet::~ModuleInet()
 {
+#if WITH_OPENSSL
+   Mod::ssl_fini();
+#endif
    Mod::shutdown_system();
 }
 

@@ -43,7 +43,7 @@
 #endif // WITH_OPENSSL
 
 #define FALCON_SOCKET int
-
+#include <openssl/err.h>
 namespace Falcon {
 namespace Mod {
 
@@ -471,11 +471,11 @@ public:
     *
     *  Successful, that function leaves an SSLData instance as m_sslData.
     */
-   SSLData::ssl_error_t sslConfig( bool asServer,
+   void sslConfig( bool asServer,
                                    SSLData::sslVersion_t sslVer,
-                                   const char* certFile,
-                                   const char* pkeyFile,
-                                   const char* certAuthFile );
+                                   String* certFile,
+                                   String* pkeyFile,
+                                   String* certAuthFile );
 
    /** Manually destroy the SSL context.
     *  Useful if you want to reuse/reconnect the socket.
@@ -484,13 +484,13 @@ public:
 
    /** Proceed with SSL handshake.
     */
-   SSLData::ssl_error_t sslConnect();
+   void sslConnect();
 
-protected:
-   /* These are called internally by send/recv
-    */
    int32 sslWrite( const byte* buf, int32 sz );
    int32 sslRead( byte* buf, int32 sz );
+
+   /* These are called internally by send/recv
+    */
 #endif // WITH_OPENSSL
 
 protected:
@@ -542,6 +542,10 @@ public:
    virtual int getFd() const;
 };
 
+#if WITH_OPENSSL
+void ssl_init();
+void ssl_fini();
+#endif
 }
 }
 
