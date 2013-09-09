@@ -21,17 +21,18 @@ function getData( address, tgt )
          // it was the resolver -- we have the address
          // connect asyncrhonousy        
          skt.connect(addr, true)
-         sel.add(skt)         
+         stream = skt.stream
+         sel.add(skt.stream)         
       else 
          // selector was excited
          if sel.getWrite()  //... in write?
-            skt.send( @"GET / HTTP/1.0\r\nHost: ${addr.host}\r\n\r\n")
+            stream.write( @"GET / HTTP/1.0\r\nHost: ${addr.host}\r\n\r\n")
          else //.. in read?
             // eof?
-            count = skt.recv(tmp, 512)
+            count = stream.read(tmp, 512)
             
-            if count == 0
-               skt.close()
+            if stream.eof()
+               stream.close()
                complete.open()
                return  
             elif count > 0

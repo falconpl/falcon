@@ -258,10 +258,10 @@ void* FileDataMPX::Private::MPXThread::run()
          }
       }
 
-      count = 1;
-      while( signaled > 0 )
+      int32 cur = 1;
+      while( signaled > 0 && cur < count )
       {
-         pollfd& current = fds[count++];
+         pollfd& current = fds[cur++];
          Selectable* resource = m_streams[current.fd].first;
 
          bool bSignaled = false;

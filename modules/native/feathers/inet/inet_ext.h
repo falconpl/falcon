@@ -27,6 +27,7 @@
 #include <falcon/error_base.h>
 
 #include <falcon/classes/classshared.h>
+#include <falcon/classes/classstream.h>
 
 #ifndef FALCON_SOCKET_ERROR_BASE
    #define FALCON_SOCKET_ERROR_BASE        1170
@@ -130,6 +131,18 @@ public:
 
 
 
+class ClassSocketStream: public ClassStream
+{
+public:
+
+   ClassSocketStream();
+   virtual ~ClassSocketStream();
+   virtual int64 occupiedMemory( void* instance ) const;
+   virtual void* clone( void* instance ) const;
+   virtual Selectable* getSelectableInterface( void* instance ) const;
+};
+
+
 class ModuleInet: public Module
 {
 public:
@@ -139,11 +152,13 @@ public:
    Class* addressClass() const { return m_clsAddress; }
    Class* socketClass() const { return m_clsSocket; }
    Class* resolverClass() const { return m_clsResolver; }
+   Class* socketStreamClass() const { return m_clsSocketStream; }
 
 public:
    Class* m_clsAddress;
    Class* m_clsSocket;
    Class* m_clsResolver;
+   Class* m_clsSocketStream;
 };
 
 

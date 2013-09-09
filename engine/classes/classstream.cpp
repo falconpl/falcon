@@ -253,7 +253,7 @@ void Function_read::invoke( ::Falcon::VMContext* ctx, ::Falcon::int32 )
       throw paramError();
    }
    
-   uint32 dataSize = i_data->asString()->size();
+   uint32 dataSize = i_data->asString()->allocated();
    uint32 count = dataSize;
    uint32 start = 0;
    
@@ -269,7 +269,7 @@ void Function_read::invoke( ::Falcon::VMContext* ctx, ::Falcon::int32 )
    
    if( i_count != 0 && ! i_count->isNil() )
    {
-      int64 icount = i_start->forceInteger();
+      int64 icount = i_count->forceInteger();
       if ( icount > 0 )
       {
          count = (uint32) icount;
@@ -291,6 +291,10 @@ void Function_read::invoke( ::Falcon::VMContext* ctx, ::Falcon::int32 )
    byte* dataSource = i_data->asString()->getRawStorage();
    Stream* sc = static_cast<Stream*>(ctx->self().asInst());
    int64 retval = (int64) sc->read(dataSource+start, count);
+   if( retval > 0 )
+   {
+      i_data->asString()->size( start + retval );
+   }
    ctx->returnFrame( retval );   
 }
 

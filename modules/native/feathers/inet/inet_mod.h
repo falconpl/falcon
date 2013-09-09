@@ -27,6 +27,7 @@
 #include <falcon/shared.h>
 #include <falcon/multiplex.h>
 #include <falcon/selectable.h>
+#include <falcon/stream.h>
 
 #ifdef FALCON_SYS_WIN
 #include <windows.h>
@@ -44,6 +45,7 @@
 
 #define FALCON_SOCKET int
 #include <openssl/err.h>
+
 namespace Falcon {
 namespace Mod {
 
@@ -376,6 +378,9 @@ public:
    /** Get the internal socket descriptor */
    FALCON_SOCKET descriptor() const { return m_skt; }
 
+   Stream* makeStreamInterface();
+   Stream* stream() const;
+
    void gcMark( uint32 mk ) { m_mark = mk; }
    uint32 currentMark() const { return m_mark; }
 
@@ -498,6 +503,7 @@ protected:
    int m_type;
    int m_protocol;
 
+   Stream* m_stream;
    Address* m_address;
    mutable bool m_bConnected;
    FALCON_SOCKET m_skt;
@@ -541,6 +547,49 @@ public:
    virtual const Multiplex::Factory* factory() const;
    virtual int getFd() const;
 };
+
+
+//================================================
+// Socket
+//================================================
+
+class SocketStream: public Stream
+{
+public:
+   SocketStream( Socket* skt );
+   virtual ~SocketStream();
+
+   virtual size_t read( void *buffer, size_t size );
+   virtual size_t write( const void *buffer, size_t size );
+   virtual bool close();
+   virtual Stream *clone() const;
+
+   virtual const Multiplex::Factory* multiplexFactory() const;
+
+   virtual int64 tell();
+   virtual bool truncate( off_t pos=-1 );
+   virtual off_t seek( off_t pos, e_whence w );
+
+   virtual Class* handler();
+
+   class Selectable: public FDSelectable
+   {
+   public:
+      Selectable( SocketStream* inst );
+      virtual ~Selectable();
+      virtual const Multiplex::Factory* factory() const;
+      virtual int getFd() const;
+   };
+
+   Socket* skt() const { return m_socket; }
+
+   static void setHandler( Class* handler );
+private:
+   Socket* m_socket;
+
+   static Class* m_socketStreamHandler;
+};
+
 
 #if WITH_OPENSSL
 void ssl_init();

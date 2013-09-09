@@ -55,54 +55,6 @@ bool shutdown_system()
    return true;
 }
 
-bool isIPV4( const String &ipv4__ )
-{
-   String ipv4 = ipv4__;
-   struct addrinfo hints;
-   struct addrinfo *res = 0;
-
-   // we want to see an IPv4:
-   memset( &hints, 0, sizeof( hints ) );
-
-   hints.ai_family = AF_INET;
-   hints.ai_flags = AI_NUMERICHOST;
-
-   //toCString is guaranteed to stay as long as the string exists.
-   char addrBuff[256];
-   ipv4.toCString( addrBuff, 255 );
-   int error = getaddrinfo( addrBuff, 0, &hints, &res );
-   if ( error == EAI_NONAME )
-      return false;
-
-   freeaddrinfo( res );
-
-   return true;
-}
-
-bool isIPV6( const String &ipv6__ )
-{
-   String ipv6 = ipv6__;
-   struct addrinfo hints;
-   struct addrinfo *res = 0;
-
-   // we want to see an IPv4:
-   memset( &hints, 0, sizeof( hints ) );
-
-   hints.ai_family = AF_INET6;
-   hints.ai_flags = AI_NUMERICHOST;
-
-   //toCString is guaranteed to stay as long as the string exists.
-   char addrBuff[256];
-   ipv6.toCString( addrBuff, 255 );
-   int error = getaddrinfo( addrBuff, 0, &hints, &res );
-   if ( error == EAI_NONAME )
-      return false;
-
-   freeaddrinfo( res );
-
-   return true;
-}
-
 
 bool getHostName( String &name )
 {
@@ -566,6 +518,7 @@ Socket::Socket():
      m_type(-1),
      m_protocol(-1),
 
+     m_stream(0),
      m_address(0),
      m_bConnected( false ),
      m_mark(0)
@@ -582,6 +535,7 @@ Socket::Socket(int family, int type, int protocol):
      m_type(-1),
      m_protocol(-1),
 
+     m_stream(0),
      m_address(0),
      m_bConnected( false ),
      m_mark(0)
@@ -597,6 +551,8 @@ Socket::Socket( FALCON_SOCKET socket, int family, int type, int protocol, Addres
      m_family(family),
      m_type(type),
      m_protocol(protocol),
+
+     m_stream(0),
      m_address( remote ),
      m_bConnected( true ),
      m_skt(socket),
@@ -633,6 +589,10 @@ void Socket::create( int family, int type, int protocol )
 Socket::~Socket()
 {
    this->close();
+   if( m_stream != 0 )
+   {
+      m_stream->decref();
+   }
 
    #if WITH_OPENSSL
    if ( m_sslData != 0 )
@@ -641,6 +601,33 @@ Socket::~Socket()
       m_sslData = 0;
    }
    #endif
+}
+
+
+Stream* Socket::makeStreamInterface()
+{
+   if ( stream() != 0 )
+   {
+      return stream();
+   }
+
+   if( m_type != SOCK_STREAM )
+   {
+      throw FALCON_SIGN_XERROR(Ext::NetError,
+               FALSOCK_ERR_INCOMPATIBLE, .desc(FALSOCK_ERR_INCOMPATIBLE_MSG));
+   }
+
+   // not very MT safe here...
+   m_stream = new SocketStream( this );
+   m_stream->incref();
+   FALCON_GC_HANDLE(m_stream);
+   return m_stream;
+}
+
+
+Stream* Socket::stream() const
+{
+   return m_stream;
 }
 
 
@@ -1107,7 +1094,18 @@ int32 Socket::recv( byte *buffer, int32 size, Address *data )
    }
    else
    {
+#if WITH_OPENSSL
+   if( m_sslData != 0 )
+   {
+      retsize = sslRead( buffer, size );
+   }
+   else
+   {
       retsize = ::recv( m_skt, buffer, size, 0 );
+   }
+#else
+      retsize = ::recv( m_skt, buffer, size, 0 );
+#endif
    }
 
    if( retsize < 0 )
@@ -1139,7 +1137,18 @@ int32 Socket::send( const byte *buffer, int32 size, Address *where )
       retsize = ::sendto( m_skt, buffer, size, 0, ai->ai_addr, ai->ai_addrlen );
    }
    else {
+#if WITH_OPENSSL
+   if( m_sslData != 0 )
+   {
+      retsize = sslWrite( buffer, size );
+   }
+   else
+   {
       retsize = ::send( m_skt, buffer, size, 0 );
+   }
+#else
+      retsize = ::send( m_skt, buffer, size, 0 );
+#endif
    }
 
    if( retsize < 0 )
@@ -1387,6 +1396,7 @@ SocketSelectable::~SocketSelectable()
 
 const Multiplex::Factory* SocketSelectable::factory() const
 {
+   // this on POSIX:
    return Engine::instance()->stdMpxFactories()->fileDataMpxFact();
 }
 
@@ -1394,6 +1404,136 @@ int SocketSelectable::getFd() const
 {
    Socket* socket = static_cast<Socket*>(instance());
    return socket->descriptor();
+}
+
+//===============================================
+// Socket Stream
+//===============================================
+SocketStream::SocketStream( Socket* skt )
+{
+   m_socket = skt;
+   m_socket->incref();
+   m_status = t_open;
+}
+
+
+SocketStream::~SocketStream()
+{
+   m_socket->decref();
+}
+
+
+size_t SocketStream::read( void *buffer, size_t size )
+{
+   int res = m_socket->recv( static_cast<unsigned char*>(buffer), (int32) size, 0 );
+   if( res == 0 )
+   {
+      m_status = m_status | t_eof;
+   }
+   else if ( res < 0 )
+   {
+      // spurious wakeup on a socket wait
+      return 0;
+   }
+   return (size_t) res;
+}
+
+
+size_t SocketStream::write( const void *buffer, size_t size )
+{
+   int res =  m_socket->send( static_cast<const unsigned char*>(buffer), (int32) size, 0 );
+   if ( res < 0 )
+   {
+      // spurious wakeup on a socket wait
+      return 0;
+   }
+   return (size_t) res;
+}
+
+
+bool SocketStream::close()
+{
+   if( m_socket->descriptor() == -1 )
+   {
+      return false;
+   }
+   else
+   {
+      m_socket->close();
+      m_status = m_status & ~t_open;
+      return true;
+   }
+}
+
+
+Stream *SocketStream::clone() const
+{
+   return new SocketStream( skt() );
+}
+
+
+const Multiplex::Factory* SocketStream::multiplexFactory() const
+{
+   // this on POSIX:
+   return Engine::instance()->stdMpxFactories()->fileDataMpxFact();
+}
+
+
+Class* SocketStream::m_socketStreamHandler = 0;
+
+int64 SocketStream::tell()
+{
+   throwUnsupported();
+   return 0;
+}
+
+bool SocketStream::truncate( off_t )
+{
+   throwUnsupported();
+   return false;
+}
+
+off_t SocketStream::seek( off_t, e_whence )
+{
+   throwUnsupported();
+   return 0;
+}
+
+void SocketStream::setHandler( Class* handler )
+{
+   m_socketStreamHandler = handler;
+}
+
+Class* SocketStream::handler()
+{
+   return m_socketStreamHandler;
+}
+
+SocketStream::Selectable::Selectable( SocketStream* inst ):
+         FDSelectable( inst->handler(), inst )
+{
+   inst->incref();
+}
+
+
+SocketStream::Selectable::~Selectable()
+{
+   SocketStream* skt = static_cast<SocketStream*>(instance());
+   skt->decref();
+}
+
+
+const Multiplex::Factory* SocketStream::Selectable::factory() const
+{
+   SocketStream* skt = static_cast<SocketStream*>(instance());
+   return skt->multiplexFactory();
+}
+
+
+int SocketStream::Selectable::getFd() const
+{
+   SocketStream* skt = static_cast<SocketStream*>(instance());
+   return skt->skt()->descriptor();
 }
 
 

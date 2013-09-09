@@ -202,6 +202,25 @@ void get_closed(const Class*, const String&, void* instance, Item& value )
 }
 
 /*#
+@property stream Socket
+@brief Access the stream interface for this socket.
+
+If this socket is stream-oriented, this property holds a reference
+to a Stream subclass instance. I/O operation on the stream map on stream-oriented
+I/O operations on the socket, and the stream selectable interface maps to the
+socket selectable status.
+*/
+void get_stream(const Class*, const String&, void* instance, Item& value )
+{
+   TRACE1( "Socket.Stream for %p", instance );
+   Mod::Socket* sock = static_cast<Mod::Socket*>(instance);
+
+   Stream* stream = sock->makeStreamInterface();
+   value.setUser( stream->handler(), stream );
+}
+
+
+/*#
 @property family Socket
 @brief Address family of this socket
 */
@@ -445,19 +464,8 @@ static void internal_send( Function* caller, VMContext* ctx, Mod::Address* to )
    const byte* data = dataStr->getRawStorage();
 
    Mod::Socket *tcps = static_cast<Mod::Socket*>( ctx->self().asInst() );
-#if WITH_OPENSSL
-   int64 res = 0;
-   if( tcps->ssl() != 0 )
-   {
-      res = (int64) tcps->sslWrite( data + start, (int) count );
-   }
-   else
-   {
-       res = (int64) tcps->send( data + start, (int) count, to );
-   }
-#else
+
    int64 res = (int64) tcps->send( data + start, (int) count, to );
-#endif
    ctx->returnFrame(res);
 }
 
@@ -651,19 +659,7 @@ FALCON_DEFINE_FUNCTION_P1(recv)
    buffer->reserve( size );
    buffer->toMemBuf();
 
-#if WITH_OPENSSL
-   int64 res = 0;
-   if( sock->ssl() != 0 )
-   {
-      res = (int64) sock->sslRead( buffer->getRawStorage(), size );
-   }
-   else
-   {
-      res = (int64) sock->recv( buffer->getRawStorage(), size, 0 );
-   }
-#else
    int64 res = (int64) sock->recv( buffer->getRawStorage(), size, 0 );
-#endif
    buffer->size(res);
    ctx->returnFrame( res );
 }
@@ -1088,6 +1084,7 @@ ClassSocket::ClassSocket():
    addProperty("service",&CSocket::get_service);
    addProperty("port",&CSocket::get_port);
    addProperty("closed",&CSocket::get_closed);
+   addProperty("stream",&CSocket::get_stream);
 
    addProperty("broadcasting", &CSocket::get_broadcasting, &CSocket::set_broadcasting );
    addProperty("nonblocking", &CSocket::get_nonblocking, &CSocket::set_nonblocking );
@@ -1538,6 +1535,36 @@ void ClassResolver::describe( void* instance, String& target, int , int  ) const
 }
 
 
+ClassSocketStream::ClassSocketStream():
+         ClassStream("SocketStream")
+{
+   setParent( Engine::instance()->stdHandlers()->streamClass() );
+}
+
+ClassSocketStream::~ClassSocketStream()
+{
+}
+
+int64 ClassSocketStream::occupiedMemory( void* ) const
+{
+   return sizeof(Mod::SocketStream) + 16;
+}
+
+void* ClassSocketStream::clone( void* instance ) const
+{
+   Mod::SocketStream* stream = static_cast<Mod::SocketStream*>(instance);
+   return stream->clone();
+}
+
+
+Selectable* ClassSocketStream::getSelectableInterface( void* instance ) const
+{
+   Mod::SocketStream* stream = static_cast<Mod::SocketStream*>(instance);
+   return new Mod::SocketStream::Selectable( stream );
+}
+
+
+
 //=================================================================
 // Module
 //=================================================================
@@ -1548,8 +1575,12 @@ ModuleInet::ModuleInet():
    m_clsAddress = new ClassAddress;
    m_clsSocket = new ClassSocket;
    m_clsResolver = new ClassResolver;
+   m_clsSocketStream = new ClassSocketStream;
+
+   Mod::SocketStream::setHandler( m_clsSocketStream );
 
    *this
+      << m_clsSocketStream
       << m_clsAddress
       << m_clsSocket
       << m_clsResolver
