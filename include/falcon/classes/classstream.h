@@ -50,6 +50,7 @@ public:
    virtual void gcMarkInstance( void* instance, uint32 mark ) const;
    virtual bool gcCheckInstance( void* instance, uint32 mark ) const;
    
+   Selectable* getSelectableInterface( void* instance ) const;
 };
 
 }

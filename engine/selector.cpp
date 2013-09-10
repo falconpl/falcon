@@ -30,13 +30,13 @@ namespace Falcon {
 class Selector::Private
 {
 public:
-   typedef std::map<Stream*, Selector::Data> StreamMap;
+   typedef std::map<Selectable*, Selector::Data> StreamMap;
    typedef std::deque<Selector::Data*> DataList;
-   typedef std::deque<Stream*> StreamList;
-   typedef std::map<StreamTraits*, Multiplex*> MultiplexMap;
+   typedef std::deque<Selectable*> StreamList;
+   typedef std::map<const Multiplex::Factory*, Multiplex*> MultiplexMap;
 
    Mutex m_mtx;
-   StreamMap m_streams;
+   StreamMap m_selectables;
    DataList m_toBeWaited;
 
    StreamList m_readyRead;
@@ -45,7 +45,6 @@ public:
 
    int32 m_readyCount;
    int32 m_version;
-
 
    Mutex m_mtxMultiplex;
    MultiplexMap m_multiplex;
@@ -65,12 +64,12 @@ public:
       while( diter != m_toBeWaited.end() )
       {
          Selector::Data* data = *diter;
-         data->m_stream->decref();
+         data->m_resource->decref();
          ++diter;
       }
 
-      StreamMap::iterator miter =  m_streams.begin();
-      while( miter != m_streams.end() )
+      StreamMap::iterator miter =  m_selectables.begin();
+      while( miter != m_selectables.end() )
       {
          miter->first->decref();
          ++miter;
@@ -79,7 +78,7 @@ public:
       StreamList::iterator liter = m_readyRead.begin();
       while( liter != m_readyRead.end() )
       {
-         Stream* stream = *liter;
+         Selectable* stream = *liter;
          stream->decref();
          liter++;
       }
@@ -87,7 +86,7 @@ public:
       liter = m_readyWrite.begin();
       while( liter != m_readyWrite.end() )
       {
-         Stream* stream = *liter;
+         Selectable* stream = *liter;
          stream->decref();
          liter++;
       }
@@ -95,7 +94,7 @@ public:
       liter = m_readyErr.begin();
       while( liter != m_readyErr.end() )
       {
-         Stream* stream = *liter;
+         Selectable* stream = *liter;
          stream->decref();
          liter++;
       }
@@ -111,7 +110,7 @@ public:
    }
 
 
-   bool pushReady( Stream* stream, StreamList& list )
+   bool pushReady( Selectable* stream, StreamList& list )
    {
       stream->incref();
 
@@ -127,9 +126,9 @@ public:
       return first;
    }
 
-   Stream* getNextReady( StreamList& list )
+   Selectable* getNextReady( StreamList& list )
    {
-      Stream* stream = 0;
+      Selectable* stream = 0;
       bool bDesignal = false;
 
       m_mtx.lock();
@@ -144,8 +143,8 @@ public:
          }
 
          // is this stream still wanted?
-         StreamMap::iterator iter = m_streams.find( stream );
-         if( iter != m_streams.end() && iter->second.m_mode != 0 )
+         StreamMap::iterator iter = m_selectables.find( stream );
+         if( iter != m_selectables.end() && iter->second.m_mode != 0 )
          {
             stream->incref();
             iter->second.m_bPending = true;
@@ -225,10 +224,10 @@ void Selector::gcMark( uint32 mark )
       int32 oldVersion = _p->m_version;
 
       m_mark = mark;
-      Private::StreamMap::iterator item = _p->m_streams.begin();
-      while( item != _p->m_streams.end() )
+      Private::StreamMap::iterator item = _p->m_selectables.begin();
+      while( item != _p->m_selectables.end() )
       {
-         Stream* stream = item->first;
+         Selectable* stream = item->first;
          _p->m_mtx.unlock();
 
          stream->gcMark(mark);
@@ -236,7 +235,7 @@ void Selector::gcMark( uint32 mark )
          _p->m_mtx.lock();
          if ( _p->m_version != oldVersion )
          {
-            item = _p->m_streams.begin();
+            item = _p->m_selectables.begin();
             oldVersion = _p->m_version;
          }
          else {
@@ -244,43 +243,21 @@ void Selector::gcMark( uint32 mark )
          }
       }
       _p->m_mtx.unlock();
-
-      _p->m_mtxMultiplex.lock();
-      oldVersion = _p->m_mpxVersion;
-      Private::MultiplexMap::iterator mpi = _p->m_multiplex.begin();
-      while( mpi != _p->m_multiplex.end() )
-      {
-         Multiplex* mpx = mpi->second;
-         _p->m_mtxMultiplex.unlock();
-
-         mpx->gcMark(mark);
-
-         _p->m_mtxMultiplex.lock();
-         if ( _p->m_mpxVersion != oldVersion )
-         {
-            mpi = _p->m_multiplex.begin();
-            oldVersion = _p->m_mpxVersion;
-         }
-         else {
-            ++mpi;
-         }
-      }
-      _p->m_mtxMultiplex.unlock();
    }
 
 }
 
 
-void Selector::add( Stream* stream, int mode, bool additive )
+void Selector::add( Selectable* stream, int mode, bool additive )
 {
    _p->m_mtx.lock();
-   Data& dt = _p->m_streams[stream];
+   Data& dt = _p->m_selectables[stream];
    // new stream around? -- data get initialized to 0
-   if( dt.m_stream == 0 )
+   if( dt.m_resource == 0 )
    {
       // new insertion
       _p->m_version++;
-      dt.m_stream = stream;
+      dt.m_resource = stream;
       // one incref is for our map...
       stream->incref();
    }
@@ -304,25 +281,25 @@ void Selector::add( Stream* stream, int mode, bool additive )
 }
 
 
-Stream* Selector::getNextReadyRead()
+Selectable* Selector::getNextReadyRead()
 {
    return _p->getNextReady( _p->m_readyRead );
 }
 
 
-Stream* Selector::getNextReadyWrite()
+Selectable* Selector::getNextReadyWrite()
 {
    return _p->getNextReady( _p->m_readyWrite );
 }
 
 
-Stream* Selector::getNextReadyErr()
+Selectable* Selector::getNextReadyErr()
 {
    return _p->getNextReady( _p->m_readyErr );
 }
 
 
-void Selector::pushReadyRead( Stream* stream )
+void Selector::pushReadyRead( Selectable* stream )
 {
    // only for the first...
    if( _p->pushReady( stream, _p->m_readyRead ) )
@@ -332,7 +309,7 @@ void Selector::pushReadyRead( Stream* stream )
 }
 
 
-void Selector::pushReadyWrite( Stream* stream )
+void Selector::pushReadyWrite( Selectable* stream )
 {
    // only for the first...
    if( _p->pushReady( stream, _p->m_readyWrite ) )
@@ -342,7 +319,7 @@ void Selector::pushReadyWrite( Stream* stream )
 }
 
 
-void Selector::pushReadyErr( Stream* stream )
+void Selector::pushReadyErr( Selectable* stream )
 {
    // only for the first...
    if( _p->pushReady( stream, _p->m_readyErr ) )
@@ -352,57 +329,63 @@ void Selector::pushReadyErr( Stream* stream )
 }
 
 
-void Selector::addRead( Stream* stream )
+void Selector::addRead( Selectable* stream )
 {
    add(stream, mode_read);
 }
 
 
-void Selector::addWrite( Stream* stream )
+void Selector::addWrite( Selectable* stream )
 {
    add(stream, mode_write);
 }
 
 
-void Selector::addErr( Stream* stream )
+void Selector::addErr( Selectable* stream )
 {
    add(stream, mode_err);
 }
 
 
-bool Selector::remove( Stream* stream )
+bool Selector::remove( Selectable* resource )
 {
-   Stream* found = 0;
+   Multiplex* mplex = 0;
+   bool bFound;
 
    _p->m_mtx.lock();
-   Private::StreamMap::iterator iter = _p->m_streams.find(stream);
-   if( iter != _p->m_streams.end() )
+   Private::StreamMap::iterator iter = _p->m_selectables.find(resource);
+   if( iter != _p->m_selectables.end() )
    {
       Data& data = iter->second;
-      found = data.m_stream;
+      bFound = true;
+      mplex = data.m_mplex;
+
       if( data.m_bPending )
       {
          // Is in the waiting list.
          Private::DataList::iterator pos = std::find( _p->m_toBeWaited.begin(), _p->m_toBeWaited.end(), &data );
          if( pos != _p->m_toBeWaited.end() )
          {
-            Stream* pending = data.m_stream;
+            Selectable* pending = data.m_resource;
             pending->decref();
             _p->m_toBeWaited.erase( pos );
             data.m_bPending = false;
          }
       }
 
-      _p->m_streams.erase( iter );
+      _p->m_selectables.erase( iter );
       _p->m_version++;
    }
    _p->m_mtx.unlock();
 
    // we can safely ask for removal outside of the lock,
    // as the status of the stream in this object is regulated by the StreamMap.
-   if( found != 0 ) {
-      removeFromMultiplex( found );
-      found->decref();
+   if ( bFound )
+   {
+      if( mplex != 0 ) {
+         mplex->remove( resource );
+      }
+      resource->decref();
       return true;
    }
 
@@ -417,27 +400,28 @@ void Selector::dequePending()
       Data& data = *_p->m_toBeWaited.front();
       _p->m_toBeWaited.pop_front();
       data.m_bPending = false;
-      Stream* toBeSent = data.m_stream;
+      Selectable* toBeSent = data.m_resource;
       int mode = data.m_mode;
       _p->m_mtx.unlock();
 
       // we can safely release the lock while searching or a multiplex.
-      StreamTraits* gen = toBeSent->traits();
+      const Multiplex::Factory* gen = toBeSent->factory();
       Multiplex* plex;
       _p->m_mtxMultiplex.lock();
       Private::MultiplexMap::iterator pos = _p->m_multiplex.find( gen );
       if( pos == _p->m_multiplex.end() )
       {
-         plex = gen->multiplex(this);
+         plex = gen->create(this);
          _p->m_multiplex[gen] = plex;
          _p->m_mpxVersion++;
       }
       else {
          plex = pos->second;
       }
+      data.m_mplex = plex;
       _p->m_mtxMultiplex.unlock();
 
-      plex->addStream(toBeSent, mode );
+      plex->add(toBeSent, mode );
       toBeSent->decref();
 
       _p->m_mtx.lock();
@@ -446,11 +430,11 @@ void Selector::dequePending()
 }
 
 
-void Selector::removeFromMultiplex( Stream* stream )
+void Selector::removeFromMultiplex( Selectable* resource )
 {
+   const Multiplex::Factory* gen = resource->factory();
    Multiplex* mpx = 0;
 
-   StreamTraits* gen = stream->traits();
    _p->m_mtxMultiplex.lock();
    Private::MultiplexMap::iterator mpi = _p->m_multiplex.find( gen );
    if( mpi != _p->m_multiplex.end() )
@@ -459,9 +443,25 @@ void Selector::removeFromMultiplex( Stream* stream )
    }
    _p->m_mtxMultiplex.unlock();
 
+
    if( mpx != 0 )
    {
-      mpx->removeStream(stream);
+      mpx->remove(resource);
+
+      // if this is currently the last resource, remove the multiplex.
+      // this is important because, after our return, an external module where
+      // the resource is allocated may be unloaded; and that module might
+      // contain the multiplex code as well.
+      _p->m_mtxMultiplex.lock();
+      if( mpx->size() == 0 )
+      {
+         _p->m_multiplex.erase( mpi );
+         _p->m_mtxMultiplex.unlock();
+         delete mpx;
+      }
+      else {
+         _p->m_mtxMultiplex.unlock();
+      }
    }
 }
 

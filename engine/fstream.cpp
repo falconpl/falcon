@@ -14,8 +14,7 @@
 */
 
 #include <falcon/fstream.h>
-#include <falcon/stdstreamtraits.h>
-#include <falcon/diskfiletraits.h>
+#include <falcon/stdmpxfactories.h>
 
 namespace Falcon{
 
@@ -31,9 +30,9 @@ FStream *FStream::clone() const
 
 
 
-StreamTraits* FStream::traits() const
+const Multiplex::Factory* FStream::multiplexFactory() const
 {
-   static StreamTraits* gen = Engine::streamTraits()->diskFileTraits();
+   static const Multiplex::Factory* gen = Engine::mpxFactories()->diskFileMpxFact();
    return gen;
 }
 

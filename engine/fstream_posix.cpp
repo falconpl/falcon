@@ -44,7 +44,7 @@ FStream::FStream( const FStream &other ):
    int fd2 = ::dup( fd );
    if ( fd2 < 0 )
    {
-      throw new IOError (ErrorParam(e_io_dup, __LINE__, __FILE__ ).sysError(errno) );
+      throw new IOError (ErrorParam(e_io_dup, __LINE__, __FILE__ ).sysError((uint32) errno) );
    }
 
    m_fsData = new Sys::FileData(fd2, data->m_nonBloking);
@@ -69,7 +69,7 @@ bool FStream::close()
 
          if( m_bShouldThrow )
          {
-            throw new IOError( ErrorParam( e_io_close, __LINE__, __FILE__ ).sysError( errno ) );
+            throw new IOError( ErrorParam( e_io_close, __LINE__, __FILE__ ).sysError( (uint32) errno ) );
          }
 
          return false;
@@ -93,7 +93,7 @@ size_t FStream::read( void *buffer, size_t size )
 
       if( m_bShouldThrow )
       {
-         throw new IOError( ErrorParam( e_io_read, __LINE__, __FILE__ ).sysError( errno ) );
+         throw new IOError( ErrorParam( e_io_read, __LINE__, __FILE__ ).sysError( (uint32) errno ) );
       }
 
       return -1;
@@ -119,7 +119,7 @@ size_t FStream::write( const void *buffer, size_t size )
 
       if( m_bShouldThrow )
       {
-         throw new IOError( ErrorParam( e_io_write, __LINE__, __FILE__ ).sysError( errno ) );
+         throw new IOError( ErrorParam( e_io_write, __LINE__, __FILE__ ).sysError( (uint32) errno ) );
       }
 
       return false;
@@ -150,7 +150,7 @@ off_t FStream::seek( off_t pos, e_whence whence )
 
       if( m_bShouldThrow )
       {
-         throw new IOError( ErrorParam( e_io_seek, __LINE__, __FILE__ ).sysError( errno ) );
+         throw new IOError( ErrorParam( e_io_seek, __LINE__, __FILE__ ).sysError( (uint32) errno ) );
       }
 
       return -1;
@@ -175,7 +175,7 @@ off_t FStream::tell()
 
       if( m_bShouldThrow )
       {
-         throw new IOError( ErrorParam( e_io_seek, __LINE__, __FILE__ ).sysError( errno ) );
+         throw new IOError( ErrorParam( e_io_seek, __LINE__, __FILE__ ).sysError( (uint32) errno ) );
       }
 
       return -1;
@@ -203,7 +203,7 @@ bool FStream::truncate( off_t pos )
 
       if( m_bShouldThrow )
       {
-         throw new IOError( ErrorParam( e_io_write, __LINE__, __FILE__ ).sysError( errno ) );
+         throw new IOError( ErrorParam( e_io_write, __LINE__, __FILE__ ).sysError( (uint32) errno ) );
       }
 
       return false;

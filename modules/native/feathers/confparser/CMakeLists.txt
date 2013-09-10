@@ -6,7 +6,7 @@
 
 if(WIN32 AND NOT MINGW)
    set( SYS_RC confparser.rc )
-endif(WIN32)
+endif()
 
 add_library(confparser_fm MODULE
   confparser.cpp

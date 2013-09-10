@@ -61,7 +61,7 @@ ExprIString::ExprIString( const String& orig, int line, int chr ):
 ExprIString::ExprIString( const ExprIString& other ):
    Expression( other ),
    m_tlgen(0),
-   m_original( m_original )
+   m_original( other.m_original )
 {
    m_original.setImmutable(true);
    m_lock = 0;

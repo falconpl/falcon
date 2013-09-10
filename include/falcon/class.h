@@ -38,6 +38,7 @@ class ItemArray;
 class Error;
 class Function;
 class TextWriter;
+class Selectable;
 
 #define FALCON_CLASS_CREATE_AT_INIT          ((void*)1)
 #define FALCON_CLASS_NO_NEED_FOR_INSTANCE    ((void*)2)
@@ -1168,6 +1169,23 @@ public:
     this method will then return true.
     */
     bool hasSharedInstances() const { return m_bHasSharedInstances; }
+
+    /** Return the selectable interface for this instance.
+     @param instance the instance that needs to be selected.
+     @return A valid selectable entity or 0.
+
+     This method is invoked by the selector system when an entity is fed into it.
+
+     An instance that can be multiplexed by a selector through the Mupltiplex class
+     will have a newly allocated selectable instance returned.
+
+     The selectable entity is then held by the selector, which will refcount it and
+     properly dispose of it, eventually gc-marking the instance when necessary.
+
+     The default behavior is that of returning 0 (that means, the given instance
+     is not selectable/doesn't offer a Multiplexing facility).
+     */
+    virtual Selectable* getSelectableInterface( void* instance ) const;
 
 protected:
    bool m_bIsFalconClass;

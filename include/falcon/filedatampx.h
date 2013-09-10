@@ -34,28 +34,47 @@ namespace Sys {
 * - TCP sockets.
 * - Pipes (anonymous, named).
 * - Standard streams (stdin/stdout/stderr).
+* - Local files having a file descriptor (although they will be normally processed by DiskMPX)
+* - Network files.
 *
 * On MS-Windows:
 * - Pipes (anonymous, named)
 * - Standard streams.
 *
-* \note Multiplexed streams are considered to be FStream subclasses.
+* \note In the POSIX implementation Multiplexed entities are considered to be
+* FDSelector subclasses. Although it's possible to use a FDSubclass on MS-Windows
+* as well, the multiplex won't make this assumption and just use the Selector interface.
 *
-* \note Linux implementation uses epoll(), while the generic POSIX implementation
-* uses select().
 */
 class FALCON_DYN_CLASS FileDataMPX: public Multiplex
 {
 public:
-   FileDataMPX( const StreamTraits* generator, Selector* master );
+   FileDataMPX( const Multiplex::Factory* generator, Selector* master );
    virtual ~FileDataMPX();
 
-   virtual void addStream( Stream* stream, int mode );
-   virtual void removeStream( Stream* stream );
+   virtual void add( Selectable* stream, int mode );
+   virtual void remove( Selectable* stream );
+   virtual uint32 size() const;
 
 private:
    class Private;
    Private* _p;
+
+   uint32 m_size;
+};
+
+/**
+ * Factory for the FileData multiplexer.
+ */
+class FALCON_DYN_CLASS FileDataMPXFactory: public Multiplex::Factory
+{
+public:
+   FileDataMPXFactory() {}
+   virtual ~FileDataMPXFactory() {}
+   virtual Multiplex* create( Selector* selector ) const
+   {
+      return new FileDataMPX(this, selector);
+   }
 };
 
 }

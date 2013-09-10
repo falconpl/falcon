@@ -26,7 +26,8 @@
 
 namespace Falcon {
 
-class StdStreamTraits;
+class StdMpxFactories;
+class Selectable;
 
 class FALCON_DYN_CLASS StringStream: public Stream
 {
@@ -132,7 +133,7 @@ public:
     */
    bool isPipeMode() const ;
   
-   virtual StreamTraits* traits() const;
+   virtual const Multiplex::Factory* multiplexFactory() const;
 
 protected:
    int64 m_posRead;
@@ -150,16 +151,17 @@ protected:
 private:
    class Buffer;
    Buffer* m_b;
+   Selectable* m_selectable;
 
-   class FALCON_DYN_CLASS Traits: public StreamTraits
+   class MpxFactory: public Multiplex::Factory
    {
    public:
-      Traits(): StreamTraits("StringStream") {}
-      virtual ~Traits();
-      virtual Multiplex* multiplex( Selector* master ) const;
+      MpxFactory() {}
+      virtual ~MpxFactory();
+      virtual Multiplex* create( Selector* selector ) const;
    };
 
-   friend class StdStreamTraits;
+   friend class StdMpxFactories;
 
    class MPX;
    friend class MPX;

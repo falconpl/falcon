@@ -81,7 +81,7 @@ public:
    bool resizeBuffer( uint32 size );
    uint32 bufferSize() const { return m_bufSize; }
 
-   StreamTraits* traits() const;
+   const Multiplex::Factory* multiplexFactory() const;
 };
 
 }

@@ -6,7 +6,7 @@
 
 if(WIN32 AND NOT MINGW)
    set( SYS_RC cmdline.rc )
-endif(WIN32)
+endif()
 
 add_library(cmdline_fm MODULE
   parser_ext.cpp

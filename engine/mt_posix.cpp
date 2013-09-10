@@ -127,7 +127,10 @@ void SysThread::attachToCurrent()
    m_sysdata->pth = pthread_self();
 }
 
-
+uint32 SysThread::lastError() const
+{
+   return (uint32) m_sysdata->m_lastError;
+}
 
 void* SysThread::RunAThread( void *data )
 {

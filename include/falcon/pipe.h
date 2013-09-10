@@ -20,10 +20,10 @@
 #include <falcon/setup.h>
 #include <falcon/types.h>
 #include <falcon/filedata.h>
-#include <falcon/streamtraits.h>
+#include <falcon/multiplex.h>
 
 #include <falcon/fstream.h>
-#include <falcon/stdstreamtraits.h>
+#include <falcon/stdmpxfactories.h>
 
 namespace Falcon {
 namespace Sys {
@@ -87,17 +87,17 @@ public:
 
    /** Traits for streams that can be interpreted as directional, piped FileData.
     */
-   class FALCON_DYN_CLASS Traits: public StreamTraits
+   class FALCON_DYN_CLASS MpxFactory: public Multiplex::Factory
    {
    public:
       /**
        * Creates a trait instance.
        * \pram readDirection if true, this pipe traits are created for read direction.
        */
-      Traits( bool readDirection );
-      virtual ~Traits();
+      MpxFactory( bool readDirection );
+      virtual ~MpxFactory();
 
-      virtual Multiplex* multiplex( Selector* master ) const;
+      virtual Multiplex* create( Selector* selector ) const;
 
       bool isRead() const { return m_bReadDirection; }
 

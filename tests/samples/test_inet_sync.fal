@@ -1,0 +1,22 @@
+load inet
+
+addr = Address("www.google.com:https")
+addr.resolve()
+addr.addresses.foreach(printl)
+
+x = Socket(AF_INET)
+str = m""
+x.sslConfig( false, SSLv3 )
+x.setOpt(SOL_SOCKET, SO_REUSEADDR, true)
+x.connect(addr)
+x.sslConnect()
+
+stream = x.stream
+stream.write("GET / HTTP/1.0\r\nHost: www.google.com\r\n\r\n")
+while not stream.eof
+   stream.read(str, 10000)
+   str.isText = true
+   > ":", str
+end
+> "Done."
+x.close()

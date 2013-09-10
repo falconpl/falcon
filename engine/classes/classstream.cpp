@@ -28,6 +28,9 @@
 #include <falcon/streambuffer.h>
 #include <falcon/transcoder.h>
 
+#include <falcon/selectable.h>
+#include <falcon/fstream.h>
+
 #include <string.h>
 
 namespace Falcon {
@@ -250,7 +253,7 @@ void Function_read::invoke( ::Falcon::VMContext* ctx, ::Falcon::int32 )
       throw paramError();
    }
    
-   uint32 dataSize = i_data->asString()->size();
+   uint32 dataSize = i_data->asString()->allocated();
    uint32 count = dataSize;
    uint32 start = 0;
    
@@ -266,7 +269,7 @@ void Function_read::invoke( ::Falcon::VMContext* ctx, ::Falcon::int32 )
    
    if( i_count != 0 && ! i_count->isNil() )
    {
-      int64 icount = i_start->forceInteger();
+      int64 icount = i_count->forceInteger();
       if ( icount > 0 )
       {
          count = (uint32) icount;
@@ -288,6 +291,10 @@ void Function_read::invoke( ::Falcon::VMContext* ctx, ::Falcon::int32 )
    byte* dataSource = i_data->asString()->getRawStorage();
    Stream* sc = static_cast<Stream*>(ctx->self().asInst());
    int64 retval = (int64) sc->read(dataSource+start, count);
+   if( retval > 0 )
+   {
+      i_data->asString()->size( start + retval );
+   }
    ctx->returnFrame( retval );   
 }
 
@@ -487,6 +494,49 @@ void* ClassStream::createInstance() const
 {
    // never really called
    return 0;
+}
+
+
+namespace {
+   class StreamSelectable: public FDSelectable
+   {
+   public:
+      StreamSelectable( const Class* cls, Stream* inst ):
+         FDSelectable( cls, inst )
+      {
+         inst->incref();
+      }
+
+      virtual ~StreamSelectable() {
+         static_cast<Stream*>(instance())->decref();
+      }
+
+      const Multiplex::Factory* factory() const {
+         return static_cast<Stream*>(instance())->multiplexFactory();
+      }
+
+      // we're using FD files on POXSIX only. On windows, we're using handles,
+      // and the windows file multiplexer uses the base Selectable interface.
+      // Also, getFD is called only by those multiplex that know they're handling
+      // fstreams or sublcasses (it's the stream that creates the multiplex!)
+      virtual int getFd() const
+      {
+         #ifdef FALCON_SYSTEM_WIN
+         return 0;
+         #else
+         // warning: not all streams are fstreams!. Let the multiplex only
+         // call this function!
+         return static_cast<FStream*>(instance())->fileData()->fdFile;
+         #endif
+      }
+   };
+}
+
+
+Selectable* ClassStream::getSelectableInterface( void* instance ) const
+{
+   Stream* stream = static_cast<Stream*>(instance);
+   return new StreamSelectable( this, stream );
 }
 
 }

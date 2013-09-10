@@ -20,10 +20,9 @@
 #include <falcon/setup.h>
 #include <falcon/types.h>
 #include <falcon/filedata.h>
-#include <falcon/streamtraits.h>
 
 #include <falcon/fstream.h>
-#include <falcon/stdstreamtraits.h>
+#include <falcon/stdmpxfactories.h>
 
 namespace Falcon {
 
@@ -37,9 +36,9 @@ public:
    virtual ~ReadPipeStream()
    {}
 
-   virtual StreamTraits* traits() const
+   virtual const Multiplex::Factory* multiplexFactory() const
    {
-      return Engine::streamTraits()->readPipeTraits();
+      return Engine::mpxFactories()->readPipeMpxFact();
    }
 };
 
@@ -53,9 +52,9 @@ public:
    virtual ~WritePipeStream()
    {}
 
-   virtual StreamTraits* traits() const
+   virtual const Multiplex::Factory* multiplexFactory() const
    {
-      return Engine::streamTraits()->writePipeTraits();
+      return Engine::mpxFactories()->writePipeMpxFact();
    }
 };
 

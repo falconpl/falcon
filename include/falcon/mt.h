@@ -176,6 +176,8 @@ public:
    
    /** Dispose of this object without modifying the underlying system data. */
    void disengage();
+
+   uint32 lastError() const;
 };
 
 

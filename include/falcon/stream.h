@@ -27,7 +27,7 @@
 #include <falcon/types.h>
 #include <falcon/refcounter.h>
 #include <falcon/item.h>
-#include <falcon/streamtraits.h>
+#include <falcon/multiplex.h>
 
 namespace Falcon {
 
@@ -165,12 +165,12 @@ public:
    /** Seks from a given position in a file. */
    virtual off_t seek( off_t pos, e_whence w ) = 0;
    
-   /** Gets the stream traits for this kind of streams.
+   /** Gets the factory generating a multiplex for this kind of streams.
     *
     * Each subclass of Stream should provide traits that
     * help the engine handle all the similar subclasses.
     */
-   virtual StreamTraits* traits() const = 0;
+   virtual const Multiplex::Factory* multiplexFactory() const = 0;
 
    /** Commits pending read/write operations on those streams supporting delayed rw. 
     \return true of the operation is completed, false on error (if not raising exceptions).

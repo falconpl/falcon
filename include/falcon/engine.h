@@ -23,6 +23,7 @@
 
 #include <falcon/vfsprovider.h>
 #include <falcon/mantra.h>
+#include <falcon/mersennetwister.h>
 
 namespace Falcon
 {
@@ -52,7 +53,7 @@ class Item;
 
 class VMContext;
 
-class StdStreamTraits;
+class StdMpxFactories;
 class StdHandlers;
 class StdErrors;
 
@@ -151,12 +152,12 @@ public:
    /**
     * The global handler class collection.
     */
-   StdStreamTraits* stdStreamTraits() const { return m_stdStreamTraits; }
+   StdMpxFactories* stdMpxFactories() const { return m_stdStreamTraits; }
 
    /**
     * The global handler class collection.
     */
-   static StdStreamTraits* streamTraits();
+   static StdMpxFactories* mpxFactories();
 
    /** Returns the collection of standard syntactic tree classes.
    \return the Engine instance of the SynClasses class collection.
@@ -323,12 +324,17 @@ public:
    static void refSymbol(Symbol* sym);
    static void releaseSymbol( Symbol* sym );
 
+   /** Engine-level logging facility */
    Log* log() const;
+
+   /** Engine-level random number generator facility */
+   MTRand_interlocked& mtrand() const { return m_rand; }
 
 protected:
    Engine();
    ~Engine();
 
+   mutable MTRand_interlocked m_rand;
    static Engine* m_instance;
    Mutex* m_mtx;
    Collector* m_collector;
@@ -385,7 +391,7 @@ protected:
 
    StdSteps* m_stdSteps;
    StdHandlers* m_stdHandlers;
-   StdStreamTraits* m_stdStreamTraits;
+   StdMpxFactories* m_stdStreamTraits;
 
    Symbol* m_baseSymbol;
    Symbol* m_ruleBaseSymbol;
