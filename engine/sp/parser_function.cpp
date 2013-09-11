@@ -169,7 +169,7 @@ void on_close_function( void* thing )
    */
    
    // was this a closure?
-   if( func->hasClosure() > 0 ) {
+   if( func->hasClosure() ) {
       // change our token -- from function (value) to closure
       sp.getLastToken()->setValue( new ExprClosure(func), treestep_deletor );
    }  
@@ -191,7 +191,7 @@ void on_close_lambda( void* thing )
    }
    
    // was this a closure?
-   if( func->hasClosure() > 0 ) {
+   if( func->hasClosure() ) {
       // change our token -- from function (value) to closure
       sp.getLastToken()->setValue( new ExprClosure(func), treestep_deletor );
    }  

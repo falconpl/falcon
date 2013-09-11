@@ -42,7 +42,7 @@ public:
    {
       int32 type; // 0 = quit, 1 = add, 2=remove
       int32 mode;
-      Stream* stream;
+      Selectable* stream;
 
       Msg():
          type(0),
@@ -50,7 +50,7 @@ public:
          stream(0)
       {};
 
-      Msg( int32 t, int32 m=0, Stream* s=0 ):
+      Msg( int32 t, int32 m=0, Selectable* s=0 ):
          type(t),
          mode(m),
          stream(s)
@@ -58,7 +58,7 @@ public:
    };
 
    typedef std::deque<Msg> MessageQueue;
-   typedef std::map<Stream*, int> StreamMap;
+   typedef std::map<Selectable*, int> StreamMap;
 
    MessageQueue m_messages;
    StreamMap m_streams;
@@ -66,6 +66,7 @@ public:
    HANDLE m_hThread;
    CRITICAL_SECTION m_csLock;
    CRITICAL_SECTION m_busyLock;
+   atomic_int s_count;
 
    FileDataMPX* m_master;
 
@@ -73,7 +74,8 @@ public:
         LPVOID lpParameter
    );
 
-   Private( FileDataMPX* master )
+   Private( FileDataMPX* master ):
+      s_count(0)
    {
       m_master = master;
       InitializeCriticalSectionAndSpinCount(&m_csLock, 250);
@@ -117,8 +119,8 @@ public:
       WaitForSingleObject( m_hThread, INFINITE );
    }
 
-   void addToMultiplex( Stream* strem, int mode );
-   void removeFromMultiplex( Stream* stream );
+   void addToMultiplex( Selectable* strem, int mode );
+   void removeFromMultiplex( Selectable* stream );
    void removeStreams();
 
    static VOID CALLBACK onReadComplete(
@@ -145,7 +147,7 @@ public:
 };
 
 
-FileDataMPX::FileDataMPX( const StreamTraits* generator, Selector* master ):
+FileDataMPX::FileDataMPX( const Multiplex::Factory* generator, Selector* master ):
          Multiplex( generator, master )
 {
    _p = new Private( this );
@@ -160,18 +162,28 @@ FileDataMPX::~FileDataMPX()
 }
 
 
-void FileDataMPX::addStream( Stream* stream, int mode )
+void FileDataMPX::add( Selectable* stream, int mode )
 {
+   atomicInc(_p->s_count);
+
    stream->incref();
    // Mode 1 to add
    _p->sendMessage( Private::Msg( 1, mode, stream ) );
 }
 
-void FileDataMPX::removeStream( Stream* stream )
+void FileDataMPX::remove( Selectable* stream )
 {
+   atomicDec(_p->s_count);
+
    stream->incref();
    // Mode 2 to remove
    _p->sendMessage( Private::Msg( 2, 0, stream ) );
+}
+
+
+uint32 FileDataMPX::size() const
+{
+   return atomicFetch(_p->s_count);
 }
 
 
@@ -229,7 +241,7 @@ DWORD FileDataMPX::Private::ThreadProc( LPVOID data )
 }
 
 
-void FileDataMPX::Private::addToMultiplex( Stream* stream, int mode )
+void FileDataMPX::Private::addToMultiplex( Selectable* stream, int mode )
 {
    // just extra?
    if( mode == Selector::mode_err )
@@ -245,7 +257,7 @@ void FileDataMPX::Private::addToMultiplex( Stream* stream, int mode )
       stream->decref();
    }
 
-   FStream* fs = static_cast<FStream*>(stream);
+   FStream* fs = static_cast<FStream*>(stream->instance());
    FileDataEx* fdx = static_cast<FileDataEx*>(fs->fileData());
 
    if( (mode & Selector::mode_read) != 0 )
@@ -342,11 +354,11 @@ void FileDataMPX::Private::addToMultiplex( Stream* stream, int mode )
 }
 
 
-void FileDataMPX::Private::removeFromMultiplex( Stream* stream )
+void FileDataMPX::Private::removeFromMultiplex( Selectable* stream )
 {
    if( m_streams.erase(stream) > 0 )
    {
-      FStream* fs = static_cast<FStream*>(stream);
+      FStream* fs = static_cast<FStream*>(stream->instance());
       FileDataEx* fdx = static_cast<FileDataEx*>(fs->fileData());
       EnterCriticalSection( &m_busyLock );
       if( fdx->bBusy )
@@ -374,7 +386,7 @@ void FileDataMPX::Private::removeStreams()
    StreamMap::iterator iter = m_streams.begin();
    while( iter != m_streams.end() )
    {
-      FStream* fs = static_cast<FStream*>(iter->first);
+      FStream* fs = static_cast<FStream*>(iter->first->instance());
       FileDataEx* fdx = static_cast<FileDataEx*>(fs->fileData());
       if( fdx->bBusy )
       {

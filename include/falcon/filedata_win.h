@@ -22,7 +22,7 @@
 
 namespace Falcon 
 {
-class Stream;
+class Selectable;
 
 namespace Sys {
 
@@ -62,7 +62,7 @@ public:
    {
       OVERLAPPED overlapped;
       FileDataEx* self;
-      Stream* owner;
+      Selectable* owner;
       void* extra;
    }
    OVERLAPPED_EX;

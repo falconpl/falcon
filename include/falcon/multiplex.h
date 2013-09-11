@@ -75,7 +75,7 @@ public:
 
    Selector* selector() const { return m_selector; }
 
-   class Factory
+   class FALCON_DYN_CLASS Factory
    {
    public:
       virtual ~Factory() {}
