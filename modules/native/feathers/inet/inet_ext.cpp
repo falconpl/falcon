@@ -359,11 +359,15 @@ FALCON_DEFINE_FUNCTION_P1(init)
       throw paramError(__LINE__, SRC );
    }
 
+   /*
 #ifdef AF_INET6
    int family = i_family == 0 || i_family->isNil() ? AF_INET6 : (int) i_family->forceInteger();
 #else
    int family = i_family == 0 || i_family->isNil() ? AF_INET : (int) i_family->forceInteger();
 #endif
+   */
+
+   int family = i_family == 0 || i_family->isNil() ? AF_INET : (int) i_family->forceInteger();
 
    int type = i_type == 0 || i_type->isNil() ? SOCK_STREAM : (int) i_type->forceInteger();
    int protocol = i_protocol == 0 || i_protocol->isNil() ? 0 : (int) i_protocol->forceInteger();

@@ -535,7 +535,7 @@ Socket::Socket():
      ,m_sslData( 0 )
      #endif
 {
-   m_skt = -1;
+   m_skt = 0;
 }
 
 
@@ -556,7 +556,7 @@ Socket::Socket(int family, int type, int protocol):
      ,m_sslData( 0 )
      #endif
 {
-   m_skt = -1;
+   m_skt = 0;
    create(family, type, protocol);
 }
 
@@ -586,7 +586,7 @@ Socket::Socket( FALCON_SOCKET socket, int family, int type, int protocol, Addres
 
 void Socket::create( int family, int type, int protocol )
 {
-   if( m_skt != -1 )
+   if( m_skt != 0 )
    {
       throw FALCON_SIGN_XERROR( Ext::NetError, FALSOCK_ERR_ALREADY_CREATED, .desc(FALSOCK_ERR_ALREADY_CREATED_MSG));
    }
@@ -596,7 +596,7 @@ void Socket::create( int family, int type, int protocol )
    m_type = type;
    m_protocol = protocol;
    m_skt = ::socket(family, type, protocol);
-   if( m_skt == -1 )
+   if( m_skt == 0 )
    {
       throw FALCON_SIGN_XERROR( Ext::NetError, FALSOCK_ERR_CREATE, .desc(FALSOCK_ERR_CREATE_MSG));
    }
@@ -606,6 +606,7 @@ void Socket::create( int family, int type, int protocol )
 Socket::~Socket()
 {
    this->close();
+
    if( m_stream != 0 )
    {
       m_stream->decref();
@@ -721,12 +722,11 @@ void Socket::bind( Address *addr )
 
 void Socket::close()
 {
-   if( m_skt >= 0 )
+   if( m_skt != 0 )
    {
       if ( ::FALCON_CLOSE_SOCKET( (int) m_skt ) == 0 )
       {
-         ::FALCON_CLOSE_SOCKET(m_skt); // for safety
-         m_skt = -1;
+         m_skt = 0;
          m_type = -1;
       }
       else {
@@ -739,14 +739,10 @@ void Socket::close()
 
 void Socket::closeWrite()
 {
-   if( m_skt >= 0 )
+   if( m_skt != 0 )
    {
-      if ( ::shutdown( (int) m_skt, FALCON_SHUT_WR ) == 0 )
-      {
-         ::FALCON_CLOSE_SOCKET(m_skt); // for safety
-         m_skt = -1;
-      }
-      else {
+      if ( ::shutdown( (int) m_skt, FALCON_SHUT_WR ) != 0 )
+      {      
          throw FALCON_SIGN_XERROR( Ext::NetError,
                        FALSOCK_ERR_CLOSE, .desc(FALSOCK_ERR_CLOSE_MSG)
                        .sysError((uint32) FALCON_ERRNO ));
@@ -773,11 +769,6 @@ void Socket::closeRead()
    {
       if ( ::shutdown( (int) m_skt, FALCON_SHUT_RD ) != 0 )
       {
-         ::FALCON_CLOSE_SOCKET(m_skt); // for safety
-         m_skt = -1;
-         m_type = -1;
-      }
-      else {
          throw FALCON_SIGN_XERROR( Ext::NetError,
                        FALSOCK_ERR_CLOSE, .desc(FALSOCK_ERR_CLOSE_MSG)
                        .sysError((uint32) FALCON_ERRNO ));
@@ -810,7 +801,7 @@ void Socket::connect( Address* where, bool async )
       if( error != EINPROGRESS )
       {
          ::FALCON_CLOSE_SOCKET( m_skt );
-         m_skt = -1;
+         m_skt = 0;
          throw FALCON_SIGN_XERROR( Ext::NetError,
                        FALSOCK_ERR_CONNECT, .desc(FALSOCK_ERR_CONNECT_MSG)
                        .sysError( error ));
@@ -983,7 +974,7 @@ void Socket::listen( int listenBacklog )
    {
       uint32 error = FALCON_ERRNO;
       ::FALCON_CLOSE_SOCKET(m_skt);
-      m_skt = -1;
+      m_skt = 0;
       m_type = -1;
 
       throw FALCON_SIGN_XERROR(Ext::NetError,
@@ -1414,7 +1405,7 @@ size_t SocketStream::write( const void *buffer, size_t size )
 
 bool SocketStream::close()
 {
-   if( m_socket->descriptor() == -1 )
+   if( m_socket->descriptor() == 0 )
    {
       return false;
    }
