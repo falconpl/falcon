@@ -154,11 +154,18 @@ public:
    Class* resolverClass() const { return m_clsResolver; }
    Class* socketStreamClass() const { return m_clsSocketStream; }
 
+   #ifdef FALCON_SYSTEM_WIN
+   Multiplex::Factory* selectMPXFactory() const { return m_smpxf; }
+   #endif
 public:
    Class* m_clsAddress;
    Class* m_clsSocket;
    Class* m_clsResolver;
    Class* m_clsSocketStream;
+
+   #ifdef FALCON_SYSTEM_WIN
+   Multiplex::Factory* m_smpxf;
+   #endif
 };
 
 

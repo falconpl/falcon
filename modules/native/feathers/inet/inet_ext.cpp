@@ -14,6 +14,12 @@
 */
 
 #define SRC "modules/native/feathres/inet/inet_ext.cpp"
+#include "inet_mod.h"
+#include "inet_ext.h"
+
+#ifdef FALCON_SYSTEM_WIN
+#include "winselectmpx.h"
+#endif
 
 #include <falcon/autocstring.h>
 #include <falcon/fassert.h>
@@ -23,8 +29,7 @@
 #include <falcon/itemarray.h>
 #include <falcon/stdhandlers.h>
 
-#include "inet_ext.h"
-#include "inet_mod.h"
+
 
 #include <errno.h>
 
@@ -202,6 +207,20 @@ void get_closed(const Class*, const String&, void* instance, Item& value )
 }
 
 /*#
+@property eof Socket
+@brief True if this an end-of-stream signal is detected from remote.
+
+This is set to true when a read operation returns 0, and this is not
+due to a non-blocking operation returning zero data.
+*/
+void get_eof(const Class*, const String&, void* instance, Item& value )
+{
+   TRACE1( "Socket.closed for %p", instance );
+   Mod::Socket* sock = static_cast<Mod::Socket*>(instance);
+   value.setBoolean( sock->eof() );
+}
+
+/*#
 @property stream Socket
 @brief Access the stream interface for this socket.
 
@@ -340,7 +359,12 @@ FALCON_DEFINE_FUNCTION_P1(init)
       throw paramError(__LINE__, SRC );
    }
 
+#ifdef AF_INET6
    int family = i_family == 0 || i_family->isNil() ? AF_INET6 : (int) i_family->forceInteger();
+#else
+   int family = i_family == 0 || i_family->isNil() ? AF_INET : (int) i_family->forceInteger();
+#endif
+
    int type = i_type == 0 || i_type->isNil() ? SOCK_STREAM : (int) i_type->forceInteger();
    int protocol = i_protocol == 0 || i_protocol->isNil() ? 0 : (int) i_protocol->forceInteger();
 
@@ -660,7 +684,7 @@ FALCON_DEFINE_FUNCTION_P1(recv)
    buffer->toMemBuf();
 
    int64 res = (int64) sock->recv( buffer->getRawStorage(), size, 0 );
-   buffer->size(res);
+   buffer->size((length_t)res);
    ctx->returnFrame( res );
 }
 
@@ -695,7 +719,7 @@ FALCON_DEFINE_FUNCTION_P1(recvFrom)
    buffer->toMemBuf();
 
    int64 res = (int64) sock->recv( buffer->getRawStorage(), size, addr );
-   buffer->size(res);
+   buffer->size((length_t)res);
    ctx->returnFrame( res );
 }
 
@@ -1084,6 +1108,7 @@ ClassSocket::ClassSocket():
    addProperty("service",&CSocket::get_service);
    addProperty("port",&CSocket::get_port);
    addProperty("closed",&CSocket::get_closed);
+   addProperty("eof",&CSocket::get_eof);
    addProperty("stream",&CSocket::get_stream);
 
    addProperty("broadcasting", &CSocket::get_broadcasting, &CSocket::set_broadcasting );
@@ -1585,6 +1610,10 @@ ModuleInet::ModuleInet():
    m_clsResolver = new ClassResolver;
    m_clsSocketStream = new ClassSocketStream;
 
+   #ifdef FALCON_SYSTEM_WIN
+   m_smpxf = new Mod::WinSelectMPXFactory;
+   #endif
+
    Mod::SocketStream::setHandler( m_clsSocketStream );
 
    *this
@@ -1745,7 +1774,9 @@ ModuleInet::ModuleInet():
    this->addConstant("AF_INET6", (int64) AF_INET6 );
    this->addConstant("AF_IPX", (int64) AF_IPX );
    this->addConstant("AF_UNIX", (int64) AF_UNIX );
+#ifdef AF_LOCAL
    this->addConstant("AF_LOCAL", (int64) AF_LOCAL );
+#endif
 
    this->addConstant("SO_DEBUG", (int64) SO_DEBUG );
    this->addConstant("SO_REUSEADDR", (int64) SO_REUSEADDR );
@@ -1792,6 +1823,9 @@ ModuleInet::~ModuleInet()
 {
 #if WITH_OPENSSL
    Mod::ssl_fini();
+#endif
+#ifdef FALCON_SYS_WINDOWS
+   delete m_smpxf;
 #endif
    Mod::shutdown_system();
 }

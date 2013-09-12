@@ -13,13 +13,10 @@
    See LICENSE file for licensing details.
 */
 
-/** \file
-   The socket module.
-*/
 
-#include <falcon/module.h>
-#include "inet_ext.h"
 #include "inet_mod.h"
+#include "inet_ext.h"
+#include <falcon/module.h>
 
 #include "version.h"
 
@@ -28,7 +25,7 @@
 #endif // WITH_OPENSSL
 
 /*#
-   @module feathers.socket Low level IP networking.
+   @module feathers.inet Low level IP networking.
    @brief Low level TCP/IP networking support.
 
    The socket module provides a low level access to network (TCP/IP) socket wise
@@ -49,7 +46,7 @@
       load socket
       @endcode
 
-   @beginmodule feathers.socket
+   @beginmodule feathers.inet
 */
 
 FALCON_MODULE_DECL

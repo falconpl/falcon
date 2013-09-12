@@ -13,24 +13,40 @@
    See LICENSE file for licensing details.
 */
 
-/** \file
-   UNIX/BSD system specific interface to sockets.
-*/
+#define SRC "modules/native/feathres/inet/inet_mod.cpp"
 
+#include "inet_mod.h"
+#include "inet_ext.h"
+
+#ifndef FALCON_SYSTEM_WIN
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/poll.h>
 #include <unistd.h>
-
 #include <netdb.h>
 #include <errno.h>
 #include <fcntl.h>
-#include <string.h>
-#include "inet_mod.h"
-#include "inet_ext.h"
 
+#define FALCON_CLOSE_SOCKET close
+#define FALCON_SHUT_WR SHUT_WR
+#define FALCON_SHUT_RD SHUT_RD
+#define FALCON_SHUT_RDWR SHUT_RDWR
+#define FALCON_ERRNO errno
+
+#else
+#define FALCON_SHUT_WR SD_RECEIVE
+#define FALCON_SHUT_RD SD_SEND
+#define FALCON_SHUT_RDWR SD_BOTH
+#define FALCON_CLOSE_SOCKET closesocket
+#define EINPROGRESS WSAEINPROGRESS
+#define EAGAIN WSAEWOULDBLOCK
+#define FALCON_ERRNO (WSAGetLastError())
+
+#endif
+
+#include <string.h>
 
 #include <falcon/stderrors.h>
 #include <falcon/autocstring.h>
@@ -42,19 +58,8 @@ namespace Falcon {
 namespace Mod {
 
 //================================================
-// Generic system dependant
+// Generic system dependent
 //================================================
-
-bool init_system()
-{
-   return true;
-}
-
-bool shutdown_system()
-{
-   return true;
-}
-
 
 bool getHostName( String &name )
 {
@@ -194,7 +199,7 @@ void Address::set( const String &host, const String &service )
    int64 port;
    if( m_service.parseInt(port) )
    {
-      m_port = port;
+      m_port = (int) port;
    }
    else {
       port = 0;
@@ -378,7 +383,7 @@ void Address::convertToIPv6( void *vai, void* vsock6, socklen_t& sock6len )
 
    sock6len = resolved->ai_addrlen;
    memcpy( vsock6, resolved->ai_addr, resolved->ai_addrlen );
-   ::freeaddrinfo( resolved );
+   //::freeaddrinfo( resolved );
 }
 
 
@@ -521,7 +526,11 @@ Socket::Socket():
      m_stream(0),
      m_address(0),
      m_bConnected( false ),
-     m_mark(0)
+     m_mark(0),
+     m_bEof(false)
+   #ifdef FALCON_SYSTEM_WIN
+     ,m_bioMode(true)
+   #endif
      #if WITH_OPENSSL
      ,m_sslData( 0 )
      #endif
@@ -538,7 +547,11 @@ Socket::Socket(int family, int type, int protocol):
      m_stream(0),
      m_address(0),
      m_bConnected( false ),
-     m_mark(0)
+     m_mark(0),
+     m_bEof(false)
+   #ifdef FALCON_SYSTEM_WIN
+     ,m_bioMode(true)
+   #endif
      #if WITH_OPENSSL
      ,m_sslData( 0 )
      #endif
@@ -556,7 +569,11 @@ Socket::Socket( FALCON_SOCKET socket, int family, int type, int protocol, Addres
      m_address( remote ),
      m_bConnected( true ),
      m_skt(socket),
-     m_mark(0)
+     m_mark(0),
+     m_bEof(false)
+   #ifdef FALCON_SYSTEM_WIN
+     ,m_bioMode(true)
+   #endif
      #if WITH_OPENSSL
      ,m_sslData( 0 )
      #endif
@@ -631,7 +648,7 @@ Stream* Socket::stream() const
 }
 
 
-void* Socket::getValidAddress( Address* addr ) const
+int Socket::getValidAddress( Address* addr, struct sockaddr_storage& target, FALCON_SOCKLEN_T& tglen ) const
 {
    // has the address to be resolved?
    if( ! addr->isResolved() ) {
@@ -641,6 +658,8 @@ void* Socket::getValidAddress( Address* addr ) const
       }
    }
 
+   struct addrinfo ai6;
+   struct sockaddr_storage storage;
    struct addrinfo *ai = (struct addrinfo *)addr->getRandomHostSystemData( m_family );
    // upgrade ipv4 addresses into ipv6.
    if( ai == 0 && m_family == AF_INET6 )
@@ -648,11 +667,13 @@ void* Socket::getValidAddress( Address* addr ) const
       ai = (struct addrinfo *)addr->getRandomHostSystemData( AF_INET );
       if ( ai != 0 )
       {
-         struct addrinfo ai6;
-         struct sockaddr_storage storage;
 
-         Address::convertToIPv6( ai, &storage, ai6.ai_addrlen );
+         int addrlen = (int) sizeof(ai6);
+         Address::convertToIPv6( ai, &storage, addrlen );
+         memset( &ai6, 0, sizeof(ai6) );
+         ai6.ai_addrlen = addrlen;
          ai6.ai_addr = (struct sockaddr*) &storage;
+         ai6.ai_family = AF_INET6;
          ai = &ai6;
       }
    }
@@ -663,16 +684,20 @@ void* Socket::getValidAddress( Address* addr ) const
                               FALSOCK_ERR_INCOMPATIBLE, .desc(FALSOCK_ERR_INCOMPATIBLE_MSG));
    }
 
-   return ai;
+   memcpy( &target, ai->ai_addr, ai->ai_addrlen );
+   tglen = ai->ai_addrlen;
+   return ai->ai_family;
 }
 
 void Socket::bind( Address *addr )
 {
    // try to bind to the resolved host
-   struct addrinfo *ai = (struct addrinfo *) getValidAddress( addr );
+   struct sockaddr_storage tgaddr;
+   FALCON_SOCKLEN_T tgaddrlen = 0;
+   getValidAddress( addr, tgaddr, tgaddrlen );
 
    // find a suitable address.
-   int res = ::bind( m_skt, ai->ai_addr, ai->ai_addrlen );
+   int res = ::bind( m_skt, (sockaddr*) &tgaddr, tgaddrlen );
 
    if ( res == 0 )
    {
@@ -689,7 +714,7 @@ void Socket::bind( Address *addr )
    else {
       throw FALCON_SIGN_XERROR( Ext::NetError,
                FALSOCK_ERR_BIND, .desc(FALSOCK_ERR_BIND_MSG)
-               .sysError((uint32) errno ));
+               .sysError((uint32) FALCON_ERRNO ));
    }
 }
 
@@ -698,16 +723,16 @@ void Socket::close()
 {
    if( m_skt >= 0 )
    {
-      if ( ::close( (int) m_skt ) == 0 )
+      if ( ::FALCON_CLOSE_SOCKET( (int) m_skt ) == 0 )
       {
-         ::close(m_skt); // for safety
+         ::FALCON_CLOSE_SOCKET(m_skt); // for safety
          m_skt = -1;
          m_type = -1;
       }
       else {
          throw FALCON_SIGN_XERROR( Ext::NetError,
                        FALSOCK_ERR_CLOSE, .desc(FALSOCK_ERR_CLOSE_MSG)
-                       .sysError((uint32) errno ));
+                       .sysError((uint32) FALCON_ERRNO ));
       }
    }
 }
@@ -716,15 +741,15 @@ void Socket::closeWrite()
 {
    if( m_skt >= 0 )
    {
-      if ( ::shutdown( (int) m_skt, SHUT_WR ) == 0 )
+      if ( ::shutdown( (int) m_skt, FALCON_SHUT_WR ) == 0 )
       {
-         ::close(m_skt); // for safety
+         ::FALCON_CLOSE_SOCKET(m_skt); // for safety
          m_skt = -1;
       }
       else {
          throw FALCON_SIGN_XERROR( Ext::NetError,
                        FALSOCK_ERR_CLOSE, .desc(FALSOCK_ERR_CLOSE_MSG)
-                       .sysError((uint32) errno ));
+                       .sysError((uint32) FALCON_ERRNO ));
       }
    }
 }
@@ -746,16 +771,16 @@ void Socket::closeRead()
 {
    if( m_skt >= 0 )
    {
-      if ( ::shutdown( (int) m_skt, SHUT_RD ) != 0 )
+      if ( ::shutdown( (int) m_skt, FALCON_SHUT_RD ) != 0 )
       {
-         ::close(m_skt); // for safety
+         ::FALCON_CLOSE_SOCKET(m_skt); // for safety
          m_skt = -1;
          m_type = -1;
       }
       else {
          throw FALCON_SIGN_XERROR( Ext::NetError,
                        FALSOCK_ERR_CLOSE, .desc(FALSOCK_ERR_CLOSE_MSG)
-                       .sysError((uint32) errno ));
+                       .sysError((uint32) FALCON_ERRNO ));
       }
    }
 }
@@ -765,29 +790,29 @@ void Socket::connect( Address* where, bool async )
    int flags = 0;
 
    // try to bind to the resolved host
-   struct addrinfo *ai = (struct addrinfo *) getValidAddress( where );
-   fassert(ai != 0);
+   struct sockaddr_storage tgaddr;
+   FALCON_SOCKLEN_T tgaddrlen = 0;
+   getValidAddress( where, tgaddr, tgaddrlen );
+   
 
-   int32 oldflags = 0;
-   if( async )
+   bool oldMode = isNonBlocking();
+   if( async && !oldMode )
    {
-      oldflags = getFcntl(F_GETFL);
-      oldflags |= O_NONBLOCK;
-      setFcntl(F_SETFL, flags);
+      setNonBlocking( true );
    }
 
    m_bConnected = false;
-   int res = ::connect( m_skt, ai->ai_addr, ai->ai_addrlen );
+   int res = ::connect( m_skt, (sockaddr*) &tgaddr, tgaddrlen );
 
    if ( res < 0 )
    {
-      int error = errno;
+      int error = FALCON_ERRNO;
       if( error != EINPROGRESS )
       {
-         ::close( m_skt );
+         ::FALCON_CLOSE_SOCKET( m_skt );
          m_skt = -1;
          throw FALCON_SIGN_XERROR( Ext::NetError,
-                       FALSOCK_ERR_CREATE, .desc(FALSOCK_ERR_CREATE_MSG)
+                       FALSOCK_ERR_CONNECT, .desc(FALSOCK_ERR_CONNECT_MSG)
                        .sysError( error ));
       }
    }
@@ -796,10 +821,10 @@ void Socket::connect( Address* where, bool async )
    }
 
    // if the connection is VERY fast, we may get connected even if we were async.
-   if( async )
+   if( async && oldMode)
    {
       // reset the non-blocking status
-      setFcntl(F_SETFL, oldflags);
+      setNonBlocking( false );
    }
 }
 
@@ -821,80 +846,19 @@ bool Socket::isConnected() const
    return m_bConnected;
 }
 
-int Socket::getFcntl( int option ) const
-{
-   int result = ::fcntl( m_skt, option );
-   if( result == -1 )
-   {
-      throw FALCON_SIGN_XERROR( Ext::NetError,
-                 FALSOCK_ERR_FCNTL, .desc(FALSOCK_ERR_FCNTL_MSG)
-                 .sysError((uint32) errno ));
-   }
-
-   return option;
-}
-
-int Socket::setFcntl( int option, int flags ) const
-{
-   int res = ::fcntl( m_skt, option, flags );
-   if( res == -1 )
-   {
-      throw FALCON_SIGN_XERROR( Ext::NetError,
-                       FALSOCK_ERR_FCNTL, .desc(FALSOCK_ERR_FCNTL_MSG)
-                       .sysError((uint32) errno ));
-   }
-
-   return res;
-}
-
-void Socket::fcntlFlagsOn( int flags ) const
-{
-   int cflags = this->getFcntl( F_GETFL );
-   cflags |= flags;
-   this->setFcntl(F_SETFL, cflags);
-}
-
-void Socket::fcntlFlagsOff( int flags ) const
-{
-   int cflags = this->getFcntl( F_GETFL );
-   cflags &= ~flags;
-   this->setFcntl(F_SETFL, cflags);
-}
-
-void Socket::setNonBlocking( bool mode ) const
-{
-   int flags = this->getFcntl( F_GETFL );
-
-   if( mode )
-   {
-      flags |= O_NONBLOCK;
-   }
-   else {
-      flags &= ~O_NONBLOCK;
-   }
-
-   this->setFcntl(F_SETFL, flags);
-}
-
-bool Socket::isNonBlocking() const
-{
-   int flags = this->getFcntl( F_GETFL );
-   return (flags & O_NONBLOCK) != 0;
-}
-
 
 /** Throws net error on error. */
 bool Socket::getBoolOption( int level, int option) const
 {
    int res = 0;
-   unsigned int len = sizeof(int);
+   FALCON_SOCKLEN_T len = sizeof(int);
 
-   if( ::getsockopt( m_skt, level, option, &res, &len ) != 0 )
+   if( sys_getsockopt( level, option, &res, &len ) != 0 )
    {
       throw FALCON_SIGN_XERROR( Ext::NetError,
             FALSOCK_ERR_GENERIC, .desc(FALSOCK_ERR_GENERIC_MSG)
             .extra("getsockopt")
-            .sysError((uint32) errno ));
+            .sysError((uint32) FALCON_ERRNO ));
    }
 
    return res != 0;
@@ -904,14 +868,14 @@ bool Socket::getBoolOption( int level, int option) const
 int  Socket::getIntOption( int level, int option ) const
 {
    int value = 0;
-   unsigned int len = sizeof(int);
+   FALCON_SOCKLEN_T len = sizeof(int);
 
-   if( ::getsockopt( m_skt, level, option, &value, &len ) != 0 )
+   if( sys_getsockopt( level, option, &value, &len ) != 0 )
    {
       throw FALCON_SIGN_XERROR( Ext::NetError,
             FALSOCK_ERR_GENERIC, .desc(FALSOCK_ERR_GENERIC_MSG)
             .extra("getsockopt")
-            .sysError((uint32) errno ));
+            .sysError((uint32) FALCON_ERRNO ));
    }
 
    return value;
@@ -921,14 +885,14 @@ int  Socket::getIntOption( int level, int option ) const
 void Socket::getStringOption( int level, int option, String& value ) const
 {
    char buffer[512];
-   unsigned int len = 512;
+   FALCON_SOCKLEN_T len = 512;
 
-   if( ::getsockopt( m_skt, level, option, buffer, &len ) != 0 )
+   if( sys_getsockopt( level, option, buffer, &len ) != 0 )
    {
       throw FALCON_SIGN_XERROR( Ext::NetError,
             FALSOCK_ERR_GENERIC, .desc(FALSOCK_ERR_GENERIC_MSG)
             .extra("getsockopt")
-            .sysError((uint32) errno ));
+            .sysError((uint32) FALCON_ERRNO ));
    }
 
    value.fromUTF8( buffer, len );
@@ -937,14 +901,14 @@ void Socket::getStringOption( int level, int option, String& value ) const
 
 void Socket::getDataOption( int level, int option, void* data, size_t& data_len ) const
 {
-   socklen_t len = (socklen_t) data_len;
+   FALCON_SOCKLEN_T len = (FALCON_SOCKLEN_T) data_len;
 
-   if( ::getsockopt( m_skt, level, option, data, &len ) != 0 )
+   if( sys_getsockopt( level, option, data, &len ) != 0 )
    {
       throw FALCON_SIGN_XERROR( Ext::NetError,
            FALSOCK_ERR_GENERIC, .desc(FALSOCK_ERR_GENERIC_MSG)
            .extra("getsockopt")
-           .sysError((uint32) errno ));
+           .sysError((uint32) FALCON_ERRNO ));
    }
 
    data_len = (size_t) len;
@@ -954,28 +918,28 @@ void Socket::getDataOption( int level, int option, void* data, size_t& data_len 
 void Socket::setBoolOption( int level, int option, bool value )
 {
    int res = value ? 1 : 0;
-   socklen_t len = sizeof(int);
+   FALCON_SOCKLEN_T len = sizeof(int);
 
-   if( ::setsockopt( m_skt, level, option, &res, len ) != 0 )
+   if( sys_setsockopt( level, option, &res, len ) != 0 )
    {
       throw FALCON_SIGN_XERROR( Ext::NetError,
             FALSOCK_ERR_GENERIC, .desc(FALSOCK_ERR_GENERIC_MSG)
             .extra("setsockopt")
-            .sysError((uint32) errno ));
+            .sysError((uint32) FALCON_ERRNO ));
    }
 }
 
 /** Throws net error on error. */
 void Socket::setIntOption( int level, int option, int value )
 {
-   socklen_t len = sizeof(int);
+   FALCON_SOCKLEN_T len = sizeof(int);
 
-   if( ::setsockopt( m_skt, level, option, &value, len ) != 0 )
+   if( sys_setsockopt( level, option, &value, len ) != 0 )
    {
       throw FALCON_SIGN_XERROR( Ext::NetError,
             FALSOCK_ERR_GENERIC, .desc(FALSOCK_ERR_GENERIC_MSG)
             .extra("setsockopt")
-            .sysError((uint32) errno ));
+            .sysError((uint32) FALCON_ERRNO ));
    }
 }
 
@@ -983,26 +947,26 @@ void Socket::setIntOption( int level, int option, int value )
 void Socket::setStringOption( int level, int option, const String& value )
 {
    AutoCString cval(value);
-   socklen_t len = cval.length();
+   FALCON_SOCKLEN_T len = cval.length();
 
-   if( ::setsockopt( m_skt, level, option, cval.c_str(), len ) != 0 )
+   if( sys_setsockopt( level, option, cval.c_str(), len ) != 0 )
    {
       throw FALCON_SIGN_XERROR( Ext::NetError,
             FALSOCK_ERR_GENERIC, .desc(FALSOCK_ERR_GENERIC_MSG)
             .extra("setsockopt")
-            .sysError((uint32) errno ));
+            .sysError((uint32) FALCON_ERRNO ));
    }
 }
 
 
 void Socket::setDataOption( int level, int option, const void* data, size_t data_len )
 {
-   if( ::setsockopt( m_skt, level, option, data, (socklen_t) data_len ) != 0 )
+   if( sys_setsockopt( level, option, data, (FALCON_SOCKLEN_T) data_len ) != 0 )
    {
       throw FALCON_SIGN_XERROR( Ext::NetError,
             FALSOCK_ERR_GENERIC, .desc(FALSOCK_ERR_GENERIC_MSG)
             .extra("setsockopt")
-            .sysError((uint32) errno ));
+            .sysError((uint32) FALCON_ERRNO ));
    }
 }
 
@@ -1017,8 +981,8 @@ void Socket::listen( int listenBacklog )
 
    if ( ::listen( m_skt, SOMAXCONN ) != 0 )
    {
-      uint32 error = errno;
-      ::close(m_skt);
+      uint32 error = FALCON_ERRNO;
+      ::FALCON_CLOSE_SOCKET(m_skt);
       m_skt = -1;
       m_type = -1;
 
@@ -1043,14 +1007,14 @@ Socket *Socket::accept()
    if( skt < 0 )
    {
       // account for spurious wakeups
-      if( errno == EAGAIN || errno == EINPROGRESS )
+      if( FALCON_ERRNO == EAGAIN || FALCON_ERRNO == EINPROGRESS )
       {
          return 0;
       }
 
       throw FALCON_SIGN_XERROR(Ext::NetError,
                      FALSOCK_ERR_ACCEPT, .desc(FALSOCK_ERR_ACCEPT_MSG)
-                     .sysError((uint32) errno));
+                     .sysError((uint32) FALCON_ERRNO));
    }
 
    char hostName[64];
@@ -1078,7 +1042,7 @@ int32 Socket::recv( byte *buffer, int32 size, Address *data )
       struct sockaddr *paddr = (struct sockaddr *) &addr;
       socklen_t len = sizeof( addr );
 
-      retsize = ::recvfrom( m_skt, buffer, size, 0, paddr, &len );
+      retsize = ::recvfrom( m_skt, (char*) buffer, size, 0, paddr, &len );
       if( retsize > 0 )
       {
          char host[64];
@@ -1097,28 +1061,34 @@ int32 Socket::recv( byte *buffer, int32 size, Address *data )
 #if WITH_OPENSSL
    if( m_sslData != 0 )
    {
-      retsize = sslRead( buffer, size );
+      retsize = sslRead( (char*) buffer, size );
    }
    else
    {
-      retsize = ::recv( m_skt, buffer, size, 0 );
+      retsize = ::recv( m_skt, (char*) buffer, size, 0 );
    }
 #else
-      retsize = ::recv( m_skt, buffer, size, 0 );
+      retsize = ::recv( m_skt, (char*) buffer, size, 0 );
 #endif
    }
 
    if( retsize < 0 )
    {
       // account for spurious wake ups in multiplexers
-      if( errno == EWOULDBLOCK || errno == EAGAIN )
+      if( FALCON_ERRNO == FALCON_EWOULDBLOCK || FALCON_ERRNO == EAGAIN )
       {
-         return -1;
+         return 0;
       }
 
       throw FALCON_SIGN_XERROR( Ext::NetError,
                  FALSOCK_ERR_RECV, .desc(FALSOCK_ERR_RECV_MSG)
-                 .sysError((uint32) errno ));
+                 .sysError((uint32) FALCON_ERRNO ));
+   }
+
+   // real end of stream?
+   if( retsize == 0 )
+   {
+      m_bEof = true;
    }
 
    return retsize;
@@ -1132,36 +1102,37 @@ int32 Socket::send( const byte *buffer, int32 size, Address *where )
    // let's try to connect the addresses in where.
    if ( where != 0 )
    {
-      struct addrinfo *ai = (struct addrinfo *) getValidAddress( where );
-      fassert(ai != 0);
-      retsize = ::sendto( m_skt, buffer, size, 0, ai->ai_addr, ai->ai_addrlen );
+      struct sockaddr_storage tgaddr;
+      FALCON_SOCKLEN_T tgaddrlen = 0;
+      getValidAddress( where, tgaddr, tgaddrlen );
+      retsize = ::sendto( m_skt, (const char*) buffer, size, 0, (sockaddr*) &tgaddr, tgaddrlen );
    }
    else {
 #if WITH_OPENSSL
    if( m_sslData != 0 )
    {
-      retsize = sslWrite( buffer, size );
+      retsize = sslWrite( (const char*) buffer, size );
    }
    else
    {
-      retsize = ::send( m_skt, buffer, size, 0 );
+      retsize = ::send( m_skt, (const char*) buffer, size, 0 );
    }
 #else
-      retsize = ::send( m_skt, buffer, size, 0 );
+      retsize = ::send( m_skt, (const char*) buffer, size, 0 );
 #endif
    }
 
    if( retsize < 0 )
    {
       // account for spurious wakeups
-      if( errno == EAGAIN || errno == EINPROGRESS )
+      if( FALCON_ERRNO == EAGAIN || FALCON_ERRNO == EINPROGRESS )
       {
-         return -1;
+         return 0;
       }
 
       throw FALCON_SIGN_XERROR( Ext::NetError,
                  FALSOCK_ERR_SEND, .desc(FALSOCK_ERR_SEND_MSG)
-                 .sysError((uint32) errno ));
+                 .sysError((uint32) FALCON_ERRNO ));
    }
 
    return retsize;
@@ -1193,14 +1164,16 @@ Socket::t_option_type Socket::getOptionType( int level, int option )
       case SO_SNDTIMEO: param_type = param_int; break;
       }
       break;
-
+/*
    case IPPROTO_IP:
       switch(option)
       {
 
       }
       break;
+*/
 
+#ifdef IPPROTO_IPV6
    case IPPROTO_IPV6:
        switch(option)
        {
@@ -1213,7 +1186,9 @@ Socket::t_option_type Socket::getOptionType( int level, int option )
        case IPV6_V6ONLY: param_type = param_bool; break;
        }
        break;
+#endif
 
+/*
    case IPPROTO_RAW:
         switch(option)
         {
@@ -1234,6 +1209,7 @@ Socket::t_option_type Socket::getOptionType( int level, int option )
 
       }
       break;
+*/
    }
 
    return param_type;
@@ -1253,7 +1229,7 @@ void Socket::setOption( int level, int option, const Item& value)
          throw FALCON_SIGN_XERROR( ParamError, e_param_type,
                   .extra("Level/option combination requires an integer value"));
       }
-      setIntOption( level, option, value.forceInteger() );
+      setIntOption( level, option, (int) value.forceInteger() );
       break;
 
    case param_string:
@@ -1394,12 +1370,6 @@ SocketSelectable::~SocketSelectable()
    socket->decref();
 }
 
-const Multiplex::Factory* SocketSelectable::factory() const
-{
-   // this on POSIX:
-   return Engine::instance()->stdMpxFactories()->fileDataMpxFact();
-}
-
 int SocketSelectable::getFd() const
 {
    Socket* socket = static_cast<Socket*>(instance());
@@ -1426,15 +1396,11 @@ SocketStream::~SocketStream()
 size_t SocketStream::read( void *buffer, size_t size )
 {
    int res = m_socket->recv( static_cast<unsigned char*>(buffer), (int32) size, 0 );
-   if( res == 0 )
+   if( m_socket->eof() )
    {
       m_status = m_status | t_eof;
    }
-   else if ( res < 0 )
-   {
-      // spurious wakeup on a socket wait
-      return 0;
-   }
+   
    return (size_t) res;
 }
 
@@ -1442,11 +1408,6 @@ size_t SocketStream::read( void *buffer, size_t size )
 size_t SocketStream::write( const void *buffer, size_t size )
 {
    int res =  m_socket->send( static_cast<const unsigned char*>(buffer), (int32) size, 0 );
-   if ( res < 0 )
-   {
-      // spurious wakeup on a socket wait
-      return 0;
-   }
    return (size_t) res;
 }
 
@@ -1739,11 +1700,11 @@ void Socket::sslConnect()
    if ( i != 1 )
    {
       int32 error = SSL_get_error( m_sslData->sslHandle, i );
-      if( error == SSL_ERROR_SYSCALL && errno != 0 )
+      if( error == SSL_ERROR_SYSCALL && FALCON_ERRNO != 0 )
       {
          throw FALCON_SIGN_XERROR( Ext::NetError, FALSOCK_ERR_RECV,
                               .desc(FALSOCK_ERR_RECV_MSG)
-                              .sysError((uint32) errno) );
+                              .sysError((uint32) FALCON_ERRNO) );
       }
       else if (  error == SSL_ERROR_SSL )
       {
@@ -1764,11 +1725,11 @@ int32 Socket::sslWrite( const byte* buf, int32 sz )
    if ( i <= 0 )
    {
       int error = SSL_get_error( m_sslData->sslHandle, i );
-      if( error == SSL_ERROR_SYSCALL && errno != 0 )
+      if( error == SSL_ERROR_SYSCALL && FALCON_ERRNO != 0 )
       {
          throw FALCON_SIGN_XERROR( Ext::NetError, FALSOCK_ERR_RECV,
                               .desc(FALSOCK_ERR_RECV_MSG)
-                              .sysError((uint32) errno) );
+                              .sysError((uint32) FALCON_ERRNO) );
       }
       else if (  error == SSL_ERROR_SSL )
       {
@@ -1788,11 +1749,11 @@ int32 Socket::sslRead( byte* buf, int32 sz )
    if ( i <= 0 )
    {
       int error = SSL_get_error( m_sslData->sslHandle, i );
-      if( error == SSL_ERROR_SYSCALL && errno != 0 )
+      if( error == SSL_ERROR_SYSCALL && FALCON_ERRNO != 0 )
       {
          throw FALCON_SIGN_XERROR( Ext::NetError, FALSOCK_ERR_RECV,
                               .desc(FALSOCK_ERR_RECV_MSG)
-                              .sysError((uint32) errno) );
+                              .sysError((uint32) FALCON_ERRNO) );
       }
       else if (  error == SSL_ERROR_SSL )
       {

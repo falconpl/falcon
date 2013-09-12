@@ -21,6 +21,35 @@
 #ifndef _FALCON_FEATHERS_SOCKET_MOD_H_
 #define _FALCON_FEATHERS_SOCKET_MOD_H_
 
+#include <falcon/setup.h>
+
+#ifdef FALCON_SYSTEM_WIN
+
+#include <winsock2.h>
+#include <ws2tcpip.h>
+#include <windows.h>
+
+#define FALCON_SOCKET SOCKET
+#define FALCON_SOCKLEN_T int
+#define FALCON_EWOULDBLOCK WSAEWOULDBLOCK
+
+#else
+#include <sys/socket.h>
+#include <netinet/in.h>
+#define FALCON_SOCKET int
+#define FALCON_SOCKLEN_T socklen_t
+#define FALCON_EWOULDBLOCK EWOULDBLOCK
+
+#endif
+
+#if WITH_OPENSSL
+#include <openssl/bio.h>
+#include <openssl/err.h>
+#include <openssl/ssl.h>
+#include <openssl/err.h>
+#endif // WITH_OPENSSL
+
+
 #include <falcon/string.h>
 #include <falcon/refcounter.h>
 #include <falcon/mt.h>
@@ -29,25 +58,12 @@
 #include <falcon/selectable.h>
 #include <falcon/stream.h>
 
-#ifdef FALCON_SYS_WIN
-#include <windows.h>
-#include <Winsock2.h>
-#else
-#include <sys/socket.h>
-#include <netinet/in.h>
-#endif
-
-#if WITH_OPENSSL
-#include <openssl/bio.h>
-#include <openssl/err.h>
-#include <openssl/ssl.h>
-#endif // WITH_OPENSSL
-
-#define FALCON_SOCKET int
-#include <openssl/err.h>
-
 namespace Falcon {
 namespace Mod {
+
+#ifndef socklen_t
+#define socklen_t int
+#endif
 
 /** Initializes the system.
    Some incredibly idiotic OS (guess) needs to initialize the socket layer.
@@ -209,7 +225,7 @@ protected:
 
 private:
    virtual ~Address();
-   FALCON_REFERENCECOUNT_DECLARE_INCDEC( Address );
+   FALCON_REFERENCECOUNT_DECLARE_INCDEC_NOEXPORT( Address );
 };
 
 //================================================
@@ -246,7 +262,7 @@ private:
 
    SysThread* m_thread;
 
-   FALCON_REFERENCECOUNT_DECLARE_INCDEC( Resolver );
+   FALCON_REFERENCECOUNT_DECLARE_INCDEC_NOEXPORT( Resolver );
 };
 
 
@@ -445,20 +461,29 @@ public:
 
    bool isConnected() const;
 
-   int getFcntl( int option ) const;
-   int setFcntl( int option, int value ) const;
-   void fcntlFlagsOn( int flags ) const;
-   void fcntlFlagsOff( int flags ) const;
-
    void setNonBlocking( bool mode ) const;
    bool isNonBlocking() const;
 
    Address* address() const {return m_address;}
 
+   /** True when a zero is read after a blocking operation.
+
+   This is set to true when the remote side has signaled that the
+   it won't send more data. 
+
+   The socket might be closed on the other side, or the process might
+   have crashed.
+
+   Conversely the socket might still be open to receive more data
+   from this side. The only way to reliable know this information
+   is trying to send data and detect any error.
+   */
+   bool eof() const { return m_bEof; }
+
    /**
     * Gets a system-resolved address that is suitable to be used by this socket.
     */
-   void* getValidAddress( Address* addr ) const;
+   int getValidAddress( Address* addr, struct sockaddr_storage& target, FALCON_SOCKLEN_T& tglen ) const;
 
    #if WITH_OPENSSL
       SSLData* ssl() const { return m_sslData; }
@@ -509,6 +534,10 @@ protected:
    FALCON_SOCKET m_skt;
 
    uint32 m_mark;
+   bool m_bEof;
+#ifdef FALCON_SYSTEM_WIN
+   mutable bool m_bioMode;
+#endif
 
    virtual ~Socket();
 
@@ -529,10 +558,13 @@ private:
    SSLData* m_sslData;
    #endif
 
+   int sys_getsockopt( int level, int option_name, void *option_value, FALCON_SOCKLEN_T * option_len) const;
+   int sys_setsockopt( int level, int option_name, const void *option_value, FALCON_SOCKLEN_T option_len) const;
+
    // disallow evil constructor
    Socket( const Socket& ) {};
 
-   FALCON_REFERENCECOUNT_DECLARE_INCDEC( Socket );
+   FALCON_REFERENCECOUNT_DECLARE_INCDEC_NOEXPORT( Socket );
 };
 
 

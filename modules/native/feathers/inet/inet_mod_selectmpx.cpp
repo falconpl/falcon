@@ -1,8 +1,8 @@
 /*
    FALCON - The Falcon Programming Language.
-   FILE: diskmpxfactory.cpp
+   FILE: diskfiletraits.cpp
 
-   MPX Factory and multiplexer for disk files.
+   Traits for plain local disk files.
    -------------------------------------------------------------------
    Author: Giancarlo Niccolai
    Begin: Sat, 02 Mar 2013 09:38:34 +0100
@@ -83,4 +83,4 @@ Multiplex* DiskMpxFactory::create( Selector* master ) const
 
 }
 
-/* end of diskmpxfactory.cpp */
+/* end of diskfiletraits.cpp */

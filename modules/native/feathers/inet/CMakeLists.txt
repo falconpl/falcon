@@ -14,7 +14,7 @@ else()
 endif()
 
 if(UNIX OR MAC)
-   set(SYS_SPECIFIC inet_sys_posix.cpp)
+   set(SYS_SPECIFIC inet_mod_posix.cpp)
 
    # On Solaris, we need also socket lib
    if( "${CMAKE_SYSTEM_NAME}" STREQUAL "SunOS" )
@@ -34,7 +34,7 @@ else()
       include_directories(${MS_SDK_PATH})
    endif()
 
-   set(SYS_SPECIFIC inet_sys_win.cpp inet.rc)
+   set(SYS_SPECIFIC inet_mod_win.cpp ../../../../engine/selectmpx.cpp winselectmpx.h winselectmpx.cpp inet.rc)
 endif()
 
 # Target
@@ -42,7 +42,10 @@ add_library(inet_fm MODULE
    inet.cpp
    inet_mod.cpp
    inet_ext.cpp
-   #${SYS_SPECIFIC}
+   
+   inet_ext.h
+   inet_mod.h
+   ${SYS_SPECIFIC}
 )
 
 #Link
