@@ -406,6 +406,8 @@ void ClassTreeStep::op_getIndex(VMContext* ctx, void* instance ) const
 
 void ClassTreeStep::op_setIndex(VMContext* ctx, void* instance ) const
 {
+   static Class* treeStepClass = Engine::instance()->stdHandlers()->treeStepClass();
+
    TreeStep* self = static_cast<TreeStep*>(instance);
    Item& index = ctx->opcodeParam(0);
    if( index.isOrdinal() )
@@ -431,8 +433,8 @@ void ClassTreeStep::op_setIndex(VMContext* ctx, void* instance ) const
       else {
          Class* cls; void* inst;
          ExprValue* ev = 0;
-         if( ! i_tree.asClassInst(cls, inst)
-               || ! cls->isDerivedFrom( this ) )
+         bool isInst = i_tree.asClassInst(cls, inst);
+         if( ! isInst || ! cls->isDerivedFrom( treeStepClass ) )
          {
             ev = new ExprValue( i_tree );
             cls = ev->handler();
