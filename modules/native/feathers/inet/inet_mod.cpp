@@ -35,6 +35,7 @@
 #define FALCON_SHUT_RDWR SHUT_RDWR
 #define FALCON_ERRNO errno
 
+
 #else
 #define FALCON_SHUT_WR SD_RECEIVE
 #define FALCON_SHUT_RD SD_SEND
@@ -43,6 +44,7 @@
 #define EINPROGRESS WSAEINPROGRESS
 #define EAGAIN WSAEWOULDBLOCK
 #define FALCON_ERRNO (WSAGetLastError())
+
 
 #endif
 
@@ -778,8 +780,6 @@ void Socket::closeRead()
 
 void Socket::connect( Address* where, bool async )
 {
-   int flags = 0;
-
    // try to bind to the resolved host
    struct sockaddr_storage tgaddr;
    FALCON_SOCKLEN_T tgaddrlen = 0;
@@ -842,7 +842,7 @@ bool Socket::isConnected() const
 bool Socket::getBoolOption( int level, int option) const
 {
    int res = 0;
-   FALCON_SOCKLEN_T len = sizeof(int);
+   FALCON_SOCKLEN_AS_INT len = sizeof(int);
 
    if( sys_getsockopt( level, option, &res, &len ) != 0 )
    {
@@ -859,7 +859,7 @@ bool Socket::getBoolOption( int level, int option) const
 int  Socket::getIntOption( int level, int option ) const
 {
    int value = 0;
-   FALCON_SOCKLEN_T len = sizeof(int);
+   FALCON_SOCKLEN_AS_INT len = sizeof(int);
 
    if( sys_getsockopt( level, option, &value, &len ) != 0 )
    {
@@ -876,7 +876,7 @@ int  Socket::getIntOption( int level, int option ) const
 void Socket::getStringOption( int level, int option, String& value ) const
 {
    char buffer[512];
-   FALCON_SOCKLEN_T len = 512;
+   FALCON_SOCKLEN_AS_INT len = 512;
 
    if( sys_getsockopt( level, option, buffer, &len ) != 0 )
    {
@@ -892,7 +892,7 @@ void Socket::getStringOption( int level, int option, String& value ) const
 
 void Socket::getDataOption( int level, int option, void* data, size_t& data_len ) const
 {
-   FALCON_SOCKLEN_T len = (FALCON_SOCKLEN_T) data_len;
+   FALCON_SOCKLEN_AS_INT len = (FALCON_SOCKLEN_T) data_len;
 
    if( sys_getsockopt( level, option, data, &len ) != 0 )
    {
@@ -986,7 +986,7 @@ void Socket::listen( int listenBacklog )
 
 Socket *Socket::accept()
 {
-   socklen_t addrlen;
+   FALCON_SOCKLEN_AS_INT addrlen;
    struct sockaddr *address;
    struct sockaddr_storage addrIn6;
 
@@ -1031,7 +1031,7 @@ int32 Socket::recv( byte *buffer, int32 size, Address *data )
       // sockaddr_in6 should be the longest possible structure we may receive.
       struct sockaddr_in6 addr;
       struct sockaddr *paddr = (struct sockaddr *) &addr;
-      socklen_t len = sizeof( addr );
+      FALCON_SOCKLEN_AS_INT len = sizeof( addr );
 
       retsize = ::recvfrom( m_skt, (char*) buffer, size, 0, paddr, &len );
       if( retsize > 0 )
@@ -1052,7 +1052,7 @@ int32 Socket::recv( byte *buffer, int32 size, Address *data )
 #if WITH_OPENSSL
    if( m_sslData != 0 )
    {
-      retsize = sslRead( (char*) buffer, size );
+      retsize = sslRead( buffer, size );
    }
    else
    {
@@ -1102,7 +1102,7 @@ int32 Socket::send( const byte *buffer, int32 size, Address *where )
 #if WITH_OPENSSL
    if( m_sslData != 0 )
    {
-      retsize = sslWrite( (const char*) buffer, size );
+      retsize = sslWrite( buffer, size );
    }
    else
    {

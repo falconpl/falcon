@@ -32,12 +32,15 @@
 #define FALCON_SOCKET SOCKET
 #define FALCON_SOCKLEN_T int
 #define FALCON_EWOULDBLOCK WSAEWOULDBLOCK
+#define FALCON_SOCKLEN_AS_INT socklen_t
 
 #else
 #include <sys/socket.h>
 #include <netinet/in.h>
+#include <fcntl.h>
 #define FALCON_SOCKET int
 #define FALCON_SOCKLEN_T socklen_t
+#define FALCON_SOCKLEN_AS_INT unsigned int
 #define FALCON_EWOULDBLOCK EWOULDBLOCK
 
 #endif
@@ -558,8 +561,8 @@ private:
    SSLData* m_sslData;
    #endif
 
-   int sys_getsockopt( int level, int option_name, void *option_value, FALCON_SOCKLEN_T * option_len) const;
-   int sys_setsockopt( int level, int option_name, const void *option_value, FALCON_SOCKLEN_T option_len) const;
+   int sys_getsockopt( int level, int option_name, void *option_value, FALCON_SOCKLEN_AS_INT * option_len) const;
+   int sys_setsockopt( int level, int option_name, const void *option_value, FALCON_SOCKLEN_AS_INT option_len) const;
 
    // disallow evil constructor
    Socket( const Socket& ) {};

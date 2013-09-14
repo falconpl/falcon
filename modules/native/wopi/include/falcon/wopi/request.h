@@ -23,9 +23,7 @@
 #include <falcon/wopi/utils.h>
 #include <falcon/wopi/parthandler.h>
 
-#include <falcon/coreobject.h>
 #include <falcon/uri.h>
-#include <falcon/membuf.h>
 #include <falcon/stream.h>
 
 namespace Falcon {
@@ -38,7 +36,7 @@ class SessionManager;
 class CoreRequest;
 class Reply;
 
-class Request: public BaseAlloc
+class Request
 {
 public:
 
@@ -216,10 +214,10 @@ protected:
 
    friend class CoreRequest;
 
-   GarbageLock* m_lockGets;
-   GarbageLock* m_lockPosts;
-   GarbageLock* m_lockHeaders;
-   GarbageLock* m_lockCookies;
+   GCLock* m_lockGets;
+   GCLock* m_lockPosts;
+   GCLock* m_lockHeaders;
+   GCLock* m_lockCookies;
 };
 
 

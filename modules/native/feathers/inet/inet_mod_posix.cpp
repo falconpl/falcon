@@ -19,6 +19,8 @@
 #include "inet_mod.h"
 #include "inet_ext.h"
 
+#include <falcon/stdmpxfactories.h>
+
 namespace Falcon {
 namespace Mod {
 
@@ -33,7 +35,7 @@ bool shutdown_system()
 }
 
 
-static int s_getFcntl( FALCON_SOCKET skt, int option ) const
+static int s_getFcntl( FALCON_SOCKET skt, int option )
 {
    int result = ::fcntl( skt, option );
    if( result == -1 )
@@ -46,7 +48,7 @@ static int s_getFcntl( FALCON_SOCKET skt, int option ) const
    return option;
 }
 
-static int s_setFcntl( FALCON_SOCKET skt, option, int flags ) const
+static int s_setFcntl( FALCON_SOCKET skt, int option, int flags )
 {
    int res = ::fcntl( skt, option, flags );
    if( res == -1 )
@@ -62,7 +64,7 @@ static int s_setFcntl( FALCON_SOCKET skt, option, int flags ) const
 
 void Socket::setNonBlocking( bool mode ) const
 {
-   int flags = s_getFcntl( F_GETFL );
+   int flags = s_getFcntl( m_skt, F_GETFL );
 
    if( mode )
    {
@@ -72,21 +74,21 @@ void Socket::setNonBlocking( bool mode ) const
       flags &= ~O_NONBLOCK;
    }
 
-   this->setFcntl(F_SETFL, flags);
+   s_setFcntl( m_skt, F_SETFL, flags);
 }
 
 bool Socket::isNonBlocking() const
 {
-   int flags = s_getFcntl( F_GETFL );
+   int flags = s_getFcntl( m_skt, F_GETFL );
    return (flags & O_NONBLOCK) != 0;
 }
 
-int Socket::sys_getsockopt( int level, int option_name, void *option_value, FALCON_SOCKLEN_T * option_len) const
+int Socket::sys_getsockopt( int level, int option_name, void *option_value, FALCON_SOCKLEN_AS_INT * option_len) const
 {
    return ::getsockopt( m_skt, level, option_name, option_value, option_len );
 }
 
-int Socket::sys_setsockopt( int level, int option_name, void *option_value, FALCON_SOCKLEN_T * option_len) const
+int Socket::sys_setsockopt( int level, int option_name, const void *option_value, FALCON_SOCKLEN_AS_INT option_len) const
 {
    return ::setsockopt( m_skt, level, option_name, option_value, option_len );
 }

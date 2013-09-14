@@ -19,7 +19,7 @@
 
 #define FALCON_WOPI_SESSION_TO_ATTRIB "wopi_sessionTO"
 
-#include <falcon/engine.h>
+#include <falcon/falcon.h>
 #include <map>
 #include <list>
 
@@ -99,7 +99,7 @@ public:
 
    //====================================================================
    // accessors
-   CoreDict* data() const { return m_dataLock.item().asDict(); }
+   ItemDict* data() const { return m_dataLock.item().asDict(); }
    bool isAssigned() const { return m_assignee != 0; }
    uint32 assigned() const { return m_assignee; }
 
@@ -160,7 +160,7 @@ public:
    void clearRefs();
 
 protected:
-   GarbageLock m_dataLock;
+   GCLock m_dataLock;
    uint32 m_assignee;
 
 private:
