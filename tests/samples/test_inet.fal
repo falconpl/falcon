@@ -20,6 +20,7 @@ function getData( address, tgt )
       if res == resolver
          // it was the resolver -- we have the address
          // connect asyncrhonousy        
+   > addr.addresses.describe()
          skt.connect(addr, true)
          stream = skt.stream
          sel.add(skt.stream)         

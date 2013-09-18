@@ -55,6 +55,11 @@
 #include <falcon/item.h>
 #include <falcon/itemid.h>
 
+#include <falcon/itemdict.h>
+#include <falcon/itemarray.h>
+
+#include <falcon/gclock.h>
+
 //--- error headers ---
 #include <falcon/classes/classerror.h>
 #include <falcon/stderrors.h>

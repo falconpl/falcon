@@ -293,7 +293,7 @@ void Function_read::invoke( ::Falcon::VMContext* ctx, ::Falcon::int32 )
    int64 retval = (int64) sc->read(dataSource+start, count);
    if( retval > 0 )
    {
-      i_data->asString()->size( start + retval );
+      i_data->asString()->size( (length_t)(start + retval) );
    }
    ctx->returnFrame( retval );   
 }

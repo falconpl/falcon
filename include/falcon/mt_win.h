@@ -213,6 +213,8 @@ struct SYSTH_DATA {
    /** Controls joinability and destruction on run exit */
    bool m_bDetached;
    bool m_bJoining;
+
+   DWORD m_lastError;
 };
 
 
