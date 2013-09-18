@@ -535,9 +535,9 @@ void DBIRecordsetMySQL_STMT::close()
       status = mysql_stmt_close(m_stmt);
       #else
 
-      while( mysql_next_result( m_pConn ) == 0 )
+      while( mysql_next_result( m_pConn->handle() ) == 0 )
       {
-         MYSQL_RES *res = mysql_use_result( m_pConn );
+         MYSQL_RES *res = mysql_use_result( m_pConn->handle() );
          if( res != NULL )
          {
             mysql_free_result( res );
