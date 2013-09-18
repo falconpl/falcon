@@ -145,7 +145,7 @@ void TestMode::perform()
 
       if( m_scripts.size() != 0 )
       {
-         log->log( Log::fac_app, Log::lvl_info, String( "Starting to test " ).N(m_scripts.size()).A( " scripts") );
+         log->log( Log::fac_app, Log::lvl_info, String( "Starting to test " ).N((int)m_scripts.size()).A( " scripts") );
       }
       else {
          log->log( Log::fac_app, Log::lvl_warn, String( "No script in format NNN-NNN.fal found in target directory.") );
@@ -171,7 +171,7 @@ void TestMode::perform()
 void TestMode::report()
 {
    TextWriter ts( new StdOutStream );
-   ts.writeLine( String("Complete. Passed ").N(m_passed).A("/").N( m_scripts.size() ) );
+   ts.writeLine( String("Complete. Passed ").N((int)m_passed).A("/").N( (int)m_scripts.size() ) );
 }
 
 

@@ -1033,10 +1033,10 @@ Socket *Socket::accept()
 {
    socklen_t addrlen;
    struct sockaddr *address;
-   struct sockaddr_storage addrIn6;
+   struct sockaddr_storage addr_stor;
 
-   address = (struct sockaddr *) &addrIn6;
-   addrlen = sizeof( addrIn6 );
+   address = (struct sockaddr *) &addr_stor;
+   addrlen = sizeof( addr_stor );
 
 
    int skt = ::accept( m_skt, address, &addrlen );
@@ -1061,7 +1061,7 @@ Socket *Socket::accept()
       ask->set(hostName,servName);
    }
 
-   Socket *s = new Socket( skt, address->sa_family, SOCK_STREAM, m_protocol, ask );
+   Socket *s = new Socket( skt, addr_stor.ss_family, SOCK_STREAM, m_protocol, ask );
    ask->decref();
 
    return s;
@@ -1350,7 +1350,7 @@ void Socket::getOption( int level, int option, Item& value ) const
       {
          String* string = new String;
          string->reserve(512);
-         length_t len = 512;
+         size_t len = 512;
          getDataOption( level, option, string->getRawStorage(), len );
          string->size(len);
          value = FALCON_GC_HANDLE( string );
@@ -1362,7 +1362,7 @@ void Socket::getOption( int level, int option, Item& value ) const
          struct linger ling;
          ling.l_onoff = 0;
          ling.l_linger = 0;
-         length_t len = sizeof(ling);
+         size_t len = sizeof(ling);
          getDataOption( level, option, &ling, len );
          if( ling.l_onoff == 0 )
          {
