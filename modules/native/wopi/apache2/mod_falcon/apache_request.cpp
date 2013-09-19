@@ -140,9 +140,9 @@ void ApacheRequest::process()
    //================================================
    // Parse get -- this is to be done anyhow.
 
-   if ( m_request->parsed_uri.query != 0 )
+   if ( m_request->args != 0 )
    {
-      Falcon::WOPI::Utils::parseQuery( m_request->parsed_uri.query, m_base->gets()->items() );
+      Falcon::WOPI::Utils::parseQuery( m_request->args, m_base->gets()->items() );
    }
 
    //================================================
