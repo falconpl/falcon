@@ -241,12 +241,12 @@ class Calendar(id, currentDate, subject, popup) from wid.Widget( id )
             var btnBack1Year = document.createElement('button');
             btnBack1Year.id = this.id + '.back1y';
             btnBack1Year.innerHTML ='&lt;&lt;';
-            btnBack1Year.onclick = function(){ self.backOneYear(); };
+            btnBack1Year.onclick = function(){ self.backOneYear();  return false; };
             
             var btnBack1Month = document.createElement('button');
             btnBack1Month.id = this.id + '.back1m';
             btnBack1Month.innerHTML ='&lt;';
-            btnBack1Month.onclick = function(){ self.backOneMonth(); };
+            btnBack1Month.onclick = function(){ self.backOneMonth(); return false; };
             
             var btnprev = document.createElement('span');
             btnprev.className = 'btnprev';
@@ -258,11 +258,11 @@ class Calendar(id, currentDate, subject, popup) from wid.Widget( id )
             var btnFwd1Month = document.createElement('button');
             btnFwd1Month.id = this.id + '.fwd1m';
             btnFwd1Month.innerHTML ='&gt;';
-            btnFwd1Month.onclick = function(){ self.fwdOneMonth(); };
+            btnFwd1Month.onclick = function(){ self.fwdOneMonth();  return false; };
             var btnFwd1Year = document.createElement('button');
             btnFwd1Year.id = this.id + '.fwd1y';
             btnFwd1Year.innerHTML ='&gt;&gt;';
-            btnFwd1Year.onclick = function(){ self.fwdOneYear(); };
+            btnFwd1Year.onclick = function(){ self.fwdOneYear();  return false; };
 
             var btnnext = document.createElement('span');
             btnnext.className = 'btnnext';
