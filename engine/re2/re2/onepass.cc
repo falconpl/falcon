@@ -172,11 +172,11 @@ static const uint32 kImpossible   = kEmptyWordBoundary | kEmptyNonWordBoundary;
 // Check, at compile time, that prog.h agrees with math above.
 // This function is never called.
 void OnePass_Checks() {
-  COMPILE_ASSERT((1<<kEmptyShift)-1 == kEmptyAllFlags,
-                 kEmptyShift_disagrees_with_kEmptyAllFlags);
+  // COMPILE_ASSERT((1<<kEmptyShift)-1 == kEmptyAllFlags,
+  //                kEmptyShift_disagrees_with_kEmptyAllFlags);
   // kMaxCap counts pointers, kMaxOnePassCapture counts pairs.
-  COMPILE_ASSERT(kMaxCap == Prog::kMaxOnePassCapture*2,
-                 kMaxCap_disagrees_with_kMaxOnePassCapture);
+  // COMPILE_ASSERT(kMaxCap == Prog::kMaxOnePassCapture*2,
+  //                kMaxCap_disagrees_with_kMaxOnePassCapture);
 }
 
 static bool Satisfy(uint32 cond, const StringPiece& context, const char* p) {
