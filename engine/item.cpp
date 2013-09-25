@@ -201,7 +201,7 @@ void Item::describe( String &target, int maxDepth, int maxLength ) const
       {
          Class* cls = 0;
          void* inst = 0;
-         asClassInst( cls, inst );
+         forceClassInst( cls, inst );
          cls->describe( inst, target, maxDepth, maxLength );
       }
       break;

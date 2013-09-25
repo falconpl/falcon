@@ -89,7 +89,6 @@ public:
    public:
       typedef union tag_cnt
       {
-         size_t id;
          Function* func;
          ExprInherit* inh;
          FalconState* state;
@@ -105,6 +104,7 @@ public:
       String m_name;
       Type m_type;
       Value m_value;
+      Item m_dflt;
 
       Property( const Property& other );
       Property( const Property& other, bool copyInitExpr );
@@ -114,18 +114,17 @@ public:
          m_type(t),
          m_expr(0)
       {
-         m_value.id = 0;
       }
       
-      inline Property( const String& name, size_t value ):
+      inline Property( const String& name, const Item& value ):
          m_name( name ),
          m_type(t_prop),
          m_expr(0)
       {
-         m_value.id = value;
+         m_dflt = value;
       }
 
-      Property( const String& name, size_t value, Expression* expr );
+      Property( const String& name, const Item& value, Expression* expr );
 
       Property( Function* value );
       Property( ExprInherit* value );
@@ -299,8 +298,6 @@ public:
    virtual Class* getParent( const String& name ) const;
    virtual void dispose( void* self ) const;
    virtual void* clone( void* source ) const;
-   virtual void serialize( DataWriter* stream, void* self ) const;
-   virtual void* deserialize( DataReader* stream ) const;
 
    //=========================================================
    // Class management
@@ -384,6 +381,9 @@ public:
    void op_summon( VMContext* ctx, void* instance, const String& message, int32 pCount, bool bOptional ) const;
    void delegate( void* instance, Item* target, const String& message ) const;
 
+   virtual void flatten( VMContext* ctx, ItemArray& subItems, void* instance ) const;
+   virtual void unflatten( VMContext* ctx, ItemArray& subItems, void* instance ) const;
+
    //=========================================================
    // Storer helpers
    //
@@ -422,6 +422,9 @@ private:
    bool m_bPureFalcon;
    
    bool m_bConstructed;
+
+   void initInstance( FalconInstance* inst ) const;
+   void internal_callprop( VMContext* ctx, void* instance, FalconClass::Property& prop, int32 pCount ) const;
 
    // This is used to initialize the init expressions.
    class FALCON_DYN_CLASS PStepInitExpr: public PStep

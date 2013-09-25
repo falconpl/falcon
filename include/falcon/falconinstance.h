@@ -33,7 +33,7 @@ class CoreInstance;
  the FalconClass that describes the instance structure.
 
  Access is normally meant to be performed directly by the virtual machine,
- and so, errors in access cause directly an AccessError raisal.
+ and so, errors in access cause directly an AccessError raising.
 
  \note This class is fully non-virtual.
  */
@@ -48,7 +48,7 @@ public:
    ~FalconInstance();
 
    /** The originator class of this instance. */
-   const FalconClass* origin() const { return m_origin; }
+   const FalconClass* origin() const;
 
    /** Gets the value of a member of this class.
     
@@ -64,10 +64,15 @@ public:
     error is immediately raised. To determine what properties are available,
     access directly the origin class (and consider using the data() array).
 
+    \note Target is not locked while copy is performed. In case the target
+    is to be sent to an unknown item storage, use a local storage and then perform
+    a correctly interlocked copy across the local temporary storage and the
+    remote target (or, if it's viable, lock the target prior invockin this method).
+
     \see FalconClass
 
     */
-   bool getMember( const String& name, Item& target ) const;
+   bool getProperty( const String& name, Item& target ) const;
 
    /** Sets the value of a property.
     \param name The name of the property to be queried.
@@ -84,42 +89,16 @@ public:
     error is immediately raised. To determine what properties are available,
     access directly the origin class (and consider using the data() array).
 
+    \note Target is not locked while copy is performed. In case the target
+    is to be sent to an unknown item storage, use a local storage and then perform
+    a correctly interlocked copy across the local temporary storage and the
+    remote target (or, if it's viable, lock the target prior invockin this method).
+
     \see FalconClass
 
     */
-   void setProperty( const String& name, const Item& value );
+   bool setProperty( const String& name, const Item& value );
 
-   /** Serializes this item into a stream.
-    \param writer The data writere where this object is serialized.
-    \note The origin class is not serialized. The caller must made sure
-    that the origin class can be found in the VM when deserialization happens.
-    */
-   void serialize( DataWriter* writer ) const;
-
-   /** Serializes this item into a stream.
-    \param reader The stream where this item is serialized.
-    */
-   void deserialize( DataReader* reader );
-
-   /** Gets the property data for this instance.
-    \return An array containing al the mutable properties of this instance.
-
-    If the user of this class has already cached the property ID
-    searching it in the origin class, this method can be used to
-    access all the property values and then the the value of the
-    required property directly, without another search through getMember()
-    */
-   ItemArray& data() { return m_data; }
-
-   /** Gets the property data for this instance.
-    \return An array containing al the mutable properties of this instance.
-    
-    If the user of this class has already cached the property ID
-    searching it in the origin class, this method can be used to
-    access all the property values and then the the value of the
-    required property directly, without another search through getMember()
-    */
-   const ItemArray& data() const { return m_data; }
 
    /** Clone this instance.
     \return A flat copy of this instance.    
@@ -132,14 +111,19 @@ public:
     */
    void gcMark( uint32 mark );
    
-   uint32 currentMark() const { return m_mark; }
+   uint32 currentMark() const;
+
 private:
    FalconInstance();
 
-   ItemArray m_data;
-   const FalconClass* m_origin;
-   uint32 m_mark;
-   DelegateMap m_delegates;
+   Item* getProperty_internal( const String* name ) const;
+   void makeStorageData( ItemArray& array ) const;
+   void restoreFromStorageData( ItemArray& array );
+
+   // IMPORTANT
+   // Use single pointer implementation semantic; never add a visible property!
+   class Private;
+   Private* _p;
    
    friend class FalconClass;
 };

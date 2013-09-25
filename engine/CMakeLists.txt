@@ -356,6 +356,7 @@ add_library(falcon_engine SHARED
   fassert.cpp
   falconclass.cpp
   falconinstance.cpp
+  falconinstance_private.h
   falconstate.cpp
   famloader.cpp
   fatal.cpp

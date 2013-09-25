@@ -358,8 +358,8 @@ static void internal_callprop( VMContext* ctx, FlexyDict* flexy, const String& m
    }
    else if( value->isCallable() )
    {
-      Class* cls;
-      void* data;
+      Class* cls=0;
+      void* data=0;
       value->asClassInst(cls, data);
       ctx->opcodeParam(pCount).copyFromRemote(*value);
       cls->op_call(ctx, pCount, data);

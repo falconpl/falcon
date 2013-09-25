@@ -17,107 +17,131 @@
 #include <falcon/falconclass.h>
 #include <falcon/psteps/exprinherit.h>
 #include <falcon/stderrors.h>
+#include <falcon/string.h>
 
+#include "falconinstance_private.h"
 
 namespace Falcon
 {
 
-FalconInstance::FalconInstance():
-   m_origin(0),
-   m_mark(0)
+
+
+FalconInstance::FalconInstance()
 {
+   _p = new Private;
 }
 
-FalconInstance::FalconInstance( const FalconClass* origin ):
-   m_origin(origin),
-   m_mark(0)
+FalconInstance::FalconInstance( const FalconClass* origin )
 {
+   _p = new Private();
+   _p->m_origin = origin;
 }
 
 
-FalconInstance::FalconInstance( const FalconInstance& other ):
-   m_data(other.m_data),
-   m_origin(other.m_origin),
-   m_mark(other.m_mark)
-{}
+FalconInstance::FalconInstance( const FalconInstance& other )
+{
+   _p = new Private(*other._p);
+}
 
 FalconInstance::~FalconInstance()
 {
+   delete _p;
 }
 
-bool FalconInstance::getMember( const String& name, Item& target ) const
-{   
-   const FalconClass::Property* prop = m_origin->getProperty( name );
-   if( prop == 0 )
-   {
-      return false;
-   }
 
-   switch( prop->m_type )
-   {
-      case FalconClass::Property::t_prop:
-         target.copyInterlocked(m_data[ prop->m_value.id ]);
-         if( target.isFunction() ) {
-            Function* func = target.asFunction();
-            target.setUser( m_origin, const_cast<FalconInstance*>(this) );
-            target.methodize( func );
-         }
-         break;
-
-      case FalconClass::Property::t_func:
-         target.setUser( m_origin, const_cast<FalconInstance*>(this) );
-         target.methodize( prop->m_value.func );
-         break;
-
-      case FalconClass::Property::t_inh:
-         target.setUser( prop->m_value.inh->base(), const_cast<FalconInstance*>(this) );
-         break;
-
-      case FalconClass::Property::t_state:
-         //TODO
-         break;
-   }
-
-   return true;
-}
-
-void FalconInstance::setProperty( const String& name, const Item& value )
+const FalconClass* FalconInstance::origin() const
 {
-   const FalconClass::Property* prop = m_origin->getProperty( name );
-   if( prop == 0 )
-   {
-      throw new AccessError( ErrorParam( e_prop_acc, __LINE__, __FILE__ ).extra( name ) );
-   }
-
-   if( prop->m_type != FalconClass::Property::t_prop )
-   {
-      throw new AccessTypeError( ErrorParam( e_prop_ro, __LINE__, __FILE__ ).extra( name ) );
-   }
-
-   m_data[ prop->m_value.id ].copyInterlocked( value );
+   return _p->m_origin;
 }
 
-void FalconInstance::serialize( DataWriter* ) const
+
+Item* FalconInstance::getProperty_internal( const String* name ) const
 {
+   return _p->getProperty( name );
 }
 
-void FalconInstance::deserialize( DataReader* )
+
+bool FalconInstance::getProperty( const String& name, Item& target ) const
 {
+   // fast path: return already cached property
+   Item* itm = _p->getProperty( &name );
+   if( itm != 0 )
+   {
+      target.copyFromRemote(*itm);
+      return true;
+   }
+   return false;
+}
+
+
+bool FalconInstance::setProperty( const String& name, const Item& value )
+{
+   Item* itm = _p->getProperty( &name );
+   if( itm != 0 )
+   {
+      itm->copyFromLocal(value);
+      return true;
+   }
+   return false;
 }
 
 
 void FalconInstance::gcMark( uint32 mark )
 {
-   if( mark != m_mark )
+   if( mark != _p->m_mark )
    {
-      m_mark = mark;
-      m_data.gcMark( mark );
-      // also, back-mark our class.
-      // possibly, it's our class that's marking ourselves,
-      // but we don't care. This will be a no-op in that case.
-      const_cast<FalconClass*>(m_origin)->gcMark( mark );
+      _p->m_mark = mark;
+      Private::Data::iterator iter = _p->m_data.begin();
+      Private::Data::iterator end = _p->m_data.end();
+      while( iter != end )
+      {
+         Item& item = iter->second;
+         item.gcMark( mark );
+         ++iter;
+      }
    }
 }
+
+
+uint32 FalconInstance::currentMark() const
+{
+   return _p->m_mark;
+}
+
+void FalconInstance::makeStorageData( ItemArray& array ) const
+{
+   // trust the strict order granted by std::map.
+   // we should re-oprdinate properties in classes in case we change structure to an unordered one.
+
+   Private::Data::const_iterator iter = _p->m_data.begin();
+   Private::Data::const_iterator end = _p->m_data.end();
+   while( iter != end )
+   {
+      const Item& item = iter->second;
+      item.lock();
+      array.append(item);
+      item.unlock();
+      ++iter;
+   }
+}
+
+
+void FalconInstance::restoreFromStorageData( ItemArray& array )
+{
+   Private::Data::iterator iter = _p->m_data.begin();
+   Private::Data::iterator end = _p->m_data.end();
+   uint32 pos = 0;
+   while( iter != end && pos < array.length() )
+   {
+      Item& src = array[pos++];
+      Item& item = iter->second;
+      item.lock();
+      item = src;
+      item.unlock();
+      ++iter;
+   }
+}
+
 
 }
 

@@ -151,7 +151,10 @@ bool Debugger::parseCommand( TextWriter& wr, const String& line, VMContext* ctx 
    else if( line == "next" )
    {
       wr.writeLine( "*: big step" );
-      CodeFrame temp = ctx->currentCode();
+      CodeFrame temp;
+      temp.m_seqId = ctx->currentCode().m_seqId;
+      temp.m_dataDepth = ctx->currentCode().m_dataDepth;
+      temp.m_dynsDepth = ctx->currentCode().m_dynsDepth;
       ctx->resetCode( stepBreak );
       ctx->pushCode( temp.m_step );
       ctx->currentCode().m_seqId = temp.m_seqId;

@@ -337,7 +337,7 @@ static void callACallback( VMContext* ctx, uint32 lastParsed, const String& meth
 
    // get the required method
    Item i_method;
-   self->getMember( method, i_method );
+   self->getProperty( method, i_method );
    if ( i_method.isCallable() )
    {
      va_list params;
@@ -471,7 +471,7 @@ ModCmdlineParser::ModCmdlineParser():
 
          // shall we pass minus-minus?
          Item i_passMM;
-         self->getMember( PARSE_PROPERTY_PASSMM, i_passMM );
+         self->getProperty( PARSE_PROPERTY_PASSMM, i_passMM );
          bool passMM = i_passMM.isTrue();
 
          for (; i < args->length(); i++ )
@@ -562,7 +562,7 @@ ModCmdlineParser::ModCmdlineParser():
          FalconInstance *self = static_cast<FalconInstance*>(ctx->self().asInst());
 
          Item i_request;
-         self->getMember( PARSE_PROPERTY_REQUEST, i_request );
+         self->getProperty( PARSE_PROPERTY_REQUEST, i_request );
          int32 req = (int32) i_request.asInteger();
 
          if( req == PARSE_PROPERTY_REQUEST_EXPECT )

@@ -206,7 +206,7 @@ static void internal_inspect( TextWriter* tw, const Item& itm, int32 depth, int3
                switch( prop->m_type )
                {
                case FalconClass::Property::t_prop:
-                  m_fi->getMember( propName, item );
+                  m_fi->getProperty( propName, item );
                   m_tw->write( propName );
                   m_tw->write( " = " );
                   internal_inspect(m_tw, item, -(m_depth+1), m_maxdepth, m_maxsize );
@@ -215,7 +215,7 @@ static void internal_inspect( TextWriter* tw, const Item& itm, int32 depth, int3
 
                case FalconClass::Property::t_inh:
                   m_tw->write( "from " );
-                  m_fi->getMember( propName, item );
+                  m_fi->getProperty( propName, item );
                   internal_inspect(m_tw, item, -(m_depth+1), m_maxdepth, m_maxsize );
                   break;
 

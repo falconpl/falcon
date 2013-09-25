@@ -38,13 +38,13 @@
 #include <falcon/symbol.h>
 #include <falcon/module.h>
 
-#include <falcon/delegatemap.h>
-
 #include <falcon/psteps/stmtreturn.h>
 #include <falcon/psteps/exprself.h>
 #include <falcon/psteps/exprparentship.h>
 #include <falcon/psteps/exprinherit.h>
 #include <falcon/stderrors.h>
+
+#include "falconinstance_private.h"
 
 #include <map>
 #include <list>
@@ -57,7 +57,6 @@ namespace Falcon
 class FalconClass::Private
 {
 public:
-   DelegateMap m_delegates;
 
    typedef std::map<String, Property*> MemberMap;
    MemberMap m_origMembers;
@@ -72,13 +71,10 @@ public:
    typedef std::vector<Property*> InitPropList;
    InitPropList m_initExpr;
 
-   ItemArray* m_propDefaults;      
-
    Private()
    {
       m_members = &m_origMembers;
       m_states = &m_origStates;
-      m_propDefaults = new ItemArray;
    }
 
    ~Private()
@@ -96,8 +92,6 @@ public:
          delete mi->second;
          ++mi;
       }
-
-      delete m_propDefaults;
    }
    
    void constructing()
@@ -112,12 +106,12 @@ public:
 };
 
 
-FalconClass::Property::Property( const String& name, size_t value, Expression* expr ):
+FalconClass::Property::Property( const String& name, const Item& value, Expression* expr ):
    m_name(name),
    m_type(t_prop),
    m_expr( expr )
 {
-   m_value.id = value;
+   m_dflt = value;
 }
 
 
@@ -139,6 +133,7 @@ FalconClass::Property::Property( const Property& other, bool copyInitExpr ):
    m_value( other.m_value ),
    m_expr( 0 )
 {
+   m_dflt = other.m_dflt;
    if( copyInitExpr && other.m_expr != 0 )
    {
       m_expr = other.m_expr->clone();
@@ -218,7 +213,7 @@ void* FalconClass::createInstance() const
    
    // we just need to copy the defaults.
    FalconInstance* inst = new FalconInstance(this);
-   inst->data().merge(*_p->m_propDefaults);
+   initInstance( inst );
 
    // someone else will initialize non-defaultable items.
    return inst;
@@ -278,10 +273,8 @@ bool FalconClass::addProperty( const String& name, const Item& initValue )
       return false;
    }
 
-   // insert a new property with the required ID
-   members[name] = new  Property( name, _p->m_propDefaults->length() );
-   // the add the init value in the value lists.
-   _p->m_propDefaults->append( initValue );
+   // insert a new property with the required default value
+   members[name] = new  Property( name, initValue );
 
    // is this thing deep? -- if it is so, we should mark it
    if( initValue.type() >= FLC_ITEM_METHOD )
@@ -313,11 +306,8 @@ bool FalconClass::addProperty( const String& name, Expression* initExpr )
    }
 
    // insert a new property -- and record its insertion
-   Property* prop = new Property( name, _p->m_propDefaults->length(), initExpr );
+   Property* prop = new Property( name, Item(), initExpr );
    members[name] = prop;
-
-   // expr properties have a default NIL item.
-   _p->m_propDefaults->append( Item() );
 
    // declare that we need this expression to be initialized.
    _p->m_initExpr.push_back( prop );
@@ -352,9 +342,7 @@ bool FalconClass::addProperty( const String& name )
    }
 
    // insert a new property with the required ID
-   members[name] = new Property( name, _p->m_propDefaults->length() );
-   // the add the init value in the value lists.
-   _p->m_propDefaults->append( Item() );
+   members[name] = new Property( name, Item() );
 
    return true;
 }
@@ -503,7 +491,7 @@ bool FalconClass::getProperty( const String& name, Item& target ) const
    switch( prop.m_type )
    {
       case Property::t_prop:
-         target = (*_p->m_propDefaults)[ prop.m_value.id ];
+         target = prop.m_dflt;
          break;
 
       case Property::t_func:
@@ -543,7 +531,18 @@ void FalconClass::gcMark( uint32 mark )
    if( m_mark != mark )
    {
       Mantra::gcMark(mark);
-      _p->m_propDefaults->gcMark( mark );
+
+      Private::MemberMap::iterator iter = _p->m_members->begin();
+      Private::MemberMap::iterator end = _p->m_members->end();
+      while( iter != end )
+      {
+         Property* prop = iter->second;
+         if( prop->m_type == Property::t_prop )
+         {
+            prop->m_dflt.gcMark(mark);
+         }
+         ++iter;
+      }
 
       if( m_parentship != 0 )
       {
@@ -726,12 +725,6 @@ bool FalconClass::construct( VMContext* ctx )
                            this->name().c_ize() );
                   Property* np = new Property(*bp, false);
                   (*_p->m_members)[np->m_name] = np;
-                  
-                  if( np->m_type == Property::t_prop )
-                  {
-                     np->m_value.id = _p->m_propDefaults->length();
-                     _p->m_propDefaults->append( (*fbase->_p->m_propDefaults)[bp->m_value.id] );
-                  }
                }
             }
             
@@ -788,29 +781,6 @@ void* FalconClass::clone( void* source ) const
 }
 
 
-void FalconClass::serialize( DataWriter* stream, void* self ) const
-{
-   static_cast<FalconInstance*>(self)->serialize(stream);
-}
-
-
-void* FalconClass::deserialize( DataReader* stream ) const
-{
-   // TODO
-   FalconInstance* fi = new FalconInstance;
-   try
-   {
-      fi->deserialize(stream);
-   }
-   catch( ... )
-   {
-      delete fi;
-      throw;
-   }
-   return fi;
-}
-
-
 
 //=========================================================
 // Class management
@@ -858,7 +828,9 @@ void FalconClass::enumeratePV( void* self, PVEnumerator& cb ) const
       Property* prop = iter->second;
       if( prop->m_type == Property::t_prop )
       {
-         cb( iter->first, inst->m_data[prop->m_value.id] );
+         Item* itm = inst->getProperty_internal(&prop->m_name);
+         fassert( itm != 0 );
+         cb( iter->first, *itm );
          ++iter;
       }
    }
@@ -895,13 +867,18 @@ void FalconClass::describe( void* instance, String& target, int depth, int maxle
          if( m_class->getProperty( name )->m_type == Property::t_prop )
          {
             #ifndef NDEBUG
-            bool found = m_inst->getMember( name, theItem );
+            bool found = m_inst->getProperty( name, theItem );
             fassert2( found, "Required property not found" );
             #else
-            m_inst->getMember( name, theItem );
+            m_inst->getProperty( name, theItem );
             #endif
             String temp;
+            if( theItem.isMethod() )
+            {
+               theItem = theItem.asMethodFunction();
+            }
             theItem.describe( temp, m_depth-1, m_maxlen );
+
             if( m_target != "" )
             {
                m_target += ", ";
@@ -1003,7 +980,6 @@ void FalconClass::flattenSelf( ItemArray& flatArray ) const
    Private::MemberMap::iterator pos = members->begin();
    
    flatArray.reserve( members->size() + 5 );
-   flatArray.append( Item(_p->m_propDefaults->handler(), _p->m_propDefaults) );
    
    if( m_constructor != 0 )
    {
@@ -1027,7 +1003,7 @@ void FalconClass::flattenSelf( ItemArray& flatArray ) const
       switch( prop->m_type )
       {
          case Property::t_prop:
-            flatArray.append( Item( (int64) prop->m_value.id ) );
+            flatArray.append( prop->m_dflt );
             if( prop->expression() != 0 )
             {
                flatArray.append( Item( prop->expression()->handler(), prop->expression()));                              
@@ -1067,30 +1043,24 @@ void FalconClass::unflattenSelf( ItemArray& flatArray )
    Private::MemberMap::iterator pos = members->begin();
    
    fassert( flatArray.length() >= 2 );
-   
-   Item& arrZero = flatArray[0];
-   fassert( arrZero.isArray() );
-   ItemArray* propDefaults = arrZero.asArray();
-   delete _p->m_propDefaults; // just in case
-   _p->m_propDefaults = propDefaults;
-   
-   if( ! flatArray[1].isNil() )
+
+   if( ! flatArray[0].isNil() )
    {
-      fassert( flatArray[1].isFunction() );
-      m_constructor = static_cast<SynFunc*>(flatArray[1].asInst());
+      fassert( flatArray[0].isFunction() );
+      m_constructor = static_cast<SynFunc*>(flatArray[0].asInst());
       // constructor status is not flattened.
       m_constructor->setConstructor();
       m_constructor->module(this->module());
    }
    
-   if( ! flatArray[2].isNil() )
+   if( ! flatArray[1].isNil() )
    {
-      ExprParentship* parents = static_cast<ExprParentship*>(flatArray[2].asInst());
+      ExprParentship* parents = static_cast<ExprParentship*>(flatArray[1].asInst());
       setParentship(parents);
    }
    
    _p->m_initExpr.clear(); // just in case
-   uint32 count = 3;
+   uint32 count = 2;
    while( pos != members->end() )
    {
       fassert( count < flatArray.length() );
@@ -1098,7 +1068,7 @@ void FalconClass::unflattenSelf( ItemArray& flatArray )
       switch( prop->m_type )
       {
          case Property::t_prop:
-            prop->m_value.id = (size_t) flatArray[count++].asInteger();
+            prop->m_dflt = flatArray[count++];
             if( flatArray[count].isUser() ) {
                prop->expression( static_cast<Expression*>( flatArray[count].asInst() ));
                _p->m_initExpr.push_back( prop );
@@ -1130,7 +1100,7 @@ void FalconClass::unflattenSelf( ItemArray& flatArray )
 }
 
 
-static void internal_callprop( VMContext* ctx, void* instance, FalconClass::Property& prop, int32 pCount )
+void FalconClass::internal_callprop( VMContext* ctx, void* instance, FalconClass::Property& prop, int32 pCount ) const
 {
    FalconInstance* inst = static_cast<FalconInstance*>(instance);
 
@@ -1142,13 +1112,13 @@ static void internal_callprop( VMContext* ctx, void* instance, FalconClass::Prop
       if( pCount > 0 ) {
          ctx->popData( pCount-1 );
          Item temp = ctx->topData();
-         inst->data()[ prop.m_value.id ].copyFromLocal( temp );
+         inst->_p->m_data[ &prop.m_name ].copyFromLocal( temp );
          ctx->popData();
          ctx->topData() = temp;
       }
       else {
          ctx->addDataSlot();
-         ctx->topData().copyFromRemote(inst->data()[ prop.m_value.id ]);
+         ctx->topData().copyFromRemote(inst->_p->m_data[ &prop.m_name ]);
       }
    }
 }
@@ -1158,14 +1128,19 @@ void FalconClass::op_summon( VMContext* ctx, void* instance, const String& messa
    FalconInstance* inst = static_cast<FalconInstance*>(instance);
    Item delegated;
 
-   if( message != "delegate" && inst->m_delegates.getDelegate(message, delegated) )
+   if( message != "delegate" )
    {
-      ctx->opcodeParam(pCount) = delegated;
-      Class* cls;
-      void* inst;
-      delegated.forceClassInst(cls, inst);
-      cls->op_summon(ctx, inst, message, pCount, bOptional);
-      return;
+      DelegateMap* dlg = &inst->_p->m_delegates;
+
+      if( dlg != 0 && dlg->getDelegate(message, delegated) )
+      {
+         ctx->opcodeParam(pCount) = delegated;
+         Class* cls;
+         void* inst;
+         delegated.forceClassInst(cls, inst);
+         cls->op_summon(ctx, inst, message, pCount, bOptional);
+         return;
+      }
    }
 
    Private::MemberMap::iterator iter = _p->m_members->find( message );
@@ -1183,16 +1158,17 @@ void FalconClass::op_summon( VMContext* ctx, void* instance, const String& messa
 void FalconClass::delegate( void* instance, Item* target, const String& message ) const
 {
    FalconInstance* mantra = static_cast<FalconInstance*>(instance);
+
    if( target == 0 )
    {
-      mantra->m_delegates.clear();
+      mantra->_p->m_delegates.clear();
    }
    else if( target->isUser() && target->asInst() == instance )
    {
-      mantra->m_delegates.clearDelegate(message);
+      mantra->_p->m_delegates.clearDelegate(message);
    }
    else {
-      mantra->m_delegates.setDelegate(message, *target);
+      mantra->_p->m_delegates.setDelegate(message, *target);
    }
 }
 
@@ -1241,53 +1217,19 @@ void FalconClass::op_getProperty( VMContext* ctx, void* self, const String& prop
 {
    FalconInstance* inst = static_cast<FalconInstance*>(self);
 
-   if( ! overrideGetProperty( ctx, self, propName ) )
+   //if( ! overrideGetProperty( ctx, self, propName ) )
    {
-      const Property* prop = getProperty( propName );
+      const Item* value = inst->_p->getProperty( &propName );
       
-      if( prop != 0 )
+      if( value != 0 )
       {
-         Item target;
-         
-         switch( prop->m_type )
-         {
-            case FalconClass::Property::t_prop:
-               if( inst->origin() != this )
-               {
-                  prop = inst->origin()->getProperty( propName );
-                  fassert( prop != 0 );
-                  fassert( prop->m_type == Property::t_prop );
-               }
-               
-               target.copyFromRemote(inst->data()[ prop->m_value.id ]);
-               
-               if( target.isFunction() ) {
-                  Function* func = target.asFunction();
-                  target.setUser( this, const_cast<FalconInstance*>(inst) );
-                  target.methodize( func );
-               }
-               break;
-
-            case FalconClass::Property::t_func:               
-               target.setUser( this, const_cast<FalconInstance*>(inst) );
-               target.methodize( prop->m_value.func );
-               break;
-
-            case FalconClass::Property::t_inh:
-               target.setUser( prop->m_value.inh->base(), const_cast<FalconInstance*>(inst) );
-               break;
-
-            case FalconClass::Property::t_state:
-               //TODO
-               break;
-         }
-
-         ctx->topData() = target;
-         return;
+         //ctx->topData() = *value;
+         ctx->topData().copyFromRemote(*value);
       }
-
-      // Default to base class
-      Class::op_getProperty( ctx, self, propName );  
+      else {
+         // Default to base class
+         Class::op_getProperty( ctx, self, propName );
+      }
    }
 }
 
@@ -1296,10 +1238,29 @@ void FalconClass::op_setProperty( VMContext* ctx, void* self, const String& prop
 {
    FalconInstance* inst = static_cast<FalconInstance*>(self);
 
-   if( ! overrideSetProperty( ctx, self, propName ) )
+   //if( ! overrideSetProperty( ctx, self, propName ) )
    {
-      inst->setProperty( propName, ctx->opcodeParam(1) );
-      ctx->popData();
+      Item* value = inst->_p->getProperty( &propName );
+      if ( value != 0 )
+      {
+         Item& top = ctx->opcodeParam(1);
+         if( top.isFunction() )
+         {
+            Function* func = top.asFunction();
+            ctx->topData().methodize(func);
+            value->copyFromLocal(ctx->topData());
+         }
+         else {
+            value->copyFromLocal(top);
+            //*value = top;
+         }
+
+         ctx->popData();
+      }
+      else {
+         // Default to base class
+         Class::op_setProperty( ctx, self, propName );
+      }
    }
 }
 
@@ -1420,35 +1381,31 @@ void FalconClass::PStepInitExpr::apply_( const PStep* ps, VMContext* ctx )
    
    CallFrame& frame = ctx->currentFrame();
    FalconInstance* inst = static_cast<FalconInstance*>( frame.m_self.asInst() );
-   const FalconClass* origin = inst->origin();
-   
    
    int size = (int) iprops.size();
    int& seqId = ccode.m_seqId;
 
    TRACE1( "In class \"%s\" pre-init step %d/%d", step->m_owner->name().c_ize(), seqId, size );
-   
-   // Fix in case we're back from a prevuious run
+
+   // Fix in case we're back from a previous run
    if( seqId > 0 )
-   {      
-      Property* previous = iprops[seqId-1];
-      TRACE2( "Initializing '%s' from a previous run...", previous->m_name.c_ize() );
-      
-         
-      const Property* prop = (origin == step->m_owner) ? 
-               previous : origin->getProperty( previous->m_name );
-      
+   {
+      Property* prop = iprops[seqId-1];
+      TRACE2( "Initializing '%s' from a previous run...", prop->m_name.c_ize() );
+
       fassert( prop != 0 );
       fassert( prop->m_type == FalconClass::Property::t_prop );
       fassert( prop->expression() != 0 );
       
-      inst->data()[prop->m_value.id].copyFromLocal( ctx->topData());
+      // during init, instances are not shared,
+      // we can safely copy them directly.
+      inst->_p->m_data[&prop->m_name] = ctx->topData();
       ctx->popData();
    }
 
-   
    while( seqId < size )
    {
+
       const Property* prop = iprops[seqId];
       TRACE2( "Initializing property %s at step step %d/%d", 
                                        prop->m_name.c_ize(), seqId, size );
@@ -1462,24 +1419,63 @@ void FalconClass::PStepInitExpr::apply_( const PStep* ps, VMContext* ctx )
          TRACE2( "Descending at step step %d/%d", seqId, size );
          return;
       }
-      
-      if( origin != step->m_owner ) 
-      {
-         // ... but the original should have had an expression or we wouldn't be here.
-         fassert( prop->expression() != 0 );
 
-         // refetch the local property, as it might have a different ID.
-         prop = origin->getProperty( prop->m_name );
-         fassert( prop != 0 );
-         fassert( prop->m_type == FalconClass::Property::t_prop );
-      }
-      
-      inst->data()[prop->m_value.id].copyFromLocal( ctx->topData() );
+      inst->_p->m_data[&prop->m_name] = ctx->topData();
       ctx->popData();
    }
 
    // we're done
    ctx->popCode();
+}
+
+
+void FalconClass::initInstance( FalconInstance* inst ) const
+{
+   Private::MemberMap::const_iterator iter = _p->m_members->begin();
+   Private::MemberMap::const_iterator end = _p->m_members->end();
+
+   while( iter != end )
+   {
+      const Property* prop = iter->second;
+      // create the property value
+      Item& tgt = inst->_p->m_data[&prop->m_name];
+
+      switch( prop->m_type )
+      {
+         case FalconClass::Property::t_prop:
+            tgt = prop->m_dflt;
+            break;
+
+         case FalconClass::Property::t_func:
+            tgt.setUser( this, inst );
+            tgt.methodize( prop->m_value.func );
+            break;
+
+         case FalconClass::Property::t_inh:
+            tgt.setUser( prop->m_value.inh->base(), inst );
+            break;
+
+         case FalconClass::Property::t_state:
+            //TODO
+            break;
+      }
+
+      iter++;
+   }
+}
+
+
+void FalconClass::flatten( VMContext*, ItemArray& subItems, void* instance ) const
+{
+   FalconInstance* inst = static_cast<FalconInstance*>(instance);
+   inst->makeStorageData(subItems);
+}
+
+
+void FalconClass::unflatten( VMContext*, ItemArray& subItems, void* instance ) const
+{
+   FalconInstance* inst = static_cast<FalconInstance*>(instance);
+   inst->restoreFromStorageData(subItems);
 }
 
 }
