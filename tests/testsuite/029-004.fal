@@ -1,0 +1,62 @@
+/*
+@name Cleanup with error
+@category Core-funcs
+
+This test checks for correct cleanup sequence when
+the program terminates with an error being thrown.
+
+@output
+Cleanup test (with error)
+============================================================
+CL2: Data from main
+CL1: Changed from CL2
+CL0: Changed from CL1
+============================================================
+Caught error was:
+UncaughtError VM0024 at 029-004.__main__:28: Explicitly raised item is uncaught
+"Uncaught!"
+   Signed by: engine/vmcontext.cpp:1173
+   Traceback:
+   "./029-004.fal" 029-004.__main__:28   Raised item: "Uncaught!"
+============================================================
+@endoutput
+*/
+
+> "Cleanup test (with error)"
+
+data = "Data from main"
+
+VMProcess.current.pushCleanup( cl0 )
+VMProcess.current.pushCleanup( cl1 )
+VMProcess.current.pushCleanup( cl2 )
+
+> "=" * 60
+
+raise "Uncaught!"
+
+// this shall not be printed
+> "Done."
+
+function cl0()
+   global data
+   > "CL0: ", data
+   data = "Changed from CL0"
+   > "=" * 60
+   > "Caught error was:"
+   > VMProcess.current.error
+   > "=" * 60
+   // force exit ignoring the error.
+   VMProcess.current.clearError()
+end
+
+function cl1()
+   global data
+   > "CL1: ", data
+   data = "Changed from CL1"
+end
+
+function cl2()
+   global data
+   > "CL2: ", data
+   data = "Changed from CL2"
+end

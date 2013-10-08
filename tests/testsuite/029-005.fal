@@ -1,0 +1,54 @@
+/*
+@name Cleanup nested
+@category Core-funcs
+
+This test checks for nested cleanup sequences.
+
+@output
+Cleanup test (nested)
+Done.
+============================================================
+CL1: Data from main
+CL0: Changed from CL1
+CL2: Changed from CL0
+CL3: Changed from CL2
+Last...
+@endoutput
+*/
+
+> "Cleanup test (nested)"
+
+data = "Data from main"
+
+VMProcess.current.pushCleanup( cl0 )
+VMProcess.current.pushCleanup( cl1 )
+
+> "Done."
+> "=" * 60
+
+function cl0()
+   global data
+   > "CL0: ", data
+   data = "Changed from CL0"
+   VMProcess.current.pushCleanup( cl2 )
+end
+
+function cl1()
+   global data
+   > "CL1: ", data
+   data = "Changed from CL1"
+   VMProcess.current.pushCleanup( cl3 )
+end
+
+function cl2()
+   global data
+   > "CL2: ", data
+   data = "Changed from CL2"
+end
+
+function cl3()
+   global data
+   > "CL3: ", data
+   data = "Changed from CL3"
+   > "Last..."
+end

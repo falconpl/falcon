@@ -1,0 +1,45 @@
+/*
+@name Cleanup clear
+@category Core-funcs
+
+This test checks for correct cleanup sequence when
+the program terminates correctly.
+
+@output
+Cleanup test (clear)
+Done.
+============================================================
+CL2: Data from main
+CL1: Changed from CL2
+CL0: Changed from CL1
+@endoutput
+*/
+
+> "Cleanup test (clear)"
+
+data = "Data from main"
+
+VMProcess.current.pushCleanup( cl0 )
+VMProcess.current.pushCleanup( cl1 )
+VMProcess.current.pushCleanup( cl2 )
+
+> "Done."
+> "=" * 60
+
+function cl0()
+   global data
+   > "CL0: ", data
+   data = "Changed from CL0"
+end
+
+function cl1()
+   global data
+   > "CL1: ", data
+   data = "Changed from CL1"
+end
+
+function cl2()
+   global data
+   > "CL2: ", data
+   data = "Changed from CL2"
+end

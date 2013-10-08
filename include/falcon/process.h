@@ -144,12 +144,12 @@ public:
    /** This is called back by the main context when done.
     This will make wait non-blocking, or wakeup waits with success.
    */
-   void completed();
+   void onCompleted();
 
    /** Declares that the process was terminated by an uncaught error.
     This will make wait non-blocking, or wakeup waits with success.
    */
-   void completedWithError( Error* error );
+   void onCompletedWithError( Error* error );
 
    int32 getNextContextID();
 
@@ -182,6 +182,12 @@ public:
     * then the process terminated correctly.
     */
    Error* error() const { return m_error; }
+
+   /**
+    * Clears the termination error.
+    */
+   void clearError();
+
 
    void setResult( const Item& value );
 
@@ -463,6 +469,14 @@ public:
     * the currently installed break callback routine.
     */
    bool onBreakpoint( Processor* prc, VMContext* ctx );
+
+   /**
+    * Adds some code to be invoked at cleanup.
+    * \param code A code (function, method, codeblock etc.) to be invoked at cleanup.
+    *
+    * This method adds an item that will be invoked when the process should terminate.
+    */
+   void pushCleanup(const Item& code);
 
 protected:
    Process( VMachine* owner, bool added );

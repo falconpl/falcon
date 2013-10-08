@@ -2083,7 +2083,7 @@ void VMContext::onTerminated()
       }
       else {
          // we're the main context.
-         m_process->completedWithError(this->m_lastRaised);
+         m_process->onCompletedWithError(this->m_lastRaised);
       }
    }
    else {
@@ -2093,7 +2093,7 @@ void VMContext::onTerminated()
       else {
          // we're the main context.
          m_process->setResult( topData() );
-         m_process->completed();
+         m_process->onCompleted();
       }
    }
 

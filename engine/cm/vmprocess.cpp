@@ -256,8 +256,37 @@ static void get_uri(const Class*, const String&, void* instance, Item& value )
    }
 }
 
+/*#
+ @property error VMProcess
+ @brief Termination error of this process.
+
+ This returns the termination error of this process,
+ or nil if there was none.
+
+ The termination error can be accessed during cleanup
+ routines; it will be nil (usually) during normal
+ execution.
+ */
+static void get_error(const Class*, const String&, void* instance, Item& value )
+{
+   Process* prc = static_cast<Process*>(instance);
+   if( prc == 0 )
+   {
+      // called statically
+      prc = Processor::currentProcessor()->currentContext()->process();
+   }
+
+   if ( prc->error() != 0 )
+   {
+      value.setUser( prc->error()->handler(), prc->error() );
+   }
+   else {
+      value.setNil();
+   }
+}
+
 /*
- @method quit VM
+ @method quit VMProcess
  @brief Terminates all the processes currently active in the host Virtual Machine.
  */
 /*static void vm_quit( VMContext*, int32 )
@@ -330,6 +359,63 @@ void Function_setTT::invoke( VMContext* ctx, int32 )
 }
 
 
+/*#
+  @method pushCleanup Process
+  @brief Adds an entity that will be evaluated at cleanup.
+  @param code The code to be evaluated
+
+  This methods adds an entity (normally a callable item, as a function,
+  method, callable array or syntactic tree) for delayed execution at
+  process termination.
+
+  This can be used to add routines that clear the state of the host system
+  no matter what happens during the process execution.
+
+  If the process is terminated due to an error thrown and uncaught in the
+  main context, the error will be available to the outer OS or embedding
+  program after all the cleanup sequences are completed.
+
+  In case a cleanup sequence raises an error, the one that was raised
+  in the main context will be discarded.
+
+  Cleanup sequences can push new cleanup sequences during their execution;
+  the new cleanup sequences will be performed as all the previously pushed
+  sequences are completed, that is, as the process is about to end.
+
+  @note Added cleanup code is invoked in reverse order (last-to-first).
+ */
+FALCON_DECLARE_FUNCTION( pushCleanup, "code:C" )
+void Function_pushCleanup::invoke( VMContext* ctx, int32 )
+{
+   Item* i_code = ctx->param(0);
+   if( i_code == 0 )
+   {
+      throw paramError(__LINE__, SRC);
+   }
+
+   Process* proc = static_cast<Process*>(ctx->self().asInst());
+   proc->pushCleanup(*i_code);
+   ctx->returnFrame();
+}
+
+
+
+/*#
+  @method clearError Process
+  @brief Removes the termination error.
+
+  If the process terminated with an error, this method
+  will clear it.
+ */
+FALCON_DECLARE_FUNCTION( clearError, "" )
+void Function_clearError::invoke( VMContext* ctx, int32 )
+{
+   Process* proc = static_cast<Process*>(ctx->self().asInst());
+   proc->clearError();
+   ctx->returnFrame();
+}
+
+
 }
 
 //==========================================================================
@@ -347,11 +433,15 @@ ClassVMProcess::ClassVMProcess():
    addProperty( "stdOut", &get_stdOut, &set_stdOut );
    addProperty( "stdErr", &get_stdErr, &set_stdErr );
    addProperty( "id", &get_id );
+   addProperty( "error", &get_error );
+
    addProperty( "name", &get_name, 0, true );
    addProperty( "uri", &get_uri, 0, true );
 
    addMethod( new CVMProcess::Function_getIs );
    addMethod( new CVMProcess::Function_setTT );
+   addMethod( new CVMProcess::Function_pushCleanup );
+   addMethod( new CVMProcess::Function_clearError );
 
 }
 

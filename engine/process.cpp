@@ -40,6 +40,7 @@
 
 #include <set>
 #include <map>
+#include <list>
 
 #define MAX_TLGEN 2100000000
 
@@ -60,6 +61,10 @@ public:
    ExportMap m_exports;
    Mutex m_mtx_exports;
 
+   typedef std::list<GCLock*> CleanupList;
+   CleanupList m_cleanups;
+   Mutex m_mtx_cleanups;
+
    Private() {
       m_transTable = 0;
       m_tempTable = 0;
@@ -68,6 +73,29 @@ public:
    ~Private() {
       delete m_transTable;
       delete m_tempTable;
+
+      // clear exports
+      {
+         ExportMap::iterator iter = m_exports.begin();
+         while( iter != m_exports.end() )
+         {
+            GCLock* gl = iter->second;
+            gl->dispose();
+            ++iter;
+         }
+      }
+
+      // clear cleanups
+      {
+         CleanupList::iterator iter = m_cleanups.begin();
+         while( iter != m_cleanups.end() )
+         {
+            GCLock* gl = *iter;
+            gl->dispose();
+            ++iter;
+         }
+      }
+
    }
 };
 
@@ -109,7 +137,7 @@ Process::Process( VMachine* owner, ModSpace* ms ):
 
 Process::Process( VMachine* owner, bool bAdded ):
    m_vm(owner),
-   m_context( new VMContext( this ) ),
+   m_context( 0 ),
    m_event( true, false ),
    m_terminated(0),
    m_running(false),
@@ -235,6 +263,15 @@ SynFunc* Process::readyEntry()
 }
 
 
+void Process::clearError()
+{
+   if( m_error != 0 )
+   {
+      m_error->decref();
+      m_error = 0;
+   }
+}
+
 bool Process::start()
 {
    if (! checkRunning() ) {
@@ -317,20 +354,58 @@ void Process::interrupt()
    m_event.interrupt();
 }
 
-void Process::completed()
+void Process::onCompleted()
 {
-   m_event.set();
+   TRACE( "Process::completed invoked for process %d (%p)", id(), this );
+   onCompletedWithError(0);
 }
 
-void Process::completedWithError( Error* error )
+void Process::onCompletedWithError( Error* error )
 {
-   if( m_error !=0 ) {
-      m_error->decref();
-   }
-   m_error = error;
-   error->incref();
+   TRACE( "Process::completedWithError(%p) invoked for process %d (%p)", error, id(), this );
 
-   m_event.set();
+   if( error != 0 )
+   {
+      if( m_error != 0 ) {
+         m_error->decref();
+      }
+
+      m_error = error;
+      error->incref();
+   }
+
+   // is there any termination handler?
+   _p->m_mtx_cleanups.lock();
+   if( ! _p->m_cleanups.empty() )
+   {
+      Private::CleanupList copy(_p->m_cleanups);
+      _p->m_cleanups.clear();
+      _p->m_mtx_cleanups.unlock();
+
+      TRACE( "Process::completedWithError %d (%p) has a cleanup sequence", id(), this );
+
+      // clear the terminated state, in case it was autonomously set
+      atomicSet(m_terminated, 0);
+
+      // the context is completed, but still alive.
+      m_context->reset();
+
+      Private::CleanupList::iterator iter = copy.begin();
+      while( iter != copy.end() )
+      {
+         GCLock* gl = *iter;
+         const Item& clup = gl->item();
+         m_context->callItem( clup );
+         gl->dispose();
+         ++iter;
+      }
+
+      startContext(m_context);
+   }
+   else {
+      _p->m_mtx_cleanups.unlock();
+      m_event.set();
+   }
 }
 
 void Process::launch()
@@ -580,6 +655,15 @@ void Process::commitTranslations( bool bAdditive )
 
    // we do this outside the lock.
    delete tt;
+}
+
+
+void Process::pushCleanup( const Item& code )
+{
+   GCLock* gl = Engine::collector()->lock(code);
+   _p->m_mtx_cleanups.lock();
+   _p->m_cleanups.push_back( gl );
+   _p->m_mtx_cleanups.unlock();
 }
 
 
