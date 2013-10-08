@@ -312,7 +312,7 @@ void Prog::ComputeByteMap() {
   // such range.
   const Bitmap<256>& v = byterange();
 
-  COMPILE_ASSERT(8*sizeof(v.Word(0)) == 32, wordsize);
+  // COMPILE_ASSERT(8*sizeof(v.Word(0)) == 32, wordsize);
   uint8 n = 0;
   uint32 bits = 0;
   for (int i = 0; i < 256; i++) {
