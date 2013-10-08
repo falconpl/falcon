@@ -174,10 +174,10 @@ namespace CSocket {
 @property address Socket
 @brief Return the address associated with a socket.
 */
-void get_pDataDir(const Class* cls, const String&, void* instance, Item& value )
+void get_address(const Class* cls, const String&, void* instance, Item& value )
 {
    TRACE1( "get WOPI.pDataDir for %p", instance );
-   ModuleWopi* wopi = static_cast<ModuleWopi*>( cls->module() );
+   ModuleInet* inet = static_cast<ModuleInet*>( cls->module() );
    Mod::Socket* socket = static_cast<Mod::Socket*>(instance);
    Mod::Address* a = socket->address();
    a->incref();
