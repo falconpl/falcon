@@ -24,6 +24,11 @@
 namespace Falcon {
 namespace WOPI {
 
+
+   class Uploaded {
+
+   };
+
 void InitUploadedClass( Module* m );
 
 }

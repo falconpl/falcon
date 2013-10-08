@@ -38,7 +38,7 @@ public:
       FWData();
 };
 
-class FWDataManager: public BaseAlloc
+class FWDataManager
 {
 public:
    FWDataManager();

@@ -17,18 +17,36 @@
 
 #include <falcon/wopi/wopi.h>
 #include <falcon/wopi/error_ext.h>
-#include <falcon/vm.h>
 #include <falcon/stringstream.h>
 #include <falcon/module.h>
-#include <falcon/attribmap.h>
-#include <falcon/garbagelock.h>
+#include <falcon/vmcontext.h>
 
 namespace Falcon {
 namespace WOPI {
 
-Wopi::Wopi():
-      m_pdata( Wopi::pdata_deletor )
+class PStepReadAppDataNext: public PStep
 {
+public:
+   PStepReadAppDataNext() { apply = apply_; }
+   virtual ~PStepReadAppDataNext();
+
+   virtual void describeTo( String& target ) const
+   {
+      target  = "PStepReadAppDataNext";
+   }
+
+   static void apply_(const PStep* self, VMContext* ctx)
+   {
+      Storer
+   }
+
+};
+
+Wopi::Wopi():
+      m_ctxdata( Wopi::pdata_deletor )
+{
+   m_readAppDataNext;
+   m_writeAppDataNext;
 }
 
 Wopi::~Wopi()
@@ -78,7 +96,7 @@ String Wopi::dataLocation()
 }
 
 
-bool Wopi::setData( Item& data, const String& appName, bool atomicUpdate )
+void Wopi::setAppData( VMContext* ctx, Item& data, const String& appName )
 {
    SharedMem* pAppMem = 0;
 
@@ -102,7 +120,7 @@ bool Wopi::setData( Item& data, const String& appName, bool atomicUpdate )
    {
       // we already know we're out of sync.
       if( atomicUpdate )
-         inner_readData( pAppMem, data );
+         inner_readAppData( pAppMem, data );
 
       return false;
    }
@@ -154,7 +172,7 @@ bool Wopi::setData( Item& data, const String& appName, bool atomicUpdate )
 }
 
 
-bool Wopi::getData( Item& data, const String& appName )
+bool Wopi::getAppData( VMContext* ctx, Item& data, const String& appName )
 {
    SharedMem* shmem = 0;
 
@@ -173,7 +191,7 @@ bool Wopi::getData( Item& data, const String& appName )
    }
 
    // we can deal with the shared memory in an unlocked region, of course.
-   inner_readData( shmem, data );
+   inner_readAppData( shmem, data );
    return true;
 }
 
@@ -219,7 +237,7 @@ SharedMem* Wopi::inner_create_appData( const String& appName )
 }
 
 
-void Wopi::inner_readData( SharedMem* shmem, Item& data )
+void Wopi::inner_readAppData( SharedMem* shmem, Item& data )
 {
    StringStream target;
    shmem->read( &target, true );
@@ -243,16 +261,16 @@ void Wopi::inner_readData( SharedMem* shmem, Item& data )
 }
 
 
-bool Wopi::setPersistent( const String& id, const Item& data )
+bool Wopi::setContextData( const String& id, const Item& data )
 {
    // get the thread-specific data map
-   PDataMap* pm = (PDataMap*) m_pdata.get();
+   PDataMap* pm = (PDataMap*) m_ctxdata.get();
 
    // we don't have it?
    if( pm == 0 )
    {
       pm = new PDataMap;
-      m_pdata.set( pm );
+      m_ctxdata.set( pm );
    }
 
    // search the key
@@ -285,10 +303,10 @@ bool Wopi::setPersistent( const String& id, const Item& data )
 }
 
 
-bool Wopi::getPeristent( const String& id, Item& data ) const
+bool Wopi::getContextData( const String& id, Item& data ) const
 {
    // get the thread-specific data map
-   PDataMap* pm = (PDataMap*) m_pdata.get();
+   PDataMap* pm = (PDataMap*) m_ctxdata.get();
 
    // we don't have it?
    if( pm == 0 )

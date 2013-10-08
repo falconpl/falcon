@@ -138,15 +138,6 @@ public:
    */
    bool getMemoryData( String& target );
 
-   /* Returns the memory data in a target memory buffer.
-
-      If the part was loaded into memory, the memory data is directly transfered to this MB
-      without any copy.
-
-      Otherwise, nothing is done and the function returns false.
-   */
-   bool getMemoryData( MemBuf& target );
-
    const HeaderMap& headers() const { return m_mHeaders; }
    HeaderMap& headers() { return m_mHeaders; }
 

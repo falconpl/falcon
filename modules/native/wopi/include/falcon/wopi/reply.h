@@ -19,8 +19,6 @@
 #define FALCON_WOPI_REPLY
 
 #include <falcon/wopi/utils.h>
-
-#include <falcon/coreobject.h>
 #include <falcon/timestamp.h>
 
 #define FALCON_WOPI_DEFAULT_REPLY_STATUS  200
@@ -72,7 +70,7 @@ public:
  - endCommit() when all the headers are sent.
 */
 
-class Reply: public CoreObject
+class Reply
 {
 public:
 

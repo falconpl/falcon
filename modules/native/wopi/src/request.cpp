@@ -21,7 +21,7 @@
 
 #include <falcon/uri.h>
 #include <falcon/error.h>
-#include <falcon/eng_messages.h>
+#include <falcon/engine.h>
 #include <falcon/fstream.h>
 
 // for memcpy
@@ -42,10 +42,10 @@ Request::Request():
    m_content_length( -1 ),
 
    // protected
-   m_gets( new CoreDict( new LinearDict ) ),
-   m_posts( new CoreDict( new LinearDict ) ),
-   m_cookies( new CoreDict( new LinearDict ) ),
-   m_headers( new CoreDict( new LinearDict ) ),
+   m_gets( new ItemDict ),
+   m_posts( new ItemDict ),
+   m_cookies( new ItemDict ),
+   m_headers( new ItemDict ),
    m_sSessionField( DEFAULT_SESSION_FIELD ),
    m_tempFiles( 0 ),
    m_nMaxMemUpload( 1024 ),
@@ -58,25 +58,11 @@ Request::Request():
    m_sTempPath = "/tmp";
 #endif
 
-   m_lockGets = new GarbageLock();
-   m_lockPosts = new GarbageLock();
-   m_lockCookies = new GarbageLock();
-   m_lockHeaders = new GarbageLock();
-
-   m_lockGets->item().setDict( m_gets );
-   m_lockPosts->item().setDict( m_posts );
-   m_lockCookies->item().setDict( m_cookies );
-   m_lockHeaders->item().setDict( m_headers );
-
    m_MainPart.setOwner( this );
 }
 
 Request::~Request()
 {
-   delete m_lockGets;
-   delete m_lockPosts;
-   delete m_lockCookies;
-   delete m_lockHeaders;
 }
 
 
@@ -95,8 +81,10 @@ bool Request::parseHeader( Stream* input )
 {
    if ( ! m_MainPart.parseHeader( input ) )
    {
-      m_posts->put( SafeItem(new CoreString(":error")),
-            SafeItem(new CoreString( m_MainPart.error() )) );
+      m_posts->insert(
+               FALCON_GC_HANDLE(&(new String(":error"))->bufferize()),
+               FALCON_GC_HANDLE(&(new String( m_MainPart.error() ))->bufferize())
+          );
       return false;
    }
 
@@ -132,7 +120,10 @@ bool Request::parseHeader( Stream* input )
       HeaderValue::ParamMap::const_iterator pi = ci->second.parameters().begin();
       while( pi != ci->second.parameters().end() )
       {
-         m_cookies->put( SafeItem( new CoreString( pi->first) ), SafeItem( new CoreString(pi->second)) );
+         m_cookies->insert(
+                        FALCON_GC_HANDLE(&(new String(pi->first))->bufferize()),
+                        FALCON_GC_HANDLE(&(new String(pi->second))->bufferize())
+                   );
          ++pi;
       }
    }
@@ -140,9 +131,10 @@ bool Request::parseHeader( Stream* input )
    ci = m_MainPart.headers().begin();
    while( ci != m_MainPart.headers().end() )
    {
-      m_headers->put(
-            SafeItem( new CoreString( ci->first ) ),
-            SafeItem( new CoreString(  ci->second.rawValue() )) );
+      m_headers->insert(
+              FALCON_GC_HANDLE(&(new String(ci->first))->bufferize()),
+              FALCON_GC_HANDLE(&(new String(ci->second.rawValue()))->bufferize())
+         );
       ++ci;
    }
 
@@ -170,9 +162,10 @@ bool Request::parseBody( Stream* input )
    bool bDummy = false;
    if ( ! m_MainPart.parseBody( input, bDummy ) )
    {
-      m_posts->put(
-            SafeItem(new CoreString(":error")),
-            SafeItem(new CoreString( m_MainPart.error() )) );
+      m_posts->insert(
+               FALCON_GC_HANDLE(&(new String(":error"))->bufferize()),
+               FALCON_GC_HANDLE(&(new String( m_MainPart.error() ))->bufferize())
+          );
       return false;
    }
 
@@ -186,7 +179,7 @@ bool Request::parseBody( Stream* input )
       // parse the post fields
       String post_data;
       m_MainPart.getMemoryData( post_data );
-      Falcon::WOPI::Utils::parseQuery( post_data, m_posts->items() );
+      Falcon::WOPI::Utils::parseQuery( post_data, *m_posts );
    }
    /*
    else
@@ -206,32 +199,30 @@ bool Request::parseBody( Stream* input )
 Stream* Request::makeTempFile( String& fname, int64& le )
 {
    Path fpath;
-   fpath.setFullLocation( getTempPath() );
+   fpath.fulloc( getTempPath() );
 
    // try 3 times
    int tries = 0;
-   while( tries < 3 )
+   while( true )
    {
 
       String fname_try;
       Utils::makeRandomFilename( fname_try, 12 );
-      fpath.setFile( fname_try );
-      fname = fpath.get();
+      fpath.file( fname_try );
+      fname = fpath.encode();
 
       // try to create the file
-      Falcon::FileStream* tgFile = new Falcon::FileStream();
-      if ( tgFile->create( fname,
-            Falcon::BaseFileStream::e_aUserRead | Falcon::BaseFileStream::e_aUserWrite ) )
-      {
-         // save the tempfile name
+      try {
+         Stream* tgFile = Falcon::Engine::instance()->vfs().createSimple(fname);
          addTempFile( fname );
-         le = 0;
-         return tgFile;
       }
-
-      le = tgFile->lastError();
-      delete tgFile;
-      ++tries;
+      catch(Falcon::Error* err )
+      {
+         if( ++tries > 3 )
+         {
+            throw err;
+         }
+      }
    }
 
    // no way, we really failed.
@@ -271,14 +262,17 @@ bool Request::getField( const String& fname, Item& value ) const
 
 void Request::fwdGet( String& fwd, bool all ) const
 {
-   forward( m_gets->items(), m_posts->items(), fwd, all );
+   forward( *m_gets, *m_posts, fwd, all );
 }
+
 
 void Request::fwdPost( String& fwd, bool all ) const
 {
-   Utils::dictAsInputFields( fwd, m_posts->items() );
+   Utils::dictAsInputFields( fwd, *m_posts );
    if( all )
-      Utils::dictAsInputFields( fwd, m_gets->items() );
+   {
+      Utils::dictAsInputFields( fwd, *m_gets );
+   }
 }
 
 void Request::forward( const ItemDict& main, const ItemDict& aux, String& fwd, bool all ) const
@@ -294,12 +288,12 @@ void Request::forward( const ItemDict& main, const ItemDict& aux, String& fwd, b
 
 bool Request::setURI( const String& uri )
 {
-   if( m_uri.parse( uri, false ) )
+   if( m_uri.parse( uri ) )
    {
       m_sUri = uri;
       if ( m_uri.query().size() != 0 )
       {
-         Utils::parseQuery( m_uri.query(), m_gets->items() );
+         Utils::parseQuery( m_uri.query(), *m_gets );
       }
 
       m_location = m_uri.path();
@@ -325,17 +319,19 @@ void Request::removeTempFiles( void* head, void* data, void (*error_func)(const 
    {
       TempFileEntry *tfe_next = tfe->m_next;
       Falcon::int32 status;
-      if ( ! Falcon::Sys::fal_unlink( tfe->m_entry, status ) )
+      try {
+         Engine::instance()->vfs().erase( tfe->m_entry );
+      }
+      catch (Error* err)
       {
          if ( error_func != 0 )
          {
-            String error =
-               String("Cannot remove temporary file (").N(status).A( tfe->m_entry );
+            String error = err->describe(false);
             error_func( error, data );
          }
+         err->decref();
       }
 
-      delete tfe;
       tfe = tfe_next;
    }
 }
@@ -345,37 +341,8 @@ void Request::removeTempFiles( void* head, void* data, void (*error_func)(const 
 // Falcon interface.
 //
 
-CoreRequest::CoreRequest( const CoreClass* base ):
-   CoreObject( base ),
-   m_sm(0),
-   m_upld_c( 0 ),
-   m_bPostInit( false ),
-   m_base(0),
-   m_reply(0),
-   m_bAutoSession(true)
-{
-}
 
-void CoreRequest::init( CoreClass* upld_c, Reply* reply, SessionManager *sm, Request* r )
-{
-   m_upld_c = upld_c;
-   m_sm = sm;
-   if( r == 0 )
-      r = new Request;
-
-   m_base = r;
-   m_reply = reply;
-   m_base->sessionToken( sm->getSessionToken() );
-}
-
-
-CoreRequest::~CoreRequest()
-{
-   delete m_base;
-}
-
-
-void CoreRequest::addUploaded( PartHandler* ph, const String& prefix )
+void Request::addUploaded( PartHandler* ph, const String& prefix )
 {
    String key = prefix.size() == 0 ? ph->name(): prefix + "." + ph->name();
 
@@ -385,7 +352,7 @@ void CoreRequest::addUploaded( PartHandler* ph, const String& prefix )
       if( ph->filename().size() == 0 )
       {
          // puts a nil item.
-         Falcon::WOPI::Utils::addQueryVariable( key, Item(), m_base->m_posts->items() );
+         Falcon::WOPI::Utils::addQueryVariable( key, Item(), *m_base->m_posts );
       }
       else
       {
@@ -639,28 +606,17 @@ bool CoreRequest::getProperty( const String &prop, Item &value ) const
 }
 
 
-void CoreRequest::gcMark( uint32 mark )
+void Request::gcMark( uint32 mark )
 {
-
-   /*
-   They are now locked.
-   if( m_base != 0 )
+   if( mark != m_mark )
    {
-      if( m_base->m_gets != 0 ) m_base->m_gets->gcMark( mark );
-      if( m_base->m_posts != 0 ) m_base->m_posts->gcMark( mark );
-      if( m_base->m_cookies != 0 ) m_base->m_cookies->gcMark( mark );
-      if( m_base->m_headers != 0 ) m_base->m_headers->gcMark( mark );
+      m_mark = mark;
+      m_gets->gcMark( mark );
+      m_posts->gcMark( mark );
+      m_cookies->gcMark( mark );
+      m_headers->gcMark( mark );
    }
-   */
 }
-
-
-CoreObject* CoreRequest::factory( const Falcon::CoreClass* cls, void* ud, bool bDeser )
-{
-   return new CoreRequest( cls );
-}
-
-
 
 }
 }

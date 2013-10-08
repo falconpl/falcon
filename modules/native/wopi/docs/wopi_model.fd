@@ -579,7 +579,7 @@
    a later time. The same parameter can then be passed to @a Request.getSession and @a Request.closeSession to
    retreive the same data during another step of the process and to get rid of that data.
 
-   @section wopi_pdata Persistent local data.
+   @section wopi_context_data Context local data.
    
    Some web applications run directly through persistent processes, as 
    as those served through the FastCGI, the apache module or the falhttpd front-ends,
@@ -589,38 +589,49 @@
    
    This is the case of database connections: opening and closing a database connection
    each time a web application is invoked may be an overkill. The same connection object may
-   be shared by all the web application invoked by the same web server execution space
-   (process or thread).
+   be shared by all the scripts from the same web application, invoked by a system-level 
+   context that staid consistent across different falcon VM script execution.
    
-   As the data needs not to be serialized to other processes or applications, and
-   stays local and private for the currently running process or thread, any falcon
-   item can be sored in this way, even if it doesn't support sharing or serialization.
+   As the data needs not to be serialized, and stays local and private for the currently 
+   running system-level context (i.e. process or thread), any falcon item can be sored 
+   in this way, even if it doesn't support sharing or serialization.
    
-   Persistent data can be created through the @a Wopi.setPData method, and then
-   accessed through and @a Wopi.getPData.
+   Persistent data can be created through the @a Wopi.setContextData method, and then
+   accessed through and @a Wopi.getContextData.
    
-   @code
+   @code   	  
       class MyClass
          file = nil
          
          init
             file = IOStream( "some file" )
          end
+      end      
+      
+      // when the module starts...
+      ctxDataId = "The common MyClass"
+      
+      try
+      	inst = WOPI.getContextData( ctxDataId )
+      catch ContextDataError       
+      	inst = MyClass()
+      	Wopi.setContextData( ctxDataId, inst )
       end
       
-      Wopi.setPData( "The common MyClass", MyClass() )
-      
-      // later on ...
-      inst = Wopi.getPData( "The common MyClass" )
-      inst.file.writeString( "Hello world!" )
+      // later on ...      
+      inst.file.write( "New entry" )
    @endcode
    
-   The @a Wopi.getPData method has an extra parameter that can be used to create the
-   object on the fly if it has still not been initialized for this process:
+   The @a WOPI.getContextData method has an extra parameter, wich gets
+   evaluated in case the context data has not been initialized yet.
+    
+   This can be used to pass a code or a function creating the context data
+   on the fly, in case it has still not been initialized:
    
    @code
       // open the file or reuse it...
-      inst = Wopi.getPData( "The common MyClass", {=> return MyClass()} )
+      ctxDataId = "The common MyClass"
+      inst = Wopi.getContextData( ctxDataId, {=> return MyClass()} )
       
       // continue to use the already open file...
       inst.file.writeString( "Hello world!" )

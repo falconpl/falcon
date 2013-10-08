@@ -30,27 +30,6 @@
 #define FALCON_ERROR_WOPI_APPDATA_DESER      (FALCON_ERROR_WOPI_BASE + 3 )
 #define FALCON_ERROR_WOPI_SESS_INVALID_ID    (FALCON_ERROR_WOPI_BASE + 4 )
 
-namespace Falcon {
-namespace WOPI {
-
-class WopiError: public ::Falcon::Error
-{
-public:
-   WopiError():
-      Error( "WopiError" )
-   {}
-
-   WopiError( const ErrorParam &params  ):
-      Error( "WopiError", params )
-      {}
-};
-
-
-void InitErrorClass( Module* self );
-
-}
-}
-
 #endif
 
 /* end of error_ext.h */

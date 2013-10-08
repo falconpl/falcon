@@ -19,12 +19,29 @@
 #define FALCON_WOPI_EXT_H
 
 #include <falcon/module.h>
+#include <falcon/class.h>
 
 namespace Falcon{
 namespace WOPI {
 
-Falcon::Module *wopi_module_init( ObjectFactory rqf, ObjectFactory rpf,
-      ext_func_t rq_init_func=0, ext_func_t rp_init_func=0  );
+class WOPI;
+
+#define FALCON_WOPI_PDATADIR_PROP "pDataDir"
+#define FALCON_WOPI_MAXMEMUPLOAD_PROP "maxMemUpload"
+#define FALCON_WOPI_TEMPDIR_PROP "tempDir"
+#define FALCON_WOPI_SCRIPTNAME_PROP "scriptName"
+#define FALCON_WOPI_SCRIPTPATH_PROP "scriptPath"
+
+class ClassWOPI: public Class
+{
+public:
+   ClassWOPI();
+   virtual ~ClassWOPI();
+
+   virtual void dispose( void* instance ) const;
+   virtual void* clone( void* instance ) const;
+   virtual void* createInstance() const;
+};
 
 }
 }

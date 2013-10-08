@@ -29,11 +29,8 @@
 namespace Falcon {
 namespace WOPI {
 
-#define FALCON_WOPI_MAXMEMUPLOAD_ATTRIB "wopi_maxMemUpload"
-#define FALCON_WOPI_TEMPDIR_ATTRIB "wopi_tempDir"
 
 class SessionManager;
-class CoreRequest;
 class Reply;
 
 class Request
@@ -57,15 +54,11 @@ public:
    //! Parses the body.
    bool parseBody( Stream* input );
 
-   /** Create a generic usage temporary file. */
-   Stream* makeTempFile( String& fname, int64& le );
+   /** Create a generic usage temporary file.
+    \throw IoError on error.
+    * */
+   Stream* makeTempFile( String& fname );
 
-   //=========================================================
-   // Overridable
-   //
-
-   virtual const String& getTempPath() const { return m_sTempPath; }
-   virtual int64 getMemoryUpload() const { return m_nMaxMemUpload; }
 
    //=========================================================
 
@@ -101,12 +94,6 @@ public:
    const PartHandler& partHandler() const { return m_MainPart; }
    PartHandler& partHandler() { return m_MainPart; }
 
-   //! Sets the maximum size that for uploading a part.
-   void setMaxMemUpload( int64 mm ) { m_nMaxMemUpload = mm; }
-
-   //! Sets the location for temporary files.
-   void setUploadPath( const String& path ) { m_sTempPath = path; }
-
    /** Adds a temporary file.
       The VM tries to delete all the temporary files during its destructor.
       On failure, it ingores the problem and logs an error in Apache.
@@ -140,10 +127,39 @@ public:
    void startedAt( Falcon::numeric t ) { m_startedAt = t; }
    Falcon::numeric startedAt() const { return m_startedAt; }
 
-   CoreDict* gets() const { return m_gets; }
-   CoreDict* posts() const { return m_posts; }
-   CoreDict* cookies() const { return m_cookies; }
-   CoreDict* headers() const { return m_headers; }
+   ItemDict* gets() const { return m_gets; }
+   ItemDict* posts() const { return m_posts; }
+   ItemDict* cookies() const { return m_cookies; }
+   ItemDict* headers() const { return m_headers; }
+
+   void gcMark( uint32 m );
+   inline uint32 currentMark() const { return m_mark; }
+
+   /** Get the session manager. */
+   SessionManager* smgr() const { return m_sm; }
+
+   /** Override this to be called back at first usage.
+
+       Also, set m_bPostInit to true; in this way, this
+       virtual function will be called back the first time
+       setProperty or getProperty is called on this object.
+    */
+   virtual void postInit() {}
+
+   /** Adds uploaded parts and process multipart fields if the request has a multipart body.
+
+       This should ALWAYS be called after the process is fully parsed to
+       translate each parts into script-available objects.
+
+       \return true If the request has a multipart body.
+   */
+   virtual bool processMultiPartBody();
+
+   virtual Request *clone() const;
+
+   inline bool autoSession() const { return m_bAutoSession; }
+
+   inline void provider( const String& s ) { m_provider = s; }
 
    // Generic request informations
    String m_protocol;
@@ -177,14 +193,17 @@ protected:
    // generate the headers when first requested.
    void makeHeaders();
 
+   //! Creates an uploaded element (in the post fields) out of the data in partHandler
+   void addUploaded( PartHandler* ph, const String& prefix = "" );
+
    // Create the headers in a canonical form
    //CoreDict* makeCanonicalHeaders();
 
    // dictionaries
-   CoreDict* m_gets;
-   CoreDict* m_posts;
-   CoreDict* m_cookies;
-   CoreDict* m_headers;
+   ItemDict* m_gets;
+   ItemDict* m_posts;
+   ItemDict* m_cookies;
+   ItemDict* m_headers;
 
    String m_sSessionField;
 
@@ -205,115 +224,17 @@ protected:
    // Used to remember which files to delete at end.
    TempFileEntry *m_tempFiles;
 
-   String m_sTempPath;
-   int64 m_nMaxMemUpload;
-
    uint32 m_nSessionToken;
 
    Falcon::numeric m_startedAt;
 
-   friend class CoreRequest;
-
-   GCLock* m_lockGets;
-   GCLock* m_lockPosts;
-   GCLock* m_lockHeaders;
-   GCLock* m_lockCookies;
-};
-
-
-/** Script side Request wrapper.
-
-    This class implements a Request object as seen by the Falcon script side.
-
-    It's mainly a wrapper for Request class with some utilities for the
-    falcon scripts using it.
-
-    A Request can be created elsewhere and passed to this class via
-    its init() method, or this class will create its own Request at init().
- */
-class CoreRequest: public CoreObject
-{
-public:
-
-   CoreRequest( const CoreClass* base );
-   virtual ~CoreRequest();
-
-   /** Construct this object after the initial creation.
-
-       This allows to build the object after it has been pre-created
-       by the virtual machine.
-
-       @param upd The coreclass serving as the generator
-    */
-   void init( CoreClass* upd, Reply* reply, SessionManager* sm, Request* r=0 );
-
-   Request* base() const { return m_base; }
-
-   /** Override this to be called back at first usage.
-
-       Also, set m_bPostInit to true; in this way, this
-       virtual function will be called back the first time
-       setProperty or getProperty is called on this object.
-    */
-   virtual void postInit() {}
-
-   /** Adds uploaded parts and process multipart fields if the request has a multipart body.
-
-       This should ALWAYS be called after the process is fully parsed to
-       translate each parts into script-available objects.
-
-       \return true If the request has a multipart body.
-   */
-   virtual bool processMultiPartBody();
-
-   /** Configure this request using the given module.
-
-      Uses the given module attributes to configure:
-      - The temporary upload path (cgi_tempDir).
-      - The maximum upload did size (cgi_maxMemUpload).
-   */
-   void configFromModule( const Module* mod );
-
-   //=====================================================
-   // Utilities for script
-   //
-
-   /** Get the session manager. */
-   SessionManager* smgr() const { return m_sm; }
-
-   //=====================================================
-   // Overrides from CoreObject
-   //
-
-   virtual CoreObject *clone() const;
-   virtual bool setProperty( const String &prop, const Item &value );
-   virtual bool getProperty( const String &prop, Item &value ) const;
-   virtual void gcMark( uint32 mark );
-
-   static CoreObject* factory( const Falcon::CoreClass* cls, void* ud, bool bDeser );
-
-   Reply* reply() const { return m_reply; }
-
-   bool autoSession() const { return m_bAutoSession; }
-
-   void provider( const String& s ) { m_provider = s; }
-
-protected:
-   //! Creates an uploaded element (in the post fields) out of the data in partHandler
-   void addUploaded( PartHandler* ph, const String& prefix = "" );
+   uint32 m_mark;
 
    String m_provider;
-
    SessionManager* m_sm;
-   CoreClass* m_upld_c;
    bool m_bPostInit;
-
-   Request* m_base;
-   Reply* m_reply;
-
    bool m_bAutoSession;
 };
-
 
 }
 }

@@ -18,10 +18,8 @@
 #include <falcon/setup.h>
 
 #include <falcon/string.h>
-#include <falcon/carray.h>
-#include <falcon/coredict.h>
-#include <falcon/cclass.h>
-#include <falcon/lineardict.h>
+#include <falcon/itemdict.h>
+#include <falcon/itemarray.h>
 #include <falcon/uri.h>
 #include <falcon/vm.h>
 
@@ -43,68 +41,97 @@ namespace Utils {
 
 void fieldsToUriQuery( const ItemDict& fields, String& target )
 {
-   Iterator iter( const_cast<ItemDict*>(&fields) );
-
-   while( iter.hasCurrent() )
+   class Rator: public ItemDict::Enumerator
    {
-      if( target.size() != 0 )
-        target += "&";
 
-      String name, value;
-      if( iter.getCurrentKey().isString() )
+   public:
+      Rator( String& tgt ):
+         m_target(tgt)
+      {}
+
+      virtual ~Rator() {}
+
+      virtual void operator()( const Item& key, Item& value )
       {
-         URI::URLEncode( *iter.getCurrentKey().asString(), name );
-
-         if( iter.getCurrent().isString() )
+         if( m_target.size() != 0 )
          {
-            URI::URLEncode( *iter.getCurrent().asString(), value );
-            target += name + "=" + value;
+            m_target += "&";
          }
-         else if( iter.getCurrent().isArray() )
-         {
-            CoreArray* arr = iter.getCurrent().asArray();
-            for( uint32 i = 0; i < arr->length(); ++i )
-            {
-               Item& str = arr->at(i);
 
-               if( str.isString() )
+         String sName, sValue;
+         if( key.isString() )
+         {
+            URI::URLEncode( *key.asString(), sName );
+
+            if( value.isString() )
+            {
+               URI::URLEncode( *value.asString(), sValue );
+               target += sName + "=" + sValue;
+            }
+            else if( value.isArray() )
+            {
+               ItemArray* arr = value.asArray();
+               for( uint32 i = 0; i < arr->length(); ++i )
                {
-                  URI::URLEncode( *str.asString(), value );
-                  target += name + "[]=" + value;
+                  Item& str = arr->at(i);
+
+                  if( str.isString() )
+                  {
+                     URI::URLEncode( *str.asString(), sValue );
+                     target += sName + "[]=" + sValue;
+                  }
                }
             }
-         }
 
-         // else, just drop the value
+            // else, just drop the value
+         }
       }
 
-      iter.next();
-   }
+      String& m_target;
+   };
+
+   Rator rator(target);
+
+   fields.enumerate(rator);
 }
+
 
 void dictAsInputFields( String& fwd, const ItemDict& items )
 {
-   Falcon::Iterator iter( const_cast<ItemDict*>(&items) );
-   while ( iter.hasCurrent() )
+   class Rator: public ItemDict::Enumerator
    {
-      const Falcon::Item &key = iter.getCurrentKey();
-      const Falcon::Item &value = iter.getCurrent();
 
-      if ( key.isString() && value.isString() )
+   public:
+      Rator( String& tgt ):
+         m_target(tgt)
+      {}
+
+      virtual ~Rator() {}
+
+      virtual void operator()( const Item& key, Item& value )
       {
-         fwd += "<input type=\"hidden\" name=\"";
-         htmlEscape( *key.asString(), fwd );
-         fwd += "\" value=\"";
-         htmlEscape( *value.asString(), fwd );
-         fwd += "\"/>\n";
+         if ( key.isString() && value.isString() )
+         {
+            m_target += "<input type=\"hidden\" name=\"";
+            htmlEscape( *key.asString(), m_target );
+            m_target += "\" value=\"";
+            htmlEscape( *value.asString(), m_target );
+            m_target += "\"/>\n";
+         }
       }
 
-      iter.next();
-   }
+      String& m_target;
+   };
+
+   Rator rator(fwd);
+   items.enumerate(rator);
 }
+
 
 void htmlEscape( const String& str, String& fwd )
 {
+   fwd.reserve(str.length());
+
    for ( Falcon::uint32 i = 0; i < str.length(); i++ )
    {
      Falcon::uint32 chr = str[i];
@@ -114,21 +141,11 @@ void htmlEscape( const String& str, String& fwd )
         case '>': fwd.append( "&gt;" ); break;
         case '"': fwd.append( "&quot;" ); break;
         case '&': fwd.append( "&amp;" ); break;
-        default:
-           fwd.append( chr );
+        default: fwd.append( chr ); break;
      }
    }
 }
 
-CoreObject* makeURI( const URI& uri )
-{
-   VMachine* vm = VMachine::getCurrent();
-   Item* i_uric = vm->findGlobalItem("URI");
-   fassert( i_uric != 0 );
-   fassert( i_uric->isClass() );
-
-   return i_uric->asClass()->createInstance( new URI(uri), false );
-}
 
 void parseQuery( const String &query, ItemDict& dict )
 {
@@ -165,7 +182,7 @@ void parseQueryEntry( const String &query, ItemDict& dict )
 {
    bool proceed = false;
    String key;
-   CoreString& value = *(new CoreString);
+   String value;
 
    // get the =
    uint32 poseq = query.find( "=" );
@@ -188,12 +205,11 @@ void parseQueryEntry( const String &query, ItemDict& dict )
       }
    }
 
-   key.trim();
-
    if ( proceed )
    {
+      key.trim();
       value.bufferize();
-      addQueryVariable( key, &value, dict );
+      addQueryVariable( key, Item(value.handler(), &value), dict );
    }
 }
 
@@ -203,7 +219,7 @@ void addQueryVariable( const String &key, const Item& value, ItemDict& dict )
    // is this a dictionary?
    if( ! key.endsWith("[]") )
    {
-      dict.put( new CoreString(key), value );
+      dict.insert( FALCON_GC_HANDLE(new String(key)), value );
    }
    else
    {
@@ -216,16 +232,16 @@ void addQueryVariable( const String &key, const Item& value, ItemDict& dict )
          if ( ! arr->isArray() )
          {
             Item* temp = arr;
-            *arr = new CoreArray;
+            *arr = FALCON_GC_HANDLE(new ItemArray);
             arr->asArray()->append( *temp );
          }
          arr->asArray()->append( value );
       }
       else
       {
-         CoreArray *carr = new CoreArray;
+         ItemArray *carr = new ItemArray;
          carr->append( value );
-         dict.put( new CoreString( short_key ), carr );
+         dict.insert( FALCON_GC_HANDLE(new String( short_key )), FALCON_GC_HANDLE(carr) );
       }
    }
 }

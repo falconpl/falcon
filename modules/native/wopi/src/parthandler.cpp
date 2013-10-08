@@ -20,7 +20,6 @@
 #include <falcon/wopi/utils.h>
 #include <falcon/stringstream.h>
 #include <falcon/fstream.h>
-#include <falcon/membuf.h>
 
 #include <cstring>
 
@@ -262,23 +261,6 @@ bool PartHandler::getMemoryData( String& target )
    if( m_str_stream != 0 )
    {
       m_str_stream->closeToString( target );
-      delete m_str_stream;
-      m_str_stream = 0;
-      m_stream = 0;
-      return true;
-   }
-
-   return false;
-}
-
-bool PartHandler::getMemoryData( MemBuf& target )
-{
-   if( m_str_stream != 0 )
-   {
-      int64 pos = m_str_stream->tell();
-      byte* data = m_str_stream->closeToBuffer();
-      target.setData( data, (uint32) pos, free( );
-
       delete m_str_stream;
       m_str_stream = 0;
       m_stream = 0;
