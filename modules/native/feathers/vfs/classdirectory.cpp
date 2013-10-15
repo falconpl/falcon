@@ -148,7 +148,7 @@ static void descend_next_apply_(const PStep* , VMContext* ctx)
       throw FALCON_SIGN_XERROR( CodeError, e_stackuf, .extra("Corruption in Directory.descend()") );
    }
 
-   URICarrier* uric = static_cast<URICarrier*>(ctx->local(0)->asInst());
+   URI* uric = static_cast<URI*>(ctx->local(0)->asInst());
 
    // get the topmost directory we're working on -- if not nil
    while( ! ctx->topData().isNil() )
@@ -162,13 +162,12 @@ static void descend_next_apply_(const PStep* , VMContext* ctx)
       else
       {
          // ok, we have a file. Is it a file or a directory?
-         uric->m_path.fulloc(dir->path().path());
-         uric->m_path.fileext(fname);
-         uric->m_uri.path(uric->m_path.encode());
-         if( (fname != "." && fname != "..") && vfs->fileType(uric->m_uri, true) == FileStat::_dir )
+         uric->path().fulloc(dir->uri().path().encode());
+         uric->path().file(fname);
+         if( (fname != "." && fname != "..") && vfs->fileType(*uric, true) == FileStat::_dir )
          {
             // then, open it and ready it for next loop
-            Directory* dir = vfs->openDir(uric->m_uri);
+            Directory* dir = vfs->openDir(*uric);
             ctx->pushData( FALCON_GC_STORE( ctx->self().asClass(), dir ) );
          }
          // anyhow, call our callback with our uri
@@ -218,9 +217,8 @@ void Function_descend::invoke( Falcon::VMContext* ctx, int )
    ctx->addLocals(3);
    // the first var is our (varying) uri.
    VFSModule* vfs = static_cast<VFSModule*>( ctx->self().asClass()->module() );
-   URICarrier* uric = new URICarrier();
-   uric->m_uri = dir->path();
-   uric->m_auth.parse(uric->m_uri.auth());
+   URI* uric = new URI;
+   *uric = dir->uri();
    *ctx->local(0) = FALCON_GC_STORE( vfs->uriClass(), uric );
 
    // we'll use local 1 as a marker that we're done, leaving it nil
@@ -230,9 +228,7 @@ void Function_descend::invoke( Falcon::VMContext* ctx, int )
    ctx->pushCode( &m_next );
 
    // call the method with the first entry
-   uric->m_path.fulloc(uric->m_uri.path());
-   uric->m_path.fileext(dir->next());
-   uric->m_uri.path(uric->m_path.encode());
+   uric->path().file(dir->next());
 
    Item ci( vfs->uriClass(), uric );
    ctx->callItem( *i_callable, 1, &ci );
@@ -245,8 +241,8 @@ static void get_uri( const Class* cls, const String&, void *instance, Item& valu
 {
    VFSModule* vfs = static_cast<VFSModule*>(cls->module());
    Directory* dir = static_cast<Directory*>(instance);
-   URICarrier* uric = new URICarrier();
-   uric->m_uri = dir->path();
+   URI* uric = new URI();
+   *uric = dir->uri();
    value = FALCON_GC_STORE(vfs->uriClass(), uric );
 }
 

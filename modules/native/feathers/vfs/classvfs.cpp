@@ -57,13 +57,8 @@ URI* ClassVFS::internal_get_uri( Item* i_uri, URI& tempURI, Module* mod )
       return 0;
    }
 
-   URICarrier* uricar = static_cast<URICarrier*>(cls->getParentData( vfsMod->uriClass(), data ));
-   if( uricar != 0 )
-   {
-      return &uricar->m_uri;
-   }
-
-   return 0;
+   URI* uricar = static_cast<URI*>(cls->getParentData( vfsMod->uriClass(), data ));
+   return uricar;
 }
 
 

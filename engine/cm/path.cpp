@@ -138,7 +138,7 @@ static void set_file( const Class*, const String&, void* instance, const Item& v
          .extra("S") );
    }
 
-   if( ! static_cast<PathCarrier*>(instance)->m_path.file(*value.asString()) )
+   if( ! static_cast<PathCarrier*>(instance)->m_path.filename(*value.asString()) )
    {
       throw new ParamError( ErrorParam( e_malformed_uri, __LINE__, SRC ) );
    }
@@ -147,7 +147,7 @@ static void set_file( const Class*, const String&, void* instance, const Item& v
    
 static void get_file( const Class*, const String&, void* instance, Item& value )
 {
-   value = FALCON_GC_HANDLE( new String(static_cast<PathCarrier*>(instance)->m_path.file()));
+   value = FALCON_GC_HANDLE( new String(static_cast<PathCarrier*>(instance)->m_path.filename()));
 }
 
 
@@ -179,7 +179,7 @@ static void set_filext( const Class*, const String&, void* instance, const Item&
          .extra("S") );
    }
 
-   if( ! static_cast<PathCarrier*>(instance)->m_path.fileext(*value.asString()) )
+   if( ! static_cast<PathCarrier*>(instance)->m_path.file(*value.asString()) )
    {
       throw new ParamError( ErrorParam( e_malformed_uri, __LINE__, SRC ) );
    }
@@ -188,7 +188,7 @@ static void set_filext( const Class*, const String&, void* instance, const Item&
 
 static void get_filext( const Class*, const String&, void* instance, Item& value )
 {
-   value = FALCON_GC_HANDLE( new String(static_cast<PathCarrier*>(instance)->m_path.fileext()));
+   value = FALCON_GC_HANDLE( new String(static_cast<PathCarrier*>(instance)->m_path.file()));
 }
 
 

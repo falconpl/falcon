@@ -23,32 +23,7 @@
 #include <falcon/path.h>
 
 namespace Falcon {
-
-class FALCON_DYN_CLASS URICarrier
-{
-public:
-   URI m_uri;
-   Path m_path;
-   URI::Authority m_auth;
-   URI::Query m_query;
-   uint32 m_mark;
-
-   URICarrier():
-      m_mark(0)
-   {}
-   
-   URICarrier( const URICarrier& other ):
-      m_uri( other.m_uri ),
-      m_mark(0)
-   {}
-   
-   ~URICarrier()
-   {      
-   }
-};
-
 namespace Ext {
-
 
 class FALCON_DYN_CLASS ClassURI: public Class
 {

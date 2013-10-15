@@ -41,12 +41,17 @@ public:
    {
    public:      
       /** Creates an autority with all the fields empty. */
-      Authority()
-      {}
-      
-      /** Creates an autority with all the fields empty. */
-      Authority( const String& value )
+      Authority( URI* owner = 0 )
       {
+         m_owner = owner;
+      }
+      
+      void ownerURI( URI* owner );
+
+      /** Creates an autority with all the fields empty. */
+      Authority( const String& value, URI* owner = 0 )
+      {
+         m_owner = owner;
          parse(value);
       }
       
@@ -61,16 +66,15 @@ public:
          m_password( pwd ),
          m_host( host ),
          m_port( port ),
-         m_encoded("@")
+         m_encoded("@"),
+         m_owner(0)
       {}
       
       Authority( const Authority& other ):
-         m_user( other.m_user ),
-         m_password( other.m_password ),
-         m_host( other.m_host ),
-         m_port( other.m_port ),
-         m_encoded( other.m_encoded )      
-      {}
+         m_owner(0)
+      {
+         copy( other );
+      }
       
       /** The user part of this authority. */
       const String& user() const { return m_user; }
@@ -82,13 +86,13 @@ public:
       const String& port() const { return m_port; }
 
       /** Changes the user part of this authority. */
-      void user( const String& value ) { m_encoded = "@"; m_user = value; }
+      void user( const String& value );
       /** The password part of this authority. */
-      void password( const String& value  ) { m_encoded = "@"; m_password = value; }
+      void password( const String& value  );
       /** The host part of this authority. */
-      void host( const String& value  ) { m_encoded = "@"; m_host = value; }
+      void host( const String& value  );
       /** The port part of this authority. */
-      void port( const String& value  ) { m_encoded = "@"; m_port = value; }
+      void port( const String& value  );
       
      /** Parse an authority string.
       \param uriAuth The source string considered an authority.
@@ -96,9 +100,20 @@ public:
       */       
      bool parse( const String& uriAuth );
      
+     void clear();
+
      /** Returns the encoded elements of this authority. */
      const String& encode() const;
      
+     void copy( const Authority& other );
+
+     Authority& operator=( const Authority& other ) { copy(other); return *this; }
+     Authority& operator=( const String& other ) { parse(other); return *this; }
+
+
+     /** True if none of the fields of the authority part are filled. */
+     inline bool empty() const { return m_user.empty() && m_password.empty() && m_host.empty() && m_port.empty(); }
+
    private:
       String m_user;
       String m_password;
@@ -106,6 +121,7 @@ public:
       String m_port;
 
       mutable String m_encoded;
+      URI* m_owner;
    };
    
    
@@ -114,9 +130,12 @@ public:
    class FALCON_DYN_CLASS Query
    {
    public:
-      Query();
+      Query( URI* owner = 0 );
+      Query( const Query& query );
       ~Query();
       
+      void ownerURI( URI* owner );
+
       /** Parse an authority string.
       \param uriAuth The source string considered an authority.
       */    
@@ -143,6 +162,13 @@ public:
        */
       void clear();
 
+      inline bool empty() const { return size() == 0; }
+
+      Query& operator=( const Query& other ) { copy(other); return *this; }
+      Query& operator=( const String& other ) { parse(other); return *this; }
+
+      void copy( const Query& other );
+
       /** Class used to enumerate key/value pairs.
        */
       class KeyValue
@@ -167,6 +193,7 @@ public:
          class Private;
          Private* _p;
 
+         URI* m_owner;
          mutable  String m_encoded;
       };
 
@@ -190,9 +217,10 @@ public:
     tests will be performed and validity will be granted only if all the required
     parts can be properly parsed.
    */
-   URI( const String &suri, Authority* auth = 0, Path* path = 0, Query* query = 0 )
+   URI( const String &suri ):
+      m_gcMark(0)
    {
-      m_bValid = parse( suri, auth, path, query );
+      m_bValid = parse( suri );
    }
 
    /** Copy constructor.
@@ -220,7 +248,7 @@ public:
       \param newUri the new URI to be parsed.     
       \return true on success, false if the given string is not a valid URI.
    */
-   bool parse( const String &newUri, Authority* auth = 0, Path* path = 0, Query* query = 0 );
+   bool parse( const String &newUri );
 
    
    /** Normalzies the URI sequence.
@@ -258,41 +286,28 @@ public:
    /** Returns the current path.
     \note The returned string is still URL encoded.
     */
-   const String& auth() const { return m_authority; }
+   const Authority& auth() const { return m_authority; }
+   Authority& auth() { return m_authority; }
    
    /** Sets a different path for this URI.
       \param value A valid (and already escaped) uri path.
       This will invalidate current URI until next uri() is called.
    */
-   void auth( const String &value ) { m_encoded = "@"; m_authority = value; }
+   void auth( const String &value );
+   void auth( const Authority& other );
    
    
    /** Returns the current path.
     \note The returned string is still URL encoded.
     */
-   const String& path() const { return m_path; }
-   
-   /** Sets a different path for this URI.
-      \param value A valid (and already escaped) uri path.
-      This will invalidate current URI until next uri() is called.
-   */
-   void path( const String &value ) { m_encoded = "@"; m_path = value; }
+   const Path& path() const { return m_path; }
+   Path& path() { return m_path; }
    
    /** Returns the current query string.
     \note The returned string is still URL encoded.
     */
-   const String& query() const { return m_query; }
-   
-   /** Sets a different path for this URI.
-      \param value A valid (and already escaped) uri query string.
-      This will invalidate current URI until next uri() is called.
-      
-    \note This method may corrupt the validity of the URI, if not properly
-    used. Consider using URIQuery class to generate correctly formatted 
-    qery strings.
-   */
-   void query( const String &value ) { m_encoded = "@"; m_query = value; }
-   
+   const Query& query() const { return m_query; }
+   Query& query() { return m_query; }
    
    /** Returns the fragment part. */
    const String &fragment() const { return m_fragment; }
@@ -301,7 +316,7 @@ public:
     \param value A valid (and already escaped) uri path.
       This will invalidate current URI until next encode() is called.
     */
-   void fragment( const String &value ) { m_encoded = "@"; m_query = value; }
+   void fragment( const String &value ) { m_encoded = "@"; m_fragment  = value; }
 
    /** Clears the content of this URI */
    void clear();
@@ -313,6 +328,8 @@ public:
 
    /** Returns true if the URI is valid. */
    bool isValid() const { return m_bValid; }
+
+   void invalidate() { m_encoded = "@"; }
       
    static void URLEncode( const String &source, String &target );
    static String URLEncode( const String &source )
@@ -376,24 +393,31 @@ public:
    inline static bool isSubDelim( uint32 chr );
 
    /** Unreserved characters under RFC3986 */
-   inline static bool isUnreserved( uint32 chr );        
+   inline static bool isUnreserved( uint32 chr );
    
+   void gcMark( uint32 mark ) { m_gcMark = mark; }
+   uint32 currentMark() const { return m_gcMark; }
+
+   void copy( const URI& other );
+   URI& operator=( const URI& other ) { copy(other); return *this; }
+   URI& operator=( const String& other ) { parse(other); return *this; }
+
 private:
    /** False if this URI is not valid. */
    bool m_bValid;
 
    /** URI scheme (e.g. http) */
    String m_scheme;   
-   String m_authority;
-   String m_path;
-   String m_query;
+   Authority m_authority;
+   Path m_path;
+   Query m_query;
    String m_fragment;
    
-
    /** The final normalized and encoded URI. */
    mutable String m_encoded;    
+   int32 m_gcMark;
    
-   bool internal_parse( const String &newUri );
+   bool internal_parse( const String &newUri, String &sAuth, String &sPath, String &sQuery );
 };
 
 //==================================================

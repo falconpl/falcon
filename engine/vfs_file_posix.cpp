@@ -67,7 +67,7 @@ void Directory_file::close()
       {
          throw new IOError(ErrorParam(e_io_close, __LINE__,__FILE__ )
             .extra("::closedir")
-            .sysError(errno) );
+            .sysError((uint32)errno) );
       }
 
       m_dir = 0;
@@ -83,7 +83,7 @@ bool Directory_file::read( String& tgt )
    {
       throw new IOError(ErrorParam(e_io_close, __LINE__,__FILE__ )
          .extra("::closedir")
-         .sysError(errno) );
+         .sysError((uint32)errno) );
    }
 
    if( res == 0 )
@@ -115,7 +115,7 @@ Stream *VFSFile::open( const URI& uri, const OParams &p )
    int omode = paramsToMode( p );
 
    // todo: do something about share mode
-   AutoCString cfilename( uri.path() );
+   AutoCString cfilename( uri.path().encode() );
 
    errno = 0;
    int handle = ::open( cfilename.c_str(), omode );
@@ -126,8 +126,8 @@ Stream *VFSFile::open( const URI& uri, const OParams &p )
    }
 
    throw new IOError( ErrorParam( e_io_error, __LINE__, __FILE__ )
-                     .extra( uri.path() )
-                     .sysError(errno));
+                     .extra( uri.path().encode() )
+                     .sysError((uint32) errno));
 }
 
 
@@ -145,7 +145,7 @@ Stream *VFSFile::create( const URI& uri, const CParams &p )
       omode |= O_EXCL;
 
    //TODO: something about sharing
-   AutoCString cfilename( uri.path() );
+   AutoCString cfilename( uri.path().encode() );
    errno=0;
 
    int handle = ::open( cfilename.c_str(), O_CREAT | omode, DEFAULT_CREATE_MODE );
@@ -164,22 +164,22 @@ Stream *VFSFile::create( const URI& uri, const CParams &p )
    }
 
    throw new IOError( ErrorParam( e_io_error, __LINE__, __FILE__ )
-                     .extra( uri.path() )
-                     .sysError(errno));
+                     .extra( uri.path().encode() )
+                     .sysError((uint32)errno));
 }
 
 
 Directory* VFSFile::openDir( const URI& uri )
 {
-   AutoCString filename( uri.path() );
+   AutoCString filename( uri.path().encode() );
 
    DIR *dir = ::opendir( filename.c_str() );
    if ( dir == 0 ) {
       throw new IOError( ErrorParam( e_io_error, __LINE__, __FILE__ )
-                     .sysError(errno));
+                     .sysError((uint32)errno));
    }
 
-   return new Directory_file( uri.path(), dir );
+   return new Directory_file( uri.path().encode(), dir );
 }
 
 
@@ -228,7 +228,7 @@ bool VFSFile::readStats( const URI& uri, FileStat &sts, bool )
       }
 
       throw new IOError( ErrorParam( e_io_error, __LINE__, __FILE__ )
-                     .sysError(errno));
+                     .sysError((uint32)errno));
    }
 
    sts.size(fs.st_size);
@@ -266,33 +266,33 @@ bool VFSFile::readStats( const URI& uri, FileStat &sts, bool )
 
 void VFSFile::erase( const URI &uri )
 {
-   AutoCString filename( uri.path() );
+   AutoCString filename( uri.path().encode() );
    if( ::unlink( filename.c_str() ) != 0 )
    {
       // try with rmdir
       if( ::rmdir( filename.c_str() ) != 0 )
       {
          throw new IOError( ErrorParam( e_io_error, __LINE__, __FILE__ )
-                     .sysError(errno));
+                     .sysError((uint32)errno));
       }
    }
 }
 
 void VFSFile::move( const URI &suri, const URI &duri )
 {
-   AutoCString filename( suri.path() );
-   AutoCString dest( duri.path() );
+   AutoCString filename( suri.path().encode() );
+   AutoCString dest( duri.path().encode() );
    if( ::rename( filename.c_str(), dest.c_str() ) != 0 )
    {
       throw new IOError( ErrorParam( e_io_error, __LINE__, __FILE__ )
-                     .sysError(errno));
+                     .sysError((uint32)errno));
    }
 }
 
 
 void VFSFile::mkdir( const URI &uri, bool descend )
 {
-   String strName = uri.path();
+   String strName = uri.path().encode();
 
    if ( descend )
    {
@@ -313,7 +313,7 @@ void VFSFile::mkdir( const URI &uri, bool descend )
             AutoCString filename( strPath );
             if( ::mkdir( filename.c_str(), DEFAULT_CREATE_MODE ) != 0 )
             {
-               throw new IOError( ErrorParam( e_io_creat, __LINE__, __FILE__ ).sysError( errno ));
+               throw new IOError( ErrorParam( e_io_creat, __LINE__, __FILE__ ).sysError((uint32) errno ));
             }
          }
 
@@ -331,7 +331,7 @@ void VFSFile::mkdir( const URI &uri, bool descend )
       AutoCString filename( strName );
       if( ::mkdir( filename.c_str(), DEFAULT_CREATE_MODE ) != 0 )
       {
-         throw new IOError( ErrorParam( e_io_creat, __LINE__, __FILE__ ).sysError( errno ));
+         throw new IOError( ErrorParam( e_io_creat, __LINE__, __FILE__ ).sysError( (uint32)errno ));
       }
    }
 }

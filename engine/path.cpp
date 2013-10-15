@@ -25,7 +25,8 @@ namespace Falcon
 {
 
 Path::Path():
-   m_bValid( true )
+   m_bValid( true ),
+   m_owner(0)
 {
 }
 
@@ -38,10 +39,18 @@ void Path::copy( const Path &other )
 
    m_device = other.m_device;
    m_location = other.m_location;
-   m_file = other.m_file;
+   m_filename = other.m_filename;
    m_extension = other.m_extension;
+   if( m_owner != 0 )
+   {
+      m_owner->invalidate();
+   }
 }
 
+void Path::ownerURI( URI* owner )
+{
+   m_owner = owner;
+}
 
 void Path::clear()
 {
@@ -52,8 +61,13 @@ void Path::clear()
 
    m_device.size(0);
    m_location.size(0);
-   m_file.size(0);
+   m_filename.size(0);
    m_extension.size(0);
+
+   if( m_owner != 0 )
+   {
+      m_owner->invalidate();
+   }
 }
 
 
@@ -66,20 +80,24 @@ void Path::encode_internal() const
 
    if ( m_extension.size() > 0 )
    {
-      m_filename = m_file + "." + m_extension; 
+      m_fileext = m_filename + "." + m_extension;
    }
    else
    {
-      m_filename = m_file;
+      m_fileext = m_filename;
    }
    
-   if( m_encoded.size() > 0 && m_encoded.getCharAt( m_encoded.length() - 1 ) != ':' )
+   if( m_encoded.size() > 0 )
    {
-      // it's right for a location to terminate with /
-      m_encoded += "/";
+      char_t lastChar = m_encoded.getCharAt( m_encoded.length() - 1 );
+      if( lastChar != ':' && lastChar != '/' )
+      {
+         // it's right for a location to terminate with /
+         m_encoded += "/";
+      }
    }
    
-   m_encoded += m_filename;
+   m_encoded += m_fileext;
 }
 
 
@@ -115,12 +133,12 @@ bool Path::parse( const String &path )
 
             bColon = true;
             m_location.size(0); // prevent storing the intial "/"
-            m_device = m_filename;
-            m_filename.size(0);
+            m_device = m_fileext;
+            m_fileext.size(0);
             break;
 
          case '/':
-            if ( m_filename.size() == 0 )
+            if ( m_fileext.size() == 0 )
             {
                if( m_location.size() == 0 )
                   m_location = "/";
@@ -130,28 +148,29 @@ bool Path::parse( const String &path )
             else {
                if ( m_location.size() != 0 && m_location.getCharAt( m_location.length() - 1 ) != '/' )
                   m_location.append( '/' );
-               m_location += m_filename;
-               m_filename.size(0);
+               m_location += m_fileext;
+               m_fileext.size(0);
             }
             break;
 
          default:
-            m_filename.append( chr );
+            m_fileext.append( chr );
+            break;
       }
 
       p++;
    }
 
    // detect if we have an extension
-   uint32 pos = m_filename.rfind( '.' );
+   uint32 pos = m_fileext.rfind( '.' );
    if ( pos > 0 && pos != String::npos )
    {
-      m_extension = m_filename.subString( pos + 1 );
-      m_file = m_filename.subString(0, pos);
+      m_extension = m_fileext.subString( pos + 1 );
+      m_filename = m_fileext.subString(0, pos);
    }
    else
    {
-      m_file = m_filename;
+      m_filename = m_fileext;
    }
 
    m_bValid = true;
@@ -172,6 +191,11 @@ bool Path::resource( const String &res )
       m_device = res;
    }
    
+   if( m_owner != 0 )
+   {
+      m_owner->invalidate();
+   }
+
    return true;
 }
 
@@ -201,12 +225,18 @@ bool Path::location( const String &loc )
          m_location.remove( m_location.length() - 1, 1 );
    }
    
+   if( m_owner != 0 )
+   {
+      m_owner->invalidate();
+   }
+
    return true;
 }
 
-bool Path::file( const String &file )
+
+bool Path::filename( const String &file )
 {
-   if ( m_file != file )
+   if ( m_filename != file )
    {
   
       if ( file.findFirstOf( "/\\.:;" ) != String::npos )
@@ -215,9 +245,14 @@ bool Path::file( const String &file )
       }
 
       m_encoded.size(0);
-      m_file = file;
+      m_filename = file;
    }
    
+   if( m_owner != 0 )
+   {
+      m_owner->invalidate();
+   }
+
    return true;
 }
 
@@ -236,11 +271,17 @@ bool Path::ext( const String &ext )
       m_encoded.size(0);
    }
    
+   if( m_owner != 0 )
+   {
+      m_owner->invalidate();
+   }
+
+
    return true;
 }
 
 
-bool Path::fileext( const String &fname )
+bool Path::file( const String &fname )
 {
    if ( fname.findFirstOf( "/\\:;" ) != String::npos )
    {
@@ -250,16 +291,22 @@ bool Path::fileext( const String &fname )
    uint32 posdot = fname.rfind( '.' );
    if ( posdot != String::npos && posdot != 0 && posdot != fname.length() - 1 )
    {
-      m_file = fname.subString( 0, posdot );
+      m_filename = fname.subString( 0, posdot );
       m_extension = fname.subString( posdot + 1 );
    }
    else {
-      m_file = fname;
+      m_filename = fname;
       m_extension = "";
    }
    
-   m_filename = fname;
+   m_fileext = fname;
    m_encoded.size(0);
+
+   if( m_owner != 0 )
+   {
+      m_owner->invalidate();
+   }
+
    return true;
 }
 
@@ -412,7 +459,7 @@ bool Path::isAbsolute() const
 
 bool Path::isLocation() const
 {
-   return (m_file.size() == m_extension.size()) == 0;
+   return (m_filename.size() == m_extension.size()) == 0;
 }
 
 
@@ -425,7 +472,7 @@ void Path::split( String &loc, String &name, String &ext )
    else
       loc = m_location;
 
-   name = m_file;
+   name = m_filename;
    ext = m_extension;
 }
 
@@ -434,7 +481,7 @@ void Path::split( String &res, String &loc, String &name, String &ext )
 {
    res = m_device;
    loc = m_location;
-   name = m_file;
+   name = m_filename;
    ext = m_extension;
 }
 

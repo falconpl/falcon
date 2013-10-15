@@ -30,6 +30,10 @@ namespace Falcon
 bool URI::Authority::parse( const String& uriAuth )
 {
    m_encoded = "@";
+   if( m_owner != 0 )
+   {
+      m_owner->invalidate();
+   }
    
    String hostPart;
    length_t posat = uriAuth.find( '@' );
@@ -50,13 +54,13 @@ bool URI::Authority::parse( const String& uriAuth )
          {
             return false;
          }
-         else
+      }
+      else
+      {
+         if( ! URLDecode( userAuth.subString(0,poscolon), m_user )
+            || ! URLDecode( userAuth.subString(poscolon+1), m_password ) )
          {
-            if( ! URLDecode( userAuth.subString(0,poscolon), m_user ) 
-               || ! URLDecode( userAuth.subString(poscolon+1), m_password ) )
-            {
-               return false;
-            }
+            return false;
          }
       }
    }
@@ -81,6 +85,64 @@ bool URI::Authority::parse( const String& uriAuth )
    return true;
 }
 
+void URI::Authority::user( const String& value )
+{
+   m_encoded = "@";
+   m_user = value;
+   if( m_owner != 0 )
+   {
+      m_owner->invalidate();
+   }
+}
+
+
+void URI::Authority::clear()
+{
+   m_encoded = "@";
+   m_user.size(0);
+   m_password.size(0);
+   m_host.size(0);
+   m_port.size(0);
+
+   if( m_owner != 0 )
+   {
+      m_owner->invalidate();
+   }
+}
+
+void URI::Authority::password( const String& value  )
+{
+   m_encoded = "@";
+   m_password = value;
+   if( m_owner != 0 )
+   {
+      m_owner->invalidate();
+   }
+}
+
+
+void URI::Authority::host( const String& value  )
+{
+   m_encoded = "@";
+   m_host = value;
+   if( m_owner != 0 )
+   {
+      m_owner->invalidate();
+   }
+}
+
+
+void URI::Authority::port( const String& value  )
+{
+   m_encoded = "@";
+   m_port = value;
+   if( m_owner != 0 )
+   {
+      m_owner->invalidate();
+   }
+}
+
+
 const String& URI::Authority::encode() const
 {
    if( m_encoded != "@" )
@@ -92,7 +154,7 @@ const String& URI::Authority::encode() const
    
    if ( m_user.size() > 0 )
    {
-      m_encoded = URLEncode( m_user );
+      m_encoded += URLEncode( m_user );
       if( m_password.size() > 0 )
       {
          m_encoded += ":";
@@ -113,7 +175,28 @@ const String& URI::Authority::encode() const
    
    return m_encoded;
 }
-     
+
+
+void URI::Authority::ownerURI( URI* owner )
+{
+   m_owner = owner;
+}
+
+
+void URI::Authority::copy( const Authority& other )
+{
+   m_user = other.m_user;
+   m_password = other.m_password;
+   m_host = other.m_host;
+   m_port = other.m_port;
+   m_encoded = other.m_encoded;
+
+   if( m_owner != 0 )
+   {
+      m_owner->invalidate();
+   }
+}
+
 //=========================================
 // Query
 //
@@ -125,16 +208,31 @@ public:
 };
 
 
-URI::Query::Query():
+URI::Query::Query( URI* owner ):
    _p( new Private)
 {
+   m_owner = owner;
 }
+
+
+URI::Query::Query( const Query& other ):
+   _p( new Private )
+{
+   m_owner = 0;
+   copy(other);
+}
+
 
 URI::Query::~Query()
 {
    delete _p;
 }
-      
+
+void URI::Query::copy( const URI::Query& other )
+{
+   _p->m_fields = other._p->m_fields;
+}
+
 bool URI::Query::parse( const String& query )
 {
    if( query.size() == 0 )
@@ -189,7 +287,17 @@ bool URI::Query::parse( const String& query )
    }
    while ( posNext != String::npos );
    
+   if( m_owner != 0 )
+   {
+      m_owner->invalidate();
+   }
+
    return true;
+}
+
+void URI::Query::ownerURI( URI* owner )
+{
+   m_owner = owner;
 }
 
 const String& URI::Query::encode() const
@@ -225,6 +333,12 @@ void URI::Query::put( const String& field, const String& value )
 {
    _p->m_fields[field] = value;
    m_encoded = "@";
+
+   if( m_owner != 0 )
+   {
+      m_owner->invalidate();
+   }
+
 }
 
 bool URI::Query::get( const String& field, String& value ) const
@@ -249,6 +363,12 @@ bool URI::Query::remove( const String &key )
    
    m_encoded = "@";
    _p->m_fields.erase(iter->second);
+
+   if( m_owner != 0 )
+   {
+      m_owner->invalidate();
+   }
+
    return true;
 }
       
@@ -257,6 +377,11 @@ void URI::Query::clear()
 {
    m_encoded = "@";
    _p->m_fields.clear();
+
+   if( m_owner != 0 )
+   {
+      m_owner->invalidate();
+   }
 }
 
 
@@ -280,8 +405,13 @@ void URI::Query::enumerateFields( URI::Query::FieldEnumerator& etor ) const
 //
 
 URI::URI():
-   m_bValid(true)
-{}
+   m_bValid(true),
+   m_gcMark(0)
+{
+   m_authority.ownerURI( this );
+   m_path.ownerURI( this );
+   m_query.ownerURI( this );
+}
 
 
 URI::URI( const URI &other ):
@@ -291,12 +421,26 @@ URI::URI( const URI &other ):
    m_path( other.m_path ),
    m_query( other.m_query ),
    m_fragment( other.m_fragment ),
-   m_encoded( other.m_encoded )
-{}
+   m_encoded( other.m_encoded ),
+   m_gcMark(0)
+{
+}
 
 
 URI::~URI()
 {
+}
+
+
+void URI::copy( const URI& other )
+{
+   m_bValid = other.m_bValid;
+   m_scheme = other.m_scheme;
+   m_authority = other.m_authority;
+   m_path = other.m_path;
+   m_query = other.m_query;
+   m_fragment = other.m_fragment;
+   m_encoded = other.m_encoded;
 }
 
 
@@ -313,30 +457,30 @@ const String& URI::encode() const
       m_encoded += ":";
    }
    
-   if( m_authority.size() > 0 )
+   if( ! m_authority.empty() )
    {
-      m_encoded += "//" + m_authority;      
+      m_encoded += "//" + m_authority.encode();
    }
    
-   if( m_path.size() > 0 )
+   if( ! m_path.empty() )
    {
-      if( m_authority.size() > 0 && m_path.getCharAt(0) != '/' )
+      if( ! m_authority.empty() && ! m_path.isAbsolute() )
       {
          m_encoded += "/./";  // use ./ to declare the relative path marker
       }
-      m_encoded += URLEncodePath(m_path);
+      m_encoded += URLEncodePath(m_path.encode());
    }
    else
    {
-      if ( m_query.size() > 0 || m_fragment.size() > 0 )
+      if ( ! m_query.empty() || ! m_fragment.empty() )
       {
          m_encoded += "/";
       }
    }
    
-   if( m_query.size() != 0 )
+   if( ! m_query.empty() )
    {
-      m_encoded += "?" + m_query;
+      m_encoded += "?" + m_query.encode();
    }
    
    if( m_fragment.size() != 0 )
@@ -348,21 +492,28 @@ const String& URI::encode() const
 }
 
 
-bool URI::parse( const String &newUri, URI::Authority* auth, Path* path, URI::Query* query )
+bool URI::parse( const String &newUri )
 {
-   if( ! internal_parse( newUri ) )
+   String sAuth, sPath, sQuery;
+
+   // disable change notification
+   m_authority.ownerURI(0);
+   m_path.ownerURI(0);
+   m_query.ownerURI(0);
+
+   if( ! internal_parse( newUri, sAuth, sPath, sQuery ) )
    {
       m_bValid = false;
    }   
-   else if( auth != 0 && ! auth->parse( m_authority ) )
+   else if ( ! m_authority.parse(sAuth) )
    {
       m_bValid = false;
    }   
-   else if( path != 0 && ! path->parse( m_path ) )
+   else if ( ! m_path.parse(sPath) )
    {
       m_bValid = false;
    }
-   else if( query != 0 && ! query->parse( m_query ) )
+   else if(! m_query.parse(sQuery) )
    {
       m_bValid = false;
    }
@@ -371,6 +522,11 @@ bool URI::parse( const String &newUri, URI::Authority* auth, Path* path, URI::Qu
       m_bValid = true;
    }
    
+   // enable change notification
+   m_authority.ownerURI(this);
+   m_path.ownerURI(this);
+   m_query.ownerURI(this);
+
    return m_bValid;
 }
    
@@ -385,7 +541,7 @@ void URI::clear()
 }
 
 
-bool URI::internal_parse( const String &newUri )
+bool URI::internal_parse( const String &newUri, String& sAuth, String& sPath, String& sQuery )
 {  
    // We must parse before decoding each element.
    uint32 pStart = 0;
@@ -403,6 +559,10 @@ bool URI::internal_parse( const String &newUri )
 
    clear();
    
+   sAuth.clear();
+   sPath.clear();
+   sQuery.clear();
+
    t_status state = e_scheme;
    length_t len = newUri.length();
    while( pEnd < len )
@@ -444,7 +604,11 @@ bool URI::internal_parse( const String &newUri )
             }
             else if( state == e_auth )
             {
-               m_authority = newUri.subString(pStart, pEnd);
+               if( ! URLDecode( newUri.subString(pStart, pEnd), sAuth ) )
+               {
+                  return false;
+               }
+
                pStart = pEnd;
                state = e_path;
             }                        
@@ -454,7 +618,7 @@ bool URI::internal_parse( const String &newUri )
             if( state == e_scheme || state == e_path )
             {
                // preceeding things are a path.
-               if( ! URLDecode( newUri.subString(pStart, pEnd ), m_path ) )
+               if( ! URLDecode( newUri.subString(pStart, pEnd ), sPath ) )
                {
                   return false;
                }
@@ -474,14 +638,18 @@ bool URI::internal_parse( const String &newUri )
             if( state == e_scheme || state == e_path )
             {
                // preceeding things are a path.
-               m_path = newUri.subString( pStart, pEnd );
+               if (! URLDecode( newUri.subString( pStart, pEnd ), sPath ) )
+               {
+                  return false;
+               }
+
                pStart = pEnd + 1;
                state = e_fragment;
             }
             if( state == e_query )
             {
-               // preceeding things are a path.
-               m_query = newUri.subString( pStart, pEnd );
+               // preceeding things are a query -- do not decode
+               sQuery = newUri.subString( pStart, pEnd );
                pStart = pEnd + 1;
                state = e_fragment;
             }
@@ -490,6 +658,8 @@ bool URI::internal_parse( const String &newUri )
                // no # accepted in the auth part.
                return false;
             }
+            // there's nothing past fragment.
+            pEnd = len;
             break;
       }
       
@@ -503,19 +673,19 @@ bool URI::internal_parse( const String &newUri )
       {
          // the scheme alone means just path
          case e_scheme: case e_path: case e_auth_slash: case e_auth_slash2:
-            m_path = newUri.subString( pStart );
+            URLDecode( newUri.subString( pStart ), sPath );
             break;
 
          case e_auth:
-            m_authority = newUri.subString( pStart );
+            URLDecode( newUri.subString( pStart ), sAuth );
             break;
 
          case e_query:
-            m_query = newUri.subString( pStart );
+            sQuery = newUri.subString( pStart );
             break;
 
          case e_fragment:
-            m_fragment = newUri.subString( pStart );
+            URLDecode( newUri.subString( pStart ), m_fragment );
             break;
       }
    }

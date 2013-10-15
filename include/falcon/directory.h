@@ -57,7 +57,7 @@ public:
    virtual void close() = 0;
 
    /** Returns the URI to which this directory handle refers. */
-   const URI &path() const { return m_uri; }
+   const URI &uri() const { return m_uri; }
 
    uint32 gcMark() const { return m_gcMark; }
    void gcMark( uint32 mark ) { m_gcMark = mark; }

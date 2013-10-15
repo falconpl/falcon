@@ -70,6 +70,11 @@ public:
       copy( other );
    }
 
+   /**
+    * Invoked by owner URI entities to be notified back about changes in the path structure.
+    */
+   void ownerURI( URI* owner );
+
    /** Copy another path.
       Copies the other path as-is.
    */
@@ -182,10 +187,10 @@ public:
    bool location( const String &loc );
 
  
-   /** Get the filename part.
+   /** Get the whole file (filename and extension) part.
       This returns the file and extension parts separated by a '.'.
    */
-   const String& fileext() const { encode(); return m_filename; }
+   const String& file() const { encode(); return m_fileext; }
    
    /** Sets the filename and the extension.
     \param fn The file and extension.
@@ -193,11 +198,11 @@ public:
     colons or semicolons.
     This returns the file and extension parts separated by a '.'.
     */
-   bool fileext( const String& fn );
+   bool file( const String& fn );
     
 
    /** Get the file part alone (without extension). */
-   const String& file() const { return m_file; }
+   const String& filename() const { return m_filename; }
 
    
    /** Sets the file part (without extension). 
@@ -205,7 +210,7 @@ public:
     \return true if the part can be changed, false if it contains
     an invalid character.
     */
-   bool file( const String& value );
+   bool filename( const String& value );
   
    /** Get the extension part. */
    const String& ext() const { return m_extension; }
@@ -361,12 +366,18 @@ public:
    */
    bool extendLocation( const String &npath );
 
-   Path & operator =( const Path &other ) { copy( other ); return *this; }
+   Path& operator =( const Path &other ) { copy( other ); return *this; }
+   Path& operator =( const String &other ) { parse( other ); return *this; }
+
    bool operator ==( const Path &other ) const { encode(); other.encode(); return other.m_encoded == m_encoded; }
    bool operator !=( const Path &other ) const { encode(); other.encode(); return other.m_encoded != m_encoded; }
    bool operator <( const Path &other ) const { encode(); other.encode(); return m_encoded < other.m_encoded; }
-   bool operator >( const Path &other ) const { encode(); other.encode(); return m_encoded < other.m_encoded; }
+   bool operator >( const Path &other ) const { encode(); other.encode(); return m_encoded > other.m_encoded; }
    
+   bool operator ==( const String &other ) const { return other == encode(); }
+   bool operator !=( const String &other ) const { return other != encode(); }
+   bool operator <( const String &other ) const { return encode() < other; }
+   bool operator >( const String &other ) const { return encode() > other; }
 
    /** Converts an arbitrary MS-Windows Path to URI path.
     An URI valid path starts either with a filename or with a "/"
@@ -406,17 +417,19 @@ public:
    */
    static void uriToWin( String &path );
    
+   bool empty() const { return m_device.empty() && m_location.empty() && m_filename.empty() && m_extension.empty(); }
+
 private:
    mutable String m_encoded;
-   mutable String m_filename;
+   mutable String m_fileext;
    
    String m_device;
    String m_location;
-   String m_file;
+   String m_filename;
    String m_extension;
-
    bool m_bValid;
 
+   URI* m_owner;
    void encode_internal() const;
 };
 

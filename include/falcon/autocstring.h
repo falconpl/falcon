@@ -125,7 +125,6 @@ public:
    AutoCString();
 
    AutoCString( const Falcon::String &str );
-   AutoCString( const Falcon::Item &itm );
 
    //AutoCString( Falcon::VMachine *vm, const Falcon::Item &itm ):
    //   m_pData( 0 )

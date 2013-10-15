@@ -79,9 +79,8 @@ static void set_encoded( const Class*, const String&, void* instance, const Item
          .extra("S") );
    }
 
-   URICarrier* uric = static_cast<URICarrier*>(instance);
-   if( ! uric->m_uri.parse( *value.asString(), 
-                     &uric->m_auth, &uric->m_path, &uric->m_query ) )
+   URI* uri = static_cast<URI*>(instance);
+   if( ! uri->parse( *value.asString() ) )
    {
       throw new ParamError( ErrorParam( e_malformed_uri, __LINE__, SRC ) );
    }   
@@ -90,8 +89,8 @@ static void set_encoded( const Class*, const String&, void* instance, const Item
 
 static void get_encoded( const Class*, const String&, void* instance, Item& value )
 {
-   URICarrier* uric = static_cast<URICarrier*>(instance);
-   value = FALCON_GC_HANDLE( new String( uric->m_uri.encode() ) ); 
+   URI* uric = static_cast<URI*>(instance);
+   value = FALCON_GC_HANDLE( new String( uric->encode() ) );
 }
 
 
@@ -103,15 +102,15 @@ static void set_scheme( const Class*, const String&, void* instance, const Item&
          .extra("S") );
    }
 
-   URICarrier* uric = static_cast<URICarrier*>(instance);
-   uric->m_uri.scheme(*value.asString());
+   URI* uric = static_cast<URI*>(instance);
+   uric->scheme(*value.asString());
 }
 
 
 static void get_scheme( const Class*, const String&, void* instance, Item& value )
 {
-   URICarrier* uric = static_cast<URICarrier*>(instance);
-   value = FALCON_GC_HANDLE( new String( uric->m_uri.scheme() ) ); 
+   URI* uric = static_cast<URI*>(instance);
+   value = FALCON_GC_HANDLE( new String( uric->scheme() ) );
 }
 
 
@@ -123,20 +122,18 @@ static void set_auth( const Class*, const String&, void* instance, const Item& v
          .extra("S") );
    }
 
-   URICarrier* uric = static_cast<URICarrier*>(instance);
-   if( ! uric->m_auth.parse( *value.asString() ) )
+   URI* uric = static_cast<URI*>(instance);
+   if( ! uric->auth().parse( *value.asString() ) )
    {
       throw new ParamError( ErrorParam( e_malformed_uri, __LINE__, SRC ) );
-   }   
-   
-   uric->m_uri.auth( uric->m_auth.encode() );
+   }
 }
 
 
 static void get_auth( const Class*, const String&, void* instance, Item& value )
 {
-   URICarrier* uric = static_cast<URICarrier*>(instance);   
-   value = FALCON_GC_HANDLE( new String( uric->m_uri.auth() ));
+   URI* uric = static_cast<URI*>(instance);
+   value = FALCON_GC_HANDLE( new String( uric->auth().encode() ));
 }
 
 
@@ -149,20 +146,18 @@ static void set_path( const Class*, const String&, void* instance, const Item& v
          .extra("S") );
    }
 
-   URICarrier* uric = static_cast<URICarrier*>(instance);
-   if( ! uric->m_path.parse( *value.asString() ) )
+   URI* uric = static_cast<URI*>(instance);
+   if( ! uric->path().parse( *value.asString() ) )
    {
       throw new ParamError( ErrorParam( e_malformed_uri, __LINE__, SRC ) );
-   }   
-   
-   uric->m_uri.path( uric->m_path.encode() );
+   }
 }
 
 
 static void get_path( const Class*, const String&, void* instance, Item& value )
 {
-   URICarrier* uric = static_cast<URICarrier*>(instance);      
-   value = FALCON_GC_HANDLE( new String( uric->m_uri.path() ));
+   URI* uric = static_cast<URI*>(instance);
+   value = FALCON_GC_HANDLE( new String( uric->path().encode() ));
 }
 
 
@@ -174,20 +169,18 @@ static void set_query( const Class*, const String&, void* instance, const Item& 
          .extra("S") );
    }
 
-   URICarrier* uric = static_cast<URICarrier*>(instance);
-   if( ! uric->m_query.parse( *value.asString() ) )
+   URI* uric = static_cast<URI*>(instance);
+   if( ! uric->query().parse( *value.asString() ) )
    {
       throw new ParamError( ErrorParam( e_malformed_uri, __LINE__, SRC ) );
    }   
-   
-   uric->m_uri.query( uric->m_query.encode() );
 }
 
 
 static void get_query( const Class*, const String&, void* instance, Item& value )
 {
-   URICarrier* uric = static_cast<URICarrier*>(instance);
-   value = FALCON_GC_HANDLE( new String( uric->m_uri.query() ));
+   URI* uric = static_cast<URI*>(instance);
+   value = FALCON_GC_HANDLE( new String( uric->query().encode() ));
 }
 
 
@@ -199,16 +192,15 @@ static void set_host( const Class*, const String&, void* instance, const Item& v
          .extra("S") );
    }
 
-   URICarrier* uric = static_cast<URICarrier*>(instance);   
+   URI* uric = static_cast<URI*>(instance);
       
-   uric->m_auth.host( *value.asString() );   
-   uric->m_uri.auth( uric->m_auth.encode() );
+   uric->auth().host( *value.asString() );
 }
 
 static void get_host( const Class*, const String&, void* instance, Item& value )
 {
-   URICarrier* uric = static_cast<URICarrier*>(instance);
-   value = FALCON_GC_HANDLE( new String( uric->m_auth.host() ));
+   URI* uric = static_cast<URI*>(instance);
+   value = FALCON_GC_HANDLE( new String( uric->auth().host() ));
 }
 
 
@@ -220,15 +212,15 @@ static void set_fragment( const Class*, const String&, void* instance, const Ite
          .extra("S") );
    }
 
-   URICarrier* uric = static_cast<URICarrier*>(instance);      
-   uric->m_uri.fragment( *value.asString() );
+   URI* uric = static_cast<URI*>(instance);
+   uric->fragment( *value.asString() );
 }
 
 
 static void get_fragment( const Class*, const String&, void* instance, Item& value )
 {
-   URICarrier* uric = static_cast<URICarrier*>(instance);
-   value = FALCON_GC_HANDLE( new String( uric->m_uri.fragment() ));
+   URI* uric = static_cast<URI*>(instance);
+   value = FALCON_GC_HANDLE( new String( uric->fragment() ));
 }
 
 
@@ -241,16 +233,15 @@ static void set_port( const Class*, const String&, void* instance, const Item& v
          .extra("S") );
    }
 
-   URICarrier* uric = static_cast<URICarrier*>(instance);
-   uric->m_auth.port( *value.asString() );
-   uric->m_uri.auth( uric->m_auth.encode() );
+   URI* uric = static_cast<URI*>(instance);
+   uric->auth().port( *value.asString() );
 }
 
 
 static void get_port( const Class*, const String&, void* instance, Item& value )
 {
-   URICarrier* uric = static_cast<URICarrier*>(instance);   
-   value = FALCON_GC_HANDLE( new String( uric->m_auth.port() ));
+   URI* uric = static_cast<URI*>(instance);
+   value = FALCON_GC_HANDLE( new String( uric->auth().port() ));
 }
 
    
@@ -262,16 +253,15 @@ static void set_user( const Class*, const String&, void* instance, const Item& v
          .extra("S") );
    }
 
-   URICarrier* uric = static_cast<URICarrier*>(instance);   
-   uric->m_auth.user( *value.asString() );
-   uric->m_uri.auth( uric->m_auth.encode() );
+   URI* uric = static_cast<URI*>(instance);
+   uric->auth().user( *value.asString() );
 }
 
 
 static void get_user( const Class*, const String&, void* instance, Item& value )
 {
-   URICarrier* uric = static_cast<URICarrier*>(instance);
-   value = FALCON_GC_HANDLE( new String( uric->m_auth.user() ));
+   URI* uric = static_cast<URI*>(instance);
+   value = FALCON_GC_HANDLE( new String( uric->auth().user() ));
 }
 
 
@@ -283,16 +273,15 @@ static void set_pwd( const Class*, const String&, void* instance, const Item& va
          .extra("S") );
    }
 
-   URICarrier* uric = static_cast<URICarrier*>(instance);
-   uric->m_auth.password( *value.asString() );   
-   uric->m_uri.auth( uric->m_auth.encode() );
+   URI* uric = static_cast<URI*>(instance);
+   uric->auth().password( *value.asString() );
 }
 
 
 static void get_pwd( const Class*, const String&, void* instance, Item& value )
 {
-   URICarrier* uric = static_cast<URICarrier*>(instance);
-   value = FALCON_GC_HANDLE( new String( uric->m_auth.password() ));
+   URI* uric = static_cast<URI*>(instance);
+   value = FALCON_GC_HANDLE( new String( uric->auth().password() ));
 }   
  
 
@@ -324,33 +313,33 @@ ClassURI::~ClassURI()
  
 void ClassURI::dispose( void* instance ) const
 {
-   URICarrier* uc = static_cast<URICarrier*>(instance);
+   URI* uc = static_cast<URI*>(instance);
    delete uc;
 }
 
 void* ClassURI::clone( void* instance ) const
 {
-   URICarrier* uc = static_cast<URICarrier*>(instance);
-   return new URICarrier(*uc);
+   URI* uc = static_cast<URI*>(instance);
+   return new URI(*uc);
 }
 
 void ClassURI::gcMarkInstance( void* instance, uint32 mark ) const
 {
-   URICarrier* uc = static_cast<URICarrier*>(instance);
-   uc->m_mark = mark;
+   URI* uc = static_cast<URI*>(instance);
+   uc->gcMark(mark);
 }
 
 bool ClassURI::gcCheckInstance( void* instance, uint32 mark ) const
 {
-   URICarrier* uc = static_cast<URICarrier*>(instance);
-   return uc->m_mark >= mark;
+   URI* uc = static_cast<URI*>(instance);
+   return uc->currentMark() >= mark;
 }
 
 
 void ClassURI::store( VMContext*, DataWriter* stream, void* instance ) const
 {
-   URICarrier* uc = static_cast<URICarrier*>(instance);
-   stream->write(uc->m_uri.encode());
+   URI* uc = static_cast<URI*>(instance);
+   stream->write(uc->encode());
 }
 
 
@@ -358,9 +347,9 @@ void ClassURI::restore( VMContext* ctx, DataReader* stream ) const
 {
    String uriName;
    stream->read( uriName );
-   URICarrier* uc = new URICarrier();
+   URI* uc = new URI();
    try {
-      uc->m_uri.parse( uriName );
+      uc->parse( uriName );
       ctx->pushData( Item( this, uc ) );
    }
    catch( ... ) {
@@ -371,45 +360,51 @@ void ClassURI::restore( VMContext* ctx, DataReader* stream ) const
    
 void* ClassURI::createInstance() const
 {
-   return new URICarrier();
+   return new URI();
 }
 
 
 bool ClassURI::op_init( VMContext* ctx, void* instance, int pcount ) const
 {
-   URICarrier* uc = static_cast<URICarrier*>(instance );
+   URI* uc = static_cast<URI*>(instance );
    
    if ( pcount >= 1 )
    {
       Item& other = *ctx->opcodeParams(pcount);
       if( other.isString() )
       {
-         if( ! uc->m_uri.parse( *other.asString(), &uc->m_auth, &uc->m_path, &uc->m_query ) )
+         if( ! uc->parse( *other.asString() ) )
          {
             delete uc;
             throw new ParamError( ErrorParam( e_malformed_uri, __LINE__, SRC )
                .origin(ErrorParam::e_orig_mod) );
          }
+         return false;
       }
-      else if( other.asClass() == this )
+
+      if( other.asClass()->isDerivedFrom(this) )
       {
-         uc->m_uri = static_cast<URICarrier*>(other.asInst())->m_uri;
+         void* inst = other.asClass()->getParentData(this, other.asInst());
+         if( inst != 0 )
+         {
+            const URI* orig = static_cast<URI*>(inst);
+            uc->copy( *orig );
+         }
+         return false;
       }
-      else
-      {
-         throw new ParamError( ErrorParam( e_inv_params, __LINE__, SRC )
+
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__, SRC )
                .extra( "S|URI" )
                .origin(ErrorParam::e_orig_mod) );
-      }
    }
-   
+
    return false;
 }
 
 void ClassURI::op_toString( VMContext* ctx, void* self ) const
 {
-   URICarrier* uc = static_cast<URICarrier*>(self);
-   ctx->topData() = FALCON_GC_HANDLE(new String(uc->m_uri.encode()));
+   URI* uc = static_cast<URI*>(self);
+   ctx->topData() = FALCON_GC_HANDLE(new String(uc->encode()));
 }
 
 //=========================================================
@@ -427,16 +422,15 @@ void MethodSetq::invoke( VMContext* ctx, int32 )
       throw paramError( __LINE__, SRC );
    }
    
-   URICarrier* uc = static_cast<URICarrier*>(ctx->self().asInst());
+   URI* uc = static_cast<URI*>(ctx->self().asInst());
    if( iValue->isString() )
    {
-      uc->m_query.put( *iKey->asString(), *iValue->asString() );
+      uc->query().put( *iKey->asString(), *iValue->asString() );
    }
    else
    {
-      uc->m_query.remove( *iKey->asString() );
+      uc->query().remove( *iKey->asString() );
    }
-   uc->m_uri.query( uc->m_query.encode() );
    
    ctx->returnFrame();
 }
@@ -452,10 +446,10 @@ void MethodGetq::invoke( VMContext* ctx, int32 )
       throw paramError( __LINE__, SRC );
    }
    
-   URICarrier* uc = static_cast<URICarrier*>(ctx->self().asInst());
+   URI* uc = static_cast<URI*>(ctx->self().asInst());
    
    String value;
-   if( uc->m_query.get( *iKey->asString(), value ) )
+   if( uc->query().get( *iKey->asString(), value ) )
    {
       ctx->returnFrame( value );
    }

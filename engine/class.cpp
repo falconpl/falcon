@@ -307,7 +307,7 @@ void Class::describe( void* instance, String& target, int depth, int maxlen) con
       while( iter != _p->m_props.end() )
       {
          const Property* prop = &iter->second;
-         if( ! prop->bHidden && prop->bStatic )
+         if( ! (prop->bHidden || prop->bStatic) )
          {
             Item value;
             prop->getFunc( this, iter->first, instance, value );

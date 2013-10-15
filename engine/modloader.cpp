@@ -171,7 +171,7 @@ bool ModLoader::loadFile( VMContext* tgtctx, const URI& uri, t_modtype type, boo
 
    srcUri = uri;
    // check if the host path is relative to the loader path
-   if( srcUri.path().startsWith("./") && loader != 0 && loader->uri() != "" )
+   if( srcUri.path().encode().startsWith("./") && loader != 0 && loader->uri() != "" )
    {
       URI loaderURI( loader->uri() );
       // merge only if same scheme, or if we have empty scheme.
@@ -179,13 +179,13 @@ bool ModLoader::loadFile( VMContext* tgtctx, const URI& uri, t_modtype type, boo
       {
          Path loaderPath( loaderURI.path() );
 
-         srcUri.path( loaderPath.fulloc() + srcUri.path().subString(1) );
+         srcUri.path().parse( loaderPath.fulloc() + srcUri.path().encode().subString(1) );
          srcUri.scheme( loaderURI.scheme() ); // in case we have none.
       }
    }
 
    // is the file absolute?
-   Path path( URI::URLDecode( srcUri.path() ) );
+   Path path( srcUri.path() );
    if( path.isAbsolute() || ! bScan )
    {
       t_modtype etype = checkFile_internal( srcUri, type, tgtUri );
@@ -199,9 +199,9 @@ bool ModLoader::loadFile( VMContext* tgtctx, const URI& uri, t_modtype type, boo
    else
    {
       // time to chop away ./ to add the paths.
-      while( srcUri.path().startsWith("./") )
+      while( srcUri.path().encode().startsWith("./") )
       {
-         srcUri.path( srcUri.path().subString(2) );
+         srcUri.path().parse( srcUri.path().encode().subString(2) );
       }
 
       // Search the file in the path elements.
@@ -213,7 +213,7 @@ bool ModLoader::loadFile( VMContext* tgtctx, const URI& uri, t_modtype type, boo
          #ifdef FALCON_SYSTEM_WIN
          Path::winToUri(prefix);
          #endif // FALCON_SYSTEM_WIN
-         URI location( prefix + "/" + srcUri.path() );
+         URI location( prefix + "/" + srcUri.path().encode() );
 
 
          if( location.isValid() )
@@ -403,14 +403,15 @@ ModLoader::t_modtype ModLoader::checkFile_internal(
    FileStat stats[4];
    URI uris[4];
    t_modtype types[] = { e_mt_source, e_mt_vmmod, e_mt_binmod, e_mt_ftd };
-   Path path( URI::URLDecode(uri.path()) );
+   Path path( uri.path() );
 
-   uris[0] = uri; path.ext( "fal" ); uris[0].path( path.encode() );
-   uris[1] = uri; path.ext( m_famExt ); uris[1].path( path.encode() );
-   uris[3] = uri; path.ext( m_ftdExt ); uris[3].path( path.encode() );
+   uris[0] = uri; path.ext( "fal" ); uris[0].path() = path;
+   uris[1] = uri; path.ext( m_famExt ); uris[1].path() = path;
+   uris[3] = uri; path.ext( m_ftdExt ); uris[3].path() = path;
    // here we modify the filename, it must be done for last.
-   uris[2] = uri; path.fileext( path.file() + "_fm." + DynLoader::sysExtension() );
-                    uris[2].path( path.encode() );
+   uris[2] = uri;
+   path.file( path.filename() + "_fm." + DynLoader::sysExtension() );
+   uris[2].path() = path;
 
    // the files we should look at depends on our working mode.
    switch( m_useSources )
@@ -476,7 +477,7 @@ void ModLoader::load_internal(
    }
    else
    {
-      pathToName( prefixPath, uri.path(), modName );
+      pathToName( prefixPath, uri.path().encode(), modName );
    }
 
    // Use the right device depending on the file type.
@@ -585,7 +586,7 @@ void ModLoader::saveModule_internal( VMContext* ctx, Module* mod, const URI& src
    URI tgtUri = srcUri;
    Path path( tgtUri.path() );
    path.ext("fam");
-   tgtUri.path( path.encode() );
+   tgtUri.path() = path;
 
    // get the proper target URI provider
    Stream* output = vfs->createSimple( tgtUri );

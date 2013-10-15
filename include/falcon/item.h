@@ -558,6 +558,7 @@ public:
    bool isMethod() const { return type() == FLC_ITEM_METHOD; }
    bool isOrdinal() const { return type() == FLC_ITEM_INT || type() == FLC_ITEM_NUM; }
    bool isCallable() const;
+   bool isTreeStep() const  { return type() == FLC_CLASS_ID_TREESTEP; }
    bool isOpaque() const { return type() == FLC_ITEM_OPAQUE; }
    bool isSymbol() const { return type() == FLC_CLASS_ID_SYMBOL; }
    
