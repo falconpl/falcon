@@ -18,15 +18,12 @@
 #include <falcon/engine.h>
 #include <falcon/stdstreams.h>
 #include <falcon/sys.h>
-#include <falcon/wopi/wopi_ext.h>
 #include <falcon/wopi/wopi.h>
 #include <falcon/wopi/file_sm.h>
 #include <falcon/wopi/replystream.h>
 
 #include <cgi_options.h>
 #include <cgi_request.h>
-#include <cgi_reply.h>
-#include <cgi_make_streams.h>
 
 #include <stdio.h>
 

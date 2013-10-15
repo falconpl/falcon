@@ -19,7 +19,7 @@ include_directories(
 # Sources files the library is built from.
 set(SRC_FILES
   cgi_options.cpp
-  cgi_reply.cpp
+  cgi_commithandler.cpp
   cgi_request.cpp
   falcgi.cpp
   falcgi_make_streams.cpp
@@ -28,9 +28,8 @@ set(SRC_FILES
 # These are actually not needed by cmake to build. But if omitted they won't be
 # listed in the virtual file tree of Visual Studio.
 set(HDR_FILES
-  cgi_make_streams.h
   cgi_options.h
-  cgi_reply.h
+  cgi_commithandler.h
   cgi_request.h
   falcgi_perform.h
 )

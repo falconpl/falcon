@@ -14,63 +14,52 @@
    See LICENSE file for licensing details.
 */
 
-#include "cgi_request.h"
-#include "cgi_reply.h"
-
-#include <falcon/wopi/file_sm.h>
+#include <falcon/wopi/cgi_request.h>
 
 #include <falcon/sys.h>
 #include <falcon/fstream.h>
-#include <falcon/coredict.h>
 #include <falcon/stdstreams.h>
 #include <falcon/vm.h>
-#include <falcon/livemodule.h>
 
 #include <cctype>
 
-CGIRequest::CGIRequest( const Falcon::CoreClass* cls ):
-   CoreRequest( cls ),
+namespace Falcon {
+namespace WOPI {
+
+CGIRequest::CGIRequest( ModuleWopi* mw ):
+   Request( mw ),
    m_cration_time(0),
-   m_post_length(0),
-   m_vmOwner(0)
+   m_post_length(0)
 {
-   m_provider = "CGI";
 }
 
 CGIRequest::~CGIRequest()
 {
-   // Actually, it does nothing if sessions have already been released.
-   if( m_sm != 0 && m_base != 0 )
-   {
-      m_sm->releaseSessions( m_base->sessionToken() );
-   }
 }
 
 
-void CGIRequest::init( Falcon::Stream* input, Falcon::CoreClass* upld_cls, Falcon::WOPI::Reply* r, Falcon::WOPI::SessionManager* sm )
+void CGIRequest::init( Falcon::Stream* input )
 {
-   CoreRequest::init( upld_cls, r, sm );
-
    // First; suck all the environment variables that we need.
    Falcon::Sys::_enumerateEnvironment( &handleEnvStr, this );
 
    // a bit of post-processing
-   if ( m_base->parsedUri().port() == "443" || m_base->parsedUri().port() == "https" )
+   if ( parsedUri().port() == "443" || parsedUri().port() == "https" )
    {
-      m_base->parsedUri().scheme("https");
+      parsedUri().scheme("https");
    }
    else
    {
-      m_base->parsedUri().scheme("http");
+      parsedUri().scheme("http");
    }
 
-   m_base->m_request_time = 0;
-   m_base->m_bytes_sent = 0;
+   m_request_time = 0;
+   m_bytes_sent = 0;
 
-   if ( m_base->m_method == "POST" )
+   if ( m_method == "POST" )
    {
       // on error, proper fields are set.
-      m_base->parseBody( input );
+      parseBody( input );
       processMultiPartBody();
    }
 }
@@ -79,7 +68,6 @@ void CGIRequest::handleEnvStr( const Falcon::String& key, const Falcon::String& 
 {
    // First; suck all the environment variables that we need.
    CGIRequest* self = (CGIRequest*) data;
-   Falcon::WOPI::Request* r = self->base();
 
    // Is this an header transformed in an env-var?
    if( key.startsWith("HTTP_") )
@@ -88,18 +76,18 @@ void CGIRequest::handleEnvStr( const Falcon::String& key, const Falcon::String& 
    }
    else if( key == "AUTH_TYPE" )
    {
-      r->m_ap_auth_type = value;
+      self->m_ap_auth_type = value;
    }
    else if( key == "CONTENT_TYPE" )
    {
-      self->m_post_type = r->m_content_type = value;
-      r->m_MainPart.addHeader( "Content-Type", value );
+      self->m_post_type = self->m_content_type = value;
+      self->m_MainPart.addHeader( "Content-Type", value );
    }
    else if( key == "CONTENT_LENGTH" )
    {
       Falcon::int64 tgt;
       value.parseInt(tgt);
-      r->m_content_length = (int) tgt;
+      self->m_content_length = (int) tgt;
       self->m_post_length = (int) tgt;
    }
    else if( key == "DOCUMENT_ROOT" )
@@ -112,7 +100,7 @@ void CGIRequest::handleEnvStr( const Falcon::String& key, const Falcon::String& 
    }
    else if( key == "PATH_INFO" )
    {
-      r->m_path_info = value;
+      self->m_path_info = value;
    }
    else if ( key == "QUERY_STRING" )
    {
@@ -120,7 +108,7 @@ void CGIRequest::handleEnvStr( const Falcon::String& key, const Falcon::String& 
    }
    else if( key == "REMOTE_ADDR" )
    {
-      r->m_remote_ip = value;
+      self->m_remote_ip = value;
    }
    else if( key == "REMOTE_PORT" )
    {
@@ -128,23 +116,23 @@ void CGIRequest::handleEnvStr( const Falcon::String& key, const Falcon::String& 
    }
    else if( key == "REMOTE_USER" )
    {
-      r->m_user = value;
+      self->m_user = value;
    }
    else if( key == "REQUEST_METHOD" )
    {
-      r->m_method = value;
+      self->m_method = value;
    }
    else if( key == "REQUEST_URI" )
    {
-      r->setURI( value );
+      self->setURI( value );
    }
    else if( key == "SCRIPT_FILENAME" )
    {
-      r->m_filename = value;
+      self->m_filename = value;
    }
    else if( key == "SCRIPT_NAME" )
    {
-      r->parsedUri().path( value );
+      self->parsedUri().path() = value;
    }
    else if( key == "SERVER_ADDR" )
    {
@@ -156,15 +144,15 @@ void CGIRequest::handleEnvStr( const Falcon::String& key, const Falcon::String& 
    }
    else if( key == "SERVER_NAME" )
    {
-      r->parsedUri().host( value );
+      self->parsedUri().auth().host( value );
    }
    else if( key == "SERVER_PORT" )
    {
-      r->parsedUri().port( value );
+      self->parsedUri().auth().port( value );
    }
    else if( key == "SERVER_PROTOCOL" )
    {
-      r->m_protocol = value;
+      self->m_protocol = value;
    }
    else if( key == "SERVER_SIGNATURE" )
    {
@@ -274,5 +262,7 @@ Falcon::CoreObject* CGIRequest::factory( const Falcon::CoreClass* cls, void* , b
    return new CGIRequest( cls );
 }
 
+}
+}
 
 /* end of cgi_request.cpp */

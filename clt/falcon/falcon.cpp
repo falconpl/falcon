@@ -187,9 +187,9 @@ void FalconApp::launch( const String& script, int argc, char* argv[], int pos )
       Path path(scriptUri.path());
       if( path.fulloc() != "" )
       {
-         scriptUri.path( path.fulloc() );
+         scriptUri.path() = path.fulloc();
          scriptUri.fragment("");
-         scriptUri.query("");
+         scriptUri.query() = "";
          ms->modLoader()->addSearchPath(scriptUri.encode());
       }
    }

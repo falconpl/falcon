@@ -44,7 +44,7 @@ bool CGIOptions::init( int argc, char* argv[] )
    m_sScritpName.bufferize( argv[0] );
 
    Falcon::Path ps( m_sScritpName );
-   m_sMainScript = ps.file();
+   m_sMainScript = ps.filename();
 
    return true;
 }

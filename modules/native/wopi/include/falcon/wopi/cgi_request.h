@@ -14,28 +14,28 @@
    See LICENSE file for licensing details.
 */
 
-
-#ifndef CGI_REQUEST_H_
-#define CGI_REQUEST_H_
+#ifndef _FALCON_WOPI_CGI_REQUEST_H_
+#define _FALCON_WOPI_CGI_REQUEST_H_
 
 #include <falcon/wopi/request.h>
 
-class CGIRequest: public Falcon::WOPI::CoreRequest
+namespace Falcon {
+namespace WOPI {
+
+class CGIRequest: public Request
 {
 public:
-   CGIRequest( const Falcon::CoreClass* cls );
+   CGIRequest( ModuleWopi* host );
    virtual ~CGIRequest();
 
-   void init( Falcon::Stream* input, Falcon::CoreClass* upld_cls, Falcon::WOPI::Reply* r, Falcon::WOPI::SessionManager* sm );
-
-   static Falcon::CoreObject* factory( const Falcon::CoreClass* cls, void* ud, bool bDeser );
-
+   void init( Stream* input );
    void PostInitPrepare( Falcon::VMachine* vmowner );
 
    virtual void postInit();
-   Falcon::numeric m_cration_time;
+   Falcon::int64 m_cration_time;
 
 private:
+
    static void handleEnvStr( const Falcon::String& key, const Falcon::String& value, void *data );
 
    void addHeaderFromEnv( const Falcon::String& key, const Falcon::String& value );
@@ -48,6 +48,10 @@ private:
 
    Falcon::VMachine* m_vmOwner;
 };
+
+
+}
+}
 
 
 #endif /* CGI_REQUEST_H_ */

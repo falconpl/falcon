@@ -20,10 +20,11 @@
    See LICENSE file for licensing details.
 */
 
-#ifndef REPLY_STREAM_H
-#define REPLY_STREAM_H
+#ifndef FALCON_WOPI_REPLY_STREAM_H
+#define FALCON_WOPI_REPLY_STREAM_H
 
 #include <falcon/stream.h>
+#include <falcon/multiplex.h>
 
 namespace Falcon {
 namespace WOPI {
@@ -31,39 +32,33 @@ namespace WOPI {
 class Reply;
 
 /**
- This is a dummy stream sensing for the first output
+ This is a procy stream sensing for the first output
    operation and then invoking the Reply for commit.
-
-   The stream is then destroyed and the first write
-   operation is invoked on the real stream.
 */
 
 class ReplyStream: public Stream
 {
 public:
-   ReplyStream( Reply* rep );
+   ReplyStream( Reply* rep , Stream* underlying );
    ReplyStream( const ReplyStream& other );
    ~ReplyStream();
 
-
-    // We don't really need to implement all of those;
-   // as we want to reimplement output streams, we'll just
-   // set "unsupported" where we don't want to provide support.
-   bool writeString( const String &source, uint32 begin=0, uint32 end = csh::npos );
+   virtual size_t read( void *buffer, size_t size );
+   virtual size_t write( const void *buffer, size_t size );
    virtual bool close();
-   virtual int32 write( const void *buffer, int32 size );
-   virtual int32 writeAvailable( int, const Sys::SystemData* );
-   virtual int64 lastError() const;
-   virtual bool put( uint32 chr );
-   virtual bool get( uint32 &chr );
+   virtual int64 tell();
+   virtual bool truncate( off_t pos=-1 );
+   virtual off_t seek( off_t pos, e_whence w );
+   virtual bool flush();
    virtual Stream *clone() const;
 
-   // Flushes the stream.
-   virtual bool flush();
+   /** We'll return the disk (neutral) engine standard factory */
+   virtual const Multiplex::Factory* multiplexFactory() const;
 
 private:
 
    Reply* m_rep;
+   Stream* m_underlying;
 };
 
 

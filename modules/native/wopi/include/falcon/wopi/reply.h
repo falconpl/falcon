@@ -25,6 +25,9 @@
 #define FALCON_WOPI_DEFAULT_REPLY_REASON  "Ok"
 
 namespace Falcon {
+
+class Stream;
+
 namespace WOPI {
 
 
@@ -74,7 +77,7 @@ class Reply
 {
 public:
 
-   Reply( const CoreClass* base );
+   Reply( ModuleWopi* module );
    virtual ~Reply();
 
    /** Sets a cookie.
@@ -116,48 +119,48 @@ public:
    bool setRedirect( const String& url, uint32 timeout=0 );
 
    //! Gets all the headers as a dictionary.
-   CoreDict* getHeaders();
+   ItemDict* getHeaders();
 
    //! Send to the final stream (to be re-implemented by the final renderer).
-   virtual bool commit();
+   virtual bool commit(Stream* stream);
 
    //! true if we have perfomed commit
    bool isCommited() const { return m_bHeadersSent; }
 
-   /** Output stream used by this reply.
+   void gcMark( uint32 mark );
 
-      It is created by the commit process invoking makeOutputStream().
-      In case a specific transcoding is required (i.e. the content-type +
-      encoding is set), the stream is wrapped with the correct transcoder
-      after makeOutputStream() is invoked.
+   /**
+    * Handler with callbacks for the commit phase.
+    *
+    * In some drivers, some information stored in the reply
+    * are to be passed to underlying services before the
+    * output is generated.
+    */
 
-      The stream is property of this reply and is destroyed with it.
-      The VM only knows ReplyStream instances, which are not owning
-      this reply nor the final stream. However, a close on one of
-      VMachine::stdErr() or VMachine::stdOut() will be reflected here.
-   */
-   Stream* output() const { return m_output; }
+   class CommitHandler
+   {
+      virtual ~CommitHandler();
+      //! Invoked when the commit operation is about to begin.
+        virtual void startCommit( Reply* reply, Stream* tgt ) = 0;
 
+      //! Invoked to finalize an header
+      virtual void commitHeader( Reply* reply, Stream* tgt, const String& hname, const String& hvalue ) = 0;
 
-   // Overrides
-   virtual CoreObject *clone() const;
-   virtual bool setProperty( const String &prop, const Item &value );
-   virtual bool getProperty( const String &prop, Item &value ) const;
-   virtual void gcMark( uint32 mark );
+      //! Invoked when all the headers are generated.
+      virtual void endCommit(Reply* reply, Stream* tgt) = 0;
+   };
+
+   void setCommitHandler( CommitHandler* h );
+
+   int32 status() const { return m_nStatus; }
+   void status(int32 n ) { m_nStatus = n; }
+
+   const String& reason() const { return m_sReason; }
+   void reason( const String& str ) { m_sReason = str; }
 
 protected:
 
-   //! Invoked when the commit operation is about to begin.
-   virtual void startCommit() = 0;
-
-   //! Invoked right before startCommit to create an output stream.
-   virtual Stream* makeOutputStream() = 0;
-
-   //! Invoked to finalize an header after makeOutputStream.
-   virtual void commitHeader( const String& hname, const String& hvalue ) = 0;
-
-   //! Invoked when all the headers are generated.
-   virtual void endCommit() = 0;
+   CommitHandler* m_commitHandler;
 
    // dictionaries
    Utils::StringMap m_mHeaders;
@@ -170,7 +173,7 @@ protected:
    bool m_bHeadersSent;
    bool m_bDefaultContent;
 
-   Stream* m_output;
+   ModuleWopi* m_module;
 };
 
 

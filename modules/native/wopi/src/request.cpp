@@ -36,7 +36,7 @@ namespace WOPI {
 //==================================================================
 // Request
 
-Request::Request():
+Request::Request( ModuleWopi* host ):
    m_request_time( 0 ),
    m_bytes_sent( 0 ),
    m_content_length( -1 ),
@@ -48,16 +48,9 @@ Request::Request():
    m_headers( new ItemDict ),
    m_sSessionField( DEFAULT_SESSION_FIELD ),
    m_tempFiles( 0 ),
-   m_nMaxMemUpload( 1024 ),
    m_startedAt(0.0)
 {
-   //just provide a silly default
-#ifdef _WIN32
-   m_sTempPath = "/C:/temp";
-#else
-   m_sTempPath = "/tmp";
-#endif
-
+   m_module = host;
    m_MainPart.setOwner( this );
 }
 
@@ -196,39 +189,6 @@ bool Request::parseBody( Stream* input )
 }
 
 
-Stream* Request::makeTempFile( String& fname, int64& le )
-{
-   Path fpath;
-   fpath.fulloc( getTempPath() );
-
-   // try 3 times
-   int tries = 0;
-   while( true )
-   {
-
-      String fname_try;
-      Utils::makeRandomFilename( fname_try, 12 );
-      fpath.file( fname_try );
-      fname = fpath.encode();
-
-      // try to create the file
-      try {
-         Stream* tgFile = Falcon::Engine::instance()->vfs().createSimple(fname);
-         addTempFile( fname );
-      }
-      catch(Falcon::Error* err )
-      {
-         if( ++tries > 3 )
-         {
-            throw err;
-         }
-      }
-   }
-
-   // no way, we really failed.
-   return 0;
-}
-
 bool Request::getField( const String& fname, String& value ) const
 {
    Item temp;
@@ -302,38 +262,6 @@ bool Request::setURI( const String& uri )
    }
 
    return false;
-}
-
-
-void Request::addTempFile( const Falcon::String &fname )
-{
-   TempFileEntry* tfe = new TempFileEntry( fname );
-   tfe->m_next = m_tempFiles;
-   m_tempFiles = tfe;
-}
-
-void Request::removeTempFiles( void* head, void* data, void (*error_func)(const String&, void*) )
-{
-   TempFileEntry *tfe = (TempFileEntry*) head;
-   while( tfe != 0 )
-   {
-      TempFileEntry *tfe_next = tfe->m_next;
-      Falcon::int32 status;
-      try {
-         Engine::instance()->vfs().erase( tfe->m_entry );
-      }
-      catch (Error* err)
-      {
-         if ( error_func != 0 )
-         {
-            String error = err->describe(false);
-            error_func( error, data );
-         }
-         err->decref();
-      }
-
-      tfe = tfe_next;
-   }
 }
 
 

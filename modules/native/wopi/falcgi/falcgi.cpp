@@ -18,18 +18,16 @@
 #include <falcon/engine.h>
 #include <falcon/stdstreams.h>
 #include <falcon/sys.h>
-#include <falcon/wopi/wopi_ext.h>
 
 
 #include "cgi_options.h"
 #include "cgi_request.h"
-#include "cgi_reply.h"
 #include "falcgi_perform.h"
 
 static void report_temp_file_error( const Falcon::String& fileName, void* data )
 {
    Falcon::Stream* serr = (Falcon::Stream*) data;
-   serr->writeString( "ERROR: Cannot remove temp file " + fileName +"\r\n");
+   serr->write( "ERROR: Cannot remove temp file " + fileName +"\r\n");
    serr->flush();
 }
 
@@ -40,7 +38,7 @@ int main( int argc, char* argv[] )
    Falcon::WOPI::Utils::xrandomize();
 
    // start the engine
-   Falcon::Engine::Init();
+   Falcon::Engine::init();
 
    CGIOptions cgiopt;
    if ( cgiopt.init( argc, argv ) )
@@ -64,7 +62,7 @@ int main( int argc, char* argv[] )
    delete cgiopt.m_smgr;
 
    // engine down.
-   Falcon::Engine::Shutdown();
+   Falcon::Engine::shutdown();
 
    return 0;
 }

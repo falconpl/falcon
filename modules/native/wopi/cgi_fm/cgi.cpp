@@ -14,37 +14,15 @@
 
 
 #include <falcon/module.h>
-#include <falcon/wopi/wopi_ext.h>
-#include <cgi_request.h>
-#include <cgi_reply.h>
-
-#include <cgi_make_streams.h>
 #include <falcon/stdstreams.h>
 #include <falcon/fstream.h>
 
-
-#include "cgifm_ext.h"
-
-Falcon::Stream* makeOutputStream()
-{
-   return new Falcon::StdOutStream;
-}
-
+#include "cgi_module.h"
 
 FALCON_MODULE_DECL
 {
-   #define FALCON_DECLARE_MODULE self
-
-   // initialize the module
-   Falcon::Module *self = Falcon::WOPI::wopi_module_init(
-         CGIRequest::factory, CGIReply::factory,
-         Falcon::CGIRequest_init, Falcon::CGIReply_init
-         );
-
-   //Change the name
-   self->name( "cgi" );
-
-   return self;
+   Falcon::WOPI::ModuleCGI* mcgi = new Falcon::WOPI::ModuleCGI;
+   return mcgi;
 }
 
 /* end of cgi.cpp */

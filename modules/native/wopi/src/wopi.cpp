@@ -20,10 +20,164 @@
 #include <falcon/stringstream.h>
 #include <falcon/module.h>
 #include <falcon/vmcontext.h>
+#include <falcon/textreader.h>
+
+#include "wopi_opts.h"
 
 namespace Falcon {
 namespace WOPI {
 
+static bool getHumanSize( const String& value, int64& val )
+{
+   int64 multiplier = 1;
+   if( value.endsWith("g") || value.endsWith("G") )
+   {
+      multiplier = 1024*1024*1024;
+   }
+   else if( value.endsWith("M") || value.endsWith("m") )
+   {
+      multiplier = 1024*1024;
+   }
+   else if( value.endsWith("K") || value.endsWith("k") )
+   {
+      multiplier = 1024;
+   }
+
+   int64 v = 0;
+   bool result;
+   if( multiplier != 1 )
+   {
+      result = value.subString(0, value.length()-1).parseInt(v);
+   }
+   else {
+      result = value.parseInt(v);
+   }
+
+   val = v * multiplier;
+
+   return result;
+}
+
+//==========================================================================================
+// Option check callbacks
+//
+
+static bool s_check_wopi_opt_LogErrors( const String &configValue, Wopi::ConfigEntry* entry )
+{
+   int64 ivalue = -1;
+   configValue.parseInt(ivalue);
+
+   if( configValue.compareIgnoreCase(WOPI_OPT_LOG_MODE_SILENT) == 0 || ivalue == WOPI_OPT_LOG_MODE_SILENT_ID )
+   {
+      entry->m_sValue = WOPI_OPT_LOG_MODE_SILENT;
+   }
+   else if( configValue.compareIgnoreCase(WOPI_OPT_LOG_MODE_LOG) == 0 || ivalue == WOPI_OPT_LOG_MODE_LOG_ID )
+   {
+      entry->m_sValue = WOPI_OPT_LOG_MODE_LOG;
+   }
+   else if( configValue.compareIgnoreCase(WOPI_OPT_LOG_MODE_KIND) == 0 || ivalue == WOPI_OPT_LOG_MODE_KIND_ID )
+   {
+      entry->m_sValue = WOPI_OPT_LOG_MODE_KIND;
+   }
+   else if( configValue.compareIgnoreCase(WOPI_OPT_LOG_MODE_FULL) == 0 || ivalue == WOPI_OPT_LOG_MODE_FULL_ID )
+   {
+      entry->m_sValue = WOPI_OPT_LOG_MODE_FULL;
+   }
+   else {
+      return false;
+   }
+
+   entry->m_iValue = ivalue;
+   return true;
+}
+
+static bool s_check_wopi_opt_SessionMode( const String &configValue, Wopi::ConfigEntry* entry )
+{
+   int64 ivalue = -1;
+   configValue.parseInt(ivalue);
+
+   if( configValue.compareIgnoreCase(WOPI_OPT_SESSION_MODE_FILE) == 0 || ivalue == WOPI_OPT_SESSION_MODE_FILE_ID )
+   {
+      entry->m_sValue = WOPI_OPT_SESSION_MODE_FILE;
+   }
+   else if( configValue.compareIgnoreCase(WOPI_OPT_SESSION_MODE_NONE) == 0 || ivalue == WOPI_OPT_SESSION_MODE_NONE_ID )
+   {
+      entry->m_sValue = WOPI_OPT_SESSION_MODE_NONE;
+   }
+   else {
+      return false;
+   }
+
+   entry->m_iValue = ivalue;
+   return true;
+}
+
+
+static bool human_option( const String &configValue, Wopi::ConfigEntry* entry )
+{
+   return human_option( configValue, entry );
+   int64 value = 0;
+   if ( ! getHumanSize(configValue, value) )
+   {
+      return false;
+   }
+
+   entry->m_iValue = value;
+   entry->m_sValue = configValue;
+   return true;
+}
+
+
+static bool s_check_wopi_opt_MaxUploadSize( const String &configValue, Wopi::ConfigEntry* entry )
+{
+   return human_option( configValue, entry );
+}
+
+
+static bool s_check_wopi_opt_MaxMemoryUploadSize( const String &configValue, Wopi::ConfigEntry* entry )
+{
+   return human_option( configValue, entry );
+}
+
+
+Wopi::ConfigEntry::ConfigEntry( const String& name, t_type type, const String& desc, t_checkfunc check )
+{
+   m_type = name;
+   m_name = name;
+   m_desc = desc;
+   m_checkFunc = check;
+}
+
+
+Wopi::ConfigEntry::~ConfigEntry()
+{
+}
+
+
+//==========================================================================================
+// Wopi Main object
+//
+
+void Wopi::pdata_deletor( void* data )
+{
+   // maybe an overkill, but...
+   if ( data == 0 )
+      return;
+
+   PDataMap* pm = (PDataMap*) data;
+   PDataMap::iterator iter = pm->begin();
+
+   while( iter != pm->end() )
+   {
+      GCLock* gl = iter->second;
+      gl->dispose();
+      ++iter;
+   }
+
+   delete pm;
+}
+
+ /*
 class PStepReadAppDataNext: public PStep
 {
 public:
@@ -37,164 +191,40 @@ public:
 
    static void apply_(const PStep* self, VMContext* ctx)
    {
-      Storer
    }
 
 };
+*/
+
+
 
 Wopi::Wopi():
       m_ctxdata( Wopi::pdata_deletor )
 {
-   m_readAppDataNext;
-   m_writeAppDataNext;
+   initConfigOptions();
+}
+
+void Wopi::initConfigOptions()
+{
+#define WOPI_OPTION_REALIZE
+#include "wopi_opts.h"
 }
 
 Wopi::~Wopi()
 {
-   AppDataMap::iterator iter = m_admap.begin();
-   while( iter != m_admap.end() )
    {
-      delete iter->second;
-      ++iter;
-   }
-}
-
-
-void Wopi::pdata_deletor( void* data )
-{
-   // maybe an overkill, but...
-   if ( data == 0 )
-      return;
-
-   PDataMap* pm = (PDataMap*) data;
-   PDataMap::iterator iter = pm->begin();
-
-   while( iter != pm->end() )
-   {
-      delete iter->second;
-      ++iter;
-   }
-
-   delete pm;
-}
-
-
-void Wopi::dataLocation( const String& loc )
-{
-   m_mtx.lock();
-   m_sAppDataLoc = loc;
-   m_mtx.unlock();
-}
-
-String Wopi::dataLocation()
-{
-   m_mtx.lock();
-   String ret = m_sAppDataLoc;
-   m_mtx.unlock();
-
-   return ret;
-}
-
-
-void Wopi::setAppData( VMContext* ctx, Item& data, const String& appName )
-{
-   SharedMem* pAppMem = 0;
-
-   // do we have the required appname data?
-   m_mtx.lock();
-   AppDataMap::const_iterator pos = m_admap.find( appName );
-   if( pos == m_admap.end() )
-   {
-      m_mtx.unlock();
-      pAppMem = inner_create_appData( appName );
-   }
-   else
-   {
-
-      pAppMem = pos->second;
-      m_mtx.unlock();
-   }
-
-   // we can deal with the shared memory in an unlocked region, of course.
-   if ( pAppMem->currentVersion() != pAppMem->lastVersion() )
-   {
-      // we already know we're out of sync.
-      if( atomicUpdate )
-         inner_readAppData( pAppMem, data );
-
-      return false;
-   }
-
-   // ok, try and serialize the data.
-   StringStream source;
-   Item::e_sercode sc = data.serialize( &source, false );
-   if( sc != Item::sc_ok )
-   {
-      throw new WopiError( ErrorParam( FALCON_ERROR_WOPI_APPDATA_SER, __LINE__ )
-                  .desc( "Error during Serialization of application data")
-                  .extra( String("type ").N( (int) sc ) )
-                  );
-   }
-
-   // great, the data is serialized; try to get it out of the door.
-   int32 datalen = (int32) source.tell();
-   source.seekBegin(0);
-   bool bSuccess = pAppMem->commit( &source, datalen, atomicUpdate );
-
-   // did we succeed?
-   if( ! bSuccess )
-   {
-      // No; we wasted the serialization. However, are now required to
-      // deserialize the item?
-      if( atomicUpdate )
+      ConfigMap::iterator iter = m_config.begin();
+      while( iter != m_config.end() )
       {
-         // ... and, is there anything to be de-serialized?
-         if( source.tell() != 0 )
-         {
-            source.seekBegin(0);
-            Item::e_sercode sc = data.deserialize( &source, VMachine::getCurrent() );
-            if( sc != Item::sc_ok )
-            {
-               throw new WopiError( ErrorParam( FALCON_ERROR_WOPI_APPDATA_DESER, __LINE__ )
-                     .desc( "Error during de-serialization of application data")
-                     .extra( String("type ").N( (int) sc ) )
-                     );
-            }
-         }
-         else
-         {
-            data.setNil();
-         }
+         ConfigEntry* entry = iter->second;
+         delete entry;
+         ++iter;
       }
+      m_config.clear();
    }
-
-   return bSuccess;
 }
 
-
-bool Wopi::getAppData( VMContext* ctx, Item& data, const String& appName )
-{
-   SharedMem* shmem = 0;
-
-   // do we have the required appname data?
-   m_mtx.lock();
-   AppDataMap::const_iterator pos = m_admap.find( appName );
-   if( pos == m_admap.end() )
-   {
-      m_mtx.unlock();
-      shmem = inner_create_appData( appName );
-   }
-   else
-   {
-      shmem = pos->second;
-      m_mtx.unlock();
-   }
-
-   // we can deal with the shared memory in an unlocked region, of course.
-   inner_readAppData( shmem, data );
-   return true;
-}
-
+/*
 SharedMem* Wopi::inner_create_appData( const String& appName )
 {
    SharedMem* pAppMem = 0;
@@ -236,30 +266,55 @@ SharedMem* Wopi::inner_create_appData( const String& appName )
    return pAppMem;
 }
 
+*/
 
-void Wopi::inner_readAppData( SharedMem* shmem, Item& data )
+bool Wopi::addConfigOption( ConfigEntry::t_type t, const String& name, const String& desc )
 {
-   StringStream target;
-   shmem->read( &target, true );
-
-   if ( target.tell() == 0 )
+   ConfigMap::iterator pos = m_config.find(name);
+   if( pos != m_config.end() )
    {
-      // nothing to be deserialized.
-      data.setNil();
-      return;
+      return false;
    }
 
-   target.seekBegin(0);
-   Item::e_sercode sc = data.deserialize( &target, VMachine::getCurrent() );
-   if( sc != Item::sc_ok )
-   {
-      throw new WopiError( ErrorParam( FALCON_ERROR_WOPI_APPDATA_DESER, __LINE__ )
-            .desc( "Error during de-serialization of application data")
-            .extra( String("type ").N( (int) sc ) )
-            );
-   }
+   ConfigEntry* entry = new ConfigEntry(name, t, desc, 0);
+   m_config[name] = entry;
+   return true;
 }
 
+
+bool Wopi::addConfigOption( ConfigEntry::t_type t, const String& name, const String& desc, String& deflt, t_checkfunc check )
+{
+   ConfigMap::iterator pos = m_config.find(name);
+   if( pos != m_config.end() )
+   {
+      return false;
+   }
+
+   ConfigEntry* entry = new ConfigEntry(name, t, desc, 0);
+   entry->m_sValue = deflt;
+   int64 dv = 0;
+   if( getHumanSize(deflt, dv) )
+   {
+      entry->m_iValue = dv;
+   }
+
+   m_config[name] = entry;
+   return true;
+}
+
+
+bool Wopi::addConfigOption( ConfigEntry::t_type t, const String& name, const String& desc, int64 deflt, t_checkfunc check )
+{
+   ConfigMap::iterator pos = m_config.find(name);
+   if( pos != m_config.end() )
+   {
+     return false;
+   }
+
+   ConfigEntry* entry = new ConfigEntry(name, t, desc, 0);
+   entry->m_iValue = deflt;
+   return true;
+}
 
 bool Wopi::setContextData( const String& id, const Item& data )
 {
@@ -279,24 +334,13 @@ bool Wopi::setContextData( const String& id, const Item& data )
    // already around?
    if( iter != pm->end() )
    {
-      GarbageLock* gl = iter->second;
-
-      // if data is NIL, we can destroy the entry
-      if( data.isNil() )
-      {
-         delete gl;
-         pm->erase(iter);
-      }
-      else
-      {
-         gl->item() = data;
-      }
-
+      GCLock* gl = iter->second;
+      gl->item() = data;
       return false;
    }
-   else if ( ! data.isNil() )
+   else
    {
-      (*pm)[id] = new GarbageLock( data );
+      (*pm)[id] = Engine::collector()->lock( data );
    }
 
    return true;
@@ -321,7 +365,7 @@ bool Wopi::getContextData( const String& id, Item& data ) const
    // already around?
    if( iter != pm->end() )
    {
-      GarbageLock* gl = iter->second;
+      GCLock* gl = iter->second;
       data = gl->item();
       return true;
    }
@@ -331,59 +375,344 @@ bool Wopi::getContextData( const String& id, Item& data ) const
 }
 
 
-//========================================================================
-// CoreWopi
-//
-
-CoreWopi::CoreWopi( const CoreClass* parent ):
-   CoreObject( parent ),
-   m_wopi( 0 )
+bool Wopi::removeContextData( const String& id )
 {
-}
+   // get the thread-specific data map
+   PDataMap* pm = (PDataMap*) m_ctxdata.get();
 
-CoreWopi::~CoreWopi()
-{
+   // we don't have it?
+   if( pm == 0 )
+   {
+      // nothing to remove
+      return false;
+   }
 
-}
+   // search the key
+   PDataMap::iterator iter = pm->find( id );
 
-CoreObject *CoreWopi::clone() const
-{
-   return 0;
-}
+   // already around?
+   if( iter != pm->end() )
+   {
+      GCLock* gl = iter->second;
+      gl->dispose();
+      pm->erase(iter);
+      return true;
+   }
 
-
-bool CoreWopi::setProperty( const String &prop, const Item &value )
-{
-   readOnlyError( prop );
    return false;
 }
 
 
-bool CoreWopi::getProperty( const String &prop, Item &value ) const
+bool Wopi::setConfigValue(const String& key, const String& value, String& error )
 {
-   return defaultProperty( prop, value );
-}
 
-
-void CoreWopi::configFromModule( const Module* mod )
-{
-   AttribMap* attribs = mod->attributes();
-   if( attribs == 0 )
+   ConfigMap::iterator kp = m_config.find( key );
+   if( kp == m_config.end() )
    {
-      return;
+      error = String("Unknown option '").A(key).A("'");
+      return false;
    }
 
-   VarDef* value = attribs->findAttrib( FALCON_WOPI_PDATADIR_ATTRIB );
-   if( value != 0 && value->isString() )
+   ConfigEntry* entry = kp->second;
+   if( entry->m_checkFunc != 0 )
    {
-      wopi()->dataLocation( *value->asString() );
+      if( ! entry->m_checkFunc(value, entry) )
+      {
+         error = String("Invalid value for option '").A(key).A("'");
+         return false;
+      }
+   }
+   else if( entry->m_type == ConfigEntry::e_t_int )
+   {
+      int64 ival;
+      if( ! value.parseInt(ival) )
+      {
+         error = String("Invalid numeric value for option '").A(key).A("'");
+         return false;
+      }
+      entry->m_iValue = ival;
+   }
+   else {
+      entry->m_sValue = value;
+   }
+
+   return true;
+}
+
+
+bool Wopi::setConfigValue(const String& key, int64 value, String& error )
+{
+
+   ConfigMap::iterator kp = m_config.find( key );
+   if( kp == m_config.end() )
+   {
+      error = String("Unknown option '").A(key).A("'");
+      return false;
+   }
+
+   ConfigEntry* entry = kp->second;
+   if( entry->m_type != ConfigEntry::e_t_int )
+   {
+      error = String("Invalid numeric value for option '").A(key).A("'");
+      return false;
+   }
+
+   entry->m_iValue = value;
+   return true;
+}
+
+
+bool Wopi::setConfigValue(const String& key, const Item& value, String& error )
+{
+   if (value.isString())
+   {
+      return setConfigValue(key, *value.asString(), error );
+   }
+   else if( value.isNumeric() )
+   {
+      return setConfigValue(key, value.forceInteger(), error );
+   }
+
+   error = String("Invalid value type for option '").A(key).A("'");
+   return false;
+}
+
+
+bool Wopi::getConfigValue( const String& key, String& value, String& error ) const
+{
+   ConfigMap::iterator pos = m_config.find(key);
+   if( pos == m_config.end() )
+   {
+      error = String("Unknown option '").A(key).A("' not found");
+      return false;
+   }
+
+   ConfigEntry* entry = pos->second;
+   value = entry->m_sValue;
+   return true;
+}
+
+
+bool Wopi::getConfigValue( const String& key, int64& value, String& error ) const
+{
+   ConfigMap::iterator pos = m_config.find(key);
+   if( pos == m_config.end() )
+   {
+      error = String("Unknown option '").A(key).A("'");
+      return false;
+   }
+
+   ConfigEntry* entry = pos->second;
+   if( entry->m_type != ConfigEntry::e_t_int )
+   {
+      error = String("Invalid type for option '").A(key).A("' ");
+      return false;
+   }
+
+   value = entry->m_iValue;
+   return true;
+}
+
+
+bool Wopi::getConfigValue( const String& key, Item& target, String& error ) const
+{
+   ConfigMap::iterator pos = m_config.find(key);
+   if( pos == m_config.end() )
+   {
+      error = String("Unknown option '").A(key).A("'");
+      return false;
+   }
+
+   ConfigEntry* entry = pos->second;
+   if( entry->m_type  == ConfigEntry::e_t_int )
+   {
+      target.setInteger( entry->m_iValue );
+   }
+   else {
+      target = FALCON_GC_HANDLE( new String(entry->m_sValue));
+   }
+
+   return true;
+}
+
+
+void Wopi::enumerateConfigOptions( Wopi::ConfigEnumerator& rator )
+{
+   ConfigMap::iterator pos = m_config.begin();
+   while( pos != m_config.end() )
+   {
+      ConfigEntry* entry = pos->second;
+      rator( *entry );
+      ++pos;
    }
 }
 
-CoreObject* CoreWopi::factory( const CoreClass *cls, void *, bool )
+
+bool Wopi::configFromIni( TextReader* iniFile, String& errors )
 {
-   return new CoreWopi( cls );
+   // Try to load the file.
+   int line = 0;
+   String buffer;
+
+   bool status = true;
+
+   try
+   {
+      while ( iniFile->readLine(buffer, 4096) )
+      {
+         ++line;
+         buffer.trim();
+
+         // skip lines to be ignored.
+         bool correct = true;
+         char_t chr;
+         if ( buffer.empty()
+                  || (chr  = buffer.getCharAt(0)) == '#'
+                  || chr == ';'
+            )
+         {
+            // a comment
+            continue;
+         }
+
+         // we have a line.
+         length_t pos = buffer.find('=');
+         if( pos == String::npos )
+         {
+            errors += String("Malformed option at line ").N(line).A("\n");
+            status = false;
+            continue;
+         }
+
+         String key, value;
+         key = buffer.subString(0,pos);
+         key.trim();
+         value = buffer.subString(pos+1);
+         uint32 posComment1 = value.rfind(';');
+         uint32 posComment2 = value.rfind('#');
+         uint32 posQuote = value.rfind('"');
+
+         if ( (posComment1 != String::npos && posComment1 < posQuote) )
+         {
+            value = value.subString(0,posComment1);
+         }
+         // no else
+         if ( (posComment2 != String::npos && posComment2 < posQuote) )
+         {
+            value = value.subString(0,posComment2);
+         }
+
+         value.trim();
+
+         String error;
+         if( ! setConfigValue(key, value, error) )
+         {
+            errors += error + " at line " + line + "\n";
+            status = false;
+         }
+      }
+   }
+   catch( Error* e )
+   {
+      errors += e->describe(false);
+      errors += "\n";
+      e->decref();
+      return false;
+   }
+
+   return status;
 }
+
+
+bool Wopi::configFromModule( Module* module, String& errors )
+{
+   const AttributeMap attribs = module->attributes();
+   bool status = true;
+
+   uint32 size = attribs.size();
+   for( uint32 i = 0; i < size; ++i )
+   {
+      Attribute* attrib = attribs.get(i);
+      if( attrib->name().startsWith("wopi_") )
+      {
+         String key = attrib->name().subString(5);
+         String error;
+         if( ! setConfigValue(key, attrib->value(), error ) )
+         {
+            errors += error + "\n";
+            status = false;
+         }
+      }
+   }
+
+   return status;
+}
+
+
+Stream* Wopi::makeTempFile( String& fname, int64& le )
+{
+   Path fpath;
+   fpath.fulloc( getConfigValue() );
+
+   // try 3 times
+   int tries = 0;
+   while( true )
+   {
+
+      String fname_try;
+      Utils::makeRandomFilename( fname_try, 12 );
+      fpath.filename( fname_try );
+      fname = fpath.encode();
+
+      // try to create the file
+      try {
+         Stream* tgFile = Falcon::Engine::instance()->vfs().createSimple(fname);
+         addTempFile( fname );
+      }
+      catch(Falcon::Error* err )
+      {
+         if( ++tries > 3 )
+         {
+            throw err;
+         }
+      }
+   }
+
+   // no way, we really failed.
+   return 0;
+}
+
+void Wopi::addTempFile( const Falcon::String &fname )
+{
+   TempFileEntry* tfe = new TempFileEntry( fname );
+   tfe->m_next = m_tempFiles;
+   m_tempFiles = tfe;
+}
+
+void Wopi::removeTempFiles( void* head, void* data, void (*error_func)(const String&, void*) )
+{
+   TempFileEntry *tfe = (TempFileEntry*) head;
+   while( tfe != 0 )
+   {
+      TempFileEntry *tfe_next = tfe->m_next;
+      Falcon::int32 status;
+      try {
+         Engine::instance()->vfs().erase( tfe->m_entry );
+      }
+      catch (Error* err)
+      {
+         if ( error_func != 0 )
+         {
+            String error = err->describe(false);
+            error_func( error, data );
+         }
+         err->decref();
+      }
+
+      tfe = tfe_next;
+   }
+}
+
 
 }
 }

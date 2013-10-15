@@ -12,7 +12,7 @@ project( falcon_wopi )
 
 option( FALCON_WOPI_BUILD_FALCGI "Build Falcon CGI support" OFF )
 option( FALCON_WOPI_BUILD_CGI_FM "Build Falcon module for stand-alone CGI scripts" OFF )
-option( FALCON_WOPI_BUILD_FFALCGI "Build Falcon FastCGI support" OFF )
+#option( FALCON_WOPI_BUILD_FFALCGI "Build Falcon FastCGI support" OFF )
 option( FALCON_WOPI_BUILD_FALHTTPD "Build Falcon simple HTTP server" OFF )
 option( FALCON_WOPI_BUILD_MOD_FALCON "Build Falcon module for Apache2" OFF )
 
@@ -47,10 +47,10 @@ if( FALCON_WOPI_BUILD_FALCGI OR FALCON_WOPI_BUILD_FFALCGI )
    set(FALCON_WOPI_CGI_INSTALL_DIR "lib/falcon/wopi/cgi-bin" CACHE PATH "The install location for CGI drivers")
 endif()
 
-if( FALCON_WOPI_BUILD_FALCGI )
-   add_subdirectory( falcgi )
-   set(FALCON_WOPI_ONE_BUILD TRUE)
-endif()
+#if( FALCON_WOPI_BUILD_FALCGI )
+#   add_subdirectory( falcgi )
+#   set(FALCON_WOPI_ONE_BUILD TRUE)
+#endif()
 
 if( FALCON_WOPI_BUILD_CGI_FM )
    add_subdirectory( cgi_fm )

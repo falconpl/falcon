@@ -24,19 +24,8 @@ else()
 endif()
 
 set(_files
-   ${_files_sys}
-  error_ext.cpp
-  file_sm.cpp
-  mem_sm.cpp
-  parthandler.cpp
-  reply.cpp
-  reply_ext.cpp
-  replystream.cpp
-  request.cpp
-  request_ext.cpp
-  session_manager.cpp
-  utils.cpp
-  uploaded_ext.cpp
+   #${_files_sys}
+  modulewopi.cpp
   wopi.cpp
   wopi_ext.cpp
 )

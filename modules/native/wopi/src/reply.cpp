@@ -17,9 +17,6 @@
 
 
 #include <falcon/wopi/reply.h>
-#include <falcon/lineardict.h>
-#include <falcon/coredict.h>
-#include <falcon/transcoding.h>
 #include <falcon/error.h>
 
 namespace Falcon {
@@ -36,8 +33,7 @@ CookieParams::CookieParams():
 }
 
 
-Reply::Reply( const CoreClass* base ):
-   CoreObject( base ),
+Reply::Reply( ModuleWopi* wopi ):
    m_nStatus( FALCON_WOPI_DEFAULT_REPLY_STATUS ),
    m_sReason( FALCON_WOPI_DEFAULT_REPLY_REASON ),
    m_bHeadersSent( false )
@@ -49,10 +45,14 @@ Reply::Reply( const CoreClass* base ):
 
    // and THEN tell we're using the defaults.
    m_bDefaultContent = true;
+
+   m_module = wopi;
+   m_commitHandler = 0;
 }
 
 Reply::~Reply()
 {
+   delete m_commitHandler;
 }
 
 
@@ -179,19 +179,23 @@ bool Reply::getHeader( const String& fname, String& value )
    return false;
 }
 
-CoreDict* Reply::getHeaders()
+ItemDict* Reply::getHeaders()
 {
-   LinearDict* ld = new LinearDict( m_mHeaders.size() );
+   ItemDict* ld = new ItemDict;
 
    Utils::StringMap::iterator ifield = m_mHeaders.begin();
    while( ifield != m_mHeaders.end() )
    {
-      ld->put( new CoreString( ifield->first ), new CoreString( ifield->second ) );
+      const String& key = ifield->first;
+      const String& value = ifield->second;
+
+      ld->insert( FALCON_GC_HANDLE( new String( key ) ), FALCON_GC_HANDLE( new String( value ) ) );
       ++ifield;
    }
 
-   return new CoreDict( ld );
+   return ld;
 }
+
 
 bool Reply::setContentType( const String& type )
 {
@@ -260,113 +264,50 @@ bool Reply::setRedirect( const String& url, uint32 timeout )
 
 
 
-bool Reply::commit()
+bool Reply::commit(Stream* target)
 {
    // already sent -- reuturn false.
    if ( m_bHeadersSent )
       return false;
 
-   // headers must be sent without transcoding
-   // and some reply child class use m_output to send them.
-   m_output = makeOutputStream();
-
-   // send the response line.
-   startCommit();
-
    // prepare the headers
-   Utils::StringMap::const_iterator ic = m_mHeaders.begin();
-   while( ic != m_mHeaders.end() )
+   if( m_commitHandler != 0 )
    {
-      //else -- raise error?
-      commitHeader( ic->first, ic->second );
-      ++ic;
-   }
+      m_commitHandler->startCommit(this, target);
 
-   ic = m_mCookies.begin();
-   while( ic != m_mCookies.end() )
-   {
-      commitHeader( "Set-Cookie", ic->second );
-      ++ic;
-   }
-
-   endCommit();
-
-   m_bHeadersSent = true;
-
-   // Apply the transcoding to the body
-   if( m_sEncoding != "C" )
-   {
-
-      Stream* out = TranscoderFactory( m_sEncoding, m_output, true );
-
-      if( out == 0 )
+      Utils::StringMap::const_iterator ic = m_mHeaders.begin();
+      while( ic != m_mHeaders.end() )
       {
-         // throw in case the transcoder can't be found
-         throw new CodeError( ErrorParam( e_unknown_encoding, __LINE__ )
-                        .extra( m_sEncoding ) );
+         //else -- raise error?
+         m_commitHandler->commitHeader( this, target, ic->first, ic->second );
+         ++ic;
       }
 
-      m_output = out;
+      ic = m_mCookies.begin();
+      while( ic != m_mCookies.end() )
+      {
+         m_commitHandler->commitHeader( this, target, "Set-Cookie", ic->second );
+         ++ic;
+      }
+
+      m_commitHandler->endCommit( this, target );
    }
 
+   m_bHeadersSent = true;
    return true;
 }
 
-//=======================================================
-// CoreObject Overrides
-//
 
-CoreObject *Reply::clone() const
+void Reply::gcMark( uint32 mark )
 {
-   // uncloneable (it's a singleton)
-   return 0;
+   m_module->gcMark( mark );
 }
 
-bool Reply::setProperty( const String &prop, const Item &value )
+
+void Reply::setCommitHandler( CommitHandler* h )
 {
-   // only read-only properties
-   if( prop == "status" )
-   {
-      m_nStatus = (int) value.forceInteger();
-   }
-   else if( prop == "reason" )
-   {
-      m_sReason = *value.asString();
-   }
-   else
-   {
-      readOnlyError( prop );
-   }
-
-   return true;
+   m_commitHandler = h;
 }
-
-bool Reply::getProperty( const String &prop, Item &value ) const
-{
-
-   if( prop == "status" )
-   {
-      value = (int64) m_nStatus;
-   }
-   else if( prop == "reason" )
-   {
-      value = m_sReason;
-   }
-   else if( prop == "isSent" )
-   {
-      value.setBoolean( m_bHeadersSent );
-   }
-   else {
-      return defaultProperty( prop, value );
-   }
-
-   return false;
-}
-
-void Reply::gcMark( uint32 )
-{
-}
-
 
 
 }

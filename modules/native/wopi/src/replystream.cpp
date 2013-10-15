@@ -22,74 +22,62 @@
 
 #include <falcon/wopi/reply.h>
 #include <falcon/wopi/replystream.h>
+#include <falcon/stdmpxfactories.h>
 
 namespace Falcon {
 namespace WOPI {
 
-ReplyStream::ReplyStream( Reply* rep ):
-      Stream( t_proxy ),
-      m_rep( rep )
+ReplyStream::ReplyStream( Reply* rep, Stream* under ):
+      m_rep( rep ),
+      m_underlying( under )
 {
+   m_underlying->incref();
 }
 
 ReplyStream::ReplyStream( const ReplyStream& other ):
       Stream( other ),
-      m_rep( other.m_rep )
+      m_rep( other.m_rep ),
+      m_underlying( other.m_underlying )
 {
+   m_underlying->decref();
 }
 
 ReplyStream::~ReplyStream()
 {
-}
-
-bool ReplyStream::writeString( const String &source, uint32 begin, uint32 end )
-{
-   if ( ! m_rep->isCommited() )
-      m_rep->commit();
-
-   return m_rep->output()->writeString( source, begin, end );
+   m_underlying->decref();
 }
 
 bool ReplyStream::close()
 {
-   if ( ! m_rep->isCommited() )
-      m_rep->commit();
-
-   return m_rep->output()->close();
+   m_rep->commit( m_underlying );
+   return m_underlying->close();
 }
 
-int32 ReplyStream::write( const void *buffer, int32 size )
+int64 ReplyStream::tell()
 {
-   if ( ! m_rep->isCommited() )
-      m_rep->commit();
-
-   return m_rep->output()->write( buffer, size );
+   return m_underlying->tell();
 }
 
-int ReplyStream::writeAvailable( int n, const Sys::SystemData* sd )
+bool ReplyStream::truncate( off_t pos )
 {
-   return m_rep->output() ?  1 :
-          m_rep->output()->writeAvailable( n, sd );
-}
-
-int64 ReplyStream::lastError() const
-{
-   return m_rep->output()->lastError();
-}
-
-bool ReplyStream::put( uint32 chr )
-{
-   if ( ! m_rep->isCommited() )
-      m_rep->commit();
-
-   return m_rep->output()->put( chr );
+   return m_underlying->truncate( pos );
 }
 
 
-bool ReplyStream::get( uint32 &chr )
+off_t ReplyStream::seek( off_t pos, e_whence w )
 {
-   m_status = t_unsupported;
-   return false;
+   return m_underlying->seek( pos, w );
+}
+
+size_t ReplyStream::read( void *buffer, size_t size )
+{
+   return m_underlying->read( buffer, size );
+}
+
+size_t ReplyStream::write( const void *buffer, size_t size )
+{
+   m_rep->commit( m_underlying );
+   return m_underlying->write( buffer, size );
 }
 
 Stream *ReplyStream::clone() const
@@ -100,10 +88,13 @@ Stream *ReplyStream::clone() const
 // Flushes the stream.
 bool ReplyStream::flush()
 {
-   if ( ! m_rep->isCommited() )
-      m_rep->commit();
+   m_rep->commit( m_underlying );
+   return m_underlying->flush();
+}
 
-   return m_rep->output()->flush();
+const Multiplex::Factory* ReplyStream::multiplexFactory() const
+{
+   return Engine::instance()->stdMpxFactories()->diskFileMpxFact();
 }
 
 

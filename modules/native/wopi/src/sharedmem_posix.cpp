@@ -22,8 +22,7 @@
 
 #include <falcon/wopi/sharedmem.h>
 #include <falcon/autocstring.h>
-#include <falcon/error.h>
-#include <falcon/eng_messages.h>
+#include <falcon/stderrors.h>
 #include <falcon/stream.h>
 
 #include <sys/types.h>
@@ -95,9 +94,9 @@ void SharedMem::internal_build( const String &name, const String &filename )
       // so it is initially takeable
       if( (d->sema = sem_open( csn.c_str(), O_CREAT, 0666, 1 )) == SEM_FAILED )
       {
-         throw new IoError( ErrorParam( e_io_error, __LINE__ )
+         throw new IOError( ErrorParam( e_io_error, __LINE__ )
                .extra( "sem_open " + sSemName )
-               .sysError( errno ) );
+               .sysError( (int32) errno ) );
       }
 
       d->bSemReady = true;
@@ -108,9 +107,9 @@ void SharedMem::internal_build( const String &name, const String &filename )
       if ( sem_wait( d->sema ) != 0 )
       {
 
-         throw new IoError( ErrorParam( e_io_error, __LINE__ )
+         throw new IOError( ErrorParam( e_io_error, __LINE__ )
                      .extra("sem_wait")
-                     .sysError( errno ) );
+                     .sysError( (int32) errno ) );
       }
 
       // we're the owners of the memory. But, is it new or does it exists?
@@ -122,9 +121,9 @@ void SharedMem::internal_build( const String &name, const String &filename )
          d->filefd = open( cfname.c_str(), O_CREAT | O_RDWR, 0666 );
          if( d->filefd <= 0 )
          {
-            throw new IoError( ErrorParam( e_io_error, __LINE__ )
+            throw new IOError( ErrorParam( e_io_error, __LINE__ )
                         .extra("open "+ filename )
-                        .sysError( errno ) );
+                        .sysError( (int32) errno ) );
          }
 
          fd = d->filefd;
@@ -137,9 +136,9 @@ void SharedMem::internal_build( const String &name, const String &filename )
 
          if( d->shmfd <= 0 )
          {
-            throw new IoError( ErrorParam( e_io_error, __LINE__ )
+            throw new IOError( ErrorParam( e_io_error, __LINE__ )
                               .extra("shm_open "+ sMemName )
-                              .sysError( errno ) );
+                              .sysError( (int32) errno ) );
          }
 
          //shm_unlink( cMemName.c_str() );
@@ -180,9 +179,9 @@ void SharedMem::init()
    off_t pos = lseek( fd, 0, SEEK_END );
    if( pos < 0 )
    {
-      throw new IoError( ErrorParam( e_io_error, __LINE__ )
+      throw new IOError( ErrorParam( e_io_error, __LINE__ )
                                     .extra("lseek" )
-                                    .sysError( errno ) );
+                                    .sysError( (int32) errno ) );
    }
 
 
@@ -191,9 +190,9 @@ void SharedMem::init()
    {
       if ( ftruncate( fd, sizeof(BufferData) ) != 0 )
       {
-         throw new IoError( ErrorParam( e_io_error, __LINE__ )
+         throw new IOError( ErrorParam( e_io_error, __LINE__ )
                                              .extra("ftruncate" )
-                                             .sysError( errno ) );
+                                             .sysError( (int32) errno ) );
       }
    }
    d->bd = (BufferData*) mmap( 0, sizeof(BufferData), PROT_READ | PROT_WRITE, MAP_SHARED,
@@ -201,9 +200,9 @@ void SharedMem::init()
 
    if( d->bd == MAP_FAILED )
    {
-      throw new IoError( ErrorParam( e_io_error, __LINE__ )
+      throw new IOError( ErrorParam( e_io_error, __LINE__ )
                                                 .extra("mmap" )
-                                                .sysError( errno ) );
+                                                .sysError( (int32) errno ) );
    }
 
    // if the file wasn't empty, we're done
@@ -219,9 +218,9 @@ void SharedMem::init()
 
    if( msync( d->bd, sizeof(BufferData), MS_ASYNC ) != 0 )
    {
-      throw new IoError( ErrorParam( e_io_error, __LINE__ )
+      throw new IOError( ErrorParam( e_io_error, __LINE__ )
                                                      .extra("msync" )
-                                                     .sysError( errno ) );
+                                                     .sysError( (int32) errno ) );
    }
 }
 
@@ -258,9 +257,9 @@ bool SharedMem::read( Stream* target, bool bAlwaysRead )
    // acquire adequate memory mapping.
    if( sem_wait( d->sema ) != 0 )
    {
-      throw new IoError( ErrorParam( e_io_error, __LINE__ )
+      throw new IOError( ErrorParam( e_io_error, __LINE__ )
                                          .extra("sem_wait" )
-                                         .sysError( errno ) );
+                                         .sysError( (int32) errno ) );
    }
 
    // be sure we have the right data in
@@ -294,9 +293,9 @@ bool SharedMem::commit( Stream* source, int32 size, bool bReread  )
    // acquire adequate memory mapping.
    if( sem_wait( d->sema ) != 0 )
    {
-      throw new IoError( ErrorParam( e_io_error, __LINE__ )
+      throw new IOError( ErrorParam( e_io_error, __LINE__ )
                                          .extra("sem_wait" )
-                                         .sysError( errno ) );
+                                         .sysError( (int32) errno ) );
    }
 
    // synchronize the version
@@ -329,9 +328,9 @@ bool SharedMem::commit( Stream* source, int32 size, bool bReread  )
    if ( ftruncate( fd, size + sizeof(BufferData) ) != 0 )
    {
       sem_post( d->sema );
-      throw new IoError( ErrorParam( e_io_error, __LINE__ )
+      throw new IOError( ErrorParam( e_io_error, __LINE__ )
                                 .extra( String("ftruncate to ").N(size).A( " bytes" ) )
-                                .sysError( errno ) );
+                                .sysError( (int32) errno ) );
    }
 
    // map the rest of the file
@@ -341,9 +340,9 @@ bool SharedMem::commit( Stream* source, int32 size, bool bReread  )
    if( data == MAP_FAILED )
    {
       sem_post( d->sema );
-      throw new IoError( ErrorParam( e_io_error, __LINE__ )
+      throw new IOError( ErrorParam( e_io_error, __LINE__ )
                               .extra( String("mmap ").N( (int32) size).A(" bytes") )
-                              .sysError( errno ) );
+                              .sysError( (int32) errno ) );
    }
 
    try
@@ -367,9 +366,9 @@ bool SharedMem::commit( Stream* source, int32 size, bool bReread  )
                break;
             }
 
-            throw new IoError( ErrorParam( e_io_error, __LINE__ )
+            throw new IOError( ErrorParam( e_io_error, __LINE__ )
                            .extra( String("reading from stream") )
-                           .sysError( source->lastError() ) );
+                           .sysError( (int32) source->lastError() ) );
          }
       }
 
@@ -408,9 +407,9 @@ void SharedMem::internal_read( Stream* target )
 
    if( data == MAP_FAILED )
    {
-      throw new IoError( ErrorParam( e_io_error, __LINE__ )
+      throw new IOError( ErrorParam( e_io_error, __LINE__ )
                      .extra( String("mmap ").N( (int32) size).A(" bytes") )
-                     .sysError( errno ) );
+                     .sysError( (int32) errno ) );
    }
 
    try
@@ -426,9 +425,9 @@ void SharedMem::internal_read( Stream* target )
          }
          else
          {
-            throw new IoError( ErrorParam( e_io_error, __LINE__ )
+            throw new IOError( ErrorParam( e_io_error, __LINE__ )
                            .extra( String("writing to stream") )
-                           .sysError( target->lastError() ) );
+                           .sysError( (int32) target->lastError() ) );
          }
       }
       munmap( data, size );

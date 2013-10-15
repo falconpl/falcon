@@ -29,17 +29,14 @@
 namespace Falcon {
 namespace WOPI {
 
-
-class SessionManager;
-class Reply;
+class ModuleWopi;
 
 class Request
 {
 public:
 
-   Request();
+   Request( ModuleWopi* host );
    virtual ~Request();
-
 
    //=========================================================
    // Main operations
@@ -53,12 +50,6 @@ public:
 
    //! Parses the body.
    bool parseBody( Stream* input );
-
-   /** Create a generic usage temporary file.
-    \throw IoError on error.
-    * */
-   Stream* makeTempFile( String& fname );
-
 
    //=========================================================
 
@@ -94,36 +85,6 @@ public:
    const PartHandler& partHandler() const { return m_MainPart; }
    PartHandler& partHandler() { return m_MainPart; }
 
-   /** Adds a temporary file.
-      The VM tries to delete all the temporary files during its destructor.
-      On failure, it ingores the problem and logs an error in Apache.
-   */
-   void addTempFile( const Falcon::String &fname );
-
-   /** Gets the list of temporary files.
-      Before the VM is destroyed, this should be taken out
-      so that it is then possible to get rid of the files.
-
-      Using removeTempFiles after the VM has been destroyed ensures
-      that all the streams open by the VM are closed (as this is done
-      during the GC step).
-
-      \return an opaque pointer to an internal structure.
-   */
-   void* getTempFiles() const { return m_tempFiles; }
-
-   /** Removes from the disk a list of temporary files.
-
-      Using removeTempFiles after the VM has been destroyed ensures
-      that all the streams open by the VM are closed (as this is done
-      during the GC step).
-
-      \param head The valued returned from getTempFiles() before the VM was destroyed.
-      \param data Opaque pointer passed as extra data to the error_func (can be 0 if not used).
-      \param error_func callback that will be invoked in some file can't be deleted.
-   */
-   static void removeTempFiles( void* head, void* data, void (*error_func)(const String& msg, void* data) );
-
    void startedAt( Falcon::numeric t ) { m_startedAt = t; }
    Falcon::numeric startedAt() const { return m_startedAt; }
 
@@ -134,9 +95,6 @@ public:
 
    void gcMark( uint32 m );
    inline uint32 currentMark() const { return m_mark; }
-
-   /** Get the session manager. */
-   SessionManager* smgr() const { return m_sm; }
 
    /** Override this to be called back at first usage.
 
@@ -158,8 +116,6 @@ public:
    virtual Request *clone() const;
 
    inline bool autoSession() const { return m_bAutoSession; }
-
-   inline void provider( const String& s ) { m_provider = s; }
 
    // Generic request informations
    String m_protocol;
@@ -196,8 +152,9 @@ protected:
    //! Creates an uploaded element (in the post fields) out of the data in partHandler
    void addUploaded( PartHandler* ph, const String& prefix = "" );
 
-   // Create the headers in a canonical form
-   //CoreDict* makeCanonicalHeaders();
+
+   // host module
+   ModuleWopi* m_module;
 
    // dictionaries
    ItemDict* m_gets;
@@ -230,8 +187,6 @@ protected:
 
    uint32 m_mark;
 
-   String m_provider;
-   SessionManager* m_sm;
    bool m_bPostInit;
    bool m_bAutoSession;
 };

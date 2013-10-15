@@ -21,23 +21,14 @@ include_directories(
 )
 
 set(SRC_FILES
-  ../falcgi/cgi_options.cpp
-  ../falcgi/cgi_reply.cpp
-  ../falcgi/cgi_request.cpp
   
   cgi.cpp
-  cgifm_ext.cpp
+  cgi_module.cpp
 )
 
 # These are actually not needed by cmake to build. But if omitted they won't be
 # listed in the virtual file tree of Visual Studio.
 set(HDR_FILES
-  ../falcgi/cgi_make_streams.h
-  ../falcgi/cgi_options.h
-  ../falcgi/cgi_reply.h
-  ../falcgi/cgi_request.h
-  
-  cgifm_ext.h
 )
 
 if(WIN32)

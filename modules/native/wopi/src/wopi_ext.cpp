@@ -15,22 +15,15 @@
    See LICENSE file for licensing details.
 */
 
-#include <falcon/wopi/session_manager.h>
-#include <falcon/wopi/request_ext.h>
-#include <falcon/wopi/reply_ext.h>
-#include <falcon/wopi/error_ext.h>
-#include <falcon/wopi/uploaded_ext.h>
-#include <falcon/wopi/utils.h>
 #include <falcon/wopi/wopi.h>
+#include <falcon/wopi/modulewopi.h>
 #include <falcon/itemdict.h>
 #include <falcon/itemarray.h>
+#include <falcon/vmcontext.h>
 
 #include <falcon/engine.h>
-#include <falcon/fstream.h>
-#include <falcon/sys.h>
-
+#include <falcon/stdhandlers.h>
 #include <stdlib.h>
-
 #include <falcon/wopi/version.h>
 
 /*#
@@ -40,6 +33,31 @@
 namespace Falcon {
 namespace WOPI {
 
+class PStepAfterPersist: public PStep
+{
+public:
+   inline PStepAfterPersist() { apply = apply_; }
+   inline virtual ~PStep() {}
+   virtual void describeTo( String& target ) const { target = "PStepAfterPersist"; }
+
+   static void apply_(const PStep*, VMContext* ctx)
+   {
+      // we have the object to be saved in the persist data in top,
+      // and the frame is that of the persist() method
+      Falcon::Item *i_id = ctx->param( 0 );
+      Wopi* wopi = static_cast<Wopi*>(ctx->self().asInst());
+      const String& src = *i_id->asString();
+      wopi->setContextData( src, ctx->topData() );
+      ctx->returnFrame();
+   }
+
+};
+
+FALCON_DECLARE_ERROR_INSTANCE( PersistError );
+FALCON_DECLARE_ERROR_CLASS_EX( PersistError, \
+         addConstant("NotFound", FALCON_ERROR_WOPI_PERSIST_NOT_FOUND );\
+         );
+
 /*#
 @object WOPI
 @brief General configuration and WOPI-system wide interface
@@ -48,30 +66,18 @@ This object gives access to generic configuration settings and global
 module functions.
 */
 
-/*#
-@property address Socket
-@brief Return the address associated with a socket.
-*/
-void get_address(const Class* cls, const String&, void* instance, Item& value )
-{
-   TRACE1( "Socket.address for %p", instance );
-   ModuleInet* inet = static_cast<ModuleInet*>( cls->module() );
-   Mod::Socket* socket = static_cast<Mod::Socket*>(instance);
-   Mod::Address* a = socket->address();
-   a->incref();
-   value = FALCON_GC_STORE(inet->addressClass(), a);
-}
-
 //===================================================================================
 // Wopi class
 //
 
 ClassWOPI::ClassWOPI()
 {
+   m_stepAfterPersist = new PStepAfterPersist;
 }
 
 ClassWOPI::~ClassWOPI()
 {
+   delete m_stepAfterPersist;
 }
 
 void ClassWOPI::dispose( void* ) const
@@ -91,19 +97,18 @@ void* ClassWOPI::createInstance() const
 }
 
 
-static void internal_htmlEscape_stream( const Falcon::String &str, Falcon::Stream *out )
+static void internal_htmlEscape_stream( const Falcon::String &str, Falcon::TextWriter *out )
 {
    for ( Falcon::uint32 i = 0; i < str.length(); i++ )
    {
       Falcon::uint32 chr = str[i];
       switch ( chr )
       {
-         case '<': out->writeString( "&lt;" ); break;
-         case '>': out->writeString( "&gt;" ); break;
-         case '"': out->writeString( "&quot;" ); break;
-         case '&': out->writeString( "&amp;" ); break;
-         default:
-            out->put( chr );
+         case '<': out->write( "&lt;" ); break;
+         case '>': out->write( "&gt;" ); break;
+         case '"': out->write( "&quot;" ); break;
+         case '&': out->write( "&amp;" ); break;
+         default: out->putChar( chr ); break;
       }
    }
 }
@@ -120,6 +125,13 @@ static void internal_htmlEscape_stream( const Falcon::String &str, Falcon::Strea
    scriptPath + "/" + scriptName is granted to give the complete file path
    where the script has been loaded.
 */
+
+static void get_scriptName(const Class* cls, const String&, void* instance, Item& value )
+{
+   TRACE1( "WOPI.scriptName for %p", instance );
+   ModuleWopi* modwopi = static_cast<ModuleWopi*>( cls->module() );
+   value = FALCON_GC_HANDLE(new String(modwopi->scriptName()));
+}
 
 /*#
    @global scriptPath
@@ -153,11 +165,7 @@ static void internal_htmlEscape_stream( const Falcon::String &str, Falcon::Strea
    is exposed through @a Request, @a Reply or @a Wopi.
 */
 
-static void Wopi_init( Falcon::VMachine* vm )
-{
-   static Wopi wopi;
-   dyncast<CoreWopi*>(vm->self().asObject())->setWopi( &wopi );
-}
+
 
 
 /*#
@@ -172,27 +180,6 @@ static void Wopi_init( Falcon::VMachine* vm )
 
    See @a wopi_appdata for further details.
 */
-static void Wopi_getAppData( Falcon::VMachine *vm )
-{
-   // Get name of the file.
-   Falcon::Item *i_app = vm->param( 0 );
-
-   // parameter sanity check.
-   if ( i_app != 0 && ! (i_app->isString() ||i_app->isNil())  )
-   {
-      throw new Falcon::ParamError( Falcon::ErrorParam( Falcon::e_inv_params, __LINE__ ).
-         extra( "[S]" ) );
-   }
-
-   Wopi* self = dyncast<CoreWopi*>( vm->self().asObject() )->wopi();
-
-   bool success = self->getAppData( vm->regA(),
-               i_app == 0 || i_app->isNil() ? "" : *i_app->asString() );
-
-   if( !success )
-      vm->retnil();
-}
-
 
 
 /*#
@@ -219,81 +206,47 @@ static void Wopi_getAppData( Falcon::VMachine *vm )
 
    See @a wopi_appdata for further details.
 */
-static void Wopi_setAppData( Falcon::VMachine *vm )
-{
-   // Get name of the file.
-   Falcon::Item *i_data = vm->param( 0 );
-   Falcon::Item *i_app = vm->param( 1 );
 
-   // parameter sanity check.
-   if ( i_data == 0
-        || (i_app != 0 && ! (i_app->isString() ||i_app->isNil()))  )
-   {
-      throw new Falcon::ParamError( Falcon::ErrorParam( Falcon::e_inv_params, __LINE__ ).
-         extra( "D,[S]" ) );
-   }
-
-   Wopi* self = dyncast<CoreWopi*>( vm->self().asObject() )->wopi();
-   vm->regA().setBoolean( 
-      self->setData(
-            *i_data,
-            i_app == 0 || i_app->isNil() ? "" : *i_app->asString(),
-            vm->isParamByRef(0) )
-      );
-}
-
-
-static bool Wopi_getPData_NEXT( Falcon::VMachine *vm )
-{
-   fassert( vm->param(0)->isString() );
-
-   // we're in the frame where we're the self!
-   Wopi* self = dyncast<CoreWopi*>( vm->self().asObject() )->wopi();
-   if( ! vm->regA().isNil() )
-   {
-      self->setContextData( *vm->param(0)->asString(), vm->regA() );
-   }
-
-   return false; // we're done, A can be returned.
-}
 
 /*#
-   @method getPData Wopi
-   @brief Gets local per-thread persistent data
+   @method persist Wopi
+   @brief Retrieves or eventually creates per-context persistent data
    @param id Unique ID for persistent data.
-   @optparam func Function to create the data if it's not ready.
-   @return The previously saved item, or nil if not found.
+   @optparam creator Code or callable evaluated to create the persistent data.
+   @return The previously saved item.
+   @raise PersistError if the persistent key is not found and creator code is not given.
 
-   This method restores process or thread specific persistent
-   data that was previously saved, possibly during another execution
-   and in another virtual machine, via @a Wopi.setPData.
+   This method restores execution-context (usually process or thread) specific
+   persistent data that was previously saved, possibly by another VM process
+   (i.e. another script).
 
-   An optional @b func parameter is called in case the data under
-   the given @b id is not found; the return value of that function is
-   then stored in the persistent data slot, as if @a Wopi.setPData was
+   An optional @b code parameter is evaluated in case the data under
+   the given @b id is not found; the evaluation result is
+   then stored in the persistent data slot, as if @a Wopi.setPersist was
    called with the same @b id to save the data, and is then returned to
    the caller of this method.
 
    See @a wopi_pdata for further details.
 */
-static void Wopi_getPData( Falcon::VMachine *vm )
+FALCON_DECLARE_FUNCTION(persist, "id:S,code:[C]")
+FALCON_DEFINE_FUNCTION_P1(persist)
 {
    // Get the ID of the persistent data
-   Falcon::Item *i_id = vm->param( 0 );
-   Falcon::Item *i_func = vm->param( 1 );
+   Falcon::Item *i_id = ctx->param( 0 );
+   Falcon::Item *i_func = ctx->param( 1 );
 
    // parameter sanity check.
    if ( i_id == 0 || ! i_id->isString() ||
-         ( i_func != 0 && ! i_func->isCallable() )
+         ( i_func != 0 && ! (i_func->isCallable() || i_func->isTreeStep()) )
       )
    {
-      throw new Falcon::ParamError( Falcon::ErrorParam( Falcon::e_inv_params, __LINE__ ).
-         extra( "S,[C]" ) );
+      throw paramError();
    }
 
-   Wopi* self = dyncast<CoreWopi*>( vm->self().asObject() )->wopi();
+   Wopi* wopi = static_cast<Wopi*>(ctx->self().asInst());
 
-   bool success = self->getContextData( *i_id->asString(), vm->regA() );
+   Item target;
+   bool success = wopi->getContextData( *i_id->asString(), target );
 
    // Not found?
    if( ! success )
@@ -301,34 +254,36 @@ static void Wopi_getPData( Falcon::VMachine *vm )
       // should we initialize the data?
       if ( i_func != 0 )
       {
-         // callback ourself in our same frame: we need self and param(0)
-         vm->returnHandler( Wopi_getPData_NEXT );
-         // then prepare the new farme
-         vm->callFrame( *i_func, 0 );
+         ClassWOPI* clw = static_cast<ClassWOPI*>(methodOf());
+         ctx->pushCode( *clw->m_stepAfterPersist );
+         ctx->callItem(*i_func);
       }
       else
       {
-         vm->regA().setNil();   // just in case
+         throw FALCON_SIGN_ERROR( PersistError, FALCON_ERROR_WOPI_PERSIST_NOT_FOUND);
       }
    }
    // otherwise, all ok
+   else {
+      ctx->returnFrame(target);
+   }
 }
 
 
 /*#
-   @method setPData Wopi
-   @brief Gets local per-thread persistent data.
+   @method setPersist Wopi
+   @brief Creates, updates or remove local per-thread persistent data.
    @param id Unique ID for persistent data.
    @param item A data to be stored persistently.
 
-   This method saves process or thread specific data, to be
-   retrieved, eventually by another virtual machine at a later
-   execution under the same thread or process.
+   This method saves O/S context-specific data, to be
+   retrieved, eventually by another VM process at a later
+   execution under the same O/S context (usually, a thread or a process).
 
    Persistent data is identified by an unique ID. An application
    can present different persistent data naming them differently.
 
-   @note The id must be a valid string, including an empty string.
+   @note The id can be any a valid string, including an empty string.
    So, "" can be used as a valid persistent key.
 
    Setting the item to nil effectively removes the entry from the
@@ -337,21 +292,31 @@ static void Wopi_getPData( Falcon::VMachine *vm )
 
    See @a wopi_pdata for further details.
 */
-static void Wopi_setPData( Falcon::VMachine *vm )
+FALCON_DECLARE_FUNCTION(setPersist, "id:S,item:X")
+FALCON_DEFINE_FUNCTION_P1(setPersist)
 {
    // Get name of the file.
-   Falcon::Item *i_id = vm->param( 0 );
-   Falcon::Item *i_item = vm->param( 1 );
+   Falcon::Item *i_id = ctx->param( 0 );
+   Falcon::Item *i_item = ctx->param( 1 );
 
    // parameter sanity check.
    if ( i_id == 0 || ! i_id->isString() || i_item == 0 )
    {
-      throw new Falcon::ParamError( Falcon::ErrorParam( Falcon::e_inv_params, __LINE__ ).
-         extra( "S,X" ) );
+      throw paramError();
    }
 
-   Wopi* self = dyncast<CoreWopi*>( vm->self().asObject() )->wopi();
-   self->setContextData( *i_id->asString(), *i_item );
+   Wopi* wopi = static_cast<Wopi*>(ctx->self().asInst());
+   const String& id = *i_id->asString();
+
+   if( i_item->isNil() )
+   {
+      wopi->removeContextData( id );
+   }
+   else {
+      wopi->setContextData( id, *i_item );
+   }
+
+   ctx->returnFrame();
 }
 
 /*#
@@ -368,48 +333,51 @@ static void Wopi_setPData( Falcon::VMachine *vm )
 
    If a dictionary is set as template conversion data, the data in the file
    is converted so that strings between a pair of '%' symbols are expanded in
-   the text coresponding to the key in the dictionary. In example, if this is
+   the text corresponding to the key in the dictionary. In example, if this is
    a template file:
    @code
       My name is %name%, pleased to meet you!
    @endcode
 
-   The @b %name% configurable text may be changed into "John Smith" throught
+   The @b %name% configurable text may be changed into "John Smith" through
    the following call:
    @code
       sendTemplate( InputStream("mytemplate.txt"), ["name" => "John Smith"] )
    @endcode
 
    If a configurable text is not found in the @b tpd dictionary, it is removed.
-   The specal sequence '%%' may be used to write a single '%'.
+   The special sequence '%%' may be used to write a single '%'.
 
-   @note Maximum lenght of template configurable strings is 64.
+   @note Maximum length of template configurable strings is 64.
 */
-static void Wopi_sendTemplate( Falcon::VMachine *vm )
+FALCON_DECLARE_FUNCTION(sendTemplate, "stream:Stream,tpd:[D],inMemory:[B]")
+FALCON_DEFINE_FUNCTION_P1(sendTemplate)
 {
+   static Class* streamClass = Engine::instance()->stdHandlers()->streamClass();
    // Get name of the file.
-   Falcon::Item *i_file = vm->param( 0 );
-   Falcon::Item *i_dict = vm->param( 1 );
-   Falcon::Item *i_inMemory = vm->param( 2 );
+   Falcon::Item *i_file = ctx->param( 0 );
+   Falcon::Item *i_dict = ctx->param( 1 );
+   Falcon::Item *i_inMemory = ctx->param( 2 );
 
    // parameter sanity check.
-   if ( i_file == 0 || ! i_file->isObject() || !i_file->asObject()->derivedFrom( "Stream" ) ||
+   if ( i_file == 0 || ! i_file->isInstanceOf( streamClass ) ||
       ( i_dict != 0 && ! ( i_dict->isDict() || i_dict->isNil() ) )
    )
    {
-      throw new Falcon::ParamError( Falcon::ErrorParam( Falcon::e_inv_params, __LINE__ ).
-         extra( "Stream,[D,X]" ) );
+      throw paramError();
    }
 
    bool bWorkInMem = i_inMemory == 0 ? false : i_inMemory->isTrue();
 
-   Falcon::Stream *outStream;
+   Falcon::TextWriter *outStream;
    if ( bWorkInMem )
    {
-      outStream = new Falcon::StringStream;
+      Stream* stream = new Falcon::StringStream;
+      outStream = new Falcon::TextWriter( stream );
+      stream->decref();
    }
    else {
-      outStream = vm->stdOut();
+      outStream = ctx->process()->textOut();
    }
 
    Falcon::CoreDict *dataDict = i_dict == 0 || i_dict->isNil() ? 0 : i_dict->asDict();
@@ -673,7 +641,7 @@ FALCON_FUNC htmlEscape( Falcon::VMachine *vm )
    - WopiError.SessionInvalid - The session data is invalid.
 
 */
-
+FALCON_DECLARE_ERROR_INSTANCE( WopiError );
 FALCON_DECLARE_ERROR_CLASS_EX( WopiError, \
          addConstant("SessionIO", FALCON_ERROR_WOPI_SESS_IO );\
          addConstant("SessionExipred", FALCON_ERROR_WOPI_SESS_EXPIRED);\
