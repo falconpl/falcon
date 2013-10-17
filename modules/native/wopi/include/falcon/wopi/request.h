@@ -106,7 +106,7 @@ public:
    */
    virtual bool processMultiPartBody();
 
-   virtual Request *clone() const;
+   ModuleWopi* module() const { return m_module; }
 
    // Generic request informations
    String m_protocol;

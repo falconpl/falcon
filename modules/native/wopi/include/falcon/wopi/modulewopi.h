@@ -54,7 +54,6 @@ protected:
    void interceptOutputStreams( Process* prc );
    void resumeOutputStreams();
 
-private:
    ClassWopi* m_classWopi;
    ClassUploaded* m_classUploaded;
 

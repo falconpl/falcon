@@ -13,26 +13,36 @@
 
 #include "cgi_module.h"
 #include <falcon/wopi/replystream.h>
+#include <falcon/wopi/request.h>
+#include <falcon/wopi/reply.h>
+
+#include <falcon/function.h>
 #include <falcon/process.h>
 #include <falcon/vmcontext.h>
+#include <falcon/textwriter.h>
 
 namespace Falcon {
 namespace WOPI {
 
 ModuleCGI::ModuleCGI():
    ModuleWopi("CGI")
-{}
+{
+   m_request->parseEnviron();
+}
 
 ModuleCGI::~ModuleCGI()
 {
-
 }
 
 
+void ModuleCGI::onStartupComplete( VMContext* ctx )
+{
+   ctx->process()->textOut()->writeLine("Test complete");
+   ctx->process()->textOut()->flush();
+}
+
 
 }
 }
-
-
 
 /* end of cgi_module.cpp */

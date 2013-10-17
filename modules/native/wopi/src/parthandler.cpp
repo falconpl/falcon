@@ -17,9 +17,12 @@
 
 #include <falcon/wopi/parthandler.h>
 #include <falcon/wopi/request.h>
+#include <falcon/wopi/modulewopi.h>
+#include <falcon/wopi/wopi.h>
 #include <falcon/wopi/utils.h>
 #include <falcon/stringstream.h>
 #include <falcon/fstream.h>
+#include <falcon/error.h>
 
 #include <cstring>
 
@@ -202,7 +205,10 @@ PartHandler::PartHandler( const String& sBound ):
 
 PartHandler::~PartHandler()
 {
-   delete m_stream;
+   if( m_stream != 0 )
+   {
+      m_stream->decref();
+   }
    delete m_pNextPart;
    delete m_pSubPart;
    if( m_bOwnBuffer )
@@ -218,29 +224,40 @@ void PartHandler::startMemoryUpload()
 
 bool PartHandler::startFileUpload()
 {
-   int64 le;
-   Stream* fs = m_owner->makeTempFile( m_sTempFile, le );
-   if( fs == 0 )
+   m_sTempFile = "";
+   Stream* fs;
+   try
+   {
+      fs = m_owner->module()->wopi()->makeTempFile( m_sTempFile, true );
+   }
+   catch ( Error* e )
    {
       m_sError = "Can't create temporary stream " + m_sTempFile;
-      m_sError.A(" (").N(le).A(")");
+      m_sError.A(" (").A(e->describe(false)).A(")");
       return false;
    }
 
    // was this stream first opened in memory?
    if( m_str_stream != 0 )
    {
-      // we must discharge all on disk.
-      int wr, written = 0;
-      while( (written != (int) m_str_stream->tell()) &&
-            ( wr = fs->write( m_str_stream->data()+written, (int) m_str_stream->tell() )) > 0  )
-      {
-         written += wr;
+      try {
+         // we must discharge all on disk.
+         int wr, written = 0;
+         while( (written != (int) m_str_stream->tell()) &&
+               ( wr = fs->write( m_str_stream->data()+written, (int) m_str_stream->tell() )) > 0  )
+         {
+            written += wr;
+         }
+
+         m_str_stream->decref();
+         m_str_stream = 0;
       }
-
-      delete m_str_stream;
-      m_str_stream = 0;
-
+      catch( ... )
+      {
+         fs->decref();
+         delete m_str_stream;
+         m_str_stream = 0;
+      }
    }
 
    m_stream = fs;

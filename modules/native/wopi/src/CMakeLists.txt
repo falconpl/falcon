@@ -24,7 +24,8 @@ else()
 endif()
 
 set(_files
-   #${_files_sys}  
+   #${_files_sys}
+  parthandler.cpp  
   request.cpp
   reply.cpp
   replystream.cpp
