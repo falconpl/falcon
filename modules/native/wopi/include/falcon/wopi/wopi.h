@@ -22,15 +22,22 @@
 #include <falcon/string.h>
 #include <falcon/mt.h>
 #include <falcon/pstep.h>
+#include <falcon/gclock.h>
 
 #include <map>
+#include <list>
 
 namespace Falcon {
 class TextReader;
+class Stream;
+class VMContext;
 
 namespace WOPI {
 
-class VMContext;
+#define WOPI_OPTION_DECLARE
+#include <falcon/wopi/wopi_opts.h>
+#undef WOPI_OPTION_DECLARE
+
 
 /** WOPI engine.
    This class implements the WOPI host that is loaded by engine frames
@@ -100,9 +107,8 @@ public:
    bool getConfigValue( const String& key, int64& value, String& error ) const;
    bool getConfigValue( const String& key, Item& target, String& error ) const;
 
-
    bool addConfigOption( ConfigEntry::t_type t, const String& name, const String& desc );
-   bool addConfigOption( ConfigEntry::t_type t, const String& name, const String& desc, String& deflt, t_checkfunc check = 0 );
+   bool addConfigOption( ConfigEntry::t_type t, const String& name, const String& desc, const String& deflt, t_checkfunc check = 0 );
    bool addConfigOption( ConfigEntry::t_type t, const String& name, const String& desc, int64 deflt, t_checkfunc check = 0 );
 
    class ConfigEnumerator
@@ -112,7 +118,7 @@ public:
       virtual void operator() (ConfigEntry& entry) = 0;
    };
 
-   void enumerateConfigOptions( ConfigEnumerator& rator );
+   void enumerateConfigOptions( ConfigEnumerator& rator ) const;
 
    //============================================================
    // By-context data
@@ -133,38 +139,36 @@ public:
 
    /** Create a generic usage temporary file.
     \throw IoError on error.
-    * */
-   Stream* makeTempFile( String& fname );
+    \param fname A file name for the temporary file.
+    \param bRandom if true, add a random suffix to the filename.
+    \return A stream open for writing.
+
+    On exit, fname will hold the full path to the created temporary file.
+
+    The temporary file will be removed when the wopi object is destroyed.
+    */
+   Stream* makeTempFile( String& fname, bool bRandom );
+
+   /**
+    * Creates an anonymous temporary file
+    * \return A stream open for writing.
+    * \throw IoError on error.
+    */
+   Stream* makeTempFile() { String temp = ""; return makeTempFile( temp, true); }
 
    /** Adds a temporary file.
       The VM tries to delete all the temporary files during its destructor.
-      On failure, it ingores the problem and logs an error in Apache.
+      On failure, it ignores the problem and logs an error to the log system.
    */
    void addTempFile( const Falcon::String &fname );
 
-   /** Gets the list of temporary files.
-      Before the VM is destroyed, this should be taken out
-      so that it is then possible to get rid of the files.
-
-      Using removeTempFiles after the VM has been destroyed ensures
-      that all the streams open by the VM are closed (as this is done
-      during the GC step).
-
-      \return an opaque pointer to an internal structure.
-   */
-   void* getTempFiles() const { return m_tempFiles; }
-
    /** Removes from the disk a list of temporary files.
-
-      Using removeTempFiles after the VM has been destroyed ensures
-      that all the streams open by the VM are closed (as this is done
-      during the GC step).
-
-      \param head The valued returned from getTempFiles() before the VM was destroyed.
-      \param data Opaque pointer passed as extra data to the error_func (can be 0 if not used).
-      \param error_func callback that will be invoked in some file can't be deleted.
+    \note This method is threadsafe, and can be called multiple
+       times during the execution of the process where the wopi module
+       is loaded (although it should be called when it's safe to
+       assume that the temporary files are not needed anymore).
    */
-   static void removeTempFiles( void* head, void* data, void (*error_func)(const String& msg, void* data) );
+   void removeTempFiles();
 
 private:
    /** Persistent data map.
@@ -172,6 +176,11 @@ private:
    */
    typedef std::map<String, GCLock*> PDataMap;
    typedef std::map<String, ConfigEntry*> ConfigMap;
+
+   typedef std::list<String> TempFileList;
+
+   Mutex m_mtxTempFiles;
+   TempFileList m_tempFiles;
 
    ConfigMap m_config;
 

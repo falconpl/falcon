@@ -645,7 +645,7 @@ void ClassModule::gcMarkInstance( void* instance, uint32 mark ) const
 
 bool ClassModule::gcCheckInstance( void* instance, uint32 mark ) const
 {
-   return static_cast<Module*>(instance)->lastGCMark() >= mark;
+   return static_cast<Module*>(instance)->currentMark() >= mark;
 }
 
 bool ClassModule::op_init( VMContext* ctx, void* instance, int32 pcount ) const

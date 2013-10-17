@@ -24,6 +24,7 @@
 #include <falcon/vfsprovider.h>
 #include <falcon/mantra.h>
 #include <falcon/mersennetwister.h>
+#include <falcon/collector.h>
 
 namespace Falcon
 {
@@ -40,7 +41,6 @@ class StdSteps;
 class StdHandlers;
 class SynClasses;
 
-class Collector;
 class PoolList;
 class Pool;
 class GCLock;
@@ -396,6 +396,53 @@ protected:
    Symbol* m_baseSymbol;
    Symbol* m_ruleBaseSymbol;
 };
+
+
+
+#if FALCON_TRACE_GC
+   #define FALCON_GC_STORE( cls, data ) ( ::Falcon::Engine::collector()->trace() ?\
+         ::Falcon::Engine::GC_H_store( cls, (void*) data, SRC, __LINE__ ): \
+         ::Falcon::Engine::GC_store( cls, (void*) data ))
+
+   #define FALCON_GC_STORE_IN( ctx, cls, data ) ( ::Falcon::Engine::collector()->trace() ?\
+                  (::Falcon::Engine::instance()->collector()->H_store_in( ctx, cls,data, SRC, __LINE__ )): \
+                  (::Falcon::Engine::instance()->collector()->store_in( ctx, cls,data)))
+
+   #define FALCON_GC_STORELOCKED( cls, data ) ( ::Falcon::Engine::collector()->trace() ?\
+         ::Falcon::Engine::GC_H_storeLocked( cls, (void*) data, SRC, __LINE__ ): \
+         ::Falcon::Engine::GC_storeLocked( cls, (void*) data ))
+
+   #define FALCON_GC_STORE_SRCLINE( cls, data, src, line ) ( ::Falcon::Engine::collector()->trace() ?\
+         ::Falcon::Engine::GC_H_store( cls, (void*) data, src, line ): \
+         ::Falcon::Engine::GC_store( cls, (void*) data ))
+
+   #define FALCON_GC_STORELOCKED_SRCLINE( cls, data, src, line ) ( ::Falcon::Engine::collector()->trace() ?\
+         ::Falcon::Engine::GC_H_storeLocked( cls, (void*) data, src, line ): \
+         ::Falcon::Engine::GC_storeLocked( cls, (void*) data ))
+
+#else  //FALCON_TRACE_GC
+   /** This macro can be used to activate the history recording of GC entities.
+    See the main body class.
+    */
+   #define FALCON_GC_STORE( cls, data ) (::Falcon::Engine::GC_store( cls, (void*) data ))
+   #define FALCON_GC_STORE_IN( ctx, cls, data ) (::Falcon::Engine::instance()->collector()->store_in(ctx, cls, data) )
+
+   #define FALCON_GC_STORE_SRCLINE( cls, data, src, line ) (::Falcon::Engine::GC_store( cls, (void*) data ))
+
+   /** This macro can be used to activate the history recording of GC entities.
+    See the main body class.
+    */
+   #define FALCON_GC_STORELOCKED( cls, data ) (::Falcon::Engine::GC_storeLocked( cls, (void*) data ))
+
+   #define FALCON_GC_STORELOCKED_SRCLINE( cls, data, src, line ) (::Falcon::Engine::GC_storeLocked( cls, (void*) data ))
+#endif  //FALCON_TRACE_GC
+
+template<typename _T>
+GCToken* FALCON_GC_HANDLE( _T data ) { return FALCON_GC_STORE(data->handler(), data); }
+
+template<typename _T>
+GCToken* FALCON_GC_HANDLE_IN( ::Falcon::VMContext *ctx, _T data ) { return FALCON_GC_STORE_IN(ctx, data->handler(), data); }
+
 
 }
 

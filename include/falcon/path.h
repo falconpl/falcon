@@ -56,7 +56,8 @@ public:
 
    /** Path constructor from strings. */
    Path( const String &path ):
-      m_bValid( true )
+      m_bValid( true ),
+      m_owner(0)
    {
       parse( path );
    }
@@ -65,7 +66,8 @@ public:
       Copies the other path as-is.
    */
    Path( const Path &other ):
-      m_bValid( true )
+      m_bValid( true ),
+      m_owner(0)
    {
       copy( other );
    }

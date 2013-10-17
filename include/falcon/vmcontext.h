@@ -608,6 +608,11 @@ public:
     */
    inline const Item& self() const { return currentFrame().m_self; }
    inline Item& self() { return currentFrame().m_self; }
+   /**
+    * Return a typeized pointer to the self instance.
+    */
+   template<typename _T>
+      _T tself() { return static_cast<_T>(currentFrame().m_self.asInst()); }
 
    const CallFrame& previousFrame( uint32 n ) const { return *(&currentFrame()-n); }
 

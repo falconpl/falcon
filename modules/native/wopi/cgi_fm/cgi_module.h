@@ -33,6 +33,8 @@ public:
     */
    virtual void onStartupComplete( VMContext* ctx );
 
+};
+
 }
 }
 

@@ -18,6 +18,7 @@
 
 #include <falcon/wopi/reply.h>
 #include <falcon/error.h>
+#include <falcon/wopi/modulewopi.h>
 
 namespace Falcon {
 namespace WOPI {

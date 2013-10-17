@@ -15,16 +15,23 @@
    See LICENSE file for licensing details.
 */
 
+#include <falcon/wopi/version.h>
+
 #include <falcon/wopi/wopi.h>
 #include <falcon/wopi/modulewopi.h>
+#include <falcon/wopi/classwopi.h>
+#include <falcon/wopi/errors.h>
+
 #include <falcon/itemdict.h>
 #include <falcon/itemarray.h>
 #include <falcon/vmcontext.h>
+#include <falcon/function.h>
+#include <falcon/textwriter.h>
+#include <falcon/stringstream.h>
 
 #include <falcon/engine.h>
 #include <falcon/stdhandlers.h>
 #include <stdlib.h>
-#include <falcon/wopi/version.h>
 
 /*#
    @beginmodule WOPI
@@ -33,11 +40,12 @@
 namespace Falcon {
 namespace WOPI {
 
+namespace {
 class PStepAfterPersist: public PStep
 {
 public:
    inline PStepAfterPersist() { apply = apply_; }
-   inline virtual ~PStep() {}
+   inline virtual ~PStepAfterPersist() {}
    virtual void describeTo( String& target ) const { target = "PStepAfterPersist"; }
 
    static void apply_(const PStep*, VMContext* ctx)
@@ -59,44 +67,60 @@ FALCON_DECLARE_ERROR_CLASS_EX( PersistError, \
          );
 
 /*#
-@object WOPI
+@object Wopi
 @brief General configuration and WOPI-system wide interface
 
 This object gives access to generic configuration settings and global
 module functions.
 */
 
-//===================================================================================
-// Wopi class
-//
 
-ClassWOPI::ClassWOPI()
+/*#
+   @method tempFile Wopi
+   @brief Creates a temporary file.
+   @optparam name If given and passed by reference, it will receive the complete file name.
+   @return A Falcon stream.
+   @raise IoError on open or write error.
+
+   Temporary streams are automatically deleted when the the script terminates.
+
+   In case the script want to get the name of the file where the temporary data
+   is stored (i.e. to copy or move it elsewhere after having completed the updates),
+   the parameter @b name needs to be passed by reference, and it will receive the
+   filename.
+
+   @note The temporary files are stored in the directory specified by the
+      parameter UploadDir in the falcon.ini file.
+*/
+
+FALCON_DECLARE_FUNCTION(tempFile, "name:[S]" )
+FALCON_DEFINE_FUNCTION_P(tempFile)
 {
-   m_stepAfterPersist = new PStepAfterPersist;
+   Wopi* wopi = ctx->tself<Wopi*>();
+
+   String fname;
+   Stream* tgFile;
+   if( pCount == 0 )
+   {
+      tgFile = wopi->makeTempFile();
+   }
+   else
+   {
+      Item* i_fname = ctx->param(0);
+      if( ! i_fname->isString() )
+      {
+         throw paramError();
+      }
+
+      // we need a copy of the string.
+      String fname = *i_fname->asString();
+      tgFile = wopi->makeTempFile(fname, false);
+   }
+
+   ctx->returnFrame( FALCON_GC_HANDLE(tgFile) );
 }
 
-ClassWOPI::~ClassWOPI()
-{
-   delete m_stepAfterPersist;
-}
-
-void ClassWOPI::dispose( void* ) const
-{
-   // do nothing
-}
-
-virtual void* ClassWOPI::clone( void* ) const
-{
-   return 0;
-}
-
-void* ClassWOPI::createInstance() const
-{
-   // static class
-   return 0;
-}
-
-
+/*
 static void internal_htmlEscape_stream( const Falcon::String &str, Falcon::TextWriter *out )
 {
    for ( Falcon::uint32 i = 0; i < str.length(); i++ )
@@ -112,7 +136,8 @@ static void internal_htmlEscape_stream( const Falcon::String &str, Falcon::TextW
       }
    }
 }
-
+*/
+}
 
 /*#
    @global scriptName
@@ -254,8 +279,8 @@ FALCON_DEFINE_FUNCTION_P1(persist)
       // should we initialize the data?
       if ( i_func != 0 )
       {
-         ClassWOPI* clw = static_cast<ClassWOPI*>(methodOf());
-         ctx->pushCode( *clw->m_stepAfterPersist );
+         ClassWopi* clw = static_cast<ClassWopi*>(methodOf());
+         ctx->pushCode( clw->m_stepAfterPersist );
          ctx->callItem(*i_func);
       }
       else
@@ -319,164 +344,7 @@ FALCON_DEFINE_FUNCTION_P1(setPersist)
    ctx->returnFrame();
 }
 
-/*#
-   @method sendTemplate Wopi
-   @brief Configures template file and possibly sends it to the remote end.
-   @param stream A Falcon stream opened for reading (or a memory string stream).
-   @optparam tpd Data for template conversion.
-   @optparam inMemory Work in memory and return the result instead sending it.
-   @return The configured contents of the file if @b inMemory is true.
-   @raise IoError on error reading the file.
-
-   This function reads a text as-is (in binary mode) and flushes its
-   contents to the remote side stream.
-
-   If a dictionary is set as template conversion data, the data in the file
-   is converted so that strings between a pair of '%' symbols are expanded in
-   the text corresponding to the key in the dictionary. In example, if this is
-   a template file:
-   @code
-      My name is %name%, pleased to meet you!
-   @endcode
-
-   The @b %name% configurable text may be changed into "John Smith" through
-   the following call:
-   @code
-      sendTemplate( InputStream("mytemplate.txt"), ["name" => "John Smith"] )
-   @endcode
-
-   If a configurable text is not found in the @b tpd dictionary, it is removed.
-   The special sequence '%%' may be used to write a single '%'.
-
-   @note Maximum length of template configurable strings is 64.
-*/
-FALCON_DECLARE_FUNCTION(sendTemplate, "stream:Stream,tpd:[D],inMemory:[B]")
-FALCON_DEFINE_FUNCTION_P1(sendTemplate)
-{
-   static Class* streamClass = Engine::instance()->stdHandlers()->streamClass();
-   // Get name of the file.
-   Falcon::Item *i_file = ctx->param( 0 );
-   Falcon::Item *i_dict = ctx->param( 1 );
-   Falcon::Item *i_inMemory = ctx->param( 2 );
-
-   // parameter sanity check.
-   if ( i_file == 0 || ! i_file->isInstanceOf( streamClass ) ||
-      ( i_dict != 0 && ! ( i_dict->isDict() || i_dict->isNil() ) )
-   )
-   {
-      throw paramError();
-   }
-
-   bool bWorkInMem = i_inMemory == 0 ? false : i_inMemory->isTrue();
-
-   Falcon::TextWriter *outStream;
-   if ( bWorkInMem )
-   {
-      Stream* stream = new Falcon::StringStream;
-      outStream = new Falcon::TextWriter( stream );
-      stream->decref();
-   }
-   else {
-      outStream = ctx->process()->textOut();
-   }
-
-   Falcon::CoreDict *dataDict = i_dict == 0 || i_dict->isNil() ? 0 : i_dict->asDict();
-
-   Falcon::Stream *inStream = (Falcon::Stream *)i_file->asObject()->getUserData();
-   Falcon::String text(1024+96); // spare a bit of space for extra templating.
-   while ( ! inStream->eof() )
-   {
-      if ( ! inStream->readString( text, 1024 ) )
-      {
-         delete outStream;
-         throw new Falcon::IoError( Falcon::ErrorParam( Falcon::e_io_error, __LINE__ ).
-               sysError( (uint32) inStream->lastError() ) );
-      }
-
-      // scan for templating
-      if ( dataDict != 0 )
-      {
-         Falcon::uint32 pos0=0, pos1, pos2;
-         pos1 = text.find( "%" );
-         while ( pos1 != Falcon::String::npos )
-         {
-            // verify the other position is within 64 chars
-            pos2 = text.find( "%", pos1+1);
-
-            // did we broke the limit of the read data?
-            while ( pos2 == Falcon::String::npos && text.length()-pos1 < 64 )
-            {
-               Falcon::uint32 c;
-               if ( ! inStream->get( c ) )
-               {
-                  delete outStream;
-                  throw new Falcon::IoError( Falcon::ErrorParam( Falcon::e_io_error, __LINE__ ).
-                        sysError( (uint32) inStream->lastError() ) );
-               }
-
-               text += c;
-               if ( c == '%' )
-                  pos2 = text.length();
-            }
-
-            // ok; now, if we have found it, fine, else just drop it.
-            if ( pos2 != Falcon::String::npos )
-            {
-               // write the other part of the text
-               outStream->writeString( text, pos0, pos1 );
-               if ( pos2 == pos1 + 1 )
-                  outStream->writeString( "%" );
-               else
-               {
-                  // find the key.
-                  Falcon::String key = text.subString( pos1+1, pos2 );
-                  Falcon::Item *i_value = dataDict->find( &key );
-                  // write something only if found
-                  if ( i_value != 0 )
-                  {
-                     if ( i_value->isString() )
-                     {
-                        outStream->writeString( *i_value->asString() );
-                     }
-                     else {
-                        Falcon::String temp;
-                        vm->itemToString( temp, i_value );
-                        outStream->writeString( temp );
-                     }
-                  }
-               }
-               // search next variable
-               pos0 = pos2 + 1;
-               pos1 = text.find( "%", pos0 );
-            }
-            else {
-               // just write everything that's left.
-               outStream->writeString( text, pos0 );
-               pos1 = pos2; // will exit loop
-            }
-         }
-
-         // write the last part
-         outStream->writeString( text, pos0 );
-      }
-      // if not using the dictionary
-      else {
-         outStream->writeString( text );
-      }
-   }
-
-   if ( bWorkInMem )
-   {
-      Falcon::CoreString *gs = new Falcon::CoreString;
-      static_cast<Falcon::StringStream *>(outStream)->closeToString(*gs);
-      vm->retval( gs );
-      delete outStream;
-   }
-   else
-   {
-      outStream->flush();
-   }
-}
+#if 0
 
 /*#
    @method parseQuery Wopi
@@ -624,6 +492,45 @@ FALCON_FUNC htmlEscape( Falcon::VMachine *vm )
 
    vm->retval( encoded );
 }
+#endif
+
+
+
+//===================================================================================
+// Wopi class
+//
+
+ClassWopi::ClassWopi():
+         Class("%Wopi")
+{
+   m_stepAfterPersist = new PStepAfterPersist;
+
+   addProperty("scriptName", &get_scriptName );
+   addMethod( new Function_tempFile );
+}
+
+ClassWopi::~ClassWopi()
+{
+   delete m_stepAfterPersist;
+}
+
+void ClassWopi::dispose( void* ) const
+{
+   // do nothing
+}
+
+void* ClassWopi::clone( void* ) const
+{
+   return 0;
+}
+
+void* ClassWopi::createInstance() const
+{
+   // static class
+   return 0;
+}
+
+
 
 /*#
    @class WopiError
@@ -648,56 +555,10 @@ FALCON_DECLARE_ERROR_CLASS_EX( WopiError, \
          addConstant("AppDataStore", FALCON_ERROR_WOPI_APPDATA_SER);\
          addConstant("AppDataRestore", FALCON_ERROR_WOPI_APPDATA_DESER);\
          addConstant("SessionInvalid", FALCON_ERROR_WOPI_SESS_INVALID_ID);\
+         addConstant("PeristNotFound", FALCON_ERROR_WOPI_PERSIST_NOT_FOUND);\
+         addConstant("FieldNotFound", FALCON_ERROR_WOPI_FIELD_NOT_FOUND);\
          )
-
-
-//============================================
-// Module initialization
-//============================================
-
-Falcon::Module * wopi_module_init( ObjectFactory rqf, ObjectFactory rpf,
-      ext_func_t rq_init_func, ext_func_t rp_init_func  )
-{
-   // initialize the module
-   Falcon::Module *self = new Falcon::Module();
-   self->name( "WOPI" );
-   self->engineVersion( FALCON_VERSION_NUM );
-   self->version( VERSION_MAJOR, VERSION_MINOR, VERSION_REVISION );
-
-   InitRequestClass( self, rqf, rq_init_func );
-   InitReplyClass( self, rpf, rp_init_func );
-   InitErrorClass( self );
-   InitUploadedClass( self );
-   
-   
-   // create a singleton instance of %Wopi class
-   Falcon::Symbol *c_wopi_o = self->addSingleton( "Wopi", &Wopi_init );
-   Falcon::Symbol *c_wopi = c_wopi_o->getInstance();
-   c_wopi->getClassDef()->factory( CoreWopi::factory );
-
-   self->addClassMethod( c_wopi, "getAppData", &Wopi_getAppData ).asSymbol()
-      ->addParam( "app" );
-   self->addClassMethod( c_wopi, "setAppData", &Wopi_setAppData ).asSymbol()
-      ->addParam( "data" )->addParam( "app" );
-   self->addClassMethod( c_wopi, "getPData", &Wopi_getPData ).asSymbol()
-      ->addParam( "id" )->addParam("func");
-   self->addClassMethod( c_wopi, "setPData", &Wopi_setPData ).asSymbol()
-      ->addParam( "id" )->addParam( "func" );
-   self->addClassMethod( c_wopi, "sendTemplate", &Wopi_sendTemplate ).asSymbol()
-      ->addParam( "stream" )->addParam( "tpd" )->addParam( "inMemory" );
-   self->addClassMethod( c_wopi, "parseQuery", &Wopi_parseQuery ).asSymbol()
-      ->addParam( "qstring" );
-   self->addClassMethod( c_wopi, "makeQuery", &Wopi_makeQuery ).asSymbol()
-      ->addParam( "dict" );
-
-   // Generic functions.
-   self->addExtFunc( "htmlEscape", htmlEscape )
-      ->addParam( "string" )->addParam( "output" );
-
-   return self;
-}
-
 }
 }
 
-/* end of wopi_ext.cpp */
+/* end of classwopi.cpp */

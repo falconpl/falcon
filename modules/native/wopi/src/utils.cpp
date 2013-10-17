@@ -41,7 +41,7 @@ namespace Utils {
 
 void fieldsToUriQuery( const ItemDict& fields, String& target )
 {
-   class Rator: public ItemDict::Enumerator
+   class Rator: public ::Falcon::ItemDict::Enumerator
    {
 
    public:
@@ -66,7 +66,7 @@ void fieldsToUriQuery( const ItemDict& fields, String& target )
             if( value.isString() )
             {
                URI::URLEncode( *value.asString(), sValue );
-               target += sName + "=" + sValue;
+               m_target += sName + "=" + sValue;
             }
             else if( value.isArray() )
             {
@@ -78,7 +78,7 @@ void fieldsToUriQuery( const ItemDict& fields, String& target )
                   if( str.isString() )
                   {
                      URI::URLEncode( *str.asString(), sValue );
-                     target += sName + "[]=" + sValue;
+                     m_target += sName + "[]=" + sValue;
                   }
                }
             }
@@ -98,7 +98,7 @@ void fieldsToUriQuery( const ItemDict& fields, String& target )
 
 void dictAsInputFields( String& fwd, const ItemDict& items )
 {
-   class Rator: public ItemDict::Enumerator
+   class Rator: public ::Falcon::ItemDict::Enumerator
    {
 
    public:

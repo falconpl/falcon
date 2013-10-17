@@ -641,7 +641,7 @@ Class* ItemDict::handler()
    return handler;
 }
 
-void ItemDict::enumerate( Enumerator& rator )
+void ItemDict::enumerate( Enumerator& rator ) const
 {
    static Class* cstr = Engine::handlers()->stringClass();
    static Class* cr = Engine::handlers()->rangeClass();

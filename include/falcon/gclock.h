@@ -63,6 +63,25 @@ public:
      */
     void dispose() { m_bDisposed = true; }
 
+    /**
+     * Deleter class to be used with stl structures.
+     *
+     * This class will render the destruction of an outside Deleter
+     * shell into the call of the dispose method of the GCLock.
+     *
+     * This can be used where stl structures or other opaque-datatype handlers
+     * require public destructors to pointers, eventually storing the pointers
+     * in a std::unique_ptr.
+     */
+    class Deleter
+    {
+    public:
+       void operator()(GCLock* element) const
+       {
+          element->dispose();
+       }
+    };
+
 protected:
     GCLock( const Item& orig ):
         m_item( orig ),

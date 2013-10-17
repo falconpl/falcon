@@ -30,6 +30,7 @@ class Stream;
 
 namespace WOPI {
 
+class ModuleWopi;
 
 class CookieParams
 {
@@ -139,6 +140,7 @@ public:
 
    class CommitHandler
    {
+   public:
       virtual ~CommitHandler();
       //! Invoked when the commit operation is about to begin.
         virtual void startCommit( Reply* reply, Stream* tgt ) = 0;
@@ -158,6 +160,7 @@ public:
    const String& reason() const { return m_sReason; }
    void reason( const String& str ) { m_sReason = str; }
 
+   ModuleWopi* module() const { return m_module; }
 protected:
 
    CommitHandler* m_commitHandler;

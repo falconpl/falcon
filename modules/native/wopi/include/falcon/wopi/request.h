@@ -18,8 +18,6 @@
 #ifndef FALCON_WOPI_REQUEST
 #define FALCON_WOPI_REQUEST
 
-#define DEFAULT_SESSION_FIELD "SID"
-
 #include <falcon/wopi/utils.h>
 #include <falcon/wopi/parthandler.h>
 
@@ -51,6 +49,9 @@ public:
    //! Parses the body.
    bool parseBody( Stream* input );
 
+   //! Reads relevant CGI-environ variables
+   void parseEnviron();
+
    //=========================================================
 
    bool getField( const String& fname, String& value ) const;
@@ -65,14 +66,6 @@ public:
 
    void fwdGet( String& fwd, bool all=false ) const;
    void fwdPost( String& fwd, bool all=false ) const;
-
-   const String& getSessionFieldName() const { return m_sSessionField; }
-   void setSessionFieldName( const String& name ) { m_sSessionField = name; }
-
-   /** Token created by the session manager for this requet.
-   */
-   uint32 sessionToken() const { return m_nSessionToken; }
-   void sessionToken( uint32 st ) { m_nSessionToken = st; }
 
    bool setURI( const String& uri );
    const URI& parsedUri() const { return m_uri; }
@@ -115,8 +108,6 @@ public:
 
    virtual Request *clone() const;
 
-   inline bool autoSession() const { return m_bAutoSession; }
-
    // Generic request informations
    String m_protocol;
    String m_method;
@@ -138,10 +129,12 @@ public:
    PartHandler m_MainPart;
 
    // quantitative informations
-   int64 m_request_time;
-   int64 m_bytes_sent;
    int64 m_content_length;
+   int64 m_bytes_sent;
+   int64 m_request_time;
+   numeric m_startedAt;
    String m_sUri;
+   URI m_uri;
 
 protected:
    void forward( const ItemDict& main, const ItemDict& aux, String& fwd, bool all ) const;
@@ -152,7 +145,6 @@ protected:
    //! Creates an uploaded element (in the post fields) out of the data in partHandler
    void addUploaded( PartHandler* ph, const String& prefix = "" );
 
-
    // host module
    ModuleWopi* m_module;
 
@@ -162,33 +154,13 @@ protected:
    ItemDict* m_cookies;
    ItemDict* m_headers;
 
-   String m_sSessionField;
-
-   URI m_uri;
-
-   class TempFileEntry
-   {
-      public:
-         Falcon::String m_entry;
-         TempFileEntry* m_next;
-
-         TempFileEntry( const Falcon::String &fname ):
-            m_entry( fname ),
-            m_next(0)
-            {}
-   };
-
-   // Used to remember which files to delete at end.
-   TempFileEntry *m_tempFiles;
-
-   uint32 m_nSessionToken;
-
-   Falcon::numeric m_startedAt;
-
    uint32 m_mark;
 
    bool m_bPostInit;
-   bool m_bAutoSession;
+
+private:
+   static void handleEnvStr( const Falcon::String& key, const Falcon::String& value, void *data );
+   void addHeaderFromEnv( const Falcon::String& key, const Falcon::String& value );
 };
 
 }

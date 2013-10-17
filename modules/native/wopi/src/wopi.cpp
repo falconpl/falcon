@@ -16,16 +16,23 @@
 */
 
 #include <falcon/wopi/wopi.h>
-#include <falcon/wopi/error_ext.h>
+#include <falcon/wopi/errors.h>
 #include <falcon/stringstream.h>
 #include <falcon/module.h>
 #include <falcon/vmcontext.h>
 #include <falcon/textreader.h>
+#include <falcon/engine.h>
+#include <falcon/log.h>
+#include <falcon/wopi/utils.h>
 
-#include "wopi_opts.h"
+#include <falcon/wopi/wopi_opts.h>
 
 namespace Falcon {
 namespace WOPI {
+
+#define WOPI_OPTION_DEFINE
+#include <falcon/wopi/wopi_opts.h>
+#undef WOPI_OPTION_DEFINE
 
 static bool getHumanSize( const String& value, int64& val )
 {
@@ -142,7 +149,7 @@ static bool s_check_wopi_opt_MaxMemoryUploadSize( const String &configValue, Wop
 
 Wopi::ConfigEntry::ConfigEntry( const String& name, t_type type, const String& desc, t_checkfunc check )
 {
-   m_type = name;
+   m_type = type;
    m_name = name;
    m_desc = desc;
    m_checkFunc = check;
@@ -207,7 +214,8 @@ Wopi::Wopi():
 void Wopi::initConfigOptions()
 {
 #define WOPI_OPTION_REALIZE
-#include "wopi_opts.h"
+#include <falcon/wopi/wopi_opts.h>
+#undef WOPI_OPTION_REALIZE
 }
 
 Wopi::~Wopi()
@@ -282,7 +290,7 @@ bool Wopi::addConfigOption( ConfigEntry::t_type t, const String& name, const Str
 }
 
 
-bool Wopi::addConfigOption( ConfigEntry::t_type t, const String& name, const String& desc, String& deflt, t_checkfunc check )
+bool Wopi::addConfigOption( ConfigEntry::t_type t, const String& name, const String& desc, const String& deflt, t_checkfunc check )
 {
    ConfigMap::iterator pos = m_config.find(name);
    if( pos != m_config.end() )
@@ -290,7 +298,7 @@ bool Wopi::addConfigOption( ConfigEntry::t_type t, const String& name, const Str
       return false;
    }
 
-   ConfigEntry* entry = new ConfigEntry(name, t, desc, 0);
+   ConfigEntry* entry = new ConfigEntry(name, t, desc, check);
    entry->m_sValue = deflt;
    int64 dv = 0;
    if( getHumanSize(deflt, dv) )
@@ -311,7 +319,7 @@ bool Wopi::addConfigOption( ConfigEntry::t_type t, const String& name, const Str
      return false;
    }
 
-   ConfigEntry* entry = new ConfigEntry(name, t, desc, 0);
+   ConfigEntry* entry = new ConfigEntry(name, t, desc, check);
    entry->m_iValue = deflt;
    return true;
 }
@@ -480,7 +488,7 @@ bool Wopi::setConfigValue(const String& key, const Item& value, String& error )
 
 bool Wopi::getConfigValue( const String& key, String& value, String& error ) const
 {
-   ConfigMap::iterator pos = m_config.find(key);
+   ConfigMap::const_iterator pos = m_config.find(key);
    if( pos == m_config.end() )
    {
       error = String("Unknown option '").A(key).A("' not found");
@@ -495,7 +503,7 @@ bool Wopi::getConfigValue( const String& key, String& value, String& error ) con
 
 bool Wopi::getConfigValue( const String& key, int64& value, String& error ) const
 {
-   ConfigMap::iterator pos = m_config.find(key);
+   ConfigMap::const_iterator pos = m_config.find(key);
    if( pos == m_config.end() )
    {
       error = String("Unknown option '").A(key).A("'");
@@ -516,7 +524,7 @@ bool Wopi::getConfigValue( const String& key, int64& value, String& error ) cons
 
 bool Wopi::getConfigValue( const String& key, Item& target, String& error ) const
 {
-   ConfigMap::iterator pos = m_config.find(key);
+   ConfigMap::const_iterator pos = m_config.find(key);
    if( pos == m_config.end() )
    {
       error = String("Unknown option '").A(key).A("'");
@@ -536,9 +544,9 @@ bool Wopi::getConfigValue( const String& key, Item& target, String& error ) cons
 }
 
 
-void Wopi::enumerateConfigOptions( Wopi::ConfigEnumerator& rator )
+void Wopi::enumerateConfigOptions( Wopi::ConfigEnumerator& rator ) const
 {
-   ConfigMap::iterator pos = m_config.begin();
+   ConfigMap::const_iterator pos = m_config.begin();
    while( pos != m_config.end() )
    {
       ConfigEntry* entry = pos->second;
@@ -564,7 +572,6 @@ bool Wopi::configFromIni( TextReader* iniFile, String& errors )
          buffer.trim();
 
          // skip lines to be ignored.
-         bool correct = true;
          char_t chr;
          if ( buffer.empty()
                   || (chr  = buffer.getCharAt(0)) == '#'
@@ -607,7 +614,8 @@ bool Wopi::configFromIni( TextReader* iniFile, String& errors )
          String error;
          if( ! setConfigValue(key, value, error) )
          {
-            errors += error + " at line " + line + "\n";
+            errors += error + " at line ";
+            errors.N(line).A("\n");
             status = false;
          }
       }
@@ -649,10 +657,16 @@ bool Wopi::configFromModule( Module* module, String& errors )
 }
 
 
-Stream* Wopi::makeTempFile( String& fname, int64& le )
+Stream* Wopi::makeTempFile( String& fname, bool random )
 {
    Path fpath;
-   fpath.fulloc( getConfigValue() );
+   String error;
+   String tempdir;
+
+   getConfigValue(OPT_TempDir, tempdir, error );
+   fassert( error.empty() );
+
+   fpath.fulloc( tempdir );
 
    // try 3 times
    int tries = 0;
@@ -660,14 +674,23 @@ Stream* Wopi::makeTempFile( String& fname, int64& le )
    {
 
       String fname_try;
-      Utils::makeRandomFilename( fname_try, 12 );
-      fpath.filename( fname_try );
-      fname = fpath.encode();
+      if( random )
+      {
+         Utils::makeRandomFilename( fname_try, 12 );
+         fpath.filename( fname + fname_try );
+      }
+      else
+      {
+         fpath.filename( fname );
+      }
+      String fullname = fpath.encode();
 
       // try to create the file
       try {
-         Stream* tgFile = Falcon::Engine::instance()->vfs().createSimple(fname);
-         addTempFile( fname );
+         Stream* tgFile = Falcon::Engine::instance()->vfs().createSimple(fullname);
+         addTempFile( fullname );
+         fname = fullname;
+         return tgFile;
       }
       catch(Falcon::Error* err )
       {
@@ -684,33 +707,41 @@ Stream* Wopi::makeTempFile( String& fname, int64& le )
 
 void Wopi::addTempFile( const Falcon::String &fname )
 {
-   TempFileEntry* tfe = new TempFileEntry( fname );
-   tfe->m_next = m_tempFiles;
-   m_tempFiles = tfe;
+   m_mtxTempFiles.lock();
+   m_tempFiles.push_back(fname);
+   m_mtxTempFiles.unlock();
 }
 
-void Wopi::removeTempFiles( void* head, void* data, void (*error_func)(const String&, void*) )
+void Wopi::removeTempFiles()
 {
-   TempFileEntry *tfe = (TempFileEntry*) head;
-   while( tfe != 0 )
-   {
-      TempFileEntry *tfe_next = tfe->m_next;
-      Falcon::int32 status;
-      try {
-         Engine::instance()->vfs().erase( tfe->m_entry );
-      }
-      catch (Error* err)
-      {
-         if ( error_func != 0 )
-         {
-            String error = err->describe(false);
-            error_func( error, data );
-         }
-         err->decref();
-      }
+   Log* log = Engine::instance()->log();
+   TempFileList tempList;
 
-      tfe = tfe_next;
+   m_mtxTempFiles.lock();
+   tempList = m_tempFiles;
+   m_tempFiles.clear();
+   m_mtxTempFiles.unlock();
+
+   TempFileList::iterator iter = tempList.begin();
+   TempFileList::iterator end = tempList.end();
+   while( iter != end )
+   {
+      const Falcon::String& fname = *iter;
+      try
+      {
+         Engine::instance()->vfs().erase(fname);
+      }
+      catch( Error* e )
+      {
+         log->log( Log::fac_engine_io, Log::lvl_warn,
+                  String("WOPI: Cannot erase temporary file \"") + fname + "\": " +
+                     e->describe(false)
+                  );
+      }
+      ++iter;
    }
+
+   m_tempFiles.clear();
 }
 
 

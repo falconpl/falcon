@@ -1,6 +1,6 @@
 /*
    FALCON - The Falcon Programming Language.
-   FILE: reply_ext.cpp
+   FILE: classreply.cpp
 
    Web Oriented Programming Interface
 
@@ -15,9 +15,14 @@
    See LICENSE file for licensing details.
 */
 
-#include <falcon/wopi/reply_ext.h>
+#include <falcon/wopi/classreply.h>
 #include <falcon/wopi/reply.h>
 #include <falcon/wopi/utils.h>
+#include <falcon/wopi/modulewopi.h>
+
+#include <falcon/itemid.h>
+#include <falcon/stderrors.h>
+#include <falcon/vmcontext.h>
 
 #include <ctype.h>
 
@@ -28,6 +33,8 @@
 
 namespace Falcon {
 namespace WOPI {
+
+namespace {
 
 static void internal_capitalize_name( String& name )
 {
@@ -73,6 +80,41 @@ static void internal_capitalize_name( String& name )
       still unsent.
 */
 
+static void get_status(const Class*, const String&, void* instance, Item& value )
+{
+   Reply*r = static_cast<Reply*>(instance);
+   value = (int64) r->status();
+}
+
+static void set_status(const Class*, const String&, void* instance, const Item& value )
+{
+   Reply*r = static_cast<Reply*>(instance);
+   r->status((int32) value.asInteger());
+}
+
+static void get_reason(const Class*, const String&, void* instance, Item& value )
+{
+   Reply*r = static_cast<Reply*>(instance);
+   value = FALCON_GC_HANDLE( new String(r->reason()) );
+}
+
+static void set_reason(const Class*, const String&, void* instance, const Item& value )
+{
+   Reply*r = static_cast<Reply*>(instance);
+   if( ! value.isString() )
+   {
+      throw FALCON_SIGN_XERROR( AccessTypeError, e_inv_prop_value, .extra("S") );
+   }
+   r->reason( *value.asString() );
+}
+
+static void get_isSent(const Class*, const String&, void* instance, Item& value )
+{
+   Reply*r = static_cast<Reply*>(instance);
+   value.setBoolean( r->isCommited() );
+}
+
+
 /*#
    @method commit Reply
    @brief Sends immediately the header and pending data.
@@ -83,17 +125,18 @@ static void internal_capitalize_name( String& name )
    is just generating a reply that consists in an HTTP header
    without data, or to start a keep-alive HTTP/1.1 conversation.
 */
-FALCON_FUNC  Reply_commit( VMachine *vm )
+FALCON_DECLARE_FUNCTION(commit, "")
+FALCON_DEFINE_FUNCTION_P1(commit)
 {
-   Reply* r = dyncast<Reply*>( vm->self().asObject() );
-   vm->retval( r->commit() );
+   Reply* r = ctx->tself<Reply*>();
+   ctx->returnFrame(Item().setBoolean( r->commit(ctx->process()->stdOut()) ) );
 }
 
 /*#
    @method setCookie Reply
    @brief sets a cookie that will be received next time that a script is called.
    @param name Name of the Cookie or complete cookie specification in a dictionary.
-   @optparam value Value for the cookie (eventually truned into a string).
+   @optparam value Value for the cookie (as a string).
    @optparam expires Expiration date (a TimeStamp or an ISO or RFC2822 formatted string),
              or maximum life in seconds (an integer).
    @optparam path Cookie path validity
@@ -106,7 +149,7 @@ FALCON_FUNC  Reply_commit( VMachine *vm )
    a web browser), which will send them back each time it connects again.
 
    The cookies sent through this function will be received in the @b cookies
-   member of subquesent call to this or other scripts.
+   member of subsequent call to this or other scripts.
 
    Parameters to be left blank can be skipped using @b nil; however, it may be useful
    to use the named parameter convention.
@@ -127,39 +170,37 @@ FALCON_FUNC  Reply_commit( VMachine *vm )
    Only the @b name parameter is mandatory.
    @note Cookies must be set before output is sent to the upstream server.
 */
-FALCON_FUNC  Reply_setCookie( VMachine *vm )
+FALCON_DECLARE_FUNCTION(setCookie, "name:S,value:[S],expires:[N|S|TimeStamp],path:[S],domain:[S],secure:[B],httpOnly:[B]")
+FALCON_DEFINE_FUNCTION_P1(setCookie)
 {
    String sDummy;
    String sCookie;
 
-   Item *i_name = vm->param(0);
-   Item *i_value = vm->param(1);
-   Item *i_expire = vm->param(2);
-   Item *i_path = vm->param(3);
-   Item *i_domain = vm->param(4);
-   Item *i_secure = vm->param(5);
-   Item *i_httpOnly = vm->param(6);
+   Item *i_name = ctx->param(0);
+   Item *i_value = ctx->param(1);
+   Item *i_expire = ctx->param(2);
+   Item *i_path = ctx->param(3);
+   Item *i_domain = ctx->param(4);
+   Item *i_secure = ctx->param(5);
+   Item *i_httpOnly = ctx->param(6);
 
    CookieParams cp;
 
    if ( i_name == 0 || ! (i_name->isString() ) )
    {
-      goto invalid;
+      throw paramError();
    }
 
    // if value is not a string, stringify it
    if ( i_value != 0 )
    {
-      String temp;
-
       if ( i_value->isString() )
       {
          cp.value( *i_value->asString() );
       }
       else if( ! i_value->isNil() )
       {
-         vm->itemToString( cp.m_value, i_value );
-         cp.m_bValueGiven = true;
+         cp.value(i_value->describe());
       }
    }
 
@@ -171,20 +212,24 @@ FALCON_FUNC  Reply_setCookie( VMachine *vm )
          cp.m_max_age = (int32) i_expire->forceInteger();
       }
       // a bit of sanitization; if we have an expire, we must ensure it's in ISO or RFC2822 format.
-      else if ( i_expire->isObject() && i_expire->asObject()->derivedFrom( "TimeStamp" ) )
+      else if ( i_expire->type() == FLC_CLASS_ID_TIMESTAMP )
       {
-         cp.m_expire = (TimeStamp *) i_expire->asObject()->getUserData();
+         cp.m_expire = (TimeStamp *) i_expire->asInst();
       }
       else if ( i_expire->isString() )
       {
          TimeStamp tsDummy;
          if ( ! TimeStamp::fromRFC2822( tsDummy, *i_expire->asString() ) )
-            goto invalid;
+         {
+            throw paramError("Invalid RFC2822 TimeStamp");
+         }
 
          cp.m_expire_string = *i_expire->asString();
       }
       else if ( ! i_expire->isNil() )
-         goto invalid;
+      {
+         throw paramError();
+      }
    }
 
    // path part
@@ -195,7 +240,9 @@ FALCON_FUNC  Reply_setCookie( VMachine *vm )
          cp.m_path = *i_path->asString();
       }
       else if ( ! i_path->isNil() )
-         goto invalid;
+      {
+         throw paramError();
+      }
    }
 
    if ( i_domain != 0 )
@@ -205,7 +252,9 @@ FALCON_FUNC  Reply_setCookie( VMachine *vm )
          cp.m_domain = *i_domain->asString();
       }
       else if ( ! i_domain->isNil() )
-         goto invalid;
+      {
+         throw paramError();
+      }
    }
 
    if ( i_secure != 0 && i_secure->isTrue() )
@@ -220,15 +269,11 @@ FALCON_FUNC  Reply_setCookie( VMachine *vm )
 
    // great, we have it.
    {
-      Reply* r = dyncast<Reply*>( vm->self().asObject() );
+      Reply* r = ctx->tself<Reply*>();
       r->setCookie( *i_name->asString(), cp );
    }
 
-   return;
-
-invalid:
-   throw new ParamError(
-      ErrorParam( e_inv_params, __LINE__ ).extra( "S|D,[X,TimeStamp|S,S,S,B,B]" ) );
+   ctx->returnFrame();
 }
 
 
@@ -241,18 +286,20 @@ invalid:
    The cookie value is @b not removed from the @a Request.cookies array.
 */
 
-FALCON_FUNC  Reply_clearCookie( VMachine *vm )
+FALCON_DECLARE_FUNCTION(clearCookie, "name:S")
+FALCON_DEFINE_FUNCTION_P1(clearCookie)
 {
    String sCookie;
 
-   Item *i_name = vm->param(0);
+   Item *i_name = ctx->param(0);
    if( i_name == 0 || ! i_name->isString() )
    {
-      throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).extra( "S" ) );
+      throw paramError();
    }
  
-   Reply* r = dyncast<Reply*>( vm->self().asObject() );
-   r->clearCookie( *i_name->asString() );  
+   Reply* r = ctx->tself<Reply*>();
+   r->clearCookie( *i_name->asString() );
+   ctx->returnFrame();
 }
 
 
@@ -272,28 +319,33 @@ FALCON_FUNC  Reply_clearCookie( VMachine *vm )
    any output is sent to the client. Otherwise, it will be ignored.
 */
 
-FALCON_FUNC  Reply_redirect( VMachine *vm )
+FALCON_DECLARE_FUNCTION(redirect, "uri:[S],timeout:[N]")
+FALCON_DEFINE_FUNCTION_P1(redirect)
 {
-   Reply* r = dyncast<Reply*>( vm->self().asObject() );
+   Reply* r = ctx->tself<Reply*>();
 
-   Item* i_url = vm->param(0);
-   Item* i_timeout = vm->param(1);
+   Item* i_url = ctx->param(0);
+   Item* i_timeout = ctx->param(1);
 
    if( (i_url != 0 && !( i_url->isNil() || i_url->isString() ))
       || (i_timeout != 0 && ! ( i_timeout->isNil() || i_timeout->isOrdinal() ))
    )
    {
-      throw new ParamError(
-         ErrorParam( e_inv_params, __LINE__ )
-         .extra( "[S],[N]" ) );
+      throw paramError();
    }
 
    int iTimeout = (int)(i_timeout == 0 || i_timeout->isNil() ? 0: i_timeout->forceInteger());
 
    if( i_url == 0 || i_url->isNil() )
+   {
       r->setRedirect( "", iTimeout );
+   }
    else
+   {
       r->setRedirect( *i_url->asString(), iTimeout );
+   }
+
+   ctx->returnFrame();
 }
 
 /*#
@@ -315,26 +367,20 @@ FALCON_FUNC  Reply_redirect( VMachine *vm )
    case-sensitive. A case mismatch may cause an undesired duplication of the header.
 */
 
-FALCON_FUNC  Reply_setHeader( VMachine *vm )
+FALCON_DECLARE_FUNCTION(setHeader, "name:S,value:[S]")
+FALCON_DEFINE_FUNCTION_P1(setHeader)
 {
-   Reply* r = dyncast<Reply*>( vm->self().asObject() );
+   Reply* r = ctx->tself<Reply*>();
 
-   Item* i_name = vm->param(0);
-   Item* i_value = vm->param(1);
+   Item* i_name = ctx->param(0);
+   Item* i_value = ctx->param(1);
 
    if( i_name == 0 || ! i_name->isString() )
    {
-      throw new ParamError(
-         ErrorParam( e_inv_params, __LINE__ )
-         .extra( "S,[X]" ) );
+      throw paramError();
    }
 
    String name = *i_name->asString();
-   if ( name.size() == 0 )
-   {
-      return;
-   }
-
    internal_capitalize_name( name );
 
    // should we delete this string?
@@ -342,16 +388,16 @@ FALCON_FUNC  Reply_setHeader( VMachine *vm )
    {
       r->removeHeader( *i_name->asString() );
    }
-   else if ( ! i_value->isString() )
+   else if ( i_value->isString() )
    {
       r->setHeader( name, *i_value->asString() );
    }
    else
    {
-      String value;
-      vm->itemToString( value , i_value );
-      r->setHeader( name, value );
+      r->setHeader( name, i_value->describe() );
    }
+
+   ctx->returnFrame();
 }
 
 
@@ -368,17 +414,16 @@ FALCON_FUNC  Reply_setHeader( VMachine *vm )
    case-sensitive.
 */
 
-FALCON_FUNC  Reply_getHeader( VMachine *vm )
+FALCON_DECLARE_FUNCTION(getHeader, "name:S,value:[S]")
+FALCON_DEFINE_FUNCTION_P1(getHeader)
 {
-   Reply* r = dyncast<Reply*>( vm->self().asObject() );
+   Reply* r = ctx->tself<Reply*>();
 
-   Item* i_name = vm->param(0);
+   Item* i_name = ctx->param(0);
 
    if( i_name == 0 || ! i_name->isString() )
    {
-      throw new ParamError(
-         ErrorParam( e_inv_params, __LINE__ )
-         .extra( "S,[X]" ) );
+      throw paramError();
    }
 
    String name = *i_name->asString();
@@ -392,10 +437,12 @@ FALCON_FUNC  Reply_getHeader( VMachine *vm )
    String value;
    if( r->getHeader( name, value ) )
    {
-      vm->retval( new CoreString( value ) );
+      ctx->returnFrame(FALCON_GC_HANDLE( new String(value) ) );
    }
    else
-      vm->retnil();
+   {
+      ctx->returnFrame();
+   }
 }
 
 
@@ -413,9 +460,12 @@ FALCON_FUNC  Reply_getHeader( VMachine *vm )
    not be reflected into this value.
 */
 
-FALCON_FUNC  Reply_getHeaders( VMachine *vm )
+FALCON_DECLARE_FUNCTION(getHeaders, "")
+FALCON_DEFINE_FUNCTION_P1(getHeaders)
 {
-   vm->retval( dyncast<Reply*>( vm->self().asObject() )->getHeaders() );
+   Reply* r = ctx->tself<Reply*>();
+   ItemDict* id = r->getHeaders();
+   ctx->returnFrame( FALCON_GC_HANDLE(id) );
 }
 
 /*#
@@ -431,22 +481,22 @@ FALCON_FUNC  Reply_getHeaders( VMachine *vm )
    @note Many functions in the module suppose that the output will be utf-8.
 */
 
-FALCON_FUNC  Reply_ctype( VMachine *vm )
-{
-   Reply* r = dyncast<Reply*>( vm->self().asObject() );
+FALCON_DECLARE_FUNCTION(ctype, "type:S,subtype:[S],charset:[S]")
+FALCON_DEFINE_FUNCTION_P1(ctype)
 
-   Item* i_type = vm->param(0);
-   Item* i_subtype = vm->param(1);
-   Item* i_charset = vm->param(2);
+{
+   Reply* r = ctx->tself<Reply*>();
+
+   Item* i_type = ctx->param(0);
+   Item* i_subtype = ctx->param(1);
+   Item* i_charset = ctx->param(2);
 
    if( (i_type == 0 || ! i_type->isString() )
        || ( i_subtype != 0 && !(i_subtype->isString() || i_subtype->isNil() ))
        || ( i_charset != 0 && !(i_charset->isString() || i_charset->isNil() ))
    )
    {
-      throw new ParamError(
-         ErrorParam( e_inv_params, __LINE__ )
-         .extra( "S,[S],[S]" ) );
+      throw paramError();
    }
 
    if( i_charset == 0 || i_charset->isNil() )
@@ -463,39 +513,70 @@ FALCON_FUNC  Reply_ctype( VMachine *vm )
             *i_charset->asString() );
    }
 
+   ctx->returnFrame();
+}
+
 }
 
 
-void InitReplyClass( Module* self, ObjectFactory cff, ext_func_t init_func  )
+//============================================================================================
+// Reply class
+//
+
+ClassReply::ClassReply():
+         Class("%Reply")
 {
-   // create a singleton instance of %Reply class
-   Symbol *c_reply_o = self->addSingleton( "Reply", init_func );
-   Falcon::Symbol *c_reply = c_reply_o->getInstance();
-   c_reply->getClassDef()->factory( cff );
+   addProperty("status", &get_status, &set_status);
+   addProperty("reason", &get_reason, &set_reason);
+   addProperty("isSent", &get_isSent);
 
-   // we don't make it WKS; let it to be exchangeable with another object.
-   self->addClassProperty( c_reply, "status" );
-   self->addClassProperty( c_reply, "reason" );
-   self->addClassProperty( c_reply, "isSent" );
-   self->addClassMethod( c_reply, "commit", &Reply_commit );
-   self->addClassMethod( c_reply, "setHeader", &Reply_setHeader ).asSymbol()
-         ->addParam( "name" )->addParam( "value" );
-   self->addClassMethod( c_reply, "getHeader", &Reply_getHeader ).asSymbol()
-         ->addParam( "name" );
-   self->addClassMethod( c_reply, "getHeaders", &Reply_getHeaders );
-   self->addClassMethod( c_reply, "redirect", &Reply_redirect ).asSymbol()
-         ->addParam( "url" )->addParam( "timeout" );
-   self->addClassMethod( c_reply, "ctype", &Reply_ctype ).asSymbol()
-         ->addParam( "type" )->addParam( "subtype" )->addParam( "charset" );
-   self->addClassMethod( c_reply, "setCookie", &Reply_setCookie ).asSymbol()
-      ->addParam( "name" )->addParam( "value" )->addParam( "expires" )
-      ->addParam( "path" )->addParam( "domain" )->addParam( "secure" )
-      ->addParam( "httpOnly" );
-   self->addClassMethod( c_reply, "clearCookie", &Reply_clearCookie ).asSymbol()
-      ->addParam( "name" );
+   addMethod( new Function_commit );
+   addMethod( new Function_ctype );
+   addMethod( new Function_getHeader );
+   addMethod( new Function_setHeader );
+   addMethod( new Function_getHeaders );
+   addMethod( new Function_setCookie );
+   addMethod( new Function_clearCookie );
+}
+
+
+ClassReply::~ClassReply()
+{
+}
+
+
+void ClassReply::dispose( void* ) const
+{
+   // do nothing
+}
+
+
+void* ClassReply::clone( void* ) const
+{
+   // uncloneable
+   return 0;
+}
+
+
+void* ClassReply::createInstance() const
+{
+   // abstract class
+   return 0;
+}
+
+void ClassReply::gcMarkInstance( void* instance, uint32 mark ) const
+{
+   Reply* r = static_cast<Reply*>(instance);
+   r->gcMark(mark);
+}
+
+bool ClassReply::gcCheckInstance( void* instance, uint32 mark ) const
+{
+   Reply* r = static_cast<Reply*>(instance);
+   return r->module()->currentMark() >= mark;
 }
 
 }
 }
 
-/* end of reply_ext.cpp */
+/* end of classreply.cpp */

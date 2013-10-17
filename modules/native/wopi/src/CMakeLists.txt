@@ -24,10 +24,20 @@ else()
 endif()
 
 set(_files
-   #${_files_sys}
-  modulewopi.cpp
+   #${_files_sys}  
+  request.cpp
+  reply.cpp
+  replystream.cpp
+  uploaded.cpp
+  utils.cpp
   wopi.cpp
-  wopi_ext.cpp
+  
+  classrequest.cpp
+  classreply.cpp
+  classuploaded.cpp  
+  classwopi.cpp
+  
+  modulewopi.cpp  
 )
 
 unset(WOPI_SOURCES)

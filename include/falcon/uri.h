@@ -445,7 +445,7 @@ inline bool URI::isSubDelim( uint32 chr )
 {
    return (chr == '!')  || (chr == '$') || (chr == '&') ||
           (chr == '\'') || (chr == '(') || (chr == ')') ||
-          (chr == '*')  || (chr == '+') | (chr == ',') ||
+          (chr == '*')  || (chr == '+') || (chr == ',') ||
           (chr == ';')  || (chr == '=');
 }
 

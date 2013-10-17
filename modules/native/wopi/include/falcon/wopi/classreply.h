@@ -1,44 +1,44 @@
 /*
    FALCON - The Falcon Programming Language.
-   FILE: wopi_ext.h
+   FILE: classreply.h
 
    Falcon Web Oriented Programming Interface.
 
-   Main module generator
+   Interface to Reply object
    -------------------------------------------------------------------
    Author: Giancarlo Niccolai
-   Begin: Sat, 20 Feb 2010 16:19:57 +0100
+   Begin: Wed, 16 Oct 2013 12:38:19 +0200
 
    -------------------------------------------------------------------
-   (C) Copyright 2010: the FALCON developers (see list in AUTHORS file)
+   (C) Copyright 2013: the FALCON developers (see list in AUTHORS file)
 
    See LICENSE file for licensing details.
 */
 
-#ifndef FALCON_WOPI_EXT_H
-#define FALCON_WOPI_EXT_H
+#ifndef FALCON_WOPI_CLASSREPLY_H
+#define FALCON_WOPI_CLASSREPLY_H
 
 #include <falcon/module.h>
 #include <falcon/class.h>
-#include <falcon/pstep.h>
 
 namespace Falcon{
 namespace WOPI {
 
-#define FALCON_WOPI_SCRIPTNAME_PROP "scriptName"
-#define FALCON_WOPI_SCRIPTPATH_PROP "scriptPath"
+//#define FALCON_WOPI_REQUEST_GETS_PROP           "gets"
 
-class ClassWopi: public Class
+
+class ClassReply: public Class
 {
 public:
-   ClassWopi();
-   virtual ~ClassWopi();
+   ClassReply();
+   virtual ~ClassReply();
 
    virtual void dispose( void* instance ) const;
    virtual void* clone( void* instance ) const;
    virtual void* createInstance() const;
 
-   PStep* m_stepAfterPersist;
+   virtual void gcMarkInstance( void* instance, uint32 mark ) const;
+   virtual bool gcCheckInstance( void* instance, uint32 mark ) const;
 };
 
 }
@@ -46,4 +46,4 @@ public:
 
 #endif
 
-/* end of wopi_ext.h */
+/* end of classreply.h */

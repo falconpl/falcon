@@ -16,18 +16,22 @@
 */
 
 #include <falcon/wopi/request.h>
-#include <falcon/wopi/session_manager.h>
+#include <falcon/wopi/wopi.h>
 #include <falcon/wopi/utils.h>
+#include <falcon/wopi/modulewopi.h>
+#include <falcon/wopi/uploaded.h>
+#include <falcon/wopi/classuploaded.h>
 
 #include <falcon/uri.h>
 #include <falcon/error.h>
 #include <falcon/engine.h>
-#include <falcon/fstream.h>
+#include <falcon/textwriter.h>
+#include <falcon/sys.h>
 
 // for memcpy
 #include <string.h>
 #include <stdio.h>
-
+#include <ctype.h>
 
 namespace Falcon {
 namespace WOPI {
@@ -37,21 +41,25 @@ namespace WOPI {
 // Request
 
 Request::Request( ModuleWopi* host ):
-   m_request_time( 0 ),
-   m_bytes_sent( 0 ),
    m_content_length( -1 ),
+   m_bytes_sent( 0 ),
+   m_request_time(0),
+   m_startedAt(0.0),
 
    // protected
    m_gets( new ItemDict ),
    m_posts( new ItemDict ),
    m_cookies( new ItemDict ),
-   m_headers( new ItemDict ),
-   m_sSessionField( DEFAULT_SESSION_FIELD ),
-   m_tempFiles( 0 ),
-   m_startedAt(0.0)
+   m_headers( new ItemDict )
 {
    m_module = host;
    m_MainPart.setOwner( this );
+
+   FALCON_GC_HANDLE( m_gets );
+   FALCON_GC_HANDLE( m_posts );
+   FALCON_GC_HANDLE( m_cookies );
+   FALCON_GC_HANDLE( m_headers );
+
 }
 
 Request::~Request()
@@ -141,9 +149,13 @@ bool Request::parseBody( Stream* input )
    m_MainPart.startMemoryUpload();
    //fprintf( stderr, "Content length: %d / %d\n", (int) m_content_length, (int) m_nMaxMemUpload );
 
+   int64 memUpload;
+   String error;
+   m_module->wopi()->getConfigValue( OPT_MaxMemoryUploadSize, memUpload, error );
+
    // Inform the part if it can use memory uploads for their subparts.
    if ( m_content_length != -1 &&
-         (m_nMaxMemUpload > 0 && m_content_length < m_nMaxMemUpload) )
+         (memUpload > 0 && m_content_length < memUpload) )
    {
       // This tell the children of the main part NOT TO create a temporary file
       // when they receive a file upload (the default).
@@ -253,11 +265,27 @@ bool Request::setURI( const String& uri )
       m_sUri = uri;
       if ( m_uri.query().size() != 0 )
       {
-         Utils::parseQuery( m_uri.query(), *m_gets );
+         class Rator: public URI::Query::FieldEnumerator
+         {
+         public:
+            Rator( Request& r ): m_request(r) {}
+            virtual ~Rator() {}
+            virtual bool operator()( const URI::Query::KeyValue& data ) {
+               m_request.gets()->insert(
+                        FALCON_GC_HANDLE(new String(data.key)),
+                        FALCON_GC_HANDLE(new String(data.value)) );
+               return true;
+            }
+
+         private:
+            Request& m_request;
+         };
+
+         Rator rator(*this);
+         m_uri.query().enumerateFields(rator);
       }
 
-      m_location = m_uri.path();
-
+      m_location = m_uri.path().encode();
       return true;
    }
 
@@ -280,39 +308,35 @@ void Request::addUploaded( PartHandler* ph, const String& prefix )
       if( ph->filename().size() == 0 )
       {
          // puts a nil item.
-         Falcon::WOPI::Utils::addQueryVariable( key, Item(), *m_base->m_posts );
+         Falcon::WOPI::Utils::addQueryVariable( key, Item(), *m_posts );
       }
       else
       {
          // configure the part
-         CoreObject* upld = m_upld_c->createInstance();
-         upld->setProperty( "mimeType", SafeItem( new CoreString(ph->contentType())) );
-         upld->setProperty( "filename", SafeItem( new CoreString(ph->filename())) );
-         upld->setProperty( "size", ph->uploadedSize() );
-
+         Uploaded* upld = new Uploaded(ph->filename(), ph->contentType(), ph->uploadedSize());
          if( ph->error().size() != 0 )
          {
             // was there an error?
-            upld->setProperty( "error", SafeItem( new CoreString(ph->error())) );
+            upld->error(ph->error());
          }
          else
          {
             // no? -- store the data or the temporary file name.
             if ( ph->isMemory() )
             {
-               MemBuf* mb = new MemBuf_1(0);
-               ph->getMemoryData( *mb );
-               upld->setProperty( "data", SafeItem(mb) );
+               String* data = new String;
+               ph->getMemoryData( *data );
+               upld->data(data);
             }
             else
             {
-               upld->setProperty( "storage", SafeItem( new CoreString(ph->tempFile())) );
+               upld->storage(ph->tempFile());
             }
          }
 
          // It may take some time before we can reach the vm,
          // so it's better to be sure we're not marked.
-         Falcon::WOPI::Utils::addQueryVariable( key, SafeItem(upld), m_base->m_posts->items() );
+         Falcon::WOPI::Utils::addQueryVariable( key, FALCON_GC_STORE(m_module->uploadedClass(), upld), *m_posts );
       }
    }
    else
@@ -321,14 +345,14 @@ void Request::addUploaded( PartHandler* ph, const String& prefix )
       if( ph->isMemory() )
       {
          String temp;
-         CoreString* value = new CoreString;
+         String* value = new String;
          ph->getMemoryData( temp );
          temp.c_ize();
          value->fromUTF8( (char *) temp.getRawStorage() );
 
          // It may take some time before we can reach the vm,
          // so it's better to be sure we're not marked.
-         Falcon::WOPI::Utils::addQueryVariable( key, SafeItem(value), m_base->m_posts->items() );
+         Falcon::WOPI::Utils::addQueryVariable( key, FALCON_GC_HANDLE(value), *m_posts );
       }
       // else, don't know what to do
    }
@@ -342,9 +366,9 @@ void Request::addUploaded( PartHandler* ph, const String& prefix )
 }
 
 
-bool CoreRequest::processMultiPartBody()
+bool Request::processMultiPartBody()
 {
-   PartHandler* child = m_base->m_MainPart.child();
+   PartHandler* child = m_MainPart.child();
    if( child == 0 )
    {
       return false;
@@ -360,179 +384,185 @@ bool CoreRequest::processMultiPartBody()
 }
 
 
-void CoreRequest::configFromModule( const Module* mod )
+//================================================================
+// CGI-oriented
+//
+void Request::parseEnviron()
 {
-   AttribMap* attribs = mod->attributes();
-   if( attribs == 0 )
-   {
-      return;
-   }
+   // First; suck all the environment variables that we need.
+   Falcon::Sys::_enumerateEnvironment( &handleEnvStr, this );
 
-   VarDef* value = attribs->findAttrib( FALCON_WOPI_MAXMEMUPLOAD_ATTRIB );
-   if( value != 0 && value->isInteger() )
+   // a bit of post-processing
+   if ( parsedUri().auth().port() == "443" || parsedUri().auth().port() == "https" )
    {
-      m_base->m_nMaxMemUpload = value->asInteger();
+      parsedUri().scheme("https");
    }
-
-   value = attribs->findAttrib( FALCON_WOPI_TEMPDIR_ATTRIB );
-   if( value != 0 && value->isString() )
+   else
    {
-      m_base->m_sTempPath.bufferize( *value->asString() );
+      parsedUri().scheme("http");
    }
 }
+
+void Request::handleEnvStr( const Falcon::String& key, const Falcon::String& value, void *data )
+{
+   // First; suck all the environment variables that we need.
+   Request* self = static_cast<Request*>(data);
+
+   // Is this an header transformed in an env-var?
+   if( key.startsWith("HTTP_") )
+   {
+      self->addHeaderFromEnv( key, value );
+   }
+   else if( key == "AUTH_TYPE" )
+   {
+      self->m_ap_auth_type = value;
+   }
+   else if( key == "CONTENT_TYPE" )
+   {
+      self->m_content_type = value;
+      self->m_MainPart.addHeader( "Content-Type", value );
+   }
+   else if( key == "CONTENT_LENGTH" )
+   {
+      Falcon::int64 tgt;
+      value.parseInt(tgt);
+      self->m_content_length = (int) tgt;
+   }
+   else if( key == "DOCUMENT_ROOT" )
+   {
+      // ....
+   }
+   else if( key == "GATEWAY_INTERFACE" )
+   {
+      // ....
+   }
+   else if( key == "PATH_INFO" )
+   {
+      self->m_path_info = value;
+   }
+   else if ( key == "QUERY_STRING" )
+   {
+      // it's part of the REQUEST_URI
+   }
+   else if( key == "REMOTE_ADDR" )
+   {
+      self->m_remote_ip = value;
+   }
+   else if( key == "REMOTE_PORT" )
+   {
+      //... not implemented
+   }
+   else if( key == "REMOTE_USER" )
+   {
+      self->m_user = value;
+   }
+   else if( key == "REQUEST_METHOD" )
+   {
+      self->m_method = value;
+   }
+   else if( key == "REQUEST_URI" )
+   {
+      self->setURI( value );
+   }
+   else if( key == "SCRIPT_FILENAME" )
+   {
+      self->m_filename = value;
+   }
+   else if( key == "SCRIPT_NAME" )
+   {
+      self->parsedUri().path() = value;
+   }
+   else if( key == "SERVER_ADDR" )
+   {
+      // ....
+   }
+   else if( key == "SERVER_ADMIN" )
+   {
+      // ....
+   }
+   else if( key == "SERVER_NAME" )
+   {
+      self->parsedUri().auth().host( value );
+   }
+   else if( key == "SERVER_PORT" )
+   {
+      self->parsedUri().auth().port( value );
+   }
+   else if( key == "SERVER_PROTOCOL" )
+   {
+      self->m_protocol = value;
+   }
+   else if( key == "SERVER_SIGNATURE" )
+   {
+      // ....
+   }
+   else if( key == "SERVER_SOFTWARE" )
+   {
+      // ....
+   }
+}
+
+void Request::addHeaderFromEnv( const Falcon::String& key, const Falcon::String& value )
+{
+   // discard "http_"
+   Falcon::String sKey( key, 5 );
+
+   // ... and transform the rest in "Content-Type" format
+   bool bUpper = true;
+   Falcon::uint32 len = sKey.length();
+
+   for( Falcon::uint32 i = 0; i < len; ++i )
+   {
+      if( sKey[i] == '_' )
+      {
+         sKey.setCharAt(i, '-');
+         bUpper = true;
+      }
+      else if ( bUpper )
+      {
+         sKey.setCharAt(i, toupper( sKey[i] ) );
+         bUpper = false;
+      }
+      else
+      {
+         sKey.setCharAt(i, tolower( sKey[i] ) );
+      }
+   }
+
+   // Ok, we can now add the thing to the dict
+   headers()->insert( FALCON_GC_HANDLE(new String( sKey )), FALCON_GC_HANDLE(new String( value )) );
+
+   if ( key == "HTTP_COOKIE" )
+   {
+      Falcon::uint32 pos = 0;
+      Falcon::uint32 pos1 = value.find(";");
+      while( true )
+      {
+         Falcon::WOPI::Utils::parseQueryEntry( value.subString(pos,pos1), *cookies() );
+
+         if( pos1 == Falcon::String::npos )
+            break;
+
+         pos = pos1+1;
+         pos1 = value.find(";", pos );
+      }
+
+   }
+   else if ( key == "HTTP_CONTENT_TYPE" )
+   {
+      m_content_type = value;
+   }
+   else if ( key == "HTTP_CONTENT_ENCODING" )
+   {
+      m_content_encoding = value;
+   }
+}
+
 
 
 //================================================================
 // Override
 //
-
-CoreObject *CoreRequest::clone() const
-{
-   // request object is not clone able.
-   return 0;
-}
-
-
-
-bool CoreRequest::setProperty( const String &prop, const Item &value )
-{
-   if ( m_bPostInit )
-   {
-      postInit();
-      m_bPostInit = false;
-   }
-
-   if( prop == "sidField" )
-   {
-      if( value.isString() )
-         m_base->m_sSessionField.bufferize(*value.asString());
-      else
-         throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
-               .extra("sidField") );
-   }
-   else if ( prop == "autoSession" )
-   {
-      m_bAutoSession = value.isTrue();
-   }
-   else
-   {
-      readOnlyError( prop );
-   }
-   return true;
-}
-
-bool CoreRequest::getProperty( const String &prop, Item &value ) const
-{
-   if ( m_bPostInit )
-   {
-      const_cast<CoreRequest*>(this)->postInit();
-      const_cast<CoreRequest*>(this)->m_bPostInit = false;
-   }
-
-   if( prop == "gets" )
-   {
-      value = m_base->m_gets;
-   }
-   else if( prop == "posts" )
-   {
-      value = m_base->m_posts;
-   }
-   else if( prop == "cookies" )
-   {
-      value = m_base->m_cookies;
-   }
-   else if( prop == "headers" )
-   {
-      value = m_base->m_headers;
-   }
-   else if( prop == "parsed_uri" )
-   {
-      value = Utils::makeURI( m_base->m_uri );
-   }
-   else if( prop == "protocol" )
-   {
-      value = m_base->m_protocol;
-   }
-   else if( prop == "request_time" )
-   {
-      value = m_base->m_request_time;
-   }
-   else if( prop == "bytes_sent" )
-   {
-      value = m_base->m_bytes_sent;
-   }
-   else if( prop == "content_length" )
-   {
-      value = m_base->m_content_length;
-   }
-   else if( prop == "method" )
-   {
-      value = m_base->m_method;
-   }
-   else if( prop == "content_type" )
-   {
-      value = m_base->m_content_type;
-   }
-   else if( prop == "content_encoding" )
-   {
-      value = m_base->m_content_encoding;
-   }
-   else if( prop == "ap_auth_type" )
-   {
-      value = m_base->m_ap_auth_type;
-   }
-   else if( prop == "user" )
-   {
-      value = m_base->m_user;
-   }
-   else if( prop == "location" )
-   {
-      value = m_base->m_location;
-   }
-   else if( prop == "uri" )
-   {
-      value = m_base->m_sUri;
-   }
-   else if( prop == "filename" )
-   {
-      value = m_base->m_filename;
-   }
-   else if( prop == "path_info" )
-   {
-      value = m_base->m_path_info;
-   }
-   else if( prop == "args" )
-   {
-      value = m_base->m_args;
-   }
-   else if( prop == "remote_ip" )
-   {
-      value = m_base->m_remote_ip;
-   }
-   else if( prop == "sidField" )
-   {
-      value = m_base->m_sSessionField;
-   }
-   else if( prop == "startedAt" )
-   {
-      value = m_base->startedAt();
-   }
-   else if( prop == "provider" )
-   {
-      value = m_provider;
-   }
-   else if( prop == "autoSession" )
-   {
-      value.setBoolean( m_bAutoSession );
-   }
-   else
-   {
-      return defaultProperty( prop, value );
-   }
-
-   return true;
-}
-
 
 void Request::gcMark( uint32 mark )
 {

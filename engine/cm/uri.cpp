@@ -17,6 +17,7 @@
 #define SRC "falcon/cm/uri.cpp"
 
 #include <falcon/cm/uri.h>
+#include <falcon/itemid.h>
 
 #include <falcon/vm.h>
 #include <falcon/vmcontext.h>
@@ -290,7 +291,7 @@ static void get_pwd( const Class*, const String&, void* instance, Item& value )
 //==================================================================
 
 ClassURI::ClassURI():
-   Class("URI")
+   Class("URI", FLC_CLASS_ID_URI)
 {   
    addProperty( "encoded", &get_encoded, &set_encoded );
    addProperty( "scheme", &get_scheme, &set_scheme );

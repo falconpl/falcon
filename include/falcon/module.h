@@ -280,7 +280,7 @@ public:
     Machine for dynamic collection.
     */
 
-   uint32 lastGCMark() const { return m_lastGCMark; }
+   uint32 currentMark() const { return m_lastGCMark; }
 
    /** Adds a request to load or import a module.
     *

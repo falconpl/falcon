@@ -20,10 +20,7 @@ namespace Falcon {
 namespace WOPI {
 
 ModuleCGI::ModuleCGI():
-   ModuleWopi("CGI"),
-   m_process(0),
-   m_oldStdout(0),
-   m_oldStderr(0)
+   ModuleWopi("CGI")
 {}
 
 ModuleCGI::~ModuleCGI()

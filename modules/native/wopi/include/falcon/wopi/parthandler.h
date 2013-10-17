@@ -20,6 +20,7 @@
 
 #include <falcon/setup.h>
 #include <falcon/string.h>
+#include <falcon/stream.h>
 
 #include <deque>
 #include <map>

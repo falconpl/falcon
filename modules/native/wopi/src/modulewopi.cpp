@@ -22,6 +22,11 @@
 #include <falcon/wopi/reply.h>
 #include <falcon/wopi/replystream.h>
 
+#include <falcon/wopi/classrequest.h>
+#include <falcon/wopi/classreply.h>
+#include <falcon/wopi/classuploaded.h>
+#include <falcon/wopi/classwopi.h>
+
 namespace Falcon {
 namespace WOPI {
 
@@ -35,15 +40,28 @@ ModuleWopi::ModuleWopi( const String& name )
    m_reply = new Reply(this);
 
    m_wopi = new Wopi;
-   m_classwopi = new ClassWOPI;
    m_provider = name;
+
+   m_classWopi = new ClassWopi;
+   m_classUploaded = new ClassUploaded;
+
+   Class* requestClass = new ClassRequest;
+   Class* replyClass = new ClassReply;
+   *this << requestClass
+         << replyClass
+         << m_classWopi
+         << m_classUploaded
+   ;
+
+   // set the global items without creating the singletons.
+   addGlobal("Request", FALCON_GC_STORE(requestClass, m_request), true );
+   addGlobal("Reply", FALCON_GC_STORE(replyClass, m_reply), true );
+   addGlobal("Wopi", FALCON_GC_STORE(m_classWopi, m_wopi), true );
 }
 
 ModuleWopi::~ModuleWopi()
 {
-   delete m_classwopi;
    delete m_wopi;
-
    delete m_request;
    delete m_reply;
 }

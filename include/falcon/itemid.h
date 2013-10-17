@@ -49,6 +49,10 @@
 #define FLC_CLASS_ID_SYMBOL   19
 #define FLC_CLASS_ID_MODULE   20
 
+#define FLC_CLASS_ID_PATH        21
+#define FLC_CLASS_ID_URI         22
+#define FLC_CLASS_ID_TIMESTAMP   23
+
 #define FLC_ITEM_INVALID      99
 
 #endif

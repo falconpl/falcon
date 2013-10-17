@@ -245,15 +245,17 @@ public:
    */
    inline Stream* stdIn() const { return m_stdIn; }
 
-   /** Returns current standard input stream.
-    \return A valid standard output stream, owned by the VM.
-    If needed elsewhere, the stream must be cloned().
+   /** Returns current standard output stream.
+    \return A valid standard output stream, owned by the process.
+    If needed elsewhere, the stream must be incref'd.
+    \note This is the same stream held by TextOut.
    */
    inline Stream* stdOut() const { return m_stdOut; }
 
    /** Returns current standard error stream.
-    \return A valid standard error stream, owned by the VM.
-    If needed elsewhere, the stream must be cloned().
+    \return A valid standard error stream, owned by the process.
+    If needed elsewhere, the stream must be incref'd.
+    \note This is the same stream held by TextOut.
    */
    inline Stream* stdErr() const { return m_stdErr; }
 

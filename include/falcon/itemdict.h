@@ -61,7 +61,7 @@ public:
       virtual void operator()( const Item& key, Item& value )=0;
    };
    
-   void enumerate( Enumerator& rator );   
+   void enumerate( Enumerator& rator ) const;
    uint32 version() const { return m_version; }
    
    void merge( const ItemDict& other );

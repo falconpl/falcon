@@ -17,6 +17,7 @@
 #define SRC "falcon/cm/path.cpp"
 
 #include <falcon/cm/path.h>
+#include <falcon/itemid.h>
 
 #include <falcon/vm.h>
 #include <falcon/vmcontext.h>
@@ -342,7 +343,7 @@ void Function_cwd::invoke( VMContext* ctx, int32 )
 
 
 ClassPath::ClassPath():
-   Class("Path")
+   Class("Path", FLC_CLASS_ID_PATH)
 {
    addProperty( "resource", &get_resource, &set_resource );
    addProperty( "location", &get_location, &set_location );

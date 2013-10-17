@@ -752,7 +752,7 @@ void  Function_getLocal::invoke ( ::Falcon::VMContext* ctx, int32 )
 }
 
 ClassTimeZone::ClassTimeZone():
-         Class("TimeZone")
+         Class("TimeZone", FLC_CLASS_ID_TIMESTAMP)
 {
    addMethod( new _classTZ::Function_getDisplacement, true );
    addMethod( new _classTZ::Function_getLocal, true );
