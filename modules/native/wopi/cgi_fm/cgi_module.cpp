@@ -15,6 +15,7 @@
 #include <falcon/wopi/replystream.h>
 #include <falcon/wopi/request.h>
 #include <falcon/wopi/reply.h>
+#include <falcon/wopi/stream_ch.h>
 
 #include <falcon/function.h>
 #include <falcon/process.h>
@@ -28,17 +29,40 @@ ModuleCGI::ModuleCGI():
    ModuleWopi("CGI")
 {
    m_request->parseEnviron();
+   m_oldStdOut = 0;
+   m_oldStdErr = 0;
 }
 
 ModuleCGI::~ModuleCGI()
 {
+   if( m_oldStdErr != 0 )
+   {
+      m_process->stdOut(m_oldStdOut);
+      m_process->stdErr(m_oldStdErr);
+      m_oldStdOut->decref();
+      m_oldStdErr->decref();
+   }
 }
 
 
 void ModuleCGI::onStartupComplete( VMContext* ctx )
 {
-   ctx->process()->textOut()->writeLine("Test complete");
-   ctx->process()->textOut()->flush();
+   m_process = ctx->process();
+   m_oldStdOut = m_process->stdOut();
+   m_oldStdErr = m_process->stdErr();
+
+   m_oldStdOut->incref();
+   m_oldStdErr->incref();
+
+   m_reply->setCommitHandler( new StreamCommitHandler );
+   m_process->stdOut( new ReplyStream(m_reply, m_oldStdOut) );
+   m_process->stdErr( new ReplyStream(m_reply, m_oldStdErr) );
+
+   if( m_request->m_method.compareIgnoreCase("POST") == 0 )
+   {
+      m_request->parse( ctx->process()->stdIn() );
+      m_request->processMultiPartBody();
+   }
 }
 
 

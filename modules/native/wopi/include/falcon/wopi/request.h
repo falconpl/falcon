@@ -89,13 +89,6 @@ public:
    void gcMark( uint32 m );
    inline uint32 currentMark() const { return m_mark; }
 
-   /** Override this to be called back at first usage.
-
-       Also, set m_bPostInit to true; in this way, this
-       virtual function will be called back the first time
-       setProperty or getProperty is called on this object.
-    */
-   virtual void postInit() {}
 
    /** Adds uploaded parts and process multipart fields if the request has a multipart body.
 
@@ -138,9 +131,6 @@ public:
 
 protected:
    void forward( const ItemDict& main, const ItemDict& aux, String& fwd, bool all ) const;
-
-   // generate the headers when first requested.
-   void makeHeaders();
 
    //! Creates an uploaded element (in the post fields) out of the data in partHandler
    void addUploaded( PartHandler* ph, const String& prefix = "" );

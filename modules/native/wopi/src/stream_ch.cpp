@@ -33,8 +33,8 @@ StreamCommitHandler::~StreamCommitHandler()
 void StreamCommitHandler::startCommit( Reply* rep, Stream* stream )
 {
    Falcon::String sRep;
-   sRep.A("HTTP/1.1 ").N( rep->status() ).A(" ").A( rep->reason() );
-   m_output->writeString( sRep + "\r\n" );
+   sRep.A("HTTP/1.1 ").N( rep->status() ).A(" ").A( rep->reason() ).A("\r\n");
+   stream->write( sRep.c_ize(), sRep.size() );
 }
 
 void StreamCommitHandler::commitHeader( Reply*, Stream* stream, const Falcon::String& name, const Falcon::String& value )

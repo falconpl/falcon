@@ -141,9 +141,10 @@ public:
    class CommitHandler
    {
    public:
-      virtual ~CommitHandler();
+      virtual ~CommitHandler() {}
+
       //! Invoked when the commit operation is about to begin.
-        virtual void startCommit( Reply* reply, Stream* tgt ) = 0;
+       virtual void startCommit( Reply* reply, Stream* tgt ) = 0;
 
       //! Invoked to finalize an header
       virtual void commitHeader( Reply* reply, Stream* tgt, const String& hname, const String& hvalue ) = 0;

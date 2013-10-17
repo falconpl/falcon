@@ -29,6 +29,7 @@ set(_files
   request.cpp
   reply.cpp
   replystream.cpp
+  stream_ch.cpp
   uploaded.cpp
   utils.cpp
   wopi.cpp

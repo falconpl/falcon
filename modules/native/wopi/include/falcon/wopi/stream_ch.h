@@ -33,9 +33,6 @@ public:
    virtual void startCommit( Reply* reply, Stream* tgt );
    virtual void commitHeader( Reply* reply, Stream* tgt, const Falcon::String& name, const Falcon::String& value );
    virtual void endCommit( Reply* reply, Stream* tgt );
-
-private:
-   Falcon::Stream* m_output;
 };
 
 }

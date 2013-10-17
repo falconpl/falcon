@@ -19,6 +19,7 @@ namespace Falcon {
 
 class VMContext;
 class Process;
+class Stream;
 
 namespace WOPI {
 
@@ -32,7 +33,11 @@ public:
     * This will be used to switch the standard process output streams.
     */
    virtual void onStartupComplete( VMContext* ctx );
+private:
 
+   Stream* m_oldStdOut;
+   Stream* m_oldStdErr;
+   Process* m_process;
 };
 
 }
