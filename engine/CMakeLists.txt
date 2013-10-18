@@ -238,6 +238,7 @@ add_library(falcon_engine SHARED
   psteps/exprlogic.cpp
   psteps/exprmath.cpp
   psteps/exprmultiunpack.cpp
+  psteps/exprnamed.cpp
   psteps/exprneg.cpp
   psteps/exprnotin.cpp
   psteps/exproob.cpp

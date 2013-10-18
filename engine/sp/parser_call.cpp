@@ -88,8 +88,8 @@ void apply_expr_call( const Rule&, Parser& p )
    {
       // symbols will be accessed in the call expression.
       //ctx->accessSymbols(*iter);
-      if( call != 0 ) call->add( *iter );
-      else callps->add( *iter );
+      if( call != 0 ) call->append( *iter );
+      else callps->append( *iter );
       ++iter;
    }
    // free the expressions in the list

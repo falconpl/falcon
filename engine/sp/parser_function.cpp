@@ -381,7 +381,7 @@ void apply_ep_body(const Rule&, Parser& p)
    for(List::const_iterator it=list->begin(),end=list->end();it!=end;++it)
    {
       Expression* expr = *it;
-      ep->add( expr );
+      ep->append( expr );
    }
    // detach all the expressions.
    list->clear();

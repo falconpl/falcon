@@ -301,6 +301,9 @@ FAL_ERRORDECL( e_inv_prop_value, 907, "Invalid value assigned to a property" );
 FAL_ERRORDECL( e_param_arity, 908, "Unexpected number of parameters in evaluation" );
 FAL_ERRORDECL( e_meta_not_proto, 909, "_meta is not a prototype" );
 FAL_ERRORDECL( e_expr_assign, 910, "Given tree step cannot be assigned to the host step" );
+FAL_ERRORDECL( e_param_compo, 911, "Positional parameter given after named parameter" );
+FAL_ERRORDECL( e_param_noname, 912, "Target item doesn't support named parameters" );
+FAL_ERRORDECL( e_param_notfound, 913, "Can't find parameter given by name" );
 
 FAL_ERRORDECL( e_internal, 998, "Intenral error" )
 FAL_ERRORDECL( e_paranoid, 999, "Paranoid check failed" );

@@ -435,7 +435,7 @@ bool FalconClass::addParent( ExprInherit* inh )
       m_parentship->setParent( &ctr->syntree() );
    }
    
-   m_parentship->add( inh );
+   m_parentship->append( inh );
    return true;
 }
 
@@ -454,7 +454,7 @@ bool FalconClass::addParent( ExprInherit* inh )
     m_parentship = inh;
     for( int i = 0; i < inh->arity(); i++ )
     {
-       ExprInherit* ei = static_cast<ExprInherit*>( inh->get(i) );
+       ExprInherit* ei = static_cast<ExprInherit*>( inh->nth(i) );
        fassert( ei->trait() == Expression::e_trait_inheritance );
        
        if( ei->base() == 0 )
@@ -602,7 +602,7 @@ bool FalconClass::isDerivedFrom( const Class* cls ) const
    
    for( int i = 0; i < m_parentship->arity(); ++i )
    {
-      ExprInherit* inh = static_cast<ExprInherit*>(m_parentship->get(i));
+      ExprInherit* inh = static_cast<ExprInherit*>(m_parentship->nth(i));
       if( inh->base() != 0 )
       {
          if( cls->isDerivedFrom(inh->base()) )

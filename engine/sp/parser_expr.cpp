@@ -46,6 +46,7 @@
 #include <falcon/psteps/exprevalretexec.h>
 #include <falcon/psteps/exprstripol.h>
 #include <falcon/psteps/exprprovides.h>
+#include <falcon/psteps/exprnamed.h>
 
 #include <falcon/psteps/exprcompose.h>
 
@@ -529,6 +530,23 @@ void apply_expr_provides( const Rule& , Parser& p )
    texpr->token( sp.Expr );   // be sure to change it
    texpr->setValue( provides, treestep_deletor );
    p.trim(2); // remove the 2 tokens in front
+}
+
+
+void apply_expr_named( const Rule& , Parser& p )
+{
+   // << T_Name << T_Disjunct << T_Expr
+   SourceParser& sp = static_cast<SourceParser&>(p);
+   TokenInstance* tname = p.getNextToken();   // name
+   p.getNextToken();                          // disjunct
+   TokenInstance* texpr = p.getNextToken();   // expression
+   Expression* expr = static_cast<Expression*>(texpr->detachValue());
+
+   TokenInstance* ti = TokenInstance::alloc(tname->line(), tname->chr(), sp.Expr);
+   Expression* named = new ExprNamed( *tname->asString(), expr, tname->line(), tname->chr() );
+   ti->setValue( named, treestep_deletor );
+
+   p.simplify(3, ti); // remove the 2 tokens in front
 }
 
 }

@@ -62,7 +62,7 @@ static void internal_summon(Parser& p, bool isOptional)
    List::iterator iter = list->begin();
    while( iter != list->end() )
    {
-      es->add( *iter );
+      es->append( *iter );
       ++iter;
    }
    // free the expressions in the list

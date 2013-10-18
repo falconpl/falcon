@@ -119,6 +119,7 @@ SourceParser::SourceParser():
    T_QMark( "?" , 175, true ),
    T_Tilde( "~" , 5 ),
    T_Bang("!"),
+   T_Disjunct( "|" , 130 ),
 
    T_UnaryMinus("(neg)",23),
    T_Dollar("$",23),
@@ -443,6 +444,7 @@ SourceParser::SourceParser():
    Expr<< (r_Expr_expr_evalret_exec << "Expr_evarlet_exec"  << apply_expr_evalret_exec << T_EVALRET_EXEC << Expr );
    Expr<< (r_Expr_expr_evalret_doubt << "Expr_evarlet_doubt"  << apply_expr_evalret_doubt << T_EVALRET_DOUBT << Expr );
 
+   Expr<< (r_Expr_named << "Expr named" << apply_expr_named << T_Name << T_Disjunct << Expr);
    Expr<< (r_Expr_provides << "Expr_provides" << apply_expr_provides << Expr << T_provides << T_Name);
 
    Expr << (r_Expr_assign << "Expr_assign" << apply_expr_assign << Expr << T_EqSign << Expr );

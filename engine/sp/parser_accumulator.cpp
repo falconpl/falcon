@@ -70,7 +70,7 @@ static void internal_accumulator( int count, int line, int c, Parser& p, List* l
       for( size_t pos = 0; pos < len; ++pos )
       {
          Expression* expr = l->at(pos);
-         ep->add(expr);
+         ep->append(expr);
       }
 
       accumulator->selector(ep);

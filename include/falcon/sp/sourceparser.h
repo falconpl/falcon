@@ -86,6 +86,8 @@ public:
    Parsing::Terminal T_QMark;
    Parsing::Terminal T_Tilde;
    Parsing::Terminal T_Bang;
+   Parsing::Terminal T_Disjunct;
+
    Parsing::Terminal T_UnaryMinus;
    Parsing::Terminal T_Dollar;
    Parsing::Terminal T_Amper;
@@ -412,6 +414,8 @@ public:
    Parsing::Rule r_Expr_expr_evalret_doubt;
    Parsing::Rule r_Expr_provides;
    
+   Parsing::Rule r_Expr_named;
+
    Parsing::Rule r_Expr_auto_add;
    Parsing::Rule r_Expr_auto_sub;
    Parsing::Rule r_Expr_auto_times;

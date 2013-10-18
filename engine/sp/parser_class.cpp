@@ -294,7 +294,7 @@ void apply_FromClause_next( const Rule&, Parser& p  )
 
    // keep the list, but discard the comma and the entry.
    ExprParentship* inhList = static_cast<ExprParentship*>( tInhList->detachValue() );
-   inhList->add( static_cast<ExprInherit*>(tInh->detachValue()) );
+   inhList->append( static_cast<ExprInherit*>(tInh->detachValue()) );
 
    TokenInstance* tiNew = TokenInstance::alloc(tInhList->line(), tInhList->chr(), sp.FromClause );
    tiNew->setValue( inhList, &treestep_deletor );
@@ -311,7 +311,7 @@ void apply_FromClause_first( const Rule&, Parser& p )
 
    TokenInstance* tlist = TokenInstance::alloc(tInh->line(), tInh->chr(), sp.FromClause );
    ExprParentship* ep = new ExprParentship( tInh->line(), tInh->chr() );   
-   ep->add( static_cast<ExprInherit*>(tInh->detachValue()) );
+   ep->append( static_cast<ExprInherit*>(tInh->detachValue()) );
    tlist->setValue( ep, &treestep_deletor );
 
    p.simplify(1, tlist);
@@ -333,7 +333,7 @@ void apply_FromClause_entry_with_expr( const Rule&, Parser& p )
    List* list=static_cast<List*>(tlistExpr->asData());
    for(List::const_iterator it=list->begin(),end=list->end();it!=end;++it)
    {
-      ei->add( *it );
+      ei->append( *it );
    }
    list->clear();
    

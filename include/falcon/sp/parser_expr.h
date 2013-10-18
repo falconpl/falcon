@@ -98,6 +98,7 @@ void apply_expr_pars( const Rule&, Parser& p );
 void apply_expr_dot( const Rule&, Parser& p );
 void apply_expr_provides( const Rule&, Parser& p );
 
+void apply_expr_named( const Rule&, Parser& p );
 }
 
 #endif	/* _FALCON_SP_PARSER_EXPR_H_ */

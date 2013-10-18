@@ -58,12 +58,28 @@ public:
    
    void render( TextWriter* tw, int32 depth ) const;
 
+   //! override to detect named-parameter calls.
+   virtual bool insert( int32 pos, TreeStep* element );
+   virtual bool setNth( int32 n, TreeStep* ts );
+   virtual bool append( TreeStep* element );
+
+   bool hasNamedParams() const { return m_bHasNamedParams; }
+
 protected:
    TreeStep* m_callExpr;
 
+   //! This is transient, no need to store.
+   bool m_bHasNamedParams;
+
 private:
+   void checkPositionalParameter( TreeStep* element );
    
-   static void apply_( const PStep*, VMContext* ctx );   
+   static void apply_( const PStep*, VMContext* ctx );
+
+   FALCON_DECLARE_INTERNAL_PSTEP_OWNED(EvalPosParams,ExprCall);
+   FALCON_DECLARE_INTERNAL_PSTEP_OWNED(EvalEtaParams,ExprCall);
+   FALCON_DECLARE_INTERNAL_PSTEP_OWNED(EvalNamedParams,ExprCall);
+   FALCON_DECLARE_INTERNAL_PSTEP_OWNED(Invoke,ExprCall);
 };
 
 }

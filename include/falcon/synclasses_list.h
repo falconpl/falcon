@@ -98,6 +98,12 @@ FALCON_SYNCLASS_DECLARATOR_EX(m_expr_provides, Provides, Expression, \
          virtual bool hasProperty( void*, const String& ) const; \
          )
 
+FALCON_SYNCLASS_DECLARATOR_EX(m_expr_named, Named, Expression, \
+         virtual void store( VMContext*, DataWriter* dw, void* instance ) const; \
+         virtual void op_getProperty( VMContext* ctx, void* instance, const String& prop) const;\
+         virtual void op_setProperty( VMContext* ctx, void* instance, const String& prop ) const;\
+         virtual bool hasProperty( void*, const String& ) const; \
+         )
 
 FALCON_SYNCLASS_DECLARATOR_EX(m_expr_lit, Lit, Expression, \
          virtual void flatten( VMContext* ctx, ItemArray& subItems, void* instance ) const;\

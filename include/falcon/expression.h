@@ -50,7 +50,8 @@ public:
       e_trait_unquote,
       e_trait_vectorial,
       e_trait_case,
-      e_trait_tree
+      e_trait_tree,
+      e_trait_named
    }
    t_trait;
    

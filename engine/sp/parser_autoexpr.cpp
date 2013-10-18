@@ -192,7 +192,7 @@ void apply_stmt_assign_list( const Rule&, Parser& p )
             sp.addError(e_assign_sym, p.currentSource(), expr->line(), expr->chr());
             // but keep the expression, as ExprAssing will accept it just the same.
          }
-         unpack->add( new ExprAssign( expr, assignand, v2->line(), v2->chr() ) );
+         unpack->append( new ExprAssign( expr, assignand, v2->line(), v2->chr() ) );
          ++iterRight;
 
       }

@@ -1,8 +1,8 @@
 /*
    FALCON - The Falcon Programming Language.
-   FILE: exprprovides.h
+   FILE: exprnamed.h
 
-   Syntactic tree item definitions -- Operator "provides"
+   Syntactic tree item definitions -- Named expression
    -------------------------------------------------------------------
    Author: Giancarlo Niccolai
    Begin: Mon, 04 Feb 2013 19:39:39 +0100
@@ -14,9 +14,9 @@
 */
 
 #undef SRC
-#define SRC "engine/exprprovides.cpp"
+#define SRC "engine/exprnamed.cpp"
 
-#include <falcon/psteps/exprprovides.h>
+#include <falcon/psteps/exprnamed.h>
 #include <falcon/trace.h>
 #include <falcon/vmcontext.h>
 #include <falcon/pstep.h>
@@ -30,50 +30,53 @@
 namespace Falcon {
 
 
-ExprProvides::ExprProvides( Expression* op1, const String& property, int line, int chr ):
+ExprNamed::ExprNamed( const String& name, Expression* op1, int line, int chr ):
          UnaryExpression( op1, line, chr ),
-         m_property(property)
+         m_name(name)
 {
-   FALCON_DECLARE_SYN_CLASS( expr_provides );
+   FALCON_DECLARE_SYN_CLASS( expr_named );
+   m_trait = e_trait_named;
    apply = apply_;
 }
 
-ExprProvides::ExprProvides(int line, int chr):
+ExprNamed::ExprNamed(int line, int chr):
             UnaryExpression(line,chr)
 {
-   FALCON_DECLARE_SYN_CLASS( expr_provides );
+   FALCON_DECLARE_SYN_CLASS( expr_named );
+   m_trait = e_trait_named;
    apply = apply_;
 }
 
-ExprProvides::ExprProvides( const ExprProvides& other ):
+ExprNamed::ExprNamed( const ExprNamed& other ):
             UnaryExpression( other ),
-            m_property(other.m_property)
+            m_name(other.m_name)
 {
-   FALCON_DECLARE_SYN_CLASS( expr_provides );
+   FALCON_DECLARE_SYN_CLASS( expr_named );
+   m_trait = e_trait_named;
    apply = apply_;
 }
 
-ExprProvides::~ExprProvides()
+ExprNamed::~ExprNamed()
 {}
 
 
-bool ExprProvides::simplify( Item& ) const
+bool ExprNamed::simplify( Item& ) const
 {
    return false;
 }
 
-void ExprProvides::render( TextWriter* tw, int32 depth ) const
+void ExprNamed::render( TextWriter* tw, int32 depth ) const
 {
    tw->write( renderPrefix(depth) );
    if( first() == 0 )
    {
-     tw->write( "/* Blank 'provides' */" );
+     tw->write( "/* Blank named expression */" );
    }
    else {
       tw->write("(");
+      tw->write( m_name );
+      tw->write(" | " );
       first()->render(tw, relativeDepth(depth));
-      tw->write(" provides " );
-      tw->write( m_property );
       tw->write( ")" );
    }
 
@@ -84,82 +87,65 @@ void ExprProvides::render( TextWriter* tw, int32 depth ) const
 }
 
 
-const String& ExprProvides::exprName() const
+const String& ExprNamed::exprName() const
 {
-   static String name("provides");
+   static String name("|");
    return name;
 }
 
 
-void ExprProvides::apply_( const PStep*ps , VMContext* ctx )
+void ExprNamed::apply_( const PStep*ps , VMContext* ctx )
 {  
-   const ExprProvides* self = static_cast<const ExprProvides*>(ps);
+   const ExprNamed* self = static_cast<const ExprNamed*>(ps);
    CodeFrame& cf = ctx->currentCode();
-   TRACE2( "ExprProvides::apply_ %d/1 \"%s\"", cf.m_seqId, self->describe().c_ize() );
-   fassert( self->first() != 0 );
-   
-   switch( cf.m_seqId )
-   {
-   case 0:
-      cf.m_seqId = 1;
-      if( ctx->stepInYield(self->first(), cf) ) {
-         return;
-      }
-      break;
-   }
-   ctx->popCode();
-
-   Class* cls;
-   void* inst;
-   ctx->topData().forceClassInst(cls, inst);
-
-   cls->op_provides(ctx, inst, self->property() );
+   TRACE2( "ExprNamed::apply_ %d/1 \"%s\"", cf.m_seqId, self->describe().c_ize() );
+   ctx->resetCode( self->first() );
 }
 
 //======================================================================
 // We do all ClassProvides here.
 //
 
-void* SynClasses::ClassProvides::createInstance() const
+void* SynClasses::ClassNamed::createInstance() const
 {
-   return new ExprProvides;
+   return new ExprNamed;
 }
 
-bool SynClasses::ClassProvides::hasProperty( void* instance, const String& prop ) const
+bool SynClasses::ClassNamed::hasProperty( void* instance, const String& prop ) const
 {
-   if( prop == "property" )
+   if( prop == "name" )
    {
       return true;
    }
    return Class::hasProperty(instance, prop);
 }
 
-void SynClasses::ClassProvides::store( VMContext* ctx, DataWriter* dw, void* instance ) const
+void SynClasses::ClassNamed::store( VMContext* ctx, DataWriter* dw, void* instance ) const
 {
-   ExprProvides* prov = static_cast<ExprProvides *>(instance);
-   dw->write( prov->property() );
+   ExprNamed* prov = static_cast<ExprNamed *>(instance);
+   dw->write( prov->name() );
    m_parent->store(ctx, dw, instance);
 }
 
-void SynClasses::ClassProvides::restore( VMContext* ctx, DataReader* dw ) const
+void SynClasses::ClassNamed::restore( VMContext* ctx, DataReader* dw ) const
 {
-   String property;
-   dw->read( property );
-   ExprProvides* prov = new ExprProvides;
-   prov->property(property);
+   String name;
+   dw->read( name );
+   ExprNamed* prov = new ExprNamed;
+   prov->name(name);
    ctx->pushData( Item(this, prov) );
    m_parent->restore(ctx, dw);
 }
 
 
-bool SynClasses::ClassProvides::op_init(VMContext* ctx, void* instance, int pcount) const
+bool SynClasses::ClassNamed::op_init(VMContext* ctx, void* instance, int pcount) const
 {
-   Item& ioperand = ctx->opcodeParam(1);
-   Item& iprop = ctx->opcodeParam(0);
+   Item& iname = ctx->opcodeParam(1);
+   Item& ioperand = ctx->opcodeParam(0);
 
-   if( pcount != 2 || ! iprop.isString()  )
+   if( pcount != 2 || ! iname.isString()  )
    {
-      throw new ParamError( ErrorParam(e_inv_params, ctx).extra("X,S") );
+      throw new ParamError( ErrorParam(e_inv_params, ctx).extra("S,X") );
    }
 
    bool make = true;
@@ -169,41 +155,41 @@ bool SynClasses::ClassProvides::op_init(VMContext* ctx, void* instance, int pcou
       throw new ParamError( ErrorParam(e_inv_params, ctx).extra("Incompatible type of expression at 0") );
    }
 
-   ExprProvides* prov = static_cast<ExprProvides*>( instance );
-   prov->setInGC();
-   String* prop = iprop.asString();
+   ExprNamed* named = static_cast<ExprNamed*>( instance );
+   named->setInGC();
+   String* prop = iname.asString();
 
-   prov->first( first );
-   prov->property( *prop );
+   named->first( first );
+   named->name( *prop );
 
    return false;
 }
 
-void SynClasses::ClassProvides::op_getProperty( VMContext* ctx, void* instance, const String& prop) const
+void SynClasses::ClassNamed::op_getProperty( VMContext* ctx, void* instance, const String& prop) const
 {
-   ExprProvides* prov = static_cast<ExprProvides *>(instance);
-   if( prop == "property" )
+   ExprNamed* prov = static_cast<ExprNamed *>(instance);
+   if( prop == "name" )
    {
-      ctx->topData() = FALCON_GC_HANDLE(new String(prov->property()));
+      ctx->topData() = FALCON_GC_HANDLE(new String(prov->name()));
       return;
    }
 
    Class::op_getProperty(ctx, instance, prop);
 }
 
-void SynClasses::ClassProvides::op_setProperty( VMContext* ctx, void* instance, const String& prop ) const
+void SynClasses::ClassNamed::op_setProperty( VMContext* ctx, void* instance, const String& prop ) const
 {
-   ExprProvides* prov = static_cast<ExprProvides *>(instance);
-   if( prop == "property" )
+   ExprNamed* named = static_cast<ExprNamed *>(instance);
+   if( prop == "name" )
    {
       Item& value = ctx->opcodeParam(1);
       if( ! value.isString() )
       {
-         throw new OperandError( ErrorParam(e_invalid_op, __LINE__, SRC )
+         throw new AccessTypeError( ErrorParam(e_inv_prop_value, __LINE__, SRC )
                   .extra("S"));
       }
 
-      prov->property(*value.asString());
+      named->name(*value.asString());
       ctx->popData();
       return;
    }
@@ -213,4 +199,4 @@ void SynClasses::ClassProvides::op_setProperty( VMContext* ctx, void* instance, 
 
 }
 
-/* end of exprprovides.cpp */
+/* end of exprnamed.cpp */

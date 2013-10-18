@@ -118,7 +118,7 @@ bool HyperClass::addParent( Class* cls )
 
    addParentProperties( cls );
    m_nParents++;
-   m_parentship->add( new ExprInherit( cls ) );
+   m_parentship->append( new ExprInherit( cls ) );
    return true;
 }
 
@@ -137,7 +137,7 @@ void HyperClass::setParentship( ExprParentship* ps, bool bOwn )
    // adds parents first to last.
    for( int i = 0; i < m_parentship->arity(); ++i )
    {  
-      ExprInherit* inh = static_cast<ExprInherit*>(m_parentship->get(i));
+      ExprInherit* inh = static_cast<ExprInherit*>(m_parentship->nth(i));
       Class* cls = inh->handler();
       
       // ... Always override names of parent classes.
@@ -222,7 +222,7 @@ void* HyperClass::createInstance() const
    // TODO: maybe we can posticipate this to init?
    for( int i = 0; i < m_nParents; ++i ) {
       Class* cls = i==0 ? m_master : 
-         static_cast<ExprInherit*>( m_parentship->get(i-1) )->handler();
+         static_cast<ExprInherit*>( m_parentship->nth(i-1) )->handler();
       
       if( ! cls->isFlatInstance() ) {
          (*ia)[i] = FALCON_GC_STORE( cls, cls->createInstance() );
@@ -242,7 +242,7 @@ bool HyperClass::isDerivedFrom( const Class* cls ) const
    
    // is the class a parent of one of our parents?
    for( int i = 0; i < m_parentship->arity(); ++i ) {
-      Class* pcls = static_cast<ExprInherit*>( m_parentship->get(i) )->handler();
+      Class* pcls = static_cast<ExprInherit*>( m_parentship->nth(i) )->handler();
       
       if( cls->isDerivedFrom(pcls) ) {
          return true;
@@ -306,7 +306,7 @@ void HyperClass::gcMark( uint32 mark )
       
       // finally all our parents
       for( int i = 0; i < m_parentship->arity(); ++i ) {
-         Class* pcls = static_cast<ExprInherit*>( m_parentship->get(i) )->handler();
+         Class* pcls = static_cast<ExprInherit*>( m_parentship->nth(i) )->handler();
          pcls->gcMark( mark );
       }
    }
@@ -361,7 +361,7 @@ bool HyperClass::hasProperty( void*, const String& prop ) const
 
 Class* HyperClass::getParentAt( int pos ) const
 {
-   Class* pcls = static_cast<ExprInherit*>( m_parentship->get(pos) )->handler();
+   Class* pcls = static_cast<ExprInherit*>( m_parentship->nth(pos) )->handler();
    return pcls;
 }
 

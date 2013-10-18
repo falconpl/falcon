@@ -57,46 +57,25 @@ TreeStep* ExprVector::nth( int32 n ) const
 
 bool ExprVector::setNth( int32 n, TreeStep* ts )
 {
-   if( ts == 0 || ts->category() != TreeStep::e_cat_expression ) return false;
+   if( ts == 0 ) return false;
    return _p->nth(n, static_cast<Expression*>(ts), this );
 }
 
 bool ExprVector::insert( int32 n, TreeStep* ts )
 {   
-   if( ts == 0 || ts->category() != TreeStep::e_cat_expression ) return false;
+   if( ts == 0 ) return false;
    return _p->insert(n, static_cast<Expression*>(ts), this );
 }
 
 bool ExprVector::append( TreeStep* ts )
 {
-   if( ts->category() != TreeStep::e_cat_expression ) return false;
+   if( ts == 0 ) return false;
    return _p->append( static_cast<Expression*>(ts), this );
 }
 
 bool ExprVector::remove( int32 n )
 {   
    return _p->remove(n);
-}
-
-
-TreeStep* ExprVector::get( size_t n ) const
-{
-   TreeStepVector_Private::ExprVector& mye = _p->m_exprs;
-   if( n < mye.size() )
-   {
-      return mye[n];
-   }
-   
-   return 0;
-}
-
-ExprVector& ExprVector::add( TreeStep* e )
-{
-   if( e->setParent(this) )
-   {
-      _p->m_exprs.push_back(e);
-   }
-   return *this;
 }
 
 

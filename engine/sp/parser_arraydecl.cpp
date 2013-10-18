@@ -70,7 +70,7 @@ static Expression* make_array_expr( PairList* list )
       while( iter != list->end() )
       {
          // Todo -- make the array expression
-         array->add(iter->first);
+         array->append(iter->first);
          ++iter;
       }
       retval = array;

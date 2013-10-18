@@ -52,6 +52,7 @@
 #include <falcon/psteps/exprlogic.h>
 #include <falcon/psteps/exprmath.h>
 #include <falcon/psteps/exprmultiunpack.h>
+#include <falcon/psteps/exprnamed.h>
 #include <falcon/psteps/exprneg.h>
 #include <falcon/psteps/exproob.h>
 #include <falcon/psteps/exprparentship.h>
@@ -310,8 +311,6 @@ FALCON_STANDARD_SYNCLASS_OP_CREATE( EEQ, ExprEEQ, binaryExprSet )
 FALCON_STANDARD_SYNCLASS_OP_CREATE( In, ExprIn, binaryExprSet )
 FALCON_STANDARD_SYNCLASS_OP_CREATE( Notin, ExprNotin, binaryExprSet )
 FALCON_STANDARD_SYNCLASS_OP_CREATE( IIF, ExprIIF, ternaryExprSet )
-// TODO: Manage lit
-//FALCON_STANDARD_SYNCLASS_OP_CREATE( Lit, ExprLit, unaryExprSet )
 
 // inc-dec
 FALCON_STANDARD_SYNCLASS_OP_CREATE( PreInc, ExprPreInc, unaryExprSet )
@@ -369,7 +368,6 @@ FALCON_STANDARD_SYNCLASS_OP_CREATE( Init, ExprInit, zeroaryExprSet )
 FALCON_STANDARD_SYNCLASS_OP_CREATE( StarIndexAccess, ExprStarIndex, binaryExprSet )
 
 // Sym -- separated
-// Unpack -- separated
 FALCON_STANDARD_SYNCLASS_OP_CREATE( Unpack, ExprUnpack, varExprInsert_sel )
 FALCON_STANDARD_SYNCLASS_OP_CREATE( MUnpack, ExprMultiUnpack, varExprInsert )
 FALCON_STANDARD_SYNCLASS_OP_CREATE( Unquote, ExprUnquote, unaryExprSet )
@@ -936,7 +934,7 @@ bool SynClasses::ClassInherit::op_init( VMContext* ctx, void* instance, int pcou
             .extra( String("Parameter ").N(i).A(" is not an expression") ) );
       }
       Expression* expr = static_cast<Expression*>( cls->getParentData(clsExpr, data) );
-      inh->add(expr);
+      inh->append(expr);
    }
  
    return false;
@@ -1003,7 +1001,7 @@ bool SynClasses::ClassParentship::op_init( VMContext* ctx, void* instance, int p
             .extra( String("Parameter ").N(i).A(" is not an Inherit expression") ) );
       }
       Expression* expr = static_cast<Expression*>( cls->getParentData(clsParent, data) );
-      pship->add(expr);
+      pship->append(expr);
    }
  
    return false;

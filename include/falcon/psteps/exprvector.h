@@ -37,19 +37,7 @@ public:
    virtual bool insert( int32 pos, TreeStep* element );   
    virtual bool remove( int32 pos );
    virtual bool append( TreeStep* element );
-   
-   /** Get the nth expression in the array.
-    \param n The number of the expression that must be accessed.
-    \return the nth expression or 0 if n is out of range.
-    */
-   TreeStep* get( size_t n ) const;
-   
 
-   /** Adds another expression to this array.
-    \return itself (useful for declarations in sources)
-    */
-   ExprVector& add( TreeStep* e );
-   
    void resolveUnquote( VMContext* ctx, const UnquoteResolver& );
 
 protected:
