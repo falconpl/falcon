@@ -1,0 +1,37 @@
+/*
+@name Named parameters
+@category Functions
+
+@output 
+Named parameters
+A: 1 B: Nil; C: Ciao
+A: 1 B: Ciao; C: Nil
+A: Ciao B: Nil; C: Nil
+A: 1 B: Ciao-p2; C: Ciao-p1
+A: Nil B: Ciao-p2; C: Ciao-p1
+A: 1 B: Ciao-p2; C: 3
+A: Ciao-p3 B: Ciao-p2; C: 3
+@endoutput
+*/
+
+// Parameters are wilfully named in reverse order
+function test( p3, p2, p1 )
+   > "A: ",p3, " B: ",p2,"; C: ",p1
+end
+
+> "Named parameters"
+// Check last parameter
+   test( 1, p1|"Ciao" )   
+// Check middle param
+   test( 1, p2|"Ciao" )
+// check overwite first param
+   test( 1, p3|"Ciao" )
+// check 2 params in reverse order   
+   test( 1, p1|"Ciao-p1", p2|"Ciao-p2" )
+// check 2 params in reverse order
+   test( p1|"Ciao-p1", p2|"Ciao-p2" )
+// check with full params
+   test( 1,2,3,4, p2|"Ciao-p2" )
+// check 2 in reverse order, with full params   
+   test( 1,2,3,4, p2|"Ciao-p2", p3|"Ciao-p3" )
+
