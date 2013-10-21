@@ -21,7 +21,6 @@
 #include "process_mod.h"
 #include "process_ext.h"
 
-#include "version.h"
 
 /*#
    @module feathers.process External process interface

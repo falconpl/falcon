@@ -51,5 +51,3 @@ add_custom_target(Falcon_Feathers)
 add_dependencies(Falcon_Feathers ${_project_targets})
 unset(_project_targets)
 
-# install headers
-add_subdirectory(include)

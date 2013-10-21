@@ -19,7 +19,6 @@
 
 #include <falcon/module.h>
 #include "regex_ext.h"
-#include "version.h"
 
 #include <stdio.h>
 

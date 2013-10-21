@@ -35,9 +35,6 @@
 #include <falcon/module.h>
 #include <falcon/class.h>
 #include <falcon/ov_names.h>
-
-#include "../include/version.h"
-
 #include "bitbuf_ext.h"
 #include "bitbuf_mod.h"
 #include "buffererror.h"
@@ -122,9 +119,6 @@ Falcon::Module *bufext_module_init(void)
 {
    // initialize the module
    Falcon::Module *self = new Falcon::Module("bitbuf");
-
-   //self->engineVersion( FALCON_VERSION_NUM );
-   //self->version( VERSION_MAJOR, VERSION_MINOR, VERSION_REVISION );
 
    //============================================================
    // API declarations

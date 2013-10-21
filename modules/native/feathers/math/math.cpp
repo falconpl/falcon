@@ -33,8 +33,6 @@
 #include <falcon/module.h>
 #include "math_ext.h"
 
-#include "version.h"
-
 /*#
    @module feathers.math
    @brief Mathematical functions

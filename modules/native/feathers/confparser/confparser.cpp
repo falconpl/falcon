@@ -20,8 +20,6 @@
 #include <falcon/class.h>
 #include "confparser_ext.h"
 
-#include "version.h"
-
 /*#
    @module feathers.confparser Configuration file parser
    @brief Advanced configuration file parser (with sections and key categorization support).
@@ -126,9 +124,6 @@ FALCON_MODULE_DECL
    // setup DLL engine common data
 
    Falcon::Module *self = new Falcon::Module("confparser");
-   //self->engineVersion( FALCON_VERSION_NUM );
-   //self->version( VERSION_MAJOR, VERSION_MINOR, VERSION_REVISION );
-
    Falcon::Class *c_cparser = Falcon::Ext::confparser_create();
    self->addMantra(c_cparser);
 

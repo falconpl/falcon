@@ -39,7 +39,6 @@ set(SRC_FILES
 set(HDR_FILES
   hash_ext.h
   hash_mod.h
-  ../include/version.h
   hash_defs.h 
   # add more header files starting here:
   adler32.h

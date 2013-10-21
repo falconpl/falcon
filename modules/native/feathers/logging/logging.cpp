@@ -22,8 +22,6 @@
 
 #include "logarea.h"
 
-#include "version.h"
-
 
 /*#
    @module feathers.logging Logging facility

@@ -18,8 +18,6 @@
 #include "inet_ext.h"
 #include <falcon/module.h>
 
-#include "version.h"
-
 #if WITH_OPENSSL
 #include <openssl/ssl.h> // check for OPENSSL_NO_SSL2
 #endif // WITH_OPENSSL

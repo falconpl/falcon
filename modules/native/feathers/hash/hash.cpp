@@ -38,9 +38,6 @@
 #include "hash_mod.h"
 #include "hash_ext.h"
 
-#include "../include/version.h"
-
-
 /*#
     @module feathers.hash Hashing algorighms
     @brief Various hash and checksum functions

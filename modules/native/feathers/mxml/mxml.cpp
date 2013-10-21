@@ -18,7 +18,6 @@
 */
 
 #include <falcon/module.h>
-#include "version.h"
 
 #include "mxml.h"
 #include "mxml_ext.h"

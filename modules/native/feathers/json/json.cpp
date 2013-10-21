@@ -37,8 +37,6 @@
 
 #include <falcon/module.h>
 #include "json_ext.h"
-
-#include "version.h"
 #include <stdio.h>
 
 FALCON_MODULE_DECL
