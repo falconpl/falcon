@@ -224,6 +224,11 @@ public:
    void errorDesc( String& target );
 
    void toString( String& target ) const;
+   String toString() const
+   {
+      String temp; toString(temp); return temp;
+   }
+
 protected:
 
 private:

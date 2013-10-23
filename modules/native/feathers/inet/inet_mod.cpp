@@ -755,7 +755,11 @@ void Socket::closeWrite()
 
 bool Socket::broadcasting() const
 {
-   return this->getBoolOption( PF_INET, SO_BROADCAST );
+   if( m_type == SOCK_DGRAM )
+   {
+      return this->getBoolOption( PF_INET, SO_BROADCAST );
+   }
+   return false;
 }
 
 

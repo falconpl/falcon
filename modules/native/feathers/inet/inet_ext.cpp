@@ -180,8 +180,14 @@ void get_address(const Class* cls, const String&, void* instance, Item& value )
    ModuleInet* inet = static_cast<ModuleInet*>( cls->module() );
    Mod::Socket* socket = static_cast<Mod::Socket*>(instance);
    Mod::Address* a = socket->address();
-   a->incref();
-   value = FALCON_GC_STORE(inet->addressClass(), a);
+   if( a  != 0 )
+   {
+      a->incref();
+      value = FALCON_GC_STORE(inet->addressClass(), a);
+   }
+   else {
+      value.setNil();
+   }
 }
 
 /*#
@@ -1113,7 +1119,7 @@ ClassSocket::ClassSocket():
    addProperty("port",&CSocket::get_port);
    addProperty("closed",&CSocket::get_closed);
    addProperty("eof",&CSocket::get_eof);
-   addProperty("stream",&CSocket::get_stream);
+   addProperty("stream",&CSocket::get_stream, 0, false, true );
 
    addProperty("broadcasting", &CSocket::get_broadcasting, &CSocket::set_broadcasting );
    addProperty("nonblocking", &CSocket::get_nonblocking, &CSocket::set_nonblocking );
@@ -1503,6 +1509,9 @@ bool ClassAddress::op_init( VMContext* ctx, void* instance, int32 pcount ) const
          throw FALCON_SIGN_XERROR(ParamError, e_inv_params, .extra("S,[N|S]"));
       }
       address->parse( *i_host.asString() );
+   }
+   else {
+      throw FALCON_SIGN_XERROR(ParamError, e_inv_params, .extra("S,[N|S]"));
    }
 
    return false;
