@@ -243,16 +243,18 @@ FAL_ERRORDECL( e_syn_import_name_star, 266, "Imported symbols cannot contain a s
 FAL_ERRORDECL( e_mod_not_fam, 267, "Fam module has invalid FAM signature" );
 FAL_ERRORDECL( e_mod_unsupported_fam, 268, "Unsupported FAM version" );
 FAL_ERRORDECL( e_directive_not_allowed, 269, "Directive not allowed in dynamic compilation" );
-FAL_ERRORDECL( e_attrib_already, 270, "Attribute already declared" );
-FAL_ERRORDECL( e_marshall_not_found, 271, "Message event handler not found" );
-FAL_ERRORDECL( e_not_responding, 272, "Summoned entity isn't responding to a mandatory summon");
-FAL_ERRORDECL( e_non_delegable, 273, "The target item doesn't support delegation");
-   
+FAL_ERRORDECL( e_no_main, 270, "Main module has no main function");
+
 FAL_ERRORDECL( e_unknown_encoding, 300, "Unknown encoding name" );
 FAL_ERRORDECL( e_enc_fail, 301, "Encoding failed or data not encodable" );
 FAL_ERRORDECL( e_dec_fail, 302, "Decode failed or input data not in required format" );
 FAL_ERRORDECL( e_membuf_def, 303, "Invalid character in membuf definition" );
 FAL_ERRORDECL( e_regex_def, 304, "Error in regular expression definition" );
+
+FAL_ERRORDECL( e_attrib_already, 350, "Attribute already declared" );
+FAL_ERRORDECL( e_marshall_not_found, 351, "Message event handler not found" );
+FAL_ERRORDECL( e_not_responding, 352, "Summoned entity isn't responding to a mandatory summon");
+FAL_ERRORDECL( e_non_delegable, 353, "The target item doesn't support delegation");
 
 
 FAL_ERRORDECL( e_state, 400, "Unknown state in state-oriented operation" );

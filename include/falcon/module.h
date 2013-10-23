@@ -50,6 +50,7 @@ class ImportDef;
 class ModRequest;
 class ClassModule;
 class TextWriter;
+class DynLibrary;
 
 /** Standard Falcon Execution unit and library.
 
@@ -400,6 +401,12 @@ public:
     */
    virtual void onStartupComplete( VMContext* ctx );
 
+   /** Invoked when the module is removed from the modspace.
+    *
+    * This happens right before the module is removed.
+    */
+   virtual void onRemoved( ModSpace* ms );
+
    /** Perform live module initialization on a virtual machine.
     * \param VMContext The context where the module is invoked.
     *
@@ -701,17 +708,6 @@ protected:
     */
    virtual ~Module();
 
-   /** Unloads a dynamically loaded module.
-    This method destroys the current module. In case the module has been
-    created through a dynamic shared object loader, the module is also unloaded.
-
-    The system keeps a reference of loaded shared objects, so if the underlying
-    shared library has been used to generate more modules, the other modules
-    will still be able to work.
-
-    */
-   virtual void unload();
-
 private:
    class Private;
    Module::Private* _p;
@@ -724,7 +720,7 @@ private:
    String m_uri;
    uint32 m_lastGCMark;
    bool m_bExportAll;
-   DynUnloader* m_unloader;
+   DynLibrary* m_unloader;
    bool m_bMain;
       
    int m_anonMantras;
@@ -743,7 +739,7 @@ private:
    
    void name( const String& v ) { m_name = v; }
    void uri( const String& v ) { m_uri = v; }
-   void setDynUnloader( DynUnloader* ul ) { m_unloader = ul; } 
+   void setDynUnloader( DynLibrary* ul ) { m_unloader = ul; }
 };
 
 }

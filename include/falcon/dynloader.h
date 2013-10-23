@@ -17,12 +17,77 @@
 #define _FALCON_DYNLOADER_H_
 
 #include <falcon/setup.h>
+#include <falcon/refcounter.h>
 
 namespace Falcon
 {
 
 class Module;
 class String;
+
+/** Utility directly loading a dynamic library.
+ * Useful for Falcon users, as it ports across platforms.
+ *
+ */
+class DynLibrary
+{
+public:
+   /** Creates a dynamic library that needs to be open */
+   DynLibrary();
+
+   /** Creates and open a dynamic library.
+    * \param path Path to a local filesystem loadable module.
+    * \throw IoError on error.
+    */
+   DynLibrary( const String& path );
+
+   /** Creates and open a dynamic library.
+    * \param path Path to a local filesystem loadable module.
+    * \throw IoError on error.
+    */
+   void open(const String& path);
+
+   /** Gets a dynamic symbol stored in the library.
+    * \param symname Name of the symbol to be found.
+    * \throw AccessError if the symbol is not found.
+    * \return always a valid reference to dynamic code.
+    */
+   void* getDynSymbol( const char* symname ) const;
+
+   /** Gets a dynamic symbol stored in the library (and doesn't throw on error).
+    * \param symname Name of the symbol to be found.
+    * \return A reference to dynamic code, or 0 on not found.
+    *
+    * \note This is the system dependent part of getDynSymbol and goes in a
+    * system-dependent source file.
+    */
+   void* getDynSymbol_nothrow( const char* symname ) const;
+
+
+   /** Closes the dynamic library.
+    * \throw IoError on error.
+    */
+   void close();
+
+   FALCON_REFERENCECOUNT_DECLARE_INCDEC(DynLibrary)
+
+private:
+   void* m_sysData;
+
+   virtual ~DynLibrary();
+
+
+   // disable evil copy constructor.
+   DynLibrary( const DynLibrary& )
+   {}
+
+   // system dep. part of open() -- must fill m_sysData
+   void open_sys(const String& path);
+
+   // system dep. part of close()
+   void close_sys();
+};
+
 
 /** Native shared object based module loader.
  */
@@ -31,7 +96,7 @@ class FALCON_DYN_CLASS DynLoader
 public:
    DynLoader();
    virtual ~DynLoader();
-   
+
    /** Loads a pre-compiled module from a data stream. 
     \param filePath The path where the shared object is stored.
     \param local_name The name under which the module is internally known.

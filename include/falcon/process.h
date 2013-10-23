@@ -96,6 +96,25 @@ public:
    bool startItem( Item& main, int pcount=0, Item const* params=0 );
 
    /**
+    * Start the execution of an external script in this process.
+    * \param Script the script to be started.
+    * \param addPathToLoadPath If true, the path from where the script is started will be
+    *        added automatically to the module loader for this process.
+    * \return false if the process is not in ready state, true if the script has started
+    * \throw IOError on input/output errors
+    * \throw CodeError If a main function cannot be found in the given script.
+    *
+    * This method will
+    * # synchronously create a load process for the given script and wait for it.
+    * # search for a main function in the loaded module.
+    * # start the execution of the main function.
+    *
+    * Begin and end of the load process are logged to the engine logger.
+    *
+    */
+   bool startScript( const URI& script, bool addPathToLoadPath = true );
+
+   /**
     * Starts a context that is ready to run.
     *
     * The context should have been already created and configured,

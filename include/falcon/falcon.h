@@ -39,6 +39,7 @@
 #include <falcon/intcompiler.h>
 #include <falcon/modcompiler.h>
 #include <falcon/modspace.h>
+#include <falcon/modloader.h>
 #include <falcon/process.h>
 #include <falcon/loaderprocess.h>
 

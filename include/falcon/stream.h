@@ -224,7 +224,7 @@ public:
    /**
     * Underlying real stream for virtual streams.
     *
-    * (for instance, StringBuffer has underlying).
+    * (for instance, StreamBuffer has underlying).
     *
     * Normally it's 0.
     */
@@ -244,6 +244,9 @@ public:
     * that can then be selected.
     */
    Item& userItem() { return m_userItem; }
+
+   /** Reads all what's left from this stream and writes to the target stream. */
+   virtual void cat( Stream* target );
 
 protected:
    uint32 m_mark;
