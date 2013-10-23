@@ -59,8 +59,7 @@ void DynLibrary::open_sys(const String& path)
       throw new IOError( ErrorParam( e_binload, __LINE__, SRC )
                          .origin( ErrorParam::e_orig_loader )
                          .sysError( GetLastError() )
-                         .extra( filePath ) );
-      return NULL;
+                         .extra( path ) );
    }
 
    m_sysData = module;
@@ -79,7 +78,7 @@ void DynLibrary::close_sys()
 
 void* DynLibrary::getDynSymbol_nothrow( const char* symname ) const
 {
-   void* sym = GetProcAddress( m_sysData, symname );
+   void* sym = (void*)GetProcAddress( (HINSTANCE)m_sysData, symname );
    return sym;
 }
 

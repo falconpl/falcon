@@ -154,8 +154,8 @@ Stream *VFSFile::open( const URI& uri, const OParams &p )
    DWORD omode = win_paramsToMode( p );
    DWORD oshare = win_paramsToShare( p );
 
-   String path = uri.path();
-   Path::uriToWin( path );
+   String path;
+   uri.path().getWinFormat(path);
    AutoWString wstr( path );
 
    HANDLE handle = CreateFileW( wstr.w_str(),
@@ -202,8 +202,8 @@ Stream *VFSFile::create( const URI& uri, const CParams &p )
    // turn the xxx bytes
    DWORD oattribs = FILE_ATTRIBUTE_NORMAL | FILE_ATTRIBUTE_ARCHIVE;
 
-   String path = uri.path();
-   Path::uriToWin( path );
+   String path;
+   uri.path().getWinFormat(path);
    AutoWString wstr( path );
 
    HANDLE handle = CreateFileW( wstr.w_str(),
@@ -251,7 +251,7 @@ Stream *VFSFile::create( const URI& uri, const CParams &p )
 
 Directory* VFSFile::openDir( const URI& uri )
 {
-   String fname = uri.path() + "\\*";
+   String fname = uri.path().encode() + "\\*";
    Path::uriToWin( fname );
    AutoWString wBuffer( fname );
 
@@ -270,14 +270,14 @@ Directory* VFSFile::openDir( const URI& uri )
          .sysError( GetLastError() ) );
    }
 
-   return new Directory_file( uri.path(), handle, dir_data );
+   return new Directory_file( uri.path().encode(), handle, dir_data );
 }
 
 
 FileStat::t_fileType VFSFile::fileType( const URI& uri, bool )
 {
-   String fname = uri.path();
-   Path::uriToWin( fname );
+   String fname;
+   uri.path().getWinFormat(fname);
 
 	AutoWString wBuffer( fname );
    // First, determine if the file exists
@@ -376,8 +376,8 @@ FileStat::t_fileType VFSFile::fileType( const URI& uri, bool )
 
 bool VFSFile::readStats( const URI& uri, FileStat &sts, bool )
 {
-   String fname = uri.path();
-   Path::uriToWin( fname );
+   String fname;
+   uri.path().getWinFormat(fname);
 
 	AutoWString wBuffer( fname );
    // First, determine if the file exists
@@ -491,8 +491,8 @@ bool VFSFile::readStats( const URI& uri, FileStat &sts, bool )
 
 void VFSFile::erase( const URI &uri )
 {
-   String fname = uri.path();
-   Path::uriToWin( fname );
+   String fname;
+   uri.path().getWinFormat(fname);
 
    AutoWString wBuffer( fname );
    BOOL res = DeleteFileW( wBuffer.w_str() );
@@ -512,10 +512,10 @@ void VFSFile::erase( const URI &uri )
 
 void VFSFile::move( const URI &suri, const URI &duri )
 {
-   String srcPath = suri.path();
-   Path::uriToWin( srcPath );
-   String destPath = duri.path();
-   Path::uriToWin( destPath );
+   String srcPath;
+   suri.path().getWinFormat(srcPath);
+   String destPath;
+   duri.path().getWinFormat(destPath);
 
    BOOL res = ::MoveFileW(AutoWString(srcPath).w_str(), AutoWString( destPath ).w_str() );
    if( ! res && GetLastError() == ERROR_CALL_NOT_IMPLEMENTED )
@@ -553,8 +553,9 @@ static void _mkdir( const String& fname )
 
 void VFSFile::mkdir( const URI &uri, bool descend )
 {
-   String strName = uri.path();
-   Path::uriToWin( strName );
+   String strName;
+   uri.path().getWinFormat(strName);
+
 
    if ( descend )
    {

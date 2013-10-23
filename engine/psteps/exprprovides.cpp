@@ -95,10 +95,12 @@ const String& ExprNamed::exprName() const
 
 
 void ExprNamed::apply_( const PStep*ps , VMContext* ctx )
-{  
+{
    const ExprNamed* self = static_cast<const ExprNamed*>(ps);
+   #ifndef NDEBUG
    CodeFrame& cf = ctx->currentCode();
    TRACE2( "ExprNamed::apply_ %d/1 \"%s\"", cf.m_seqId, self->describe().c_ize() );
+   #endif
    ctx->resetCode( self->first() );
 }
 

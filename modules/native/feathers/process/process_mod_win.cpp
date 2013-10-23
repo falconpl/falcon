@@ -27,7 +27,7 @@
 
 #include <tlhelp32.h>
 
-namespace Falcon { 
+namespace Falcon {
 namespace Mod {
 
 namespace {
@@ -158,13 +158,13 @@ bool ProcessEnum::next()
    {
       return false;
    }
-   
+
    WIN_PROC_HANDLE *ph = reinterpret_cast<WIN_PROC_HANDLE*>( m_sysdata );
    m_pid = ph->process.th32ProcessID;
    m_ppid = ph->process.th32ParentProcessID;
    m_commandLine.bufferize( ph->process.szExeFile );
    m_name.bufferize( ph->process.szExeFile );
-   
+
    if ( ! Process32Next( ph->hSnap, &ph->process ) )
    {
       CloseHandle( ph->hSnap );
@@ -199,7 +199,7 @@ void ProcessEnum::close()
    {
       delete ph;
       m_sysdata = 0;
-      throw FALCON_SIGN_XERROR( ::Falcon::Ext::ProcessError, 
+      throw FALCON_SIGN_XERROR( ::Falcon::Ext::ProcessError,
                FALCON_PROCESS_ERROR_ERRLIST2,
                  .desc(FALCON_PROCESS_ERROR_ERRLIST2_MSG )
                  .sysError( (uint32) GetLastError )
@@ -229,7 +229,7 @@ public:
 
    Private() {
       hChildProcess = INVALID_HANDLE_VALUE;
-      
+
       hPipeInRd = INVALID_HANDLE_VALUE;
       hPipeInWr = INVALID_HANDLE_VALUE;
       hPipeOutRd = INVALID_HANDLE_VALUE;
@@ -239,7 +239,7 @@ public:
    }
 
    ~Private() {
-   
+
    }
 
    void closeAll()
@@ -256,7 +256,7 @@ public:
 
 static const char *shellName()
 {
-   char *shname = getenv("ComSpec");
+   const char *shname = getenv("ComSpec");
    if ( shname == 0 ) {
       OSVERSIONINFO osVer;
       osVer.dwOSVersionInfoSize = sizeof( osVer );
@@ -297,7 +297,7 @@ bool Process::terminate( bool )
 void Process::sys_init()
 {
    _p = new Private();
-   
+
 }
 
 
@@ -306,12 +306,12 @@ void Process::sys_destroy()
    delete _p;
 }
 
-   
+
 void Process::sys_wait()
 {
    if( WaitForSingleObject( _p->hChildProcess, INFINITE ) == WAIT_FAILED )
    {
-      throw FALCON_SIGN_XERROR( ::Falcon::Ext::ProcessError, FALCON_PROCESS_ERROR_WAITFAIL, 
+      throw FALCON_SIGN_XERROR( ::Falcon::Ext::ProcessError, FALCON_PROCESS_ERROR_WAITFAIL,
          .desc(FALCON_PROCESS_ERROR_WAITFAIL_MSG)
          .sysError( (uint32) GetLastError() ) );
    }
@@ -329,7 +329,7 @@ void Process::sys_wait()
 
 void Process::sys_close()
 {
-   if( _p->hChildProcess != INVALID_HANDLE_VALUE ) 
+   if( _p->hChildProcess != INVALID_HANDLE_VALUE )
    {
       CloseHandle(_p->hChildProcess);
       _p->hChildProcess = INVALID_HANDLE_VALUE;
@@ -338,13 +338,13 @@ void Process::sys_close()
 
 
 void Process::sys_open( const String& cmd, int params )
-{      
+{
    // prepare security attributes
    SECURITY_ATTRIBUTES secAtt;
    secAtt.nLength = sizeof( secAtt );
    secAtt.lpSecurityDescriptor = NULL;
    secAtt.bInheritHandle = TRUE;
-   
+
    try
    {
       if ( !CreatePipe( &_p->hPipeInRd, &_p->hPipeInWr, &secAtt, 0 ) )
@@ -364,7 +364,7 @@ void Process::sys_open( const String& cmd, int params )
                .extra("OUT pipe")
                .sysError(GetLastError()) );
       }
-          
+
       if ( (params & MERGE_AUX) != 0 )
       {
          _p->hPipeErrRd = _p->hPipeOutRd;
@@ -407,12 +407,12 @@ void Process::sys_open( const String& cmd, int params )
    DWORD iFlags = 0;
    memset( &si, 0, sizeof( si ) );
    si.cb = sizeof( si );
-   
+
    si.dwFlags = STARTF_USESTDHANDLES;
    si.hStdInput = _p->hPipeInRd;
    si.hStdOutput = _p->hPipeOutWr;
    si.hStdError = _p->hPipeErrWr;
-   
+
    if( (params & BACKGROUND) != 0 )
    {
       si.dwFlags |= STARTF_USESHOWWINDOW;
@@ -444,7 +444,7 @@ void Process::sys_open( const String& cmd, int params )
    {
      _p->hChildProcID = proc.dwProcessId;
      _p->hChildProcess = proc.hProcess;
-     
+
      CloseHandle( proc.hThread ); // unused
 
       // close unused pipe ends

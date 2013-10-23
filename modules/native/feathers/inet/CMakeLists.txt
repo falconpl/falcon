@@ -34,7 +34,10 @@ else()
       include_directories(${MS_SDK_PATH})
    endif()
 
-   set(SYS_SPECIFIC inet_mod_win.cpp ../../../../engine/selectmpx.cpp winselectmpx.h winselectmpx.cpp inet.rc)
+   set(SYS_SPECIFIC inet_mod_win.cpp ../../../../engine/selectmpx.cpp winselectmpx.h winselectmpx.cpp)
+   if (NOT MINGW)
+      set(SYS_RC inet.rc)
+   endif()
 endif()
 
 # Target
@@ -46,6 +49,7 @@ add_library(inet_fm MODULE
    inet_ext.h
    inet_mod.h
    ${SYS_SPECIFIC}
+   ${SYS_RC}
 )
 
 #Link

@@ -7,7 +7,10 @@
 if(UNIX)
    set(SYS_SPECIFIC process_mod_posix.cpp)
 else()
-   set(SYS_SPECIFIC process_mod_win.cpp process.rc)
+   if (NOT MINGW)
+      set(SYS_RC process.rc)
+   endif()
+   set(SYS_SPECIFIC process_mod_win.cpp ${SYS_RC})
    set_source_files_properties(sys/process_win.cpp PROPERTIES
       COMPILE_DEFINITIONS "UNICODE"
    )

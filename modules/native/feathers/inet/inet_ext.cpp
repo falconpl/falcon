@@ -209,7 +209,7 @@ void get_closed(const Class*, const String&, void* instance, Item& value )
 {
    TRACE1( "Socket.closed for %p", instance );
    Mod::Socket* sock = static_cast<Mod::Socket*>(instance);
-   value.setBoolean( sock->descriptor() == -1 );
+   value.setBoolean( sock->descriptor() == FALCON_INVALID_SOCKET_VALUE );
 }
 
 /*#

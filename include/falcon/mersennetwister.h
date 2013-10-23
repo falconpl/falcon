@@ -67,7 +67,11 @@
 
 #include <falcon/mt.h>
 
+#if defined(__MINGW32__) || defined(__MINGW64__)
+class MTRand {
+#else
 class FALCON_DYN_CLASS MTRand {
+#endif
 // Data
 public:
     typedef Falcon::uint32 uint32;
@@ -146,8 +150,11 @@ protected:
 	static uint32 hash( const time_t& t, const clock_t& c );
 };
 
-
+#if defined(__MINGW32__) || defined(__MINGW64__)
+class MTRand_interlocked: public MTRand
+#else
 class FALCON_DYN_CLASS MTRand_interlocked: public MTRand
+#endif
 {
 
 //Methods
