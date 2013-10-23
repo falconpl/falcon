@@ -504,7 +504,9 @@ public:
       {
          Module* mod = iter->second;
          // Remove the weak reference with us.
+         ModSpace* owner = mod->modSpace();
          mod->modSpace(0);
+         mod->onRemoved(owner);
          mod->decref();
          ++iter;
       }

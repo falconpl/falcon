@@ -17,7 +17,6 @@
 #define SRC "engine/dynloader_win.cpp"
 
 #include <falcon/dynloader.h>
-#include <falcon/dynunloader.h>
 #include <falcon/string.h>
 #include <falcon/path.h>
 #include <falcon/module.h>
@@ -26,13 +25,13 @@
 #include <windows.h>
 
 
-
 namespace Falcon
 {
 
-Module* DynLoader::load_sys( const String& filePath )
+
+void DynLibrary::open_sys(const String& path)
 {
-   String dll_name = filePath;
+   String dll_name = path;
    Path::uriToWin( dll_name );
 
    uint32 bufsize = dll_name.length() * sizeof( wchar_t ) + sizeof( wchar_t );
@@ -64,39 +63,30 @@ Module* DynLoader::load_sys( const String& filePath )
       return NULL;
    }
 
-   typedef Module* (*module_init_type)();
-   module_init_type module_init;
-
-   module_init = (module_init_type) GetProcAddress( module, DEFALUT_FALCON_MODULE_INIT_NAME );
-
-   Module* mod = module_init();
-   if( mod == 0 )
-   {
-      throw new IOError( ErrorParam( e_bininit, __LINE__, SRC )
-                         .origin( ErrorParam::e_orig_loader )
-                         .extra( filePath ) );
-   }
-
-   mod->setDynUnloader( new DynUnloader( module ) );
-   return mod;
+   m_sysData = module;
 }
 
-const String& DynLoader::sysExtension()
-{
-   static String ext = "dll";
-   return ext;
-}
 
-//============================================================
-//
-
-void DynUnloader::unload()
+void DynLibrary::close_sys()
 {
    if( m_sysData != 0 )
    {
       FreeLibrary( (HMODULE) m_sysData );
       m_sysData = 0;
    }
+}
+
+
+void* DynLibrary::getDynSymbol_nothrow( const char* symname ) const
+{
+   void* sym = GetProcAddress( m_sysData, symname );
+   return sym;
+}
+
+const String& DynLoader::sysExtension()
+{
+   static String ext = "dll";
+   return ext;
 }
 
 }

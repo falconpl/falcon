@@ -67,6 +67,19 @@ Stream* Stream::underlying() const
 }
 
 
+void Stream::cat( Stream* target )
+{
+   char* buffer[4096];
+   size_t count;
+   while( (count = read(buffer, sizeof(buffer) ) ) )
+   {
+      size_t written = 0;
+      while( written < count) {
+         written += target->write(buffer, count);
+      }
+   }
+}
+
 }
 
 /* end of stream.cpp */

@@ -14,7 +14,7 @@
 */
 
 #undef SRC
-#define SRC "engine/dynloader_posix.cpp"
+#define SRC "engine/dynloader_macosx.cpp"
 
 #include <falcon/dynloader.h>
 #include <falcon/string.h>

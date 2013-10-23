@@ -17,7 +17,6 @@
 #define SRC "engine/dynloader_posix.cpp"
 
 #include <falcon/dynloader.h>
-#include <falcon/dynunloader.h>
 #include <falcon/stderrors.h>
 #include <falcon/autocstring.h>
 #include <falcon/string.h>
@@ -29,40 +28,44 @@
 
 namespace Falcon
 {
-   
-Module* DynLoader::load_sys( const String& filePath )
+
+void DynLibrary::open_sys(const String& path)
 {
-   AutoCString cname( filePath );
+   AutoCString cname( path );
    errno = 0;
    void* modData = ::dlopen( cname.c_str(), RTLD_NOW |RTLD_LOCAL);
    if( modData == 0 )
    {
       throw new IOError( ErrorParam( e_binload, __LINE__, SRC )
          .origin( ErrorParam::e_orig_loader )
-         .sysError(errno)
-         .extra( filePath + " - " + dlerror() ) );
+         .sysError( (uint32) errno )
+         .extra( path + " - " + dlerror() ) );
    }
- 
-   Module* (*module_init)();
-   (void) dlerror();
-   module_init = (Module* (*)())::dlsym( modData, DEFALUT_FALCON_MODULE_INIT_NAME );
-   if ( module_init == 0 )
+
+   m_sysData = modData;
+}
+
+
+void DynLibrary::close_sys()
+{
+   int res = ::dlclose( m_sysData );
+   if( res != 0 )
    {
-      throw new IOError( ErrorParam( e_binstartup, __LINE__, SRC )
-         .origin( ErrorParam::e_orig_loader )
-         .extra( filePath + " - " + dlerror() ) );
+      throw new IOError( ErrorParam( e_binload, __LINE__, SRC )
+               .origin( ErrorParam::e_orig_loader )
+               .sysError( (uint32) errno )
+               .extra( dlerror() )
+               );
    }
-   Module* mod = module_init();
-   
-   if( mod == 0 )
-   {
-      throw new IOError( ErrorParam( e_bininit, __LINE__, SRC )
-         .origin( ErrorParam::e_orig_loader )
-         .extra( filePath ) );
-   }
-   
-   mod->setDynUnloader( new DynUnloader( modData ) );
-   return mod;
+
+   m_sysData = 0;
+}
+
+
+void* DynLibrary::getDynSymbol_nothrow( const char* symname ) const
+{
+   void* sym = ::dlsym( m_sysData, symname );
+   return sym;
 }
 
 
@@ -70,18 +73,6 @@ const String& DynLoader::sysExtension()
 {
    static String ext("so");
    return ext;
-}
-
-//============================================================
-//
-
-void DynUnloader::unload()
-{
-   if( m_sysData != 0 )
-   {
-      dlclose( m_sysData );
-      m_sysData = 0;
-   }
 }
 
 }

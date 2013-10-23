@@ -30,10 +30,10 @@
 #include <falcon/error.h>
 #include <falcon/falconclass.h>
 #include <falcon/hyperclass.h>
-#include <falcon/dynunloader.h>
 #include <falcon/textwriter.h>
 #include <falcon/stdsteps.h>
 #include <falcon/stderrors.h>
+#include <falcon/dynloader.h>
 
 #include <stdexcept>
 #include <map>
@@ -165,12 +165,12 @@ void Module::decref()
 {
    if( atomicDec(m_refcount) == 0 )
    {
-      DynUnloader* unl = m_unloader;
+      DynLibrary* unl = m_unloader;
       m_unloader = 0;
       delete this;
 
       if( unl != 0 ) {
-         unl->unload();
+         unl->decref();
       }
    }
 }
@@ -863,6 +863,10 @@ void Module::onStartupComplete( VMContext* )
 {
 }
 
+void Module::onRemoved( ModSpace* )
+{
+}
+
 static void pushAttribs( VMContext* ctx, const AttributeMap& map )
 {
    static PStep* attribStep = &Engine::instance()->stdSteps()->m_fillAttribute;
@@ -975,17 +979,6 @@ bool Module::exportAll() const
 void Module::exportAll( bool e )
 {
    globals().setExportAll(e);
-}
-
-
-void Module::unload()
-{
-   if( m_unloader != 0 )
-   {
-      DynUnloader* ul = m_unloader;
-      m_unloader = 0;
-      ul->unload();
-   }
 }
 
 

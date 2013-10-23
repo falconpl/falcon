@@ -17,12 +17,74 @@
 #define SRC "engine/dynloader.cpp"
 
 #include <falcon/dynloader.h>
-#include <falcon/dynunloader.h>
 #include <falcon/module.h>
 #include <falcon/fassert.h>
+#include <falcon/stderrors.h>
 
 namespace Falcon
 {
+
+//===================================================================
+// DynLibrary
+//
+
+DynLibrary::DynLibrary():
+   m_sysData(0)
+{}
+
+
+DynLibrary::DynLibrary( const String& path ):
+   m_sysData(0)
+{
+   open(path);
+}
+
+
+DynLibrary::~DynLibrary()
+{
+   this->close();
+}
+
+
+void DynLibrary::open(const String& path)
+{
+   if( m_sysData != 0 )
+   {
+      return;
+   }
+
+   open_sys(path);
+}
+
+
+void* DynLibrary::getDynSymbol( const char* symname ) const
+{
+   void* sym = getDynSymbol_nothrow( symname );
+
+   if( sym == 0 )
+   {
+      throw FALCON_SIGN_XERROR( AccessError, e_undef_sym, .extra(symname) );
+   }
+
+   return sym;
+}
+
+
+void DynLibrary::close()
+{
+   if( m_sysData == 0 )
+   {
+      return;
+   }
+
+   close_sys();
+
+   m_sysData = 0;
+}
+
+//===================================================================
+// DynLoader
+//
 
 DynLoader::DynLoader()
 {}
@@ -31,31 +93,27 @@ DynLoader::~DynLoader()
 {}
    
 Module* DynLoader::load( const String& modpath, const String& modname )
-{   
-   Module* mod = load_sys( modpath );
-   fassert( mod != 0 ); // should throw on problem.
+{
+   DynLibrary* dl = new DynLibrary(modpath);
+
+   Module* (*module_init)();
+   module_init = (Module* (*)()) dl->getDynSymbol(DEFALUT_FALCON_MODULE_INIT_NAME);
+   Module* mod = module_init();
+
+   if( mod == 0 )
+   {
+      throw new IOError( ErrorParam( e_bininit, __LINE__, SRC )
+         .origin( ErrorParam::e_orig_loader )
+         .extra( modpath ) );
+   }
+
+   mod->setDynUnloader( dl );
+
    mod->uri( modpath );
    mod->name( modname );
    return mod;
 }
 
-
-//===================================================================
-//
-
-DynUnloader::DynUnloader( void* sysData ):
-   m_sysData(sysData)
-{}
-
-DynUnloader::~DynUnloader()
-{
-   if( m_sysData != 0 )
-   {
-      unload();
-   }
-   m_sysData = 0;
-}
- 
 }
 
 /* end of dynloader.cpp */

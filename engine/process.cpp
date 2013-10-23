@@ -37,6 +37,9 @@
 #include <falcon/itemdict.h>
 #include <falcon/pool.h>
 #include <falcon/itemstack.h>
+#include <falcon/modloader.h>
+#include <falcon/log.h>
+#include <falcon/module.h>
 
 #include <set>
 #include <map>
@@ -321,6 +324,47 @@ bool Process::startItem( Item& main, int pcount, Item const* params )
    // launch is to be called after call,
    // as it may stack higher priority calls for base modules.
    launch();
+   return true;
+}
+
+
+bool Process::startScript( const URI& script, bool addPathToLoadPath )
+{
+   static Log* LOG =  Engine::instance()->log();
+
+   if (! checkRunning() ) {
+      return false;
+   }
+
+   if( addPathToLoadPath )
+   {
+      modSpace()->modLoader()->addDirectoryFront( script.path().fulloc() );
+   }
+
+   Process* loadProc = modSpace()->loadModule( script.encode(), true, false, true );
+
+   LOG->log(Log::fac_engine, Log::lvl_info, String("Internally starting loader process on: ") + script.encode() );
+   loadProc->start();
+   loadProc->wait();
+   LOG->log(Log::fac_engine, Log::lvl_info, String("Internally started loader process complete on: ") + script.encode() );
+
+   // get the main module
+   Module* mod = static_cast<Module*>(loadProc->result().asInst());
+   loadProc->decref();
+
+   Function* mainFunc = mod->getMainFunction();
+   if( mainFunc != 0 )
+   {
+      LOG->log(Log::fac_engine, Log::lvl_info, String("Launching main script function on: ") + script.encode() );
+
+      mainContext()->call( mainFunc );
+      launch();
+   }
+   else {
+      LOG->log(Log::fac_engine, Log::lvl_info, String("Module has no main script function: ") + script.encode() );
+      throw FALCON_SIGN_XERROR(CodeError, e_no_main, .extra(script.encode()) );
+   }
+
    return true;
 }
 
