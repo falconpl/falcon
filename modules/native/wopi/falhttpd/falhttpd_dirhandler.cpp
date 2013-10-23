@@ -24,6 +24,8 @@
 
 #include <falcon/sys.h>
 
+namespace Falcon {
+
 DirHandler::DirHandler( const Falcon::String& sFile, FalhttpdClient* cli ):
       FalhttpdRequestHandler( sFile, cli )
 {
@@ -35,62 +37,63 @@ DirHandler::~DirHandler()
 }
 
 
-void DirHandler::serve( Falcon::WOPI::Request* req )
+void DirHandler::serve( WOPI::Request* )
 {
    // open the directory
-   Falcon::int32 error;
-   Falcon::DirEntry *de = Falcon::Sys::fal_openDir( m_sFile, error );
+   Falcon::Directory *de = 0;
+   try {
+      de = Engine::instance()->vfs().openDir( m_sFile );
+      Falcon::String thisDir = m_sFile.subString( m_client->options().m_homedir.length() );
 
-   if( de == 0 )
-   {
-      m_client->log()->log( LOGLEVEL_WARN, "Can't open directory " + m_sFile );
-      m_client->replyError( 403 );
-      return;
-   }
-
-   Falcon::String thisDir = m_sFile.subString( m_client->options().m_homedir.length() );
-
-   if( thisDir.endsWith("/") && thisDir.length() >  1 )
-   {
-      thisDir.remove(thisDir.length()-1, 1);
-   }
-
-   Falcon::String title =
-         "<html><head><title>Index of "+ thisDir + "</title></head>"
-         "<body>\n<h1>Index of "+ thisDir + "</h1>\n<p>";
-
-   m_client->sendData( title );
-
-   Falcon::String fname;
-   while ( de->read(fname) )
-   {
-      if ( fname == "." )
-         continue;
-
-      Falcon::String loc;
-      if( fname == ".." )
+      if( thisDir.endsWith("/") && thisDir.length() >  1 )
       {
-         if( thisDir == "/" )
+         thisDir.remove(thisDir.length()-1, 1);
+      }
+
+      Falcon::String title =
+            "<html><head><title>Index of "+ thisDir + "</title></head>"
+            "<body>\n<h1>Index of "+ thisDir + "</h1>\n<p>";
+
+      m_client->sendData( title );
+
+      Falcon::String fname;
+      while ( de->read(fname) )
+      {
+         if ( fname == "." )
             continue;
 
-         Falcon::uint32 pos = thisDir.rfind("/");
-         if ( pos == Falcon::String::npos )
-            loc = "";
+         Falcon::String loc;
+         if( fname == ".." )
+         {
+            if( thisDir == "/" )
+               continue;
+
+            Falcon::uint32 pos = thisDir.rfind("/");
+            if ( pos == Falcon::String::npos )
+               loc = "";
+            else
+               loc = thisDir.subString(0,pos);
+         }
          else
-            loc = thisDir.subString(0,pos);
-      }
-      else
-      {
-         loc = thisDir;
+         {
+            loc = thisDir;
+         }
+
+         Falcon::String entry = "<br/><a href=\""+ loc + "/" + fname +"\">" + fname + "</a>\n";
+         m_client->sendData( entry );
       }
 
-      Falcon::String entry = "<br/><a href=\""+ loc + "/" + fname +"\">" + fname + "</a>\n";
-      m_client->sendData( entry );
+      m_client->sendData( "\n</body>\n</html>" );
+   }
+   catch(Error* e )
+   {
+      LOGW( "Can't open directory " + m_sFile );
+      m_client->replyError( 403 );
    }
 
-   m_client->sendData( "\n</body>\n</html>" );
-
    delete de;
+}
+
 }
 
 /* end of falhttpd_dirhandler.cpp */

@@ -44,6 +44,7 @@ ReplyStream::ReplyStream( const ReplyStream& other ):
 
 ReplyStream::~ReplyStream()
 {
+   m_rep->commit( m_underlying );
    m_underlying->decref();
 }
 

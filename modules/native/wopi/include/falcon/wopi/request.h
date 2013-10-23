@@ -33,7 +33,7 @@ class Request
 {
 public:
 
-   Request( ModuleWopi* host );
+   Request( ModuleWopi* host = 0 );
    virtual ~Request();
 
    //=========================================================
@@ -100,6 +100,7 @@ public:
    virtual bool processMultiPartBody();
 
    ModuleWopi* module() const { return m_module; }
+   void module( ModuleWopi* mod ) { m_module = mod; }
 
    // Generic request informations
    String m_protocol;

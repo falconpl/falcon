@@ -23,6 +23,8 @@
 #include "falhttpd.h"
 #include <falcon/wopi/request.h>
 
+namespace Falcon {
+
 class FalhttpdClient;
 
 class FalhttpdRequestHandler
@@ -40,6 +42,8 @@ protected:
 
    FalhttpdClient* m_client;
 };
+
+}
 
 #endif
 

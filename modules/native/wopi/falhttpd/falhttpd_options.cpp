@@ -29,6 +29,8 @@
 
 #include <list>
 
+namespace Falcon {
+
 //TODO: set from .h
 FalhttpOptions::FalhttpOptions():
    m_loadPath( "." ),
@@ -45,9 +47,7 @@ FalhttpOptions::FalhttpOptions():
    m_sUploadPath = "/tmp";
    m_sTextEncoding = "utf-8";
    m_sSourceEncoding = "utf-8";
-   m_pSessionManager = new Falcon::WOPI::MemSessionManager;
    
-   m_pSessionManager->timeout(30);
    setIndexFile( "index.ftd;index.fal;index.html;index.htm" );
 }
 
@@ -95,8 +95,8 @@ bool FalhttpOptions::init( int argc, char* argv[] )
          case 'p': pParam = &sPort; break;
          case 'q': m_bQuiet = true; break;
          case 'S': m_bSysLog = false; break;
-         case 'T': pParam = &m_sUploadPath;
-         case 't': pParam = &sTimeout;
+         case 'T': pParam = &m_sUploadPath; break;
+         case 't': pParam = &sTimeout; break;
          case '?': m_bHelp = true; break;
          default:
             m_sErrorDesc = "Invalid command ";
@@ -150,7 +150,6 @@ bool FalhttpOptions::init( int argc, char* argv[] )
       if( sTimeout.parseInt( ll ) )
       {
          m_nTimeout = (int) ll;
-         m_pSessionManager->timeout(m_nTimeout);
       }
       else
       {
@@ -159,7 +158,6 @@ bool FalhttpOptions::init( int argc, char* argv[] )
       }
    }
 
-   Falcon::Engine::setEncodings( m_sSourceEncoding, m_sSourceEncoding );
    return true;
 }
 
@@ -203,47 +201,26 @@ bool FalhttpOptions::remap( Falcon::String& sFname ) const
    // find the file.
    Falcon::Path path( sFname );
 
-   path.setFullLocation( m_homedir + "/" + path.getFullLocation() );
+   path.fulloc( m_homedir + "/" + path.fulloc() );
 
-   sFname = path.get();
+   sFname = path.encode();
    Falcon::FileStat stats;
-   if( ! Falcon::Sys::fal_stats( sFname, stats ) )
+   if( ! Engine::instance()->vfs().readStats( sFname, stats, true ) )
    {
       return false;
    }
    else
    {
-      // resolve links
-      while( stats.m_type == Falcon::FileStat::t_link )
-      {
-         Falcon::String nname;
-         if( ! Falcon::Sys::fal_readlink( sFname, nname ) )
-            return false;
-
-         if( nname.startsWith("/") )
-            sFname = nname;
-         else
-         {
-            Falcon::uint32 pos = sFname.rfind("/");
-            sFname = sFname.subString( 0, pos ) + "/" + nname;
-         }
-
-         if( ! Falcon::Sys::fal_stats( sFname, stats ) )
-         {
-            return false;
-         }
-      }
-
       // Is the file a directory?
-      if( stats.m_type == Falcon::FileStat::t_dir )
+      if( stats.type() == Falcon::FileStat::_dir )
       {
-         path.setFullLocation( sFname );
+         path.fulloc( sFname );
          // Do we have index files to try?
          std::list<Falcon::String>::const_iterator fni = m_lIndexFiles.begin();
          while( fni != m_lIndexFiles.end() )
          {
-            path.setFilename( *fni );
-            if( Falcon::Sys::fal_stats( path.get(), stats ) )
+            path.file( *fni );
+            if( Engine::instance()->vfs().readStats( path.encode(), stats, true ) )
             {
                break;
             }
@@ -253,11 +230,11 @@ bool FalhttpOptions::remap( Falcon::String& sFname ) const
          // return it as a directory?
          if( fni == m_lIndexFiles.end() )
          {
-            sFname = path.getFullLocation() + "/";
+            sFname = path.fulloc() + "/";
          }
          else
          {
-            sFname = path.get();
+            sFname = path.encode();
          }
 
       }
@@ -267,155 +244,115 @@ bool FalhttpOptions::remap( Falcon::String& sFname ) const
 }
 
 
-void FalhttpOptions::loadIni( Falcon::LogArea* log, Falcon::ConfigFileService* cfs )
+void FalhttpOptions::parseIni()
 {
-   Falcon::String  sPort;
-   Falcon::String  sIndex;
-
-   cfs->getValue( "HomeDir", m_homedir );
-   cfs->getValue( "LoadPath", m_loadPath );
-   cfs->getValue( "TempDir", m_sUploadPath );
-   cfs->getValue( "Interface", m_sIface );
-   cfs->getValue( "PersistentDataDir", m_sAppDataDir );
-
-   if( cfs->getValue( "Port", sPort ) )
-   {
-      Falcon::int64 nPort;
-      if( sPort.parseInt( nPort ) )
-         m_nPort = (int) nPort;
-   }
-
-   if( cfs->getValue( "SessionTimeout", sPort ) )
-   {
-      Falcon::int64 nTimeout;
-      if( sPort.parseInt( nTimeout ) )
-      {
-         m_nTimeout = (int) nTimeout;
-         m_pSessionManager->timeout( m_nTimeout );
-      }
-   }
-
-   Falcon::String sBoolVal;
-   if( cfs->getValue( "AllowDir", sBoolVal ) )
-   {
-      m_bAllowDir = checkBool(sBoolVal);
-   }
-
-   if( cfs->getValue( "IndexFile", sIndex ) )
-   {
-      setIndexFile( sIndex );
-   }
-
-   parseMimeTypes( log, cfs );
-   parseRedirects( log, cfs );
+   ConfigSection* cs = m_cfg.mainSection();
+   cs->getValue( "HomeDir", m_homedir );
+   cs->getValue( "LoadPath", m_loadPath );
+   cs->getValue( "TempDir", m_sUploadPath );
+   cs->getValue( "Interface", m_sIface );
+   cs->getValue( "PersistentDataDir", m_sAppDataDir );
 }
 
 
-void FalhttpOptions::parseMimeTypes( Falcon::LogArea* log, Falcon::ConfigFileService* cfs )
+void FalhttpOptions::parseMimeTypes()
 {
-   Falcon::String sKey;
-
-   if ( cfs->getFirstKey( "mime", sKey ) )
+   ConfigSection* cs = m_cfg.getSection("MIME");
+   if( cs != 0 )
    {
-      addMimeType( log, cfs, sKey );
-
-      while( cfs->getNextKey( sKey ) )
+      class KN: public ConfigSection::KeyEnumerator
       {
-         addMimeType( log, cfs, sKey );
+      public:
+         KN( FalhttpOptions* opts ):
+            m_opts(opts)
+         {}
+
+         virtual ~KN(){}
+
+         void operator() (const String& key, const String& value)
+         {
+            m_opts->addMimeType(key, value);
+         }
+
+         FalhttpOptions* m_opts;
       }
+      rator( this );
+
+      cs->enumerateKeys(rator);
    }
-   else
-   {
-      // add some sensible default.
-      m_lMimeTypes.push_back( MimeType( "text/html", "*.html;*.htm" ) );
-      m_lMimeTypes.push_back( MimeType( "text/css", "*.css" ) );
-      m_lMimeTypes.push_back( MimeType( "text/javascript", "*.js" ) );
-      m_lMimeTypes.push_back( MimeType( "image/png", "*.png" ) );
-      m_lMimeTypes.push_back( MimeType( "image/gif", "*.gif" ) );
-      m_lMimeTypes.push_back( MimeType( "image/jpg", "*.jpg;*.jpeg" ) );
-      m_lMimeTypes.push_back( MimeType( "image/tiff", "*.tif;*.tiff" ) );
-      m_lMimeTypes.push_back( MimeType( "text/plain", "*" ) );
-   }
+
+   // add some sensible default.
+   m_lMimeTypes.push_back( MimeType( "text/html", "*.html;*.htm" ) );
+   m_lMimeTypes.push_back( MimeType( "text/css", "*.css" ) );
+   m_lMimeTypes.push_back( MimeType( "text/javascript", "*.js" ) );
+   m_lMimeTypes.push_back( MimeType( "image/png", "*.png" ) );
+   m_lMimeTypes.push_back( MimeType( "image/gif", "*.gif" ) );
+   m_lMimeTypes.push_back( MimeType( "image/jpg", "*.jpg;*.jpeg" ) );
+   m_lMimeTypes.push_back( MimeType( "image/tiff", "*.tif;*.tiff" ) );
+   m_lMimeTypes.push_back( MimeType( "text/plain", "*" ) );
 }
 
 
-void FalhttpOptions::parseRedirects( Falcon::LogArea* log, Falcon::ConfigFileService* cfs )
-{
-   Falcon::String sKey;
 
-   if ( cfs->getFirstKey( "vpath", sKey ) )
-   {
-      addRedirect( log, cfs, sKey );
-
-      while( cfs->getNextKey( sKey ) )
-      {
-         addRedirect( log, cfs, sKey );
-      }
-   }
-}
-
-void FalhttpOptions::addMimeType( Falcon::LogArea* log, Falcon::ConfigFileService* cfs, const Falcon::String& sKey )
+void FalhttpOptions::parseRedirects()
 {
    Falcon::String sValue;
-   if( cfs->getValue( sKey, sValue ) )
+   ConfigSection* cs = m_cfg.getSection("REDIRECT");
+
+   class KN: public ConfigSection::KeyEnumerator
    {
-      log->log( LOGLEVEL_INFO, "Parsing mime type " + sKey + " = " + sValue );
-      Falcon::String sType = sKey.subString(5); // discard "mime."
+   public:
+      KN( FalhttpOptions* opts ):
+         m_opts(opts)
+      {}
 
+      virtual ~KN(){}
 
-      Falcon::uint32 pos=0;
-      while( (pos = sType.find( ".", pos ) ) != Falcon::String::npos )
+      void operator() (const String& key, const String& value)
       {
-         sType.setCharAt(pos, '/' );
+         m_opts->addRedirect(key, value);
       }
 
-      if ( sValue == "*" )
-      {
-         m_lMimeTypes.push_back( MimeType( sType, sValue ) );
-      }
-      else
-      {
-         m_lMimeTypes.push_front( MimeType( sType, sValue ) );
-      }
+      FalhttpOptions* m_opts;
+   }
+   rator( this );
+
+   cs->enumerateKeys(rator);
+}
+
+void FalhttpOptions::addMimeType( const Falcon::String& sKey, const Falcon::String& sValue )
+{
+   LOGI( "Parsing mime type " + sKey + " = " + sValue );
+
+   if ( sValue == "*" )
+   {
+      m_lMimeTypes.push_back( MimeType( sKey, sValue ) );
    }
    else
    {
-      log->log( LOGLEVEL_WARN, "No mime type associated with " + sKey );
+      m_lMimeTypes.push_front( MimeType( sKey, sValue ) );
    }
 }
 
 
-void FalhttpOptions::addRedirect( Falcon::LogArea* log, Falcon::ConfigFileService* cfs, const Falcon::String& sKey )
+void FalhttpOptions::addRedirect( const Falcon::String& sKey, const Falcon::String& sValue )
 {
-   Falcon::String sValue;
-   if( cfs->getValue( sKey, sValue ) )
+   Falcon::String sPath = sKey;
+
+   // remove the * so that we get the whole path
+   if( sPath.endsWith("*") )
    {
-      Falcon::String sPath = sKey.subString(8); // discard "redirect" (we need the starting ".")
-      Falcon::uint32 pos=0;
-      while( (pos = sPath.find( ".", pos ) ) != Falcon::String::npos )
-      {
-         sPath.setCharAt(pos, '/' );
-      }
-
-      // remove the * so that we get the whole path
-      if( sPath.endsWith("*") )
-      {
-         sPath.remove(sPath.length()-1,1);
-         m_lRedirects.push_back( Redirect( sPath, sValue ) );
-      }
-      else
-      {
-         sPath += "/";
-         m_lRedirects.push_front( Redirect( sPath, sValue ) );
-      }
-
-      log->log( LOGLEVEL_INFO, "Adding redirect script handler "+ sValue + " for queries in "  + sPath );
-
+      sPath.remove(sPath.length()-1,1);
+      m_lRedirects.push_back( Redirect( sPath, sValue ) );
    }
    else
    {
-      log->log( LOGLEVEL_WARN, "No script associated with redirect " + sKey );
+      sPath += "/";
+      m_lRedirects.push_front( Redirect( sPath, sValue ) );
    }
+
+   LOGI( "Adding redirect script handler "+ sValue + " for queries in "  + sPath );
+
 }
 
 FalhttpOptions::MimeType::MimeType( const Falcon::String& sType, const Falcon::String& sValue ):
@@ -490,6 +427,8 @@ FalhttpdRequestHandler* FalhttpOptions::getHandler(
    }
       
    return new FileHandler( sFile, cli );
+}
+
 }
 
 /* end of falhttpd_options.cpp */

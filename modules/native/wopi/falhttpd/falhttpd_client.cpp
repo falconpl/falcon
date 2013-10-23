@@ -18,9 +18,11 @@ s
 
 #define MAX_HEADER_SIZE 100000
 
+#include <inet_mod.h>
+#include <falcon/autocstring.h>
+
 #include "falhttpd.h"
 #include "falhttpd_client.h"
-#include "falhttpd_istream.h"
 #include "falhttpd_rh.h"
 
 #ifndef _WIN32
@@ -37,18 +39,14 @@ s
 #include <falcon/wopi/mem_sm.h>
 #include <falcon/sys.h>
 
-FalhttpdClient::FalhttpdClient( const FalhttpOptions& options, LogArea* l, SOCKET s, const String& remName ):
-   m_log( l ),
-   m_nSocket( s ),
-   m_sRemote( remName ),
-   m_cBuffer( 0 ),
-   m_sSize( 0 ),
+namespace Falcon {
+
+FalhttpdClient::FalhttpdClient( const FalhttpOptions& options, Mod::Socket* skt ):
+   m_skt( skt ),
    m_bComplete( false ),
    m_options( options )
 {
-   m_log->log( LOGLEVEL_INFO, "Incoming client from "+ m_sRemote );
-   m_cBuffer = (char*) malloc( DEFAULT_BUFFER_SIZE );
-   m_pSessionManager = options.m_pSessionManager;
+   LOGI( "Incoming client from "+ skt->address()->toString() );
 }
 
 FalhttpdClient::~FalhttpdClient()
@@ -58,28 +56,22 @@ FalhttpdClient::~FalhttpdClient()
 
 void FalhttpdClient::close()
 {
-   if( m_nSocket != 0 )
+   if( m_skt != 0 )
    {
-   #ifdef FALCON_SYSTEM_WIN
-      ::shutdown( m_nSocket, SD_BOTH );
-      ::closesocket( m_nSocket );
-   #else
-      ::shutdown( m_nSocket, SHUT_RDWR );
-      ::close( m_nSocket );
-   #endif
-
-      m_log->log( LOGLEVEL_INFO, "Client "+ m_sRemote + " gone" );
-      m_nSocket = 0;
+      LOGI( "Client "+ m_skt->address()->toString() + " gone" );
+      m_skt->close();
+      m_skt->decref();
+      m_skt = 0;
    }
 }
 
 void FalhttpdClient::serve()
 {
-   m_log->log( LOGLEVEL_DEBUG, "Serving client "+ m_sRemote );
+   LOGD( "Serving client " + m_skt->address()->toString() );
 
    // get the header
    String sHeader;
-   StreamBuffer si( new SocketInputStream( m_nSocket ) );
+   StreamBuffer si( m_skt->makeStreamInterface() );
    uint32 chr;
    while ( ! sHeader.endsWith("\r\n") && si.get(chr) )
    {
@@ -89,7 +81,7 @@ void FalhttpdClient::serve()
 
    if ( ! sHeader.endsWith("\r\n") )
    {
-      m_log->log( LOGLEVEL_WARN, "Client "+ m_sRemote + " has sent an invalid header." );
+      FalhttpdApp::get()->logd( "Client "+ m_skt->address()->toString() + " has sent an invalid header." );
       return;
    }
    // remove trailing \r\n
@@ -102,21 +94,21 @@ void FalhttpdClient::serve()
    if ( p1 == p2 )
    {
       sHeader.trim();
-      m_log->log( LOGLEVEL_WARN, "Client "+ m_sRemote + " has sent an invalid header: " + sHeader );
+      LOGW( "Client "+ m_skt->address()->toString() + " has sent an invalid header: " + sHeader );
       return;
    }
 
-   String sRequest = sHeader.subString( 0, p1 );
+   String sMethod = sHeader.subString( 0, p1 );
    String sUri = sHeader.subString( p1+1, p2 );
    String sProto = sHeader.subString( p2+1 );
 
    // a bit of formal control
-   int type = sRequest == "GET" ? 1 :
-               ( sRequest == "POST"  ? 2 : ( sRequest == "HEAD" ? 3 : 0 ) );
+   int type = sMethod == "GET" ? 1 :
+               ( sMethod == "POST"  ? 2 : ( sMethod == "HEAD" ? 3 : 0 ) );
 
    if ( type == 0 )
    {
-      m_log->log( LOGLEVEL_WARN, "Client "+ m_sRemote + " has sent an invalid type: " + sHeader );
+      LOGW( "Client "+ m_skt->address()->toString() + " has sent an invalid type: " + sHeader );
       replyError( 400, "Invalid requests type" );
       return;
    }
@@ -124,27 +116,27 @@ void FalhttpdClient::serve()
    URI uri( sUri );
    if( ! uri.isValid() )
    {
-      m_log->log( LOGLEVEL_WARN, "Client "+ m_sRemote + " has sent an invalid URI: " + sHeader );
+      LOGW( "Client "+ m_skt->address()->toString() + " has sent an invalid URI: " + sHeader );
       replyError( 400, "Invalid invalid uri" );
       return;
    }
 
    if( sProto != "HTTP/1.0" && sProto != "HTTP/1.1" )
    {
-      m_log->log( LOGLEVEL_WARN, "Client "+ m_sRemote + " has sent an invalid Protocol: " + sHeader );
+      LOGW( "Client "+ m_skt->address()->toString() + " has sent an invalid Protocol: " + sHeader );
       replyError( 505 );
       return;
    }
 
    // ok, we got a valid header -- proceed in serving the request.
-   serveRequest( sRequest, sUri, sProto, &si );
+   serveRequest( sMethod, sUri, sProto, &si );
 }
 
 void FalhttpdClient::serveRequest(
-      const String& sRequest, const String& sUri,  const String& sProto,
+      const String& sMethod, const String& sUri,  const String& sProto,
       Stream* si )
 {
-   m_log->log( LOGLEVEL_INFO, "Serving request from "+ m_sRemote + ": " + sRequest + " " + sUri + " " + sProto );
+   LOGI( "Serving request from "+ m_skt->address()->toString() + ": " + sMethod + " " + sUri + " " + sProto );
 
    // first, read the headers.
 
@@ -158,20 +150,19 @@ void FalhttpdClient::serveRequest(
    }
 
    req->setURI( sUri );
-   req->m_remote_ip = m_sRemote;
+   req->m_remote_ip = m_skt->address()->toString();
+   String sFile = req->parsedUri().path().encode();
 
-   String sFile = req->parsedUri().path();
-
-   m_log->log( LOGLEVEL_DEBUG, "Remapping file "+ sFile );
+   LOGD( "Remapping file "+ sFile );
    // Time to re-map the file
    if ( ! m_options.remap( sFile ) )
    {
-      m_log->log( LOGLEVEL_WARN, "Not found file "+ sFile );
+      LOGW( "Not found file "+ sFile );
       replyError( 404 );
    }
    else
    {
-      m_log->log( LOGLEVEL_DEBUG, "File remapped as "+ sFile );
+      LOGD( "File remapped as "+ sFile );
       req->m_filename = sFile;
 
       // and finally process the request through the appropriate request handler.
@@ -181,7 +172,7 @@ void FalhttpdClient::serveRequest(
    }
 
    delete req;
-   m_log->log( LOGLEVEL_INFO, "Served client "+ m_sRemote );
+   LOGW( "Served client "+ m_skt->address()->toString() );
 }
 
 
@@ -224,7 +215,7 @@ void FalhttpdClient::replyError( int errorID, const String& explain )
    sReply.A( "Content-Length: ").N( (int64) content.length() ).A("\r\n");
    sReply += "Content-Type: text/html; charset=utf-8\r\n\r\n";
 
-   m_log->log( LOGLEVEL_INFO, "Sending ERROR reply to client " + m_sRemote + ": " + sError );
+   LOGI( "Sending ERROR reply to client " + m_skt->address()->toString() + ": " + sError );
    sendData( sReply );
    sendData( content.c_str(), content.length() );
 
@@ -309,19 +300,20 @@ void FalhttpdClient::sendData( const void* data, uint32 size )
 {
    uint32 sent = 0;
    int res = 0;
-   const char* bdata = (const char* ) data;
+   const byte* bdata = (const byte* ) data;
 
    while( sent < size )
    {
-      res = ::send( m_nSocket, bdata + sent, size - sent, 0 );
+      res = m_skt->send( bdata + sent, size - sent );
       if( res < 0 )
       {
-         m_log->log( LOGLEVEL_WARN, "Client "+ m_sRemote + " had a send error." );
+         LOGW( "Client "+ m_skt->address()->toString() + " had a send error." );
          return;
       }
       sent += res;
    }
 }
 
+}
 
-/* falhttpd_socket.cpp */
+/* falhttpd_client.cpp */

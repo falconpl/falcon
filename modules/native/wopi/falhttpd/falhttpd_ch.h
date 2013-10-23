@@ -23,26 +23,22 @@
 #include "falhttpd.h"
 #include <falcon/wopi/reply.h>
 
-class FalhttpdReply: public Falcon::WOPI::Reply
+namespace Falcon {
+
+class Falhttpd_CommitHandler: public WOPI::Reply::CommitHandler
 {
 public:
-   FalhttpdReply( const Falcon::CoreClass* cls );
+   Falhttpd_CommitHandler();
    ~FalhttpdReply();
-   void init( SOCKET s );
 
-   Falcon::Stream* makeOutputStream();
-   virtual void startCommit();
-   virtual void commitHeader( const Falcon::String& hname, const Falcon::String& hvalue );
-   virtual void endCommit();
-
-   static Falcon::CoreObject* factory( const Falcon::CoreClass* cls, void* ud, bool bDeser );
+   virtual void startCommit( WOPI::Reply* reply, Stream* tgt );
+   virtual void commitHeader( WOPI::Reply* reply, Stream* tgt, const String& hname, const String& hvalue );
+   virtual void endCommit( WOPI::Reply* reply, Stream* tgt);
 
 private:
-   void send( const Falcon::String& s );
-   SOCKET m_socket;
-
    Falcon::String m_headers;
 };
+}
 
 #endif
 

@@ -1,10 +1,10 @@
 /*
    FALCON - The Falcon Programming Language.
-   FILE: falhttpd_reply.cpp
+   FILE: falhttpd_ch.cpp
 
    Micro HTTPD server providing Falcon scripts on the web.
 
-   Reply object specific for the Falcon micro HTTPD server.
+   Commit handler -- falhttpd specific reply commit rules.
 
    -------------------------------------------------------------------
    Author: Giancarlo Niccolai
@@ -17,65 +17,42 @@ s
 */
 
 
-#include "falhttpd_reply.h"
-#include "falhttpd_ostream.h"
+#include "falhttpd_ch.h"
 
-FalhttpdReply::FalhttpdReply( const Falcon::CoreClass* cls ):
-   Reply( cls )
+namespace Falcon {
+
+
+Falhttpd_CommitHandler::Falhttpd_CommitHandler()
 {
 }
 
-FalhttpdReply::~FalhttpdReply()
+Falhttpd_CommitHandler::~Falhttpd_CommitHandler()
 {
 }
 
-
-void FalhttpdReply::init( SOCKET s )
+void Falhttpd_CommitHandler::startCommit( WOPI::Reply* reply, Stream* )
 {
-   m_socket = s;
+   m_headers.A("HTTP/1.1 ").N( reply->status() ).A( reply->reason() ).A("\r\n");
 }
 
-
-void FalhttpdReply::startCommit()
-{
-   m_headers.A("HTTP/1.1 ").N( m_nStatus ).A( m_sReason ).A("\r\n");
-}
-
-
-Falcon::Stream* FalhttpdReply::makeOutputStream()
-{
-   return new Falcon::StreamBuffer( new FalhttpdOutputStream( m_socket ) );
-}
-
-void FalhttpdReply::commitHeader( const Falcon::String& hname, const Falcon::String& hvalue )
+void Falhttpd_CommitHandler::commitHeader( WOPI::Reply*, Stream*, const String& hname, const String& hvalue )
 {
    m_headers += hname + ": " + hvalue + "\r\n";
 }
 
-void FalhttpdReply::endCommit()
+void Falhttpd_CommitHandler::endCommit( WOPI::Reply*, Stream* tgt )
 {
-   send( m_headers + "\r\n" );
-}
+   m_headers += "\r\n";
+   length_t written = m_headers.size();
 
-
-void FalhttpdReply::send( const Falcon::String& s )
-{
-   Falcon::uint32 sent = 0;
-   while( sent < s.size() )
+   // overkill, but...
+   while( written < m_headers.size() )
    {
-      int res = ::send( m_socket, (const char*) s.getRawStorage() + sent, s.size() - sent, 0 );
-      if( res < 0 )
-         return;
-      sent += res;
+      written += tgt->write( m_headers.getRawStorage() + written, m_headers.size() - written  );
    }
 }
 
 
-Falcon::CoreObject* FalhttpdReply::factory( const Falcon::CoreClass* cls, void* ud, bool bDeser )
-{
-   return new FalhttpdReply( cls );
 }
 
-
-
-/* falhttpd_reply.cpp */
+/* falhttpd_ch.cpp */

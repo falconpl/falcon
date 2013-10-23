@@ -20,6 +20,8 @@
 #include "falhttpd_rh.h"
 #include "falhttpd_client.h"
 
+namespace Falcon {
+
 FalhttpdRequestHandler::FalhttpdRequestHandler( const Falcon::String& sFile, FalhttpdClient* cli ):
    m_sFile( sFile ),
    m_client( cli )
@@ -29,6 +31,8 @@ FalhttpdRequestHandler::FalhttpdRequestHandler( const Falcon::String& sFile, Fal
 
 FalhttpdRequestHandler::~FalhttpdRequestHandler()
 {
+}
+
 }
 
 /* end of falhttpd_rh.cpp */

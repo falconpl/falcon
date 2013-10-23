@@ -25,9 +25,11 @@ s
 
 #include <falcon/types.h>
 #include <falcon/string.h>
-#include <falcon/wopi/session_manager.h>
-#include <falcon/srv/confparser_srv.h>
-#include <falcon/srv/logging_srv.h>
+#include <confparser_mod.h>
+
+#include <list>
+
+namespace Falcon {
 
 class FalhttpdClient;
 class FalhttpdRequestHandler;
@@ -43,8 +45,9 @@ public:
    void setIndexFile( const Falcon::String& fName );
    //bool loadConfig( const String& cfgFile );
 
-   /** Load an INI file. */
-   void loadIni( Falcon::LogArea* si, Falcon::ConfigFileService* cfs );
+   void parseIni();
+   void parseMimeTypes();
+   void parseRedirects();
 
    /** Change the file to be loaded.
    */
@@ -56,6 +59,9 @@ public:
 
    /** Gets a registered request handler for the given file. */
    FalhttpdRequestHandler* getHandler( const Falcon::String& sFile, FalhttpdClient* cli ) const;
+
+   void addMimeType( const String& sKey, const String& sValue );
+   void addRedirect( const String& sKey, const String& sValue );
 
    Falcon::int64 m_maxUpload;
    Falcon::int64 m_maxMemUpload;
@@ -82,14 +88,9 @@ public:
 
    bool m_bAllowDir;
 
-   Falcon::WOPI::SessionManager* m_pSessionManager;
-
 private:
    bool checkBool( const Falcon::String& b );
-   void parseMimeTypes( Falcon::LogArea* log, Falcon::ConfigFileService* cfs );
-   void addMimeType( Falcon::LogArea* log, Falcon::ConfigFileService* cfs, const Falcon::String& key );
-   void parseRedirects( Falcon::LogArea* log, Falcon::ConfigFileService* cfs );
-   void addRedirect( Falcon::LogArea* log, Falcon::ConfigFileService* cfs, const Falcon::String& key );
+   ConfigFile m_cfg;
 
    class MimeType
    {
@@ -116,6 +117,8 @@ private:
    std::list<MimeType> m_lMimeTypes;
    std::list< Redirect > m_lRedirects;
 };
+
+}
 
 #endif
 

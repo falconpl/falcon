@@ -19,15 +19,16 @@
 */
 
 #include "falhttpd_scripthandler.h"
-#include "falhttpd_reply.h"
-#include "falhttpd_ostream.h"
 #include "falhttpd_client.h"
 #include "falhttpd.h"
 
-#include <falcon/wopi/wopi_ext.h>
-#include <falcon/wopi/wopi.h>
+#include <falcon/falcon.h>
+#include <falcon/sys.h>
+#include <falcon/wopi/modulewopi.h>
 #include <falcon/wopi/replystream.h>
+#include <falcon/wopi/reply.h>
 
+namespace Falcon {
 
 ScriptHandler::ScriptHandler( const Falcon::String& sFile, FalhttpdClient* cli ):
       FalhttpdRequestHandler( sFile, cli )
@@ -40,116 +41,60 @@ ScriptHandler::~ScriptHandler()
 
 }
 
-static void report_temp_file_error( const Falcon::String& fileName, void* data )
-{
-   Falcon::LogArea* serr = (Falcon::LogArea*) data;
-   serr->log( LOGLEVEL_WARN, "Cannot remove temp file " + fileName );
-}
 
 void ScriptHandler::serve( Falcon::WOPI::Request* req )
 {
-   Falcon::String cwd;
-   Falcon::int32 status;
-   Falcon::Sys::fal_getcwd( cwd, status );
-
    FalhttpdApp* app = FalhttpdApp::get();
+   Process* process = app->vm()->createProcess();
 
-   // find the file.
-   Falcon::ModuleLoader ml( *app->loader() );
-   ml.sourceEncoding( m_client->options().m_sSourceEncoding );
-   Falcon::Engine::setEncodings( m_client->options().m_sSourceEncoding, m_client->options().m_sTextEncoding );
+   // we must have already checked for the engine having this encoding.
+   process->setStdEncoding(m_client->options().m_sTextEncoding);
+
+   // same applies here.
+   ModLoader* ml = process->modSpace()->modLoader();
+   ml->sourceEncoding( m_client->options().m_sSourceEncoding );
+
 
    if( m_client->options().m_loadPath.size() == 0 )
-      ml.addFalconPath();
+      ml->addFalconPath();
    else
-      ml.addSearchPath( m_client->options().m_loadPath );
+      ml->addSearchPath( m_client->options().m_loadPath );
 
    Falcon::Path path( m_sFile );
-   ml.addDirectoryFront( path.getFullLocation() );
+   ml->addDirectoryFront( path.fulloc() );
 
-   // broadcast the dir to other elements
-   Falcon::Engine::setSearchPath( ml.getSearchPath() );
 
-   void *tempFileList = 0;
+   Module* core = new CoreModule;
+   WOPI::ModuleWopi* wopi = new WOPI::ModuleWopi("FalHTTPD", req);
+
+   process->modSpace()->add( core );
+   process->modSpace()->add( wopi );
+
+   WOPI::ReplyStream* r_stdout = new WOPI::ReplyStream(wopi->reply(), process->stdOut() );
+   WOPI::ReplyStream* r_stderr = new WOPI::ReplyStream(wopi->reply(), process->stdErr() );
+   process->stdOut(r_stdout);
+   process->stdErr(r_stderr);
+
+   wopi->scriptName(path.filename());
+   wopi->scriptPath(m_sFile);
+
+   try
    {
-      Falcon::Runtime rt(&ml);
-      Falcon::VMachineWrapper vm;
-
-      // we should have no trouble here
-      vm->link( app->core() );
-      vm->link( app->wopi() );
-
-      // Now let's init the request and reply objects
-      Falcon::Item* i_req = vm->findGlobalItem( "Request" );
-      Falcon::Item* i_rep = vm->findGlobalItem( "Reply" );
-      Falcon::Item* i_cupt = vm->findGlobalItem( "Uploaded" );
-      Falcon::Item* i_wopi = vm->findGlobalItem( "Wopi" );
-      
-      fassert( i_req->isObject() && i_rep->isObject() );
-      fassert( i_wopi != 0 && i_wopi->isObject() );
-
-      FalhttpdReply* rep = dyncast<FalhttpdReply*>(i_rep->asObject());
-      rep->init( m_client->socket() );
-
-      Falcon::WOPI::CoreRequest* creq = dyncast<Falcon::WOPI::CoreRequest*>(i_req->asObject());
-      creq->init(i_cupt->asClass(), rep, m_client->smgr(), req );
-      creq->processMultiPartBody();
-
-      creq->provider("HTTPD");
-
-      uint32 sTokenId = dyncast<Falcon::WOPI::CoreRequest*>(i_req->asObject())->base()->sessionToken();
-
-      vm->stdOut( new Falcon::WOPI::ReplyStream( rep ) );
-      vm->stdErr( new Falcon::WOPI::ReplyStream( rep ) );
-      
-      Falcon::Item* i_sn = vm->findGlobalItem( "scriptName" );
-      Falcon::Item* i_sp = vm->findGlobalItem( "scriptPath" );
-      *i_sn = new CoreString( path.getFullLocation() );
-      *i_sp = new CoreString( path.getFilename() );
-
-      if( m_client->options().m_sAppDataDir != "" )
-         dyncast<Falcon::WOPI::CoreWopi*>( i_wopi->asObject() )->wopi()->dataLocation( m_client->options().m_sAppDataDir );
-
-      try
-      {
-         // prepare the reply
-         rt.loadFile( path.get() );
-         vm->link( &rt );
-
-         Falcon::Sys::fal_chdir( path.getFullLocation(), status );
-
-         m_client->log()->log( LOGLEVEL_INFO, "Serving script "+ path.get() );
-
-         vm->launch();
-         // be sure that the output is committed, or output may be 0 below at close()
-         rep->commit();
-      }
-      catch( Error* err )
-      {
-         rep->commit();
-
-         String s = err->toString();
-         rep->output()->writeString( s );
-         rep->output()->flush();
-         m_client->log()->log( LOGLEVEL_WARN, "Script "+ path.get()+ " terminated with error: " + s );
-         err->decref();
-      }
-
-      tempFileList = req->getTempFiles();
-      m_client->smgr()->releaseSessions(sTokenId);
-      rep->output()->close();
-
-   } // End of scope of the VM
-
-   Falcon::Sys::fal_chdir( cwd, status );
-
-   // Free the temp files
-   if( tempFileList != 0 )
-   {
-      Falcon::WOPI::Request::removeTempFiles( tempFileList,
-               m_client->log(),
-               report_temp_file_error );
+      process->startScript( m_sFile );
+      process->wait();
+      LOGI( "Script " + m_sFile + " completed." );
    }
+   catch( Error* err )
+   {
+      String s = err->describe();
+      process->textErr()->write( s );
+      LOGW( "Script "+ m_sFile + " terminated with error: " + s );
+      err->decref();
+   }
+
+   wopi->reply()->commit( process->stdOut() );
+   process->decref();
+}
 
 }
 

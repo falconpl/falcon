@@ -31,12 +31,24 @@ class Request;
 class Reply;
 
 /**
-   Specific WOPI interface Falcon Module
+   Specific WOPI interface Falcon Module.
 */
 class ModuleWopi: public Module
 {
 public:
-   ModuleWopi( const String& name );
+   /** Creates the module.
+    * \param name Module name
+    * \param req Eventually pre-parsed request.
+    *
+    * A WOPI request might be prepared before the module is
+    * actually created, i.e. by parsing an incoming request
+    * from the net and checking its validity.
+    *
+    * If a Request entity is not provided in advance, this
+    * class creates one, else an empty request is created on
+    * the fly and can be accessed via the request() member.
+    */
+   ModuleWopi( const String& name, Request* req = 0 );
    virtual ~ModuleWopi();
 
    ClassWopi* wopiClass() const { return m_classWopi; }
@@ -49,6 +61,9 @@ public:
    void scriptPath( const String& value ) { m_scriptPath = value; }
 
    const String& provider() const { return m_provider; }
+
+   Request* request() const { return m_request; }
+   Reply* reply() const { return m_reply; }
 protected:
 
    void interceptOutputStreams( Process* prc );

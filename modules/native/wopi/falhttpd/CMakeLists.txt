@@ -1,5 +1,5 @@
 ######################################################################
-# CMake file for fcgi
+# CMake file for falhttpd
 #
 
 MESSAGE( "Creating the Falcon micro HTTP Daemon" )
@@ -11,22 +11,45 @@ MESSAGE( "Creating the Falcon micro HTTP Daemon" )
 # Inclusion settings
 include_directories(
   ${CMAKE_CURRENT_SOURCE_DIR}
-  ${PROJECT_SOURCE_DIR}/include
+  ${PROJECT_SOURCE_DIR}/../feathers/inet
+  ${PROJECT_SOURCE_DIR}/../feathers/confparser
   ${Falcon_INCLUDE_DIRS}
 )
 
+if(UNIX OR MAC)
+	set(SYS_SPECIFIC
+		${PROJECT_SOURCE_DIR}/../feathers/inet/inet_mod_posix.cpp
+		)
+	if(MAC)
+		set(SYS_SPECIFIC
+			${SYS_SPECIFIC}
+			${PROJECT_SOURCE_DIR}/../feathers/inet/inet_mod_posix.cpp
+			)
+	endif()	
+else()
+	set(SYS_SPECIFIC
+		${PROJECT_SOURCE_DIR}/../feathers/inet/inet_mod_win.cpp
+		${PROJECT_SOURCE_DIR}/../feathers/inet/winselectmpx.cpp
+		${PROJECT_SOURCE_DIR}/../feathers/inet/winselectmpx.h
+		)
+endif()
+
 # Sources files the library is built from.
 set(SRC_FILES
-  falhttpd_client.cpp
   falhttpd.cpp
+  falhttpd_client.cpp
   falhttpd_dirhandler.cpp
   falhttpd_filehandler.cpp
-  falhttpd_istream.cpp
   falhttpd_options.cpp
-  falhttpd_ostream.cpp
-  falhttpd_reply.cpp
   falhttpd_rh.cpp
   falhttpd_scripthandler.cpp
+  
+  falhttpd_loglistener.cpp
+  ${PROJECT_SOURCE_DIR}/../feathers/inet/inet_mod.cpp
+  ${PROJECT_SOURCE_DIR}/../feathers/inet/inet_mod.h
+  ${PROJECT_SOURCE_DIR}/../feathers/confparser/confparser_mod.cpp
+  ${PROJECT_SOURCE_DIR}/../feathers/confparser/confparser_mod.h
+  ${SYS_SPECIFIC}
 )
 # These are actually not needed by cmake to build. But if omitted they won't be
 # listed in the virtual file tree of Visual Studio.
@@ -35,10 +58,7 @@ set(HDR_FILES
   falhttpd_dirhandler.h
   falhttpd_filehandler.h
   falhttpd.h
-  falhttpd_istream.h
   falhttpd_options.h
-  falhttpd_ostream.h
-  falhttpd_reply.h
   falhttpd_rh.h
   falhttpd_scripthandler.h
 

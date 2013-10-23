@@ -26,15 +26,17 @@ FalhttpdApp::LogListener::LogListener( Stream* log ):
    m_logfile = new TextWriter( log );
 }
 
-FalconApp::Logger::~Logger()
+FalhttpdApp::LogListener::~LogListener()
 {
    delete m_logfile;
 }
 
-void FalconApp::Logger::onMessage( int fac, int lvl, const String& message )
+void FalhttpdApp::LogListener::onMessage( int , int lvl, const String& message )
 {
    String tgt;
    Log::addTS(tgt);
+   tgt += " ";
+   tgt += Log::levelToString(lvl);
    tgt += " ";
    tgt += message;
    tgt += "\n";

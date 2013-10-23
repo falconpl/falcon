@@ -24,6 +24,8 @@
 #include "falhttpd.h"
 #include "falhttpd_rh.h"
 
+namespace Falcon {
+
 class DirHandler: public FalhttpdRequestHandler
 {
 public:
@@ -31,6 +33,8 @@ public:
    virtual ~DirHandler();
    virtual void serve( Falcon::WOPI::Request* req );
 };
+
+}
 
 #endif
 

@@ -21,17 +21,17 @@ s
 #define FALHTTPD_CLIENT_H_
 
 #include "falhttpd.h"
+#include <inet_mod.h>
 #include <falcon/wopi/request.h>
 #include <falcon/wopi/mem_sm.h>
 
-#define DEFAULT_BUFFER_SIZE 4096
-
-using namespace Falcon;
+namespace Falcon
+{
 
 class FalhttpdClient
 {
 public:
-   FalhttpdClient( const FalhttpOptions& opts, LogArea* l, SOCKET s, const String& remName );
+   FalhttpdClient( const FalhttpOptions& opts, Mod::Socket* skt );
    ~FalhttpdClient();
 
    void close();
@@ -45,26 +45,19 @@ public:
    void sendData( const void* data, uint32 size );
 
    const FalhttpOptions& options() const { return m_options; }
-   Falcon::LogArea* log() const { return m_log; }
-   SOCKET socket() const { return m_nSocket; }
-   Falcon::WOPI::SessionManager* smgr() const { return m_pSessionManager; }
+   Mod::Socket* skt() const { return m_skt; }
 
 private:
    void serveRequest(
-         const String& sRequest, const String& sUri,  const String& sProto,
-         Stream* si );
+         const String& sMethod, const String& sUri,  const String& sProto, Stream* si );
 
-   LogArea* m_log;
-   SOCKET m_nSocket;
-   String m_sRemote;
-
-   char* m_cBuffer;
-   uint32 m_sSize;
+   Mod::Socket* m_skt;
    bool m_bComplete;
 
    const FalhttpOptions& m_options;
-   Falcon::WOPI::SessionManager* m_pSessionManager;
 };
+
+}
 
 #endif /* FALHTTPD_CLIENT_H_ */
 

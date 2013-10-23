@@ -16,9 +16,9 @@
 
 #include "falhttpd.h"
 #include "falhttpd_client.h"
-#include "falhttpd_reply.h"
 #include <falcon/engine.h>
-#include <falcon/wopi/wopi_ext.h>
+#include <falcon/autocstring.h>
+#include <inet_mod.h>
 
 #include <cstdlib>
 #include <cstring>
@@ -34,57 +34,30 @@
 #define socklen_t int
 #endif
 
+
+namespace Falcon {
+
 FalhttpdApp* FalhttpdApp::m_theApp = 0;
 
 FalhttpdApp::FalhttpdApp():
-   m_logModule(0),
-   m_log(0)
+   m_log(0),
+   m_ll(0)
 {
+   Engine::init();
+
    if ( m_theApp != 0 )
    {
       throw std::runtime_error( "FalhttpdApp is not singleton");
    }
 
    m_theApp = this;
-
-   // start the engine
-   Falcon::Engine::Init();
-   Falcon::Engine::cacheModules( true );
-
-   // let's create also a useful general module loader.
-   m_loader = new Falcon::ModuleLoader(".");
-   m_loader->addFalconPath();
-
-   Falcon::String io_encoding;
-   m_ss = Falcon::stdOutputStream();
-
-   m_coreModule = Falcon::core_module_init();
-   m_wopiModule = Falcon::WOPI::wopi_module_init(
-         &WOPI::CoreRequest::factory,
-         &FalhttpdReply::factory );
+   m_log = Engine::instance()->log();
+   m_ss = new TextWriter( new StdOutStream );
 }
 
 
 FalhttpdApp::~FalhttpdApp()
 {
-
-   if ( m_log != 0 )
-   {
-      // we did get initialized
-      m_log->log(LOGLEVEL_INFO, "Log closed." );
-      m_log->decref();
-   }
-
-   if( m_logModule != 0 )
-   {
-      m_logModule->decref();
-   }
-
-   m_wopiModule->decref();
-   m_coreModule->decref();
-
-   delete m_ss;
-
    if( m_nSocket != 0 )
    {
       #ifdef _WIN32
@@ -95,7 +68,8 @@ FalhttpdApp::~FalhttpdApp()
       #endif
    }
 
-   Falcon::Engine::Shutdown();
+   m_ss->decref();
+   Falcon::Engine::shutdown();
 }
 
 
@@ -114,53 +88,12 @@ bool FalhttpdApp::init( int argc, char* argv[] )
       usage();
    }
 
-   if( ! readyServices() )
-      return false;
-
-   if( m_hopts.m_loadPath.size() )
-   {
-      m_loader->setSearchPath( m_hopts.m_loadPath );
-   }
-
-   return readyNet();
+   return   readyLog()
+         && readyNet()
+         && readyVM()
+            ;
 }
 
-
-bool FalhttpdApp::readyServices()
-{
-   // we'll be throwing an error if not available.
-   m_logModule = m_loader->loadName("logging");
-   Falcon::LogService* ls = (Falcon::LogService*) m_logModule->getService(LOGSERVICE_NAME);
-   fassert( ls != 0 );
-
-   // create our application log area.
-   m_log = ls->makeLogArea( "HTTP" );
-   readyLog( ls );
-   m_log->log( LOGLEVEL_INFO, "Falcon HTTPD server started..." );
-
-   if( m_hopts.m_configFile.size() != 0 )
-   {
-      // Ok, time to get the config (we don't need to cache it)
-      Falcon::Module* cfgmod = m_loader->loadName( "confparser" );
-      Falcon::ConfigFileService* cfs = (Falcon::ConfigFileService*) cfgmod->getService( CONFIGFILESERVICE_NAME );
-      fassert( cfs != 0 );
-
-      if( ! cfs->initialize( m_hopts.m_configFile, "utf-8" ) || ! cfs->load() )
-      {
-         m_log->log( LOGLEVEL_WARN, "Cannot read init file "
-               + m_hopts.m_configFile + ": " + cfs->errorMessage() );
-      }
-      else
-      {
-         m_hopts.loadIni( m_log, cfs );
-      }
-      // Not working because of static destructor. We need to upgrate core.
-      cfs->clearMainSection();
-      cfgmod->decref();
-   }
-
-   return true;
-}
 
 bool FalhttpdApp::readyNet()
 {
@@ -208,43 +141,41 @@ bool FalhttpdApp::readyNet()
 }
 
 
-void FalhttpdApp::readyLog( Falcon::LogService* ls )
+bool FalhttpdApp::readyLog()
 {
    // and a console channel logging everything up to info level
    if( ! m_hopts.m_bQuiet )
    {
-      Falcon::LogChannel* chnConsole = ls->makeChnStream(
-            Falcon::stdOutputStream(),
-            "[%S %L|%a] %m",
-            m_hopts.m_logLevel );
-
-      m_log->addChannel( chnConsole );
-      chnConsole->decref();
+      Stream* stream = new StdErrStream;
+      m_ll = new LogListener( stream );
+      stream->decref();
+      m_log->addListener(m_ll);
    }
 
    if( m_hopts.m_bSysLog )
    {
-      Falcon::LogChannel* chnSyslog = ls->makeChnSyslog(
-               "FHTTPD",
-               "[%S %L|%a] %m",
-               0,
-               m_hopts.m_logLevel );
-      m_log->addChannel( chnSyslog );
-      chnSyslog->decref();
+      // todo
    }
 
    if( m_hopts.m_sLogFiles.size() != 0 )
    {
       // on files, log everything
-      Falcon::LogChannel* chnStream = ls->makeChnlFiles( m_hopts.m_sLogFiles );
-      m_log->addChannel( chnStream );
-      chnStream->decref();
+      // todo
    }
+   return true;
+}
+
+bool FalhttpdApp::readyVM()
+{
+   return true;
 }
 
 void FalhttpdApp::usage()
 {
-   m_ss->writeString( "  Usage: \n"
+   LocalRef<Stream> out( new StdOutStream );
+   TextWriter tw(out);
+
+   tw.write( "  Usage: \n"
       "       falhttpd [options]\n\n"
       "  Options:\n"
       "  -?          This help\n"
@@ -270,7 +201,7 @@ int FalhttpdApp::run()
    {
       sockaddr_in inAddr;
       socklen_t inLen = sizeof(inAddr);
-      SOCKET sIncoming = ::accept( m_nSocket, (struct sockaddr*) &inAddr, &inLen );
+      SOCKET sIncoming = ::accept( m_nSocket, (struct sockaddr*) &inAddr, (unsigned int*)&inLen );
 
       logi( "Incoming client" );
       if( sIncoming == 0 )
@@ -296,7 +227,9 @@ int FalhttpdApp::run()
          sRemote = "unknown";
       }
 
-      FalhttpdClient* cli = new FalhttpdClient( m_hopts, m_log, sIncoming, sRemote );
+      Mod::Socket* skt = new Mod::Socket( sIncoming, PF_INET, SOCK_STREAM, 0, new Mod::Address(sRemote) );
+
+      FalhttpdClient* cli = new FalhttpdClient( m_hopts, skt );
       cli->serve();
       delete cli;
 
@@ -305,13 +238,13 @@ int FalhttpdApp::run()
    return 0;
 }
 
+}
 
 //=============================================================================
 //
-
 int main( int argc, char* argv[] )
 {
-   FalhttpdApp theApp;
+   Falcon::FalhttpdApp theApp;
 
    try
    {
@@ -321,22 +254,24 @@ int main( int argc, char* argv[] )
       }
       else
       {
-         theApp.m_ss->writeString(
+         theApp.m_ss->writeLine(
                Falcon::String( "falhttpd: Cannot intialize application.\n") +
-               Falcon::String( "falhttpd: ") + theApp.m_hopts.m_sErrorDesc +"\n\n" );
+               Falcon::String( "falhttpd: ") + theApp.m_hopts.m_sErrorDesc +"\n" );
       }
    }
    catch( Falcon::Error* e )
    {
       // Run catches its own error. Errors here can happen only during initialization
-      theApp.m_ss->writeString( "Error during initialization: \n" );
-      theApp.m_ss->writeString( e->toString() + "\n" );
+      theApp.m_ss->write( "Error during initialization: \n" );
+      theApp.m_ss->write( e->describe() + "\n" );
       theApp.m_ss->flush();
       e->decref();
    }
 
    return -1;
 }
+
+
 
 /* end of falhttpd.cpp */
 
