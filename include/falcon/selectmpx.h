@@ -49,7 +49,11 @@ public:
    virtual void remove( Selectable* stream );
    virtual uint32 size() const;
 
+   #ifndef __MINGW32__
    typedef int FILE_DESCRIPTOR;
+   #else
+   typedef unsigned int FILE_DESCRIPTOR;
+   #endif
 
    virtual int readControlFD( void* data, int size ) const = 0;
    virtual int writeControlFD( const void* data, int size ) const = 0;

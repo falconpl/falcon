@@ -36,6 +36,7 @@
 #define FALCON_ERRNO errno
 
 
+
 #else
 #define FALCON_SHUT_WR SD_RECEIVE
 #define FALCON_SHUT_RD SD_SEND
@@ -45,6 +46,14 @@
 #define EAGAIN WSAEWOULDBLOCK
 #define FALCON_ERRNO (WSAGetLastError())
 
+
+#ifdef __MINGW32__
+   #define _inline __inline
+   #include<ws2spi.h>//#include <include/Wspiapi.h>
+   #undef _inline
+#else
+   #include <Wspiapi.h>
+#endif
 
 #endif
 
@@ -373,7 +382,10 @@ void Address::convertToIPv6( void *vai, void* vsock6, socklen_t& sock6len )
    struct addrinfo hints;
    memset(&hints, 0, sizeof(hints) );
    hints.ai_family = AF_INET6;
-   hints.ai_flags = AI_NUMERICHOST | AI_NUMERICSERV | AI_PASSIVE;
+   hints.ai_flags = AI_NUMERICHOST | AI_PASSIVE;
+   #ifndef __MINGW32__
+   hints.ai_flags |= AI_NUMERICSERV;
+   #endif // __MINGW32__
 
    res = ::getaddrinfo( host, serv, &hints, &resolved );
    if ( res != 0 )
@@ -744,7 +756,7 @@ void Socket::closeWrite()
    if( m_skt != 0 )
    {
       if ( ::shutdown( (int) m_skt, FALCON_SHUT_WR ) != 0 )
-      {      
+      {
          throw FALCON_SIGN_XERROR( Ext::NetError,
                        FALSOCK_ERR_CLOSE, .desc(FALSOCK_ERR_CLOSE_MSG)
                        .sysError((uint32) FALCON_ERRNO ));
@@ -771,7 +783,7 @@ void Socket::broadcasting( bool mode )
 
 void Socket::closeRead()
 {
-   if( m_skt >= 0 )
+   if( m_skt != FALCON_INVALID_SOCKET_VALUE )
    {
       if ( ::shutdown( (int) m_skt, FALCON_SHUT_RD ) != 0 )
       {
@@ -788,7 +800,7 @@ void Socket::connect( Address* where, bool async )
    struct sockaddr_storage tgaddr;
    FALCON_SOCKLEN_T tgaddrlen = 0;
    getValidAddress( where, tgaddr, tgaddrlen );
-   
+
 
    bool oldMode = isNonBlocking();
    if( async && !oldMode )
@@ -1178,7 +1190,9 @@ Socket::t_option_type Socket::getOptionType( int level, int option )
        case IPV6_MULTICAST_IF: param_type = param_string; break;
        case IPV6_MULTICAST_LOOP: param_type = param_bool; break;
        case IPV6_UNICAST_HOPS: param_type = param_int; break;
+       #ifndef __MINGW32__
        case IPV6_V6ONLY: param_type = param_bool; break;
+       #endif
        }
        break;
 #endif
@@ -1395,7 +1409,7 @@ size_t SocketStream::read( void *buffer, size_t size )
    {
       m_status = m_status | t_eof;
    }
-   
+
    return (size_t) res;
 }
 

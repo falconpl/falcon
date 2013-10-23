@@ -43,7 +43,7 @@ different systems.
 
    // Minimal specific.
    #if ! defined(_WIN32_WINNT)
-   #define _WIN32_WINNT 0x0403
+   #define _WIN32_WINNT 0x0501 //0x0403
    #endif
 
    #ifndef NOMINMAX

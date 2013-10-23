@@ -23,7 +23,7 @@
 
 #ifdef __MINGW32__
    #define _inline __inline
-   #include <include/Wspiapi.h>
+   #include<ws2spi.h>//#include <include/Wspiapi.h>
    #undef _inline
 #else
    #include <Wspiapi.h>
@@ -35,7 +35,7 @@ namespace Mod {
 
 bool getErrorDesc( int64 error, String &ret )
 {
-   char *errordesc;
+   const char *errordesc;
    switch( error )
    {
       case -1: errordesc = "(internal) No valid target addresses for selected protocol";
@@ -134,7 +134,7 @@ void Socket::setNonBlocking( bool mode ) const
 }
 
 bool Socket::isNonBlocking() const
-{   
+{
    return m_bioMode;
 }
 

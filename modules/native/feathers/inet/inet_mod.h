@@ -33,6 +33,7 @@
 #define FALCON_SOCKLEN_T int
 #define FALCON_EWOULDBLOCK WSAEWOULDBLOCK
 #define FALCON_SOCKLEN_AS_INT socklen_t
+#define FALCON_INVALID_SOCKET_VALUE INVALID_SOCKET
 
 #else
 #include <sys/socket.h>
@@ -42,6 +43,7 @@
 #define FALCON_SOCKLEN_T socklen_t
 #define FALCON_SOCKLEN_AS_INT unsigned int
 #define FALCON_EWOULDBLOCK EWOULDBLOCK
+#define FALCON_INVALID_SOCKET_VALUE -1
 
 #endif
 
@@ -477,7 +479,7 @@ public:
    /** True when a zero is read after a blocking operation.
 
    This is set to true when the remote side has signaled that the
-   it won't send more data. 
+   it won't send more data.
 
    The socket might be closed on the other side, or the process might
    have crashed.
