@@ -19,6 +19,7 @@
 #include <falcon/engine.h>
 #include <falcon/autocstring.h>
 #include <inet_mod.h>
+#include <inet_ext.h>
 
 #include <cstdlib>
 #include <cstring>
@@ -43,8 +44,6 @@ FalhttpdApp::FalhttpdApp():
    m_log(0),
    m_ll(0)
 {
-   Engine::init();
-
    if ( m_theApp != 0 )
    {
       throw std::runtime_error( "FalhttpdApp is not singleton");
@@ -53,6 +52,7 @@ FalhttpdApp::FalhttpdApp():
    m_theApp = this;
    m_log = Engine::instance()->log();
    m_ss = new TextWriter( new StdOutStream );
+   Mod::SocketStream::setHandler( new Ext::ClassSocketStream );
 }
 
 
@@ -69,7 +69,6 @@ FalhttpdApp::~FalhttpdApp()
    }
 
    m_ss->decref();
-   Falcon::Engine::shutdown();
 }
 
 
@@ -244,6 +243,7 @@ int FalhttpdApp::run()
 //
 int main( int argc, char* argv[] )
 {
+   Falcon::Engine::init();
    Falcon::FalhttpdApp theApp;
 
    try
@@ -268,6 +268,7 @@ int main( int argc, char* argv[] )
       e->decref();
    }
 
+   Falcon::Engine::shutdown();
    return -1;
 }
 

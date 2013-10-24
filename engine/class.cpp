@@ -290,7 +290,6 @@ void Class::describe( void* instance, String& target, int depth, int maxlen) con
    target.reserve(128);
    target.size(0);
    
-   target.append("Class " );
    target.append(name());
 
    if( depth == 0 )
@@ -338,6 +337,76 @@ void Class::describe( void* instance, String& target, int depth, int maxlen) con
    }
 }
 
+
+void Class::inspect( void* instance, String& target, int depth ) const
+{
+   String temp;
+
+   target.reserve(128);
+   target.size(0);
+
+   target.append(name());
+
+   if( depth == 0 )
+   {
+       target += "{...}";
+   }
+   else
+   {
+      Private::PropertyMap::const_iterator iter = _p->m_props.begin();
+
+      target += "{";
+
+      while( iter != _p->m_props.end() )
+      {
+         const String& name = iter->first;
+         const Property* prop = &iter->second;
+         target.append("\n");
+         target.append( name );
+
+         if( prop->bHidden )
+         {
+            target.append( " (hidden)");
+         }
+         else {
+            Item value;
+            prop->getFunc( this, iter->first, instance, value );
+
+            if( value.isFunction() )
+            {
+               target += "(";
+               target += value.asFunction()->signature();
+               target += ")";
+            }
+            else if( value.isMethod() )
+            {
+               target += "(";
+               target += value.asMethodFunction()->signature();
+               target += ")";
+            }
+            else
+            {
+               Class* cls = 0;
+               void* inst = 0;
+               value.forceClassInst(cls, inst);
+               cls->inspect( inst, temp, depth-1 );
+               target.append('=');
+               target.append(temp);
+               temp.size(0);
+            }
+         }
+
+         ++iter;
+      }
+
+      if( ! _p->m_props.empty() )
+      {
+         target += '\n';
+      }
+
+      target += '}';
+   }
+}
 
 void Class::enumerateProperties( void*, Class::PropertyEnumerator& pe ) const
 {

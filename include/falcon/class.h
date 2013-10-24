@@ -115,8 +115,34 @@ class Selectable;
  \see OpToken
 
  \section class_serialize Item serialization
-
  TODO
+
+ \section class_tostring Item representation
+
+ Falcon items have different forms of representation, there is not a single way
+ to turn an item in a string for output, as different forms have different intent.
+
+ - Stringification (or toString()): this process turns an instance in a string
+   for presentation to final-users. It's driven by the op_toString VM operator,
+   and this allows the item itself to have a say in how the object is converted
+   to a string. The operation is automatically invoked when an instance is
+   added to a string. By default, a stringified instance just reports the class
+   name.
+
+ - description: This is a developer-oriented representation of the instance,
+   recursively rendering the name of the instance class and the values of
+   the public properties. If detected, methods are not included in the
+   representation. This representation is invoked via the describe() method.
+
+  - inspection: This describes the structure of a class instance. Public properties
+    are recursively inspected, private properties and methods are just listed.
+
+  - Rendering: this converts the instance to a representation suitable to be
+  parsed as Falcon source code back into the rendered instance. Not all the instances
+  are suitable for rendering (in which case, it's legal to throw an exception). Mostly,
+  TreeStep subclasses and simple data types only are rendered.
+
+
 */
 
 class FALCON_DYN_CLASS Class: public Mantra
@@ -528,6 +554,13 @@ public:
     renderings of items in a container.
     */
    virtual void describe( void* instance, String& target, int depth = 3, int maxlen = 60 ) const;
+
+   /**
+    * Describes the deep structure of the object.
+    *
+    * \note It is acceptable for this method to default to describe() or render().
+    */
+   virtual void inspect( void* instance, String& target, int depth = 3 ) const;
 
    /** Called back by an inheritance when it gets resolved.
     \param inh The inheritance that has been just resolved.

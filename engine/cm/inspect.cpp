@@ -189,6 +189,7 @@ static void internal_inspect( TextWriter* tw, const Item& itm, int32 depth, int3
 
    default:
       itm.forceClassInst(cls, data);
+
       if( cls->isFalconClass() )
       {
          class Rator: public Class::PropertyEnumerator {

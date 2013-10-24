@@ -46,6 +46,7 @@ set(SRC_FILES
   
   falhttpd_loglistener.cpp
   ${PROJECT_SOURCE_DIR}/../feathers/inet/inet_mod.cpp
+  ${PROJECT_SOURCE_DIR}/../feathers/inet/inet_ext.cpp
   ${PROJECT_SOURCE_DIR}/../feathers/inet/inet_mod.h
   ${PROJECT_SOURCE_DIR}/../feathers/confparser/confparser_mod.cpp
   ${PROJECT_SOURCE_DIR}/../feathers/confparser/confparser_mod.h

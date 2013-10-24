@@ -365,7 +365,7 @@ void* ClassFunction::createInstance() const
 void ClassFunction::describe( void* instance, String& target, int, int ) const
 {
    Function* func = static_cast<Function*>(instance);
-   target = func->name() + " /* Function " + func->locate() + " */";
+   target = func->name() + "(" + func->signature() +")";
 }
 
 
