@@ -122,7 +122,7 @@ function testCheck( exp )
    end
    >'</table>'
    
-   if count == exp.len()
+   if count == exp.len
       > '<p>Test <b>SUCCESS</b>.</p>'
    else
       > '<p>Test <b>failed</b>.</p>'

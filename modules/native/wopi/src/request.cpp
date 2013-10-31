@@ -274,9 +274,9 @@ bool Request::setURI( const String& uri )
                Engine::instance()->log()->log(Log::fac_engine, Log::lvl_debug2,
                         String("Setting URI query variable ") + data.key + "=" +data.value );
 #endif
-               m_request.gets()->insert(
-                        FALCON_GC_HANDLE(new String(data.key)),
-                        FALCON_GC_HANDLE(new String(data.value)) );
+               WOPI::Utils::addQueryVariable(data.key,
+                        FALCON_GC_HANDLE( new String(data.value) ),
+                        *m_request.gets() );
                return true;
             }
 
