@@ -51,6 +51,7 @@ public:
    virtual bool op_init( VMContext* ctx, void* instance, int32 pcount ) const;
    virtual void op_isTrue( VMContext* ctx, void* self ) const;
    virtual void op_toString( VMContext* ctx, void* self ) const;
+   virtual void op_compare( VMContext* ctx, void* ) const;
 
 private:
 

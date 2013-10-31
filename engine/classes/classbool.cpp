@@ -172,6 +172,25 @@ void ClassBool::op_toString( VMContext* ctx, void* ) const
    token.exit( FALCON_GC_STORE( s->handler(), s ) );
 }
 
+
+void ClassBool::op_compare( VMContext* ctx, void* ) const
+{
+   Item *op1, *op2;
+
+   ctx->operands( op1, op2 );
+   bool iop1 = op1->asBoolean();
+
+   if( op2->isBoolean() )
+   {
+      ctx->stackResult(2, (int64) (iop1 == op2->asBoolean() ? 0 : iop1 ? 1 : -1) );
+      return;
+   }
+
+   // we have no information about what an item might be here, but we can
+   // order the items by type
+   ctx->stackResult(2, (int64) op1->type() - op2->type() );
+}
+
 }
 
 /* end of classbool.cpp */
