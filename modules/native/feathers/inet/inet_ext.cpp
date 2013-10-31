@@ -687,10 +687,17 @@ FALCON_DEFINE_FUNCTION_P1(recv)
    {
       throw FALCON_SIGN_XERROR(ParamError, e_param_type, .extra( "Immutable string") );
    }
-
+   length_t size;
    buffer->clear();
-   length_t size = (length_t) i_size->forceInteger();
-   buffer->reserve( size );
+   if (i_size == NULL)
+   {
+      size = buffer->size();
+   }
+   else
+   {
+      size = (length_t) i_size->forceInteger();
+      buffer->reserve( size );
+   }
    buffer->toMemBuf();
 
    int64 res = (int64) sock->recv( buffer->getRawStorage(), size, 0 );
