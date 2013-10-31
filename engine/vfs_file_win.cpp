@@ -13,6 +13,8 @@
    See LICENSE file for licensing details.
 */
 
+#define SRC "engine/vfs_file_win.cpp"
+
 #include <falcon/vfs_file.h>
 #include <falcon/error.h>
 #include <falcon/sys.h>
@@ -60,7 +62,7 @@ void Directory_file::close()
 {
    if ( m_handle != INVALID_HANDLE_VALUE ) {
       if ( ! FindClose( m_handle ) ) {
-         throw new IOError( ErrorParam( e_io_close, __LINE__, __FILE__ )
+         throw new IOError( ErrorParam( e_io_close, __LINE__, SRC )
             .extra( "Directory::close" )
             .sysError( GetLastError() ) );
       }
@@ -184,7 +186,7 @@ Stream *VFSFile::open( const URI& uri, const OParams &p )
 
    if ( handle == 0 || handle == INVALID_HANDLE_VALUE )
    {
-      throw new IOError( ErrorParam( e_io_open, __LINE__, __FILE__ )
+      throw new IOError( ErrorParam( e_io_open, __LINE__, SRC )
          .extra( path )
          .sysError( GetLastError() ) );
    }
@@ -233,7 +235,7 @@ Stream *VFSFile::create( const URI& uri, const CParams &p )
 
    if ( handle == 0 || handle == INVALID_HANDLE_VALUE )
    {
-      throw new IOError( ErrorParam( e_io_creat, __LINE__, __FILE__ )
+      throw new IOError( ErrorParam( e_io_creat, __LINE__, SRC )
          .extra( path )
          .sysError( dwError ) );
    }
@@ -265,7 +267,7 @@ Directory* VFSFile::openDir( const URI& uri )
 
    if ( handle == INVALID_HANDLE_VALUE )
    {
-      throw new IOError( ErrorParam( e_io_error, __LINE__, __FILE__ )
+      throw new IOError( ErrorParam( e_io_error, __LINE__, SRC )
          .extra(fname)
          .sysError( GetLastError() ) );
    }
@@ -503,7 +505,7 @@ void VFSFile::erase( const URI &uri )
 	}
 
    if ( ! res ) {
-      throw new IOError( ErrorParam( e_io_error, __LINE__, __FILE__ )
+      throw new IOError( ErrorParam( e_io_error, __LINE__, SRC )
          .extra( fname )
          .sysError(::GetLastError()));
    }
@@ -525,7 +527,7 @@ void VFSFile::move( const URI &suri, const URI &duri )
 
    if ( ! res )
    {
-      throw new IOError( ErrorParam( e_io_error, __LINE__, __FILE__ )
+      throw new IOError( ErrorParam( e_io_error, __LINE__, SRC )
          .extra( "move" )
          .sysError(::GetLastError()));
    }
@@ -545,7 +547,7 @@ static void _mkdir( const String& fname )
 
    if ( ! res )
    {
-      new IOError( ErrorParam( e_io_error, __LINE__, __FILE__ )
+      new IOError( ErrorParam( e_io_error, __LINE__, SRC )
          .extra( fname )
          .sysError( GetLastError() ) );
    }
@@ -591,6 +593,62 @@ void VFSFile::mkdir( const URI &uri, bool descend )
    }
 }
 
+
+
+void VFSFile::setCWD( const URI& uri )
+{
+   String strName;
+   uri.path().getWinFormat(strName);
+
+   AutoWString wBuffer( strName );
+   BOOL res = ::SetCurrentDirectoryW( wBuffer.w_str(), NULL );
+
+   if( ! res && GetLastError() == ERROR_CALL_NOT_IMPLEMENTED )
+   {
+      AutoCString cBuffer( strName );
+      res = ::SetCurrentDirectoryA( cBuffer.c_str(), NULL );
+   }
+
+   if ( ! res )
+   {
+      new IOError( ErrorParam( e_io_error, __LINE__, SRC )
+         .extra( strName )
+         .sysError( GetLastError() ) );
+   }
+
+}
+
+
+void VFSFile::getCWD( URI& uri )
+{
+   wchar_t wpath[MAX_PATH+1];
+   BOOL res = ::GetCurrentDirectoryW( MAX_PATH, wpath );
+
+   if( res )
+   {
+      String path(wpath);
+      Path::winToUri(path);
+      uri.path() = path;
+   }
+   else if( GetLastError() == ERROR_CALL_NOT_IMPLEMENTED )
+   {
+      char cpath[MAX_PATH+1];
+      res = ::SetCurrentDirectoryA( MAX_PATH, cpath );
+      if( res )
+      {
+         String path(cpath);
+         Path::winToUri(path);
+         uri.path() = path;
+      }
+   }
+
+   if ( ! res )
+   {
+      new IOError( ErrorParam( e_io_error, __LINE__, SRC )
+         .sysError( GetLastError() ) );
+   }
+
+}
 }
 
 /* end of vsf_file_windows.cpp */

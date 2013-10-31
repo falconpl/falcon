@@ -68,6 +68,33 @@ Stream* VFSIface::create( const URI &uri, const CParams &p )
    return iter->second->create( uri, p );
 }
 
+
+void VFSIface::setCWD( const URI &uri )
+{
+   VFSIface_p::VFSMap::iterator iter = _p->m_vfsmap.find( uri.scheme() );
+   if( iter == _p->m_vfsmap.end() )
+   {
+      throw new IOError( ErrorParam(e_io_unsup, __LINE__, __FILE__)
+              .extra("scheme " + uri.scheme()) );
+   }
+
+   iter->second->setCWD( uri );
+}
+
+
+void VFSIface::getCWD( URI &uri )
+{
+   VFSIface_p::VFSMap::iterator iter = _p->m_vfsmap.find( uri.scheme() );
+   if( iter == _p->m_vfsmap.end() )
+   {
+      throw new IOError( ErrorParam(e_io_unsup, __LINE__, __FILE__)
+              .extra("scheme " + uri.scheme()) );
+   }
+
+   iter->second->getCWD( uri );
+}
+
+
 Directory* VFSIface::openDir( const URI &uri )
 {
    VFSIface_p::VFSMap::iterator iter = _p->m_vfsmap.find( uri.scheme() );

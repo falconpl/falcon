@@ -214,6 +214,10 @@ public:
    virtual FileStat::t_fileType fileType( const URI& uri, bool delink = true )=0;
 
    virtual void move( const URI &suri, const URI &duri ) = 0;
+
+   virtual void setCWD( const URI& uri ) = 0;
+   virtual void getCWD( URI& uri ) = 0;
+
 protected:
    VFSProvider( const String &name ):
       m_servedProto( name )

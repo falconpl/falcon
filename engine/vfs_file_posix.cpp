@@ -13,6 +13,8 @@
    See LICENSE file for licensing details.
 */
 
+#define SRC "engine/vfs_file_posix.cpp"
+
 #include <falcon/vfs_file.h>
 #include <falcon/error.h>
 #include <falcon/sys.h>
@@ -65,7 +67,7 @@ void Directory_file::close()
    {
       if( ::closedir( m_dir ) != 0 )
       {
-         throw new IOError(ErrorParam(e_io_close, __LINE__,__FILE__ )
+         throw new IOError(ErrorParam(e_io_close, __LINE__,SRC )
             .extra("::closedir")
             .sysError((uint32)errno) );
       }
@@ -81,7 +83,7 @@ bool Directory_file::read( String& tgt )
 
    if( ::readdir_r( m_dir, &m_de, &res ) != 0 )
    {
-      throw new IOError(ErrorParam(e_io_close, __LINE__,__FILE__ )
+      throw new IOError(ErrorParam(e_io_close, __LINE__,SRC )
          .extra("::closedir")
          .sysError((uint32)errno) );
    }
@@ -125,7 +127,7 @@ Stream *VFSFile::open( const URI& uri, const OParams &p )
       return fs;
    }
 
-   throw new IOError( ErrorParam( e_io_error, __LINE__, __FILE__ )
+   throw new IOError( ErrorParam( e_io_error, __LINE__, SRC )
                      .extra( uri.path().encode() )
                      .sysError((uint32) errno));
 }
@@ -163,7 +165,7 @@ Stream *VFSFile::create( const URI& uri, const CParams &p )
       }
    }
 
-   throw new IOError( ErrorParam( e_io_error, __LINE__, __FILE__ )
+   throw new IOError( ErrorParam( e_io_error, __LINE__, SRC )
                      .extra( uri.path().encode() )
                      .sysError((uint32)errno));
 }
@@ -175,7 +177,7 @@ Directory* VFSFile::openDir( const URI& uri )
 
    DIR *dir = ::opendir( filename.c_str() );
    if ( dir == 0 ) {
-      throw new IOError( ErrorParam( e_io_error, __LINE__, __FILE__ )
+      throw new IOError( ErrorParam( e_io_error, __LINE__, SRC )
                      .sysError((uint32)errno));
    }
 
@@ -194,7 +196,7 @@ FileStat::t_fileType VFSFile::fileType( const URI& uri, bool )
          return FileStat::_notFound;
       }
 
-      throw new IOError( ErrorParam( e_io_creat, __LINE__, __FILE__ ).sysError( errno ));
+      throw new IOError( ErrorParam( e_io_creat, __LINE__, SRC ).sysError( errno ));
    }
 
    if( S_ISREG( fs.st_mode ) )
@@ -227,7 +229,7 @@ bool VFSFile::readStats( const URI& uri, FileStat &sts, bool )
          return false;
       }
 
-      throw new IOError( ErrorParam( e_io_error, __LINE__, __FILE__ )
+      throw new IOError( ErrorParam( e_io_error, __LINE__, SRC )
                      .sysError((uint32)errno));
    }
 
@@ -272,7 +274,7 @@ void VFSFile::erase( const URI &uri )
       // try with rmdir
       if( ::rmdir( filename.c_str() ) != 0 )
       {
-         throw new IOError( ErrorParam( e_io_error, __LINE__, __FILE__ )
+         throw new IOError( ErrorParam( e_io_error, __LINE__, SRC )
                      .sysError((uint32)errno));
       }
    }
@@ -284,7 +286,7 @@ void VFSFile::move( const URI &suri, const URI &duri )
    AutoCString dest( duri.path().encode() );
    if( ::rename( filename.c_str(), dest.c_str() ) != 0 )
    {
-      throw new IOError( ErrorParam( e_io_error, __LINE__, __FILE__ )
+      throw new IOError( ErrorParam( e_io_error, __LINE__, SRC )
                      .sysError((uint32)errno));
    }
 }
@@ -313,7 +315,7 @@ void VFSFile::mkdir( const URI &uri, bool descend )
             AutoCString filename( strPath );
             if( ::mkdir( filename.c_str(), DEFAULT_CREATE_MODE ) != 0 )
             {
-               throw new IOError( ErrorParam( e_io_creat, __LINE__, __FILE__ ).sysError((uint32) errno ));
+               throw new IOError( ErrorParam( e_io_creat, __LINE__, SRC ).sysError((uint32) errno ));
             }
          }
 
@@ -331,9 +333,36 @@ void VFSFile::mkdir( const URI &uri, bool descend )
       AutoCString filename( strName );
       if( ::mkdir( filename.c_str(), DEFAULT_CREATE_MODE ) != 0 )
       {
-         throw new IOError( ErrorParam( e_io_creat, __LINE__, __FILE__ ).sysError( (uint32)errno ));
+         throw new IOError( ErrorParam( e_io_creat, __LINE__, SRC ).sysError( (uint32)errno ));
       }
    }
+}
+
+
+void VFSFile::setCWD( const URI& uri )
+{
+   AutoCString dir(uri.path().fulloc());
+   if( ::chdir(dir) != 0 )
+   {
+      throw new IOError( ErrorParam( e_io_error, __LINE__, SRC ).
+               extra(uri.path().fulloc()).sysError( (uint32)errno ));
+   }
+}
+
+
+void VFSFile::getCWD( URI& uri )
+{
+#ifdef PATH_MAX
+   char cwd[PATH_MAX+1];
+#else
+   char cwd[4096];
+#endif
+   if( ::getcwd( cwd, sizeof(cwd) ) != 0 )
+   {
+      throw new IOError( ErrorParam( e_io_error, __LINE__, SRC ).sysError( (uint32)errno ));
+   }
+
+   uri.path().fulloc( cwd );
 }
 
 

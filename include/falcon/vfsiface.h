@@ -56,6 +56,9 @@ public:
    virtual void erase( const URI &uri );
    virtual void move( const URI &suri, const URI &duri );
 
+   virtual void setCWD( const URI &uri );
+   virtual void getCWD( URI &uri );
+
    void addVFS( const String& str, VFSProvider* vfs );
    VFSProvider* getVFS( const String& str );
 

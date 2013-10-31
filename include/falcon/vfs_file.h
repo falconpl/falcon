@@ -46,6 +46,9 @@ public:
    virtual void erase( const URI &uri );
    virtual void move( const URI &suri, const URI &duri );
 
+   virtual void setCWD( const URI& uri );
+   virtual void getCWD( URI& uri );
+
 protected:
    void *m_fsdata;
 
