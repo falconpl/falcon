@@ -657,12 +657,13 @@ ConfigFile::ConfigFile():
    m_bUseUnixComments( false ),
    m_bUseUnixSpecs( false )
 {
+   _p = new Private;
 }
 
 
 ConfigFile::~ConfigFile()
 {
-
+   delete _p;
 }
 
 
