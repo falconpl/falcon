@@ -136,7 +136,7 @@ static void internal_htmlEscape_stream( const Falcon::String &str, Falcon::TextW
 }
 
 /*#
-   @global scriptName
+   @property scriptName Wopi
    @brief Physical name of the loaded main script.
 
    This is the name of the script that has been loaded and served through the
@@ -152,6 +152,24 @@ static void get_scriptName(const Class* cls, const String&, void* instance, Item
    TRACE1( "WOPI.scriptName for %p", instance );
    ModuleWopi* modwopi = static_cast<ModuleWopi*>( cls->module() );
    value = FALCON_GC_HANDLE(new String(modwopi->scriptName()));
+}
+
+/*#
+   @property scriptPath Wopi
+   @brief Physical name of the loaded main script.
+
+   This is the name of the script that has been loaded and served through the
+   web server request. It may be different from the file name that has been
+   actually requested, as the web server may perform several mappings.
+
+   scriptPath + "/" + scriptName is granted to give the complete file path
+   where the script has been loaded.
+*/
+static void get_scriptPath(const Class* cls, const String&, void* instance, Item& value )
+{
+   TRACE1( "WOPI.scriptPath for %p", instance );
+   ModuleWopi* modwopi = static_cast<ModuleWopi*>( cls->module() );
+   value = FALCON_GC_HANDLE(new String(modwopi->scriptPath()));
 }
 
 /*#
@@ -502,6 +520,7 @@ ClassWopi::ClassWopi():
    m_stepAfterPersist = new PStepAfterPersist;
 
    addProperty("scriptName", &get_scriptName );
+   addProperty("scriptPath", &get_scriptPath );
    addMethod( new Function_tempFile );
 }
 

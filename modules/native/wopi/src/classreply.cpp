@@ -537,6 +537,7 @@ ClassReply::ClassReply():
    addMethod( new Function_getHeaders );
    addMethod( new Function_setCookie );
    addMethod( new Function_clearCookie );
+   addMethod( new Function_redirect );
 }
 
 
