@@ -23,7 +23,8 @@ else
 end
 
 // load pre-pages
-if VFS.fileType( "pages/pre-" + page + ".fal" ) == FileStat.NORMAL
+path = Path (Wopi.scriptPath)
+if VFS.fileType( path.fulloc() + "/pages/pre-" + page + ".fal" ) == FileStat.NORMAL
    try
       pre_data = include( "pages/pre-" + page + ".fal" )
    catch in error

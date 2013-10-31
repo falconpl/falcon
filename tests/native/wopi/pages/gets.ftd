@@ -40,15 +40,16 @@ count = 0
 <? else ?>
 <p>To start the GET field test <a href="<?
       uri = URI( Request.location )
-      uri.setFields(
+      ^[
          [ "p" => "gets",
            "delta" => "",
            "beta" => "xyz",
            "gamma" => "30%",
             "数" => "百万円"
-            ] )
+            ]
+         ] { pair => uri.setq(pair[0], pair[1]) }
 
-      >> uri.uri + "&alpha[]=one&alpha[]=two&alpha[]=three"
+      >> uri.encoded + "&alpha[]=one&alpha[]=two&alpha[]=three"
       
       /*>> Request.uri +  "?p=gets&delta=&beta=xyz&gamma=" + URI.encode("30%") + "&alpha[]=one&alpha[]=two&alpha[]=three&" +
       URI.encode( "数") + "=" + URI.encode("百万円")*/
