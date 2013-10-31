@@ -60,14 +60,11 @@ void ExprIn::apply_( const PStep* ps, VMContext* ctx )
    // we won't be back anymore
    ctx->popCode();
 
+   Class* cls = 0;
+   void* data = 0;
+   ctx->topData().forceClassInst( cls, data );
    // invert the operands: "x in y" is leaded by y
    ctx->opcodeParam(0).swap(ctx->opcodeParam(1));
-   register Item* item = &ctx->opcodeParam(1);
-   
-   Class* cls;
-   void* data;
-   item->forceClassInst( cls, data );
-   
    cls->op_in( ctx, data );
 }
 

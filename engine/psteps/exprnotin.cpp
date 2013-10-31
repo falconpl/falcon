@@ -47,33 +47,33 @@ void ExprNotin::apply_( const PStep* ps, VMContext* ctx )
       {
          return;
       }
-      // fallthrough
+      /* no break */
    case 1:
       cf.m_seqId = 2;
       if( ctx->stepInYield( self->second(), cf ) )
       {
          return;
       }
-      // fallthrough
+      /* no break */
+   case 2:
+      cf.m_seqId = 3;
+      Class* cls = 0;
+      void* data = 0;
+      ctx->topData().forceClassInst( cls, data );
+      ctx->topData().swap(ctx->opcodeParam(1));
+      cls->op_in( ctx, data );
+      // went deep?
+      if( &cf != &ctx->currentCode() )
+      {
+         return;
+      }
+      /* no break */
    }
    
-   register Item* item = &ctx->topData();
    
-   Class* cls;
-   void* data;
-   item->forceClassInst( cls, data );
-   
-   cls->op_in( ctx, data );
    // Revert the result of op_in
    Item &res = ctx->topData();
    res.setBoolean( !res.asBoolean() );
-   // went deep?
-   if( &cf != &ctx->currentCode() )
-   {
-      // s_nextApply will be called
-      return;
-   }
-   
    ctx->popCode();
 }
 
