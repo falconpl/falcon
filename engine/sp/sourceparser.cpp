@@ -154,7 +154,7 @@ SourceParser::SourceParser():
 
    T_as("as"),
    T_if("if"),
-   T_in("in", 20),
+   T_in("in", 23),
    T_or("or", 130),
    T_to("to", 70),
 
@@ -166,7 +166,7 @@ SourceParser::SourceParser():
    T_nil("nil"),
    T_try("try"),
    T_catch("catch"),
-   T_notin("notin", 20),
+   T_notin("notin", 23),
    T_finally("finally"),
    T_raise("raise"),
    T_fself("fself"),
