@@ -129,7 +129,7 @@ FALCON_DECLARE_FUNCTION(commit, "")
 FALCON_DEFINE_FUNCTION_P1(commit)
 {
    Reply* r = ctx->tself<Reply*>();
-   ctx->returnFrame(Item().setBoolean( r->commit(ctx->process()->stdOut()) ) );
+   ctx->returnFrame(Item().setBoolean( r->commit() ));
 }
 
 /*#

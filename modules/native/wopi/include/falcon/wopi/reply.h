@@ -78,7 +78,7 @@ class Reply
 {
 public:
 
-   Reply( ModuleWopi* module );
+   Reply( ModuleWopi* module=0 );
    virtual ~Reply();
 
    /** Sets a cookie.
@@ -122,8 +122,8 @@ public:
    //! Gets all the headers as a dictionary.
    ItemDict* getHeaders();
 
-   //! Send to the final stream (to be re-implemented by the final renderer).
-   virtual bool commit(Stream* stream);
+   //! Send to the commit handler.
+   virtual bool commit();
 
    //! true if we have perfomed commit
    bool isCommited() const { return m_bHeadersSent; }
@@ -144,13 +144,13 @@ public:
       virtual ~CommitHandler() {}
 
       //! Invoked when the commit operation is about to begin.
-       virtual void startCommit( Reply* reply, Stream* tgt ) = 0;
+       virtual void startCommit( Reply* reply ) = 0;
 
       //! Invoked to finalize an header
-      virtual void commitHeader( Reply* reply, Stream* tgt, const String& hname, const String& hvalue ) = 0;
+      virtual void commitHeader( Reply* reply, const String& hname, const String& hvalue ) = 0;
 
       //! Invoked when all the headers are generated.
-      virtual void endCommit(Reply* reply, Stream* tgt) = 0;
+      virtual void endCommit(Reply* reply) = 0;
    };
 
    void setCommitHandler( CommitHandler* h );
@@ -162,6 +162,7 @@ public:
    void reason( const String& str ) { m_sReason = str; }
 
    ModuleWopi* module() const { return m_module; }
+   void module( ModuleWopi* m ) { m_module = m; }
 protected:
 
    CommitHandler* m_commitHandler;

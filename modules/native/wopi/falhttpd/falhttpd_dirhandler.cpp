@@ -22,6 +22,9 @@
 #include "falhttpd_dirhandler.h"
 #include "falhttpd_client.h"
 
+#include <falcon/wopi/stream_ch.h>
+#include <falcon/wopi/reply.h>
+
 #include <falcon/sys.h>
 
 namespace Falcon {
@@ -41,13 +44,14 @@ void DirHandler::serve( WOPI::Request* )
 {
    // open the directory
    Falcon::Directory *de = 0;
+
    try {
       de = Engine::instance()->vfs().openDir( m_sFile );
       Falcon::String thisDir = m_sFile.subString( m_client->options().m_homedir.length() );
 
-      if( thisDir.endsWith("/") && thisDir.length() >  1 )
+      if( ! thisDir.endsWith("/") )
       {
-         thisDir.remove(thisDir.length()-1, 1);
+         thisDir +="/";
       }
 
       Falcon::String title =
@@ -67,19 +71,9 @@ void DirHandler::serve( WOPI::Request* )
          {
             if( thisDir == "/" )
                continue;
-
-            Falcon::uint32 pos = thisDir.rfind("/");
-            if ( pos == Falcon::String::npos )
-               loc = "";
-            else
-               loc = thisDir.subString(0,pos);
-         }
-         else
-         {
-            loc = thisDir;
          }
 
-         Falcon::String entry = "<br/><a href=\""+ loc + "/" + fname +"\">" + fname + "</a>\n";
+         Falcon::String entry = "<br/><a href=\""+ thisDir + fname +"\">" + fname + "</a>\n";
          m_client->sendData( entry );
       }
 

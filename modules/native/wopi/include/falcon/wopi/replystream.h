@@ -39,7 +39,7 @@ class Reply;
 class ReplyStream: public Stream
 {
 public:
-   ReplyStream( Reply* rep , Stream* underlying );
+   ReplyStream( Reply* rep , Stream* underlying, bool bMakeCH = true );
    ReplyStream( const ReplyStream& other );
    ~ReplyStream();
 

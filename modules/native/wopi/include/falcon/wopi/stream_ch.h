@@ -27,12 +27,17 @@ namespace WOPI  {
 class StreamCommitHandler: public Reply::CommitHandler
 {
 public:
-   StreamCommitHandler();
+   StreamCommitHandler( Stream* stream );
    virtual ~StreamCommitHandler();
 
-   virtual void startCommit( Reply* reply, Stream* tgt );
-   virtual void commitHeader( Reply* reply, Stream* tgt, const Falcon::String& name, const Falcon::String& value );
-   virtual void endCommit( Reply* reply, Stream* tgt );
+   virtual void startCommit( Reply* reply);
+   virtual void commitHeader( Reply* reply, const Falcon::String& name, const Falcon::String& value );
+   virtual void endCommit( Reply* reply );
+
+   Stream* stream() const { return m_stream; }
+
+private:
+   Stream* m_stream;
 };
 
 }

@@ -39,7 +39,6 @@ void FalhttpdApp::LogListener::onMessage( int , int lvl, const String& message )
    tgt += Log::levelToString(lvl);
    tgt += " ";
    tgt += message;
-   tgt += "\n";
 
    m_logfile->writeLine( tgt );
    m_logfile->flush();

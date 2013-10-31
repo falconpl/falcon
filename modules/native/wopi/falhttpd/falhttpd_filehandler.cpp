@@ -44,7 +44,12 @@ void FileHandler::serve( Falcon::WOPI::Request* )
    // Get the document -- for now a very simple thing
    if ( ! m_client->options().findMimeType( m_sFile, sMimeType ) )
    {
-      sMimeType = "unknown";
+      LOGI("Unknown mime type for file " + m_sFile );
+      sMimeType = "text/plain; charset=" + m_client->options().m_sTextEncoding;
+   }
+   else
+   {
+      LOGD("Mapping MIME type " + m_sFile + " -> " + sMimeType );
    }
 
    // Send the file
@@ -61,19 +66,16 @@ void FileHandler::serve( Falcon::WOPI::Request* )
       LOGI( "Sending file "+ m_sFile );
 
       // ok we can serve the file
-      String sReply = "HTTP/1.0 200 OK\r\n";
+      WOPI::Reply* rep = m_client->reply();
+
 
       TimeStamp now;
       now.currentTime();
-      sReply += "Content-Type: " + sMimeType + "; charset=" + m_client->options().m_sTextEncoding + "\r\n";
-      sReply += "Date: " + now.toRFC2822() + "\r\n";
+      rep->setContentType(sMimeType);
+      rep->setHeader("Date", now.toRFC2822() );
       TimeStamp ts(Date(stats.mtime(),0));
-      sReply += "Last-Modified: " + ts.toRFC2822() + "\r\n";
+      rep->setHeader( "Last-Modified", ts.toRFC2822() );
 
-      sReply += "\r\n";
-      // content length not strictly necessary now
-
-      m_client->sendData( sReply );
       char buffer[4096];
       int len = fs->read( buffer, 4096 );
       while( len > 0 )

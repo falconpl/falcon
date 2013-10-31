@@ -23,6 +23,7 @@ s
 #include "falhttpd.h"
 #include <inet_mod.h>
 #include <falcon/wopi/request.h>
+#include <falcon/wopi/reply.h>
 #include <falcon/wopi/mem_sm.h>
 
 namespace Falcon
@@ -46,6 +47,8 @@ public:
 
    const FalhttpOptions& options() const { return m_options; }
    Mod::Socket* skt() const { return m_skt; }
+   Stream* stream() const { return m_stream; }
+   WOPI::Reply* reply() const { return m_reply; }
 
 private:
    void serveRequest(
@@ -53,6 +56,8 @@ private:
 
    Mod::Socket* m_skt;
    bool m_bComplete;
+   Stream* m_stream;
+   WOPI::Reply* m_reply;
 
    const FalhttpOptions& m_options;
 };

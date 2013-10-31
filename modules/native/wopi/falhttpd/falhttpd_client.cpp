@@ -36,7 +36,7 @@ s
 
 #include <falcon/wopi/request.h>
 #include <falcon/wopi/reply.h>
-#include <falcon/wopi/mem_sm.h>
+#include <falcon/wopi/stream_ch.h>
 #include <falcon/sys.h>
 
 namespace Falcon {
@@ -47,11 +47,15 @@ FalhttpdClient::FalhttpdClient( const FalhttpOptions& options, Mod::Socket* skt 
    m_options( options )
 {
    LOGI( "Incoming client from "+ skt->address()->toString() );
+   m_stream = m_skt->makeStreamInterface();
+   m_reply = new WOPI::Reply;
+   m_reply->setCommitHandler( new WOPI::StreamCommitHandler(m_stream) );
 }
 
 FalhttpdClient::~FalhttpdClient()
 {
    close();
+   delete m_reply;
 }
 
 void FalhttpdClient::close()
@@ -59,6 +63,7 @@ void FalhttpdClient::close()
    if( m_skt != 0 )
    {
       LOGI( "Client "+ m_skt->address()->toString() + " gone" );
+      m_stream->decref();
       m_skt->close();
       m_skt->decref();
       m_skt = 0;
@@ -172,7 +177,7 @@ void FalhttpdClient::serveRequest(
    }
 
    delete req;
-   LOGW( "Served client "+ m_skt->address()->toString() );
+   LOGI( "Served client "+ m_skt->address()->toString() );
 }
 
 
@@ -302,9 +307,11 @@ void FalhttpdClient::sendData( const void* data, uint32 size )
    int res = 0;
    const byte* bdata = (const byte* ) data;
 
+   m_reply->commit();
+
    while( sent < size )
    {
-      res = m_skt->send( bdata + sent, size - sent );
+      res = m_stream->write( bdata + sent, size - sent );
       if( res < 0 )
       {
          LOGW( "Client "+ m_skt->address()->toString() + " had a send error." );

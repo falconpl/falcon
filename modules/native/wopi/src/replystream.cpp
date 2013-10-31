@@ -22,15 +22,20 @@
 
 #include <falcon/wopi/reply.h>
 #include <falcon/wopi/replystream.h>
+#include <falcon/wopi/stream_ch.h>
 #include <falcon/stdmpxfactories.h>
 
 namespace Falcon {
 namespace WOPI {
 
-ReplyStream::ReplyStream( Reply* rep, Stream* under ):
+ReplyStream::ReplyStream( Reply* rep, Stream* under, bool bMakeCH ):
       m_rep( rep ),
       m_underlying( under )
 {
+   if( bMakeCH )
+   {
+      rep->setCommitHandler( new StreamCommitHandler(under) );
+   }
    m_underlying->incref();
 }
 
@@ -39,18 +44,19 @@ ReplyStream::ReplyStream( const ReplyStream& other ):
       m_rep( other.m_rep ),
       m_underlying( other.m_underlying )
 {
-   m_underlying->decref();
+   m_underlying->incref();
+
 }
 
 ReplyStream::~ReplyStream()
 {
-   m_rep->commit( m_underlying );
+   m_rep->commit();
    m_underlying->decref();
 }
 
 bool ReplyStream::close()
 {
-   m_rep->commit( m_underlying );
+   m_rep->commit();
    return m_underlying->close();
 }
 
@@ -77,7 +83,7 @@ size_t ReplyStream::read( void *buffer, size_t size )
 
 size_t ReplyStream::write( const void *buffer, size_t size )
 {
-   m_rep->commit( m_underlying );
+   m_rep->commit();
    return m_underlying->write( buffer, size );
 }
 
@@ -89,7 +95,7 @@ Stream *ReplyStream::clone() const
 // Flushes the stream.
 bool ReplyStream::flush()
 {
-   m_rep->commit( m_underlying );
+   m_rep->commit();
    return m_underlying->flush();
 }
 

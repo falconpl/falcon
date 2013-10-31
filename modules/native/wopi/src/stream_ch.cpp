@@ -21,32 +21,35 @@
 namespace Falcon {
 namespace WOPI {
 
-StreamCommitHandler::StreamCommitHandler()
+StreamCommitHandler::StreamCommitHandler( Stream* stream ):
+         m_stream(stream)
 {
+   stream->incref();
 }
 
 StreamCommitHandler::~StreamCommitHandler()
 {
+   m_stream->decref();
 }
 
 
-void StreamCommitHandler::startCommit( Reply* rep, Stream* stream )
+void StreamCommitHandler::startCommit( Reply* rep )
 {
    Falcon::String sRep;
    sRep.A("HTTP/1.1 ").N( rep->status() ).A(" ").A( rep->reason() ).A("\r\n");
-   stream->write( sRep.c_ize(), sRep.size() );
+   m_stream->write( sRep.c_ize(), sRep.size() );
 }
 
-void StreamCommitHandler::commitHeader( Reply*, Stream* stream, const Falcon::String& name, const Falcon::String& value )
+void StreamCommitHandler::commitHeader( Reply*, const Falcon::String& name, const Falcon::String& value )
 {
    AutoCString header(name + ": " + value + "\r\n");
-   stream->write( header.c_str(), header.length() );
+   m_stream->write( header.c_str(), header.length() );
 }
 
-void StreamCommitHandler::endCommit( Reply*, Stream* stream )
+void StreamCommitHandler::endCommit( Reply* )
 {
-   stream->write( "\r\n", 2 );
-   stream->flush();
+   m_stream->write( "\r\n", 2 );
+   m_stream->flush();
 }
 
 }

@@ -65,7 +65,7 @@ void ScriptHandler::serve( Falcon::WOPI::Request* req )
 
 
    Module* core = new CoreModule;
-   WOPI::ModuleWopi* wopi = new WOPI::ModuleWopi("FalHTTPD", req);
+   WOPI::ModuleWopi* wopi = new WOPI::ModuleWopi("FalHTTPD", req, m_client->reply() );
 
    process->modSpace()->add( core );
    process->modSpace()->add( wopi );
@@ -92,7 +92,7 @@ void ScriptHandler::serve( Falcon::WOPI::Request* req )
       err->decref();
    }
 
-   wopi->reply()->commit( process->stdOut() );
+   wopi->reply()->commit();
    process->decref();
 }
 

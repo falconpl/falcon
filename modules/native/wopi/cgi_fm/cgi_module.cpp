@@ -54,9 +54,10 @@ void ModuleCGI::onStartupComplete( VMContext* ctx )
    m_oldStdOut->incref();
    m_oldStdErr->incref();
 
-   m_reply->setCommitHandler( new StreamCommitHandler );
-   m_process->stdOut( new ReplyStream(m_reply, m_oldStdOut) );
-   m_process->stdErr( new ReplyStream(m_reply, m_oldStdErr) );
+   m_process->stdOut( new ReplyStream(m_reply, m_oldStdOut, false) );
+   m_process->stdErr( new ReplyStream(m_reply, m_oldStdErr, false) );
+   // overrides ReplyStream default commit handler
+   m_reply->setCommitHandler( new StreamCommitHandler(m_oldStdOut) );
 
    if( m_request->m_method.compareIgnoreCase("POST") == 0 )
    {

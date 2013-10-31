@@ -48,7 +48,7 @@ public:
     * class creates one, else an empty request is created on
     * the fly and can be accessed via the request() member.
     */
-   ModuleWopi( const String& name, Request* req = 0 );
+   ModuleWopi( const String& name, Request* req = 0, Reply* rep = 0 );
    virtual ~ModuleWopi();
 
    ClassWopi* wopiClass() const { return m_classWopi; }

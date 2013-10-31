@@ -44,6 +44,8 @@ Reply::Reply( ModuleWopi* wopi ):
    setHeader( "Pragma", "no-cache" );
    setHeader( "Cache-Control", "no-cache" );
 
+   m_commitHandler = 0;
+
    // and THEN tell we're using the defaults.
    m_bDefaultContent = true;
 
@@ -265,7 +267,7 @@ bool Reply::setRedirect( const String& url, uint32 timeout )
 
 
 
-bool Reply::commit(Stream* target)
+bool Reply::commit()
 {
    // already sent -- reuturn false.
    if ( m_bHeadersSent )
@@ -274,24 +276,24 @@ bool Reply::commit(Stream* target)
    // prepare the headers
    if( m_commitHandler != 0 )
    {
-      m_commitHandler->startCommit(this, target);
+      m_commitHandler->startCommit(this);
 
       Utils::StringMap::const_iterator ic = m_mHeaders.begin();
       while( ic != m_mHeaders.end() )
       {
          //else -- raise error?
-         m_commitHandler->commitHeader( this, target, ic->first, ic->second );
+         m_commitHandler->commitHeader( this, ic->first, ic->second );
          ++ic;
       }
 
       ic = m_mCookies.begin();
       while( ic != m_mCookies.end() )
       {
-         m_commitHandler->commitHeader( this, target, "Set-Cookie", ic->second );
+         m_commitHandler->commitHeader( this, "Set-Cookie", ic->second );
          ++ic;
       }
 
-      m_commitHandler->endCommit( this, target );
+      m_commitHandler->endCommit( this );
    }
 
    m_bHeadersSent = true;
@@ -307,6 +309,7 @@ void Reply::gcMark( uint32 mark )
 
 void Reply::setCommitHandler( CommitHandler* h )
 {
+   delete m_commitHandler;
    m_commitHandler = h;
 }
 

@@ -158,6 +158,9 @@ bool FalhttpOptions::init( int argc, char* argv[] )
       }
    }
 
+   parseIni();
+   parseMimeTypes();
+
    return true;
 }
 
@@ -200,8 +203,11 @@ bool FalhttpOptions::remap( Falcon::String& sFname ) const
 
    // find the file.
    Falcon::Path path( sFname );
+   if( sFname == "" ) {
+      path.fulloc("/");
+   }
 
-   path.fulloc( m_homedir + "/" + path.fulloc() );
+   path.fulloc( m_homedir + path.fulloc() );
 
    sFname = path.encode();
    Falcon::FileStat stats;
@@ -230,7 +236,11 @@ bool FalhttpOptions::remap( Falcon::String& sFname ) const
          // return it as a directory?
          if( fni == m_lIndexFiles.end() )
          {
-            sFname = path.fulloc() + "/";
+            sFname = path.fulloc();
+            if( ! sFname.endsWith("/") )
+            {
+               sFname += "/";
+            }
          }
          else
          {
@@ -246,17 +256,31 @@ bool FalhttpOptions::remap( Falcon::String& sFname ) const
 
 void FalhttpOptions::parseIni()
 {
-   ConfigSection* cs = m_cfg.mainSection();
-   cs->getValue( "HomeDir", m_homedir );
-   cs->getValue( "LoadPath", m_loadPath );
-   cs->getValue( "TempDir", m_sUploadPath );
-   cs->getValue( "Interface", m_sIface );
-   cs->getValue( "PersistentDataDir", m_sAppDataDir );
+   if( m_cfg.mainSection() != 0 )
+   {
+      ConfigSection* cs = m_cfg.mainSection();
+      cs->getValue( "HomeDir", m_homedir );
+      cs->getValue( "LoadPath", m_loadPath );
+      cs->getValue( "TempDir", m_sUploadPath );
+      cs->getValue( "Interface", m_sIface );
+      cs->getValue( "PersistentDataDir", m_sAppDataDir );
+   }
 }
 
 
 void FalhttpOptions::parseMimeTypes()
 {
+   // add some sensible default.
+   m_lMimeTypes.push_back( MimeType( "text/html", "*.html;*.htm" ) );
+   m_lMimeTypes.push_back( MimeType( "text/css", "*.css" ) );
+   m_lMimeTypes.push_back( MimeType( "text/javascript", "*.js" ) );
+   m_lMimeTypes.push_back( MimeType( "image/png", "*.png" ) );
+   m_lMimeTypes.push_back( MimeType( "image/gif", "*.gif" ) );
+   m_lMimeTypes.push_back( MimeType( "image/jpg", "*.jpg;*.jpeg" ) );
+   m_lMimeTypes.push_back( MimeType( "image/tiff", "*.tif;*.tiff" ) );
+   m_lMimeTypes.push_back( MimeType( "text/plain", "*" ) );
+
+
    ConfigSection* cs = m_cfg.getSection("MIME");
    if( cs != 0 )
    {
@@ -280,16 +304,6 @@ void FalhttpOptions::parseMimeTypes()
 
       cs->enumerateKeys(rator);
    }
-
-   // add some sensible default.
-   m_lMimeTypes.push_back( MimeType( "text/html", "*.html;*.htm" ) );
-   m_lMimeTypes.push_back( MimeType( "text/css", "*.css" ) );
-   m_lMimeTypes.push_back( MimeType( "text/javascript", "*.js" ) );
-   m_lMimeTypes.push_back( MimeType( "image/png", "*.png" ) );
-   m_lMimeTypes.push_back( MimeType( "image/gif", "*.gif" ) );
-   m_lMimeTypes.push_back( MimeType( "image/jpg", "*.jpg;*.jpeg" ) );
-   m_lMimeTypes.push_back( MimeType( "image/tiff", "*.tif;*.tiff" ) );
-   m_lMimeTypes.push_back( MimeType( "text/plain", "*" ) );
 }
 
 

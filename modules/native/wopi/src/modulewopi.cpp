@@ -30,7 +30,7 @@
 namespace Falcon {
 namespace WOPI {
 
-ModuleWopi::ModuleWopi( const String& name, Request* req )
+ModuleWopi::ModuleWopi( const String& name, Request* req, Reply* rep )
 {
    m_process = 0;
    m_oldStdout = 0;
@@ -44,7 +44,14 @@ ModuleWopi::ModuleWopi( const String& name, Request* req )
       req->module(this);
    }
 
-   m_reply = new Reply(this);
+   if( rep == 0 )
+   {
+      m_reply = new Reply(this);
+   }
+   else {
+      m_reply = rep;
+      rep->module( this );
+   }
 
    m_wopi = new Wopi;
    m_provider = name;
