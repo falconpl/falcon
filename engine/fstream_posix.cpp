@@ -34,6 +34,7 @@ FStream::FStream( Sys::FileData* data ):
    m_fsData(data)
 {
    m_status = t_open;
+   m_bPS = false;
 }
 
 FStream::FStream( const FStream &other ):

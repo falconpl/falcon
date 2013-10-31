@@ -147,7 +147,18 @@ Address::~Address()
    clear();
 }
 
-Address::Address( const String& addr)
+
+Address::Address():
+   m_systemData(0),
+   m_port(0),
+   m_resolvCount(0),
+   m_activeHostId(-1),
+   m_mark(0)
+{}
+
+
+Address::Address( const String& addr):
+   m_systemData(0)
 {
    if( ! parse(addr) )
    {
@@ -1393,6 +1404,8 @@ SocketStream::SocketStream( Socket* skt )
    m_socket = skt;
    m_socket->incref();
    m_status = t_open;
+   // has pipe semantic
+   m_bPS = true;
 }
 
 

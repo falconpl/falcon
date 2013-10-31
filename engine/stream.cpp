@@ -28,14 +28,16 @@ Stream::Stream():
    m_mark(0),
    m_status( t_none ),
    m_lastError( 0 ),
-   m_bShouldThrow( false )
+   m_bShouldThrow( false ),
+   m_bPS( true )
 {}
 
 Stream::Stream( const Stream &other ):
    m_mark(0),
    m_status( other.m_status ),
    m_lastError( other.m_lastError ),
-   m_bShouldThrow(other.m_bShouldThrow)
+   m_bShouldThrow(other.m_bShouldThrow),
+   m_bPS( other.m_bPS )
 {}
 
 Stream::~Stream()

@@ -419,6 +419,7 @@ void StringStream::setPipeMode( bool mode )
 {
    m_b->m_mtx.lock();
    m_bPipeMode = mode;
+   m_bPS = mode;
    if( ! m_bPipeMode )
    {
       m_posWrite = m_posRead;

@@ -115,14 +115,7 @@ class Address
 
 public:
 
-   Address():
-      m_systemData(0),
-      m_port(0),
-      m_resolvCount(0),
-      m_activeHostId(-1),
-      m_mark(0)
-      {}
-
+   Address();
    Address( const String& addr );
    Address( const String& host, const String& service );
    Address( const Address& other );

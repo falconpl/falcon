@@ -46,6 +46,32 @@ class Class;
 
    This is a purely abstract class that serves as a base class for
    system-specific or system independent implementations.
+
+   @section stream_pipe Pipe semantics
+
+   Some streams are directed to a device that becomes blocking
+   on write overflow and/or read underflow. This happens on system
+   pipes, sockets, or on streams specifically designed to behave this way.
+
+   Other streams are directed to resources that have constantly available
+   a set of data, and throw an error in case of overflow/underflow. This happens
+   with disk or network files.
+
+   Knowing if a stream has pipe semantic helps to chose the right behavior
+   in some automated operations (i.e. cat(), or StreamBuffer::fill()).
+
+   By default, a stream is considered having pipe semantic; this means that
+   automated actions involving reads or writes outside the control of the
+   user application are performed taking a prudent approach on a possible
+   underlying blocking policy.
+
+   Streams open to disk or memory resources should set the m_bPS protected
+   member to false in the constructor, so that an optimized, non prudent
+   approach is taken when dealing with those streams.
+
+   An application can use the hasPipeSemantic() member to determine if it
+   should threat this stream with prudence with respect to blocking policy
+   or not.
 */
 class FALCON_DYN_CLASS Stream
 {
@@ -248,11 +274,20 @@ public:
    /** Reads all what's left from this stream and writes to the target stream. */
    virtual void cat( Stream* target );
 
+   /** True if this stream has pipe semantic.
+    *
+    * If reads on streams with no more data left to read
+    * or write to streams with a full write buffer might block
+    * the user, this method shall return true.
+    */
+   bool hasPipeSemantic() const { return m_bPS; }
+
 protected:
    uint32 m_mark;
    t_status m_status;
    size_t m_lastError;
    bool m_bShouldThrow;
+   bool m_bPS;
 
    Item m_userItem;
 

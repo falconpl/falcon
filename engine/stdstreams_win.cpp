@@ -56,16 +56,20 @@ inline Sys::FileData* make_handle( HANDLE orig_handle, bool bDup )
 StdInStream::StdInStream( bool bDup ):
 ReadOnlyFStream(make_handle(GetStdHandle(STD_INPUT_HANDLE), bDup ))
 {
-
+   m_bPS = true;
 }
 
 StdOutStream::StdOutStream( bool bDup ):
    WriteOnlyFStream(make_handle(GetStdHandle(STD_OUTPUT_HANDLE), bDup ))
-{}
+{
+   m_bPS = true;
+}
 
 StdErrStream::StdErrStream( bool bDup ):
    WriteOnlyFStream(make_handle(GetStdHandle(STD_ERROR_HANDLE), bDup ))
-{}
+{
+   m_bPS = true;
+}
 
 }
 

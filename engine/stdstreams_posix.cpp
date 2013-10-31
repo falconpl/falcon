@@ -47,15 +47,21 @@ inline int make_fd( int origfd, bool bDup )
 
 StdInStream::StdInStream( bool bDup ):
    ReadOnlyFStream( new Sys::FileData(make_fd(STDIN_FILENO, bDup )) )
-{}
+{
+   m_bPS = true;
+}
 
 StdOutStream::StdOutStream( bool bDup ):
    WriteOnlyFStream( new Sys::FileData(make_fd(STDOUT_FILENO, bDup )) )
-{}
+{
+   m_bPS = true;
+}
 
 StdErrStream::StdErrStream( bool bDup ):
    WriteOnlyFStream( new Sys::FileData(make_fd(STDERR_FILENO, bDup )) )
-{}
+{
+   m_bPS = true;
+}
 
 }
 

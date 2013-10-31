@@ -126,9 +126,9 @@ size_t StreamBuffer::read( void *b, size_t size )
          memcpy( buf, m_buffer + m_bufPos, avail );
          m_bufPos = m_bufLen;  // declare we have consumed everything.
          // return a partial read in case of underlying networks
-         /*if ( m_stream->type() == t_network )
+         if ( m_stream->hasPipeSemantic() )
             return avail;
-          */
+
       }
    }
 
