@@ -341,7 +341,7 @@ bool Process::startScript( const URI& script, bool addPathToLoadPath )
       modSpace()->modLoader()->addDirectoryFront( script.path().fulloc() );
    }
 
-   Process* loadProc = modSpace()->loadModule( script.encode(), true, false, true );
+   Process* loadProc = modSpace()->loadModule( script.encode(), true, true, true );
 
    LOG->log(Log::fac_engine, Log::lvl_info, String("Internally starting loader process on: ") + script.encode() );
    loadProc->start();
