@@ -23,16 +23,17 @@ if(UNIX OR MAC)
 
 else()
    #We must configure inet_sys_win.cpp.in with the correct location of SDK
-   if(CMAKE_GENERATOR STREQUAL "MinGW Makefiles" )
-      if(NOT MS_SDK_PATH)
-         set( MS_SDK_PATH "$ENV{MS_SDK_PATH}" )
-      endif()
+   #Not necessary since I fixed it to use the mingw includes.
+   # if(CMAKE_GENERATOR STREQUAL "MinGW Makefiles" )
+      # if(NOT MS_SDK_PATH)
+         # set( MS_SDK_PATH "$ENV{MS_SDK_PATH}" )
+      # endif()
 
-      if(NOT MS_SDK_PATH)
-         message( FATAL_ERROR "Please, valorize MS_SDK_PATH CMAKE or environment variable with path to SDK" )
-      endif()
-      include_directories(${MS_SDK_PATH})
-   endif()
+      # if(NOT MS_SDK_PATH)
+         # message( FATAL_ERROR "Please, valorize MS_SDK_PATH CMAKE or environment variable with path to SDK" )
+      # endif()
+      # include_directories(${MS_SDK_PATH})
+   # endif()
 
    set(SYS_SPECIFIC inet_mod_win.cpp ../../../../engine/selectmpx.cpp winselectmpx.h winselectmpx.cpp)
    if (NOT MINGW)
