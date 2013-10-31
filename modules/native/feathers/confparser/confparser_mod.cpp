@@ -48,6 +48,7 @@ public:
       {
          ConfigFileLine* line = *iter;
          delete line;
+         ++iter;
       }
    }
 };
@@ -80,6 +81,7 @@ public:
       {
          ConfigSection* section = *iter;
          delete section;
+         ++iter;
       }
    }
 };

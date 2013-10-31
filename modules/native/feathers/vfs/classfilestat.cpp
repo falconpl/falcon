@@ -92,7 +92,7 @@ void Function_read::invoke( Falcon::VMContext* ctx, int )
    Item* i_uri   = ctx->param(0);
    URI tmpUri;
    URI* uri;
-   if ( (uri = ClassVFS::internal_get_uri( i_uri, tmpUri, m_module )) )
+   if ( (uri = ClassVFS::internal_get_uri( i_uri, tmpUri, m_module )) == 0)
    {
       ctx->raiseError(paramError( __LINE__, SRC ) );
       return;
@@ -227,6 +227,7 @@ ClassFileStat::ClassFileStat():
    addConstant( "DEVICE", FileStat::_device );
    addConstant( "SOCKET", FileStat::_socket );
 
+   setConstuctor( new _classFileStat::Function_read );
    addMethod( new _classFileStat::Function_read );
 
    addProperty("atime", &get_atime, &set_atime );
