@@ -626,6 +626,32 @@ void ClassNumeric::op_next( VMContext* ctx, void* self ) const
 }
 
 
+void ClassNumeric::op_compare( VMContext* ctx, void* ) const
+{
+   Item *op1, *op2;
+
+   ctx->operands( op1, op2 );
+   numeric iop1 = op1->asNumeric();
+
+   if( op2->isInteger() )
+   {
+      numeric iop2 = (numeric) op2->asInteger();
+      ctx->stackResult(2, iop1 > iop2 ? 1 : (iop1 < iop2 ? -1 : 0 ) );
+      return;
+   }
+   else if (op2->isNumeric())
+   {
+      numeric iop2 = op2->asNumeric();
+      ctx->stackResult(2, iop1 > iop2 ? 1 : (iop1 < iop2 ? -1 : 0 ) );
+      return;
+   }
+
+   // we have no information about what an item might be here, but we can
+   // order the items by type
+   ctx->stackResult(2, (int64) op1->type() - op2->type() );
+}
+
+
 }
 
 /* end of classnumeric.cpp */

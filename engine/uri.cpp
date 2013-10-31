@@ -203,7 +203,7 @@ void URI::Authority::copy( const Authority& other )
 
 class URI::Query::Private {
 public:
-   typedef std::map<String,String> QueryMap;
+   typedef std::multimap<String,String> QueryMap;
    QueryMap m_fields;
 };
 
@@ -266,6 +266,11 @@ bool URI::Query::parse( const String& query )
       if( eqpos == String::npos || eqpos == part.length()-1 )
       {
          value = "";
+         if( eqpos != String::npos )
+         {
+            part = part.subString(0, part.length()-1);
+         }
+
          if( ! URLDecode( part, key ) )
          {
             clear();
@@ -282,7 +287,7 @@ bool URI::Query::parse( const String& query )
          }
       }
       
-      fields[key] = value;
+      fields.insert( std::make_pair(key,value) );
       pos = posNext+1;
    }
    while ( posNext != String::npos );
@@ -331,7 +336,7 @@ size_t URI::Query::size() const
 
 void URI::Query::put( const String& field, const String& value )
 {
-   _p->m_fields[field] = value;
+   _p->m_fields.insert(std::make_pair(field,value));
    m_encoded = "@";
 
    if( m_owner != 0 )

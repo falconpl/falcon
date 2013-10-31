@@ -1311,6 +1311,52 @@ public:
 };
 
 
+class PStepCompareNext: public PStep
+{
+public:
+   PStepCompareNext() {apply=apply_;}
+   virtual ~PStepCompareNext() {}
+   void describeTo(String& tgt) {tgt = "PStepCompareNext";}
+
+   static void apply_(const PStep*, VMContext* ctx )
+   {
+      // op(0) top --> compare result
+      // op(1) --> second operand
+      // op(2) --> first operand
+      int64 result = ctx->topData().asInteger();
+
+      if( result == 0 )
+      {
+         // prepare the next loop
+         ItemArray* arr = ctx->opcodeParam(2).asArray();
+         // more result to get?
+         int32 &count = ctx->currentCode().m_seqId;
+         ++count;
+         if( count < (int) arr->length() )
+         {
+            ItemArray* oarr = ctx->opcodeParam(1).asArray();
+            // push (change) first operand
+            ctx->topData() = arr->at(count);
+            Class* cls = 0;
+            void* data = 0;
+            ctx->topData().forceClassInst(cls,data);
+            // push second operand
+            ctx->pushData( oarr->at(count) );
+            // compare
+            cls->op_compare(ctx,data);
+
+            return;
+         }
+      }
+
+      // remove 2 operands
+      ctx->popData(2);
+      ctx->topData().setInteger(result);
+      ctx->popCode();
+   }
+};
+
+
 /**
  @method fill Array
  @brief Changes all or some of the items in an array to a specified value
@@ -1504,6 +1550,7 @@ ClassArray::ClassArray():
    m_stepQSort = new _classArray::PStepQSort(this);
    m_stepQSortPartLow = new _classArray::PStepQSortLow;
    m_stepQSortPartHigh = new _classArray::PStepQSortPartHigh;
+   m_stepCompareNext = new _classArray::PStepCompareNext;
 }
 
 
@@ -1514,6 +1561,7 @@ ClassArray::~ClassArray()
    delete m_stepQSort;
    delete m_stepQSortPartLow;
    delete m_stepQSortPartHigh;
+   delete m_stepCompareNext;
 }
 
 int64 ClassArray::occupiedMemory( void* instance ) const
@@ -2170,6 +2218,49 @@ void ClassArray::op_next( VMContext* ctx, void* instance ) const
       {
          ctx->topData().setDoubt();
       }
+   }
+}
+
+
+void ClassArray::op_compare( VMContext* ctx, void* instance ) const
+{
+   ItemArray* arr = static_cast<ItemArray*>( instance );
+   Item& other = ctx->topData();
+   int64 cfr = typeID() - other.type();
+   if( cfr != 0 )
+   {
+      ctx->popData();
+      ctx->topData().setInteger(cfr);
+      return;
+   }
+
+   ItemArray* oarr = other.asArray();
+   cfr = ((int64)arr->length()) -((int64) oarr->length());
+   if( cfr != 0 )
+   {
+      ctx->popData();
+      ctx->topData().setInteger(cfr);
+      return;
+   }
+
+
+   // the two arrays MIGHT be equal.
+   if( arr->length() == 0 )
+   {
+      ctx->popData();
+      // indeed they are.
+      ctx->topData().setInteger(0);
+   }
+   else {
+      // ready to check next compare.
+      ctx->pushCode( m_stepCompareNext );
+
+      ctx->pushData(arr->at(0));
+      ctx->pushData(oarr->at(0));
+      Class* cls = 0;
+      void* data;
+      arr->at(0).forceClassInst(cls,data);
+      cls->op_compare(ctx,data);
    }
 }
 

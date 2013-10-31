@@ -75,6 +75,8 @@ public:
 
    virtual void op_iter( VMContext* ctx, void* self ) const;
    virtual void op_next( VMContext* ctx, void* self ) const;
+
+   virtual void op_compare( VMContext* ctx, void* self ) const;
 };
 
 }

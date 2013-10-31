@@ -499,6 +499,18 @@ Item* ItemDict::find( const Item& key )
 }
 
 
+
+Item* ItemDict::find( const String& key )
+{
+   Private::StringMap::iterator iter = _p->m_stringMap.find(key);
+   if( iter != _p->m_stringMap.end() )
+   {
+      return &iter->second;
+   }
+   return 0;
+}
+
+
 length_t ItemDict::size() const
 {
    length_t count = 0;

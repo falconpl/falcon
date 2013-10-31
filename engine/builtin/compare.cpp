@@ -38,7 +38,7 @@ Compare::~Compare()
 {
 }
 
-void Compare::invoke( VMContext* ctx, int32 nParams )
+void Compare::invoke( VMContext* ctx, int32 )
 {
    Item* item;
    Item* item2;
@@ -56,7 +56,7 @@ void Compare::invoke( VMContext* ctx, int32 nParams )
    }
 
    // Checking if both the items are here.
-   if( item == 0 || item2 == 0 || nParams != 2 )
+   if( item == 0 || item2 == 0 )
    {
       throw paramError(__LINE__, "core" );
    }

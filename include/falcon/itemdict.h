@@ -50,6 +50,7 @@ public:
    void insert( const Item& key, const Item& value );
    bool remove( const Item& key );
    Item* find( const Item& key );
+   Item* find( const String& key );
 
    length_t size() const;
    bool empty() const { return size() == 0; }
