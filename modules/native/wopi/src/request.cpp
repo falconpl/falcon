@@ -21,6 +21,7 @@
 #include <falcon/wopi/modulewopi.h>
 #include <falcon/wopi/uploaded.h>
 #include <falcon/wopi/classuploaded.h>
+#include <falcon/log.h>
 
 #include <falcon/uri.h>
 #include <falcon/error.h>
@@ -186,7 +187,6 @@ bool Request::parseBody( Stream* input )
       m_MainPart.getMemoryData( post_data );
       Falcon::WOPI::Utils::parseQuery( post_data, *m_posts );
    }
-   /*
    else
    {
       while( child != 0 )
@@ -195,7 +195,6 @@ bool Request::parseBody( Stream* input )
          child = child->next();
       }
    }
-   */
 
    return true;
 }
@@ -271,6 +270,10 @@ bool Request::setURI( const String& uri )
             Rator( Request& r ): m_request(r) {}
             virtual ~Rator() {}
             virtual bool operator()( const URI::Query::KeyValue& data ) {
+#ifndef NDEBUG
+               Engine::instance()->log()->log(Log::fac_engine, Log::lvl_debug2,
+                        String("Setting URI query variable ") + data.key + "=" +data.value );
+#endif
                m_request.gets()->insert(
                         FALCON_GC_HANDLE(new String(data.key)),
                         FALCON_GC_HANDLE(new String(data.value)) );

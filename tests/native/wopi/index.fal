@@ -10,10 +10,10 @@
    Read the README file for more informations on setup.
 *****************************************************************************/
 
+load vfs
 // The defaults and the configuration are usually ok
 // but you may want to set your own:
 // wopi_tempDir: "/tmp"
-
 
 // shows the real page
 if "p" notin Request.gets
@@ -23,7 +23,7 @@ else
 end
 
 // load pre-pages
-if fileType( "pages/pre-" + page + ".fal" ) == FileStat.NORMAL
+if VFS.fileType( "pages/pre-" + page + ".fal" ) == FileStat.NORMAL
    try
       pre_data = include( "pages/pre-" + page + ".fal" )
    catch in error

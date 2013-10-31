@@ -4,4 +4,5 @@
    Redirection test -- pre-load part
 *****************************************************************************/
 
+> "PRE"
 Reply.redirect( makeLink( "redir_2" ), 5 )

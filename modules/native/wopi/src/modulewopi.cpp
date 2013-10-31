@@ -30,7 +30,8 @@
 namespace Falcon {
 namespace WOPI {
 
-ModuleWopi::ModuleWopi( const String& name, Request* req, Reply* rep )
+ModuleWopi::ModuleWopi( const String& name, Request* req, Reply* rep ):
+         Module("WOPI", true)
 {
    m_process = 0;
    m_oldStdout = 0;
