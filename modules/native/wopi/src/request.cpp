@@ -150,9 +150,12 @@ bool Request::parseBody( Stream* input )
    m_MainPart.startMemoryUpload();
    //fprintf( stderr, "Content length: %d / %d\n", (int) m_content_length, (int) m_nMaxMemUpload );
 
-   int64 memUpload;
+   int64 memUpload = 0;
    String error;
-   m_module->wopi()->getConfigValue( OPT_MaxMemoryUploadSize, memUpload, error );
+   if ( m_module != 0 )
+   {
+      m_module->wopi()->getConfigValue( OPT_MaxMemoryUploadSize, memUpload, error );
+   }
 
    // Inform the part if it can use memory uploads for their subparts.
    if ( m_content_length != -1 &&

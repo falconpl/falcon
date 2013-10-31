@@ -55,7 +55,7 @@ end
 
 <form method="POST" action="<?= Request.uri ?>">
 <table>
-<tr><td>Name (Exp. "John Doe"):</td><td><input type="text" value="<?= htmlEscape(posts["Name"])?>" name="Name"/></td></tr>
+<tr><td>Name (Exp. "John Doe"):</td><td><input type="text" value="<?= Wopi.escape(posts["Name"])?>" name="Name"/></td></tr>
 <tr><td>Occupation (Exp. Student):</td><td>
    <select name="Occupation">
    <option value="" <? if posts["Occupation"] =="": >>'selected="yes"'?>> -- Please select -- </option>
@@ -71,13 +71,14 @@ end
       <input type="radio" name="Gender" value="F" <? if posts["Gender"] =="F": >>'checked="yes"'?>/>&nbsp;Female
       </td></tr>
 <tr><td>Likes (Exp. Reading + Music):</td><td>
+      <?= "test" in posts["Likes"] ?>
       <input type="checkbox" name="Likes[]" value="Sport" <? if "Likes" in posts and "Sport" in posts["Likes"]: >>'checked="yes"'?>/>&nbsp;Sport
       &nbsp;&nbsp&nbsp;
       <input type="checkbox" name="Likes[]" value="Reading" <? if "Likes" in posts and "Reading" in posts["Likes"]: >>'checked="yes"'?>/>&nbsp;Reading
       &nbsp;&nbsp&nbsp;
       <input type="checkbox" name="Likes[]" value="Music" <? if "Likes" in posts and "Music" in posts["Likes"]: >>'checked="yes"'?>/>&nbsp;Music
       </td></tr>
-<tr><td>International (Exp. "国際値"):</td><td><input type="text" value="<?= htmlEscape(posts['入空'])?>" name="入空"/></td></tr>
+<tr><td>International (Exp. "国際値"):</td><td><input type="text" value="<?= Wopi.escape(posts['入空'])?>" name="入空"/></td></tr>
 <tr><td colspan="2"><input type="submit" name="btn" value="send"/></td></tr>
 </table>
 </form>

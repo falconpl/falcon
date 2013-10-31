@@ -21,6 +21,7 @@
 #include <falcon/wopi/modulewopi.h>
 #include <falcon/wopi/classwopi.h>
 #include <falcon/wopi/errors.h>
+#include <falcon/wopi/utils.h>
 
 #include <falcon/itemdict.h>
 #include <falcon/itemarray.h>
@@ -116,24 +117,6 @@ FALCON_DEFINE_FUNCTION_P(tempFile)
    ctx->returnFrame( FALCON_GC_HANDLE(tgFile) );
 }
 
-/*
-static void internal_htmlEscape_stream( const Falcon::String &str, Falcon::TextWriter *out )
-{
-   for ( Falcon::uint32 i = 0; i < str.length(); i++ )
-   {
-      Falcon::uint32 chr = str[i];
-      switch ( chr )
-      {
-         case '<': out->write( "&lt;" ); break;
-         case '>': out->write( "&gt;" ); break;
-         case '"': out->write( "&quot;" ); break;
-         case '&': out->write( "&amp;" ); break;
-         default: out->putChar( chr ); break;
-      }
-   }
-}
-*/
-}
 
 /*#
    @property scriptName Wopi
@@ -358,7 +341,6 @@ FALCON_DEFINE_FUNCTION_P1(setPersist)
    ctx->returnFrame();
 }
 
-#if 0
 
 /*#
    @method parseQuery Wopi
@@ -368,22 +350,20 @@ FALCON_DEFINE_FUNCTION_P1(setPersist)
  
 */
 
-FALCON_FUNC Wopi_parseQuery( Falcon::VMachine *vm )
+FALCON_DECLARE_FUNCTION(parseQuery, "qstring:S")
+FALCON_DEFINE_FUNCTION_P1(parseQuery)
 {
-   Falcon::Item *i_qstring = vm->param(0);
-   Falcon::Item *i_output = vm->param(1);
+   Falcon::Item *i_qstring = ctx->param(0);
 
    // return an empty string if nil was given as parameter.
    if ( i_qstring == 0 || ! i_qstring->isString() )
    {
-       throw new Falcon::ParamError(
-         Falcon::ErrorParam( Falcon::e_inv_params, __LINE__ ).
-         extra( "S" ) );
+       throw paramError();
    }
 
-   LinearDict* dict = new LinearDict;
+   ItemDict* dict = new ItemDict;
    Utils::parseQuery( *i_qstring->asString(), *dict );
-   vm->retval(new CoreDict(dict));
+   ctx->returnFrame(FALCON_GC_HANDLE(dict));
 }
 
 /*#
@@ -396,50 +376,54 @@ FALCON_FUNC Wopi_parseQuery( Falcon::VMachine *vm )
     into strings with the basic toString() method. Object.toString() overrides
     won't be respected.
 */
-FALCON_FUNC Wopi_makeQuery( Falcon::VMachine *vm )
+FALCON_DECLARE_FUNCTION(makeQuery, "dict:D")
+FALCON_DEFINE_FUNCTION_P1(makeQuery)
 {
-   Falcon::Item *i_dict = vm->param(0);
+   Falcon::Item *i_dict = ctx->param(0);
    
    // return an empty string if nil was given as parameter.
    if ( i_dict == 0 || ! i_dict->isDict() )
    {
-       throw new Falcon::ParamError(
-         Falcon::ErrorParam( Falcon::e_inv_params, __LINE__ ).
-         extra( "D" ) );
+       throw paramError();
    }
-
-   CoreString* cs = new CoreString();
-   vm->retval( cs );
    
-   CoreDict* dict = i_dict->asDict();
-   ItemDict& idict = dict->items();
-   Iterator iter(&idict);
-   bool bFilled = false;
-   while( iter.hasCurrent() )
+
+   ItemDict* idict = i_dict->asDict();
+   String* str = new String;
+
+   class Rator: public ItemDict::Enumerator
    {
-      if (bFilled )
+   public:
+      Rator( String& tgt ): m_tgt(tgt){}
+      virtual ~Rator() {}
+      virtual void operator()( const Item& key, Item& value )
       {
-         cs->append('&');
+         if( !m_tgt.empty() )
+         {
+            m_tgt.append('&');
+         }
+
+         String sKey, sValue;
+         key.describe(sKey);
+         value.describe(sValue);
+         m_tgt.append( URI::URLEncode( sKey ) );
+         m_tgt.append( '=' );
+         m_tgt.append( URI::URLEncode( sValue ) );
       }
-      const Item& key = iter.getCurrentKey();
-      const Item& value = iter.getCurrent();
-      String skey; key.toString( skey );
-      String svalue; value.toString( svalue );
       
-      cs->append( URI::URLEncode( skey ) );
-      cs->append( '=' );
-      cs->append( URI::URLEncode( svalue ) );
-      
-      iter.next();
-      bFilled = true;
+   private:
+      String& m_tgt;
    }
+   rator( *str );
+
+   idict->enumerate(rator);
+   ctx->returnFrame( FALCON_GC_HANDLE(idict) );
 }
 
 /*#
-   @function htmlEscape
+   @method escape Wopi
    @brief Escapes a string converting HTML special characters.
    @param string The string to be converted.
-   @optparam output A stream where to place the output.
    @return A converted string, or nil if writing to a string.
 
    This function converts special HTML characters to HTML sequences:
@@ -456,38 +440,26 @@ FALCON_FUNC Wopi_makeQuery( Falcon::VMachine *vm )
    CPU.
 */
 
-FALCON_FUNC htmlEscape( Falcon::VMachine *vm )
+FALCON_DECLARE_FUNCTION(escape, "string:S")
+FALCON_DEFINE_FUNCTION_P1(escape)
 {
-   Falcon::Item *i_str = vm->param(0);
-   Falcon::Item *i_output = vm->param(1);
+   Falcon::Item *i_str = ctx->param(0);
 
    // return an empty string if nil was given as parameter.
    if ( i_str != 0 && i_str->isNil() )
    {
-      vm->retval( new Falcon::CoreString );
+      ctx->returnFrame( FALCON_GC_HANDLE(new String) );
       return;
    }
 
    if ( i_str == 0 || ! i_str->isString() )
    {
-      throw new Falcon::ParamError(
-         Falcon::ErrorParam( Falcon::e_inv_params, __LINE__ ).
-         extra( "S,[Stream|X]" ) );
+      throw paramError();
    }
 
-   if ( i_output != 0 )
-   {
-       if ( i_output->isObject() && i_output->asObject()->derivedFrom( "Stream" ) )
-         internal_htmlEscape_stream( *i_str->asString(),
-            (Falcon::Stream *) i_output->asObject()->getUserData() );
-      else
-         internal_htmlEscape_stream( *i_str->asString(),
-            i_output->isTrue() ? vm->stdOut() : vm->stdErr() );
-      return;
-   }
 
    const Falcon::String& str = *i_str->asString();
-   Falcon::CoreString* encoded = new Falcon::CoreString( str.size() );
+   String* encoded = new String( str.size() );
 
    Falcon::uint32 len = str.length();
    for ( Falcon::uint32 i = 0; i < len; i++ )
@@ -501,14 +473,14 @@ FALCON_FUNC htmlEscape( Falcon::VMachine *vm )
          case '&': encoded->append( "&amp;" ); break;
          default:
             encoded->append( chr );
+            break;
       }
    }
 
-   vm->retval( encoded );
+   ctx->returnFrame( FALCON_GC_HANDLE(encoded) );
 }
-#endif
 
-
+}
 
 //===================================================================================
 // Wopi class
@@ -521,7 +493,11 @@ ClassWopi::ClassWopi():
 
    addProperty("scriptName", &get_scriptName );
    addProperty("scriptPath", &get_scriptPath );
+
    addMethod( new Function_tempFile );
+   addMethod( new Function_escape );
+   addMethod( new Function_parseQuery );
+   addMethod( new Function_makeQuery );
 }
 
 ClassWopi::~ClassWopi()
