@@ -270,16 +270,6 @@ void FalhttpOptions::parseIni()
 
 void FalhttpOptions::parseMimeTypes()
 {
-   // add some sensible default.
-   m_lMimeTypes.push_back( MimeType( "text/html", "*.html;*.htm" ) );
-   m_lMimeTypes.push_back( MimeType( "text/css", "*.css" ) );
-   m_lMimeTypes.push_back( MimeType( "text/javascript", "*.js" ) );
-   m_lMimeTypes.push_back( MimeType( "image/png", "*.png" ) );
-   m_lMimeTypes.push_back( MimeType( "image/gif", "*.gif" ) );
-   m_lMimeTypes.push_back( MimeType( "image/jpg", "*.jpg;*.jpeg" ) );
-   m_lMimeTypes.push_back( MimeType( "image/tiff", "*.tif;*.tiff" ) );
-   m_lMimeTypes.push_back( MimeType( "text/plain", "*" ) );
-
 
    ConfigSection* cs = m_cfg.getSection("MIME");
    if( cs != 0 )
@@ -304,6 +294,17 @@ void FalhttpOptions::parseMimeTypes()
 
       cs->enumerateKeys(rator);
    }
+
+   // add some sensible default.
+   m_lMimeTypes.push_back( MimeType( "text/html", "*.html;*.htm" ) );
+   m_lMimeTypes.push_back( MimeType( "text/css", "*.css" ) );
+   m_lMimeTypes.push_back( MimeType( "text/javascript", "*.js" ) );
+   m_lMimeTypes.push_back( MimeType( "image/png", "*.png" ) );
+   m_lMimeTypes.push_back( MimeType( "image/gif", "*.gif" ) );
+   m_lMimeTypes.push_back( MimeType( "image/jpg", "*.jpg;*.jpeg" ) );
+   m_lMimeTypes.push_back( MimeType( "image/tiff", "*.tif;*.tiff" ) );
+   m_lMimeTypes.push_back( MimeType( "text/plain", "*" ) );
+
 }
 
 

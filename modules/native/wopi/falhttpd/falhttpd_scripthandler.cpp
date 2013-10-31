@@ -27,6 +27,7 @@
 #include <falcon/wopi/modulewopi.h>
 #include <falcon/wopi/replystream.h>
 #include <falcon/wopi/reply.h>
+#include <falcon/wopi/stream_ch.h>
 
 namespace Falcon {
 
@@ -70,8 +71,9 @@ void ScriptHandler::serve( Falcon::WOPI::Request* req )
    process->modSpace()->add( core );
    process->modSpace()->add( wopi );
 
-   WOPI::ReplyStream* r_stdout = new WOPI::ReplyStream(wopi->reply(), process->stdOut() );
-   WOPI::ReplyStream* r_stderr = new WOPI::ReplyStream(wopi->reply(), process->stdErr() );
+   WOPI::ReplyStream* r_stdout = new WOPI::ReplyStream(wopi->reply(), m_client->stream(), false );
+   WOPI::ReplyStream* r_stderr = new WOPI::ReplyStream(wopi->reply(), process->stdErr(), false );
+   wopi->reply()->setCommitHandler( new WOPI::StreamCommitHandler(m_client->stream()) );
    process->stdOut(r_stdout);
    process->stdErr(r_stderr);
 
@@ -87,8 +89,10 @@ void ScriptHandler::serve( Falcon::WOPI::Request* req )
    catch( Error* err )
    {
       String s = err->describe();
-      process->textErr()->write( s );
-      LOGW( "Script "+ m_sFile + " terminated with error: " + s );
+      m_client->reply()->setContentType("text/plain");
+      process->textOut()->write( s );
+      String text = "Script "+ m_sFile + " terminated with error: " + s;
+      LOGW( text );
       err->decref();
    }
 
