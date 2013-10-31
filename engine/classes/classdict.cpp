@@ -733,7 +733,7 @@ void ClassDict::op_ashr( VMContext* ctx, void* inst ) const
 
 void ClassDict::op_isTrue( VMContext* ctx, void* self ) const
 {
-   ctx->stackResult( 1, static_cast<ItemDict*>(self)->size() != 0 );
+   ctx->topData().setBoolean(static_cast<ItemDict*>(self)->size() != 0);
 }
 
 

@@ -21,7 +21,8 @@
 #include <falcon/stdhandlers.h>
 #include <falcon/symbol.h>
 
-#include "falcon/itemarray.h"
+#include <falcon/itemarray.h>
+#include <falcon/itemdict.h>
 
 
 namespace Falcon
@@ -92,6 +93,15 @@ bool Item::isTrue() const
 
    case FLC_ITEM_NUM:
       return asNumeric() != 0.0;
+
+   case FLC_CLASS_ID_ARRAY:
+      return ! asArray()->empty();
+
+   case FLC_CLASS_ID_DICT:
+      return ! asDict()->empty();
+
+   case FLC_CLASS_ID_STRING:
+      return ! asString()->empty();
 
    default:
       return false;
