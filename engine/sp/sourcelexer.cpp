@@ -94,6 +94,12 @@ Parsing::TokenInstance* SourceLexer::readOutscape()
    state = e_normal;
 
    // if we exited, then we completed a token.
+   if( m_chr == 0 )
+   {
+      // start the count
+      m_chr = 1;
+      m_line = 1;
+   }
    m_sline = m_line;
    m_schr = m_chr;
 
