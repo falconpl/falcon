@@ -203,7 +203,7 @@ void URI::Authority::copy( const Authority& other )
 
 class URI::Query::Private {
 public:
-   typedef std::multimap<String,String> QueryMap;
+   typedef std::map<String,String> QueryMap;
    QueryMap m_fields;
 };
 
