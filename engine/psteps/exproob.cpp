@@ -120,7 +120,7 @@ void ExprXorOob::apply_( const PStep* ps, VMContext* ctx )
          return;
    }
 
-   
+   ctx->popCode();
    ctx->topData().xorOob();
 }
 
@@ -157,6 +157,7 @@ void ExprIsOob::apply_( const PStep* ps, VMContext* ctx )
          return;
    }
    
+   ctx->popCode();
    Item& item = ctx->topData();
    item.setBoolean(item.isOob());
 }
@@ -164,7 +165,7 @@ void ExprIsOob::apply_( const PStep* ps, VMContext* ctx )
 
 const String& ExprIsOob::exprName() const
 {
-   static String name("^?");
+   static String name("^$");
    return name;
 }
 
