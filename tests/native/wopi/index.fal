@@ -26,7 +26,9 @@ end
 path = Path (Wopi.scriptPath)
 if VFS.fileType( path.fulloc() + "/pages/pre-" + page + ".fal" ) == FileStat.NORMAL
    try
-      pre_data = include( "pages/pre-" + page + ".fal" )
+      dt = ["__main__" => nil]
+      include( "pages/pre-" + page + ".fal", nil, nil, dt )
+      pre_data = dt["__main__"]()
    catch in error
       header("Error!")
       errorDocument( @"Sorry, required pre-requisite for required page \"$page\" cannot be loaded.", error )

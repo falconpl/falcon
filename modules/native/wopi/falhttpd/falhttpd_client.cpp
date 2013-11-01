@@ -47,7 +47,7 @@ FalhttpdClient::FalhttpdClient( const FalhttpOptions& options, Mod::Socket* skt 
    m_options( options )
 {
    LOGI( "Incoming client from "+ skt->address()->toString() );
-   m_stream = m_skt->makeStreamInterface();
+   m_stream = new StreamBuffer(m_skt->makeStreamInterface());
    m_reply = new WOPI::Reply;
    m_reply->setCommitHandler( new WOPI::StreamCommitHandler(m_stream) );
 }
@@ -62,6 +62,7 @@ void FalhttpdClient::close()
 {
    if( m_skt != 0 )
    {
+      m_stream->flush();
       LOGI( "Client "+ m_skt->address()->toString() + " gone" );
       m_stream->decref();
       m_skt->close();
@@ -76,7 +77,7 @@ void FalhttpdClient::serve()
 
    // get the header
    String sHeader;
-   StreamBuffer si( m_skt->makeStreamInterface() );
+   StreamBuffer& si = *m_stream;
    uint32 chr;
    while ( ! sHeader.endsWith("\r\n") && si.get(chr) )
    {
@@ -134,12 +135,11 @@ void FalhttpdClient::serve()
    }
 
    // ok, we got a valid header -- proceed in serving the request.
-   serveRequest( sMethod, sUri, sProto, &si );
+   serveRequest( sMethod, sUri, sProto );
 }
 
 void FalhttpdClient::serveRequest(
-      const String& sMethod, const String& sUri,  const String& sProto,
-      Stream* si )
+      const String& sMethod, const String& sUri,  const String& sProto )
 {
    LOGI( "Serving request from "+ m_skt->address()->toString() + ": " + sMethod + " " + sUri + " " + sProto );
 
@@ -147,12 +147,6 @@ void FalhttpdClient::serveRequest(
 
    WOPI::Request* req = new WOPI::Request;
    req->startedAt( Sys::_seconds() );
-   if( ! req->parse( si ) )
-   {
-      replyError( 400, req->partHandler().error() );
-      delete req;
-      return;
-   }
 
    req->setURI( sUri );
    req->m_remote_ip = m_skt->address()->toString();
@@ -164,6 +158,7 @@ void FalhttpdClient::serveRequest(
    {
       LOGW( "Not found file "+ sFile );
       replyError( 404 );
+      delete req;
    }
    else
    {
@@ -175,8 +170,6 @@ void FalhttpdClient::serveRequest(
       rh->serve( req );
       delete rh;
    }
-
-   delete req;
    LOGI( "Served client "+ m_skt->address()->toString() );
 }
 

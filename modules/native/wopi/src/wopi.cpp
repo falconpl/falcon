@@ -156,6 +156,18 @@ Wopi::ConfigEntry::ConfigEntry( const String& name, t_type type, const String& d
 }
 
 
+Wopi::ConfigEntry::ConfigEntry( const ConfigEntry& other )
+{
+   m_type = other.m_type;
+   m_name = other.m_name;
+   m_desc = other.m_desc;
+   m_checkFunc = other.m_checkFunc;
+
+   m_sValue = other.m_sValue;
+   m_iValue = other.m_iValue;
+}
+
+
 Wopi::ConfigEntry::~ConfigEntry()
 {
 }
@@ -654,6 +666,30 @@ bool Wopi::configFromModule( Module* module, String& errors )
    }
 
    return status;
+}
+
+
+void Wopi::configFromWopi( const Wopi& other )
+{
+   ConfigMap::const_iterator iter = other.m_config.begin();
+   ConfigMap::const_iterator end = other.m_config.end();
+   while( iter != end )
+   {
+      const String& option = iter->first;
+      ConfigEntry* entry = iter->second;
+
+      ConfigMap::iterator pos = m_config.find(option);
+      if( pos != m_config.end() )
+      {
+         delete pos->second;
+         pos->second = new ConfigEntry(*entry);
+      }
+      else {
+         m_config.insert(std::make_pair(option, new ConfigEntry(*entry)));
+      }
+
+      ++iter;
+   }
 }
 
 

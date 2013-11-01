@@ -42,18 +42,15 @@ FalhttpOptions::FalhttpOptions():
    m_bSysLog( true ),
    m_bAllowDir( true )
 {
-   m_maxUpload = 200000;
-   m_maxMemUpload = 5000;
-   m_sUploadPath = "/tmp";
-   m_sTextEncoding = "utf-8";
-   m_sSourceEncoding = "utf-8";
+   m_sTextEncoding = "utf8";
+   m_sSourceEncoding = "utf8";
+   fassert( Engine::instance()->getTranscoder(m_sTextEncoding) != 0 );
    
    setIndexFile( "index.ftd;index.fal;index.html;index.htm" );
 }
 
 FalhttpOptions::~FalhttpOptions()
 {
-
 }
 
 
@@ -95,8 +92,9 @@ bool FalhttpOptions::init( int argc, char* argv[] )
          case 'p': pParam = &sPort; break;
          case 'q': m_bQuiet = true; break;
          case 'S': m_bSysLog = false; break;
-         case 'T': pParam = &m_sUploadPath; break;
          case 't': pParam = &sTimeout; break;
+         case 'e': pParam = &m_sTextEncoding; break;
+         case 'E': pParam = &m_sSourceEncoding; break;
          case '?': m_bHelp = true; break;
          default:
             m_sErrorDesc = "Invalid command ";
@@ -158,10 +156,39 @@ bool FalhttpOptions::init( int argc, char* argv[] )
       }
    }
 
-   parseIni();
-   parseMimeTypes();
+   if( ! m_configFile.empty() )
+   {
+      parseIni();
+      parseMimeTypes();
+   }
 
-   return true;
+
+   if ( ! m_wopiIni.empty() )
+   {
+      parseWopiIni();
+   }
+
+   // add some sensible MIME default.
+   m_lMimeTypes.push_back( MimeType( "text/html", "*.html;*.htm" ) );
+   m_lMimeTypes.push_back( MimeType( "text/css", "*.css" ) );
+   m_lMimeTypes.push_back( MimeType( "text/javascript", "*.js" ) );
+   m_lMimeTypes.push_back( MimeType( "image/png", "*.png" ) );
+   m_lMimeTypes.push_back( MimeType( "image/gif", "*.gif" ) );
+   m_lMimeTypes.push_back( MimeType( "image/jpg", "*.jpg;*.jpeg" ) );
+   m_lMimeTypes.push_back( MimeType( "image/tiff", "*.tif;*.tiff" ) );
+   m_lMimeTypes.push_back( MimeType( "text/plain", "*" ) );
+
+   if ( Engine::instance()->getTranscoder(m_sTextEncoding) == 0 )
+   {
+      m_sErrorDesc += "Invalid text stream encoding " + m_sTextEncoding +"\n";
+   }
+
+   if ( Engine::instance()->getTranscoder(m_sSourceEncoding) == 0 )
+   {
+      m_sErrorDesc += "Invalid source script encoding " + m_sSourceEncoding +"\n";
+   }
+
+   return m_sErrorDesc.empty();
 }
 
 
@@ -256,14 +283,42 @@ bool FalhttpOptions::remap( Falcon::String& sFname ) const
 
 void FalhttpOptions::parseIni()
 {
-   if( m_cfg.mainSection() != 0 )
+   try {
+      Stream* stream = Engine::instance()->vfs().openRO( m_configFile );
+      TextReader input(stream, Engine::instance()->getTranscoder(m_sSourceEncoding) );
+      stream->decref();
+      m_cfg.load(&input);
+      if( m_cfg.mainSection() != 0 )
+      {
+         ConfigSection* cs = m_cfg.mainSection();
+         cs->getValue( "HomeDir", m_homedir );
+         cs->getValue( "Interface", m_sIface );
+         cs->getValue( "PersistentDataDir", m_sAppDataDir );
+         cs->getValue( "WopiINI", m_wopiIni );
+      }
+   }
+   catch( Error* err )
    {
-      ConfigSection* cs = m_cfg.mainSection();
-      cs->getValue( "HomeDir", m_homedir );
-      cs->getValue( "LoadPath", m_loadPath );
-      cs->getValue( "TempDir", m_sUploadPath );
-      cs->getValue( "Interface", m_sIface );
-      cs->getValue( "PersistentDataDir", m_sAppDataDir );
+      m_sErrorDesc += "Error reading configuration file: " + err->describe();
+   }
+}
+
+
+void FalhttpOptions::parseWopiIni()
+{
+   try {
+      Stream* stream = Engine::instance()->vfs().openRO( m_wopiIni );
+      TextReader input(stream, Engine::instance()->getTranscoder(m_sSourceEncoding) );
+      stream->decref();
+      String errors;
+      if( ! m_templateWopi.configFromIni( &input, errors ) )
+      {
+         m_sErrorDesc += "Error reading WOPI configuration: " + errors;
+      }
+   }
+   catch( Error* err )
+   {
+      m_sErrorDesc += "Error reading configuration file: " + err->describe();
    }
 }
 
@@ -294,17 +349,6 @@ void FalhttpOptions::parseMimeTypes()
 
       cs->enumerateKeys(rator);
    }
-
-   // add some sensible default.
-   m_lMimeTypes.push_back( MimeType( "text/html", "*.html;*.htm" ) );
-   m_lMimeTypes.push_back( MimeType( "text/css", "*.css" ) );
-   m_lMimeTypes.push_back( MimeType( "text/javascript", "*.js" ) );
-   m_lMimeTypes.push_back( MimeType( "image/png", "*.png" ) );
-   m_lMimeTypes.push_back( MimeType( "image/gif", "*.gif" ) );
-   m_lMimeTypes.push_back( MimeType( "image/jpg", "*.jpg;*.jpeg" ) );
-   m_lMimeTypes.push_back( MimeType( "image/tiff", "*.tif;*.tiff" ) );
-   m_lMimeTypes.push_back( MimeType( "text/plain", "*" ) );
-
 }
 
 

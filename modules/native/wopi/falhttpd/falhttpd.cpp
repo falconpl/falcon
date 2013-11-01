@@ -181,6 +181,8 @@ void FalhttpdApp::usage()
       "  -A <dir>    Directory where to place persistent application data.\n"
       "  -C <file>   Load this configuration file\n"
       "  -D <file>   Log debug level informations to the given file or path\n"
+      "  -e <enc>    Text encoding used to render text output from scripts.\n"
+      "  -E <enc>    Text encoding used to read source scripts (defaults to -e).\n"
       "  -h <dir>    Sets this directory as site HTDOCS root\n"
       "  -i <addr>   Listen on the named interface (defaults to 0.0.0.0 - all)\n"
       "  -l <n>      Log level (0 min, 5 max)\n"

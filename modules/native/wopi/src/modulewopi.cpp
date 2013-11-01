@@ -60,17 +60,17 @@ ModuleWopi::ModuleWopi( const String& name, Request* req, Reply* rep ):
    m_classWopi = new ClassWopi;
    m_classUploaded = new ClassUploaded;
 
-   Class* requestClass = new ClassRequest;
-   Class* replyClass = new ClassReply;
-   *this << requestClass
-         << replyClass
+   m_classRequest = new ClassRequest;
+   m_classReply = new ClassReply;
+   *this << m_classReply
+         << m_classRequest
          << m_classWopi
          << m_classUploaded
    ;
 
    // set the global items without creating the singletons.
-   addGlobal("Request", FALCON_GC_STORE(requestClass, m_request), true );
-   addGlobal("Reply", FALCON_GC_STORE(replyClass, m_reply), true );
+   addGlobal("Request", FALCON_GC_STORE(m_classRequest, m_request), true );
+   addGlobal("Reply", FALCON_GC_STORE(m_classReply, m_reply), true );
    addGlobal("Wopi", FALCON_GC_STORE(m_classWopi, m_wopi), true );
 }
 

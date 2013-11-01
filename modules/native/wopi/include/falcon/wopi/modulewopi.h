@@ -25,6 +25,8 @@ class Process;
 namespace WOPI {
 
 class ClassWopi;
+class ClassRequest;
+class ClassReply;
 class ClassUploaded;
 class Wopi;
 class Request;
@@ -63,6 +65,8 @@ public:
    const String& provider() const { return m_provider; }
 
    Request* request() const { return m_request; }
+   ClassRequest* requestClass() const { return m_classRequest; }
+   ClassReply* replyClass() const { return m_classReply; }
    Reply* reply() const { return m_reply; }
 protected:
 
@@ -70,6 +74,8 @@ protected:
    void resumeOutputStreams();
 
    ClassWopi* m_classWopi;
+   ClassRequest* m_classRequest;
+   ClassReply* m_classReply;
    ClassUploaded* m_classUploaded;
 
    Wopi* m_wopi;

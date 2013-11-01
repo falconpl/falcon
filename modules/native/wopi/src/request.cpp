@@ -70,13 +70,38 @@ Request::~Request()
 
 bool Request::parse( Stream* input )
 {
-   if( ! parseHeader( input ) )
-      return false;
+   Engine::collector()->enable(false);
 
-   if( m_content_length > 0 )
-      return parseBody( input );
+   bool check;
+   Error* error = 0;
+   try
+   {
+      if( parseHeader( input ) )
+      {
+         check = true;
 
-   return true;
+         if( m_content_length > 0 )
+         {
+            check = parseBody( input );
+         }
+      }
+      else {
+         check = false;
+      }
+   }
+   catch ( Error* err )
+   {
+      error = err;
+      check = false;
+   }
+
+   Engine::collector()->enable(true);
+   if( error != 0 )
+   {
+      throw error;
+   }
+
+   return check;
 }
 
 bool Request::parseHeader( Stream* input )
@@ -267,28 +292,12 @@ bool Request::setURI( const String& uri )
       m_sUri = uri;
       if ( m_uri.query().size() != 0 )
       {
-         class Rator: public URI::Query::FieldEnumerator
-         {
-         public:
-            Rator( Request& r ): m_request(r) {}
-            virtual ~Rator() {}
-            virtual bool operator()( const URI::Query::KeyValue& data ) {
-#ifndef NDEBUG
-               Engine::instance()->log()->log(Log::fac_engine, Log::lvl_debug2,
-                        String("Setting URI query variable ") + data.key + "=" +data.value );
-#endif
-               WOPI::Utils::addQueryVariable(data.key,
-                        FALCON_GC_HANDLE( new String(data.value) ),
-                        *m_request.gets() );
-               return true;
-            }
+         // we can't trust URI query field, as RFC for URI locator query variables
+         // doesn't include special naming conventions as dictionaries and arrays
+         // passed in that.
 
-         private:
-            Request& m_request;
-         };
-
-         Rator rator(*this);
-         m_uri.query().enumerateFields(rator);
+         uint32 pos = uri.find('?');
+         WOPI::Utils::parseQuery(uri.subString(pos+1), *m_gets);
       }
 
       m_location = m_uri.path().encode();

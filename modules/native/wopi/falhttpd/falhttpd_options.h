@@ -25,6 +25,7 @@ s
 
 #include <falcon/types.h>
 #include <falcon/string.h>
+#include <falcon/wopi/wopi.h>
 #include <confparser_mod.h>
 
 #include <list>
@@ -48,6 +49,7 @@ public:
    void parseIni();
    void parseMimeTypes();
    void parseRedirects();
+   void parseWopiIni();
 
    /** Change the file to be loaded.
    */
@@ -63,19 +65,17 @@ public:
    void addMimeType( const String& sKey, const String& sValue );
    void addRedirect( const String& sKey, const String& sValue );
 
-   Falcon::int64 m_maxUpload;
-   Falcon::int64 m_maxMemUpload;
-   Falcon::String m_sUploadPath;
    Falcon::String m_loadPath;
    Falcon::String m_homedir;
    Falcon::String m_configFile;
-   Falcon::String m_sErrorDesc;
    Falcon::String m_sLogFiles;
    Falcon::String m_sIface;
    Falcon::String m_sIndexFile;
    Falcon::String m_sTextEncoding;
    Falcon::String m_sSourceEncoding;
    Falcon::String m_sAppDataDir;
+
+   Falcon::String m_wopiIni;
 
    std::list<Falcon::String> m_lIndexFiles;
 
@@ -88,6 +88,10 @@ public:
 
    bool m_bAllowDir;
 
+   //! Tempalte WOPI object used for configuration.
+   WOPI::Wopi m_templateWopi;
+
+   String m_sErrorDesc;
 private:
    bool checkBool( const Falcon::String& b );
    ConfigFile m_cfg;

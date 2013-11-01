@@ -27,6 +27,7 @@
 #include <falcon/wopi/modulewopi.h>
 #include <falcon/wopi/replystream.h>
 #include <falcon/wopi/reply.h>
+#include <falcon/wopi/classrequest.h>
 #include <falcon/wopi/stream_ch.h>
 
 namespace Falcon {
@@ -64,12 +65,14 @@ void ScriptHandler::serve( Falcon::WOPI::Request* req )
    Falcon::Path path( m_sFile );
    ml->addDirectoryFront( path.fulloc() );
 
-
    Module* core = new CoreModule;
-   WOPI::ModuleWopi* wopi = new WOPI::ModuleWopi("FalHTTPD", req, m_client->reply() );
+   WOPI::Reply* reply = m_client->reply();
+   WOPI::ModuleWopi* wopi = new WOPI::ModuleWopi("FalHTTPD", req, reply );
+   m_client->detachReply();
 
    process->modSpace()->add( core );
    process->modSpace()->add( wopi );
+   wopi->wopi()->configFromWopi( m_client->options().m_templateWopi );
 
    WOPI::ReplyStream* r_stdout = new WOPI::ReplyStream(wopi->reply(), m_client->stream(), false );
    WOPI::ReplyStream* r_stderr = new WOPI::ReplyStream(wopi->reply(), process->stdErr(), false );
@@ -80,22 +83,71 @@ void ScriptHandler::serve( Falcon::WOPI::Request* req )
    wopi->scriptName(path.filename());
    wopi->scriptPath(m_sFile);
 
+   // now that the module (and so, the request) is fully configured,
+   // we can read the incoming data
+
+
+   // read the rest of the request.
+   // Notice: the parsing disables the GC; our request object MUST be
+   // already considered live in a VM.
+   GCLock* lock = Engine::collector()->lock(Item(wopi->requestClass(), req));
+   if( ! req->parse( m_client->stream() ) )
+   {
+      m_client->replyError( 400, req->partHandler().error() );
+      process->decref();
+      return;
+   }
+
    try
    {
-      process->startScript( m_sFile );
-      process->wait();
-      LOGI( "Script " + m_sFile + " completed." );
+      Process* loadProc = process->modSpace()->loadModule( m_sFile, true, true, true );
+      LOGI( String("Starting loader process on: ") + m_sFile );
+      loadProc->start();
+      loadProc->wait();
+      LOGI( String("Completed loading script on: ") + m_sFile );
+
+      // get the main module
+      Module* mod = static_cast<Module*>(loadProc->result().asInst());
+      loadProc->decref();
+
+      String configErrors;
+      if ( ! wopi->wopi()->configFromModule( mod, configErrors ) )
+      {
+         String text = "Invalid configuration in module " + m_sFile + ":\n" + configErrors;
+         LOGW( text );
+         m_client->replyError( 500, text );
+         process->decref();
+         return;
+      }
+
+
+      Function* mainFunc = mod->getMainFunction();
+      if( mainFunc != 0 )
+      {
+         LOGI( String("Launching main script function on: ") + m_sFile );
+         process->start( mainFunc );
+         process->wait();
+         LOGI( "Script " + m_sFile + " completed." );
+      }
+      else {
+         String text = "No main function to be processed in " + m_sFile;
+         LOGW( text );
+         m_client->replyError( 500, text );
+         process->decref();
+         return;
+      }
    }
    catch( Error* err )
    {
       String s = err->describe();
-      m_client->reply()->setContentType("text/plain");
+      reply->setContentType("text/plain");
       process->textOut()->write( s );
       String text = "Script "+ m_sFile + " terminated with error: " + s;
       LOGW( text );
       err->decref();
    }
 
+   lock->dispose();
    wopi->reply()->commit();
    process->decref();
 }

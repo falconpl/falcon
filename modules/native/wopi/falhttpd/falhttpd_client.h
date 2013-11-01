@@ -50,13 +50,14 @@ public:
    Stream* stream() const { return m_stream; }
    WOPI::Reply* reply() const { return m_reply; }
 
+   void detachReply() { m_reply = 0; }
 private:
    void serveRequest(
-         const String& sMethod, const String& sUri,  const String& sProto, Stream* si );
+         const String& sMethod, const String& sUri,  const String& sProto );
 
    Mod::Socket* m_skt;
    bool m_bComplete;
-   Stream* m_stream;
+   StreamBuffer* m_stream;
    WOPI::Reply* m_reply;
 
    const FalhttpOptions& m_options;

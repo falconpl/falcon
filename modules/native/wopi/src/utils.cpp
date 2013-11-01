@@ -209,7 +209,7 @@ void parseQueryEntry( const String &query, ItemDict& dict )
    {
       key.trim();
       value.bufferize();
-      addQueryVariable( key, Item(value.handler(), &value), dict );
+      addQueryVariable( key, FALCON_GC_HANDLE(&(new String(value))->bufferize()), dict );
    }
 }
 
@@ -219,7 +219,7 @@ void addQueryVariable( const String &key, const Item& value, ItemDict& dict )
    // is this a dictionary?
    if( ! key.endsWith("[]") )
    {
-      dict.insert( FALCON_GC_HANDLE(new String(key)), value );
+      dict.insert( FALCON_GC_HANDLE(&(new String(key))->bufferize()), value );
    }
    else
    {
@@ -241,7 +241,7 @@ void addQueryVariable( const String &key, const Item& value, ItemDict& dict )
       {
          ItemArray *carr = new ItemArray;
          carr->append( value );
-         dict.insert( FALCON_GC_HANDLE(new String( short_key )), FALCON_GC_HANDLE(carr) );
+         dict.insert( FALCON_GC_HANDLE(&(new String(short_key))->bufferize()), FALCON_GC_HANDLE(carr) );
       }
    }
 }

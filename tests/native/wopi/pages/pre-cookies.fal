@@ -18,7 +18,7 @@ switch mode
          times_around = 0
       else
          // clear the user variable so we know the user is invalid
-         user = oob(nil)  // oob to mark the failed login
+         user = ^+ nil  // oob to mark the failed login
       end
 
    case "logout"
@@ -40,7 +40,7 @@ switch mode
          Reply.setCookie( "times", ++times_around )
       elif user != ""
          // AAARGH, a failed breackage attempt!
-         user = oob("")  // mark this situation
+         user = ^+ ""  // mark this situation
       end
 end
 

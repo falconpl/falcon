@@ -40,10 +40,18 @@ DirHandler::~DirHandler()
 }
 
 
-void DirHandler::serve( WOPI::Request* )
+void DirHandler::serve( WOPI::Request* req )
 {
    // open the directory
    Falcon::Directory *de = 0;
+
+   // read the rest of the request.
+   if( ! req->parse( m_client->stream() ) )
+   {
+      m_client->replyError( 400, req->partHandler().error() );
+      delete req;
+      return;
+   }
 
    try {
       de = Engine::instance()->vfs().openDir( m_sFile );
@@ -86,6 +94,7 @@ void DirHandler::serve( WOPI::Request* )
    }
 
    delete de;
+   delete req;
 }
 
 }

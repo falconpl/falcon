@@ -95,6 +95,7 @@ public:
       t_checkfunc m_checkFunc;
 
       ConfigEntry( const String& name, t_type type, const String& desc, t_checkfunc check = 0 );
+      ConfigEntry( const ConfigEntry& other );
       ~ConfigEntry();
    };
 
@@ -169,6 +170,9 @@ public:
        assume that the temporary files are not needed anymore).
    */
    void removeTempFiles();
+
+   /** Copies the configuration from a template WOPI object */
+   void configFromWopi( const Wopi& other );
 
 private:
    /** Persistent data map.

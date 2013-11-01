@@ -37,9 +37,17 @@ FileHandler::~FileHandler()
 }
 
 
-void FileHandler::serve( Falcon::WOPI::Request* )
+void FileHandler::serve( Falcon::WOPI::Request* req )
 {
    String sMimeType;
+
+   // read the rest of the request.
+   if( ! req->parse( m_client->stream() ) )
+   {
+      m_client->replyError( 400, req->partHandler().error() );
+      delete req;
+      return;
+   }
 
    // Get the document -- for now a very simple thing
    if ( ! m_client->options().findMimeType( m_sFile, sMimeType ) )
@@ -57,6 +65,7 @@ void FileHandler::serve( Falcon::WOPI::Request* )
    if( ! Engine::instance()->vfs().readStats( m_sFile, stats, true ) )
    {
       m_client->replyError( 403 );
+      delete req;
       return;
    }
 
@@ -95,10 +104,10 @@ void FileHandler::serve( Falcon::WOPI::Request* )
    catch( Error* e )
    {
      LOGW( "Can't open file "+ m_sFile );
-      m_client->replyError( 403 );
-      return;
+     m_client->replyError( 403 );
    }
 
+   delete req;
 }
 
 }

@@ -20,7 +20,7 @@ to see the international cookie.</p>
 <? else ?>
    <? if mode == "logout" ?>
       <p><b>Logout performed</b>. Goodbye!</p>
-   <? elif isoob(user) ?>
+   <? elif ^$ user ?>
       <!-- Something was wrong. Login failure has user == nil, while breackages have user == "" -->
       <? if user == nil ?>
          <p><b>Wrong userid/password</b>. Please try again.</p>
