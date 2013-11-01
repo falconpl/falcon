@@ -333,6 +333,8 @@ bool Wopi::addConfigOption( ConfigEntry::t_type t, const String& name, const Str
 
    ConfigEntry* entry = new ConfigEntry(name, t, desc, check);
    entry->m_iValue = deflt;
+   entry->m_sValue.N(deflt);
+   m_config[name] = entry;
    return true;
 }
 
@@ -445,17 +447,15 @@ bool Wopi::setConfigValue(const String& key, const String& value, String& error 
    else if( entry->m_type == ConfigEntry::e_t_int )
    {
       int64 ival;
-      if( ! value.parseInt(ival) )
+      if( ! getHumanSize(value, ival) )
       {
          error = String("Invalid numeric value for option '").A(key).A("'");
          return false;
       }
       entry->m_iValue = ival;
    }
-   else {
-      entry->m_sValue = value;
-   }
 
+   entry->m_sValue = value;
    return true;
 }
 

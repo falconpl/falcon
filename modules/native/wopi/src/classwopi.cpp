@@ -29,6 +29,9 @@
 #include <falcon/function.h>
 #include <falcon/textwriter.h>
 #include <falcon/stringstream.h>
+#include <falcon/modspace.h>
+#include <falcon/modloader.h>
+#include <falcon/transcoder.h>
 
 #include <falcon/engine.h>
 #include <falcon/stdhandlers.h>
@@ -480,6 +483,176 @@ FALCON_DEFINE_FUNCTION_P1(escape)
    ctx->returnFrame( FALCON_GC_HANDLE(encoded) );
 }
 
+/*#
+   @method info Wopi
+   @brief Generates a human-readable HTML 5 table containing information about WOPI and Falcon.
+*/
+
+FALCON_DECLARE_FUNCTION(info, "")
+FALCON_DEFINE_FUNCTION_P1(info)
+{
+   Process* prc = ctx->process();
+   TextWriter& tw = *prc->textOut();
+
+   tw.writeLine("<style>");
+   tw.writeLine("table.wopi_info {border:thin solid black; margin-left:5%; margin-top:30px; margin-bottom:30px; width:90%}");
+   tw.writeLine("td.wopi_info_title {color: red; font: arial, sans; font-weight: bold; font-style: italic; font-size:24pt; background: white; vertical-align: middle; text-align:center; }");
+   tw.writeLine("td.wopi_info_subtitle {color: red; font: arial, sans; font-weight: bold; font-style: italic; font-size:18pt; background: white; text-align:center; }");
+   tw.writeLine("td.wopi_info_section {color: blue; font: arial, sans; font-weight: bold; font-size:14pt; background: #aaa; vertical-align: middle; text-align:center; }");
+   tw.writeLine("tr.wopi_info_head {}");
+   tw.writeLine("tr.wopi_info_section {border-top: 2pt solid #001;border-bottom: 2pt solid #001;}");
+   tw.writeLine("tr.wopi_info_row {border-top:thin solid black;}");
+   tw.writeLine("td.wopi_info_key {background: #f0f0ff; padding: 2px; width: 20%}");
+   tw.writeLine("td.wopi_info_value {background: #f0f0f0; padding: 2px; width: 40%}");
+   tw.writeLine("td.wopi_info_desc {background: #e0e0e0;  padding: 2px; width: 40%}");
+   tw.writeLine("</style>");
+
+   tw.writeLine("<table class=\"wopi_info\"><tbody>");
+   tw.writeLine("<tr class=\"wopi_info_head\"><td colspan=\"3\" class=\"wopi_info_title\">"
+            "<div style=\"display: inline-block; vertical-align:middle\"><a href=\"http://www.falconpl.org\"><img style=\"vertical-algin:bottom\" border=\"0\" src=\"http://www.falconpl.org/images/logo.png\"></a></div>"
+            "<div style=\"display: inline-block; vertical-align:middle\">&nbsp; <a href=\"http://www.falconpl.org\">The Falcon Programming Language</a></div></td></tr>");
+   tw.writeLine("<tr class=\"wopi_info_head\"><td colspan=\"3\" colspan=\"\" class=\"wopi_info_subtitle\">Web Oriented Programming Interface</td></tr>");
+
+   tw.writeLine("<tr class=\"wopi_info_row\"><td colspan=\"3\" class=\"wopi_info_section\">General information</td></tr>");
+   tw.writeLine("<tr class=\"wopi_info_row\"><td class=\"wopi_info_key\">Engine version</td><td colspan=\"2\" class=\"wopi_info_value\">" + Engine::instance()->fullVersion() + "</td></tr>");
+   tw.writeLine("<tr class=\"wopi_info_row\"><td class=\"wopi_info_key\">Process search path</td><td colspan=\"2\" class=\"wopi_info_value\">" + prc->modSpace()->modLoader()->getSearchPath() + "</td></tr>");
+   tw.writeLine("<tr class=\"wopi_info_row\"><td class=\"wopi_info_key\">Source encoding</td><td colspan=\"2\" class=\"wopi_info_value\">" + prc->modSpace()->modLoader()->sourceEncoding() + "</td></tr>");
+   tw.writeLine("<tr class=\"wopi_info_row\"><td class=\"wopi_info_key\">Output encoding</td><td colspan=\"2\" class=\"wopi_info_value\">" + tw.transcoder()->name() + "</td></tr>");
+
+   tw.writeLine("<tr class=\"wopi_info_section\"><td colspan=\"3\" class=\"wopi_info_section\">Configuration information</td></tr>");
+
+
+   class Rator: public Wopi::ConfigEnumerator
+   {
+   public:
+      Rator( TextWriter& t ): tw(t) {}
+      ~Rator() {}
+      void operator() (Wopi::ConfigEntry& entry)
+      {
+         tw.write("<tr class=\"wopi_info_row\"><td class=\"wopi_info_key\">");
+         tw.write(entry.m_name);
+         tw.write("</td><td class=\"wopi_info_value\">");
+         tw.write(entry.m_sValue); // ok also if numeric.
+         tw.write("</td><td class=\"wopi_info_desc\">");
+         tw.write(entry.m_desc);
+         tw.writeLine("</td</tr>");
+      }
+   private:
+      TextWriter& tw;
+   }
+   rator(tw);
+
+   ctx->tself<Wopi*>()->enumerateConfigOptions(rator);
+   tw.writeLine("</tbody></table>");
+
+   ctx->returnFrame();
+}
+
+
+/*#
+   @method config Wopi
+   @brief Returns a dictionary containing all the configuration values.
+   @return A dictionary containing all the configuration values.
+*/
+
+FALCON_DECLARE_FUNCTION(config, "")
+FALCON_DEFINE_FUNCTION_P1(config)
+{
+   ItemDict* dict = new ItemDict;
+
+   class Rator: public Wopi::ConfigEnumerator
+   {
+   public:
+      Rator( ItemDict* dict ): m_dict(dict) {}
+      ~Rator() {}
+      void operator() (Wopi::ConfigEntry& entry)
+      {
+         Item value;
+         if( entry.m_type == Wopi::ConfigEntry::e_t_int ) {
+            value.setInteger(entry.m_iValue);
+         }
+         else {
+            value = FALCON_GC_HANDLE(new String(entry.m_sValue));
+         }
+
+         m_dict->insert( FALCON_GC_HANDLE(new String(entry.m_name)), value );
+      }
+
+   private:
+      ItemDict* m_dict;
+   }
+   rator(dict);
+
+   ctx->tself<Wopi*>()->enumerateConfigOptions(rator);
+   ctx->returnFrame( FALCON_GC_HANDLE(dict) );
+}
+
+
+/*#
+   @method setcfg Wopi
+   @brief Sets a configuration key.
+   @param name The name of the configuration entry
+   @param value The new value for the configuration entry
+   @throw AccessError if the configuration key is invalid.
+*/
+
+FALCON_DECLARE_FUNCTION(setcfg, "name:S,value:X")
+FALCON_DEFINE_FUNCTION_P1(setcfg)
+{
+   Item *i_str = ctx->param(0);
+   Item *i_value = ctx->param(1);
+
+   // return an empty string if nil was given as parameter.
+   if ( i_str == 0 || ! i_str->isString() || i_value == 0 )
+   {
+      throw paramError();
+   }
+
+   String error;
+   Wopi* wopi = ctx->tself<Wopi*>();
+   if( ! wopi->setConfigValue(*i_str->asString(), *i_value, error) )
+   {
+      throw FALCON_SIGN_XERROR( WopiError, FALCON_ERROR_WOPI_INVALID_CONFIG,
+               .desc("Invalid configuration key/value")
+               .extra(*i_str->asString())
+               );
+   }
+
+   ctx->returnFrame();
+}
+
+/*#
+   @method getcfg Wopi
+   @brief Retreives a configuration key
+   @param name The name of the configuration entry
+*/
+
+FALCON_DECLARE_FUNCTION(getcfg, "name:S")
+FALCON_DEFINE_FUNCTION_P1(getcfg)
+{
+   Item *i_str = ctx->param(0);
+
+   // return an empty string if nil was given as parameter.
+   if ( i_str == 0 || ! i_str->isString() )
+   {
+      throw paramError();
+   }
+
+   String error;
+   Wopi* wopi = ctx->tself<Wopi*>();
+   Item result;
+   if( ! wopi->getConfigValue(*i_str->asString(), result, error) )
+   {
+      throw FALCON_SIGN_XERROR( WopiError, FALCON_ERROR_WOPI_INVALID_CONFIG,
+               .desc("Invalid configuration key/value")
+               .extra(*i_str->asString())
+               );
+   }
+
+   ctx->returnFrame(result);
+}
+
+
 }
 
 //===================================================================================
@@ -498,6 +671,12 @@ ClassWopi::ClassWopi():
    addMethod( new Function_escape );
    addMethod( new Function_parseQuery );
    addMethod( new Function_makeQuery );
+
+   addMethod( new Function_info );
+   addMethod( new Function_config );
+
+   addMethod( new Function_setcfg );
+   addMethod( new Function_getcfg );
 }
 
 ClassWopi::~ClassWopi()

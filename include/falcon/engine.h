@@ -330,6 +330,10 @@ public:
    /** Engine-level random number generator facility */
    MTRand_interlocked& mtrand() const { return m_rand; }
 
+   const String& version() const;
+   const String& fullVersion() const;
+   int64 versionID() const;
+
 protected:
    Engine();
    ~Engine();

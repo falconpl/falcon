@@ -696,6 +696,24 @@ Class* Engine::getError( const String& name ) const
    return err;
 }
 
+const String& Engine::version() const
+{
+   static String sv( String(FALCON_VERSION) + " " + FALCON_VERSION_SPEC + "(" + FALCON_VERSION_NAME +")" );
+   return sv;
+}
+
+const String& Engine::fullVersion() const
+{
+   static String sv( String(FALCON_VERSION) + " " + String(FALCON_VERSION_SPEC) + "(" + FALCON_VERSION_NAME +") build " + String().N(FALCON_VERSION_BUILD_ID) );
+   return sv;
+}
+
+
+int64 Engine::versionID() const
+{
+   return FALCON_VERSION_NUM;
+}
+
 //=====================================================
 // Type handlers
 //

@@ -81,11 +81,11 @@
 //
 
 WOPI_OPTION      ( string, LoadPath, "Default load path for the Falcon engine" )
-WOPI_OPTION      ( string, SourceEncoding, "Default source encoding for the Falcon engine" )
-WOPI_OPTION      ( string, OutputEncoding, "Default output encoding for the Falcon engine" )
+WOPI_OPTION_DFLT ( string, SourceEncoding, "Default source encoding for the Falcon engine", "utf8" )
+WOPI_OPTION_DFLT ( string, OutputEncoding, "Default output encoding for the Falcon engine", "utf8" )
 WOPI_OPTION      ( string, FalconHandler, "General script handling incoming requests" )
-WOPI_OPTION_CHECK( int   , LogErrors, "Error log mode - can be one of: SILENT LOG KIND FULL", WOPI_OPT_LOG_MODE_FULL_ID )
-WOPI_OPTION_CHECK( int   , SessionMode, "Session storage mode - can be one of: NONE FILE", WOPI_OPT_SESSION_MODE_FILE_ID )
+WOPI_OPTION_CHECK( int   , LogErrors, "Error log mode - can be one of: SILENT LOG KIND FULL", WOPI_OPT_LOG_MODE_FULL )
+WOPI_OPTION_CHECK( int   , SessionMode, "Session storage mode - can be one of: NONE FILE", WOPI_OPT_SESSION_MODE_FILE )
 WOPI_OPTION_DFLT ( int   , SessionTimeout, "Default session timeout in seconds", 600 )
 WOPI_OPTION_CHECK( int   , MaxUploadSize, "Maximum upload size in kilobytes", 2048 )
 WOPI_OPTION_CHECK( int   , MaxMemoryUploadSize, "Upload size in kilobytes under which memory-only upload is used", 4 )

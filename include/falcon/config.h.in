@@ -35,12 +35,15 @@
 #define FALCON_VERSION              "@FALCON_VERSION_ID@"
 #define FALCON_VERSION_NAME         "@FALCON_VERSION_NAME@"
 
+#define FALCON_VERSION_SPEC			"@FALCON_VERSION_SPEC@"
+#define FALCON_VERSION_BUILD_ID		@FALCON_VERSION_BUILD_ID@
+
 //============================================
 // Version RCINFO
 //
 
 #define FALCON_VERSION_RCINFO 	    "@FALCON_VERSION_RC@"
-#define FALCON_VERSION_RCINFO_N 	    @FALCON_VERSION_RC@
+#define FALCON_VERSION_RCINFO_N 	@FALCON_VERSION_RC@
 
 //============================================
 // System informations

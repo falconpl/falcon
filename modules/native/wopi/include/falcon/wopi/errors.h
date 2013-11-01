@@ -31,6 +31,7 @@
 #define FALCON_ERROR_WOPI_SESS_INVALID_ID    (FALCON_ERROR_WOPI_BASE + 4 )
 #define FALCON_ERROR_WOPI_PERSIST_NOT_FOUND  (FALCON_ERROR_WOPI_BASE + 5 )
 #define FALCON_ERROR_WOPI_FIELD_NOT_FOUND    (FALCON_ERROR_WOPI_BASE + 6 )
+#define FALCON_ERROR_WOPI_INVALID_CONFIG     (FALCON_ERROR_WOPI_BASE + 7 )
 
 namespace Falcon {
 
@@ -68,6 +69,7 @@ FALCON_DECLARE_ERROR_CLASS_EX( WopiError, \
          addConstant("SessionInvalid", FALCON_ERROR_WOPI_SESS_INVALID_ID);\
          addConstant("PeristNotFound", FALCON_ERROR_WOPI_PERSIST_NOT_FOUND);\
          addConstant("FieldNotFound", FALCON_ERROR_WOPI_FIELD_NOT_FOUND);\
+         addConstant("InvalidConfigKey", FALCON_ERROR_WOPI_INVALID_CONFIG)
          )
 }
 
