@@ -23,7 +23,6 @@
 
 namespace Falcon
 {
-class QueryMap;
 
 /** RFC 3986 - Uniform Resource Identifier.
 
@@ -239,11 +238,9 @@ public:
 
       If the \b decode param is false, the input string is read as-is.
 
-      By default, the function will just store the query field for later retrival
+      By default, the function will just store the query field for later retrieval
       with the query() accessor. The query field will be returned in its original
-      form, undecoded. If the makeQueryMap boolean field is set to true,
-      the parseQuery() method will be called upon succesful completion of URI parsing,
-      before the function returns.
+      form, undecoded.
 
       \param newUri the new URI to be parsed.     
       \return true on success, false if the given string is not a valid URI.

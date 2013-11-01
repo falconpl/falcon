@@ -37,9 +37,14 @@ public:
 private:
    uint32 m_bufSize;
    bool m_changed;
-   byte *m_buffer;
-   uint32 m_bufPos;
-   uint32 m_bufLen;
+   byte *m_rbuffer;
+   byte *m_wbuffer;
+
+   uint32 m_rBufPos;
+   uint32 m_rBufLen;
+
+   uint32 m_wBufPos;
+   uint32 m_wBufLen;
 
    uint64 m_filePos;
    bool m_bReseek;
