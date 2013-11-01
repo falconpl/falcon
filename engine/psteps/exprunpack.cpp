@@ -177,14 +177,20 @@ void ExprUnpack::apply_( const PStep* ps, VMContext* ctx )
    {
       // no need to throw, we're going to get back in the VM.
       throw
-         new OperandError( ErrorParam(e_unpack_size, __LINE__ ).extra("Not an array") );
+         new OperandError( ErrorParam(e_unpack_size, __LINE__ )
+                  .line(self->m_expander->line())
+                  .chr(self->m_expander->chr())
+                  .extra("Not an array") );
    }
    ItemArray& array = *(ItemArray*) expander.asInst();
 
    if( pcount != (int) array.length() )
    {
       throw
-         new OperandError( ErrorParam(e_unpack_size, __LINE__ ).extra("Different size") );
+         new OperandError( ErrorParam(e_unpack_size, __LINE__ )
+                  .line(self->m_expander->line())
+                  .chr(self->m_expander->chr())
+                  .extra("Different size") );
    }
 
    while( cf.m_seqId <= pcount )
