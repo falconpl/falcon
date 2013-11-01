@@ -179,6 +179,7 @@ void Function_include::PStepModLoaded::apply_(const PStep* pstep, VMContext* ctx
       else {
          // has the module a __main__ to run?
          Function* theMain = module->getMainFunction();
+
          if( theMain != 0 )
          {
             // great, let's call it;
