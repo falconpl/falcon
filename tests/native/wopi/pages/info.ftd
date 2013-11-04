@@ -1,0 +1,21 @@
+<!-- Info test -->
+<h1>Info test</h1>
+<p> The following is the result of the <b>Wopi.info()</b> method.</p>
+<? Wopi.info() ?>
+
+<hr/>
+<p> The following is generated accessing directly the configuration dictionary.</p>
+<?
+dict = Wopi.config()
+for key, val in dict
+   forfirst: > "<table border=\"1\"><thead><tr><th>Key</th><th>Value</th><th>Direct</th></tr></thead><tbody>"
+   > "<tr><td>", key, "</td><td>", val, "</td><td>", Wopi.getcfg(key), "</td><tr>"
+   forlast: >"</tbody></table>"
+end
+?>
+
+<hr/>
+
+<p>Now changing the value for TempDir to "temporary":</p>
+<? Wopi.setcfg("TempDir", "temporary" ) ?>
+<p>Refetching the value: <?= Wopi.getcfg("TempDir") ?></p>
