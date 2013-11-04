@@ -44,7 +44,8 @@ namespace Falcon {
 FalhttpdClient::FalhttpdClient( const FalhttpOptions& options, Mod::Socket* skt ):
    m_skt( skt ),
    m_bComplete( false ),
-   m_options( options )
+   m_options( options ),
+   m_bDeleteReply(true)
 {
    LOGI( "Incoming client from "+ skt->address()->toString() );
    m_stream = new StreamBuffer(m_skt->makeStreamInterface());
@@ -55,7 +56,8 @@ FalhttpdClient::FalhttpdClient( const FalhttpOptions& options, Mod::Socket* skt 
 FalhttpdClient::~FalhttpdClient()
 {
    close();
-   delete m_reply;
+   if( m_bDeleteReply )
+      delete m_reply;
 }
 
 void FalhttpdClient::close()
@@ -179,8 +181,8 @@ void FalhttpdClient::replyError( int errorID, const String& explain )
    String sErrorDesc = codeDesc( errorID );
    String sReply;
    String sError;
-   sReply.A("HTTP/1.0 ").N( errorID ).A( " " + sErrorDesc + "\r\n");
-   sError.N(errorID ).A( ": " + sErrorDesc );
+   m_reply->reason(sErrorDesc);
+   m_reply->status(errorID);
 
    // for now, we create the docuemnt here.
    // TODO Read the error document from a file.
@@ -208,13 +210,12 @@ void FalhttpdClient::replyError( int errorID, const String& explain )
 
    TimeStamp now;
    now.currentTime();
-   sReply += "Date: " + now.toRFC2822() + "\r\n";
+   m_reply->setHeader( "Date", now.toRFC2822() );
 
-   sReply.A( "Content-Length: ").N( (int64) content.length() ).A("\r\n");
-   sReply += "Content-Type: text/html; charset=utf-8\r\n\r\n";
+   m_reply->setHeader( "Content-Length", String().N( (int64) content.length() ));
+   m_reply->setContentType("text/html; charset=utf-8");
 
    LOGI( "Sending ERROR reply to client " + m_skt->address()->toString() + ": " + sError );
-   sendData( sReply );
    sendData( content.c_str(), content.length() );
 
 }
@@ -226,6 +227,14 @@ String FalhttpdClient::getServerSignature()
 
    return sString;
 }
+
+
+void FalhttpdClient::consumeRequest()
+{
+   unsigned char buffer[2048];
+   while( m_skt->recv(buffer,2048) == 2048);
+}
+
 
 String FalhttpdClient::codeDesc( int errorID )
 {

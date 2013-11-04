@@ -42,9 +42,14 @@ void FileHandler::serve( Falcon::WOPI::Request* req )
    String sMimeType;
 
    // read the rest of the request.
-   if( ! req->parse( m_client->stream() ) )
+   try
    {
-      m_client->replyError( 400, req->partHandler().error() );
+      req->parse( m_client->stream() );
+   }
+   catch(Error* error)
+   {
+      m_client->replyError( 400, error->describe(true) );
+      error->decref();
       delete req;
       return;
    }

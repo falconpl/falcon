@@ -32,6 +32,9 @@
 #define FALCON_ERROR_WOPI_PERSIST_NOT_FOUND  (FALCON_ERROR_WOPI_BASE + 5 )
 #define FALCON_ERROR_WOPI_FIELD_NOT_FOUND    (FALCON_ERROR_WOPI_BASE + 6 )
 #define FALCON_ERROR_WOPI_INVALID_CONFIG     (FALCON_ERROR_WOPI_BASE + 7 )
+#define FALCON_ERROR_WOPI_UPLOAD_TOO_BIG     (FALCON_ERROR_WOPI_BASE + 8 )
+#define FALCON_ERROR_WOPI_IO                 (FALCON_ERROR_WOPI_BASE + 9 )
+#define FALCON_ERROR_WOPI_REQUEST_PARSE      (FALCON_ERROR_WOPI_BASE + 10 )
 
 namespace Falcon {
 
@@ -58,9 +61,26 @@ namespace Falcon {
    - WopiError.AppDataStore - Cannot store/save application specific data.
    - WopiError.AppDataRestore - Cannot restore application-specific data.
    - WopiError.SessionInvalid - The session data is invalid.
+   - WopiError.PeristNotFound - Persistent data not found.
+   - WopiError.FieldNotFound - Required field was not presented in the remote request.
+   - WopiError.InvalidConfigKey - Invalid configuration key.
+   - WopiError.UploadTooBig - Uploaded file is too big.
+   - WopiError.IO - Generic input/output error during an essential operation.
+   - WopiError.RequestParse - Error while parsing incoming web request.
 
 */
-FALCON_DECLARE_ERROR_INSTANCE( WopiError );
+FALCON_DECLARE_ERROR_INSTANCE_WITH_DESC( WopiError,
+         FALCON_ERROR_CLASS_DESC( FALCON_ERROR_WOPI_SESS_IO, "I/O error in storing or restoring a session" )
+         FALCON_ERROR_CLASS_DESC( FALCON_ERROR_WOPI_SESS_EXPIRED, "The session is expired" )
+         FALCON_ERROR_CLASS_DESC( FALCON_ERROR_WOPI_APPDATA_SER, "Cannot store/save application specific data" )
+         FALCON_ERROR_CLASS_DESC( FALCON_ERROR_WOPI_APPDATA_DESER, "Cannot restore application-specific data" )
+         FALCON_ERROR_CLASS_DESC( FALCON_ERROR_WOPI_SESS_INVALID_ID, "The session ID is invalid" )
+         FALCON_ERROR_CLASS_DESC( FALCON_ERROR_WOPI_PERSIST_NOT_FOUND, "Required field was not presented in the remote request" )
+         FALCON_ERROR_CLASS_DESC( FALCON_ERROR_WOPI_INVALID_CONFIG, "Invalid configuration key or value" )
+         FALCON_ERROR_CLASS_DESC( FALCON_ERROR_WOPI_UPLOAD_TOO_BIG, "Upload too big" )
+         FALCON_ERROR_CLASS_DESC( FALCON_ERROR_WOPI_IO, "Generic input/output error" )
+         FALCON_ERROR_CLASS_DESC( FALCON_ERROR_WOPI_REQUEST_PARSE, "Error while parsing incoming web request" )
+);
 FALCON_DECLARE_ERROR_CLASS_EX( WopiError, \
          addConstant("SessionIO", FALCON_ERROR_WOPI_SESS_IO );\
          addConstant("SessionExipred", FALCON_ERROR_WOPI_SESS_EXPIRED);\
@@ -69,7 +89,10 @@ FALCON_DECLARE_ERROR_CLASS_EX( WopiError, \
          addConstant("SessionInvalid", FALCON_ERROR_WOPI_SESS_INVALID_ID);\
          addConstant("PeristNotFound", FALCON_ERROR_WOPI_PERSIST_NOT_FOUND);\
          addConstant("FieldNotFound", FALCON_ERROR_WOPI_FIELD_NOT_FOUND);\
-         addConstant("InvalidConfigKey", FALCON_ERROR_WOPI_INVALID_CONFIG)
+         addConstant("InvalidConfigKey", FALCON_ERROR_WOPI_INVALID_CONFIG);\
+         addConstant("UploadTooBig", FALCON_ERROR_WOPI_UPLOAD_TOO_BIG); \
+         addConstant("IO", FALCON_ERROR_WOPI_IO ); \
+         addConstant("RequestParse", FALCON_ERROR_WOPI_REQUEST_PARSE );
          )
 }
 

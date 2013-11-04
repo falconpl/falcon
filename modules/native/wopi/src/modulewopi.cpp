@@ -26,6 +26,7 @@
 #include <falcon/wopi/classreply.h>
 #include <falcon/wopi/classuploaded.h>
 #include <falcon/wopi/classwopi.h>
+#include <falcon/wopi/errors.h>
 
 namespace Falcon {
 namespace WOPI {
@@ -66,6 +67,8 @@ ModuleWopi::ModuleWopi( const String& name, Request* req, Reply* rep ):
          << m_classRequest
          << m_classWopi
          << m_classUploaded
+         << new ClassPersistError
+         << new ClassWopiError
    ;
 
    // set the global items without creating the singletons.

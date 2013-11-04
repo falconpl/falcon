@@ -41,21 +41,21 @@ public:
    //
 
    //! Do a complete parse of the whole input (headers and body)
-   bool parse( Stream* input );
+   void parse( Stream* input );
 
    //! parse the header part.
    /** \note this inserts Falcon GC relevant objects in the GC,
     *  if invoked from outside the VM, wrap in gc-disabled zone.
     *  (Also, the Request object should be already locked/reachable from GC)
     */
-   bool parseHeader( Stream* input );
+   void parseHeader( Stream* input );
 
    //! Parses the body.
    /** \note this inserts Falcon GC relevant objects in the GC,
     *  if invoked from outside the VM, wrap in gc-disabled zone.
     *  (Also, the Request object should be already locked/reachable from GC)
     */
-   bool parseBody( Stream* input );
+   void parseBody( Stream* input );
 
    //! Reads relevant CGI-environ variables
    void parseEnviron();
@@ -132,7 +132,7 @@ public:
 
    // quantitative informations
    int64 m_content_length;
-   int64 m_bytes_sent;
+   int64 m_bytes_received;
    int64 m_request_time;
    numeric m_startedAt;
    String m_sUri;

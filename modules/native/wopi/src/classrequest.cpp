@@ -211,7 +211,7 @@ static void get_request_time( const Class*, const String&, void* inst, Item& val
 static void get_bytes_sent( const Class*, const String&, void* inst, Item& value )
 {
    Request* request = static_cast<Request*>(inst);
-   value = (int64) request->m_bytes_sent;
+   value = (int64) request->m_bytes_received;
 }
 
 static void get_content_length( const Class*, const String&, void* inst, Item& value )

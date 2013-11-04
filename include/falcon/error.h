@@ -336,6 +336,7 @@ public:
    void scriptize( Item& tgt );
 
    const Class* handler() const;
+   void handler( const Class* ) const;
 
    /** Adds a trace step to this error.
     This method adds a tracestep that lead to the place where the error
@@ -344,6 +345,37 @@ public:
     Errors raised outside a script execution may be without trace steps.
     */
    void addTrace( const TraceStep& step );
+
+   /**
+    * Returns a sub-class specific description of the error code.
+    *
+    * The base class version describes the engine error codes (allocated
+    * under 1000).
+    *
+    * Overriding the base version allows to return consistent descriptions
+    * for given user-specific error codes.
+    *
+    * The macro FALCON_DECLARE_ERROR_INSTANCE_WITH_DESC allows to declare
+    * a subclass and provide some description, via the FALCON_ERROR_CLASS_DESC macro,
+    * like in this example:
+    *
+    * \code
+    * FALCON_DECLARE_ERROR_INSTANCE_WITH_DESC( MyError,
+    *    FALCON_ERROR_CLASS_DESC( 10001, "Some error condition" )
+    *    FALCON_ERROR_CLASS_DESC( 10002, "Some other error condition" )
+    * )
+    * FALCON_DECLARE_ERROR_CLASS( MyError )
+    * \endcode
+    *
+    * \note The description() field overrides the values returned by
+    * this method.
+    */
+   virtual void describeErrorCodeTo( int errorCode, String& tgt ) const;
+
+   inline String describeErrorCode( int errorCode ) const
+   {
+      String temp; describeErrorCodeTo( errorCode, temp ); return temp;
+   }
 
    /** Enumerate the traceback steps.
     \param rator A StepEnumerator that is called back with each step in turn.
@@ -402,6 +434,7 @@ protected:
    Error( const String& name );
 
    Error( const Class* handler );
+   Error( const Class* handler, const ErrorParam &params );
 
    mutable atomic_int m_refCount;
 
@@ -438,29 +471,11 @@ private:
 
 }
 
-#define FALCON_DECLARE_ERROR_CLASS_EX( __name__, __extra__ ) \
-   class Class##__name__: public ::Falcon::ClassError \
-   {\
-   public:\
-      inline Class##__name__(): ::Falcon::ClassError( #__name__ ) { setParent( Engine::instance()->getError("Error")); __extra__; } \
-      inline Class##__name__( bool bInEngine ): ::Falcon::ClassError( #__name__, bInEngine ) { setParent( Engine::instance()->getError("Error"));  __extra__; } \
-      inline virtual ~Class##__name__(){} \
-      inline virtual void* createInstance() const { return new __name__(this); } \
-   };
-
 #define FALCON_DECLARE_ERROR_CLASS( __name__ ) \
          FALCON_DECLARE_ERROR_CLASS_EX( __name__, )
 
 #define  FALCON_DECLARE_ERROR_INSTANCE( __name__ ) \
-   class __name__ : public ::Falcon::Error\
-   {\
-   public:\
-      __name__ (): ::Falcon::Error( #__name__ ) {} \
-      __name__ ( const ErrorParam& ep ): ::Falcon::Error( #__name__, ep ) {} \
-      __name__ ( const Class* handler ): ::Falcon::Error( handler ) {} \
-       inline virtual ~__name__() {}\
-   };
-
+         FALCON_DECLARE_ERROR_INSTANCE_WITH_DESC( __name__, );
 
 /** Macro used to declare an error class and it's related handler class.
  * \param __name__ The name of the error class as seen from the script.
@@ -485,7 +500,7 @@ private:
  */
 #define FALCON_DECLARE_SYS_ERROR( __name__ ) \
    FALCON_DECLARE_ERROR_INSTANCE( __name__ ) \
-   FALCON_DECLARE_ERROR_CLASS_EX( __name__, ::Falcon::Engine::instance()->addMantra(this) )
+   FALCON_DECLARE_ERROR_CLASS_EX( __name__, ::Falcon::Engine::instance()->addMantra(::Falcon::Engine::instance()->registerError(this)) )
 
 /**
  * Creates a signed error.
@@ -501,7 +516,7 @@ private:
  * @note Remember to add the ';' after the macro.
  */
 #define FALCON_SIGN_ERROR( Error_Class__, error_code__ ) \
-   (new Error_Class__(ErrorParam(error_code__, __LINE__, SRC  ) ))
+         (new Error_Class__(ErrorParam(error_code__, __LINE__, SRC  ) ))
 
 /**
  * More compact error macro.
@@ -510,7 +525,7 @@ private:
  * method and dereferences the returned error immediately.
  */
 #define FALCON_RESIGN_ERROR( Error_Class__, error_code__, VMContext__ ) \
-         (VMContext__->raiseError(new Error_Class__(ErrorParam(error_code__, __LINE__, SRC ) ))->decref())
+         (VMContext__->raiseError(new Error_Class__->(ErrorParam(error_code__, __LINE__, SRC ) ))->decref())
 
 /**
  * Creates a signed error with extra information.
@@ -563,8 +578,41 @@ private:
 #define FALCON_RESIGN_ROPROP_ERROR( prop, VMContext__ ) \
          (VMContext__->raiseError(new AccessError(ErrorParam(e_prop_ro, __LINE__, SRC  ).extra(prop) ))->decref())
 
-#endif	/* FALCON_ERROR_H */
+
+#define FALCON_DECLARE_ERROR_CLASS_EX( __name__, __extra__ ) \
+   class Class##__name__: public ::Falcon::ClassError \
+   {\
+   public:\
+      inline Class##__name__(): ::Falcon::ClassError( #__name__ ) { setParent( Engine::instance()->getError("Error")); __extra__; } \
+      inline Class##__name__( bool bInEngine ): ::Falcon::ClassError( #__name__, bInEngine ) { setParent( Engine::instance()->getError("Error"));  __extra__; } \
+      inline virtual ~Class##__name__(){} \
+      inline virtual void* createInstance() const { return new __name__(this); } \
+      Error* createError( const ErrorParam& params ) const {return new __name__(this, params); }\
+   };\
+   extern Class##__name__* __name__##_handler;
 
 
+#define  FALCON_DECLARE_ERROR_INSTANCE_WITH_DESC( __name__, __DESC__ ) \
+   class __name__ : public ::Falcon::Error\
+   {\
+   public:\
+      __name__ (): ::Falcon::Error( #__name__ ) {} \
+      __name__ ( const ErrorParam& ep ): ::Falcon::Error( #__name__, ep ) {} \
+      __name__ ( const Class* handler ): ::Falcon::Error( handler ) {} \
+      __name__ ( const Class* handler, const ErrorParam& ep ): ::Falcon::Error( handler, ep ) {} \
+       inline virtual ~__name__() {}\
+       inline virtual void describeErrorCodeTo( int errorCode, String& tgt ) const \
+         {\
+             switch(errorCode) {\
+             __DESC__\
+             default:  Error::describeErrorCodeTo(errorCode,tgt); break;\
+             }\
+         }\
+   };
+
+
+#define FALCON_ERROR_CLASS_DESC( __id__, __desc__ )  case __id__: tgt = __desc__; break;
+
+#endif   /* FALCON_ERROR_H */
 
 /* end of error.h */

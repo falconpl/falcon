@@ -2150,6 +2150,16 @@ void VMContext::contextualize( Error* error, bool force )
       {
          error->path(mod->uri());
       }
+
+      if( error->handler() == 0 )
+      {
+         // try to contextualize the handler in the module
+         const Class* cls = mod->getClass(error->className());
+         if( cls != 0 )
+         {
+            error->handler(cls);
+         }
+      }
    }
 
 }

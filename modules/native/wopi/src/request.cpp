@@ -18,6 +18,8 @@
 #include <falcon/wopi/request.h>
 #include <falcon/wopi/wopi.h>
 #include <falcon/wopi/utils.h>
+#include <falcon/wopi/wopi_opts.h>
+#include <falcon/wopi/errors.h>
 #include <falcon/wopi/modulewopi.h>
 #include <falcon/wopi/uploaded.h>
 #include <falcon/wopi/classuploaded.h>
@@ -43,7 +45,7 @@ namespace WOPI {
 
 Request::Request( ModuleWopi* host ):
    m_content_length( -1 ),
-   m_bytes_sent( 0 ),
+   m_bytes_received( 0 ),
    m_request_time(0),
    m_startedAt(0.0),
 
@@ -68,52 +70,31 @@ Request::~Request()
 }
 
 
-bool Request::parse( Stream* input )
+void Request::parse( Stream* input )
 {
    Engine::collector()->enable(false);
 
-   bool check;
-   Error* error = 0;
    try
    {
-      if( parseHeader( input ) )
+      parseHeader( input );
+      if( m_content_length > 0 )
       {
-         check = true;
-
-         if( m_content_length > 0 )
-         {
-            check = parseBody( input );
-         }
-      }
-      else {
-         check = false;
+         parseBody( input );
       }
    }
-   catch ( Error* err )
+   catch ( ... )
    {
-      error = err;
-      check = false;
+      Engine::collector()->enable(true);
+      throw;
    }
 
    Engine::collector()->enable(true);
-   if( error != 0 )
-   {
-      throw error;
-   }
-
-   return check;
 }
 
-bool Request::parseHeader( Stream* input )
+
+void Request::parseHeader( Stream* input )
 {
-   if ( ! m_MainPart.parseHeader( input ) )
-   {
-      m_posts->insert(
-               FALCON_GC_HANDLE(&(new String(":error"))->bufferize()),
-               FALCON_GC_HANDLE(&(new String( m_MainPart.error() ))->bufferize())
-          );
-      return false;
-   }
+   m_MainPart.parseHeader( input );
 
    // get the content type and encoding
    PartHandler::HeaderMap::const_iterator ci = m_MainPart.headers().find( "Content-Type" );
@@ -164,27 +145,38 @@ bool Request::parseHeader( Stream* input )
          );
       ++ci;
    }
-
-   return true;
 }
 
 
-bool Request::parseBody( Stream* input )
+void Request::parseBody( Stream* input )
 {
+   Log* LOG = Engine::instance()->log();
+   m_bytes_received = 0;
+
+   // read the configuration relevant keys
+   String error;
+   int64 maxUpload = 0;
+   int64 maxMemUpload = 0;
+   if( module() != 0 )
+   {
+      module()->wopi()->getConfigValue(OPT_MaxUploadSize, maxUpload, error);
+      module()->wopi()->getConfigValue(OPT_MaxMemoryUploadSize, maxMemUpload, error);
+   }
+
+   LOG->log(Log::fac_engine_io, Log::lvl_detail,
+            String("Receiving upload with Content-Length: ").N(m_content_length)
+               .A("/").N(maxUpload).A( " mem:").N(maxMemUpload) );
+
+   if( maxUpload > 0 && m_content_length > maxUpload *1024 )
+   {
+      throw FALCON_SIGN_XERROR(WopiError, FALCON_ERROR_WOPI_UPLOAD_TOO_BIG, .extra("") );
+   }
    // prepare the POST data receive area
    m_MainPart.startMemoryUpload();
-   //fprintf( stderr, "Content length: %d / %d\n", (int) m_content_length, (int) m_nMaxMemUpload );
-
-   int64 memUpload = 0;
-   String error;
-   if ( m_module != 0 )
-   {
-      m_module->wopi()->getConfigValue( OPT_MaxMemoryUploadSize, memUpload, error );
-   }
 
    // Inform the part if it can use memory uploads for their subparts.
    if ( m_content_length != -1 &&
-         (memUpload > 0 && m_content_length < memUpload) )
+         (maxMemUpload > 0 && m_content_length < maxMemUpload*1024) )
    {
       // This tell the children of the main part NOT TO create a temporary file
       // when they receive a file upload (the default).
@@ -194,14 +186,7 @@ bool Request::parseBody( Stream* input )
    // For prudence,
 
    bool bDummy = false;
-   if ( ! m_MainPart.parseBody( input, bDummy ) )
-   {
-      m_posts->insert(
-               FALCON_GC_HANDLE(&(new String(":error"))->bufferize()),
-               FALCON_GC_HANDLE(&(new String( m_MainPart.error() ))->bufferize())
-          );
-      return false;
-   }
+   m_MainPart.parseBody( input, bDummy );
 
    // shouldn't be necessary as we started the upload in memory mode.
    m_MainPart.closeUpload();
@@ -224,7 +209,7 @@ bool Request::parseBody( Stream* input )
       }
    }
 
-   return true;
+   m_bytes_received = m_content_length;
 }
 
 
@@ -329,24 +314,16 @@ void Request::addUploaded( PartHandler* ph, const String& prefix )
       {
          // configure the part
          Uploaded* upld = new Uploaded(ph->filename(), ph->contentType(), ph->uploadedSize());
-         if( ph->error().size() != 0 )
+         // no? -- store the data or the temporary file name.
+         if ( ph->isMemory() )
          {
-            // was there an error?
-            upld->error(ph->error());
+            String* data = new String;
+            ph->getMemoryData( *data );
+            upld->data(data);
          }
          else
          {
-            // no? -- store the data or the temporary file name.
-            if ( ph->isMemory() )
-            {
-               String* data = new String;
-               ph->getMemoryData( *data );
-               upld->data(data);
-            }
-            else
-            {
-               upld->storage(ph->tempFile());
-            }
+            upld->storage(ph->tempFile());
          }
 
          // It may take some time before we can reach the vm,

@@ -387,6 +387,11 @@ void* ClassError::createInstance() const
 }
 
 
+Error* ClassError::createError( const ErrorParam& ) const
+{
+   return 0;
+}
+
 
 void ClassError::describe( void* instance, String& target, int, int maxlen ) const
 {

@@ -20,6 +20,7 @@
 #include <falcon/wopi/modulewopi.h>
 #include <falcon/wopi/wopi.h>
 #include <falcon/wopi/utils.h>
+#include <falcon/wopi/errors.h>
 #include <falcon/stringstream.h>
 #include <falcon/fstream.h>
 #include <falcon/error.h>
@@ -222,7 +223,7 @@ void PartHandler::startMemoryUpload()
    m_stream = m_str_stream = new StringStream;
 }
 
-bool PartHandler::startFileUpload()
+void PartHandler::startFileUpload()
 {
    m_sTempFile = "";
    Stream* fs;
@@ -232,9 +233,13 @@ bool PartHandler::startFileUpload()
    }
    catch ( Error* e )
    {
-      m_sError = "Can't create temporary stream " + m_sTempFile;
-      m_sError.A(" (").A(e->describe(false)).A(")");
-      return false;
+      Error* err = FALCON_SIGN_XERROR( WopiError, FALCON_ERROR_WOPI_IO,
+               .desc("Generic WOPI I/O error")
+               .extra( "Can't create temporary stream " + m_sTempFile )
+               );
+      err->appendSubError(e);
+      e->decref();
+      throw err;
    }
 
    // was this stream first opened in memory?
@@ -261,7 +266,6 @@ bool PartHandler::startFileUpload()
    }
 
    m_stream = fs;
-   return true;
 }
 
 
@@ -288,7 +292,7 @@ bool PartHandler::getMemoryData( String& target )
 }
 
 
-bool PartHandler::startUpload()
+void PartHandler::startUpload()
 {
    if ( m_bUseMemoryUpload || ! m_bPartIsFile )
    {
@@ -296,33 +300,32 @@ bool PartHandler::startUpload()
    }
    else
    {
-      return startFileUpload() != 0;
+      startFileUpload();
    }
-   return true;
 }
 
 
-bool PartHandler::parse( Stream* input, bool& isLast )
+void PartHandler::parse( Stream* input, bool& isLast )
 {
    // read the header and the body
-   if ( ! parseHeader( input ) )
-      return false;
+   parseHeader( input );
 
    // time to open the upload
-   if ( ! startUpload() )
-   {
-      return false;
+   startUpload();
+
+   try {
+      parseBody( input, isLast );
+      closeUpload();
    }
-
-
-   bool v = parseBody( input, isLast );
-   closeUpload();
-
-   return v;
+   catch(...)
+   {
+      closeUpload();
+      throw;
+   }
 }
 
 
-bool PartHandler::parseBody( Stream* input, bool& isLast )
+void PartHandler::parseBody( Stream* input, bool& isLast )
 {
    fassert( m_stream != 0 );
 
@@ -335,21 +338,19 @@ bool PartHandler::parseBody( Stream* input, bool& isLast )
    // is this a mulitpart element?
    if( m_sBoundary.size() != 0 )
    {
-      if ( ! parsePrologue( input ) || ! parseMultipartBody( input ) )
-      {
-         return false;
-      }
+      parsePrologue( input );
+      parseMultipartBody( input );
 
       // are we part of a bigger multipart element?
       if ( m_sEnclosingBoundary.size() != 0 )
       {
-         return scanForBound( "\r\n--"+m_sEnclosingBoundary, input, isLast );
+         scanForBound( "\r\n--"+m_sEnclosingBoundary, input, isLast );
       }
    }
    // are we part of a bigger multipart element?
    else if ( m_sEnclosingBoundary.size() != 0 )
    {
-      return scanForBound( "\r\n--"+m_sEnclosingBoundary, input, isLast );
+      scanForBound( "\r\n--"+m_sEnclosingBoundary, input, isLast );
    }
    else
    {
@@ -361,62 +362,50 @@ bool PartHandler::parseBody( Stream* input, bool& isLast )
       {
          m_pBuffer->fill( input );
          m_pBuffer->allFlush( m_stream );
-
-         if( ! ( input->good() && m_stream->good() ) )
-         {
-            m_sError = "I/O Error while reading the post body";
-            return false;
-         }
       }
 
       isLast = true;
    }
-
-   return true;
 }
 
 
-bool PartHandler::parsePrologue( Stream* input )
+void PartHandler::parsePrologue( Stream* input )
 {
    // we must scan to the first body
    bool bIsLast;
 
    // When processed through web servers, the prologue is removed.
    // shouldn't be the last, or we have no multipart
-   if (! scanForBound( "--"+m_sBoundary, input, bIsLast ) || bIsLast )
+   scanForBound( "--"+m_sBoundary, input, bIsLast );
+   if (bIsLast )
    {
-      m_sError = "Can't find the initial boundary; " + m_sError;
-      return false;
+      throw FALCON_SIGN_XERROR( WopiError, FALCON_ERROR_WOPI_REQUEST_PARSE,
+               .extra("Can't find the initial boundary") );
    }
-   return true;
+
 }
 
 
-bool PartHandler::parseMultipartBody( Stream* input )
+void PartHandler::parseMultipartBody( Stream* input )
 {
    PartHandler* child = new PartHandler( m_sBoundary );
    m_pSubPart = child;
    passSetting( child );
 
-   bool bResult;
    bool bIsLast;
-
-   while( (bResult = child->parse( input, bIsLast ) ) && ! bIsLast )
+   child->parse( input, bIsLast );
+   while( ! bIsLast )
    {
       child->m_pNextPart = new PartHandler( m_sBoundary );
       child = child->m_pNextPart;
       passSetting( child );
+      child->parse( input, bIsLast );
    }
-
-   if( ! bResult )
-      m_sError = child->m_sError;
-
-   return bResult;
 }
 
 
 
-bool PartHandler::scanForBound( const String& boundary, Stream* input, bool& isLast )
+void PartHandler::scanForBound( const String& boundary, Stream* input, bool& isLast )
 {
    m_pBuffer->fill( input );
 
@@ -426,8 +415,7 @@ bool PartHandler::scanForBound( const String& boundary, Stream* input, bool& isL
    {
       if( *m_pToBodyLeft == 0 || input->eof() || m_pBuffer->m_nBufPos + boundary.size() + 2 > m_pBuffer->m_nBufSize )
       {
-         m_sError = "Malformed part (missing boundary)";
-         return false;
+         throw FALCON_SIGN_XERROR(WopiError, FALCON_ERROR_WOPI_REQUEST_PARSE, .extra( "Malformed part (missing boundary)" ));
       }
 
       m_pBuffer->m_nBufPos = m_pBuffer->m_nBufSize - (boundary.size() + 2);
@@ -441,8 +429,7 @@ bool PartHandler::scanForBound( const String& boundary, Stream* input, bool& isL
 
    if( ! m_pBuffer->hasMore( boundary.size() + 2, input, m_stream ) )
    {
-      m_sError = "Malformed part (missing ending)";
-      return false;
+      throw FALCON_SIGN_XERROR(WopiError, FALCON_ERROR_WOPI_REQUEST_PARSE, .extra( "Malformed part (missing ending)" ));
    }
 
    m_pBuffer->flush( m_stream );
@@ -460,8 +447,7 @@ bool PartHandler::scanForBound( const String& boundary, Stream* input, bool& isL
 
          if( ! sRealBound.endsWith( "\r\n" ) )
          {
-            m_sError = "Malformed last part (missing trailing CRLF)";
-            return false;
+            throw FALCON_SIGN_XERROR(WopiError, FALCON_ERROR_WOPI_REQUEST_PARSE, .extra( "Malformed last part (missing trailing CRLF)" ));
          }
 
          m_pBuffer->m_nBufPos += boundary.size() + 4;
@@ -472,8 +458,7 @@ bool PartHandler::scanForBound( const String& boundary, Stream* input, bool& isL
    {
       if( ! sRealBound.endsWith( "\r\n" ) )
       {
-         m_sError = "Malformed part (missing trailing CRLF)";
-         return false;
+         throw FALCON_SIGN_XERROR(WopiError, FALCON_ERROR_WOPI_REQUEST_PARSE, .extra( "Malformed part (missing trailing CRLF)" ));
       }
 
       m_pBuffer->m_nBufPos += boundary.size() + 2;
@@ -482,11 +467,10 @@ bool PartHandler::scanForBound( const String& boundary, Stream* input, bool& isL
 
    //remove the boundary -- Necessary?
    m_pBuffer->flush();
-   return true;
 }
 
 
-bool PartHandler::parseHeader( Stream* input )
+void PartHandler::parseHeader( Stream* input )
 {
    // if we're not given a buffer, create it now
    if ( m_pBuffer == 0 )
@@ -507,25 +491,16 @@ bool PartHandler::parseHeader( Stream* input )
          // was the flush operation useless -- can't we make new space?
          if( m_pBuffer->full() )
          {
-            m_sError = "Single header entity too large";
-            return false;
+            throw FALCON_SIGN_XERROR(WopiError, FALCON_ERROR_WOPI_REQUEST_PARSE, .extra( "Single header entity too large" ));
          }
 
          // hit eof in the previous loops?
          if( *m_pToBodyLeft == 0 || input->eof()  )
          {
-            m_sError = "Unterminated header";
-            return false;
+            throw FALCON_SIGN_XERROR(WopiError, FALCON_ERROR_WOPI_REQUEST_PARSE, .extra( "Unterminated header" ));
          }
 
          m_pBuffer->fill( input );
-
-         // read error?
-         if( ! input->good() )
-         {
-            m_sError = "I/O Error while reading from input stream";
-            return false;
-         }
 
          // Re-perform the search
          continue;
@@ -543,10 +518,7 @@ bool PartHandler::parseHeader( Stream* input )
       String sLineBuf;
       m_pBuffer->grabMore( sLineBuf, pos );
 
-      if( ! parseHeaderField( sLineBuf ) )
-      {
-         return false;
-      }
+      parseHeaderField( sLineBuf );
 
       // update the buffer pos
       m_pBuffer->m_nBufPos += pos + 2;
@@ -554,24 +526,22 @@ bool PartHandler::parseHeader( Stream* input )
 
    // flush discarding parsed headers.
    m_pBuffer->flush(); // Maybe not necessary here
-   return true;
 }
 
 
-bool PartHandler::parseHeaderField( const String& line )
+void PartHandler::parseHeaderField( const String& line )
 {
    String sKey, sValue;
    if( ! Utils::parseHeaderEntry( line, sKey, sValue ) )
    {
-      m_sError = "Failed to parse header: " + line;
-      return false;
+      throw FALCON_SIGN_XERROR(WopiError, FALCON_ERROR_WOPI_REQUEST_PARSE, .extra( "Failed to parse header: " + line ));
    }
 
-   return addHeader( sKey, sValue );
+   addHeader( sKey, sValue );
 }
 
 
-bool PartHandler::addHeader( const String& sKeyu, const String& sValue )
+void PartHandler::addHeader( const String& sKeyu, const String& sValue )
 {
    // probably this is an overkill
    String sKey = URI::URLDecode( sKeyu );
@@ -597,8 +567,7 @@ bool PartHandler::addHeader( const String& sKeyu, const String& sValue )
    {
       if( ! bValid )
       {
-         m_sError = "Failed to parse header value: " + sValue;
-         return false;
+         throw FALCON_SIGN_XERROR(WopiError, FALCON_ERROR_WOPI_REQUEST_PARSE, .extra( "Failed to parse header value: " + sValue ));
       }
 
       HeaderValue::ParamMap::const_iterator ni = hv.parameters().find( "name" );
@@ -609,8 +578,7 @@ bool PartHandler::addHeader( const String& sKeyu, const String& sValue )
       else
       {
          // can't be a well formed content-disposition
-         m_sError = "Invalid Content-Disposition";
-         return false;
+         throw FALCON_SIGN_XERROR(WopiError, FALCON_ERROR_WOPI_REQUEST_PARSE, .extra( "Invalid Content-Disposition" ));
       }
 
       ni = hv.parameters().find( "filename" );
@@ -625,14 +593,12 @@ bool PartHandler::addHeader( const String& sKeyu, const String& sValue )
    {
       if( ! bValid )
       {
-         m_sError = "Failed to parse header value: " + sValue;
-         return false;
+         throw FALCON_SIGN_XERROR(WopiError, FALCON_ERROR_WOPI_REQUEST_PARSE, .extra( "Failed to parse header value: " + sValue ));
       }
 
       if( ! hv.hasValue() )
       {
-         m_sError = "Invalid Content-Type";
-         return false;
+         throw FALCON_SIGN_XERROR(WopiError, FALCON_ERROR_WOPI_REQUEST_PARSE, .extra( "Invalid Content-Type" ));
       }
 
       m_sPartContentType = hv.value();
@@ -641,8 +607,7 @@ bool PartHandler::addHeader( const String& sKeyu, const String& sValue )
          m_sBoundary = hv.parameters()["boundary"];
          if( m_sBoundary.size() == 0 )
          {
-            m_sError = "Missing boundary in multipart Content-Type";
-            return false;
+            throw FALCON_SIGN_XERROR(WopiError, FALCON_ERROR_WOPI_REQUEST_PARSE, .extra( "Missing boundary in multipart Content-Type" ));
          }
       }
    }
@@ -650,18 +615,14 @@ bool PartHandler::addHeader( const String& sKeyu, const String& sValue )
    {
       if( ! hv.hasValue() )
       {
-         m_sError = "Invalid Content-Length";
-         return false;
+         throw FALCON_SIGN_XERROR(WopiError, FALCON_ERROR_WOPI_REQUEST_PARSE, .extra( "Invalid Content-Length" ));
       }
 
       if (! hv.value().parseInt( m_nPartSize ) )
       {
-         m_sError = "Invalid Content-Length";
-         return false;
+         throw FALCON_SIGN_XERROR(WopiError, FALCON_ERROR_WOPI_REQUEST_PARSE, .extra( "Invalid Content-Length" ));
       }
    }
-
-   return true;
 }
 
 //============================================================

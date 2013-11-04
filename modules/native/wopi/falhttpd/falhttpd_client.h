@@ -41,6 +41,7 @@ public:
    void replyError( int errorID, const String& explain="" );
    String codeDesc( int errorID );
    String getServerSignature();
+   void consumeRequest();
 
    void sendData( const String& sReply );
    void sendData( const void* data, uint32 size );
@@ -50,7 +51,7 @@ public:
    Stream* stream() const { return m_stream; }
    WOPI::Reply* reply() const { return m_reply; }
 
-   void detachReply() { m_reply = 0; }
+   void detachReply() { m_bDeleteReply = false; }
 private:
    void serveRequest(
          const String& sMethod, const String& sUri,  const String& sProto );
@@ -61,6 +62,7 @@ private:
    WOPI::Reply* m_reply;
 
    const FalhttpOptions& m_options;
+   bool m_bDeleteReply;
 };
 
 }

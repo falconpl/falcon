@@ -91,9 +91,18 @@ void ScriptHandler::serve( Falcon::WOPI::Request* req )
    // Notice: the parsing disables the GC; our request object MUST be
    // already considered live in a VM.
    GCLock* lock = Engine::collector()->lock(Item(wopi->requestClass(), req));
-   if( ! req->parse( m_client->stream() ) )
+   try
    {
-      m_client->replyError( 400, req->partHandler().error() );
+      req->parse( m_client->stream() );
+   }
+   catch(Error* err)
+   {
+      if( req->m_content_length != req->m_bytes_received )
+      {
+         m_client->consumeRequest();
+      }
+      m_client->replyError( 400, err->describe(true) );
+      err->decref();
       process->decref();
       return;
    }

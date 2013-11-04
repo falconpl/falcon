@@ -204,6 +204,7 @@ FAL_ERRORDECL( e_catch_invtype, 195, "Invalid type in catch clause" );
 FAL_ERRORDECL( e_select_invtype, 196, "Invalid type in select clause" );
 FAL_ERRORDECL( e_syn_or, 197, "Rule alternative 'or' not under rule" );
 FAL_ERRORDECL( e_for_not_numeric, 198, "For/in loop start, end or step are not numeric values");
+FAL_ERRORDECL( e_non_script_error, 199, "Trying to scriptize a non-scriptable error.");
 
 
 FAL_ERRORDECL( e_io_error, 200, "Generic I/O Error" );

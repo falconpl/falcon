@@ -84,13 +84,13 @@ public:
 
    virtual ~PartHandler();
 
-   bool parse( Stream* input )
+   void parse( Stream* input )
    {
       bool dummy;
-      return parse( input, dummy );
+      parse( input, dummy );
    }
 
-   bool parse( Stream* input, bool& isLast );
+   void parse( Stream* input, bool& isLast );
 
    //! Return true if this part is complete
    bool isComplete() const { return m_nReceived == m_nPartSize; }
@@ -114,21 +114,20 @@ public:
    PartHandler* child() const { return m_pSubPart; }
 
    //! Adds an header
-   bool addHeader( const String& key, const String& value );
+   void addHeader( const String& key, const String& value );
 
    //! Returns true if we're saving on a memory stream.
    bool isMemory() const { return m_str_stream != 0; }
 
    //! Parses just the header before the body
-   bool parseHeader( Stream* input );
+   void parseHeader( Stream* input );
 
    /** Parse the body of the request part.
     \note The upload stream MUST have been already opened or the function will assert.
     \param input The stream.
     \param isLast will be set to true if this is the last part of a multipart request.
-    \return true on success, false on I/O failure or malformed boundary.
     */
-   bool parseBody( Stream* input, bool& isLast );
+   void parseBody( Stream* input, bool& isLast );
 
    /* Returns the memory data in a target string.
 
@@ -142,15 +141,12 @@ public:
    const HeaderMap& headers() const { return m_mHeaders; }
    HeaderMap& headers() { return m_mHeaders; }
 
-   //! Returns a brief description of what was wrong with last decoding.
-   const String& error() const { return m_sError; }
-
    int64 uploadedSize() const { return m_nReceived; }
 
-   bool startUpload();
+   void startUpload();
    void closeUpload();
    void startMemoryUpload();
-   bool startFileUpload();
+   void startFileUpload();
 
    void setOwner( Request* owner ) { m_owner = owner; }
 
@@ -226,13 +222,13 @@ private:
 
 
    //! Searches for the boundary and store the data in m_stream
-   bool scanForBound( const String& boundary, Stream* input, bool& isLast );
+   void scanForBound( const String& boundary, Stream* input, bool& isLast );
 
 
-   bool parseHeaderField( const String& line );
+   void parseHeaderField( const String& line );
 
-   bool parsePrologue( Stream* input );
-   bool parseMultipartBody( Stream* input );
+   void parsePrologue( Stream* input );
+   void parseMultipartBody( Stream* input );
 
    HeaderMap m_mHeaders;
 
@@ -240,7 +236,6 @@ private:
    String m_sPartFileName;
    String m_sPartContentType;
    String m_sTempFile;
-   String m_sError;
 
    String m_sBoundaryBuffer;
    String m_sBoundary;

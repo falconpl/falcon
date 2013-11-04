@@ -24,22 +24,21 @@
 #include <falcon/sys.h>
 #include <falcon/class.h>
 #include <falcon/engine.h>
+#include <falcon/stderrors.h>
 
 #include <deque>
 
 namespace Falcon {
 
-static const String errorDesc( int code )
+static const char* errorDesc( int code )
 {
-   static String unk("Unknown error");
-
    switch( code )
    {
       #define FLC_MAKE_ERROR_MESSAGE_SELECTOR
       #include <falcon/error_messages.h>
    }
 
-   return unk;
+   return "Unknown error";
 }
 
 //==================================================
@@ -81,6 +80,16 @@ Error::Error( const Class* handler ):
    m_handler( handler )
 {
    _p = new Error_p;
+}
+
+Error::Error( const Class* handler, const ErrorParam& params ):
+   m_refCount( 1 ),
+   m_bHasRaised(false),
+   m_name( handler->name() ),
+   m_handler( handler )
+{
+   _p = new Error_p;
+   set(params);
 }
 
 
@@ -174,7 +183,7 @@ void Error::describeTo( String &target, bool addSignature ) const
 
 String &Error::heading( String &target ) const
 {
-   target += handler()->name();
+   target += m_name;
    target += " ";
 
    switch( m_origin )
@@ -233,7 +242,7 @@ String &Error::heading( String &target ) const
       target += ": " + m_description;
    }
    else {
-      target += ": " + errorDesc( m_errorCode );
+      target += ": " + describeErrorCode( m_errorCode ) ;
    }
 
    if ( m_extra.size() > 0 )
@@ -249,6 +258,12 @@ String &Error::heading( String &target ) const
    }
 
    return target;
+}
+
+
+void Error::describeErrorCodeTo( int errorCode, String& tgt ) const
+{
+   tgt = errorDesc( errorCode );
 }
 
 
@@ -268,8 +283,15 @@ void Error::appendSubError( Error *error )
 
 void Error::scriptize( Item& tgt )
 {
+   const Class* h = handler();
+   if( h == 0 )
+   {
+      Error* err = new CodeError(ErrorParam(e_non_script_error, __LINE__, SRC).extra(m_name));
+      err->appendSubError(this);
+      throw err;
+   }
    incref();
-   tgt.setUser( FALCON_GC_STORE( handler(), this ) );
+   tgt.setUser( FALCON_GC_STORE( h, this ) );
 }
 
 
@@ -278,10 +300,15 @@ const Class* Error::handler() const
    if ( m_handler == 0 )
    {
       m_handler = Engine::instance()->getError( m_name );
-      fassert( m_handler != 0 );
    }
 
    return m_handler;
+}
+
+
+void Error::handler( const Class* cls ) const
+{
+   m_handler = cls;
 }
 
 
