@@ -1,0 +1,19 @@
+load shmem
+
+
+mem = SharedMem("test")
+id = mem.size
+> "This will be client with ID ", id
+
+data = mem.grab(id)
+data += "A"
+count = 0
+while true
+   >> data, " \r"
+   sleep(1)
+   data[id] = "A"/count
+   count++
+   mem.write(data)
+end
+
+   
