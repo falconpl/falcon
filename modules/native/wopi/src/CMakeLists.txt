@@ -15,11 +15,9 @@ include_directories(
 
 if(WIN32)
    set( _files_sys 
-        sharedmem_win.cpp
    )
 else()
    set( _files_sys 
-        sharedmem_posix.cpp
    )
 endif()
 

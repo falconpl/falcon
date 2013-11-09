@@ -2,10 +2,6 @@
    FALCON - The Falcon Programming Language.
    FILE: sharedmem_win.cpp
 
-   Shared memory mapped object.
-
-   TODO: Move this file in the main engine in the next version.
-
    Interprocess shared-memory object.
    -------------------------------------------------------------------
    Author: Giancarlo Niccolai
@@ -17,10 +13,9 @@
    See LICENSE file for licensing details.
 */
 
-#include <falcon/wopi/sharedmem.h>
+#include "sharedmem.h"
 #include <falcon/autowstring.h>
 #include <falcon/error.h>
-#include <falcon/eng_messages.h>
 #include <falcon/stream.h>
 #include <falcon/path.h>
 
