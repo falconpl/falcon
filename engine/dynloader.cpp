@@ -21,6 +21,8 @@
 #include <falcon/fassert.h>
 #include <falcon/stderrors.h>
 
+#include <stdio.h>
+
 namespace Falcon
 {
 
@@ -52,7 +54,7 @@ void DynLibrary::open(const String& path)
    {
       return;
    }
-
+   m_path = path;
    open_sys(path);
 }
 
@@ -63,7 +65,7 @@ void* DynLibrary::getDynSymbol( const char* symname ) const
 
    if( sym == 0 )
    {
-      throw FALCON_SIGN_XERROR( AccessError, e_undef_sym, .extra(symname) );
+      throw FALCON_SIGN_XERROR( AccessError, e_undef_sym, .extra(String(symname) + " in " + m_path).origin(ErrorParam::e_orig_loader) );
    }
 
    return sym;

@@ -18,12 +18,12 @@
 
 #include <falcon/setup.h>
 #include <falcon/refcounter.h>
+#include <falcon/string.h>
 
 namespace Falcon
 {
 
 class Module;
-class String;
 
 /** Utility directly loading a dynamic library.
  * Useful for Falcon users, as it ports across platforms.
@@ -71,8 +71,11 @@ public:
 
    FALCON_REFERENCECOUNT_DECLARE_INCDEC(DynLibrary)
 
+   const String& path() const { return m_path; }
+
 private:
    void* m_sysData;
+   String m_path;
 
    virtual ~DynLibrary();
 

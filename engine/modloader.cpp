@@ -162,48 +162,64 @@ bool ModLoader::loadFile( VMContext* tgtctx, const String& path, t_modtype type,
    return loadFile( tgtctx, uri, type, bScan, loader );
 }
 
+// -- copy parameters, we don't want the original to be modified.
+static bool s_checkModuleName( URI first, URI second )
+{
+   first.path().ext("");
+   second.path().ext("");
+   return first.encode() == second.encode();
+}
+
 
 bool ModLoader::loadFile( VMContext* tgtctx, const URI& uri, t_modtype type, bool bScan, Module* loader )
 {
    URI srcUri;
    URI tgtUri;
-   TRACE( "ModLoader::loadFile: %s %d %d", uri.encode().c_ize(), type, bScan );
+   TRACE( "ModLoader::loadFile: %s %d %d by %s", uri.encode().c_ize(), type, bScan,
+            loader == 0 ? "(none)" : loader->uri().c_ize() );
 
    srcUri = uri;
-   // check if the host path is relative to the loader path
-   if( srcUri.path().encode().startsWith("./") && loader != 0 && loader->uri() != "" )
+   URI loaderURI;
+   bool bRelativeToLoader = false;
+   if( loader != 0 )
    {
-      URI loaderURI( loader->uri() );
+      loaderURI.parse(loader->uri());
+      loaderURI.path().canonicize();
+   }
+
+   // check if the host path is relative to the loader path
+   if( srcUri.path().fulloc().startsWith(".") && loader != 0 && loader->uri() != "" )
+   {
+      srcUri.path().canonicize();
       // merge only if same scheme, or if we have empty scheme.
       if( loaderURI.scheme() == srcUri.scheme() || srcUri.scheme().empty() )
       {
-         Path loaderPath( loaderURI.path() );
-
-         srcUri.path().parse( loaderPath.fulloc() + srcUri.path().encode().subString(1) );
+         bRelativeToLoader = true;
+         srcUri.path().parse( loaderURI.path().fulloc() + "/" + srcUri.path().encode() );
          srcUri.scheme( loaderURI.scheme() ); // in case we have none.
+         srcUri.path().canonicize();
       }
    }
 
    // is the file absolute?
-   Path path( srcUri.path() );
-   if( path.isAbsolute() || ! bScan )
+   if( srcUri.path().isAbsolute() || ! bScan )
    {
       t_modtype etype = checkFile_internal( srcUri, type, tgtUri );
       if( etype != e_mt_none )
       {
-         load_internal( tgtctx, "", tgtUri, etype );
+         if( loader == 0 ) {
+            load_internal( tgtctx, tgtUri.encode(), tgtUri, etype );
+         }
+         // try to use a loader-relative path
+         else {
+            load_internal( tgtctx, loaderURI.encode(), tgtUri, etype );
+         }
          return true;
       }
       TRACE1( "ModLoader::loadFile: %s not found as direct path", uri.encode().c_ize() );
    }
    else
    {
-      // time to chop away ./ to add the paths.
-      while( srcUri.path().encode().startsWith("./") )
-      {
-         srcUri.path().parse( srcUri.path().encode().subString(2) );
-      }
-
       // Search the file in the path elements.
       Private::PathList& plist = _p->m_plist;
       Private::PathList::iterator iter = plist.begin();
@@ -214,23 +230,41 @@ bool ModLoader::loadFile( VMContext* tgtctx, const URI& uri, t_modtype type, boo
          Path::winToUri(prefix);
          #endif // FALCON_SYSTEM_WIN
          URI location( prefix + "/" + srcUri.path().encode() );
-
+         location.path().canonicize();
 
          if( location.isValid() )
          {
             TRACE( "Scanning for module %s with type %d ", location.encode().c_ize(), type );
-
-            t_modtype etype = checkFile_internal( location, type, tgtUri );
-            if( etype != e_mt_none )
+            if( s_checkModuleName( loaderURI, location ) )
             {
-               load_internal( tgtctx, *iter, tgtUri, etype );
-               return true;
+               TRACE( "Skipping module with same path as loader %s == %s", location.encode().c_ize(), loaderURI.encode().c_ize() );
+            }
+            else {
+               t_modtype etype = checkFile_internal( location, type, tgtUri );
+               if( etype != e_mt_none )
+               {
+                  TRACE( "Module %s found with type %d ", location.encode().c_ize(), type );
+                  // if we don't have a loader, the name of the module is the name without path.
+                  if( loader == 0 ) {
+                     load_internal( tgtctx, tgtUri.encode(), tgtUri, etype );
+                  }
+                  // if it's relative to loader, use the loader path to calculate the name
+                  else if( bRelativeToLoader ) {
+                     load_internal( tgtctx, loaderURI.encode(), tgtUri, etype );
+                  }
+                  else {
+                     // otherwise, calculate a name relative from the current item in the load path.
+                     load_internal( tgtctx, *iter, tgtUri, etype );
+                  }
+                  return true;
+               }
             }
          }
          else
          {
             TRACE( "URI not valid: %s", location.encode().c_ize() );
          }
+
          ++iter;
       }
       TRACE1( "ModLoader::loadFile: %s not found in any path", uri.encode().c_ize() );
@@ -328,17 +362,22 @@ const String& ModLoader::getSearchPath() const
 
 
 
-void ModLoader::pathToName( const String &path, const String &modFile, String &modName )
+void ModLoader::pathToName( const URI &prefix, const URI &modFile, String &modName )
 {
    // Chop away the topmost part of the path.
-   if( modFile.find( path ) == 0 )
+   if (prefix.scheme() == modFile.scheme() || modFile.scheme().empty() )
    {
-      modName = modFile.subString( path.length() );
+      modName = modFile.path().encode();
+      String prefixPath = modFile.path().fulloc();
+      if( modName.find( prefixPath ) == 0 )
+      {
+         modName = modName.subString( prefixPath.length() );
+      }
    }
-   else
-   {
-      modName = modFile;
+   else {
+      modName = modFile.path().encode();
    }
+
 
    // chop away ../ ./ or /
    bool found = true;
@@ -471,14 +510,10 @@ void ModLoader::load_internal(
    String modName;
    // The module name depends on the prefix path.
    // if the scheme is not in the prefix, then we should just use the path.
-   if( prefixPath.find( uri.scheme() ) == 0 )
-   {
-      pathToName( prefixPath, uri.encode(), modName );
-   }
-   else
-   {
-      pathToName( prefixPath, uri.path().encode(), modName );
-   }
+   pathToName( prefixPath, uri, modName );
+
+   TRACE1("ModLoader::load_internal translated module %s => %s",
+            uri.encode().c_ize(), modName.c_ize() );
 
    // Use the right device depending on the file type.
    switch( type )

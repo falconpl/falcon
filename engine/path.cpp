@@ -672,7 +672,7 @@ void Path::canonicize()
 {
    m_encoded = "";
    
-   // add a final "/" to the location, we'll need that.
+   // add a final "/" to the location, we'll need that for "/.." to be managed as "/../"
    m_location += '/';
    
    // first, remove /./
@@ -687,6 +687,7 @@ void Path::canonicize()
    pos = m_location.find( "/../" );
    while ( pos != String::npos )
    {
+      // "/../abc" must become "/abc"
       if( pos == 0 )
       {
          // leave the initial "/"
@@ -697,24 +698,35 @@ void Path::canonicize()
       else
       {
          // find the preceding "/" and remove all up to that
-         length_t pos2 = m_location.rfind( '/', pos - 1 );
+         length_t pos2 = m_location.rfind( '/', 0, pos - 1 );
          // ... but only if there is something to be removed.
-         if( pos2 == String::npos )
+         if( pos2 != String::npos )
          {
-            pos2 = 0;
+            //         pos2*   *pos
+            //        "/abc/def/../xyz" ==> "/abc/xyz"
+            // remove      ^-----|
+            m_location.remove( pos2, pos - pos2 + 3 );
          }
-         
-         m_location.remove( pos2, pos - pos2 + 3 );
+
          // next...
          pos = m_location.find( "/../", pos2 );
       }
    }
-   
-   // remove the last "/" that we added previously.
-   m_location.size( m_location.size() - m_location.manipulator()->charSize() );
-   
+
+   // remove trailing "/"s -- including the trailing "/" we added before.
+   while( m_location.size() > 0 &&  m_location.getCharAt(m_location.length()-1) == '/' )
+   {
+      m_location.size( m_location.size() - m_location.manipulator()->charSize() );
+   }
+
+   // remove "//"
+   while( (pos = m_location.find("//")) != String::npos )
+   {
+      m_location.remove(pos,1);
+   }
+
    // finally, remove leading "./" if any -- other "/./" are already gone.
-   if( m_location.size() > 2 && 
+   if( m_location.size() > 2 &&
        m_location.getCharAt(0) == '.' && m_location.getCharAt(1) == '/' )
    {
       m_location.remove( 0, 2 );

@@ -353,7 +353,7 @@ public:
       \param modFile the path to a possible falcon module
       \param modNmae the possible falcon module name
    */
-   static void pathToName( const String &path, const String &modFile, String &modName );
+   static void pathToName( const URI &prefix, const URI &modFile, String &modName );
    
 
 private:

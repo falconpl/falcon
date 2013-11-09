@@ -261,6 +261,10 @@ void ModSpace::PStepResolveModReq::apply_( const PStep* self, VMContext* ctx )
 
         if( found != 0 )
         {
+           if( found == mod )
+           {
+              throw FALCON_SIGN_XERROR( LinkError, e_mod_load_self, .extra(mreq->name()).origin(ErrorParam::e_orig_loader));
+           }
            mreq->module( found );
            mod->onModuleResolved(mreq);
         }
