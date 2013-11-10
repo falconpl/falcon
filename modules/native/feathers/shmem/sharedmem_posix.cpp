@@ -64,6 +64,7 @@ public:
       bd(static_cast<BufferData*>(MAP_FAILED))
       {}
 
+   String name;
    atomic_int hasBeenInit;
    int shmfd;
    int filefd;
@@ -113,7 +114,7 @@ void SharedMem::s_unlockf( int etype )
    }
 }
 
-void SharedMem::init( const String &name, bool bFileBackup )
+void SharedMem::init( const String &name, bool bOpen, bool bFileBackup )
 {
    if( ! atomicCAS(d->hasBeenInit, 0, 1) )
    {
@@ -124,8 +125,9 @@ void SharedMem::init( const String &name, bool bFileBackup )
    if( bFileBackup )
    {
       // try to map the file
+      d->name = name;
       AutoCString cfname( name );
-      d->filefd = open( cfname.c_str(), O_CREAT | O_RDWR, 0666 );
+      d->filefd = ::open( cfname.c_str(), O_CREAT | O_RDWR, 0666 );
       if( d->filefd <= 0 )
       {
          throw FALCON_SIGN_XERROR(ShmemError, FALCON_ERROR_SHMEM_IO_INIT,
@@ -137,6 +139,7 @@ void SharedMem::init( const String &name, bool bFileBackup )
    else
    {
       String sMemName = APP_PREFIX + name;
+      d->name = sMemName;
       AutoCString cMemName( sMemName );
       d->shmfd = shm_open( cMemName.c_str(), O_CREAT | O_RDWR, 0666 );
       if( d->shmfd <= 0 )
@@ -152,18 +155,22 @@ void SharedMem::init( const String &name, bool bFileBackup )
 
    int fd = d->filefd;
 
-   // ok, we have our stream. See if it needs initialization.
-   off_t pos = lseek( fd, 0, SEEK_END );
-   if( pos < 0 )
+   off_t pos = 0;
+   if( bOpen )
    {
-      throw FALCON_SIGN_XERROR(ShmemError, FALCON_ERROR_SHMEM_IO_INIT,
-                                 .extra("lseek" )
-                                 .sysError( (int32) errno )
-                        );
+      // ok, we have our stream. See if it needs initialization.
+      pos = lseek( fd, 0, SEEK_END );
+      if( pos < 0 )
+      {
+         throw FALCON_SIGN_XERROR(ShmemError, FALCON_ERROR_SHMEM_IO_INIT,
+                                    .extra("lseek" )
+                                    .sysError( (int32) errno )
+                           );
+      }
    }
 
    // Yes? -- add space.
-   if( pos == 0 )
+   if( pos < (int) sizeof(BufferData) )
    {
       if ( ftruncate( fd, sizeof(BufferData) ) != 0 )
       {
@@ -185,7 +192,7 @@ void SharedMem::init( const String &name, bool bFileBackup )
    }
 
    // if the file wasn't empty, we're done
-   if ( pos != 0 )
+   if ( pos >= (int) sizeof(BufferData) )
    {
       return;
    }
@@ -220,7 +227,7 @@ SharedMem::~SharedMem()
 }
 
 
-void SharedMem::close()
+void SharedMem::close( bool bRemove )
 {
    if( d->bd != MAP_FAILED )
    {
@@ -231,10 +238,20 @@ void SharedMem::close()
    if( d->shmfd > 0 )
    {
       res = ::close( d->shmfd );
+      if( res == 0 && bRemove )
+      {
+         AutoCString fname(d->name);
+         res = ::shm_unlink( fname.c_str() );
+      }
    }
    else if( d->filefd > 0 )
    {
       res = ::close( d->filefd );
+      if( res == 0 && bRemove )
+      {
+         AutoCString fname(d->name);
+         res = ::unlink(fname.c_str());
+      }
    }
 
    d->shmfd = 0;
@@ -430,7 +447,7 @@ bool SharedMem::internal_write( const void* data, int64 size, int64 offset, bool
 
 bool SharedMem::write( const void* data, int64 size, int64 offset, bool bSync, bool bTrunc )
 {
-   return internal_write(data, size, offset, bSync, false, bTrunc );
+   return internal_write(data, size, offset, bSync, bTrunc );
 }
 
 int64 SharedMem::size() const

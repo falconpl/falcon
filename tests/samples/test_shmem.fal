@@ -1,16 +1,22 @@
 load shmem
 
 
-mem = SharedMem("test")
+mem = args.len == 0 ? SharedMem("test") : SharedMem.create("test")
 data = mem.grab()
 id = data.len
+> "Press enter to terminate"
 > "This will be client with ID ", id
 data += "A"
 mem.write(data)
-count = 0
-while true
-   >> @"$({mem.size}:r4): ",data, " \r"
-   sleep(0.5)
+
+sel = Selector()
+// add the stream for read
+sel.addRead( VMProcess.current().stdIn() )
+
+count = 1
+
+while not sel.wait(500)
+   >> @"$({mem.size}:r4): ",data, " \r"   
    mem.read(data)
    data[id] = "A"/count
    if ++count == 26
@@ -19,4 +25,8 @@ while true
    mem.write(data)
 end
 
-   
+if args.len != 0
+   mem.close(true)
+end
+
+> "Done"

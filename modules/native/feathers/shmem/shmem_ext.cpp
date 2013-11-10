@@ -23,12 +23,16 @@
 
 #include <pthread.h>
 
+/*#
+ @beginmodule shmem
+ */
+
 namespace Falcon {
 /*#
- * @class SharedMem
- * @brief Inter-process shared memory low level front-end.
- * @param name The name of the resource, or eventually a target filesystem path.
- * @optparam store True if the resource is to be backup on the filesystem.
+ @class SharedMem
+ @brief Inter-process shared memory low level front-end.
+ @param name The name of the resource, or eventually a target filesystem path.
+ @optparam store True if the resource is to be backup on the filesystem.
  */
 
 namespace {
@@ -43,36 +47,84 @@ static void get_size( const Class*, const String&, void* instance, Item& value )
    value.setInteger( (int64) self->size() );
 }
 
-
-FALCON_DECLARE_FUNCTION(init, "name:S,store:[B]");
-FALCON_DEFINE_FUNCTION_P1(init)
+static void internal_open( SharedMem* shm, Function* func, VMContext* ctx, bool bOpen )
 {
-   TRACE1( "ClassSharedMem::init(%d)", ctx->paramCount() );
    Item* i_name = ctx->param(0);
    Item* i_store = ctx->param(1);
    if( i_name == 0 || ! i_name->isString() )
    {
-      throw paramError();
+      throw func->paramError();
    }
 
    const String& name = *i_name->asString();
    bool bStore = i_store != 0 ? i_store->isTrue() : false;
 
-   SharedMem* shm = ctx->tself<SharedMem*>();
-   shm->init(name, bStore);
+   shm->init(name, bOpen, bStore);
+}
+
+
+FALCON_DECLARE_FUNCTION(init, "name:S, store:[B]");
+FALCON_DEFINE_FUNCTION_P1(init)
+{
+   TRACE1( "ClassSharedMem::init(%d)", ctx->paramCount() );
+   internal_open( ctx->tself<SharedMem*>(), this, ctx, true );
    ctx->returnFrame(ctx->self());
+}
+
+/*#
+ @method open SharedMem
+ @brief (static) Creates a shared memory object eventually opening an existing resource.
+ @param name The name of the resource, or eventually a target filesystem path.
+ @optparam store True if the resource is to be backup on the filesystem.
+ @return A new instance of the SharedMem class.
+
+ This is equivalent to create a SharedMem() instance.
+ */
+FALCON_DECLARE_FUNCTION(open, "name:S,store:[B]");
+FALCON_DEFINE_FUNCTION_P1(open)
+{
+   TRACE1( "ClassSharedMem::open(%d)", ctx->paramCount() );
+   SharedMem* shmem = new SharedMem;
+   ctx->addLocals(1);
+   ctx->local(0)->setUser(FALCON_GC_STORE( methodOf(), shmem));
+   internal_open( shmem, this, ctx, true );
+   ctx->returnFrame(*ctx->local(0));
+}
+
+/*#
+ @method create SharedMem
+ @brief (static) Creates a shared memory object, eventually clearing the previously existing one.
+ @param name The name of the resource, or eventually a target filesystem path.
+ @optparam store True if the resource is to be backup on the filesystem.
+ @return A new instance of the SharedMem class.
+ */
+
+FALCON_DECLARE_FUNCTION(create, "name:S,store:[B]");
+FALCON_DEFINE_FUNCTION_P1(create)
+{
+   TRACE1( "ClassSharedMem::create(%d)", ctx->paramCount() );
+   SharedMem* shmem = new SharedMem;
+   ctx->addLocals(1);
+   ctx->local(0)->setUser(FALCON_GC_STORE( methodOf(), shmem));
+   internal_open( shmem, this, ctx, false );
+   ctx->returnFrame(*ctx->local(0));
 }
 
 /*#
  @method close SharedMem
  @brief Closes the resources associated with this memory
+ @optparam remove True to remove the system object associated with this shared memory object.
 */
 
-FALCON_DECLARE_FUNCTION(close, "");
+FALCON_DECLARE_FUNCTION(close, "remove:[B]");
 FALCON_DEFINE_FUNCTION_P1(close)
 {
+   TRACE1( "ClassSharedMem::close(%d)", ctx->paramCount() );
+   Item* i_remove = ctx->param(0);
+
+   bool bRemove = i_remove == 0 ? false: i_remove->isTrue();
    SharedMem* shm = ctx->tself<SharedMem*>();
-   shm->close();
+   shm->close(bRemove);
    ctx->returnFrame(ctx->self());
 }
 
@@ -299,6 +351,10 @@ ClassSharedMem::ClassSharedMem():
    addMethod(new FALCON_FUNCTION_NAME(read));
    addMethod(new FALCON_FUNCTION_NAME(grab));
    addMethod(new FALCON_FUNCTION_NAME(write));
+   addMethod(new FALCON_FUNCTION_NAME(close));
+
+   addMethod(new FALCON_FUNCTION_NAME(open), true);
+   addMethod(new FALCON_FUNCTION_NAME(create), true);
 }
 
 ClassSharedMem::~ClassSharedMem()
