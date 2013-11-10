@@ -149,6 +149,7 @@ void ClassShared::genericClassWait( const Class* childClass, VMContext* ctx, int
    {
       // use a simpler approach
       genericClassTryWait(childClass, ctx, pCount );
+      return;
    }
 
    // first of all check that we're clear to go with pending events.
