@@ -2,17 +2,20 @@ load shmem
 
 
 mem = SharedMem("test")
-id = mem.size
+data = mem.grab()
+id = data.len
 > "This will be client with ID ", id
-
-data = mem.grab(id)
 data += "A"
+mem.write(data)
 count = 0
 while true
-   >> data, " \r"
-   sleep(1)
+   >> @"$({mem.size}:r4): ",data, " \r"
+   sleep(0.5)
+   mem.read(data)
    data[id] = "A"/count
-   count++
+   if ++count == 26
+      count = 0
+   end
    mem.write(data)
 end
 

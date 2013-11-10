@@ -21,6 +21,8 @@
 #include <falcon/trace.h>
 #include <falcon/vmcontext.h>
 
+#include <pthread.h>
+
 namespace Falcon {
 /*#
  * @class SharedMem
@@ -96,11 +98,38 @@ static void internal_read( VMContext* ctx, String* storage, Item* i_size, Item* 
    }
    else
    {
-      size = storage->size();
-      void* data = shm->grab(storage->getRawStorage(), size , offset);
+      void* data = storage->getRawStorage();
+      // first query the size
+      int64 size = 0;
+
+      // repeat multiple times, as the size might change as we read it.
+      while( ! shm->grab(data, size, offset ) )
+      {
+         if( size == 0 )
+         {
+            storage->size(0);
+            break;
+         }
+
+         // need to clear old data?
+         if( data != storage->getRawStorage() )
+         {
+            delete[] (byte*) data;
+         }
+
+         // need to ask for new?
+         if( size > storage->allocated() )
+         {
+            data = new byte[size];
+         }
+      }
+
       if ( data != storage->getRawStorage() )
       {
          storage->adoptMemBuf( static_cast<byte*>(data), size, size);
+      }
+      else {
+         storage->size(size);
       }
    }
 
@@ -132,7 +161,7 @@ FALCON_DEFINE_FUNCTION_P1(read)
    Item* i_offset = ctx->param(2);
 
    if( i_storage == 0 || ! i_storage->isString()
-       || (i_size == 0 && ! (i_size->isOrdinal() || i_size->isNil() ))
+       || (i_size != 0 && ! (i_size->isOrdinal() || i_size->isNil() ))
        || ( i_offset != 0 && ! i_offset->isOrdinal() ))
    {
       throw paramError();
@@ -168,7 +197,7 @@ FALCON_DEFINE_FUNCTION_P1(grab)
    Item* i_size = ctx->param(0);
    Item* i_offset = ctx->param(1);
 
-   if( (i_size == 0 && ! (i_size->isOrdinal() || i_size->isNil() ))
+   if( (i_size != 0 && ! (i_size->isOrdinal() || i_size->isNil() ))
        || ( i_offset != 0 && ! i_offset->isOrdinal() ))
    {
       throw paramError();

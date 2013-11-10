@@ -82,10 +82,10 @@ public:
     */
    void init( const String &name, bool bFileBackup=false );
 
-   bool read( void* data, int64& size, int64 offset = 0 );
-   void* grab(void* data, int64& size , int64 offset = 0);
+   int64 read( void* data, int64 size, int64 offset = 0 );
+   bool grab(void* data, int64& size, int64 offset = 0 );
+   void* grabAll( int64& size );
    bool write( const void* data, int64 size, int64 offset = 0, bool bSync = false, bool bTrunc = false );
-   bool tryWrite( const void* data, int64 size, int64 offset = 0, bool bSync = false, bool bTrunc = false );
 
    void close();
 
@@ -105,7 +105,10 @@ private:
    class Private;
    Private* d;
 
-   bool internal_write( const void* data, int64 size, int64 offset, bool bSync, bool bTry, bool bTrunc );
+   bool internal_write( const void* data, int64 size, int64 offset, bool bSync, bool bTrunc );
+   int64 lockAndAlign();
+   bool s_lockf( int etype );
+   void s_unlockf( int etype );
 };
 
 }
