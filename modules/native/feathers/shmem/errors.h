@@ -31,6 +31,8 @@
 #define FALCON_ERROR_SHMEM_IO_WRITE       (FALCON_SHMEM_ERROR_BASE + 2 )
 #define FALCON_ERROR_SHMEM_IO_READ        (FALCON_SHMEM_ERROR_BASE + 3 )
 #define FALCON_ERROR_SHMEM_IO_INIT        (FALCON_SHMEM_ERROR_BASE + 4 )
+#define FALCON_ERROR_SHMEM_POST           (FALCON_SHMEM_ERROR_BASE + 5 )
+#define FALCON_ERROR_SHMEM_WAIT           (FALCON_SHMEM_ERROR_BASE + 6 )
 
 
 namespace Falcon {
@@ -48,6 +50,8 @@ namespace Falcon {
    - WopiError.IoWrite - Error while storing the object on shared memory.
    - WopiError.IoRead - Error while restoring the object from shared memory.
    - WopiError.IoInit - Error while creating the shared memory object.
+   - WopiError.Post - Error while posting to a shared semaphore.
+   - WopiError.Wait - Error while waiting for a shared semaphore.
 */
 FALCON_DECLARE_ERROR_INSTANCE_WITH_DESC( ShmemError,
          FALCON_ERROR_CLASS_DESC( FALCON_ERROR_SHMEM_ALREADY_INIT, "Object initialized multiple times" )
@@ -55,6 +59,8 @@ FALCON_DECLARE_ERROR_INSTANCE_WITH_DESC( ShmemError,
          FALCON_ERROR_CLASS_DESC( FALCON_ERROR_SHMEM_IO_WRITE, "Error while storing the object on shared memory" )
          FALCON_ERROR_CLASS_DESC( FALCON_ERROR_SHMEM_IO_READ, "Error while restoring the object from shared memory" )
          FALCON_ERROR_CLASS_DESC( FALCON_ERROR_SHMEM_IO_INIT, "Error while creating the shared memory object" )
+         FALCON_ERROR_CLASS_DESC( FALCON_ERROR_SHMEM_POST, "Error while posting to a shared semaphore" )
+         FALCON_ERROR_CLASS_DESC( FALCON_ERROR_SHMEM_WAIT, "Error while waiting for a shared semaphore" )
 );
 FALCON_DECLARE_ERROR_CLASS_EX( ShmemError, \
          addConstant("AlreadyInit", FALCON_ERROR_SHMEM_ALREADY_INIT );\
@@ -62,7 +68,11 @@ FALCON_DECLARE_ERROR_CLASS_EX( ShmemError, \
          addConstant("IoWrite", FALCON_ERROR_SHMEM_IO_WRITE);\
          addConstant("IoRead", FALCON_ERROR_SHMEM_IO_READ);\
          addConstant("IoInit", FALCON_ERROR_SHMEM_IO_INIT);\
+         addConstant("Post", FALCON_ERROR_SHMEM_POST);\
+         addConstant("WAit", FALCON_ERROR_SHMEM_WAIT);\
          )
+
+
 }
 
 #endif /* _FALCON_FEATHERS_SHMEM_ERRORS_H_ */

@@ -100,7 +100,7 @@ public:
    /**
     Posts a number of signals equal to the current number of waiters.
 
-    Normally, this request is to be avoided, but is provided for
+    Normally, this method is to be avoided, but is provided for
     special purposes.
 
     A program relying on this semantic must take measures so that:

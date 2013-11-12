@@ -24,6 +24,7 @@ if(WIN32)
 else()
    set( _files_sys 
         sharedmem_posix.cpp
+        ipsem_posix.cpp
    )
 endif()
 
@@ -37,9 +38,14 @@ include_directories(
 set(SRC_FILES 
   ${_files_sys}
   shmem_ext.cpp
+  ipsem_ext.cpp
+  shared_ipsem.cpp
   shmem.cpp
   
   sharedmem.h
+  ipsem.h
+  shared_ipsem.h
+  
   shmem_ext.h
   version.h
 )
