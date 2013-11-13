@@ -26,6 +26,7 @@
 #include <falcon/stdhandlers.h>
 #include <falcon/gclock.h>
 #include <falcon/classes/classshared.h>
+#include <falcon/vm.h>
 
 #include <set>
 #include <deque>
@@ -44,11 +45,15 @@ namespace Falcon {
 
 namespace {
 
+//=======================================================================
+// Thread waiting for an IP semaphore to become available.
+//=======================================================================
+
 /** This class waits for a semaphore to be signaled. */
 class SemWaiter: public Runnable
 {
 public:
-   SemWaiter( ClassIPSem* owner );
+   SemWaiter( const ClassIPSem* owner );
    ~SemWaiter();
 
    void wait(SharedIPSem* sem, int64 to);
@@ -57,7 +62,7 @@ public:
    virtual void* run();
 
 private:
-   ClassIPSem* m_owner;
+   const ClassIPSem* m_owner;
    SysThread* m_thread;
    GCLock* m_semLock;
 
@@ -80,20 +85,15 @@ private:
    Mutex m_mtxMsg;
    Event m_newMsg;
 
-   GCLock* m_classLock;
-
    void clearMessages();
    void process(SharedIPSem* sem, int64 to);
 };
 
 
-SemWaiter::SemWaiter(ClassIPSem* owner):
+SemWaiter::SemWaiter(const ClassIPSem* owner):
          m_owner(owner)
 {
    TRACE1("SemWaiter(%p)::SemWaiter(owner:%p)", owner, this);
-
-   // prevent the owner to be destroyed while we're alive.
-   m_classLock = Engine::collector()->lock(Item(owner->handler(), owner));
 
    m_thread = new SysThread(this);
    // start detached: we know when to end.
@@ -135,7 +135,8 @@ void* SemWaiter::run()
    TRACE1("SemWaiter(%p)::run()", this);
 
    // Always check if we're wanted.
-   while( m_owner->checkNeeded(this) )
+   bool goOn = true;
+   while( goOn )
    {
       m_newMsg.wait();
       m_mtxMsg.lock();
@@ -152,7 +153,15 @@ void* SemWaiter::run()
          {
             process(msg.sem, msg.to);
             fassert(msg.lock != 0);
+            // as long as we hold the lock on the item,
+            // it's handler (our owner) is valid.
+            goOn = m_owner->checkNeeded(this);
+            // after we use our owner, we can dispose the lock.
             msg.lock->dispose();
+         }
+         else
+         {
+            goOn = false;
          }
       }
       else {
@@ -161,9 +170,6 @@ void* SemWaiter::run()
       }
    }
    TRACE1("SemWaiter(%p)::run() -- terminating", this);
-
-   // we're not going to reference the owner class anymore
-   m_classLock->dispose();
 
    // if we're not needed, this means we're not in the class pool anymore,
    // and this means we won't receive new semaphores -- unlock them.
@@ -201,23 +207,204 @@ void SemWaiter::process(SharedIPSem* sem, int64 to)
    }
 }
 
+//=======================================================================
+// Class IP Semaphore methods
+//=======================================================================
+
+
+static void internal_create( VMContext* ctx, Function* func, int mode )
+{
+   Item* i_name = ctx->param(0);
+   Item* i_public = ctx->param(1);
+   if( i_name == 0 || ! i_name->isString() )
+   {
+      throw func->paramError();
+   }
+
+   const String& name = *i_name->asString();
+   SharedIPSem* ips = new SharedIPSem(&ctx->vm()->contextManager(), func->methodOf() );
+   bool bPublic = i_public == 0? false : i_public->isTrue();
+
+   try {
+      switch (mode)
+      {
+      case 0: ips->semaphore().open(name, bPublic); break;
+      case 1: ips->semaphore().openExisting(name); break;
+      case 2: ips->semaphore().create(name, bPublic); break;
+      }
+   }
+   catch(...)
+   {
+      delete ips;
+      throw;
+   }
+
+   ctx->returnFrame( FALCON_GC_STORE(func->methodOf(), ips) );
+}
+
+/*#
+ @class IPSem
+ @from Shared
+ @brief Interprocess semaphore implementation
+ @param name The name of the semaphore to be opened
+ @optparam public Set to true to create a publicly visible semaphore
+ @throw ShmemError on system error or if the semaphore already exists.
+
+ This class implements an inter-process semaphore that
+ allows synchronization across different actual O/S processes
+ running in the real machine.
+
+ Invoking the constructor is equivalent to invoke the
+ @a IPSem.open static method.
+ */
+FALCON_DECLARE_FUNCTION(init, "name:S, exist:[B]")
+FALCON_DEFINE_FUNCTION_P1(init)
+{
+   internal_create( ctx, this, 0 );
+}
+
+/*#
+ @method open IPSem
+ @brief (static) Opens or creates a semaphore.
+ @param name The name of the semaphore to be opened.
+ @optparam public Set to true to create a publicly visible semaphore
+ @throw ShmemError on system error.
+
+  This method opens an interprocess semaphore with the given name,
+  eventually creating if it doesn't exists.
+
+  If the @b exist parameter is given and true, the method will
+  throw if the semaphore wasn't already existing (e.g. because
+  created by another process).
+ */
+FALCON_DECLARE_FUNCTION(open, "name:S, public:[B]")
+FALCON_DEFINE_FUNCTION_P1(open)
+{
+   internal_create( ctx, this, 0 );
+}
+
+/*#
+ @method openExisting IPSem
+ @brief (static) Opens an existing semaphore.
+ @param name The name of the semaphore to be opened.
+ @throw ShmemError on system error or if the doesn't exist.
+
+  This method opens an interprocess semaphore with the given name,
+  eventually creating if it doesn't exists.
+ */
+FALCON_DECLARE_FUNCTION(openExisting, "name:S")
+FALCON_DEFINE_FUNCTION_P1(openExisting)
+{
+   internal_create( ctx, this, 1 );
+}
+
+
+/*#
+ @method create IPSem
+ @brief (static) Creates a new a semaphore.
+ @param name The name of the semaphore to be created.
+ @param public True to create a publicly visible semaphore.
+ @throw ShmemError on system error or if the semaphore already exists.
+
+  This method tries to create a new semaphore with the given name.
+  If a semaphore with the given name already existed, the method
+  fails, throwing an error.
+
+  If the parameter @b public is given and true, the semaphore
+  is created as publicly visible, otherwise processes created
+  by the same user only will be able to open it.
+ */
+FALCON_DECLARE_FUNCTION(create, "name:S,public:[B]")
+FALCON_DEFINE_FUNCTION_P1(create)
+{
+   internal_create( ctx, this, 2 );
+}
+
+
+/*#
+ @method close IPSem
+ @brief Closes the given semaphore.
+ @optparam remove If true, will remove the semaphore from the system.
+
+ */
+FALCON_DECLARE_FUNCTION(close, "remove:[B]")
+FALCON_DEFINE_FUNCTION_P1(close)
+{
+   Item* i_remove = ctx->param(0);
+   SharedIPSem* sip = ctx->tself<SharedIPSem*>();
+   bool bRemove = i_remove == 0 ? false: i_remove->isTrue();
+   sip->semaphore().close( bRemove );
+   ctx->returnFrame();
+}
+
+
+/*#
+ @method post IPSem
+ @brief Signals the semaphore.
+ @optparam count A positive integer indicating the number of signals to be posted.
+
+   This method signals the semaphore as being waitable, eventually releasing other
+   processes using waiters to synchronize on this semaphore.
+ */
+FALCON_DECLARE_FUNCTION(post, "count:[I]")
+FALCON_DEFINE_FUNCTION_P1(post)
+{
+   Item* i_count = ctx->param(0);
+
+   if( i_count != 0 && ! i_count->isOrdinal() )
+   {
+      throw paramError();
+   }
+
+   int64 count = 1;
+   if( i_count != 0 )
+   {
+      count = i_count->forceInteger();
+      if( count <= 0 )
+      {
+         throw paramError("Invalid range");
+      }
+   }
+
+   SharedIPSem* sip = ctx->tself<SharedIPSem*>();
+   while( count > 0 )
+   {
+      sip->semaphore().post();
+      --count;
+   }
+
+   ctx->returnFrame();
+}
+
 }
 
 //=======================================================================
-//
+// Main IP Semaphore class
 //=======================================================================
 
 class ClassIPSem::Private
 {
 public:
-   Private() {}
-   ~Private() {}
-
    Mutex m_mtxPool;
    typedef std::set<SemWaiter*> WaiterPool;
    WaiterPool m_wpool;
 
    static const uint32 POOL_SIZE = 4;
+
+
+   Private() {}
+   ~Private() {
+      // send a termination request to all the waiters in the pool
+      m_mtxPool.lock();
+      WaiterPool::iterator iter = m_wpool.begin();
+      while( iter != m_wpool.end() )
+      {
+         (*iter)->terminate();
+         ++iter;
+      }
+      m_mtxPool.unlock();
+   }
+
 };
 
 ClassIPSem::ClassIPSem():
@@ -225,6 +412,12 @@ ClassIPSem::ClassIPSem():
 {
    setParent( Engine::instance()->stdHandlers()->sharedClass() );
    _p = new Private;
+
+   setConstuctor( new FALCON_FUNCTION_NAME(init));
+   addMethod( new FALCON_FUNCTION_NAME(open), true);
+   addMethod( new FALCON_FUNCTION_NAME(create), true);
+   addMethod( new FALCON_FUNCTION_NAME(post));
+   addMethod( new FALCON_FUNCTION_NAME(close));
 }
 
 ClassIPSem::~ClassIPSem()
@@ -260,6 +453,9 @@ void ClassIPSem::gcMarkInstance( void* instance, uint32 mark ) const
 {
    SharedIPSem* sem = static_cast<SharedIPSem*>(instance);
    sem->gcMark(mark);
+   // as long as there are instances of us around (i.e. in gc locks),
+   // reference ourselves as well, to keep the module alive.
+   const_cast<ClassIPSem*>(this)->gcMark(mark);
 }
 
 bool ClassIPSem::gcCheckInstance( void* instance, uint32 mark ) const
@@ -268,15 +464,39 @@ bool ClassIPSem::gcCheckInstance( void* instance, uint32 mark ) const
    return sem->currentMark() >= mark;
 }
 
+void ClassIPSem::waitOn( SharedIPSem* ips, int64 to ) const
+{
+   SemWaiter* waiter = 0;
+   _p->m_mtxPool.lock();
+   if( ! _p->m_wpool.empty() )
+   {
+      waiter = *_p->m_wpool.begin();
+      _p->m_wpool.erase(_p->m_wpool.begin());
+   }
+   _p->m_mtxPool.unlock();
+
+   if( waiter == 0 )
+   {
+      waiter = new SemWaiter(this);
+   }
+
+   waiter->wait( ips, to );
+}
+
+
 /** Used by an internal class to know if it should stay active or not. */
 bool ClassIPSem::checkNeeded( SemWaiter* threadData ) const
 {
-   bool bNeeded = true;
+   bool bNeeded;
    _p->m_mtxPool.lock();
    if( _p->m_wpool.size() > Private::POOL_SIZE )
    {
-      _p->m_wpool.erase( threadData );
       bNeeded = false;
+   }
+   else
+   {
+      bNeeded = true;
+      _p->m_wpool.insert( threadData );
    }
    _p->m_mtxPool.unlock();
 

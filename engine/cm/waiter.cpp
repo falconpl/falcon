@@ -107,17 +107,7 @@ void ClassWaiter::internal_wait( VMContext* ctx, int64 to )
 
       Shared* sh = static_cast<Shared*>(cls->getParentData( clsShared, inst ));
       ctx->addWait(sh);
-   }
-
-   for( uint32 i = 0; i < start; ++i )
-   {
-      Item& param = array->at(i);
-      Class* cls = 0;
-      void* inst = 0;
-      param.asClassInst(cls, inst);
-
-      Shared* sh = static_cast<Shared*>(cls->getParentData( clsShared, inst ));
-      ctx->addWait(sh);
+      sh->onWaiterWaiting(ctx, to);
    }
 
    Shared* sh = ctx->engageWait(to);
@@ -291,7 +281,7 @@ void Function_add::invoke(VMContext* ctx, int32 )
 
    self->m_waited.append(*i_added);
    Shared* sh = static_cast<Shared*>(cls->getParentData(clsShared, inst));
-   sh->onWaiterWaiting(ctx);
+   sh->onWaiterAdded(ctx);
 
    if( i_callback != 0 )
    {

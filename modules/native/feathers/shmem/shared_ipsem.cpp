@@ -12,48 +12,61 @@
    See LICENSE file for licensing details.
 */
 
-#ifndef _FALCON_FEATHERS_SHAREDIPSEM_H_
-#define _FALCON_FEATHERS_SHAREDIPSEM_H_
+#define SRC "modules/native/feathers/shmem/shared_ipsem.cpp"
 
-#include <falcon/setup.h>
-#include <falcon/string.h>
-#include <falcon/shared.h>
-
-#include "ipsem.h"
+#include "shared_ipsem.h"
+#include "ipsem_ext.h"
 
 namespace Falcon {
 
-/** Interface for the Virtual Machine to an interprocess semaphore.
- *
- * While the IPSem class abstracts the system-level IP semaphore, this
- * class wraps the abstraction into a structure that can be used as a
- * shared object by the Falcon VM (e.g. scripts).
- *
- */
-class SharedIPSem: public Shared
+SharedIPSem::SharedIPSem( ContextManager* ctx, Class* handler ):
+      Shared(ctx, handler)
 {
-public:
-   SharedIPSem( ContextManager* ctx, Class* handler );
-   SharedIPSem( ContextManager* ctx, Class* handler, const String& name );
-   SharedIPSem( const IPSem& other );
+}
 
-   virtual ~SharedIPSem();
+SharedIPSem::SharedIPSem( ContextManager* ctx, Class* handler, const String& name ):
+      Shared(ctx, handler),
+      m_sem(name)
+{
+}
 
-   IPSem& semaphore() { return m_sem; }
-   const IPSem& semaphore() const { return m_sem; }
-
-   virtual int32 consumeSignal( VMContext* target, int32 count = 1 );
-
-private:
-   class Private;
-   Private* _p;
-
-   IPSem m_sem;
-};
+SharedIPSem::SharedIPSem( const SharedIPSem& other ):
+         Shared( other.notifyTo(), other.handler() ),
+         m_sem(other.m_sem)
+{
 
 }
 
-#endif
+
+SharedIPSem::~SharedIPSem()
+{
+}
+
+int32 SharedIPSem::consumeSignal( VMContext* target, int32 count )
+{
+   int i = 0;
+   for( ; i < count; ++i )
+   {
+      if ( ! m_sem.tryWait() )
+      {
+         return Shared::consumeSignal(target, count - i) + i;
+      }
+   }
+
+   return i;
+}
+
+
+void SharedIPSem::onWaiterWaiting(VMContext*, int64 to)
+{
+   // we ask our class to wait for the IPC semaphore to be ready.
+   const ClassIPSem* cs = static_cast<const ClassIPSem*>(handler());
+   cs->waitOn(this, to);
+}
+
+
+}
+
 
 /* end of shared_ipsem.cpp */
 

@@ -208,7 +208,7 @@ int32 MessageQueue::lockedConsumeSignal( VMContext* target, int32 count )
 }
 
 
-void MessageQueue::onWaiterWaiting(VMContext* ctx)
+void MessageQueue::onWaiterAdded(VMContext* ctx)
 {
    subscribe(ctx);
 }

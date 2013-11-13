@@ -36,14 +36,17 @@ class SharedIPSem: public Shared
 public:
    SharedIPSem( ContextManager* ctx, Class* handler );
    SharedIPSem( ContextManager* ctx, Class* handler, const String& name );
-   SharedIPSem( const IPSem& other );
+   SharedIPSem( const SharedIPSem& other );
 
    virtual ~SharedIPSem();
 
    IPSem& semaphore() { return m_sem; }
    const IPSem& semaphore() const { return m_sem; }
 
+
    virtual int32 consumeSignal( VMContext* target, int32 count = 1 );
+
+   void onWaiterWaiting(VMContext* ctx, int64 to);
 
 private:
    class Private;

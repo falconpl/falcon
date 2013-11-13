@@ -25,6 +25,8 @@ namespace {
 class SemWaiter;
 }
 
+class SharedIPSem;
+
 /** Interface for the IPSem
  *
  */
@@ -46,6 +48,7 @@ public:
    /** Used by an internal class to know if it should stay active or not. */
    bool checkNeeded( SemWaiter* threadData ) const;
 
+   void waitOn( SharedIPSem* ips, int64 to ) const;
 private:
    class Private;
    Private* _p;

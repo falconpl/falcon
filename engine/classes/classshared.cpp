@@ -164,9 +164,9 @@ void ClassShared::genericClassWait( const Class* childClass, VMContext* ctx, int
    Shared* shared = static_cast<Shared*>(ctx->self().asInst());
    ctx->initWait();
    ctx->addWait(shared);
-   shared = ctx->engageWait( timeout );
+   Shared* engaged = ctx->engageWait( timeout );
 
-   if( shared != 0 )
+   if( engaged == shared )
    {
       ctx->returnFrame( Item().setBoolean(true) );
    }
@@ -177,6 +177,7 @@ void ClassShared::genericClassWait( const Class* childClass, VMContext* ctx, int
          ctx->returnFrame(Item().setBoolean(false));
       }
       else {
+         shared->onWaiterWaiting(ctx, timeout);
          ctx->pushCode( &stepWaitSuccess );
       }
    }

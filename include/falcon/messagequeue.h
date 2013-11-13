@@ -57,7 +57,7 @@ public:
 
    Shared* subscriberWaiter( int count );
 
-   virtual void onWaiterWaiting(VMContext* ctx);
+   virtual void onWaiterAdded(VMContext* ctx);
 
 protected:
    virtual ~MessageQueue();

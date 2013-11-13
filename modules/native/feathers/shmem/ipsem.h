@@ -45,10 +45,10 @@ public:
    }
    t_open_mode;
 
-   void init( const String& name, t_open_mode mode );
-   void open(const String& name) { init(name, e_om_open ); }
-   void openExisting(const String& name) { init(name, e_om_openex ); }
-   void create(const String& name) { init(name, e_om_create ); }
+   void init( const String& name, t_open_mode mode, bool bPublic = false );
+   void open(const String& name, bool bPublic = false) { init(name, e_om_open, bPublic ); }
+   void openExisting(const String& name, bool bPublic = false) { init(name, e_om_openex, bPublic ); }
+   void create(const String& name, bool bPublic = false) { init(name, e_om_create, bPublic ); }
 
    void close( bool bDelete = false );
 

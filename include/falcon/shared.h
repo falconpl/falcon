@@ -139,9 +139,19 @@ public:
    virtual void gcMark( uint32 n ) { m_mark = n; }
 
    /**
-    * Called back when added to a waiter that will wait instead of this shared.
+    * Called back when a waiter context wants to be notified about changes.
+    *
+    * The base class version does nothing.
     */
-   virtual void onWaiterWaiting(VMContext* ctx);
+   virtual void onWaiterAdded(VMContext* ctx);
+
+   /**
+    * Invoked right before the target context engages a wait on this resource.
+    *
+    * The base class version does nothing. This is usually not called
+    * for a try-wait (to = 0).
+    */
+   virtual void onWaiterWaiting(VMContext* ctx, int64 to);
 
    /**
     * Determines whether this resource is context-specific.

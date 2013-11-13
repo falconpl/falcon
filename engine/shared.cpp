@@ -106,7 +106,12 @@ void Shared::unlockSignals() const
 }
 
 
-void Shared::onWaiterWaiting(VMContext*)
+void Shared::onWaiterAdded(VMContext*)
+{
+   // nothing to do
+}
+
+void Shared::onWaiterWaiting(VMContext*, int64 )
 {
    // nothing to do
 }

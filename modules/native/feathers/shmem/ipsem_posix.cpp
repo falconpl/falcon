@@ -73,7 +73,7 @@ IPSem::~IPSem()
 
 
 
-void IPSem::init( const String& name, IPSem::t_open_mode mode )
+void IPSem::init( const String& name, IPSem::t_open_mode mode, bool bPublic )
 {
    if( ! atomicCAS(_p->hasInit, 0, 1) )
    {
@@ -90,21 +90,32 @@ void IPSem::init( const String& name, IPSem::t_open_mode mode )
       sname = name;
    }
 
-   _p->semName = name;
+   _p->semName = sname;
 
-   int omode;
+   int omode, pmode;
    switch(mode)
    {
-   case e_om_create: omode = O_CREAT; break;
-   case e_om_openex: omode = O_CREAT | O_EXCL; break;
-   case e_om_open: omode = 0; break;
+   case e_om_create: omode = O_CREAT | O_EXCL; break;
+   case e_om_open: omode = O_CREAT; break;
+   case e_om_openex: omode = 0; break;
    }
 
+   pmode = bPublic ? 0777: 0700;
+
    AutoCString cname(sname);
-   _p->semaphore = sem_open( cname.c_str(), omode );
+   if( omode != 0 ) {
+      _p->semaphore = sem_open( cname.c_str(), omode, pmode, 0 );
+   }
+   else {
+      _p->semaphore = sem_open( cname.c_str(), 0 );
+   }
+
    if( _p->semaphore == SEM_FAILED )
    {
-      throw FALCON_SIGN_XERROR(ShmemError, FALCON_ERROR_SHMEM_IO_INIT, .sysError((uint32) errno) );
+      if( _p->semaphore == SEM_FAILED )
+      {
+         throw FALCON_SIGN_XERROR(ShmemError, FALCON_ERROR_SHMEM_IO_INIT, .sysError((uint32) errno) );
+      }
    }
 }
 
@@ -195,18 +206,17 @@ bool IPSem::wait( int64 to )
          }
 
          res = sem_timedwait(_p->semaphore, &ts_wait);
-
-         if( res == ETIMEDOUT )
-         {
-            return false;
-         }
       }
    }
    // repeat in case of signal interruption.
-   while( res == EINTR );
+   while( res != 0 && errno == EINTR );
 
    if( res != 0 )
    {
+      if( errno == ETIMEDOUT || errno == EAGAIN )
+      {
+         return false;
+      }
       throw FALCON_SIGN_XERROR(ShmemError, FALCON_ERROR_SHMEM_WAIT, .sysError((uint32) errno) );
    }
 
