@@ -396,6 +396,8 @@ void HyperClass::describe( void* instance, String& target, int depth, int maxlen
       str += temp;
    }
    str += "}";
+
+   target  = str;
 }
 
 //=========================================================

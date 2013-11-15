@@ -909,6 +909,12 @@ void Module::startup( VMContext* ctx )
             // no? -- use an hyper construct.
             // notice that in case of hard errors, as undefined symbols, we threw here.
             HyperClass* cls = fcls->hyperConstruct();
+            if( cls == 0 )
+            {
+               throw FALCON_SIGN_XERROR(CodeError, e_acc_forbidden,
+                        .extra("Invalid hyperclass " + fcls->name()) );
+            }
+
             _p->m_mantras[cls->name()] = cls;
             Item* icls = m_globals.getValue(cls->name());
             fassert(icls!=0);
