@@ -747,7 +747,7 @@ bool FalconClass::construct( VMContext* ctx )
 HyperClass* FalconClass::hyperConstruct()
 {
    TRACE( "Creating an hyperclass from %s", name().c_ize() );
-   if( m_missingParents != 0 || m_bConstructed )
+   if( m_missingParents > 0 || (m_bConstructed && m_bPureFalcon) )
    {
       TRACE( "FalconClass %s has not the requisites to become an hyperclass", name().c_ize() );
       return 0;
