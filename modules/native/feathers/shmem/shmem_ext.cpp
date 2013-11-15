@@ -382,7 +382,6 @@ int64 ClassSharedMem::occupiedMemory( void* instance ) const
    return static_cast<SharedMem*>(instance)->size() + sizeof(SharedMem) + 32;
 }
 
-
 }
 
 /* end of shmem_ext.cpp */
