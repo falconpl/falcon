@@ -25,7 +25,15 @@ namespace Falcon {
 class TextReader;
 class String;
 
-/**
+/** Waitable virtual machine context.
+ *
+ * This is an extended front-end to the Falcon engine
+ * that simplifies the writing of embedded scripts in applications.
+ *
+ * Instead of programming the raw process of loading a main module
+ * through a process, then launching it in the executor process, this
+ * executor-in-a-box can take care of loading or evaluating scripts from
+ * VFS (virtual file systems) or texts.
  *
  */
 class FALCON_DYN_CLASS WVMContext: public VMContext
@@ -48,11 +56,11 @@ public:
 
    /** Wait for the completion event to be signaled.
     *
-    * If an error is thrown in the contect, the waiter will be waken up
-    * and the error will be rethrown in the caller's context.
+    * If an error is thrown in the context, the waiter will be waken up
+    * and the error will be re-thrown in the caller's context.
     *
     * If this is not desired, wait directly on completeEvent(), then check
-    * completionError() to be zero (all ok) or nonzero (something was thrown).
+    * completionError() to be zero (all OK) or nonzero (something was thrown).
     *
     * \note: The WVMContext class wraps uncaught raised items into a CodeError.
     * The original raised item can still be found in the VMContext::raisedItem() method,
