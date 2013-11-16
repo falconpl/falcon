@@ -138,7 +138,7 @@ void HyperClass::setParentship( ExprParentship* ps, bool bOwn )
    for( int i = 0; i < m_parentship->arity(); ++i )
    {  
       ExprInherit* inh = static_cast<ExprInherit*>(m_parentship->nth(i));
-      Class* cls = inh->handler();
+      Class* cls = inh->base();
       
       // ... Always override names of parent classes.
       props[cls->name()] = ClassMulti::Property( cls, -m_nParents );
@@ -163,6 +163,8 @@ Class* HyperClass::getParent( const String& name ) const
 
 void HyperClass::addParentProperties( Class* cls )
 {
+   TRACE2("HyperClass::addParentProperties(%s)", cls->name().c_ize() );
+
    class PE: public PropertyEnumerator
    {
    public:
@@ -176,6 +178,7 @@ void HyperClass::addParentProperties( Class* cls )
          // ignore properties representing parent classes.
          if( m_cls->getParent( pname ) == 0 )
          {
+            TRACE2("HyperClass::addParentProperties(%s) -- adding %s", m_cls->name().c_ize(), pname.c_ize());
             m_owner->addParentProperty( m_cls, pname );
          }
          
@@ -216,14 +219,20 @@ void* HyperClass::clone( void* source ) const
 
 void* HyperClass::createInstance() const
 {
+   TRACE1("HyperClass(%p,%s)::createInstance() for %d parents", this, name().c_ize(), m_nParents );
+
    ItemArray* ia = new ItemArray( m_nParents );
    ia->resize(m_nParents);
    
    // TODO: maybe we can posticipate this to init?
-   for( int i = 0; i < m_nParents; ++i ) {
+   for( int i = 0; i < m_nParents; ++i )
+   {
       Class* cls = i==0 ? m_master : 
-         static_cast<ExprInherit*>( m_parentship->nth(i-1) )->handler();
+         static_cast<ExprInherit*>( m_parentship->nth(i-1) )->base();
       
+      TRACE1("HyperClass(%p,%s)::createInstance() for %s",
+               this, name().c_ize(), cls->name().c_ize() );
+
       if( ! cls->isFlatInstance() ) {
          (*ia)[i] = FALCON_GC_STORE( cls, cls->createInstance() );
       }
@@ -407,7 +416,9 @@ void HyperClass::describe( void* instance, String& target, int depth, int maxlen
 bool HyperClass::op_init( VMContext* ctx, void* instance, int32 pcount ) const
 {  
    ItemArray& mData = *static_cast<ItemArray*>(instance);   
-   
+   TRACE1("HyperClass(%p,%s)::op_init(ctx:%p, inst:%p, pcount: %d)",
+            this, name().c_ize(), ctx, instance, pcount );
+
    // if we have a constructor, call it.
    if( m_constructor )
    {
@@ -424,15 +435,17 @@ bool HyperClass::op_init( VMContext* ctx, void* instance, int32 pcount ) const
    {
       // good, we have a master class constructor (but we know we reaped its parents).
       // we also know that the master class has no direct parentship -- we own it.
-      m_master->op_init( ctx, mData[0].asInst(), pcount );
-      
-      // we finally know that the master op_init went deep, as it has a ctor...
-      ctx->pushCode( &m_initParentsStep );
-      // apply now, it's useless to wait.
-      m_initParentsStep.apply( &m_initParentsStep, ctx );
+      if( ! m_master->op_init( ctx, mData[0].asInst(), pcount ) )
+      {
+         ctx->popData(pcount);
+      }
    }
-      
-   // are we clear -- If we went deep we take care of our params.
+
+   // we finally know that the master op_init went deep, as it has a ctor...
+   ctx->pushData(Item(this,instance));
+   ctx->stepIn( &m_initParentsStep );
+
+   // stepInit is always to be called, prevent stack cleaning
    return m_constructor != 0 || m_master->constructor() != 0;
 }
 
@@ -445,13 +458,16 @@ bool HyperClass::op_init( VMContext* ctx, void* instance, int32 pcount ) const
 void HyperClass::InitParentsStep::apply_(const PStep* ps, VMContext* ctx )
 {
    const InitParentsStep* self = static_cast<const InitParentsStep*>(ps);
-   ItemArray& mData = *static_cast<ItemArray*>(ctx->self().asInst());
-   
    CodeFrame& cf = ctx->currentCode();
    int& pid = cf.m_seqId; 
-   int size = mData.length()-1;
-   ctx->addDataSlot();
    
+   ItemArray& mData = *static_cast<ItemArray*>(ctx->opcodeParam(pid).asInst());
+   int size = mData.length()-1;
+
+
+   TRACE1("HyperClass(%p,%s)::InitParentsStep::apply_ %d/%d (depth %d)",
+                  self->m_owner, self->m_owner->name().c_ize(), pid, size, (int) ctx->dataSize() );
+
    while( pid < size )
    {
       // ei wants the item before being called.
@@ -460,7 +476,7 @@ void HyperClass::InitParentsStep::apply_(const PStep* ps, VMContext* ctx )
       // data in mData goes 1..size
       ++pid;
       // ExprInherit wants the self object on top of the data stack.
-      ctx->topData() = mData[pid];
+      ctx->pushData( mData[pid] );
       if( ctx->stepInYield( ei, cf ) ) {
          return;
       }
@@ -468,8 +484,8 @@ void HyperClass::InitParentsStep::apply_(const PStep* ps, VMContext* ctx )
 
    // we're done.
    ctx->popCode();
-   // pop also the extra data we pushed to make room
-   ctx->popData();
+   // pop also the extra data we pushed (An extra copy of self) at op_init
+   ctx->popData(pid+1);
 }
    
 }
