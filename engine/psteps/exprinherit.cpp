@@ -153,11 +153,13 @@ void ExprInherit::apply_( const PStep* ps, VMContext* ctx )
    int& seqId = cf.m_seqId;
    const TreeStepVector_Private::ExprVector& exprs = self->_p->m_exprs;
    int size = (int) exprs.size();   
-   
-   TRACE1("Apply with %d/%d parameters", seqId, size );
-   
+
+   TRACE1("ExprInherit::apply_ with %d/%d parameters (depth: %d)", seqId, size, (int) ctx->dataSize() );
+
    while( seqId < size )
    {
+      TRACE1("ExprInherit::apply_ looping %d/%d", seqId, size );
+
       TreeStep* exp = exprs[seqId++];
       if( ctx->stepInYield( exp, cf ) )
       {

@@ -758,6 +758,7 @@ HyperClass* FalconClass::hyperConstruct()
    {
       // give the ownership of the parentship to the hyperclass.
       nself->setParentship( this->m_parentship, false );
+      this->m_parentship = 0;
    }
    
    // it's now duty of the caller to construct the hyperclass.
