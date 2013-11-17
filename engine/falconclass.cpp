@@ -1377,16 +1377,21 @@ void FalconClass::PStepInitExpr::apply_( const PStep* ps, VMContext* ctx )
 {
    // supposedly, if we're here, we have been invited -- iexpr.size() > 0
    const PStepInitExpr* step = static_cast<const PStepInitExpr*>(ps);
-   const FalconClass::Private::InitPropList& iprops = step->m_owner->_p->m_initExpr;
-   register CodeFrame& ccode = ctx->currentCode();
-   
    CallFrame& frame = ctx->currentFrame();
    FalconInstance* inst = static_cast<FalconInstance*>( frame.m_self.asInst() );
    
+   applyInitExpr( ctx, step->m_owner, inst );
+}
+
+
+void FalconClass::applyInitExpr( VMContext* ctx, FalconClass* cls, FalconInstance* inst )
+{
+   const FalconClass::Private::InitPropList& iprops = cls->_p->m_initExpr;
    int size = (int) iprops.size();
+   CodeFrame& ccode = ctx->currentCode();
    int& seqId = ccode.m_seqId;
 
-   TRACE1( "In class \"%s\" pre-init step %d/%d", step->m_owner->name().c_ize(), seqId, size );
+   TRACE1( "In class \"%s\" pre-init step %d/%d", cls->name().c_ize(), seqId, size );
 
    // Fix in case we're back from a previous run
    if( seqId > 0 )

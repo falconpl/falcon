@@ -17,6 +17,7 @@
 #define SRC "engine/hyperclass.cpp"
 
 #include <falcon/trace.h>
+#include <falcon/stdsteps.h>
 #include <falcon/hyperclass.h>
 #include <falcon/itemarray.h>
 #include <falcon/function.h>
@@ -44,7 +45,8 @@ HyperClass::HyperClass( FalconClass* master ):
    m_master( master ),
    m_nParents(0),
    m_ownParentship( true ),
-   m_initParentsStep( this )
+   m_initParentsStep( this ),
+   m_InitMasterExprStep( this )
 {
    _p_base = new Private_base;
    addParentProperties( master );
@@ -60,7 +62,8 @@ HyperClass::HyperClass( const String& name ):
    m_master( 0 ),
    m_nParents(0),
    m_ownParentship( true ),
-   m_initParentsStep(this)
+   m_initParentsStep(this),
+   m_InitMasterExprStep( this )
 {
    _p_base = new Private_base;
    m_master = new FalconClass("#master$" + name);
@@ -415,6 +418,8 @@ void HyperClass::describe( void* instance, String& target, int depth, int maxlen
 
 bool HyperClass::op_init( VMContext* ctx, void* instance, int32 pcount ) const
 {  
+   //static StdSteps& st = *Engine::instance()->stdSteps();
+
    ItemArray& mData = *static_cast<ItemArray*>(instance);   
    TRACE1("HyperClass(%p,%s)::op_init(ctx:%p, inst:%p, pcount: %d)",
             this, name().c_ize(), ctx, instance, pcount );
@@ -433,12 +438,14 @@ bool HyperClass::op_init( VMContext* ctx, void* instance, int32 pcount ) const
    
    if( m_master->constructor() != 0 )
    {
-      // good, we have a master class constructor (but we know we reaped its parents).
+      // good, we have a master class constructor.
       // we also know that the master class has no direct parentship -- we own it.
-      if( ! m_master->op_init( ctx, mData[0].asInst(), pcount ) )
-      {
-         ctx->popData(pcount);
-      }
+      // We finally know that the constructor is made to work with our class instead of FalconClass,
+      // as it uses a generic self. accessor (it's Falcon code), so we can send our SELF, and not data[0]
+      // where the master class data lies.
+      //ctx->pushCode( &st.m_pop );
+      ctx->callInternal( m_master->constructor(), pcount, ctx->opcodeParam(pcount) );
+      ctx->pushCode(&m_InitMasterExprStep);
    }
 
    // we finally know that the master op_init went deep, as it has a ctor...
@@ -486,6 +493,22 @@ void HyperClass::InitParentsStep::apply_(const PStep* ps, VMContext* ctx )
    ctx->popCode();
    // pop also the extra data we pushed (An extra copy of self) at op_init
    ctx->popData(pid+1);
+}
+
+void HyperClass::InitMasterExprStep::apply_(const PStep* ps, VMContext* ctx )
+{
+   ItemArray& mData = *static_cast<ItemArray*>(ctx->currentFrame().m_self.asInst());
+   FalconInstance* inst = static_cast<FalconInstance*>( mData[0].asInst() );
+   FalconClass* fc = static_cast<FalconClass*>( mData[0].asClass() );
+
+#ifndef NDEBUG
+   const InitMasterExprStep* self = static_cast<const InitMasterExprStep*>(ps);
+
+   TRACE1("HyperClass(%p,%s)::InitMasterExprStep::apply_ %d (depth %d)",
+                  self->m_owner, self->m_owner->name().c_ize(), ctx->currentCode().m_seqId, (int) ctx->dataSize() );
+#endif
+
+   FalconClass::applyInitExpr(ctx, fc, inst);
 }
    
 }

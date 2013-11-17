@@ -408,6 +408,8 @@ public:
 
    ExprParentship* getParentship();
 
+   static void applyInitExpr( VMContext* ctx, FalconClass* cls, FalconInstance* inst );
+
 private:
    class Private;
    Private* _p;
