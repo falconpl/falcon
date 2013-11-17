@@ -166,6 +166,23 @@ private:
 
    InitParentsStep m_initParentsStep;
 
+   class FALCON_DYN_CLASS InitMasterExprStep: public PStep
+   {
+   public:
+      InitMasterExprStep( HyperClass* o ): m_owner(o) { apply = apply_; }
+      virtual ~InitMasterExprStep() {};
+      virtual void describeTo( String& tgt, int ) const {
+         tgt = "InitMasterExprStep for " + m_owner->name();
+      }
+
+      static void apply_(const PStep* ps, VMContext* ctx );
+
+   private:
+      HyperClass* m_owner;
+   };
+
+   InitMasterExprStep m_InitMasterExprStep;
+
    friend class FalconClass;
    friend class MetaHyperClass;
 };
