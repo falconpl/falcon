@@ -41,8 +41,10 @@ set(SRC_FILES
   ipsem_ext.cpp
   shared_ipsem.cpp
   shmem.cpp
+  session.cpp
   
   sharedmem.h
+  session.h
   ipsem.h
   shared_ipsem.h
   

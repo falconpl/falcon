@@ -16,6 +16,9 @@
 #include "session.h"
 #include <falcon/mt.h>
 #include <falcon/symbol.h>
+#include <falcon/item.h>
+#include <falcon/module.h>
+#include <falcon/vmcontext.h>
 
 #include <map>
 
@@ -97,6 +100,7 @@ void Session::record( Module* mod )
    _p->m_mtxSym.unlock();
 }
 
+
 void Session::apply( Module* mod ) const
 {
    _p->m_mtxSym.lock();
@@ -107,7 +111,10 @@ void Session::apply( Module* mod ) const
       Item* item = mod->resolveLocally(sym);
       if( item != 0 )
       {
-         iter->second = mod->resolveLocally(sym);
+         iter->second = *item;
+      }
+      else {
+         mod->addGlobal(sym, *item, false);
       }
       ++iter;
    }

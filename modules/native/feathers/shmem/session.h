@@ -22,6 +22,8 @@
 namespace Falcon
 {
 
+class Symbol;
+
 class Session
 {
 public:
