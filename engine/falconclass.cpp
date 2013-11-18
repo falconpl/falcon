@@ -1224,8 +1224,15 @@ void FalconClass::op_getProperty( VMContext* ctx, void* self, const String& prop
       
       if( value != 0 )
       {
-         //ctx->topData() = *value;
-         ctx->topData().copyFromRemote(*value);
+         Item temp;
+         temp.copyFromRemote(*value);
+         if( temp.isMethod() )
+         {
+            ctx->topData().methodize(temp.asMethodFunction());
+         }
+         else {
+            ctx->topData() = temp;
+         }
       }
       else {
          // Default to base class

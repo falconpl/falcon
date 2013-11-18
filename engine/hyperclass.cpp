@@ -156,8 +156,8 @@ Class* HyperClass::getParent( const String& name ) const
    for( int i = 0; i < m_parentship->arity(); ++i )
    {
       ExprInherit* inh = static_cast<ExprInherit*>(m_parentship->nth(i));
-      if ( inh->handler()->name() == name ) {
-         return inh->handler();
+      if ( inh->base()->name() == name ) {
+         return inh->base();
       }
    }   
    
@@ -254,7 +254,7 @@ bool HyperClass::isDerivedFrom( const Class* cls ) const
    
    // is the class a parent of one of our parents?
    for( int i = 0; i < m_parentship->arity(); ++i ) {
-      Class* pcls = static_cast<ExprInherit*>( m_parentship->nth(i) )->handler();
+      Class* pcls = static_cast<ExprInherit*>( m_parentship->nth(i) )->base();
       
       if( cls->isDerivedFrom(pcls) ) {
          return true;
@@ -318,7 +318,7 @@ void HyperClass::gcMark( uint32 mark )
       
       // finally all our parents
       for( int i = 0; i < m_parentship->arity(); ++i ) {
-         Class* pcls = static_cast<ExprInherit*>( m_parentship->nth(i) )->handler();
+         Class* pcls = static_cast<ExprInherit*>( m_parentship->nth(i) )->base();
          pcls->gcMark( mark );
       }
    }
@@ -373,7 +373,7 @@ bool HyperClass::hasProperty( void*, const String& prop ) const
 
 Class* HyperClass::getParentAt( int pos ) const
 {
-   Class* pcls = static_cast<ExprInherit*>( m_parentship->nth(pos) )->handler();
+   Class* pcls = static_cast<ExprInherit*>( m_parentship->nth(pos) )->base();
    return pcls;
 }
 
