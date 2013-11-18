@@ -27,7 +27,8 @@
 
 #include <windows.h>
 
-namespace Falcon {
+namespace Falcon
+{
 
 class FALCON_DYN_CLASS Directory_file: public Directory
 {
@@ -60,8 +61,10 @@ Directory_file::~Directory_file()
 
 void Directory_file::close()
 {
-   if ( m_handle != INVALID_HANDLE_VALUE ) {
-      if ( ! FindClose( m_handle ) ) {
+    if ( m_handle != INVALID_HANDLE_VALUE )
+    {
+        if ( ! FindClose( m_handle ) )
+        {
          throw new IOError( ErrorParam( e_io_close, __LINE__, SRC )
             .extra( "Directory::close" )
             .sysError( GetLastError() ) );
@@ -79,7 +82,8 @@ bool Directory_file::read( String& str )
 
 	bool bWideChar = true;
 
-   if ( m_first ) {
+    if ( m_first )
+    {
       m_first = false;
    }
    else
@@ -354,11 +358,13 @@ FileStat::t_fileType VFSFile::fileType( const URI& uri, bool )
 
       CloseHandle( temp );
 
-      if( attribs == INVALID_FILE_ATTRIBUTES ) {
+        if( attribs == INVALID_FILE_ATTRIBUTES )
+        {
          return FileStat::_unknown;
       }
 
-      if( (attribs & FILE_ATTRIBUTE_DIRECTORY) == FILE_ATTRIBUTE_DIRECTORY ) {
+        if( (attribs & FILE_ATTRIBUTE_DIRECTORY) == FILE_ATTRIBUTE_DIRECTORY )
+        {
          return FileStat::_dir;
       }
    }
@@ -454,11 +460,13 @@ bool VFSFile::readStats( const URI& uri, FileStat &sts, bool )
 
       CloseHandle( temp );
 
-      if( attribs == INVALID_FILE_ATTRIBUTES ) {
+        if( attribs == INVALID_FILE_ATTRIBUTES )
+        {
          return false;
       }
 
-      if( (attribs & FILE_ATTRIBUTE_DIRECTORY) == FILE_ATTRIBUTE_DIRECTORY ) {
+        if( (attribs & FILE_ATTRIBUTE_DIRECTORY) == FILE_ATTRIBUTE_DIRECTORY )
+        {
          sts.type(FileStat::_dir);
          sts.size(0);
          return true;
@@ -504,7 +512,8 @@ void VFSFile::erase( const URI &uri )
       res = DeleteFile( cBuffer.c_str() );
 	}
 
-   if ( ! res ) {
+    if ( ! res )
+    {
       throw new IOError( ErrorParam( e_io_error, __LINE__, SRC )
          .extra( fname )
          .sysError(::GetLastError()));
@@ -601,12 +610,20 @@ void VFSFile::setCWD( const URI& uri )
    uri.path().getWinFormat(strName);
 
    AutoWString wBuffer( strName );
+#if defined(_MSC_VER)
    BOOL res = ::SetCurrentDirectoryW( wBuffer.w_str(), NULL );
 
+#else
+    BOOL res = ::SetCurrentDirectoryW( wBuffer.w_str() );
+#endif
    if( ! res && GetLastError() == ERROR_CALL_NOT_IMPLEMENTED )
    {
       AutoCString cBuffer( strName );
+#if defined(_MSC_VER)
       res = ::SetCurrentDirectoryA( cBuffer.c_str(), NULL );
+#else
+        res = ::SetCurrentDirectoryA( cBuffer.c_str() );
+#endif
    }
 
    if ( ! res )
@@ -633,7 +650,11 @@ void VFSFile::getCWD( URI& uri )
    else if( GetLastError() == ERROR_CALL_NOT_IMPLEMENTED )
    {
       char cpath[MAX_PATH+1];
+#if defined(_MSC_VER)
       res = ::SetCurrentDirectoryA( MAX_PATH, cpath );
+#else
+        res = ::SetCurrentDirectoryA( cpath );
+#endif
       if( res )
       {
          String path(cpath);

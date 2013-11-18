@@ -796,7 +796,7 @@ void Class::op_getProperty( VMContext* ctx, void* data, const String& propName )
       Property& prop = iter->second;
       if( prop.method != 0 ) 
       {
-         ctx->topData().setUser(this, data);
+         ctx->topData().setUser(ctx->topData().asClass(), data);
          ctx->topData().methodize(prop.method);
       }
       else if (prop.bConst )
@@ -805,7 +805,7 @@ void Class::op_getProperty( VMContext* ctx, void* data, const String& propName )
       }
       else
       {
-         prop.getFunc( this, iter->first, data, ctx->topData() );
+         prop.getFunc( ctx->topData().asClass(), iter->first, data, ctx->topData() );
       }
 
       return;
