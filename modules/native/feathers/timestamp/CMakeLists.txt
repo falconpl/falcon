@@ -12,10 +12,15 @@ include_directories(
   ${CMAKE_CURRENT_SOURCE_DIR}
 )
 
+if(WIN32 AND NOT MINGW)
+   set( SYS_RC timestamp.rc)
+endif()
+
 # Sources files the module is built from.
 set(SRC_FILES 
   timestamp.cpp
   timestamp_ext.cpp
+  ${SYS_RC}
 )
 
 # These are actually not needed by cmake to build. But if omitted they won't be

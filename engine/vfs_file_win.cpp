@@ -610,20 +610,11 @@ void VFSFile::setCWD( const URI& uri )
    uri.path().getWinFormat(strName);
 
    AutoWString wBuffer( strName );
-#if defined(_MSC_VER)
-   BOOL res = ::SetCurrentDirectoryW( wBuffer.w_str(), NULL );
-
-#else
-    BOOL res = ::SetCurrentDirectoryW( wBuffer.w_str() );
-#endif
+   BOOL res = ::SetCurrentDirectoryW( wBuffer.w_str() );
    if( ! res && GetLastError() == ERROR_CALL_NOT_IMPLEMENTED )
    {
       AutoCString cBuffer( strName );
-#if defined(_MSC_VER)
-      res = ::SetCurrentDirectoryA( cBuffer.c_str(), NULL );
-#else
-        res = ::SetCurrentDirectoryA( cBuffer.c_str() );
-#endif
+      res = ::SetCurrentDirectoryA( cBuffer.c_str() );
    }
 
    if ( ! res )
@@ -650,11 +641,7 @@ void VFSFile::getCWD( URI& uri )
    else if( GetLastError() == ERROR_CALL_NOT_IMPLEMENTED )
    {
       char cpath[MAX_PATH+1];
-#if defined(_MSC_VER)
-      res = ::SetCurrentDirectoryA( MAX_PATH, cpath );
-#else
-        res = ::SetCurrentDirectoryA( cpath );
-#endif
+      res = ::SetCurrentDirectoryA( cpath );
       if( res )
       {
          String path(cpath);

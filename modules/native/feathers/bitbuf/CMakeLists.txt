@@ -7,6 +7,10 @@
 # Creates the proper module file name from the project name.
 falcon_define_module( CURRENT_MODULE bitbuf )
 
+if(WIN32 AND NOT MINGW)
+   set( SYS_RC bitbuf.rc )
+endif()
+
 # Inclusion settings
 include_directories(
   ${CMAKE_CURRENT_SOURCE_DIR}
@@ -22,6 +26,7 @@ set(SRC_FILES
   bitbuf_ext.cpp
   bitbuf_mod.cpp
   # add more source files starting here:
+  ${SYS_RC}
 )
 
 # These are actually not needed by cmake to build. But if omitted they won't be

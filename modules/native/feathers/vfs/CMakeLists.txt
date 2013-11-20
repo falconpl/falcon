@@ -9,6 +9,9 @@ include_directories(
 )
 
 #Specific system files
+if(WIN32 AND NOT MINGW)
+   set( SYS_RC vfs.rc )
+endif()
 
 add_library(vfs_fm MODULE
    vfs_ext.cpp
@@ -16,6 +19,7 @@ add_library(vfs_fm MODULE
    classfilestat.cpp
    classdirectory.cpp
 
+   ${SYS_RC}
    vfs.cpp
 )
 

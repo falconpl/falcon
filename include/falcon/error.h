@@ -604,6 +604,7 @@ private:
        inline virtual void describeErrorCodeTo( int errorCode, String& tgt ) const \
          {\
              switch(errorCode) {\
+             case -100: break;\
              __DESC__\
              default:  Error::describeErrorCodeTo(errorCode,tgt); break;\
              }\
