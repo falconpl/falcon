@@ -316,11 +316,22 @@ public:
     */
    Symbol* ruleBaseSymbol() const;
 
-   /** Returns a pointer to a local or global symbol.
+   /** Returns a pointer to a symbol.
+    * \param name The name of the symbol
+    * \return A valid Symbol, incremented of 1 refcount.
      Each call to this function increases the reference of the
      retrieved symbol.
+     If the symbol doesn't exist, it's created.
     */
    static Symbol* getSymbol( const String& name );
+
+   /** Returns a pointer to a symbol.
+    \param name The name of the symbol
+    \return A valid symbol or 0 if not found.
+       Invoking this function doesn't increase the reference count of the symbol;
+       if the symbol doesn't exist, 0 is returned.
+    */
+   static Symbol* getSymbolNoRef( const String& name );
    static void refSymbol(Symbol* sym);
    static void releaseSymbol( Symbol* sym );
 

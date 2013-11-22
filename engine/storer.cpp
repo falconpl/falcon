@@ -21,7 +21,6 @@
 #include <falcon/datawriter.h>
 #include <falcon/itemarray.h>
 #include <falcon/module.h>
-#include <falcon/gclock.h>
 #include <falcon/vmcontext.h>
 #include <falcon/stdhandlers.h>
 

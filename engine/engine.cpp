@@ -137,6 +137,19 @@ public:
       return s;
    }
 
+   inline Symbol* getNoRef(const String& name)
+   {
+      Symbol *s = 0;
+      m_mtx.lock();
+      SymbolSet::iterator iter = m_symbols.find(&name);
+      if( iter != m_symbols.end() ) {
+         s = iter->second;
+      }
+      m_mtx.unlock();
+
+      return s;
+   }
+
    inline void release( Symbol* s ) {
      m_mtx.lock();
      if( --s->m_counter == 0 ) {
@@ -758,6 +771,12 @@ Symbol* Engine::getSymbol( const String& name )
 {
    fassert( m_instance != 0 );
    return m_instance->m_symbols->get(name);
+}
+
+Symbol* Engine::getSymbolNoRef( const String& name )
+{
+   fassert( m_instance != 0 );
+   return m_instance->m_symbols->getNoRef(name);
 }
 
 void Engine::refSymbol( Symbol* sym )

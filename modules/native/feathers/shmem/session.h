@@ -1,6 +1,6 @@
 /*
    FALCON - The Falcon Programming Language.
-   FILE: session.cpp
+   FILE: session.h
 
    Falcon script interface for Inter-process semaphore.
    -------------------------------------------------------------------
@@ -23,6 +23,7 @@ namespace Falcon
 {
 
 class Symbol;
+class VMContext;
 
 class Session
 {
@@ -34,11 +35,30 @@ public:
    const String& name() const { return m_name; }
    void name( const String& n ) { m_name = n; }
 
-   void addSymbol(Symbol* sym);
+   void addSymbol(Symbol* sym, const Item& value=Item());
    bool removeSymbol(Symbol* sym);
 
-   void record( Module* mod);
-   void apply( Module* mod) const;
+   void record(VMContext* ctx);
+   void apply(VMContext* ctx) const;
+
+   /**
+    * Prepares a storer to commit the session data.
+    *
+    * After this call susccessfully returns, the storer can
+    * be stored on a file via storer::commit.
+    *
+    * The method never goes deep in ctx, but it might prepare
+    * ctx to perform some deep operation after the method returns.
+    */
+   void store(VMContext* ctx, Storer* storer) const;
+
+   /**
+    * Restores the session from an alaredy loaded restorer.
+    *
+    * The given restorer must have been already loaded via
+    * Restorer::restore.
+    */
+   void restore(Restorer* restorer);
 
 private:
    String m_name;
@@ -51,4 +71,4 @@ private:
 
 #endif
 
-/* end of session.cpp */
+/* end of session.h */
