@@ -7,6 +7,7 @@
 #include <falcon/config.h>
 #include <falcon/rc_version.h>
 
+
 VS_VERSION_INFO VERSIONINFO
  FILEVERSION FALCON_MAKE_VERSION_NUMBER( FALCON_VERSION_MAJOR, FALCON_VERSION_MINOR, FALCON_VERSION_REVISION, 0 )
  PRODUCTVERSION FALCON_VERSION_RCINFO_N
@@ -25,13 +26,13 @@ BEGIN
         BLOCK "041004b0"
         BEGIN
             VALUE "CompanyName", "Falcon Committee"
-            VALUE "FileDescription", "Logging feather module"
-            VALUE "FileVersion", FALCON_MAKE_VERSION_STRING( FALCON_VERSION_MAJOR, FALCON_VERSION_MINOR, FALCON_VERSION_REVISION )
-            VALUE "InternalName", "logging"
+            VALUE "FileDescription", "Math extension functions"
+            VALUE "FileVersion", FALCON_MAKE_VERSION_STRING_RC( VERSION_MAJOR, VERSION_MINOR, VERSION_REVISION, 0 )
+            VALUE "InternalName", "math"
             VALUE "LegalCopyright", "The Falcon Programming Language License"
-            VALUE "OriginalFilename", "logging_fm.dll"
+            VALUE "OriginalFilename", "math_fm.dll"
             VALUE "ProductName", "The Falcon Programming Language"
-            VALUE "ProductVersion", FALCON_VERSION
+            VALUE "ProductVersion", FALCON_VERSION_RCINFO
         END
     END
     BLOCK "VarFileInfo"

@@ -7,12 +7,9 @@
 #include <falcon/config.h>
 #include <falcon/rc_version.h>
 
-// and application versioning
-#include "version.h"
-
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION FALCON_MAKE_VERSION_NUMBER( VERSION_MAJOR, VERSION_MINOR, VERSION_REVISION, 0 )
+ FILEVERSION FALCON_MAKE_VERSION_NUMBER( FALCON_VERSION_MAJOR, FALCON_VERSION_MINOR, FALCON_VERSION_REVISION, 0 )
  PRODUCTVERSION FALCON_VERSION_RCINFO_N
  FILEFLAGSMASK 0x17L
 #ifdef _DEBUG
@@ -30,7 +27,7 @@ BEGIN
         BEGIN
             VALUE "CompanyName", "Falcon Committee"
             VALUE "FileDescription", "Bit-oriented buffer extension feather module"
-            VALUE "FileVersion", FALCON_MAKE_VERSION_STRING_RC( VERSION_MAJOR, VERSION_MINOR, VERSION_REVISION, 0 )
+            VALUE "FileVersion", FALCON_MAKE_VERSION_STRING_RC( FALCON_VERSION_MAJOR, FALCON_VERSION_MINOR, FALCON_VERSION_REVISION, 0 )
             VALUE "InternalName", "bitbuf"
             VALUE "LegalCopyright", "The Falcon Programming Language License"
             VALUE "OriginalFilename", "bitbuf_fm.dll"

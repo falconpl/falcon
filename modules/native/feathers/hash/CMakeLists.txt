@@ -14,6 +14,9 @@ include_directories(
 # Enable this include if the project has a private include
 #include_directories( ${PROJECT_SOURCE_DIR}/include )
 
+if(WIN32 AND NOT MINGW)
+   set( SYS_RC hash.rc )
+endif()
 
 # Sources files the module is built from.
 set(SRC_FILES 
@@ -32,6 +35,7 @@ set(SRC_FILES
   tiger.cpp
   tiger_sboxes.cpp
   whirlpool.cpp
+  ${SYS_RC}
 )
 
 # These are actually not needed by cmake to build. But if omitted they won't be

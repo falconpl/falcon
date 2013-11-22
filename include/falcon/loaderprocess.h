@@ -51,7 +51,7 @@ private:
    Module* m_mainModule;
    SynFunc* m_loaderEntry;
 
-   class PStepSetupMain: public PStep
+   class FALCON_DYN_CLASS PStepSetupMain: public PStep
    {
    public:
       PStepSetupMain( LoaderProcess* owner ): m_owner( owner ) {

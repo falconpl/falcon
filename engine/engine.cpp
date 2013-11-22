@@ -87,6 +87,8 @@
 #include <falcon/stdmpxfactories.h>
 #include <falcon/sys.h>
 
+#include <falcon/config.h>
+
 #include <falcon/paranoid.h>
 #include <map>
 #include <deque>

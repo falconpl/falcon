@@ -7,6 +7,10 @@
 # Creates the proper module file name from the project name.
 falcon_define_module( CURRENT_MODULE math )
 
+if(WIN32 AND NOT MINGW)
+   set( SYS_RC math.rc )
+endif()
+
 # Inclusion settings
 include_directories(
   ${CMAKE_CURRENT_SOURCE_DIR}
@@ -16,6 +20,7 @@ include_directories(
 set(SRC_FILES 
   math.cpp
   math_ext.cpp
+  ${SYS_RC}
 )
 
 # These are actually not needed by cmake to build. But if omitted they won't be

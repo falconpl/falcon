@@ -25,11 +25,11 @@ BEGIN
         BLOCK "041004b0"
         BEGIN
             VALUE "CompanyName", "Falcon Committee"
-            VALUE "FileDescription", "Logging feather module"
+            VALUE "FileDescription", "Random number generator feather module"
             VALUE "FileVersion", FALCON_MAKE_VERSION_STRING( FALCON_VERSION_MAJOR, FALCON_VERSION_MINOR, FALCON_VERSION_REVISION )
-            VALUE "InternalName", "logging"
+            VALUE "InternalName", "rnd"
             VALUE "LegalCopyright", "The Falcon Programming Language License"
-            VALUE "OriginalFilename", "logging_fm.dll"
+            VALUE "OriginalFilename", "rnd_fm.dll"
             VALUE "ProductName", "The Falcon Programming Language"
             VALUE "ProductVersion", FALCON_VERSION
         END

@@ -293,7 +293,7 @@ void* Scheduler::run()
          // we don't need to wait here for nextSchedule == -1
          // as it's done when the map is empty, and that will lead us
          // to wait forever on the topmost loop
-         m_evtActivity.wait( nextSchedule - currentTime );
+         m_evtActivity.wait( static_cast<int32>(nextSchedule - currentTime) );
          currentTime = Sys::_milliseconds();
       }
 
