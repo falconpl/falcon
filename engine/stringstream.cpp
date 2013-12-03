@@ -108,6 +108,16 @@ StringStream::StringStream( const String &strbuf ):
    m_b->m_str->bufferize();
 }
 
+StringStream::StringStream( byte* data, int64 size ):
+   m_posRead(0),
+   m_posWrite(0),
+   m_bPipeMode(false),
+   m_b( new Buffer ),
+   m_selectable(0)
+{
+   m_b->m_str->adoptMemBuf(data, size, size );
+}
+
 StringStream::StringStream( const StringStream &strbuf ):
    Stream( strbuf ),
    m_posRead( strbuf.m_posRead ),

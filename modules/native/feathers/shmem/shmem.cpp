@@ -22,6 +22,7 @@
 
 #include <falcon/module.h>
 #include "shmem_ext.h"
+#include "session_ext.h"
 #include "ipsem_ext.h"
 #include "errors.h"
 
@@ -47,6 +48,7 @@ public:
          << new ClassSharedMem
          << new ClassIPSem
          << new ClassShmemError
+         << new ClassSession
                ;
    }
 

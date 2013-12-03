@@ -2,7 +2,7 @@
    FALCON - The Falcon Programming Language.
    FILE: session.h
 
-   Falcon script interface for Inter-process semaphore.
+   Automatism to implement persistent data.
    -------------------------------------------------------------------
    Author: Giancarlo Niccolai
    Begin: Fri, 15 Nov 2013 15:31:11 +0100
@@ -27,6 +27,7 @@ class Symbol;
 class VMContext;
 class Storer;
 class Restorer;
+class SharedMem;
 
 /** Automatism to implement persistent data across multiple runs of a program.
  *
@@ -34,6 +35,14 @@ class Restorer;
 class Session
 {
 public:
+   typedef enum {
+     e_om_file,
+     e_om_shmem,
+     e_om_shmem_bu
+  }
+  t_openmode;
+
+
    /** Creates an empty session.
     *
     * When created in this form, the session won't be given any ID
@@ -53,13 +62,13 @@ public:
     * as the session is first saved on a storage.
     *
     */
-   Session( const String& id, int64 to = 0 );
+   Session( t_openmode mode, const String& id, int64 to = 0 );
 
    /** Destroys the session */
    ~Session();
 
    /** Starts the session as a new session right now. */
-   void start();
+   void begin();
 
    /** Gets the ID of the session.
     * \param target the string where the ID of the session is stored.
@@ -75,6 +84,8 @@ public:
     */
    void setID( const String& n );
 
+   void setOpenMode(t_openmode mode) { m_open_mode = mode; }
+
    /** Adds a symbol (with its value) to the session recording. */
    void addSymbol(Symbol* sym, const Item& value=Item());
 
@@ -88,23 +99,34 @@ public:
    void apply(VMContext* ctx) const;
 
    /**
-    * Prepares a storer to commit the session data.
+    * Saves the session from the given context.
     *
-    * After this call susccessfully returns, the storer can
-    * be stored on a file via storer::commit.
+    * The values previously recored by record() are
+    * stored to the session stream, and eventually
+    * transferred to the shared memory object pointed
+    * in this session.
     *
-    * The method never goes deep in ctx, but it might prepare
-    * ctx to perform some deep operation after the method returns.
+    * The metod writes the data header and the serializable
+    * entities to the internal session stream.
+    *
+    * Concurrent operations on the stream are rejected,
+    * with an exception being thrown on the context.
     */
-   void store(VMContext* ctx, Storer* storer) const;
+   void save( VMContext* ctx );
 
    /**
-    * Restores the session from an already loaded restorer.
+    * Loads the session into the given context.
     *
-    * The given restorer must have been already loaded via
-    * Restorer::restore.
+    * The values are brought in the session, and have to
+    * be stored in the context by calling apply()
+    *
     */
-   void restore(Restorer* restorer);
+   void load( VMContext* ctx );
+
+   /**
+    * Destroies a session and all its associated resources.
+    */
+   void close();
 
    /** Gets the value stored in the session for a symbol. */
    bool get(Symbol* sym, Item& value) const;
@@ -113,8 +135,13 @@ public:
 
    /** Returns the timestamp when the start() method was called. */
    int64 createdAt() const;
+
    /** Returns the timestamp when the session expires */
    int64 expiresAt() const;
+
+   bool open();
+
+   void create();
 
    /** Returns the timeout set for the session.
     *
@@ -144,16 +171,47 @@ public:
    void gcMark( uint32 mark );
    uint32 currentMark() const { return m_mark; }
 
+   /** perform commit step on storage */
+   void commitStore(VMContext* ctx, Storer* sto );
+
+   int64 occupiedMemory() const;
 private:
    /** Not cloneable */
    Session(const Session& ) {}
+
+   void init();
+
+   /**
+   * Prepares a storer to commit the session data.
+   *
+   * After this call susccessfully returns, the storer can
+   * be stored on a file via storer::commit.
+   *
+   * The method never goes deep in ctx, but it might prepare
+   * ctx to perform some deep operation after the method returns.
+   *
+   */
+  void store(VMContext* ctx, Storer* storer) const;
+
+  /**
+   * Restores the session from an already loaded restorer.
+   *
+   * The given restorer must have been already loaded via
+   * Restorer::restore.
+   */
+  void restore(Restorer* restorer);
 
    String m_id;
    int64 m_tsCreation;
    int64 m_tsExpire;
    int64 m_timeout;
+   t_openmode m_open_mode;
+
    mutable bool m_bExpired;
    uint32 m_mark;
+
+   Stream* m_stream;
+   SharedMem* m_shmem;
 
    class Private;
    Private* _p;

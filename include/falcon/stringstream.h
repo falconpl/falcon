@@ -33,6 +33,7 @@ class FALCON_DYN_CLASS StringStream: public Stream
 {
 public:
    StringStream( int32 size=0 );
+   StringStream( byte* data, int64 size );
    StringStream( const String &strbuf );
    StringStream( const StringStream &strbuf );
    virtual ~StringStream();

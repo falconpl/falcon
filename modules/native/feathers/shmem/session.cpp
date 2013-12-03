@@ -2,7 +2,7 @@
    FALCON - The Falcon Programming Language.
    FILE: session.cpp
 
-   Falcon script interface for Inter-process semaphore.
+   Automatism to implement persistent data.
    -------------------------------------------------------------------
    Author: Giancarlo Niccolai
    Begin: Fri, 15 Nov 2013 15:31:11 +0100
@@ -12,6 +12,8 @@
 
    See LICENSE file for licensing details.
 */
+
+#define SRC "engine/modules/native/feathers/shmem/session.cpp"
 
 #include "session.h"
 #include <falcon/mt.h>
@@ -25,10 +27,17 @@
 #include <falcon/storer.h>
 #include <falcon/restorer.h>
 #include <falcon/itemid.h>
+#include <falcon/stringstream.h>
+#include <falcon/pstep.h>
+#include <falcon/datareader.h>
+#include <falcon/datawriter.h>
 
 #include <falcon/sys.h>
 
 #include <map>
+
+#include "errors.h"
+#include "sharedmem.h"
 
 namespace Falcon {
 
@@ -40,38 +49,141 @@ public:
    Mutex m_mtxSym;
    SymbolSet m_symbols;
    uint32 m_version;
+   bool bInUse;
 
-   Private():
-      m_version(0)
+   Private( Session* session ):
+      m_version(0),
+      m_stepRestore(session),
+      m_stepStore(session)
    {}
 
    ~Private() {}
+
+   inline void inUseCheckIn( int line )
+   {
+      m_mtxSym.lock();
+      if( bInUse )
+      {
+         m_mtxSym.unlock();
+         throw new SessionError(
+                  ErrorParam( FALCON_ERROR_SHMEM_SESSION_CONCURRENT, line, SRC )
+                   );
+      }
+
+      bInUse = true;
+   }
+
+   inline void inUseCheckOut()
+   {
+      bInUse = false;
+      m_mtxSym.unlock();
+   }
+
+
+   class PStepRestore: public PStep
+   {
+   public:
+      PStepRestore( Session* s ): m_session(s) { apply = apply_; }
+      virtual ~PStepRestore() {}
+      virtual void describeTo( String& s ) { s = "Session::Private::PStepRestore"; }
+
+      static void apply_(const PStep* ps, VMContext* ctx );
+
+   private:
+      Session* m_session;
+   };
+
+   PStepRestore m_stepRestore;
+
+
+   class PStepStore: public PStep
+      {
+      public:
+         PStepStore( Session* s ): m_session(s) { apply = apply_; }
+         virtual ~PStepStore() {}
+         virtual void describeTo( String& s ) { s = "Session::Private::PStepStore"; }
+
+         static void apply_(const PStep* ps, VMContext* ctx );
+
+      private:
+         Session* m_session;
+      };
+
+      PStepRestore m_stepStore;
 };
 
 
+void Session::Private::PStepRestore::apply_(const PStep* ps, VMContext* ctx )
+{
+   const PStepRestore* self = static_cast<const PStepRestore*>(ps);
+   fassert(ctx->topData().asClass()->name() == "Restorer");
+   Restorer* res = static_cast<Restorer*>(ctx->topData().asInst());
+
+   ctx->popCode();
+
+   self->m_session->restore( res );
+   // if everything is allright...
+   ctx->popData(); // remove the restorer.
+}
+
+
+void Session::Private::PStepStore::apply_(const PStep* ps, VMContext* ctx )
+{
+   const PStepStore* self = static_cast<const PStepStore*>(ps);
+   fassert(ctx->topData().asClass()->name() == "Storer");
+   Storer* sto = static_cast<Storer*>(ctx->topData().asInst());
+
+   ctx->popCode();
+   self->m_session->commitStore(ctx,sto);
+
+   // if everything is allright...
+   ctx->popData(); // remove the restorer.
+}
+
+
+//=====================================================================
+// Main session object
+//=====================================================================
+
 Session::Session()
 {
-   _p = new Private;
+   init();
+}
+
+
+Session::Session( t_openmode mode, const String& name, int64 to ):
+   m_id(name)
+{
+   init();
+   m_timeout = to;
+   m_open_mode = mode;
+}
+
+void Session::init()
+{
+   _p = new Private(this);
    m_timeout = 0;
    m_tsCreation = 0;
    m_tsExpire = 0;
    m_bExpired = false;
+   m_stream = 0;
+   m_shmem = 0;
+   m_open_mode = e_om_shmem;
 }
-
-
-Session::Session( const String& name, int64 to ):
-   m_id(name)
-{
-   _p = new Private;
-   m_timeout = 0;
-   m_tsCreation = to;
-   m_tsExpire = 0;
-   m_bExpired = false;
-}
-
 
 Session::~Session()
 {
+   if ( m_shmem != 0 )
+   {
+      m_shmem->close(false);
+      delete m_shmem;
+   }
+
+   if( m_stream != 0 )
+   {
+      m_stream->decref();
+   }
+
    delete _p;
 }
 
@@ -92,7 +204,7 @@ void Session::setID( const String& target )
 }
 
 
-void Session::start()
+void Session::begin()
 {
    int64 now = Sys::_epoch();
 
@@ -112,9 +224,198 @@ void Session::start()
 }
 
 
+bool Session::open()
+{
+   switch( m_open_mode )
+   {
+   case e_om_file:
+   {
+      try {
+         m_stream = Engine::instance()->vfs().open(m_id, VFSProvider::OParams().rdwr() );
+      }
+      catch( IOError* e )
+      {
+         e->decref();
+         return false;
+      }
+   }
+   break;
+
+   case e_om_shmem: case e_om_shmem_bu:
+   {
+      try {
+         m_shmem = new SharedMem;
+         m_shmem->open( m_id, m_open_mode == e_om_shmem_bu );
+      }
+      catch( IOError* e )
+      {
+         delete m_shmem;
+         e->decref();
+         return false;
+      }
+   }
+   break;
+   }
+
+   tick();
+   return true;
+}
+
+
+void Session::create()
+{
+   switch( m_open_mode )
+   {
+   case e_om_file:
+      m_stream = Engine::instance()->vfs().create(m_id, VFSProvider::CParams().rdwr().truncate() );
+      break;
+
+   case e_om_shmem: case e_om_shmem_bu:
+      m_shmem = new SharedMem;
+      m_shmem->open( m_id, m_open_mode == e_om_shmem_bu );
+      break;
+   }
+
+   begin();
+}
+
+
+void Session::save( VMContext* ctx )
+{
+   static Class* clsStorer = Engine::instance()->stdHandlers()->storerClass();
+
+   _p->inUseCheckIn(__LINE__);
+   // in-use throwing is a strong enough guarantee for us...
+   _p->m_mtxSym.unlock();
+
+   if ( m_shmem != 0 )
+   {
+      m_stream = new StringStream;
+   }
+   else {
+      create();
+   }
+
+
+   const char* marker = "FALS";
+   m_stream->write(marker,4);
+   DataWriter writer(m_stream, DataWriter::e_LE);
+
+   // ... but here; need stronger guarantees
+   _p->m_mtxSym.lock();
+   try
+   {
+      writer.write(m_id);
+      writer.write(m_tsCreation);
+      writer.write(m_tsExpire);
+      writer.write(m_timeout);
+      _p->m_mtxSym.unlock();
+   }
+   catch(...)
+   {
+      _p->m_mtxSym.unlock();
+      throw;
+   }
+
+   // prepare the restorer for garbage collection.
+   Storer* storer = new Storer;
+   ctx->pushData( FALCON_GC_STORE(clsStorer, storer) );
+   ctx->pushCode(&_p->m_stepStore);
+
+   // ready to go.
+   store(ctx, storer);
+
+   // we don't care if the session is being used after this point.
+   _p->m_mtxSym.lock();
+   _p->inUseCheckOut();
+
+   // let the context finish the recursive storage...
+}
+
+
+void Session::load( VMContext* ctx )
+{
+   static Class* clsRestorer = Engine::instance()->stdHandlers()->restorerClass();
+
+   _p->inUseCheckIn(__LINE__);
+   // in-use throwing is a strong enough guarantee for us...
+   _p->m_mtxSym.unlock();
+
+   if ( ! open() )
+   {
+      // there's nothing to be loaded
+      return;
+   }
+
+   if ( m_stream == 0 )
+   {
+      fassert(m_shmem != 0);
+      int64 len;
+      void* data = m_shmem->grabAll(len);
+      m_stream = new StringStream((byte*) data, len);
+   }
+
+   char marker[4];
+   m_stream->read(marker,4);
+   if ( String("FALS") != marker )
+   {
+      throw FALCON_SIGN_ERROR(SessionError, FALCON_ERROR_SHMEM_SESSION_INVALID );
+   }
+
+   DataReader reader(m_stream, DataReader::e_LE);
+
+   String id;
+   reader.read(id);
+   if( id != m_id )
+   {
+      throw FALCON_SIGN_ERROR(SessionError, FALCON_ERROR_SHMEM_SESSION_INVALID );
+   }
+
+   // ... but here; need stronger guarantees
+   _p->m_mtxSym.lock();
+   try
+   {
+      reader.read(m_tsCreation);
+      reader.read(m_tsExpire);
+      reader.read(m_timeout);
+      _p->m_mtxSym.unlock();
+   }
+   catch(...)
+   {
+      _p->m_mtxSym.unlock();
+      throw;
+   }
+
+   if( isExpired() )
+   {
+      throw FALCON_SIGN_ERROR(SessionError, FALCON_ERROR_SHMEM_SESSION_EXPIRED );
+   }
+
+   // prepare the restorer for garbage collection.
+   Restorer* rest = new Restorer;
+   ctx->pushData( FALCON_GC_STORE(clsRestorer, rest) );
+   ctx->pushCode(&_p->m_stepRestore);
+
+   // ready to go.
+   rest->restore(ctx, m_stream, ctx->process()->modSpace());
+
+   // we don't care if the session is being used after this point.
+   _p->m_mtxSym.lock();
+   _p->inUseCheckOut();
+}
+
+
+void Session::close()
+{
+
+}
+
+
+
 void Session::addSymbol(Symbol* sym, const Item& value)
 {
-   _p->m_mtxSym.lock();
+   _p->inUseCheckIn(__LINE__ );
+
    Private::SymbolSet::iterator iter = _p->m_symbols.find(sym);
    _p->m_version++;
    if( iter != _p->m_symbols.end() )
@@ -125,25 +426,27 @@ void Session::addSymbol(Symbol* sym, const Item& value)
    else {
       iter->second = value;
    }
-   _p->m_mtxSym.unlock();
+
+   _p->inUseCheckOut();
 }
 
 
 bool Session::removeSymbol(Symbol* sym)
 {
-   _p->m_mtxSym.lock();
+   _p->inUseCheckIn(__LINE__ );
+
    Private::SymbolSet::iterator iter = _p->m_symbols.find(sym);
    if( iter != _p->m_symbols.end() )
    {
       _p->m_version++;
       _p->m_symbols.erase(iter);
-      _p->m_mtxSym.unlock();
+      _p->inUseCheckOut();
 
       sym->decref();
       return true;
    }
    else {
-      _p->m_mtxSym.unlock();
+      _p->inUseCheckOut();
    }
 
    return false;
@@ -152,7 +455,7 @@ bool Session::removeSymbol(Symbol* sym)
 
 void Session::record( VMContext* ctx )
 {
-   _p->m_mtxSym.lock();
+   _p->inUseCheckIn(__LINE__);
    _p->m_version++;
    Private::SymbolSet::iterator iter = _p->m_symbols.begin();
    while( iter != _p->m_symbols.begin() )
@@ -165,13 +468,14 @@ void Session::record( VMContext* ctx )
       }
       ++iter;
    }
-   _p->m_mtxSym.unlock();
+   _p->inUseCheckOut();
 }
 
 
 void Session::apply( VMContext* ctx ) const
 {
-   _p->m_mtxSym.lock();
+   _p->inUseCheckIn(__LINE__);
+
    Private::SymbolSet::iterator iter = _p->m_symbols.begin();
    while( iter != _p->m_symbols.begin() )
    {
@@ -181,7 +485,8 @@ void Session::apply( VMContext* ctx ) const
       item->copyFromLocal(iter->second);
       ++iter;
    }
-   _p->m_mtxSym.unlock();
+
+   _p->inUseCheckOut();
 }
 
 
@@ -190,8 +495,8 @@ void Session::store(VMContext* ctx, Storer* storer) const
    Class* cls = 0;
    void* data = 0;
 
-   // the lock here is a bit wide, but having a look into Storer::store, it seems harmless.
-   _p->m_mtxSym.lock();
+   // We don't lock here, as we have a concurrent prevention mechanism in the
+   // invoking method.
    Private::SymbolSet::iterator iter = _p->m_symbols.begin();
    while( iter != _p->m_symbols.begin() )
    {
@@ -202,12 +507,35 @@ void Session::store(VMContext* ctx, Storer* storer) const
       storer->store(ctx, cls, data, true);
       ++iter;
    }
-   _p->m_mtxSym.unlock();
 
    // write a nil as end marker
    Item item;
    item.forceClassInst(cls, data);
    storer->store(ctx, cls, data, false);
+}
+
+
+void Session::commitStore(VMContext* ctx, Storer* sto)
+{
+   fassert( m_stream != 0 );
+   _p->inUseCheckIn(__LINE__);
+   _p->m_mtxSym.unlock();
+
+   sto->commit(ctx, m_stream);
+
+   if( m_shmem != 0 )
+   {
+      StringStream* ss = static_cast<StringStream*>(m_stream);
+      String temp;
+      ss->closeToString(temp);
+      m_shmem->write(temp.getRawStorage(), temp.size(), 0, false, true);
+   }
+   else {
+      m_stream->close();
+   }
+
+   _p->m_mtxSym.lock();
+   _p->inUseCheckOut();
 }
 
 
@@ -386,6 +714,17 @@ void Session::gcMark( uint32 mark )
       }
    }
    _p->m_mtxSym.unlock();
+}
+
+
+int64 Session::occupiedMemory() const
+{
+   int64 count;
+   _p->m_mtxSym.lock();
+   count = _p->m_symbols.size() * 16;
+   _p->m_mtxSym.unlock();
+
+   return sizeof(Session) + 16 + count;
 }
 
 }
