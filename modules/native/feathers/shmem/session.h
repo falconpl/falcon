@@ -121,7 +121,7 @@ public:
     * be stored in the context by calling apply()
     *
     */
-   void load( VMContext* ctx );
+   void load( VMContext* ctx, bool bApply = false );
 
    /**
     * Destroies a session and all its associated resources.

@@ -37,6 +37,7 @@
 #define FALCON_ERROR_SHMEM_SESSION_CONCURRENT  (FALCON_SHMEM_ERROR_BASE + 7 )
 #define FALCON_ERROR_SHMEM_SESSION_EXPIRED     (FALCON_SHMEM_ERROR_BASE + 8 )
 #define FALCON_ERROR_SHMEM_SESSION_INVALID     (FALCON_SHMEM_ERROR_BASE + 9 )
+#define FALCON_ERROR_SHMEM_SESSION_NOTFOUND    (FALCON_SHMEM_ERROR_BASE + 10 )
 
 
 namespace Falcon {
@@ -87,16 +88,20 @@ FALCON_DECLARE_ERROR_CLASS_EX( ShmemError, \
    Possible error codes are:
    - SessionError.Concurrent - Concurrent access to session storage
    - SessionError.Expired - Tried to start an expired session
+   - SessionError.Invalid - Session file structure is invalid
+   - SessionError.NotFound - Can't find any session with the given ID
 */
 FALCON_DECLARE_ERROR_INSTANCE_WITH_DESC( SessionError,
          FALCON_ERROR_CLASS_DESC( FALCON_ERROR_SHMEM_SESSION_CONCURRENT, "Concurrent access to session storage" )\
          FALCON_ERROR_CLASS_DESC( FALCON_ERROR_SHMEM_SESSION_EXPIRED, "Session expired" )\
          FALCON_ERROR_CLASS_DESC( FALCON_ERROR_SHMEM_SESSION_INVALID, "Invalid session file" )\
+         FALCON_ERROR_CLASS_DESC( FALCON_ERROR_SHMEM_SESSION_NOTFOUND, "Can't find any session with the given ID" )\
 );
 FALCON_DECLARE_ERROR_CLASS_EX( SessionError, \
          addConstant("Concurrent", FALCON_ERROR_SHMEM_SESSION_CONCURRENT );\
          addConstant("Expired", FALCON_ERROR_SHMEM_SESSION_EXPIRED );\
          addConstant("Invalid", FALCON_ERROR_SHMEM_SESSION_INVALID );\
+         addConstant("NotFound", FALCON_ERROR_SHMEM_SESSION_NOTFOUND );\
          )
 }
 

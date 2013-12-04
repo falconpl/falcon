@@ -119,11 +119,18 @@ void Session::Private::PStepRestore::apply_(const PStep* ps, VMContext* ctx )
    fassert(ctx->topData().asClass()->name() == "Restorer");
    Restorer* res = static_cast<Restorer*>(ctx->topData().asInst());
 
+   bool doApply = ctx->currentCode().m_seqId != 0;
    ctx->popCode();
 
    self->m_session->restore( res );
+
    // if everything is allright...
    ctx->popData(); // remove the restorer.
+
+   if (doApply)
+   {
+      self->m_session->apply( ctx );
+   }
 }
 
 
@@ -333,7 +340,7 @@ void Session::save( VMContext* ctx )
 }
 
 
-void Session::load( VMContext* ctx )
+void Session::load( VMContext* ctx, bool bApply )
 {
    static Class* clsRestorer = Engine::instance()->stdHandlers()->restorerClass();
 
@@ -395,6 +402,9 @@ void Session::load( VMContext* ctx )
    Restorer* rest = new Restorer;
    ctx->pushData( FALCON_GC_STORE(clsRestorer, rest) );
    ctx->pushCode(&_p->m_stepRestore);
+   if( bApply ) {
+      ctx->currentCode().m_seqId = 1;
+   }
 
    // ready to go.
    rest->restore(ctx, m_stream, ctx->process()->modSpace());
@@ -407,7 +417,23 @@ void Session::load( VMContext* ctx )
 
 void Session::close()
 {
+   if (m_shmem != 0)
+   {
+      m_shmem->close(true);
+      m_shmem = 0;
+   }
 
+   if( m_stream != 0 )
+   {
+      m_stream->decref();
+      m_stream = 0;
+
+      if( m_open_mode == e_om_file )
+      {
+         // this might throw...
+         Engine::instance()->vfs().erase(m_id);
+      }
+   }
 }
 
 
