@@ -542,6 +542,7 @@ void URI::clear()
    m_query = "";
    m_fragment = "";
    m_encoded = "";
+   m_path.clear();
    m_bValid = true; // by default.
 }
 
