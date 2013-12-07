@@ -753,6 +753,22 @@ int64 Session::occupiedMemory() const
    return sizeof(Session) + 16 + count;
 }
 
+
+void Session::enumerate( Enumerator& r ) const
+{
+   _p->inUseCheckIn(__LINE__);
+   Private::SymbolSet::iterator iter = _p->m_symbols.begin();
+   while( iter != _p->m_symbols.end() )
+   {
+      Symbol* sym = iter->first;
+      Item& value = iter->second;
+      r(sym,value);
+      ++iter;
+   }
+
+   _p->inUseCheckOut();
+}
+
 }
 
 /* end of session.cpp */

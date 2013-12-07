@@ -175,6 +175,18 @@ public:
    void commitStore(VMContext* ctx, Storer* sto );
 
    int64 occupiedMemory() const;
+
+   class Enumerator {
+   public:
+      virtual ~Enumerator () {}
+      virtual void operator()( Symbol* sym, Item& value );
+   };
+
+   /** Enumerate the items in the session.
+    * Notice that the enumeration is interlocked; in the callback, do things fast.
+    */
+   void enumerate( Enumerator& r ) const;
+
 private:
    /** Not cloneable */
    Session(const Session& ) {}

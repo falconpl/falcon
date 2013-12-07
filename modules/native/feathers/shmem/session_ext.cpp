@@ -25,6 +25,7 @@
 #include <falcon/stdsteps.h>
 #include <falcon/stderrors.h>
 #include <falcon/symbol.h>
+#include <falcon/itemdict.h>
 
 namespace Falcon {
 
@@ -319,7 +320,29 @@ FALCON_DEFINE_FUNCTION_P1(set)
 FALCON_DECLARE_FUNCTION(getAll, "")
 FALCON_DEFINE_FUNCTION_P1(getAll)
 {
-   ctx->returnFrame();
+   MESSAGE("getAll()");
+   Session* session = ctx->tself<Session*>();
+
+   ItemDict* dict = new ItemDict;
+
+   class Rator: public Session::Enumerator
+   {
+   public:
+      Rator( ItemDict* dict ): m_dict(dict) {}
+      virtual ~Rator() {}
+      virtual void operator()(Symbol* sym, Item& value)
+      {
+         m_dict->insert(FALCON_GC_HANDLE(new String(sym->name()) ), value);
+      }
+
+   private:
+      ItemDict* m_dict;
+   };
+
+   Rator rator(dict);
+
+   session->enumerate(rator);
+   ctx->returnFrame(FALCON_GC_HANDLE(dict));
 }
 
 }
