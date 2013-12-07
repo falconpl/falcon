@@ -2124,7 +2124,7 @@ void ClassArray::op_ashr( VMContext* ctx, void* self ) const
 
 void ClassArray::op_isTrue( VMContext* ctx, void* self ) const
 {
-   ctx->stackResult( 1, static_cast<ItemArray*>( self )->length() != 0 );
+   ctx->stackResult( 1, Item().setBoolean(static_cast<ItemArray*>( self )->length() != 0) );
 }
 
 

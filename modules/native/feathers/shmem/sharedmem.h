@@ -114,7 +114,8 @@ public:
     */
    uint32 version() const;
 
-   int64 size() const;
+   int64 size();
+   int64 localSize() const;
 
 private:
    class Private;

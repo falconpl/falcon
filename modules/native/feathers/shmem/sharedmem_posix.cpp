@@ -373,6 +373,7 @@ void* SharedMem::grabAll( int64& size )
       throw FALCON_SIGN_XERROR(CodeError, e_membuf_def, .extra(String("malloc(").N(rdSize).A(")") ));
    }
 
+   size = rdSize;
    memcpy( data, reinterpret_cast<char*>(d->bd) + sizeof(BufferData), size );
 
    // release the file lock
@@ -450,10 +451,19 @@ bool SharedMem::write( const void* data, int64 size, int64 offset, bool bSync, b
    return internal_write(data, size, offset, bSync, bTrunc );
 }
 
-int64 SharedMem::size() const
+int64 SharedMem::size()
+{
+   int64 s = lockAndAlign();
+   s_unlockf( FALCON_ERROR_SHMEM_IO_WRITE );
+   return s;
+}
+
+
+int64 SharedMem::localSize() const
 {
    return d->mapsize;
 }
+
 
 }
 

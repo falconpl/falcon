@@ -129,7 +129,7 @@ FALCON_DEFINE_FUNCTION_P(remove)
 FALCON_DECLARE_FUNCTION(open, "apply:[B]")
 FALCON_DEFINE_FUNCTION_P(open)
 {
-   static PStep* retStep = &Engine::instance()->stdSteps()->m_returnFrameWithTop;
+   static PStep* retStep = &Engine::instance()->stdSteps()->m_returnFrame;
 
    Session* session = ctx->tself<Session*>();
    bool bApply = pCount > 0 ? ctx->param(0)->isTrue() : true;
@@ -142,16 +142,10 @@ FALCON_DEFINE_FUNCTION_P(open)
 #endif
 
 
-   if( ! session->open() )
-   {
-      ctx->returnFrame(Item().setBoolean(false));
-   }
-   else {
-      ctx->pushData(Item().setBoolean(true));
-      ctx->pushCode( retStep );
-      session->load(ctx, bApply);
-      // don't return the frame
-   }
+   session->open();
+   ctx->pushCode( retStep );
+   session->load(ctx, bApply);
+   // don't return the frame
 }
 
 
@@ -182,18 +176,16 @@ FALCON_DEFINE_FUNCTION_P(start)
    Session* session = ctx->tself<Session*>();
    TRACE1("Session.start() with %d parameters", ctx->paramCount() );
 
-   if( ! session->open() )
+   session->open();
+   if( ! session->checkLoad() )
    {
       internal_add_remove( this, ctx, pCount, true, 0 );
-      session->create();
-      ctx->returnFrame();
+      session->begin();
    }
-   else
-   {
-      ctx->pushCode( retStep );
-      session->load(ctx, true);
-      // don't return the frame
-   }
+
+   ctx->pushCode( retStep );
+   session->load(ctx, true);
+   // don't return the frame
 }
 
 
@@ -223,9 +215,10 @@ FALCON_DEFINE_FUNCTION_P1(save)
 {
    static PStep* retStep = &Engine::instance()->stdSteps()->m_returnFrame;
 
-   MESSAGE("save.apply()" );
+   MESSAGE("Session.save()" );
    Session* session = ctx->tself<Session*>();
    ctx->pushCode( retStep );
+   session->record(ctx);
    session->save(ctx);
    // don't return the frame
 }
@@ -354,7 +347,7 @@ FALCON_DEFINE_FUNCTION_P1(getAll)
 ClassSession::ClassSession():
          Class("Session")
 {
-   addMethod( new FALCON_FUNCTION_NAME(init) );
+   setConstuctor(new FALCON_FUNCTION_NAME(init) );
    addMethod( new FALCON_FUNCTION_NAME(add) );
    addMethod( new FALCON_FUNCTION_NAME(remove) );
 
@@ -368,6 +361,10 @@ ClassSession::ClassSession():
    addMethod( new FALCON_FUNCTION_NAME(get) );
    addMethod( new FALCON_FUNCTION_NAME(set) );
    addMethod( new FALCON_FUNCTION_NAME(getAll) );
+
+   addConstant("OM_FILE", static_cast<int64>(Session::e_om_file) );
+   addConstant("OM_SHMEM", static_cast<int64>(Session::e_om_shmem) );
+   addConstant("OM_SHMEM_BU", static_cast<int64>(Session::e_om_shmem_bu) );
 }
 
 

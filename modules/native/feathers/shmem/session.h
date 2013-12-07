@@ -139,7 +139,7 @@ public:
    /** Returns the timestamp when the session expires */
    int64 expiresAt() const;
 
-   bool open();
+   void open();
 
    void create();
 
@@ -179,13 +179,16 @@ public:
    class Enumerator {
    public:
       virtual ~Enumerator () {}
-      virtual void operator()( Symbol* sym, Item& value );
+      virtual void operator()( Symbol* sym, Item& value ) = 0;
    };
 
    /** Enumerate the items in the session.
     * Notice that the enumeration is interlocked; in the callback, do things fast.
     */
    void enumerate( Enumerator& r ) const;
+
+   /** Checks if an open session is ready for load (i.e. has data). */
+   bool checkLoad() const;
 
 private:
    /** Not cloneable */

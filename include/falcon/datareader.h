@@ -69,6 +69,14 @@ public:
 
    virtual ~DataReader();
 
+   /** Moves the file pointer of the stream back to the current buffer position.
+    *
+    * Can be used to reset the stream so that it can them be used for other
+    * operations outside this data reader.
+    *
+    */
+   void resetStream();
+
    /** Sets the endianity of the integer and floating point data reads. */
    void setEndianity( t_endianity endian );
 

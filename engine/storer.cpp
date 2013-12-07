@@ -235,6 +235,7 @@ void Storer::setStream( Stream* dataStream )
 
 bool Storer::commit( VMContext* ctx, Stream* dataStream )
 {
+   TRACE( "Storer::commit( %p, %p ) ", ctx, dataStream );
    try
    {
       if( dataStream != 0 )
@@ -366,6 +367,8 @@ void Storer::writeClassTable( DataWriter* wr )
 {   
    // First, write the class dictionary.
    uint32 clsSize = (uint32) _p->m_clsVector.size();
+   TRACE( "Storer::writeClassTable writing %d classes ", clsSize );
+
    wr->write( clsSize );
    Private::ClassVector::const_iterator iter = _p->m_clsVector.begin();
    Private::ClassVector::const_iterator end = _p->m_clsVector.end();
@@ -378,10 +381,13 @@ void Storer::writeClassTable( DataWriter* wr )
       
       if ( mod != 0 )
       {
+         TRACE( "Storer::writeClassTable writing class %s from %s (%s)",
+                     cls->name().c_ize(), mod->name().c_ize(), mod->uri().c_ize() );
          wr->write( mod->name() );
          wr->write( mod->uri() );
       }
       else {
+         TRACE( "Storer::writeClassTable writing class %s without module", cls->name().c_ize() );
          wr->write("");
       }
          
@@ -394,6 +400,7 @@ void Storer::writeInstanceTable( DataWriter* wr )
 {   
    // First, write the class dictionary.
    uint32 instSize = (uint32) _p->m_storedVector.size();
+   TRACE( "Storer::writeInstanceTable writing %d instances ", instSize );
    wr->write( instSize );
    Private::IDVector::const_iterator iter = _p->m_storedVector.begin();
    Private::IDVector::const_iterator end = _p->m_storedVector.end();
@@ -411,6 +418,7 @@ bool Storer::writeObjectTable( VMContext* ctx, DataWriter* wr )
 {
    // write the object boundary count
    uint32 size = (uint32) _p->m_objVector.size();
+   TRACE( "Storer::writeObjectTable writing %d objects", size );
    wr->write( size );
 
    ctx->pushCode( &m_writeNext );
@@ -427,6 +435,7 @@ void Storer::WriteNext::apply_( const PStep* ps, VMContext* ctx )
    register int32& pos = ctx->currentCode().m_seqId;
    int32 size = (int32) self.m_owner->_p->m_objVector.size();
    DataWriter* wr = self.m_owner->m_writer;
+   TRACE( "Storer::WriteNext::apply_ writing object %d/%d", pos, size );
    
    while( pos < size ) 
    {

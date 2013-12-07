@@ -109,7 +109,7 @@ public:
          Session* m_session;
       };
 
-      PStepRestore m_stepStore;
+      PStepStore m_stepStore;
 };
 
 
@@ -231,41 +231,25 @@ void Session::begin()
 }
 
 
-bool Session::open()
+void Session::open()
 {
    switch( m_open_mode )
    {
    case e_om_file:
    {
-      try {
-         m_stream = Engine::instance()->vfs().open(m_id, VFSProvider::OParams().rdwr() );
-      }
-      catch( IOError* e )
-      {
-         e->decref();
-         return false;
-      }
+      m_stream = Engine::instance()->vfs().open(m_id, VFSProvider::OParams().rdwr() );
    }
    break;
 
    case e_om_shmem: case e_om_shmem_bu:
    {
-      try {
-         m_shmem = new SharedMem;
-         m_shmem->open( m_id, m_open_mode == e_om_shmem_bu );
-      }
-      catch( IOError* e )
-      {
-         delete m_shmem;
-         e->decref();
-         return false;
-      }
+      m_shmem = new SharedMem;
+      m_shmem->open( m_id, m_open_mode == e_om_shmem_bu );
    }
    break;
    }
 
    tick();
-   return true;
 }
 
 
@@ -346,24 +330,44 @@ void Session::load( VMContext* ctx, bool bApply )
 
    _p->inUseCheckIn(__LINE__);
    // in-use throwing is a strong enough guarantee for us...
-   _p->m_mtxSym.unlock();
-
-   if ( ! open() )
+   if( m_shmem == 0 && m_stream == 0 )
    {
-      // there's nothing to be loaded
-      return;
+      _p->m_mtxSym.unlock();
+      open();
+   }
+   else {
+      _p->m_mtxSym.unlock();
    }
 
    if ( m_stream == 0 )
    {
       fassert(m_shmem != 0);
-      int64 len;
+      int64 len=0;
       void* data = m_shmem->grabAll(len);
+
+      // still unused session file?
+      if( len == 0 )
+      {
+         _p->m_mtxSym.lock();
+         _p->inUseCheckOut();
+         return;
+      }
+
       m_stream = new StringStream((byte*) data, len);
+   }
+   else {
+      m_stream->seekBegin(0);
    }
 
    char marker[4];
-   m_stream->read(marker,4);
+   if( m_stream->eof() || m_stream->read(marker,4) == 0 )
+   {
+      // still unused file.
+      _p->m_mtxSym.lock();
+      _p->inUseCheckOut();
+      return;
+   }
+
    if ( String("FALS") != marker )
    {
       throw FALCON_SIGN_ERROR(SessionError, FALCON_ERROR_SHMEM_SESSION_INVALID );
@@ -386,10 +390,12 @@ void Session::load( VMContext* ctx, bool bApply )
       reader.read(m_tsExpire);
       reader.read(m_timeout);
       _p->m_mtxSym.unlock();
+
+      reader.resetStream();
    }
    catch(...)
    {
-      _p->m_mtxSym.unlock();
+      _p->inUseCheckOut();
       throw;
    }
 
@@ -444,7 +450,7 @@ void Session::addSymbol(Symbol* sym, const Item& value)
 
    Private::SymbolSet::iterator iter = _p->m_symbols.find(sym);
    _p->m_version++;
-   if( iter != _p->m_symbols.end() )
+   if( iter == _p->m_symbols.end() )
    {
       sym->incref();
       _p->m_symbols.insert(std::make_pair(sym, value));
@@ -484,14 +490,21 @@ void Session::record( VMContext* ctx )
    _p->inUseCheckIn(__LINE__);
    _p->m_version++;
    Private::SymbolSet::iterator iter = _p->m_symbols.begin();
-   while( iter != _p->m_symbols.begin() )
+   while( iter != _p->m_symbols.end() )
    {
       Symbol* sym = iter->first;
-      Item* item = ctx->resolveSymbol(sym, false);
-      if( item != 0 )
-      {
-         iter->second.copyFromRemote(*item);
+      try {
+         Item* item = ctx->resolveSymbol(sym, false);
+         if( item != 0 )
+         {
+            iter->second.copyFromRemote(*item);
+         }
       }
+      catch( Error* e )
+      {
+         e->decref();
+      }
+
       ++iter;
    }
    _p->inUseCheckOut();
@@ -503,7 +516,7 @@ void Session::apply( VMContext* ctx ) const
    _p->inUseCheckIn(__LINE__);
 
    Private::SymbolSet::iterator iter = _p->m_symbols.begin();
-   while( iter != _p->m_symbols.begin() )
+   while( iter != _p->m_symbols.end() )
    {
       Symbol* sym = iter->first;
       Item* item = ctx->resolveSymbol(sym, true);
@@ -524,7 +537,7 @@ void Session::store(VMContext* ctx, Storer* storer) const
    // We don't lock here, as we have a concurrent prevention mechanism in the
    // invoking method.
    Private::SymbolSet::iterator iter = _p->m_symbols.begin();
-   while( iter != _p->m_symbols.begin() )
+   while( iter != _p->m_symbols.end() )
    {
       Symbol* sym = iter->first;
       storer->store(ctx, sym->handler(), sym, false);
@@ -556,11 +569,11 @@ void Session::commitStore(VMContext* ctx, Storer* sto)
       ss->closeToString(temp);
       m_shmem->write(temp.getRawStorage(), temp.size(), 0, false, true);
    }
-   else {
-      m_stream->close();
-   }
+
+   m_stream->close();
 
    _p->m_mtxSym.lock();
+   m_stream = 0;
    _p->inUseCheckOut();
 }
 
@@ -593,7 +606,10 @@ void Session::restore(Restorer* restorer)
          throw FALCON_SIGN_XERROR(IOError, e_deser, .extra("Missing data in session restore") );
       }
       Item value(handler, data);
-      value.deuser();
+      if( value.isUser() )
+      {
+         value.deuser();
+      }
       addSymbol( sym, value );
    }
 }
@@ -767,6 +783,28 @@ void Session::enumerate( Enumerator& r ) const
    }
 
    _p->inUseCheckOut();
+}
+
+bool Session::checkLoad() const
+{
+   bool check = false;
+   _p->inUseCheckIn(__LINE__);
+   if( m_shmem != 0 )
+   {
+      check = m_shmem->size() > 0;
+   }
+   else if (m_stream != 0) {
+      Stream* stream = m_stream;
+      stream->incref();
+      _p->m_mtxSym.unlock();
+
+      check = stream->seekEnd(0) != 0;
+      stream->decref();
+      _p->m_mtxSym.lock();
+   }
+   _p->inUseCheckOut();
+
+   return check;
 }
 
 }
