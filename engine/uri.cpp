@@ -537,12 +537,14 @@ bool URI::parse( const String &newUri )
    
 void URI::clear()
 {
-   m_scheme = "";
-   m_path = "";
-   m_query = "";
-   m_fragment = "";
-   m_encoded = "";
+   m_encoded.size(0);
+
+   m_scheme.size(0);
+   m_fragment.size(0);
+   m_query.clear();
+   m_authority.clear();
    m_path.clear();
+
    m_bValid = true; // by default.
 }
 

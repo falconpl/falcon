@@ -55,13 +55,12 @@ void Path::ownerURI( URI* owner )
 void Path::clear()
 {
    m_encoded.size(0);
-   m_filename.size(0);
-   
    m_bValid = true;
 
    m_device.size(0);
    m_location.size(0);
    m_filename.size(0);
+   m_fileext.size(0);
    m_extension.size(0);
 
    if( m_owner != 0 )
