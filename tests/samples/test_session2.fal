@@ -1,0 +1,34 @@
+load shmem
+load timestamp
+
+control = nil
+
+x = Session("test")
+
+try
+   x.start(&control, &var0, &start, &lastAccess)
+catch SessionError in e
+   if e.code == SessionError.Expired
+      > "Session expired; creating a new session."
+      x.create(&control, &var0, &start, &lastAccess)
+   end
+end
+
+if control == nil   
+   var0 = 0
+   control = true
+   start = TimeStamp().current()
+   lastAccess = start
+   > "Initializing sesion at ", start
+   x.timeout = 30
+else
+   > "Session started at: ", start
+   > "Last accessed: ", lastAccess
+   lastAccess = TimeStamp().current()
+   > "Called ", ++var0, " times."
+   > "Status: ", x.createdAt, " - ", x.expiresAt, " - ", x.timeout, "."
+end
+
+x.save()
+
+> "Done."

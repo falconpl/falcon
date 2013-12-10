@@ -373,6 +373,12 @@ static void get_createdAt( const Class*, const String&, void *instance, Item& va
    value.setInteger(session->createdAt());
 }
 
+static void get_expiresAt( const Class*, const String&, void *instance, Item& value )
+{
+   Session* session = static_cast<Session*>(instance);
+   value.setInteger(session->expiresAt());
+}
+
 }
 
 //=============================================================================
@@ -399,6 +405,7 @@ ClassSession::ClassSession():
 
    addProperty( "timeout", &get_timeout, &set_timeout );
    addProperty( "createdAt", &get_createdAt );
+   addProperty( "expiresAt", &get_expiresAt );
 
    addConstant("OM_FILE", static_cast<int64>(Session::e_om_file) );
    addConstant("OM_SHMEM", static_cast<int64>(Session::e_om_shmem) );

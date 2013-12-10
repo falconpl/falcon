@@ -378,6 +378,8 @@ void Session::load( VMContext* ctx, bool bApply )
 
    if ( String("FALS") != marker )
    {
+      _p->m_mtxSym.lock();
+      _p->inUseCheckOut();
       throw FALCON_SIGN_ERROR(SessionError, FALCON_ERROR_SHMEM_SESSION_INVALID );
    }
 
@@ -387,6 +389,8 @@ void Session::load( VMContext* ctx, bool bApply )
    reader.read(id);
    if( id != m_id )
    {
+      _p->m_mtxSym.lock();
+      _p->inUseCheckOut();
       throw FALCON_SIGN_ERROR(SessionError, FALCON_ERROR_SHMEM_SESSION_INVALID );
    }
 
@@ -409,6 +413,8 @@ void Session::load( VMContext* ctx, bool bApply )
 
    if( isExpired() )
    {
+      _p->m_mtxSym.lock();
+      _p->inUseCheckOut();
       throw FALCON_SIGN_ERROR(SessionError, FALCON_ERROR_SHMEM_SESSION_EXPIRED );
    }
 
