@@ -405,6 +405,8 @@ void ModSpace::PStepSaveDynMantra::apply_( const PStep* self, VMContext* ctx )
    // get the parameters
    Module* clsContainer = ctx->topData().isNil() ? 0 : static_cast<Module*>( ctx->topData().asInst() );
    const String& className = *ctx->opcodeParam(1).asString();
+   TRACE( "ModSpace::PStepSaveDynMantra::apply_ - search \"%s\" in %s -- depth %d",
+            className.c_ize(), clsContainer == 0 ? "<nothing>" : clsContainer->uri().c_ize(), (int) ctx->dataSize() );
 
    // remove the module
    ctx->popData();
@@ -456,6 +458,7 @@ void ModSpace::PStepSaveDynMantra::apply_( const PStep* self, VMContext* ctx )
    }
 
    ctx->pushData( Item(theClass->handler(), theClass) );
+   ctx->popCode();
 }
 
 
@@ -1011,7 +1014,6 @@ void ModSpace::findDynamicMantra(
    }
 
    // push the mantra resolver step.
-   ctx->pushData( Item( className.handler(), const_cast<String*>(&className)) );
    ctx->pushCode( m_stepSaveDynMantra );
 
    // and then start resolving the module
