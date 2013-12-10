@@ -67,6 +67,8 @@ public:
    /** Destroys the session */
    ~Session();
 
+   const String& id() const { return m_id; }
+
    /** Starts the session as a new session right now. */
    void begin();
 
