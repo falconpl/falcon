@@ -129,8 +129,6 @@ FALCON_DEFINE_FUNCTION_P(remove)
 FALCON_DECLARE_FUNCTION(open, "apply:[B]")
 FALCON_DEFINE_FUNCTION_P(open)
 {
-   static PStep* retStep = &Engine::instance()->stdSteps()->m_returnFrame;
-
    Session* session = ctx->tself<Session*>();
    bool bApply = pCount > 0 ? ctx->param(0)->isTrue() : true;
    TRACE1("Session.open(%s)", bApply ? "true" : "false" );
@@ -141,10 +139,22 @@ FALCON_DEFINE_FUNCTION_P(open)
    TRACE1("Session(%s).open(%s)", id.c_ize(), (bApply ? "true" : "false") );
 #endif
 
-
    session->open();
-   ctx->pushCode( retStep );
-   session->load(ctx, bApply);
+   try {
+      session->load(ctx, bApply);
+   }
+   catch(SessionError* se)
+   {
+      if (se->errorCode() == FALCON_ERROR_SHMEM_SESSION_NOTOPEN )
+      {
+         se->decref();
+         ctx->returnFrame(Item().setBoolean(false));
+      }
+      else {
+         throw;
+      }
+   }
+
    // don't return the frame
 }
 
@@ -171,21 +181,27 @@ FALCON_DEFINE_FUNCTION_P(create)
 FALCON_DECLARE_FUNCTION(start, "symbol:[S|Symbol],...")
 FALCON_DEFINE_FUNCTION_P(start)
 {
-   static PStep* retStep = &Engine::instance()->stdSteps()->m_returnFrame;
-
    Session* session = ctx->tself<Session*>();
    TRACE1("Session.start() with %d parameters", ctx->paramCount() );
 
-   session->open();
-   if( ! session->checkLoad() )
-   {
-      internal_add_remove( this, ctx, pCount, true, 0 );
-      session->begin();
+   try {
+      session->open();
+      session->load(ctx, true);
+      // don't return frame.
    }
-
-   ctx->pushCode( retStep );
-   session->load(ctx, true);
-   // don't return the frame
+   catch(SessionError* se)
+   {
+      if (se->errorCode() == FALCON_ERROR_SHMEM_SESSION_NOTOPEN )
+      {
+         internal_add_remove( this, ctx, pCount, true, 0 );
+         session->create();
+         se->decref();
+         ctx->returnFrame();
+      }
+      else {
+         throw;
+      }
+   }
 }
 
 
@@ -338,6 +354,25 @@ FALCON_DEFINE_FUNCTION_P1(getAll)
    ctx->returnFrame(FALCON_GC_HANDLE(dict));
 }
 
+
+static void get_timeout( const Class*, const String&, void *instance, Item& value )
+{
+   Session* session = static_cast<Session*>(instance);
+   value.setInteger(session->timeout());
+}
+
+static void set_timeout( const Class*, const String&, void *instance, const Item& value )
+{
+   Session* session = static_cast<Session*>(instance);
+   session->timeout(value.forceInteger());
+}
+
+static void get_createdAt( const Class*, const String&, void *instance, Item& value )
+{
+   Session* session = static_cast<Session*>(instance);
+   value.setInteger(session->createdAt());
+}
+
 }
 
 //=============================================================================
@@ -361,6 +396,9 @@ ClassSession::ClassSession():
    addMethod( new FALCON_FUNCTION_NAME(get) );
    addMethod( new FALCON_FUNCTION_NAME(set) );
    addMethod( new FALCON_FUNCTION_NAME(getAll) );
+
+   addProperty( "timeout", &get_timeout, &set_timeout );
+   addProperty( "createdAt", &get_createdAt );
 
    addConstant("OM_FILE", static_cast<int64>(Session::e_om_file) );
    addConstant("OM_SHMEM", static_cast<int64>(Session::e_om_shmem) );

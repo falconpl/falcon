@@ -229,7 +229,7 @@ void Restorer::readClassTable()
 
 void Restorer::loadClasses( VMContext* ctx, ModSpace* msp )
 {
-   MESSAGE( "Restorer::loadClasses" );
+   TRACE( "Restorer::loadClasses -- depth %d", (int) ctx->dataSize() );
 
    ctx->pushData( Item( "ModSpace", msp ) );
    ctx->pushData( Item() );
@@ -256,7 +256,7 @@ void Restorer::readInstanceTable()
 
 bool Restorer::readObjectTable( VMContext* ctx )
 {
-   MESSAGE( "Restorer::readObjectTable" );
+   TRACE( "Restorer::readObjectTable -- depth %d", (int) ctx->dataSize() );
    uint32 instCount;
    m_reader->read( instCount );
    TRACE1( "Restorer::readObjectTable -- reading %d objects", instCount );
@@ -299,7 +299,7 @@ void Restorer::ReadNext::apply_( const PStep* ps, VMContext* ctx )
    
    int32& seq = ctx->currentCode().m_seqId;
    uint32 objCount = objects.size();
-   TRACE( "Restorer::ReadNext::apply_ with sequence %d/%d", seq, objCount );
+   TRACE( "Restorer::ReadNext::apply_ with sequence %d/%d -- depth %d", seq, objCount, (int) ctx->dataSize() );
    
    if( seq > 0 )
    {
@@ -462,7 +462,7 @@ void Restorer::UnflattenNext::apply_( const PStep* ps, VMContext* ctx )
 
 void Restorer::PStepLoadNextClass::apply_( const PStep* ps, VMContext* ctx )
 {
-   MESSAGE( "Restorer::PStepLoadNextClass::apply_" );
+   TRACE( "Restorer::PStepLoadNextClass::apply_ with depth %d", (int) ctx->dataSize() );
    
    const Restorer::PStepLoadNextClass* self = static_cast<const Restorer::PStepLoadNextClass*>(ps);
    Restorer* restorer = self->m_owner;

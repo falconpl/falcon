@@ -49,6 +49,7 @@ public:
          << new ClassIPSem
          << new ClassShmemError
          << new ClassSession
+         << new ClassSessionError
                ;
    }
 

@@ -115,6 +115,8 @@ public:
 
 void Session::Private::PStepRestore::apply_(const PStep* ps, VMContext* ctx )
 {
+   TRACE("Session::Private::PStepRestore::apply_ with depth %d", (int) ctx->dataSize());
+
    const PStepRestore* self = static_cast<const PStepRestore*>(ps);
    fassert(ctx->topData().asClass()->name() == "Restorer");
    Restorer* res = static_cast<Restorer*>(ctx->topData().asInst());
@@ -125,7 +127,9 @@ void Session::Private::PStepRestore::apply_(const PStep* ps, VMContext* ctx )
    self->m_session->restore( res );
 
    // if everything is allright...
-   ctx->popData(); // remove the restorer.
+   ctx->returnFrame(Item().setBoolean(true));
+
+   //ctx->popData(); // remove the restorer.
 
    if (doApply)
    {
@@ -136,6 +140,8 @@ void Session::Private::PStepRestore::apply_(const PStep* ps, VMContext* ctx )
 
 void Session::Private::PStepStore::apply_(const PStep* ps, VMContext* ctx )
 {
+   TRACE("Session::Private::PStepRestore::apply_ with depth %d", (int) ctx->dataSize());
+
    const PStepStore* self = static_cast<const PStepStore*>(ps);
    fassert(ctx->topData().asClass()->name() == "Storer");
    Storer* sto = static_cast<Storer*>(ctx->topData().asInst());
@@ -275,6 +281,8 @@ void Session::save( VMContext* ctx )
 {
    static Class* clsStorer = Engine::instance()->stdHandlers()->storerClass();
 
+   tick();
+
    _p->inUseCheckIn(__LINE__);
    // in-use throwing is a strong enough guarantee for us...
    _p->m_mtxSym.unlock();
@@ -350,7 +358,7 @@ void Session::load( VMContext* ctx, bool bApply )
       {
          _p->m_mtxSym.lock();
          _p->inUseCheckOut();
-         return;
+         throw FALCON_SIGN_ERROR(SessionError, FALCON_ERROR_SHMEM_SESSION_NOTOPEN );
       }
 
       m_stream = new StringStream((byte*) data, len);
@@ -365,7 +373,7 @@ void Session::load( VMContext* ctx, bool bApply )
       // still unused file.
       _p->m_mtxSym.lock();
       _p->inUseCheckOut();
-      return;
+      throw FALCON_SIGN_ERROR(SessionError, FALCON_ERROR_SHMEM_SESSION_NOTOPEN );
    }
 
    if ( String("FALS") != marker )
@@ -408,6 +416,7 @@ void Session::load( VMContext* ctx, bool bApply )
    Restorer* rest = new Restorer;
    ctx->pushData( FALCON_GC_STORE(clsRestorer, rest) );
    ctx->pushCode(&_p->m_stepRestore);
+   TRACE1("Session::load pushed stepRestore with depth %d", (int) ctx->dataSize());
    if( bApply ) {
       ctx->currentCode().m_seqId = 1;
    }
@@ -605,12 +614,18 @@ void Session::restore(Restorer* restorer)
       {
          throw FALCON_SIGN_XERROR(IOError, e_deser, .extra("Missing data in session restore") );
       }
-      Item value(handler, data);
-      if( value.isUser() )
+
+      // flat data?
+      if( handler->typeID() < FLC_ITEM_COUNT )
       {
-         value.deuser();
+         Item value = *static_cast<Item*>(data);
+         addSymbol( sym, value );
       }
-      addSymbol( sym, value );
+      else {
+         Item value(handler, data);
+         addSymbol( sym, value );
+      }
+
    }
 }
 
