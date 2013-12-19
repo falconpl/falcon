@@ -196,8 +196,8 @@ void _getCurrentDate( Date& date )
 {
    SYSTEMTIME st;
    GetSystemTime( &st );
-   numeric ms = SYSTEMTIME_TO_SECONDS( st );
-   date.fromMilliseconds(static_cast<int64>(ms));
+   numeric seconds = SYSTEMTIME_TO_SECONDS( st );
+   date.fromMilliseconds(static_cast<int64>(seconds)*1000 + st.wMilliseconds);
 }
 
 
