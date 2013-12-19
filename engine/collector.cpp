@@ -592,7 +592,7 @@ void Collector::clearRing( GCToken *ringRoot )
             ++count;
             GCToken* prev = ring;
             ring = ring->m_next;
-            disposeToken(prev);
+            delete prev;
          }
          else {
             // skip it now, and keep it for later.

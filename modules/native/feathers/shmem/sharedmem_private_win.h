@@ -77,9 +77,35 @@ public:
                   .sysError( GetLastError() ) ); 
          }
 
+         if( ! CloseHandle( hMemory ) )
+         {
+            s_unlockf();
+            throw new IOError( ErrorParam( e_io_error, __LINE__, SRC )
+                              .extra("CreateFileMapping "+ sMemName )
+                              .sysError( GetLastError() ) );
+         }
+
+          // remap the file.
+         AutoWString wMemName( sMemName );
+         hMemory = CreateFileMappingW(
+            hFile,
+            0,
+            PAGE_READWRITE,
+            0,
+            sizeof( BufferData ) +(SIZE_T) currentSize,
+            wMemName.w_str() );
+
+         if( hMemory == INVALID_HANDLE_VALUE )
+         {
+            s_unlockf();
+            throw new IOError( ErrorParam( e_io_error, __LINE__, SRC )
+                              .extra("CreateFileMapping "+ sMemName )
+                              .sysError( GetLastError() ) );
+         }
+
          bd = (BufferData*) MapViewOfFile(
             hMemory,
-            FILE_MAP_WRITE,
+            FILE_MAP_WRITE | FILE_MAP_READ,
             0,
             0,
             sizeof( BufferData )+(SIZE_T) currentSize );
@@ -119,16 +145,19 @@ public:
       int64 size = bd->size;
       
       // fix the expected size now, to avoid problems if we have to drop the process in the middle
-      bd->size = newSize;
-/*
-      if( ! FlushViewOfFile(bd, (SIZE_T) (size + sizeof(bd)) ) )
+      if( newSize < size )
+      {
+         bd->size = newSize;
+      }
+
+      if( ! FlushViewOfFile(bd, (SIZE_T) (size + sizeof(BufferData)) ) )
       {
          s_unlockf();
          throw new IOError( ErrorParam( e_io_error, __LINE__, SRC )
                .extra("FlushViewOfFile "+ sMemName )
                .sysError( GetLastError() ) ); 
       }
-*/
+
       // we'll need to remap with the new size.
       if( ! UnmapViewOfFile( bd ) )
       {         
@@ -152,10 +181,10 @@ public:
          // don't leave the pointer dangling.
          hMemory = INVALID_HANDLE_VALUE;
 
-         LONG lHDist = (size >> 32) & 0xFFFFFFFF;
-         LONG lLDist = size & 0xFFFFFFFF;
+         LONG lHDist = (newSize >> 32) & 0xFFFFFFFF;
+         LONG lLDist = newSize & 0xFFFFFFFF;
          // try to resize...
-         if( ! SetFilePointer(hFile, lHDist, &lLDist, FILE_BEGIN ) )
+         if( SetFilePointer(hFile, lLDist, &lHDist, FILE_BEGIN ) == INVALID_SET_FILE_POINTER )
          {
             s_unlockf();
             throw new IOError( ErrorParam( e_io_error, __LINE__, SRC )
@@ -202,7 +231,7 @@ public:
          FILE_MAP_WRITE,
          0,
          0,
-         sizeof( BufferData ) + (SIZE_T) size );
+         sizeof( BufferData ) + (SIZE_T) newSize );
 
       if ( bd == NULL )
       {
@@ -211,6 +240,12 @@ public:
                .extra("MapViewOfFile "+ sMemName )
                .sysError( GetLastError() ) ); 
       }      
+
+      // fix the expected size now, to avoid problems if we have to drop the process in the middle
+      if( newSize > size )
+      {
+         bd->size = newSize;
+      }
    }
 
 

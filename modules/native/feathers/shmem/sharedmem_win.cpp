@@ -140,7 +140,7 @@ void SharedMem::init( const String &name, bool bOpen, bool bFileBackup )
    // correctly opened -- or created. Let's map it.
    d->bd = (BufferData*) MapViewOfFile(
       d->hMemory,
-      FILE_MAP_WRITE,
+      FILE_MAP_WRITE | FILE_MAP_READ,
       0,
       0,
       sizeof( BufferData ) );

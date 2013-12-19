@@ -53,6 +53,7 @@ public:
 
    Private( Session* session ):
       m_version(0),
+      bInUse(false),
       m_stepRestore(session),
       m_stepStore(session)
    {}
@@ -367,7 +368,8 @@ void Session::load( VMContext* ctx, bool bApply )
       m_stream->seekBegin(0);
    }
 
-   char marker[4];
+   char marker[5];
+   marker[4] = 0;
    if( m_stream->eof() || m_stream->read(marker,4) == 0 )
    {
       // still unused file.

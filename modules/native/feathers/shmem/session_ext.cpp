@@ -319,6 +319,7 @@ FALCON_DEFINE_FUNCTION_P(start)
    {
       if (se->errorCode() == FALCON_ERROR_SHMEM_SESSION_NOTOPEN )
       {
+         session->close();
          internal_add_remove( this, ctx, pCount, true, 0 );
          session->create();
          se->decref();

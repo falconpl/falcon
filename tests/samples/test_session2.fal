@@ -3,7 +3,7 @@ load timestamp
 
 control = nil
 
-x = Session("test")
+x = Session("test3", Session.OM_SHMEM_BU)
 
 try
    x.start(&control, &var0, &start, &lastAccess)

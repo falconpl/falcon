@@ -33,7 +33,6 @@ namespace Falcon {
 /*#
    @module feathers.shmem
    @brief Shared and persistent memory extsnsions.
-
 */
 
 class ShmemModule: public Falcon::Module
