@@ -2637,7 +2637,8 @@ length_t String::find( const String &element, length_t start, length_t end ) con
 {
    if ( (size() == 0) 
       || (element.size() == 0) 
-      || (start >= length()) )
+      || (start >= length())
+      || (element.length() > length() ) )
    {
       return npos;
    }
