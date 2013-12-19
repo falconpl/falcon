@@ -55,7 +55,8 @@ StmtFastPrint::StmtFastPrint( int line, int chr ):
 
 StmtFastPrint::StmtFastPrint( int line, int chr, bool ):
    Statement( line, chr ),
-   _p( new Private )
+   _p( new Private ),
+   m_bAddNL( false )
 {
    // do not declare the synclass, this constructor is for child classes
    apply = apply_;
@@ -216,6 +217,7 @@ void StmtFastPrint::apply_( const PStep* ps, VMContext* ctx )
       {
          ctx->process()->textOut()->write("\n");
       }
+      ctx->process()->textOut()->flush();
       ctx->pushData(Item());
       ctx->popCode();
    }
