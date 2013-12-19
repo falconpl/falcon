@@ -1,8 +1,8 @@
 /*
    FALCON - The Falcon Programming Language.
-   FILE: ipsem.cpp
+   FILE: ipsem_posix.cpp
 
-   Inter-process semaphore.
+   Inter-process semaphore -- POSIX specific
    -------------------------------------------------------------------
    Author: Giancarlo Niccolai
    Begin: Mon, 11 Nov 2013 16:27:30 +0100
@@ -13,7 +13,7 @@
    See LICENSE file for licensing details.
 */
 
-#define SRC "modules/native/feathers/shmem/ipsem.cpp"
+#define SRC "modules/native/feathers/shmem/ipsem_posix.cpp"
 
 #include <falcon/autocstring.h>
 #include <falcon/stderrors.h>
@@ -97,7 +97,7 @@ void IPSem::init( const String& name, IPSem::t_open_mode mode, bool bPublic )
    {
    case e_om_create: omode = O_CREAT | O_EXCL; break;
    case e_om_open: omode = O_CREAT; break;
-   case e_om_openex: omode = 0; break;
+   case e_om_open_existing: omode = 0; break;
    }
 
    pmode = bPublic ? 0777: 0700;
@@ -225,4 +225,4 @@ bool IPSem::wait( int64 to )
 
 }
 
-/* end of ipsem.cpp */
+/* end of ipsem_posix.cpp */

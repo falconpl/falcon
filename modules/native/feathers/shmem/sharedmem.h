@@ -121,10 +121,9 @@ private:
    class Private;
    Private* d;
 
-   bool internal_write( const void* data, int64 size, int64 offset, bool bSync, bool bTrunc );
    int64 lockAndAlign();
-   bool s_lockf( int etype );
-   void s_unlockf( int etype );
+   void unlock();
+   bool internal_write( const void* data, int64 size, int64 offset, bool bSync, bool bTrunc );
 };
 
 }

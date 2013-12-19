@@ -21,8 +21,6 @@
 #include <falcon/trace.h>
 #include <falcon/vmcontext.h>
 
-#include <pthread.h>
-
 /*#
  @beginmodule shmem
  */
@@ -143,7 +141,7 @@ static void internal_read( VMContext* ctx, String* storage, Item* i_size, Item* 
    {
       if( storage->allocated() < size )
       {
-         storage->reserve(size);
+         storage->reserve(static_cast<length_t>(size));
       }
 
       shm->read(storage->getRawStorage(), size, offset);
@@ -172,16 +170,16 @@ static void internal_read( VMContext* ctx, String* storage, Item* i_size, Item* 
          // need to ask for new?
          if( size > storage->allocated() )
          {
-            data = new byte[size];
+            data = new byte[static_cast<length_t>(size)];
          }
       }
 
       if ( data != storage->getRawStorage() )
       {
-         storage->adoptMemBuf( static_cast<byte*>(data), size, size);
+         storage->adoptMemBuf( static_cast<byte*>(data), static_cast<length_t>(size), static_cast<length_t>(size));
       }
       else {
-         storage->size(size);
+         storage->size(static_cast<length_t>(size));
       }
    }
 
@@ -379,7 +377,7 @@ void* ClassSharedMem::clone( void* ) const
 int64 ClassSharedMem::occupiedMemory( void* instance ) const
 {
    // account for internal structures.
-   return static_cast<SharedMem*>(instance)->size() + sizeof(SharedMem) + 32;
+   return static_cast<SharedMem*>(instance)->localSize() + sizeof(SharedMem) + 32;
 }
 
 }

@@ -13,452 +13,211 @@
    See LICENSE file for licensing details.
 */
 
+#define SRC "modules/feathers/shmem/sharedmem_win.cpp"
+
 #include "sharedmem.h"
+#include "errors.h"
+#include <falcon/trace.h>
 #include <falcon/autowstring.h>
 #include <falcon/error.h>
 #include <falcon/stream.h>
 #include <falcon/path.h>
+#include <falcon/stderrors.h>
 
 #include <windows.h>
 
-#define SEM_PREFIX "WOPI_SEM_"
-#define APP_PREFIX "WOPI_MEM_"
+#include "sharedmem_private_win.h"
 
 namespace Falcon {
 
-// data in the initial part of the buffer
-typedef struct tag_BufferData
+SharedMem::SharedMem():
+      d( new Private )
 {
-   uint32 version;
-   int32 size;
-} BufferData;
+}
 
-class SharedMemPrivate
+
+SharedMem::SharedMem( const String &name, bool bFileBackup ):
+      d(new Private)
 {
-public:
-   SharedMemPrivate():
-	  mtx(INVALID_HANDLE_VALUE),
-	  hFile(INVALID_HANDLE_VALUE),
-	  hMemory(INVALID_HANDLE_VALUE),
-     bd(0)
-      {}
+   init( name, true, bFileBackup );
+}
 
-   HANDLE mtx;
-   HANDLE hFile;
-   HANDLE hMemory;
 
-   // Temporary buffer data
-   BufferData* bd;
+void SharedMem::init( const String &name, bool bOpen, bool bFileBackup )
+{
+   if( bFileBackup )
+   {     
+      // try to map the file
+      Path winName(name);         
+      AutoWString wfname( winName.getWinFormat() );
+      d->hFile = CreateFileW( wfname.w_str(),
+          GENERIC_READ | GENERIC_WRITE,
+          FILE_SHARE_READ | FILE_SHARE_WRITE,
+          0,
+          (bOpen ? OPEN_ALWAYS : CREATE_ALWAYS),
+          FILE_ATTRIBUTE_NORMAL,
+          NULL );
 
-   String sMemName;
-
-   void EnterSession()
-   {
-      if( WaitForSingleObject( this->mtx, INFINITE ) != WAIT_OBJECT_0 )
+      if( d->hFile == INVALID_HANDLE_VALUE )
       {
-         throw new IoError( ErrorParam( e_io_error, __LINE__ )
-                                            .extra("WaitForSingleObject" )
-                                            .sysError( GetLastError() ) );
-      }
-
-      // be sure we have the right data in
-      this->bd = (BufferData*) MapViewOfFile(
-            this->hMemory, FILE_MAP_WRITE, 0, 0, 0 );
-
-      if( this->bd == 0 )
-      {
-         ReleaseMutex( this->mtx );
-         throw new IoError( ErrorParam( e_io_error, __LINE__ )
-                                            .extra("MapViewOfFile" )
-                                            .sysError( GetLastError() ) );
+         throw new IOError( ErrorParam( e_io_error, __LINE__ )
+                     .extra("CreateFile "+ name )
+                     .sysError( GetLastError() ) );
       }
    
-   }
-
-   void ExitSession()
-   {
-      UnmapViewOfFile( this->bd );
-      this->bd = 0;
-      ReleaseMutex( this->mtx );
-   }
-};
-
-
-
-SharedMem::SharedMem( const String &name ):
-      d( new SharedMemPrivate ),
-      m_version(0)
-{
-   internal_build( name, "" );
-}
-
-SharedMem::SharedMem( const String &name, const String &filename ):
-      d( new SharedMemPrivate ),
-      m_version(0)
-{
-   internal_build( name, filename );
-}
-
-void SharedMem::internal_build( const String &name, const String &filename )
-{
-   String sSemName =  SEM_PREFIX + name;
-   AutoWString csn( sSemName );
-
-   // Are we the first around?
-   bool bFirst = false;
-   DWORD dwLastError;
-
-   try
-   {
-      // try to create the mutex, and take ownership.
-      d->mtx = CreateMutexW( 0, TRUE, csn.w_str() );
-      if ( d->mtx == INVALID_HANDLE_VALUE )
-      {
-         
-         if ( (dwLastError = GetLastError()) == ERROR_ALREADY_EXISTS )
-         {
-            // great, the mutex (and the rest) already exists.            
-            d->mtx = OpenMutexW( SYNCHRONIZE, FALSE, csn.w_str() );
-            if( d->mtx == INVALID_HANDLE_VALUE )
-            {
-               throw new IoError( ErrorParam( e_io_error, __LINE__ )
-                  .extra( "OpenMutex " + sSemName )
-                  .sysError( GetLastError() ) );
-            }
-         }
-         else
-         {
-            throw new IoError( ErrorParam( e_io_error, __LINE__ )
-               .extra( "CreateMutex " + sSemName )
-               .sysError( dwLastError ) );
-         }
-      }
-      else
-      {
-         if( GetLastError() != ERROR_ALREADY_EXISTS )
-            bFirst = true;
+      // if we have open semantic, ensure there is enough space.
+      LONG result = 0;
+      LONG pl = 0;
+      if( bOpen )
+      {         
+         result = SetFilePointer( d->hFile, 0, &pl, FILE_END );
       }
 
-      HANDLE handle;
-
-      // we're the owners of the memory. But, is it new or does it exists?
-      if( filename != "" )
+      // smaller than needed? -- or just created?
+      if( result < (LONG) sizeof(BufferData) && pl == 0 )
       {
-         // try to map the file
-         Path winName(filename);
-         
-         AutoWString wfname( winName.getWinFormat() );
-         d->hFile = CreateFileW( wfname.w_str(),
-             GENERIC_READ | GENERIC_WRITE,
-             FILE_SHARE_READ | FILE_SHARE_WRITE,
-             0,
-             OPEN_ALWAYS,
-             FILE_ATTRIBUTE_NORMAL,
-             NULL );
-
-         if( d->hFile == INVALID_HANDLE_VALUE )
-         {
-            throw new IoError( ErrorParam( e_io_error, __LINE__ )
-                        .extra("CreateFile "+ filename )
-                        .sysError( GetLastError() ) );
-         }
-
-         handle = d->hFile;
-      }
-      else
-      {
-         handle = INVALID_HANDLE_VALUE;
-      }
-      
-
-      // create the file mapping.
-      d->sMemName = APP_PREFIX + name;
-      AutoWString wMemName( d->sMemName );
-
-      d->hMemory = CreateFileMappingW(
-            handle,
-            0,
-            PAGE_READWRITE,
-            0,
-            sizeof( BufferData ),
-            wMemName.w_str() );
-
-      if( d->hMemory == INVALID_HANDLE_VALUE )
-      {
-         throw new IoError( ErrorParam( e_io_error, __LINE__ )
-                           .extra("CreateFileMapping "+ d->sMemName )
-                           .sysError( GetLastError() ) );
-      }
-
-      // ok, let's run -- if we're the first, we should release the mutex
-      if( bFirst )
-      {
-         init();
-         ReleaseMutex( d->mtx );
+         // reset its size.
+         SetFilePointer( d->hFile, 0, &pl, FILE_BEGIN );
+         BufferData bd;
+         ZeroMemory(&bd, sizeof(bd));
+         DWORD dwWriteCount = 0;
+         WriteFile( d->hFile, &bd, sizeof(bd), &dwWriteCount, NULL );
+         // Ignore errors: they might be caused by concurrent processes doing the same thing,
+         // or by I/O errors that we'll see later on.
       }
    }
-   catch( ... )
+   else
    {
-      if( bFirst )
-      {
-         ReleaseMutex( d->mtx );
-      }
-      close();
-      delete d;
-      throw;
-   }
-}
-
-
-SharedMem::~SharedMem()
-{
-   close();
-   delete d;
-}
-
-
-void SharedMem::init()
-{
-   // real initialization
-   BufferData* bd = (BufferData*) MapViewOfFile(
-         d->hMemory,
-         FILE_MAP_WRITE,
-         0,
-         0,
-         sizeof( BufferData ) );
-      
-   if( bd == NULL )
-   {
-      throw new IoError( ErrorParam( e_io_error, __LINE__ )
-                        .extra("MapViewOfFile" )
-                        .sysError( GetLastError() ) );
-   }
-
-   if( bd->version == 0 )
-   {
-      bd->size = 0;
-   }
-   UnmapViewOfFile( bd );
-}
-
-
-void SharedMem::close()
-{
-   if ( d->bd != NULL )
-   {
-      UnmapViewOfFile( d->bd );
-      d->bd = NULL;
-   }
-
-   if( d->hMemory != INVALID_HANDLE_VALUE )
-   {
-      CloseHandle( d->hMemory );
-      d->hMemory = INVALID_HANDLE_VALUE;
-   }
-
-   if( d->hFile != INVALID_HANDLE_VALUE )
-   {
-      CloseHandle( d->hFile );
       d->hFile = INVALID_HANDLE_VALUE;
    }
 
-   if( d->mtx != INVALID_HANDLE_VALUE )
+   // create the file mapping.
+   d->sMemName = name;
+   AutoWString wMemName( d->sMemName );
+   AutoWString wMtxMemName( "MTX_" + d->sMemName );
+   d->hMtx = CreateMutexW( NULL, FALSE, wMtxMemName.w_str() );
+   
+   if( d->hMtx == NULL || d->hMtx == INVALID_HANDLE_VALUE )
    {
-      CloseHandle( d->mtx );
-      d->mtx = INVALID_HANDLE_VALUE;
-   }
-}
-
-
-bool SharedMem::read( Stream* target, bool bAlwaysRead )
-{
-   d->EnterSession();
-
-   // are we aligned?
-   if( m_version != d->bd->version && ! bAlwaysRead )
-   {
-      d->ExitSession();
-      return false;
-   }
-
-   // align
-   try
-   {
-      internal_read( target );
-      d->ExitSession();
-   }
-   catch( ... )
-   {
-      d->ExitSession();
-      throw;
-   }
-
-   return true;
-}
-
-
-bool SharedMem::commit( Stream* source, int32 size, bool bReread  )
-{
-   // acquire adequate memory mapping.
-   d->EnterSession();
+      DWORD le = GetLastError();
+      TRACE("SharedMem::init -- CreateMutexW failed because %d", le );
+      if( le == ERROR_ALREADY_EXISTS )
+      {
+         TRACE("SharedMem::init -- Trying to open", le );
+         d->hMtx = OpenMutexW( SYNCHRONIZE|MUTEX_MODIFY_STATE, FALSE, wMtxMemName.w_str() );
+      }
       
+      if( d->hMtx == NULL || d->hMtx == INVALID_HANDLE_VALUE )
+      {
+         TRACE("SharedMem::init -- definitive failure %d", le );
+         throw new IOError( ErrorParam( e_io_error, __LINE__ )
+                        .extra("CreateFileMapping "+ d->sMemName )
+                        .sysError( le ) );
+      }
+   }
+   
+   // try to open the mapping
+   // with create semantic, we must rewrite the header, if present.
+   d->hMemory = CreateFileMappingW(
+         d->hFile,
+         0,
+         PAGE_READWRITE,
+         0,
+         sizeof( BufferData ),
+         wMemName.w_str() );
+      
+   if( d->hMemory == NULL || d->hMemory == INVALID_HANDLE_VALUE )
+   {
+      DWORD le = GetLastError();
+      TRACE("SharedMem::init -- CreateFileMappingW failed because %d", le );
+      throw new IOError( ErrorParam( e_io_error, __LINE__ )
+                        .extra("CreateFileMapping "+ d->sMemName )
+                        .sysError( le ) );
+   }
+    
+   DWORD alreadyCreated = GetLastError();
+
+   // correctly opened -- or created. Let's map it.
+   d->bd = (BufferData*) MapViewOfFile(
+      d->hMemory,
+      FILE_MAP_WRITE,
+      0,
+      0,
+      sizeof( BufferData ) );
+   
    if( d->bd == NULL )
    {
-      throw new IoError( ErrorParam( e_io_error, __LINE__ )
-                        .extra("MapViewOfFile" )
-                        .sysError( GetLastError() ) );
+      DWORD le = GetLastError();
+      TRACE("SharedMem::init -- MapViewOfFile failed because %d", le );
+      throw new IOError( ErrorParam( e_io_error, __LINE__ )
+                           .extra("MapViewOfFile "+ d->sMemName )
+                           .sysError( le ) );
    }
 
-   // are we aligned?
-   if( m_version != d->bd->version )
-   {
-      // ops, we have a problem.
-      if( bReread )
-      {
-         // ok, time to update the data.
-         try
-         {
-            internal_read( source );
-         }
-         catch( ... )
-         {
-            d->ExitSession();
-            throw;
-         }
-      }
+   // We don't need to update the size; the first I/O will do.
+}
 
-      d->ExitSession();
-      return false;
+
+void SharedMem::close( bool bRemove )
+{
+   bool rem = bRemove && d->hFile != INVALID_HANDLE_VALUE;
+
+   d->close();
+   if( bRemove )
+   {
+      // ignore result
+      AutoWString wname(d->sMemName);
+      DeleteFileW( wname.w_str() );
+   }
+}
+
+
+int64 SharedMem::localSize() const
+{
+   return d->currentSize;
+}
+
+
+int64 SharedMem::lockAndAlign()
+{
+   return d->lockAndAlign();
+}
+
+
+void SharedMem::unlock()
+{
+   d->s_unlockf();
+}
+
+bool SharedMem::internal_write( const void* data, int64 size, int64 offset, bool bSync, bool bTrunc )
+{
+   if( size == 0 )
+   {
+      return true;
    }
 
-   if( d->hFile != INVALID_HANDLE_VALUE )
+   if( bTrunc )
    {
-      // try to resize the file
-      SetFilePointer( d->hFile, size + sizeof(BufferData), 0, FILE_BEGIN );
-      SetEndOfFile( d->hFile );
+      d->lockAndResize( offset+size );
    }
-
-   // write the new data -- changing the file view
-   AutoWString wMemName( d->sMemName );
-   HANDLE hView = CreateFileMappingW(
-            d->hFile,
-            0,
-            PAGE_READWRITE,
-            0,
-            size + sizeof(BufferData),
-            wMemName.w_str() );
-
-   if ( hView == INVALID_HANDLE_VALUE )
-   {
-      d->ExitSession();
-      throw new IoError( ErrorParam( e_io_error, __LINE__ )
-                                .extra( String("CreateFileMappingW to ").N(size).A( " bytes" ) )
-                                .sysError( GetLastError() ) );
-   }
-
-
-   UnmapViewOfFile( d->bd );
-   d->bd = 0;
-
-   void* data = MapViewOfFile( d->hMemory, FILE_MAP_WRITE, 0, 0, 0 );
-   if( data == NULL )
-   {
-      CloseHandle( hView );
-      ReleaseMutex( d->mtx );
-      throw new IoError( ErrorParam( e_io_error, __LINE__ )
-                              .extra( String("MapViewOfFile ").N( (int32) size).A(" bytes") )
-                              .sysError( GetLastError() ) );
-   }
-
-   try
-   {
-      // ok, read the data from our stream (in the final buffer).
-      byte* bdata = ((byte*) data) + sizeof(BufferData);
-      int32 written = 0;
-      while( written < size )
-      {
-         int32 rin = source->read( bdata + written, size - written );
-         if( rin > 0 )
-         {
-            written += rin;
-         }
-         else
-         {
-            // end of stream?
-            if ( rin == 0 )
-            {
-               size = written;
-               break;
-            }
-
-            throw new IoError( ErrorParam( e_io_error, __LINE__ )
-                           .extra( String("reading from stream") )
-                           .sysError( (int32) source->lastError() ) );
-         }
-      }
-
-      // update the version
-      m_version++;
-      if( m_version == 0 )
-         m_version = 1;
+   else {
+      int64 curSize = d->lockAndAlign();
       
-      BufferData* bd = (BufferData*) data;
-      bd->version = m_version;
-      bd->size = size;
-
-      // sync all the buffers, infos and data
-      UnmapViewOfFile( data );
-
-      // change the old view with the new one
-      CloseHandle( d->hMemory );
-      d->hMemory = hView;
-      ReleaseMutex( d->mtx );
+      if( offset + size > curSize )
+      {
+         d->enlarge( offset + size );
+      }
    }
-   catch( ... )
+   
+   memcpy( static_cast<char*>(d->bd->data) + offset, data, (size_t) size );
+   if( bSync && d->hFile != INVALID_HANDLE_VALUE )
    {
-      UnmapViewOfFile( data );
-      CloseHandle( hView );
-      ReleaseMutex( d->mtx );
-      throw;
+      FlushViewOfFile( d->bd, (SIZE_T) (offset + size +sizeof(d->bd)) );
    }
 
+   d->s_unlockf();
+   
    return true;
-}
-
-
-
-void SharedMem::internal_read( Stream* target )
-{
-   m_version = d->bd->version;
-   int32 size = d->bd->size;
-
-   // map the rest of the file
-   byte* bdata = (byte*) (d->bd + 1);
-   int32 written = 0;
-   while( written < size )
-   {
-      int32 rin = target->write( bdata + written, size - written );
-      if( rin > 0 )
-      {
-         written += rin;
-      }
-      else
-      {
-         throw new IoError( ErrorParam( e_io_error, __LINE__ )
-                        .extra( String("writing to stream") )
-                        .sysError( (int32) target->lastError() ) );
-      }
-   }
-}
-
-
-uint32 SharedMem::currentVersion() const
-{
-   d->EnterSession();
-   uint32 version = d->bd->version;
-   d->ExitSession();
-
-   return version;
 }
 
 }

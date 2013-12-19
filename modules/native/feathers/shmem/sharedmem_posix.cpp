@@ -4,9 +4,7 @@
 
    Shared memory mapped object.
 
-   TODO: Move this file in the main engine in the next version.
-
-   Interprocess shared-memory object.
+   Interprocess shared-memory object -- posix part.
    -------------------------------------------------------------------
    Author: Giancarlo Niccolai
    Begin: Sat, 24 Apr 2010 12:12:10 +0200
@@ -38,42 +36,22 @@
 #include "sharedmem.h"
 #include "errors.h"
 
-
 #define APP_PREFIX "/WPM_"
 
+#include "sharedmem_private_posix.h"
 
 namespace Falcon {
 
-// data in the initial part of the buffer
-typedef struct tag_BufferData
+int64 SharedMem::lockAndAlign()
 {
-   uint32 version;
-   size_t size;
-   char data[0];
-} BufferData;
+   return d->lockAndAlign();
+}
 
-class SharedMem::Private
+
+void SharedMem::unlock()
 {
-public:
-   Private():
-      hasBeenInit(0),
-      shmfd(0),
-      filefd(0),
-      version(0),
-      mapsize(0),
-      bd(static_cast<BufferData*>(MAP_FAILED))
-      {}
-
-   String name;
-   atomic_int hasBeenInit;
-   int shmfd;
-   int filefd;
-   uint32 version;
-   int64 mapsize;
-
-   // Memory mapped data
-   BufferData* bd;
-};
+   d->s_unlockf( FALCON_ERROR_SHMEM_IO_READ );
+}
 
 
 SharedMem::SharedMem():
@@ -84,35 +62,9 @@ SharedMem::SharedMem():
 SharedMem::SharedMem( const String &name, bool bFileBackup ):
       d(new Private)
 {
-   init( name, bFileBackup );
+   init( name, true, bFileBackup );
 }
 
-
-bool SharedMem::s_lockf( int etype )
-{
-   if( mlock(d->bd, d->mapsize + sizeof(BufferData)) != 0 )
-   {
-      throw FALCON_SIGN_XERROR(ShmemError, etype,
-                  .extra("mlock" )
-                  .sysError( (int32) errno )
-                  );
-
-   }
-
-   return true;
-}
-
-void SharedMem::s_unlockf( int etype )
-{
-   if( munlock(d->bd, d->mapsize + sizeof(BufferData)) != 0 )
-   {
-      throw FALCON_SIGN_XERROR(ShmemError, etype,
-                  .extra("munlock" )
-                  .sysError( (int32) errno )
-                  );
-
-   }
-}
 
 void SharedMem::init( const String &name, bool bOpen, bool bFileBackup )
 {
@@ -211,21 +163,6 @@ void SharedMem::init( const String &name, bool bOpen, bool bFileBackup )
 }
 
 
-SharedMem::~SharedMem()
-{
-   try {
-      this->close();
-   }
-   catch(Error* err )
-   {
-      err->decref();
-   }
-   catch( ... )
-   {}
-
-   delete d;
-}
-
 
 void SharedMem::close( bool bRemove )
 {
@@ -267,125 +204,10 @@ void SharedMem::close( bool bRemove )
 }
 
 
-int64 SharedMem::lockAndAlign()
-{
-   // acquire adequate memory mapping. This should work inter-thread as well.
-   s_lockf(FALCON_ERROR_SHMEM_IO_READ);
-
-   // d->bd is mem-mapped; any change is shared.
-   int64 rdSize = d->bd->size;
-
-   if( d->mapsize != rdSize  )
-   {
-      // -- no? -- realign
-      if(munmap( d->bd, d->mapsize + sizeof(BufferData) ) != 0)
-      {
-         s_unlockf(FALCON_ERROR_SHMEM_IO_READ );
-         throw FALCON_SIGN_XERROR(ShmemError, FALCON_ERROR_SHMEM_IO_READ,
-                       .extra("munmap" )
-                       .sysError( (int32) errno )
-                       );
-      }
-
-      // map the rest of the file -- possibly change the cache.
-      d->bd = (BufferData*) mmap( 0, rdSize+sizeof(BufferData), PROT_READ | PROT_WRITE, MAP_SHARED, d->filefd, 0 );
-
-      if( d->bd == MAP_FAILED )
-      {
-         s_unlockf(FALCON_ERROR_SHMEM_IO_READ );
-         throw FALCON_SIGN_XERROR(ShmemError, FALCON_ERROR_SHMEM_IO_READ,
-                        .extra("mmap" )
-                        .sysError( (int32) errno )
-                        );
-      }
-      rdSize = d->mapsize = d->bd->size;
-   }
-
-   d->version = d->bd->version;
-
-   return rdSize;
-}
-
-int64 SharedMem::read( void* data, int64 size, int64 offset )
-{
-   // are we aligned?
-   int64 rdSize = lockAndAlign();
-
-   if ( offset >= rdSize )
-   {
-      size = 0;
-   }
-   else
-   {
-      // according to POSIX, d->bd is directly visible in all the processes.
-      if( offset + size > rdSize )
-      {
-         size = rdSize - offset;
-      }
-
-      memcpy( data, reinterpret_cast<char*>(d->bd) + offset + sizeof(BufferData), size );
-   }
-
-   // release the file lock
-   s_unlockf( FALCON_ERROR_SHMEM_IO_READ );
-
-   return size;
-}
-
-
-
-bool SharedMem::grab( void* data, int64& size, int64 offset )
-{
-   // acquire adequate memory mapping. This should work inter-thread as well.
-   int64 rdSize = lockAndAlign();
-
-   if( rdSize <= offset )
-   {
-      size = 0;
-      return false;
-   }
-
-   if( size == 0 || rdSize < size+offset )
-   {
-      // we know rdSize is > offset because of the first check.
-      size = rdSize - offset;
-      return false;
-   }
-
-   memcpy( data, reinterpret_cast<char*>(d->bd) + sizeof(BufferData) + offset, size );
-
-   // release the file lock
-   s_unlockf(FALCON_ERROR_SHMEM_IO_READ );
-
-   return true;
-}
-
-
-void* SharedMem::grabAll( int64& size )
-{
-   // acquire adequate memory mapping. This should work inter-thread as well.
-   int64 rdSize = lockAndAlign();
-
-   void* data = malloc( rdSize );
-   if( data == 0 )
-   {
-      s_unlockf(FALCON_ERROR_SHMEM_IO_READ );
-      throw FALCON_SIGN_XERROR(CodeError, e_membuf_def, .extra(String("malloc(").N(rdSize).A(")") ));
-   }
-
-   size = rdSize;
-   memcpy( data, reinterpret_cast<char*>(d->bd) + sizeof(BufferData), size );
-
-   // release the file lock
-   s_unlockf(FALCON_ERROR_SHMEM_IO_READ );
-   return data;
-}
-
-
 bool SharedMem::internal_write( const void* data, int64 size, int64 offset, bool bSync, bool bTrunc )
 {
    // acquire adequate memory mapping. This should work inter-thread as well.
-   s_lockf( FALCON_ERROR_SHMEM_IO_WRITE );
+   d->s_lockf( FALCON_ERROR_SHMEM_IO_WRITE );
 
    // synchronize the version
 
@@ -396,7 +218,7 @@ bool SharedMem::internal_write( const void* data, int64 size, int64 offset, bool
       // actually resize the underlying file
       if ( ftruncate( d->filefd, offset + size + sizeof(BufferData) ) != 0 )
       {
-         s_unlockf( FALCON_ERROR_SHMEM_IO_WRITE );
+         d->s_unlockf( FALCON_ERROR_SHMEM_IO_WRITE );
          throw FALCON_SIGN_XERROR(ShmemError, FALCON_ERROR_SHMEM_IO_WRITE,
                                    .extra( String("ftruncate to ").N(size).A( " bytes" ) )
                                    .sysError( (int32) errno ) );
@@ -409,7 +231,7 @@ bool SharedMem::internal_write( const void* data, int64 size, int64 offset, bool
       // unmap, we need to remap the file.
       if( munmap( d->bd, d->mapsize + sizeof(BufferData) ) != 0 )
       {
-         s_unlockf( FALCON_ERROR_SHMEM_IO_WRITE );
+         d->s_unlockf( FALCON_ERROR_SHMEM_IO_WRITE );
          throw FALCON_SIGN_XERROR(ShmemError, FALCON_ERROR_SHMEM_IO_WRITE,
                                 .extra("munmap" )
                                 .sysError( (int32) errno )
@@ -419,7 +241,7 @@ bool SharedMem::internal_write( const void* data, int64 size, int64 offset, bool
       d->bd = (BufferData*) mmap( 0,  offset + size + sizeof(BufferData), PROT_READ | PROT_WRITE, MAP_SHARED, d->filefd, 0 );
       if( d->bd == MAP_FAILED )
       {
-         s_unlockf( FALCON_ERROR_SHMEM_IO_WRITE );
+         d->s_unlockf( FALCON_ERROR_SHMEM_IO_WRITE );
          throw FALCON_SIGN_XERROR(ShmemError, FALCON_ERROR_SHMEM_IO_WRITE,
                                           .extra("mmap" )
                                           .sysError( (int32) errno )
@@ -435,27 +257,15 @@ bool SharedMem::internal_write( const void* data, int64 size, int64 offset, bool
 
    if( msync( d->bd, sizeof(BufferData)+ offset + size, bSync ? MS_SYNC : MS_ASYNC ) != 0 )
    {
-      s_unlockf( FALCON_ERROR_SHMEM_IO_WRITE );
+      d->s_unlockf( FALCON_ERROR_SHMEM_IO_WRITE );
       throw FALCON_SIGN_XERROR(ShmemError, FALCON_ERROR_SHMEM_IO_WRITE,
                            .extra("msync" )
                            .sysError( (int32) errno )
                            );
    }
 
-   s_unlockf( FALCON_ERROR_SHMEM_IO_WRITE );
+   d->s_unlockf( FALCON_ERROR_SHMEM_IO_WRITE );
    return true;
-}
-
-bool SharedMem::write( const void* data, int64 size, int64 offset, bool bSync, bool bTrunc )
-{
-   return internal_write(data, size, offset, bSync, bTrunc );
-}
-
-int64 SharedMem::size()
-{
-   int64 s = lockAndAlign();
-   s_unlockf( FALCON_ERROR_SHMEM_IO_WRITE );
-   return s;
 }
 
 
@@ -463,6 +273,7 @@ int64 SharedMem::localSize() const
 {
    return d->mapsize;
 }
+
 
 
 }

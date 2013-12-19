@@ -257,7 +257,7 @@ static void internal_create( VMContext* ctx, Function* func, int mode )
  Invoking the constructor is equivalent to invoke the
  @a IPSem.open static method.
  */
-FALCON_DECLARE_FUNCTION(init, "name:S, exist:[B]")
+FALCON_DECLARE_FUNCTION(init, "name:S, public:[B]")
 FALCON_DEFINE_FUNCTION_P1(init)
 {
    internal_create( ctx, this, 0 );
@@ -273,9 +273,14 @@ FALCON_DEFINE_FUNCTION_P1(init)
   This method opens an interprocess semaphore with the given name,
   eventually creating if it doesn't exists.
 
-  If the @b exist parameter is given and true, the method will
-  throw if the semaphore wasn't already existing (e.g. because
-  created by another process).
+  If the @b public parameter is true, the semaphore will be publicly
+  visible in a global namespace. On some system, this might require
+  administrative privileges.
+
+  @note On MS-Windows, the name of the semaphore may contain a '\\'
+  backslash character that will be interpreted as a namespace where
+  the semaphore is to be allocated. In this case, the @b public parameter
+  will be ignored.
  */
 FALCON_DECLARE_FUNCTION(open, "name:S, public:[B]")
 FALCON_DEFINE_FUNCTION_P1(open)
@@ -289,8 +294,11 @@ FALCON_DEFINE_FUNCTION_P1(open)
  @param name The name of the semaphore to be opened.
  @throw ShmemError on system error or if the doesn't exist.
 
-  This method opens an interprocess semaphore with the given name,
-  eventually creating if it doesn't exists.
+  This method opens an interprocess semaphore with the given name.
+
+  This method differs from @b IPSem.open in the fact that this method will
+  raise a ShmemError if the semaphore wasn't already existing (e.g. because
+  created by another process).
  */
 FALCON_DECLARE_FUNCTION(openExisting, "name:S")
 FALCON_DEFINE_FUNCTION_P1(openExisting)

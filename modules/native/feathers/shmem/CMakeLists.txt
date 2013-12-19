@@ -20,11 +20,14 @@ include_directories(
 if(WIN32)
    set( _files_sys 
         sharedmem_win.cpp
+        ipsem_win.cpp
+        sharedmem_private_win.h
    )
 else()
    set( _files_sys 
         sharedmem_posix.cpp
         ipsem_posix.cpp
+        sharedmem_private_posix.h
    )
 endif()
 
@@ -37,6 +40,7 @@ include_directories(
 # Sources files the module is built from.
 set(SRC_FILES 
   ${_files_sys}
+  sharedmem.cpp
   shmem_ext.cpp
   ipsem_ext.cpp
   shared_ipsem.cpp

@@ -40,14 +40,14 @@ public:
 
    typedef enum {
       e_om_open,
-      e_om_openex,
+      e_om_open_existing,
       e_om_create
    }
    t_open_mode;
 
    void init( const String& name, t_open_mode mode, bool bPublic = false );
    void open(const String& name, bool bPublic = false) { init(name, e_om_open, bPublic ); }
-   void openExisting(const String& name, bool bPublic = false) { init(name, e_om_openex, bPublic ); }
+   void openExisting(const String& name, bool bPublic = false) { init(name, e_om_open_existing, bPublic ); }
    void create(const String& name, bool bPublic = false) { init(name, e_om_create, bPublic ); }
 
    void close( bool bDelete = false );
