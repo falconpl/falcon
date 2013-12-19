@@ -99,28 +99,28 @@ bool TextWriter::write( const String& str, length_t start, length_t count )
          // we're done -- no more \n (so we can't flush).
          return rawWrite( str, pos1, end - pos1 );
       }
-      
-      if( m_bCRLF && (posNext == 0 || str.getCharAt(posNext-1) != '\r') )
-      {
-         // write separately the \r\n sequence
-         if( posNext > 0 && ! rawWrite( str, pos1, posNext-pos1 ) )
-         {
-            return false;
-         }
 
-         m_mtx.lock();
-         ensure(m_encoder->encodingSize(2));
-         m_bufPos += m_encoder->encode("\r\n", currentBuffer(), m_bufSize - m_bufPos );
-         m_mtx.unlock();
+      // write what's before.
+      if( ! rawWrite( str, pos1, posNext - pos1 ) ) return false;
+      
+      String toWrite;
+      if( str.getCharAt(posNext) == '\r' )
+      {
+         toWrite = "\r";
+      }
+      else if( m_bCRLF && (posNext == 0 || str.getCharAt(posNext-1) != '\r' ) )
+      {
+         toWrite = "\r\n";
       }
       else
       {
-         // just write everything, \n included.
-         if( ! rawWrite( str, pos1, posNext-pos1 +1 ) )
-         {
-            return false;
-         }
+         toWrite = "\n";
       }
+
+      m_mtx.lock();
+      ensure(m_encoder->encodingSize(toWrite.size()));
+      m_bufPos += m_encoder->encode(toWrite, currentBuffer(), m_bufSize - m_bufPos );
+      m_mtx.unlock();
 
       if ( m_bLineFlush )
       {
