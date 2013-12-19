@@ -33,6 +33,8 @@
 #define FALCON_SHUT_WR SHUT_WR
 #define FALCON_SHUT_RD SHUT_RD
 #define FALCON_SHUT_RDWR SHUT_RDWR
+#define FALCON_EINPROGRESS EINPROGRESS
+#define FALCON_EAGAIN EAGAIN
 #define FALCON_ERRNO errno
 
 
@@ -42,8 +44,8 @@
 #define FALCON_SHUT_RD SD_SEND
 #define FALCON_SHUT_RDWR SD_BOTH
 #define FALCON_CLOSE_SOCKET closesocket
-#define EINPROGRESS WSAEINPROGRESS
-#define EAGAIN WSAEWOULDBLOCK
+#define FALCON_EINPROGRESS WSAEINPROGRESS
+#define FALCON_EAGAIN WSAEWOULDBLOCK
 #define FALCON_ERRNO (WSAGetLastError())
 
 
@@ -825,7 +827,7 @@ void Socket::connect( Address* where, bool async )
    if ( res < 0 )
    {
       int error = FALCON_ERRNO;
-      if( error != EINPROGRESS )
+      if( error != FALCON_EINPROGRESS )
       {
          ::FALCON_CLOSE_SOCKET( m_skt );
          m_skt = 0;
@@ -854,7 +856,7 @@ bool Socket::isConnected() const
    }
    else
    {
-      if( ::connect(m_skt, 0, 0) == EAGAIN )
+      if( ::connect(m_skt, 0, 0) == FALCON_EAGAIN )
       {
          return false;
       }
@@ -1025,7 +1027,7 @@ Socket *Socket::accept()
    if( skt < 0 )
    {
       // account for spurious wakeups
-      if( FALCON_ERRNO == EAGAIN || FALCON_ERRNO == EINPROGRESS )
+      if( FALCON_ERRNO == FALCON_EAGAIN || FALCON_ERRNO == FALCON_EINPROGRESS )
       {
          return 0;
       }
@@ -1093,7 +1095,7 @@ int32 Socket::recv( byte *buffer, int32 size, Address *data )
    if( retsize < 0 )
    {
       // account for spurious wake ups in multiplexers
-      if( FALCON_ERRNO == FALCON_EWOULDBLOCK || FALCON_ERRNO == EAGAIN )
+      if( FALCON_ERRNO == FALCON_EWOULDBLOCK || FALCON_ERRNO == FALCON_EAGAIN )
       {
          return 0;
       }
@@ -1143,7 +1145,7 @@ int32 Socket::send( const byte *buffer, int32 size, Address *where )
    if( retsize < 0 )
    {
       // account for spurious wakeups
-      if( FALCON_ERRNO == EAGAIN || FALCON_ERRNO == EINPROGRESS )
+      if( FALCON_ERRNO == FALCON_EAGAIN || FALCON_ERRNO == FALCON_EINPROGRESS )
       {
          return 0;
       }

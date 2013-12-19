@@ -202,7 +202,7 @@ void ProcessEnum::close()
       throw FALCON_SIGN_XERROR( ::Falcon::Ext::ProcessError,
                FALCON_PROCESS_ERROR_ERRLIST2,
                  .desc(FALCON_PROCESS_ERROR_ERRLIST2_MSG )
-                 .sysError( (uint32) GetLastError )
+                 .sysError( (uint32) GetLastError() )
                  );
    }
    delete ph;

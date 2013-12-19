@@ -103,7 +103,8 @@ void SysThread::attachToCurrent()
 extern "C" {
    static unsigned int __stdcall run_a_thread( void *data )
    {
-      return (unsigned int) SysThread::RunAThread( data );
+      SysThread::RunAThread( data );
+      return 0;
    }
 }
 
