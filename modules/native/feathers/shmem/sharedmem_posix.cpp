@@ -275,7 +275,6 @@ int64 SharedMem::localSize() const
 }
 
 
-
 }
 
 /* end of sharedmem_posix.cpp */

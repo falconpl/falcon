@@ -13,7 +13,11 @@
    See LICENSE file for licensing details.
 */
 
+#ifndef FALCON_FEATHERS_SHARED_POSIX_PRIVATE_H
+#define FALCON_FEATHERS_SHARED_POSIX_PRIVATE_H
+
 #include "sharedmem.h"
+#include <sys/mman.h>
 
 namespace Falcon {
 
@@ -87,7 +91,7 @@ public:
          // -- no? -- realign
          if(munmap( bd, mapsize + sizeof(BufferData) ) != 0)
          {
-            d->s_unlockf(FALCON_ERROR_SHMEM_IO_READ );
+            s_unlockf(FALCON_ERROR_SHMEM_IO_READ );
             throw FALCON_SIGN_XERROR(ShmemError, FALCON_ERROR_SHMEM_IO_READ,
                           .extra("munmap" )
                           .sysError( (int32) errno )
@@ -97,7 +101,7 @@ public:
          // map the rest of the file -- possibly change the cache.
          bd = (BufferData*) mmap( 0, rdSize+sizeof(BufferData), PROT_READ | PROT_WRITE, MAP_SHARED, filefd, 0 );
 
-         if( d->bd == MAP_FAILED )
+         if( bd == MAP_FAILED )
          {
             s_unlockf(FALCON_ERROR_SHMEM_IO_READ );
             throw FALCON_SIGN_XERROR(ShmemError, FALCON_ERROR_SHMEM_IO_READ,

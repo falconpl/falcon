@@ -22,6 +22,8 @@
 #include <falcon/stream.h>
 #include <falcon/atomic.h>
 
+#include <string.h>
+
 #include "sharedmem.h"
 #include "errors.h"
 
