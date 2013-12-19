@@ -16,7 +16,7 @@ sel.addRead( VMProcess.current().stdIn() )
 count = 1
 
 while not sel.wait(500)
-   >> @"$({mem.size}:r4): ",data, "< \r"   
+   >> @"$({mem.size}:r4): >",data, "< \r"   
    mem.read(data)
    data[id] = "A"/count
    if ++count == 26

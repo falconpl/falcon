@@ -246,6 +246,8 @@ public:
       {
          bd->size = newSize;
       }
+
+      currentSize = bd->size;
    }
 
 
