@@ -386,9 +386,11 @@ void Function_seek::invoke( ::Falcon::VMContext* ctx, ::Falcon::int32 )
    }
    
    Stream* sc = static_cast<Stream*>(ctx->self().asInst());
+   Stream::e_whence wh = i_whence == 0 ? Stream::ew_begin : (Stream::e_whence) i_whence->forceInteger();
    
-   ctx->returnFrame( sc->seek( i_loc->forceInteger(),
-         (Stream::e_whence) i_whence->forceInteger() ) );
+   int64 loc = i_loc->forceInteger();
+   int64 pos = sc->seek( loc, wh);
+   ctx->returnFrame( Item().setInteger(pos) );
 }
 
 

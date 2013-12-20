@@ -1,9 +1,22 @@
+/***********************************************
+ Test for session objects
+ 
+ This test creates a session containing a counter and
+ a timestamp variable.
+ 
+ After the first time, the session is read and the variables
+ are updated.
+ 
+ The test is baked on a file called "test_session"
+ because not all O/S have persistent shared memory.
+ ***********************************************/
+
 load shmem
 load timestamp
 
 control = nil
 
-x = Session("test3", Session.OM_SHMEM_BU)
+x = Session("test_session", Session.OM_SHMEM_BU)
 
 try
    x.start(&control, &var0, &start, &lastAccess)

@@ -99,11 +99,11 @@ void IPSem::init( const String& name, IPSem::t_open_mode mode, bool pMode )
    switch( mode )
    {
    case e_om_create: 
-      _p->semaphore = CreateSemaphoreW( NULL, 1, 10000, cname.w_str() );
+      _p->semaphore = CreateSemaphoreW( NULL, 0, 10000, cname.w_str() );
       break;
 
    case e_om_open:
-      _p->semaphore = CreateSemaphoreW( NULL, 1, 10000, cname.w_str() );
+      _p->semaphore = CreateSemaphoreW( NULL, 0, 10000, cname.w_str() );
       if( _p->semaphore == INVALID_HANDLE_VALUE && GetLastError() == ERROR_ALREADY_EXISTS )
       {
          _p->semaphore = OpenSemaphoreW( SYNCHRONIZE | SEMAPHORE_MODIFY_STATE, FALSE, cname.w_str() );

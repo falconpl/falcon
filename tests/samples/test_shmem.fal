@@ -1,5 +1,19 @@
-load shmem
+/***********************************************
+ Test for shared memory objects
+ 
+ This test open a shared memory object called "test".
+ Each client participating will increase a letter
+ A-Z each half second; the first client will rotate
+ the first letter, the second client the second letter
+ and so on.
+ 
+ If a client receives anyting on the command line,
+ it will destroy the session memory object and
+ start all over again (so, the "master" client should
+ have a parameter on the command line).
+***********************************************/
 
+load shmem
 
 mem = args.len == 0 ? SharedMem("test") : SharedMem.create("test")
 data = mem.grab()

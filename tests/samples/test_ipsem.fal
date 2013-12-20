@@ -1,0 +1,78 @@
+/***********************************************
+ Test for interprocess semaphore.
+ 
+ This test open two semaphore called "tstwr"
+ and "tstrd", and a shared memory object
+ called "tstex".
+ 
+ The test having a command line parameter is the
+ master. It will input a string that will be
+ then written on the shared memory object. When
+ the consumer has read it, a new string will
+ be input.
+***********************************************/
+
+load shmem
+
+> "Interprocess semaphore test"
+
+mem = SharedMem("tstex")
+ipwr = IPSem("tstwr")
+iprd = IPSem("tstrd")
+
+if args.len
+	master()
+else
+	client()
+end
+
+> "Done"
+
+function master()
+	> "This will be the master"
+	> "Input an empty string to terminate"
+	
+	while true
+		>> "Enter a text: "	
+		text = input()			
+		
+		ss = StringStream()
+		ds = Storer()
+		ds.store( text )
+		ds.commit(ss)
+		result = ss.closeToString()
+		mem.write( result )
+		ipwr.post()
+		
+		if text.len == 0
+			return
+		end
+		
+		> "Data sent; waiting for reader to read the data..."
+		iprd.wait()		
+	end
+end
+
+function client()
+	> "This will be the client"
+	
+	while true
+		> "Waiting for the master to produce a text..."	
+		ipwr.wait()
+		
+		data = mem.grab()
+		ss = StringStream()
+		ss.write(data)
+		ss.seek(0)
+		dr = Restorer()
+		dr.restore(ss)
+		text = dr.next()
+		if text.len == 0
+			> "Server quit."
+			return
+		end
+		
+		> "Read: ", text
+		iprd.post()
+	end
+end
