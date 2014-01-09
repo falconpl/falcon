@@ -29,6 +29,45 @@
 
 namespace Falcon {
 
+class PStepAssignAllValues: public PStep
+{
+public:
+   PStepAssignAllValues( ExprUnpack* es ): ps(es) { apply = apply_;}
+   virtual ~PStepAssignAllValues() {}
+   virtual void describeTo( String& target ) const { target = "PStepAssignAllValues"; }
+
+   static void apply_( const PStep* ps, VMContext* ctx )
+   {
+      TRACE3( "Apply PStepAssignAllValues: %p (%s)", ps, ps->describe().c_ize() );
+      CodeFrame& cf = ctx->currentCode();
+      const PStepAssignAllValues* self = static_cast<const PStepAssignAllValues*>(ps);
+
+      // remove previously pushed data.
+      ctx->popData();
+      while( cf.m_seqId > 0 )
+      {
+         // we start from 1...
+         register int pos = cf.m_seqId-1;
+         TreeStep* expr = self->ps->_p->m_exprs[pos];
+
+         fassert( expr->lvalueStep() != 0 );
+         cf.m_seqId = pos;
+
+         if( ctx->stepInYield( expr->lvalueStep(), cf ) )
+         {
+            return;
+         }
+         ctx->popData();
+      }
+
+      // do not push a result -- the result is the expander left in the stack.
+      ctx->popCode();
+      // leave the expander in the stack.
+   }
+
+private:
+   ExprUnpack* ps;
+};
 
 
 //=========================================================
@@ -41,6 +80,7 @@ ExprUnpack::ExprUnpack( Expression* op1, int line, int chr ):
    FALCON_DECLARE_SYN_CLASS( expr_unpack )
    apply = apply_;
    m_trait = Expression::e_trait_composite;
+   m_stepAssignAllValues = new PStepAssignAllValues( this );
 }
 
 ExprUnpack::ExprUnpack( int line, int chr ):
@@ -182,6 +222,7 @@ void ExprUnpack::apply_( const PStep* ps, VMContext* ctx )
                   .chr(self->m_expander->chr())
                   .extra("Not an array") );
    }
+
    ItemArray& array = *(ItemArray*) expander.asInst();
 
    if( pcount != (int) array.length() )
@@ -193,26 +234,20 @@ void ExprUnpack::apply_( const PStep* ps, VMContext* ctx )
                   .extra("Different size") );
    }
 
-   while( cf.m_seqId <= pcount )
+   // do not remove the expander -- it's our result.
+
+   // push all the value to be saved in the expanded expressions
+   for( int i = 0; i < pcount; i++ )
    {
-      // we start from 1...
-      register int pos = cf.m_seqId-1;
-      TreeStep* expr = self->_p->m_exprs[pos];
-      ctx->pushData( array[pos] );
-      fassert( expr->lvalueStep() != 0 );
-      cf.m_seqId++;
-
-      if( ctx->stepInYield( expr->lvalueStep(), cf ) )
-      {
-         return;
-      }
+      ctx->pushData(array[i]);
    }
-
-   if( pcount > 1) ctx->popData(pcount-1);
-   ctx->topData().setNil();
+   // we also push an extra item that will be removed at first step.
+   ctx->pushData(Item());
 
    ctx->popCode();
-   // leave the expander in the stack.
+   ctx->pushCode( self->m_stepAssignAllValues );
+   ctx->currentCode().m_seqId = pcount;
+   self->m_stepAssignAllValues->apply( self->m_stepAssignAllValues, ctx );
 }
 
 }

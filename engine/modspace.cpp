@@ -408,8 +408,8 @@ void ModSpace::PStepSaveDynMantra::apply_( const PStep* self, VMContext* ctx )
    TRACE( "ModSpace::PStepSaveDynMantra::apply_ - search \"%s\" in %s -- depth %d",
             className.c_ize(), clsContainer == 0 ? "<nothing>" : clsContainer->uri().c_ize(), (int) ctx->dataSize() );
 
-   // remove the module
-   ctx->popData();
+   // remove the module and the class name
+   ctx->popData(2);
 
    // still no luck?
    if( clsContainer == 0 )
@@ -966,13 +966,9 @@ void ModSpace::retreiveDynamicModule(
       loading = m_loader->loadFile( ctx, moduleUri, ModLoader::e_mt_none, true );
       if( ! loading )
       {
-         loading = m_loader->loadName( ctx, moduleName, ModLoader::e_mt_none );
-
-         if( ! loading )
-         {
-            // push an empty entry and let the caller to handle the situation.
-            ctx->pushData(Item());
-         }
+         ctx->popData();
+         m_loader->loadName( ctx, moduleName, ModLoader::e_mt_none );
+         // in case of failure, a Item() is already pushed by loadName.
       }
    }
    else
@@ -1014,6 +1010,7 @@ void ModSpace::findDynamicMantra(
    }
 
    // push the mantra resolver step.
+   ctx->pushData( FALCON_GC_HANDLE(new String(className) ) );
    ctx->pushCode( m_stepSaveDynMantra );
 
    // and then start resolving the module

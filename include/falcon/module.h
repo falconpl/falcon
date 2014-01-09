@@ -30,6 +30,7 @@
 #include <falcon/globalsmap.h>
 #include <falcon/attribute.h>
 #include <falcon/atomic.h>
+#include <falcon/service.h>
 
 #define DEFALUT_FALCON_MODULE_INIT falcon_module_init
 #define DEFALUT_FALCON_MODULE_INIT_NAME "falcon_module_init"
@@ -701,6 +702,33 @@ public:
     */
    void render( TextWriter* tw, int32 depth );
 
+   /** Returns an object natively exported in the module dynamic file.
+    * \param name The name of the data/object/function to be searched.
+    * \return a native data/object/function pointer or 0 if the object is not found --
+    *    or if the module is not native.
+    *
+    * The isNative() method might be used to know if the module has a
+    * native dynamic library backup or not.
+    */
+   void* getNativeEntity( const String& name ) const;
+
+   /** Creates a service with the given name.
+    *
+    * A service is dynamically linked library interface to
+    * a functionality offered by a module. It's meant to be implemented
+    * as a full virtual-pointer method vector class, so that it can
+    * be used by third party modules via the virtual methods through
+    * a DLL interface without any need for direct linkage.
+    *
+    * In other words, a user of a service should be just able to load
+    * the module and then use the header file of the service class to
+    * access its functions, without a C++/system linkage getting in the way.
+    *
+    * This methods is meant to be overloaded by modules to create an
+    * usable instance of a service, in case they want to publish it
+    * to third party users that don't want to use the Class interface.
+    */
+   virtual Service* createService( const String& name );
 
 protected:
    /** Invoked when refcount hits 0.
@@ -720,7 +748,7 @@ private:
    String m_uri;
    uint32 m_lastGCMark;
    bool m_bExportAll;
-   DynLibrary* m_unloader;
+   DynLibrary* m_dynlib;
    bool m_bMain;
       
    int m_anonMantras;
@@ -739,7 +767,7 @@ private:
    
    void name( const String& v ) { m_name = v; }
    void uri( const String& v ) { m_uri = v; }
-   void setDynUnloader( DynLibrary* ul ) { m_unloader = ul; }
+   void setDynUnloader( DynLibrary* ul ) { m_dynlib = ul; }
 };
 
 }

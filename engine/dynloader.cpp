@@ -59,13 +59,13 @@ void DynLibrary::open(const String& path)
 }
 
 
-void* DynLibrary::getDynSymbol( const char* symname ) const
+void* DynLibrary::getDynSymbol( const String& symname ) const
 {
    void* sym = getDynSymbol_nothrow( symname );
 
    if( sym == 0 )
    {
-      throw FALCON_SIGN_XERROR( AccessError, e_undef_sym, .extra(String(symname) + " in " + m_path).origin(ErrorParam::e_orig_loader) );
+      throw FALCON_SIGN_XERROR( AccessError, e_undef_sym, .extra(symname + " in " + m_path).origin(ErrorParam::e_orig_loader) );
    }
 
    return sym;

@@ -133,7 +133,7 @@ Error* Function::paramError(int line, const char* place, bool methodic ) const
    placeName.bufferize();
    return new ParamError(
            ErrorParam(e_inv_params, line == 0 ? m_sr.line(): line, placeName)
-           .extra( methodic ? methodicSignature() : m_signature) );
+           .extra( String("in ") + fullName() + " "+ (methodic ? methodicSignature() : m_signature)) );
    
 }
 

@@ -52,7 +52,7 @@ public:
     * \throw AccessError if the symbol is not found.
     * \return always a valid reference to dynamic code.
     */
-   void* getDynSymbol( const char* symname ) const;
+   void* getDynSymbol( const String& name ) const;
 
    /** Gets a dynamic symbol stored in the library (and doesn't throw on error).
     * \param symname Name of the symbol to be found.
@@ -61,7 +61,7 @@ public:
     * \note This is the system dependent part of getDynSymbol and goes in a
     * system-dependent source file.
     */
-   void* getDynSymbol_nothrow( const char* symname ) const;
+   void* getDynSymbol_nothrow( const String& name ) const;
 
 
    /** Closes the dynamic library.

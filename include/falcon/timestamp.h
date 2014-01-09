@@ -278,7 +278,7 @@ public:
     * add the milliseconds to that.
     */
    void add( int32 days, int32 hours=0, int32 mins=0, int32 secs=0, int32 msecs=0 );
-
+   void add( int64 msecs );
 
    int64 compare( const TimeStamp &ts ) const;
 

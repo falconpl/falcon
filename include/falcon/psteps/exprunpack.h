@@ -22,6 +22,8 @@
 
 namespace Falcon {
 
+class PStepAssignAllValues;
+
 /** Expression used to unpack a single value into multiple symbols. */
 class FALCON_DYN_CLASS ExprUnpack: public ExprVector
 {
@@ -51,7 +53,10 @@ protected:
    TreeStep* m_expander;
    
 private:
+   friend class PStepAssignAllValues;
+
    static void apply_( const PStep*, VMContext* ctx );
+   PStep* m_stepAssignAllValues;
 };
 
 }

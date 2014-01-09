@@ -85,7 +85,7 @@ Module::Module():
    m_name( "$noname" ),
    m_lastGCMark(0),
    m_bExportAll( false ),
-   m_unloader( 0 ),
+   m_dynlib( 0 ),
    m_bMain( false ),
    m_anonMantras(0),
    m_mainFunc(0),
@@ -103,7 +103,7 @@ Module::Module( const String& name, bool bNative ):
    m_name( name ),
    m_lastGCMark(0),
    m_bExportAll( false ),
-   m_unloader( 0 ),
+   m_dynlib( 0 ),
    m_bMain( false ),
    m_anonMantras(0),
    m_mainFunc(0),
@@ -122,7 +122,7 @@ Module::Module( const String& name, const String& uri, bool bNative ):
    m_uri(uri),
    m_lastGCMark(0),
    m_bExportAll( false ),
-   m_unloader( 0 ),
+   m_dynlib( 0 ),
    m_bMain( false ),
    m_anonMantras(0),
    m_mainFunc(0),
@@ -165,8 +165,8 @@ void Module::decref()
 {
    if( atomicDec(m_refcount) == 0 )
    {
-      DynLibrary* unl = m_unloader;
-      m_unloader = 0;
+      DynLibrary* unl = m_dynlib;
+      m_dynlib = 0;
       delete this;
 
       if( unl != 0 ) {
@@ -1025,6 +1025,23 @@ uint32 Module::countIStrings() const
    return _p->m_istrings.size();
 }
 
+
+void* Module::getNativeEntity( const String& name ) const
+{
+   if( m_dynlib )
+   {
+      void* data = m_dynlib->getDynSymbol_nothrow(name);
+      return data;
+   }
+
+   return 0;
+}
+
+
+Service* Module::createService( const String& )
+{
+   return 0;
+}
 
 //=====================================================================
 // render

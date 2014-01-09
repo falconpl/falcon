@@ -21,6 +21,7 @@
 #include <falcon/path.h>
 #include <falcon/module.h>
 #include <falcon/stderrors.h>
+#include <falcon/autocstring.h>
 
 #include <windows.h>
 
@@ -76,8 +77,10 @@ void DynLibrary::close_sys()
 }
 
 
-void* DynLibrary::getDynSymbol_nothrow( const char* symname ) const
+void* DynLibrary::getDynSymbol_nothrow( const String& str_symname ) const
 {
+   AutoCString sn(str_symname);
+   const char* symname = sn.c_str();
    void* sym = (void*)GetProcAddress( (HINSTANCE)m_sysData, symname );
    return sym;
 }
