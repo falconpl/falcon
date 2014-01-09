@@ -1052,8 +1052,7 @@ void Class::op_isTrue( VMContext* ctx, void* ) const
 
 void Class::op_in( VMContext* ctx, void*) const
 {
-   FALCON_RESIGN_XERROR( OperandError, e_invop, ctx,
-                .extra("in") );
+   ctx->topData().setBoolean(false);
 }
 
 void Class::op_provides( VMContext* ctx, void* instance, const String& propName ) const
