@@ -4,7 +4,7 @@ load timestamp
 mode = Request.getField( "mode", "" )
 
 try
-   session = [=>]
+   session = nil
    Wopi.session(&session)
    
 catch Error in e
@@ -30,6 +30,7 @@ switch mode
 
    case "logout"
       Wopi.closeSession()
+      session = nil
 
    default
       // no mode? -- if we're logged in we must update the times counter.

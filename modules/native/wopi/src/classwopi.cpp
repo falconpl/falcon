@@ -635,18 +635,16 @@ FALCON_DEFINE_FUNCTION_P(session)
       }
    }
 
-   //wopi->pushSessionSave(ctx);
-
    if( bOpen )
    {
       ss->open();
-      //wopi->pushSessionSave(ctx);
+      ctx->pushCode( &Engine::instance()->stdSteps()->m_returnFrame );
       ss->load(ctx, true);
       // don't return the frame
    }
    else {
       ss->create();
-      //wopi->pushSessionSave(ctx);
+      ctx->returnFrame();
    }
 }
 
@@ -704,10 +702,15 @@ FALCON_DEFINE_FUNCTION_P1(save)
 
    Wopi* wopi = ctx->tself<Wopi*>();
    SessionService* ss = wopi->sessionService();
-   ss->record(ctx);
-
-   ctx->pushCode( retStep );
-   ss->save(ctx);
+   if( ss != 0 )
+   {
+      ss->record(ctx);
+      ctx->pushCode( retStep );
+      ss->save(ctx);
+   }
+   else {
+      ctx->returnFrame();
+   }
 }
 /*#
    @method info Wopi

@@ -7,11 +7,11 @@ session, mode, status = pre_data
    to be separately retreived.</p>
 <p>The user is "master" and the password is "1234".</p>
 <? if session ?>
+   <?= session.describe() ?>
    <!-- We're really logged in! -->
    <p>Welcome, <?= session["user"] ?>!</p>
    <p>You have been around <?= session["times"] ?> times.</p>
    <p>Session started at <?
-      >> session["started"] 
       now = TimeStamp().current()
       distance = int((now.msSinceEpoch - session["started"].msSinceEpoch)/1000)
       ?>
