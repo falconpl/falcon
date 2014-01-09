@@ -610,6 +610,16 @@ void TimeStamp::add( int32 days, int32 hours, int32 mins, int32 secs, int32 msec
    }
 }
 
+void TimeStamp::add( int64 msecs )
+{
+   if( msecs != 0 )
+   {
+      m_bChanged = true;
+      m_date.addMilliseconds(msecs);
+   }
+}
+
+
 
 int64 TimeStamp::compare( const TimeStamp &ts ) const
 {
