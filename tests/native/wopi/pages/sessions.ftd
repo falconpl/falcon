@@ -1,5 +1,7 @@
-<? session, mode, status = pre_data ?>
-<h1>Sessions test</h1>
+<? 
+load timestamp
+session, mode, status = pre_data 
+?><h1>Sessions test</h1>
 <p>This test checks for session usage allwoing to perform an emulated login/logout sequence.
    Also, two elements (one international string and a counter) are added to the session data.
    to be separately retreived.</p>
@@ -9,12 +11,12 @@
    <p>Welcome, <?= session["user"] ?>!</p>
    <p>You have been around <?= session["times"] ?> times.</p>
    <p>Session started at <?
-      now = TimeStamp()
-      now.fromLongFormat(session["started"])
-      >> now.toRFC2822() ?>
-      (alive for <?
-         now.distance( CurrentTime() )
-         >> Format(".3").format( now.day * 14400 + now.hour * 3600 + now.minute * 60 + now.second + now.msec/1000) ?> seconds).</p>
+      >> session["started"] 
+      now = TimeStamp().current()
+      distance = int((now.msSinceEpoch - session["started"].msSinceEpoch)/1000)
+      ?>
+      
+      (alive for <?= distance ?> seconds).</p>
    <? if "international" in session ?>
       <p>You have the international session item: <?= session["international"] ?></p>
    <? end ?>

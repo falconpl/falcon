@@ -13,6 +13,11 @@
    See LICENSE file for licensing details.
 */
 
+#define SESSION_MODULE "shmem"
+#define SESSION_CLASS_NAME "Session"
+
+#define SRC "modules/native/wopi/modulewopi.cpp"
+
 #include <falcon/process.h>
 
 #include <falcon/wopi/modulewopi.h>
@@ -21,6 +26,8 @@
 #include <falcon/wopi/request.h>
 #include <falcon/wopi/reply.h>
 #include <falcon/wopi/replystream.h>
+#include <falcon/stderrors.h>
+#include <falcon/modrequest.h>
 
 #include <falcon/wopi/classrequest.h>
 #include <falcon/wopi/classreply.h>
@@ -37,6 +44,9 @@ ModuleWopi::ModuleWopi( const String& name, Request* req, Reply* rep ):
    m_process = 0;
    m_oldStdout = 0;
    m_oldStderr = 0;
+
+   m_sessionClass = 0;
+   m_sessionModule = 0;
 
    if( req == 0 ) {
       m_request = new Request(this);
@@ -75,10 +85,18 @@ ModuleWopi::ModuleWopi( const String& name, Request* req, Reply* rep ):
    addGlobal("Request", FALCON_GC_STORE(m_classRequest, m_request), true );
    addGlobal("Reply", FALCON_GC_STORE(m_classReply, m_reply), true );
    addGlobal("Wopi", FALCON_GC_STORE(m_classWopi, m_wopi), true );
+
+   addModRequest(SESSION_MODULE,false, true);
 }
+
 
 ModuleWopi::~ModuleWopi()
 {
+   if( m_sessionModule != 0 )
+   {
+      m_sessionModule->decref();
+   }
+
    delete m_wopi;
    delete m_request;
    delete m_reply;
@@ -105,7 +123,36 @@ void ModuleWopi::interceptOutputStreams( Process* prc )
    prc->stdOut( new ReplyStream(m_reply, m_oldStdout) );
    prc->stdErr( new ReplyStream(m_reply, m_oldStderr) );
 }
+
+
+void ModuleWopi::onModuleResolved( ModRequest* mr )
+{
+   if( mr->name() == SESSION_MODULE )
+   {
+      Module* mod = mr->module();
+      fassert( mod != 0 );
+      m_sessionClass = mod->getClass(SESSION_CLASS_NAME);
+      m_sessionModule = mod;
+      mod->incref();
+
+      if( m_sessionClass == 0 )
+      {
+         throw FALCON_SIGN_XERROR( LinkError, e_service_undef, .extra(SESSION_CLASS_NAME) );
+      }
+
+   }
+}
+
+
+void ModuleWopi::onLinkComplete(VMContext*)
+{
+   if( m_sessionClass == 0 )
+   {
+      throw FALCON_SIGN_XERROR( LinkError, e_service_undef, .extra(SESSION_CLASS_NAME) );
+   }
+}
+
 }
 }
 
-/* modulewopi.cpp */
+/* end of modulewopi.cpp */

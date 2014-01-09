@@ -111,6 +111,7 @@ void ScriptHandler::serve( Falcon::WOPI::Request* req )
    {
       Process* loadProc = process->modSpace()->loadModule( m_sFile, true, true, true );
       LOGI( String("Starting loader process on: ") + m_sFile );
+      process->modSpace()->resolveDeps(loadProc->mainContext(), wopi );
       loadProc->start();
       loadProc->wait();
       LOGI( String("Completed loading script on: ") + m_sFile );
@@ -128,7 +129,6 @@ void ScriptHandler::serve( Falcon::WOPI::Request* req )
          process->decref();
          return;
       }
-
 
       Function* mainFunc = mod->getMainFunction();
       if( mainFunc != 0 )
@@ -159,6 +159,9 @@ void ScriptHandler::serve( Falcon::WOPI::Request* req )
    lock->dispose();
    wopi->reply()->commit();
    process->decref();
+
+   wopi->wopi()->removeTempFiles();
+   wopi->decref();
 }
 
 }

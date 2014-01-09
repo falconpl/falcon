@@ -21,8 +21,11 @@
 */
 
 #include <falcon/module.h>
+
+#include "shmemmodule.h"
 #include "shmem_ext.h"
 #include "session_ext.h"
+#include "session_srv.h"
 #include "ipsem_ext.h"
 #include "errors.h"
 
@@ -35,25 +38,33 @@ namespace Falcon {
    @brief Shared and persistent memory extsnsions.
 */
 
-class ShmemModule: public Falcon::Module
-{
-public:
 
-   // initialize the module
-   ShmemModule():
-      Module("shmem")
+// initialize the module
+ShmemModule::ShmemModule():
+   Module("shmem")
+{
+   m_classSession = new ClassSession;
+
+   *this
+      << new ClassSharedMem
+      << new ClassIPSem
+      << new ClassShmemError
+      << m_classSession
+      << new ClassSessionError
+            ;
+}
+
+ShmemModule::~ShmemModule() {}
+
+Service* ShmemModule::createService( const String& name )
+{
+   if (name == "Session" )
    {
-      *this
-         << new ClassSharedMem
-         << new ClassIPSem
-         << new ClassShmemError
-         << new ClassSession
-         << new ClassSessionError
-               ;
+      return new SessionService(this);
    }
 
-   virtual ~ShmemModule() {}
-};
+   return 0;
+}
 
 }
 
@@ -64,5 +75,5 @@ FALCON_MODULE_DECL
    return mod;
 }
 
-/* end of rnd.cpp */
+/* end of shmem.cpp */
 

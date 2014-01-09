@@ -47,11 +47,14 @@ set(SRC_FILES
   shmem.cpp
   session.cpp
   session_ext.cpp
+  session_srv.cpp
     
   sharedmem.h
   session.h
   ipsem.h
   shared_ipsem.h
+  session_srv.h
+  shmemmodule.h
   
   shmem_ext.h
   session_ext.h

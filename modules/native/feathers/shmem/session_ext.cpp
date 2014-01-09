@@ -315,6 +315,22 @@ FALCON_DEFINE_FUNCTION_P(start)
       session->load(ctx, true);
       // don't return frame.
    }
+   catch( IOError* ie )
+   {
+      session->close();
+      internal_add_remove( this, ctx, pCount, true, 0 );
+      session->create();
+      ie->decref();
+      ctx->returnFrame();
+   }
+   catch( ShmemError* se )
+   {
+      session->close();
+      internal_add_remove( this, ctx, pCount, true, 0 );
+      session->create();
+      se->decref();
+      ctx->returnFrame();
+   }
    catch(SessionError* se)
    {
       if (se->errorCode() == FALCON_ERROR_SHMEM_SESSION_NOTOPEN )

@@ -23,6 +23,9 @@
 #include <falcon/wopi/errors.h>
 #include <falcon/wopi/utils.h>
 
+#include <falcon/wopi/request.h>
+#include <falcon/wopi/reply.h>
+
 #include <falcon/itemdict.h>
 #include <falcon/itemarray.h>
 #include <falcon/vmcontext.h>
@@ -32,9 +35,11 @@
 #include <falcon/modspace.h>
 #include <falcon/modloader.h>
 #include <falcon/transcoder.h>
+#include <falcon/symbol.h>
 
 #include <falcon/engine.h>
 #include <falcon/stdhandlers.h>
+#include <falcon/stdsteps.h>
 #include <stdlib.h>
 
 /*#
@@ -156,6 +161,26 @@ static void get_scriptPath(const Class* cls, const String&, void* instance, Item
    TRACE1( "WOPI.scriptPath for %p", instance );
    ModuleWopi* modwopi = static_cast<ModuleWopi*>( cls->module() );
    value = FALCON_GC_HANDLE(new String(modwopi->scriptPath()));
+}
+
+/*#
+   @property sdata Wopi
+   @brief Session data associated with this WOPI instance.
+
+   This returns an instance of class  @a shmem.Session from module @a shmem
+   containing the session automatically handled by a@ Wopi.session
+   where the script has been loaded.
+
+   It will be @b nil if no session is currently active.
+*/
+static void get_sdata(const Class*, const String&, void* instance, Item& value )
+{
+   TRACE1( "WOPI.sdata for %p", instance );
+   Wopi* wopi = static_cast<Wopi*>( instance );
+   if ( wopi->sessionService() != 0 )
+   {
+      wopi->sessionService()->itemize(value);
+   }
 }
 
 /*#
@@ -483,6 +508,207 @@ FALCON_DEFINE_FUNCTION_P1(escape)
    ctx->returnFrame( FALCON_GC_HANDLE(encoded) );
 }
 
+/*# @method session Wopi
+ * @param name A name or a symbol to be recorded in the session
+ * @optparam ... other names or symbols to be recored in the session
+ */
+FALCON_DECLARE_FUNCTION(session, "name:S|Symbol,...")
+FALCON_DEFINE_FUNCTION_P(session)
+{
+   if( pCount == 0 )
+   {
+      throw paramError(__LINE__);
+   }
+
+   Wopi* wopi = ctx->tself<Wopi*>();
+   ModuleWopi* mod = static_cast<ModuleWopi*>(methodOf()->module());
+
+   Request* req = mod->request();
+   Reply* rep = mod->reply();
+
+   if( wopi->sessionService() != 0 )
+   {
+      throw FALCON_SIGN_ERROR(WopiError, FALCON_ERROR_WOPI_SESS_ALREADY );
+   }
+
+   if( rep->isCommited() )
+   {
+      throw FALCON_SIGN_ERROR(WopiError, FALCON_ERROR_WOPI_SESS_AFTER_OUT );
+   }
+
+   // Get the needed information.
+
+   String sSIDName, sSID, sERR;
+   if( ! wopi->getConfigValue(OPT_SessionField, sSIDName, sERR) )
+   {
+      sSIDName = "SID";
+   }
+
+   // shall we apply? -----------------------------------------------
+   int64 sessionMode = 0;
+   int64 sessionTO = 0;
+   int64 sessionAuto = WOPI_OPT_SESSION_AUTO_ON_ID;
+   wopi->getConfigValue(OPT_SessionAuto, sessionAuto, sERR);
+   wopi->getConfigValue(OPT_SessionMode, sessionMode, sERR);
+   wopi->getConfigValue(OPT_SessionTimeout, sessionTO, sERR);
+
+   SessionService* ss = static_cast<SessionService*>(mod->sessionModule()->createService( SESSIONSERVICE_NAME ));
+   wopi->sessionService(ss);
+
+   // creating a new session or opening an old one?
+   bool bOpen = req->getField( sSIDName, sSID );
+   if( ! bOpen )
+   {
+      // we're creating the session
+      Utils::makeRandomFilename( sSID, 12 );
+   }
+
+   // setup the reply parameters -- relaunch cookie for session.
+   WOPI::CookieParams cpars;
+   TimeStamp tsnow;
+   if( sessionTO > 0 )
+   {
+      tsnow.currentTime();
+      tsnow.add( (sessionTO*2) * 1000 );
+      cpars.expire(&tsnow);
+   }
+
+   cpars.value( sSID );
+   rep->setCookie( sSIDName, cpars );
+
+   switch( sessionMode )
+   {
+   case WOPI_OPT_SESSION_MODE_SHF_ID:
+   case WOPI_OPT_SESSION_MODE_FILE_ID:
+      if( sessionMode == WOPI_OPT_SESSION_MODE_SHF_ID ) {
+         ss->setOpenMode_shmem_bu();
+      }
+      else {
+         ss->setOpenMode_file();
+      }
+
+      {
+         String tempDir;
+         wopi->getConfigValue(OPT_TempDir, tempDir, sERR);
+         ss->setID( tempDir + DIR_SEP_STR + sSID );
+      }
+      break;
+
+   case WOPI_OPT_SESSION_MODE_SHMEM_ID:
+      ss->setOpenMode_shmem();
+      ss->setID( sSID );
+      break;
+
+
+   case WOPI_OPT_SESSION_MODE_NONE_ID:
+      ctx->returnFrame();
+      return;
+   }
+
+   // get the topmost module space.
+   ModSpace* ms = ctx->process()->modSpace();
+   while (ms->parent() != 0 )
+   {
+      ms = ms->parent();
+   }
+
+   // record session -- and create the symbols in the current context if not there.
+   for(int32 i = 0; i < pCount; i++ )
+   {
+      Item* item = ctx->param(i);
+      fassert( item != 0 );
+      if( item->isString() )
+      {
+         const String& symName = *item->asString();
+         Symbol* sym = Engine::getSymbol(symName);
+         ss->addSymbol(sym);
+         sym->decref();
+      }
+      else if( item->isSymbol() )
+      {
+         Symbol* sym = item->asSymbol();
+         ss->addSymbol(sym);
+      }
+      else
+      {
+         throw paramError(String("Parameter ").N(i+1).A(" must be a symbol or a string"));
+      }
+   }
+
+   //wopi->pushSessionSave(ctx);
+
+   if( bOpen )
+   {
+      ss->open();
+      //wopi->pushSessionSave(ctx);
+      ss->load(ctx, true);
+      // don't return the frame
+   }
+   else {
+      ss->create();
+      //wopi->pushSessionSave(ctx);
+   }
+}
+
+
+
+
+/*# @method closeSession Wopi
+ Closes the currently opened session (and remove session cookies).
+ */
+FALCON_DECLARE_FUNCTION(closeSession, "")
+FALCON_DEFINE_FUNCTION_P1(closeSession)
+{
+   Wopi* wopi = ctx->tself<Wopi*>();
+   ModuleWopi* mod = static_cast<ModuleWopi*>(methodOf()->module());
+   Reply* rep = mod->reply();
+
+   if( rep->isCommited() )
+   {
+      throw FALCON_SIGN_ERROR(WopiError, FALCON_ERROR_WOPI_SESS_AFTER_OUT );
+   }
+
+   SessionService* ss = wopi->sessionService();
+   if( ss != 0 )
+   {
+      ss->close();
+   }
+   else {
+      throw FALCON_SIGN_ERROR(WopiError, FALCON_ERROR_WOPI_SESS_ALREADY );
+   }
+
+   String sSIDName, sERR;
+   if( ! wopi->getConfigValue(OPT_SessionField, sSIDName, sERR) )
+   {
+      sSIDName = "SID";
+   }
+
+   rep->clearCookie(sSIDName);
+
+   wopi->sessionService(0);
+   delete ss;
+
+   ctx->returnFrame();
+}
+
+
+
+
+/*# @method save Wopi
+ Save the current status of a session.
+ */
+FALCON_DECLARE_FUNCTION(save, "")
+FALCON_DEFINE_FUNCTION_P1(save)
+{
+   static PStep* retStep = &Engine::instance()->stdSteps()->m_returnFrame;
+
+   Wopi* wopi = ctx->tself<Wopi*>();
+   SessionService* ss = wopi->sessionService();
+   ss->record(ctx);
+
+   ctx->pushCode( retStep );
+   ss->save(ctx);
+}
 /*#
    @method info Wopi
    @brief Generates a human-readable HTML 5 table containing information about WOPI and Falcon.
@@ -666,11 +892,16 @@ ClassWopi::ClassWopi():
 
    addProperty("scriptName", &get_scriptName );
    addProperty("scriptPath", &get_scriptPath );
+   addProperty("sdata", &get_sdata );
 
    addMethod( new Function_tempFile );
    addMethod( new Function_escape );
    addMethod( new Function_parseQuery );
    addMethod( new Function_makeQuery );
+
+   addMethod( new Function_session );
+   addMethod( new Function_closeSession );
+   addMethod( new Function_save );
 
    addMethod( new Function_info );
    addMethod( new Function_config );

@@ -24,11 +24,11 @@
    #define FALCON_ERROR_WOPI_BASE            2400
 #endif
 
-#define FALCON_ERROR_WOPI_SESS_IO            (FALCON_ERROR_WOPI_BASE + 0 )
-#define FALCON_ERROR_WOPI_SESS_EXPIRED       (FALCON_ERROR_WOPI_BASE + 1 )
-#define FALCON_ERROR_WOPI_APPDATA_SER        (FALCON_ERROR_WOPI_BASE + 2 )
-#define FALCON_ERROR_WOPI_APPDATA_DESER      (FALCON_ERROR_WOPI_BASE + 3 )
-#define FALCON_ERROR_WOPI_SESS_INVALID_ID    (FALCON_ERROR_WOPI_BASE + 4 )
+#define FALCON_ERROR_WOPI_SESS_ALREADY       (FALCON_ERROR_WOPI_BASE + 0 )
+#define FALCON_ERROR_WOPI_SESS_CLOSED        (FALCON_ERROR_WOPI_BASE + 1 )
+#define FALCON_ERROR_WOPI_SESS_AFTER_OUT     (FALCON_ERROR_WOPI_BASE + 2 )
+#define FALCON_ERROR_WOPI_APPDATA_SER        (FALCON_ERROR_WOPI_BASE + 3 )
+#define FALCON_ERROR_WOPI_APPDATA_DESER      (FALCON_ERROR_WOPI_BASE + 4 )
 #define FALCON_ERROR_WOPI_PERSIST_NOT_FOUND  (FALCON_ERROR_WOPI_BASE + 5 )
 #define FALCON_ERROR_WOPI_FIELD_NOT_FOUND    (FALCON_ERROR_WOPI_BASE + 6 )
 #define FALCON_ERROR_WOPI_INVALID_CONFIG     (FALCON_ERROR_WOPI_BASE + 7 )
@@ -56,11 +56,11 @@ namespace Falcon {
    @from Error code, description, extra
 
    Possible error codes are:
-   - WopiError.SessionIO - I/O error in storing or restoring a session.
-   - WopiError.SessionExipred - The session is expired.
+   - WopiError.SessionAlready -Session already started
+   - WopiError.SessionAlready - Session already closed
+   - WopiError.SessionOutput - Session started after output
    - WopiError.AppDataStore - Cannot store/save application specific data.
    - WopiError.AppDataRestore - Cannot restore application-specific data.
-   - WopiError.SessionInvalid - The session data is invalid.
    - WopiError.PeristNotFound - Persistent data not found.
    - WopiError.FieldNotFound - Required field was not presented in the remote request.
    - WopiError.InvalidConfigKey - Invalid configuration key.
@@ -70,11 +70,11 @@ namespace Falcon {
 
 */
 FALCON_DECLARE_ERROR_INSTANCE_WITH_DESC( WopiError,
-         FALCON_ERROR_CLASS_DESC( FALCON_ERROR_WOPI_SESS_IO, "I/O error in storing or restoring a session" )
-         FALCON_ERROR_CLASS_DESC( FALCON_ERROR_WOPI_SESS_EXPIRED, "The session is expired" )
+         FALCON_ERROR_CLASS_DESC( FALCON_ERROR_WOPI_SESS_ALREADY, "Session already started" )
+         FALCON_ERROR_CLASS_DESC( FALCON_ERROR_WOPI_SESS_CLOSED, "Session already closed" )
+         FALCON_ERROR_CLASS_DESC( FALCON_ERROR_WOPI_SESS_AFTER_OUT, "Session started after output" )
          FALCON_ERROR_CLASS_DESC( FALCON_ERROR_WOPI_APPDATA_SER, "Cannot store/save application specific data" )
          FALCON_ERROR_CLASS_DESC( FALCON_ERROR_WOPI_APPDATA_DESER, "Cannot restore application-specific data" )
-         FALCON_ERROR_CLASS_DESC( FALCON_ERROR_WOPI_SESS_INVALID_ID, "The session ID is invalid" )
          FALCON_ERROR_CLASS_DESC( FALCON_ERROR_WOPI_PERSIST_NOT_FOUND, "Required field was not presented in the remote request" )
          FALCON_ERROR_CLASS_DESC( FALCON_ERROR_WOPI_INVALID_CONFIG, "Invalid configuration key or value" )
          FALCON_ERROR_CLASS_DESC( FALCON_ERROR_WOPI_UPLOAD_TOO_BIG, "Upload too big" )
@@ -82,11 +82,11 @@ FALCON_DECLARE_ERROR_INSTANCE_WITH_DESC( WopiError,
          FALCON_ERROR_CLASS_DESC( FALCON_ERROR_WOPI_REQUEST_PARSE, "Error while parsing incoming web request" )
 );
 FALCON_DECLARE_ERROR_CLASS_EX( WopiError, \
-         addConstant("SessionIO", FALCON_ERROR_WOPI_SESS_IO );\
-         addConstant("SessionExipred", FALCON_ERROR_WOPI_SESS_EXPIRED);\
+         addConstant("SessionAlready", FALCON_ERROR_WOPI_SESS_ALREADY );\
+         addConstant("SessionClosed", FALCON_ERROR_WOPI_SESS_CLOSED );\
+         addConstant("SessionOutput", FALCON_ERROR_WOPI_SESS_AFTER_OUT);\
          addConstant("AppDataStore", FALCON_ERROR_WOPI_APPDATA_SER);\
          addConstant("AppDataRestore", FALCON_ERROR_WOPI_APPDATA_DESER);\
-         addConstant("SessionInvalid", FALCON_ERROR_WOPI_SESS_INVALID_ID);\
          addConstant("PeristNotFound", FALCON_ERROR_WOPI_PERSIST_NOT_FOUND);\
          addConstant("FieldNotFound", FALCON_ERROR_WOPI_FIELD_NOT_FOUND);\
          addConstant("InvalidConfigKey", FALCON_ERROR_WOPI_INVALID_CONFIG);\

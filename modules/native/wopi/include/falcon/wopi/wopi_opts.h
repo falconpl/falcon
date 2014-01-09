@@ -21,10 +21,20 @@
 
 #ifndef FALCON_MODULE_WOPI_OPTS_H
 #define WOPI_OPT_SESSION_MODE_FILE "FILE"
-#define WOPI_OPT_SESSION_MODE_NONE "NONE"
+#define WOPI_OPT_SESSION_MODE_SHMEM "NONE"
+#define WOPI_OPT_SESSION_MODE_SHF  "SHF"
+#define WOPI_OPT_SESSION_MODE_NONE "SHMEM"
 
-#define WOPI_OPT_SESSION_MODE_FILE_ID 0
-#define WOPI_OPT_SESSION_MODE_NONE_ID 1
+#define WOPI_OPT_SESSION_MODE_FILE_ID  0
+#define WOPI_OPT_SESSION_MODE_SHMEM_ID 1
+#define WOPI_OPT_SESSION_MODE_SHF_ID   2
+#define WOPI_OPT_SESSION_MODE_NONE_ID  3
+
+#define WOPI_OPT_SESSION_AUTO_ON_ID    0
+#define WOPI_OPT_SESSION_AUTO_OFF_ID   1
+#define WOPI_OPT_SESSION_AUTO_ON       "ON"
+#define WOPI_OPT_SESSION_AUTO_OFF      "OFF"
+
 
 #define WOPI_OPT_LOG_MODE_SILENT   "SILENT"
 #define WOPI_OPT_LOG_MODE_LOG      "LOG"
@@ -85,8 +95,10 @@ WOPI_OPTION_DFLT ( string, SourceEncoding, "Default source encoding for the Falc
 WOPI_OPTION_DFLT ( string, OutputEncoding, "Default output encoding for the Falcon engine", "utf8" )
 WOPI_OPTION      ( string, FalconHandler, "General script handling incoming requests" )
 WOPI_OPTION_CHECK( int   , LogErrors, "Error log mode - can be one of: SILENT LOG KIND FULL", WOPI_OPT_LOG_MODE_FULL )
+WOPI_OPTION_DFLT ( string, SessionField, "Session ID field name (defaluts to SID)", "SID" )
 WOPI_OPTION_CHECK( int   , SessionMode, "Session storage mode - can be one of: NONE FILE", WOPI_OPT_SESSION_MODE_FILE )
 WOPI_OPTION_DFLT ( int   , SessionTimeout, "Default session timeout in seconds", 600 )
+WOPI_OPTION_CHECK( int   , SessionAuto, "Automatically apply session variables at script startup: ON or OFF", WOPI_OPT_SESSION_AUTO_ON )
 WOPI_OPTION_CHECK( int   , MaxUploadSize, "Maximum upload size in kilobytes", 2048 )
 WOPI_OPTION_CHECK( int   , MaxMemoryUploadSize, "Upload size in kilobytes under which memory-only upload is used", 4 )
 

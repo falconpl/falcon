@@ -24,6 +24,8 @@
 #include <falcon/pstep.h>
 #include <falcon/gclock.h>
 
+#include "../../feathers/shmem/session_srv.h"
+
 #include <map>
 #include <list>
 
@@ -174,6 +176,11 @@ public:
    /** Copies the configuration from a template WOPI object */
    void configFromWopi( const Wopi& other );
 
+   SessionService* sessionService() const { return m_ss; }
+   void sessionService( SessionService* ss ) { m_ss = ss; }
+
+   void pushSessionSave( VMContext* ctd );
+
 private:
    /** Persistent data map.
       We have one of these per thread.
@@ -190,6 +197,9 @@ private:
 
    PStep* m_readAppDataNext;
    PStep* m_writeAppDataNext;
+   PStep* m_pushSessionSave;
+
+   SessionService* m_ss;
 
    /** Persistent data. */
    ThreadSpecific m_ctxdata;

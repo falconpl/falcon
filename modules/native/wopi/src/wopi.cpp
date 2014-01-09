@@ -24,6 +24,7 @@
 #include <falcon/engine.h>
 #include <falcon/log.h>
 #include <falcon/wopi/utils.h>
+#include <falcon/modspace.h>
 
 #include <falcon/wopi/wopi_opts.h>
 
@@ -119,6 +120,26 @@ static bool s_check_wopi_opt_SessionMode( const String &configValue, Wopi::Confi
    return true;
 }
 
+static bool s_check_wopi_opt_SessionAuto( const String &configValue, Wopi::ConfigEntry* entry )
+{
+   int64 ivalue = -1;
+   configValue.parseInt(ivalue);
+
+   if( configValue.compareIgnoreCase(WOPI_OPT_SESSION_AUTO_ON) == 0 || ivalue == WOPI_OPT_SESSION_AUTO_ON_ID )
+   {
+      entry->m_sValue = WOPI_OPT_SESSION_AUTO_ON;
+   }
+   else if( configValue.compareIgnoreCase(WOPI_OPT_SESSION_AUTO_OFF) == 0 || ivalue == WOPI_OPT_SESSION_AUTO_OFF_ID )
+   {
+      entry->m_sValue = WOPI_OPT_SESSION_AUTO_OFF;
+   }
+   else {
+      return false;
+   }
+
+   entry->m_iValue = ivalue;
+   return true;
+}
 
 static bool human_option( const String &configValue, Wopi::ConfigEntry* entry )
 {
@@ -196,30 +217,49 @@ void Wopi::pdata_deletor( void* data )
    delete pm;
 }
 
- /*
-class PStepReadAppDataNext: public PStep
+
+class PStepPushSessionSave: public PStep
 {
 public:
-   PStepReadAppDataNext() { apply = apply_; }
-   virtual ~PStepReadAppDataNext();
+   PStepPushSessionSave() { apply = apply_; }
+   virtual ~PStepPushSessionSave() {}
 
    virtual void describeTo( String& target ) const
    {
-      target  = "PStepReadAppDataNext";
+      target  = "PStepPushSessionSave";
    }
 
-   static void apply_(const PStep* self, VMContext* ctx)
+   static void apply_(const PStep*, VMContext* ctx)
    {
-   }
+      TRACE2( "WOPI.PStepPushSessionSave.apply_ for %p", ctx );
+      // push the session->save cleanup on the topmost process
+      Wopi* wopi = ctx->tself<Wopi*>();
+      SessionService* ss = wopi->sessionService();
+      Item sessionItem;
+      ss->itemize(sessionItem);
+      Class* cls = sessionItem.asClass();
+      ctx->pushData(sessionItem);
+      cls->op_getProperty(ctx, sessionItem.asInst(), "save" );
+      Item cleanup = ctx->topData();
 
+      ModSpace* ms = ctx->process()->modSpace();
+      while( ms->parent() != 0 )
+      {
+         ms = ms->parent();
+      }
+
+      ms->process()->pushCleanup( cleanup );
+      ctx->returnFrame();
+   }
 };
-*/
 
 
 
 Wopi::Wopi():
       m_ctxdata( Wopi::pdata_deletor )
 {
+   m_ss = 0;
+   m_pushSessionSave = new PStepPushSessionSave;
    initConfigOptions();
 }
 
@@ -232,6 +272,9 @@ void Wopi::initConfigOptions()
 
 Wopi::~Wopi()
 {
+   delete m_ss;
+   delete m_pushSessionSave;
+
    {
       ConfigMap::iterator iter = m_config.begin();
       while( iter != m_config.end() )
@@ -690,6 +733,30 @@ void Wopi::configFromWopi( const Wopi& other )
 
       ++iter;
    }
+}
+
+
+void Wopi::pushSessionSave( VMContext* ctx )
+{
+   //ctx->pushCode( m_pushSessionSave );
+
+   // push the session->save cleanup on the topmost process
+   Wopi* wopi = ctx->tself<Wopi*>();
+   SessionService* ss = wopi->sessionService();
+   Item sessionItem;
+   ss->itemize(sessionItem);
+   Class* cls = sessionItem.asClass();
+   ctx->pushData(sessionItem);
+   cls->op_getProperty(ctx, sessionItem.asInst(), "save" );
+   Item cleanup = ctx->topData();
+
+   ModSpace* ms = ctx->process()->modSpace();
+   while( ms->parent() != 0 )
+   {
+      ms = ms->parent();
+   }
+
+   ms->process()->pushCleanup( cleanup );
 }
 
 

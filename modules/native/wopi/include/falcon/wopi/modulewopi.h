@@ -68,6 +68,14 @@ public:
    ClassRequest* requestClass() const { return m_classRequest; }
    ClassReply* replyClass() const { return m_classReply; }
    Reply* reply() const { return m_reply; }
+
+   Class* sessionClass() const { return m_sessionClass; }
+   Module* sessionModule() const { return m_sessionModule; }
+
+   /** Records the session class as it's resolved. */
+   virtual void onModuleResolved( ModRequest* mr );
+   virtual void onLinkComplete(VMContext*);
+
 protected:
 
    void interceptOutputStreams( Process* prc );
@@ -77,6 +85,8 @@ protected:
    ClassRequest* m_classRequest;
    ClassReply* m_classReply;
    ClassUploaded* m_classUploaded;
+
+   Class* m_sessionClass;
 
    Wopi* m_wopi;
    Request* m_request;
@@ -90,6 +100,8 @@ protected:
 
    String m_scriptName;
    String m_scriptPath;
+
+   Module* m_sessionModule;
 };
 
 }
@@ -97,4 +109,4 @@ protected:
 
 #endif
 
-/* modulewopi.h */
+/* end of modulewopi.h */
