@@ -105,6 +105,7 @@ bool ClassModule::hasProperty( void*, const String& prop ) const
          || prop == "setAttribute"
          || prop == "uri"
          || prop == "add"
+         || prop == "globals"
          ;
 }
 
@@ -708,6 +709,28 @@ void ClassModule::op_getProperty( VMContext* ctx, void* instance, const String& 
    else if( prop == "add" )
    {
       ctx->topData().methodize(&m_addMethod);
+   }
+   else if( prop == "globals")
+   {
+      ItemDict *globs = new ItemDict;
+
+      class Rator: public GlobalsMap::VariableEnumerator  {
+      public:
+         Rator(ItemDict* g): m_globs(g) {}
+         virtual ~Rator() {};
+         virtual void operator() ( Symbol* sym, Item*& value )
+         {
+            m_globs->insert( FALCON_GC_HANDLE(
+                     new String(sym->name())), *value );
+         }
+
+      private:
+         ItemDict* m_globs;
+      }
+      rator(globs);
+
+      mod->globals().enumerate(rator);
+      ctx->topData() = FALCON_GC_HANDLE(globs);
    }
    else {
       Class::op_getProperty(ctx, instance, prop );
