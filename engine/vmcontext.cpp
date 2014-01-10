@@ -2097,6 +2097,12 @@ void VMContext::onTerminated()
       }
    }
 
+   // relaunched?
+   if( getStatus() != statusTerminated )
+   {
+      return;
+   }
+
    // we're off from the collector...
    Engine::collector()->unregisterContext(this);
 
