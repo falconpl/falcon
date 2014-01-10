@@ -350,6 +350,26 @@ void GlobalsMap::enumerateExports( VariableEnumerator& rator ) const
 }
 
 
+void GlobalsMap::enumerate( VariableEnumerator& rator ) const
+{
+   Private::VariableMap::iterator iter, end;
+
+   iter = _p->m_variables.begin();
+   end = _p->m_variables.end();
+
+   while( iter != end ) {
+      Symbol* sym = iter->first;
+      if( ! sym->name().empty() )
+      {
+         Data* vd = iter->second;
+         rator( sym, vd->m_data );
+      }
+
+      ++iter;
+   }
+}
+
+
 uint32 GlobalsMap::size() const
 {
    return _p->m_variables.size();
