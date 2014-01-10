@@ -6,7 +6,6 @@ mode = Request.getField( "mode", "" )
 
 try
    Wopi.session(&session)
-   
 catch Error in e
    status = "Invalid or expired session ID: " + e.toString()
 end

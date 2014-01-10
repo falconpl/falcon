@@ -1,3 +1,9 @@
+load timestamp
+load shmem
+load rnd
+
+import session
+
 // determine what we want to do.
 mode = Request.getField( "mode", "" )
 
@@ -6,13 +12,15 @@ switch mode
       // a very simple auth scheme:
       if Request.getField( "user", "" ) == "master" and Request.getField( "pwd", "" ) == "1234"
          // notice: cookie names == to form field names
-         sid = toString(random())
-         session = Request.startSession(sid)
+         sid = toString(random(1,10000000))
+         sdata = Session(sid, Session.OM_FILE)         
+         sdata.create(&session)
+         session = [=>]
          session["user"] = "master"
          session["times"] = 0
          session["international"] = "国際記録物"
-         session["started"] = CurrentTime().toLongFormat()
-
+         session["started"] = TimeStamp().current()
+         
          // All right.
          status = nil
       else
@@ -20,14 +28,17 @@ switch mode
       end
 
    case "logout"
-      Request.closeSession( Request.gets["my_sid"] )
+      sid = Request.gets["my_sid"]
+      sdata = Session(sid, Session.OM_FILE)         
+      sdata.close()
 
    default
       // no mode? -- if we're logged in we must update the times counter.
       try
          if "my_sid" in Request.gets
             sid = Request.gets["my_sid"]
-            session = Request.getSession(sid)
+            sdata = Session(sid, Session.OM_FILE)      
+            sdata.open(true)
          end
       catch WopiError in e
          // an error in reading the session means we're trying to cheat
@@ -35,4 +46,4 @@ switch mode
       end
 end
 
-return [session, mode, status, sid]
+return [session, mode, status, sdata]

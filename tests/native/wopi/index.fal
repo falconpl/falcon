@@ -11,6 +11,7 @@
 *****************************************************************************/
 
 load vfs
+session = nil
 // The defaults and the configuration are usually ok
 // but you may want to set your own:
 // wopi_tempDir: "/tmp"
@@ -132,5 +133,4 @@ function testCheck( exp )
 end
 
 // export the utility functions so pages can use them
-session = nil
 export makeLink, errorDocument, testCheck, pre_data, session
