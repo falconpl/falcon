@@ -32,11 +32,6 @@ switch mode
       Wopi.closeSession()
       session = nil
 
-   default
-      // no mode? -- if we're logged in we must update the times counter.
-      if "times" in session
-         session["times"]++
-      end
 end
 
 return [session, mode, status]
