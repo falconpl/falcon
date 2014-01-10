@@ -134,6 +134,8 @@ void ScriptHandler::serve( Falcon::WOPI::Request* req )
       if( mainFunc != 0 )
       {
          LOGI( String("Launching main script function on: ") + m_sFile );
+         mod->addMantra( wopi->wopi()->onTerminate, false );
+         process->pushCleanup( wopi->wopi()->onTerminate );
          process->start( mainFunc );
          process->wait();
          LOGI( "Script " + m_sFile + " completed." );

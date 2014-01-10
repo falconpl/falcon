@@ -39,6 +39,4 @@ switch mode
       end
 end
 
-Wopi.save()
-
 return [session, mode, status]

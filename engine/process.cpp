@@ -444,7 +444,15 @@ void Process::onCompletedWithError( Error* error )
          ++iter;
       }
 
-      startContext(m_context);
+      // all done during callItem?
+      if( m_context->callDepth() > 0 )
+      {
+         startContext(m_context);
+      }
+      else {
+         atomicSet(m_terminated, 1);
+         m_event.set();
+      }
    }
    else {
       _p->m_mtx_cleanups.unlock();

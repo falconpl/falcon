@@ -517,6 +517,10 @@ void Session::record( VMContext* ctx )
             iter->second.copyFromRemote(*item);
          }
       }
+      catch( CodeError* e )
+      {
+         e->decref();
+      }
       catch( Error* e )
       {
          e->decref();

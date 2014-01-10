@@ -272,7 +272,7 @@ static void get_sdata(const Class*, const String&, void* instance, Item& value )
 
    An optional @b code parameter is evaluated in case the data under
    the given @b id is not found; the evaluation result is
-   then stored in the persistent data slot, as if @a Wopi.setPersist was
+   then d in the persistent data slot, as if @a Wopi.setPersist was
    called with the same @b id to save the data, and is then returned to
    the caller of this method.
 
@@ -639,8 +639,14 @@ FALCON_DEFINE_FUNCTION_P(session)
    {
       ss->open();
       ctx->pushCode( &Engine::instance()->stdSteps()->m_returnFrame );
+      long cd = ctx->codeDepth();
       ss->load(ctx, true);
-      // don't return the frame
+      if( cd == ctx->codeDepth() )
+      {
+         ctx->returnFrame();
+      }
+
+      // don't return the frame if code depth is changed
    }
    else {
       ss->create();
@@ -702,11 +708,17 @@ FALCON_DEFINE_FUNCTION_P1(save)
 
    Wopi* wopi = ctx->tself<Wopi*>();
    SessionService* ss = wopi->sessionService();
-   if( ss != 0 )
+   if( ss != 0 && ! wopi->isSaved() )
    {
+      long cd = ctx->codeDepth();
       ss->record(ctx);
       ctx->pushCode( retStep );
       ss->save(ctx);
+      if( cd == ctx->codeDepth() )
+      {
+         ctx->returnFrame();
+      }
+      wopi->isSaved(true);
    }
    else {
       ctx->returnFrame();

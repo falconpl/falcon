@@ -185,6 +185,7 @@ public:
     * allowing the receiver to change the pointer if needed.
     */
    void enumerateExports( VariableEnumerator& rator ) const;
+   void enumerate( VariableEnumerator& rator ) const;
 
    /** Returns the count of global variables. */
    uint32 size() const;

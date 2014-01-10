@@ -132,4 +132,5 @@ function testCheck( exp )
 end
 
 // export the utility functions so pages can use them
-export makeLink, errorDocument, testCheck, pre_data
+session = nil
+export makeLink, errorDocument, testCheck, pre_data, session

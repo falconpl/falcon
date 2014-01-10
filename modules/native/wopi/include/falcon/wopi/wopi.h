@@ -181,6 +181,12 @@ public:
 
    void pushSessionSave( VMContext* ctd );
 
+   // Function injected in main modules to be invoked at termination.
+   Function* onTerminate;
+
+   bool isSaved() const { return m_saved; }
+   void isSaved( bool b ) { m_saved = b; }
+
 private:
    /** Persistent data map.
       We have one of these per thread.
@@ -197,9 +203,9 @@ private:
 
    PStep* m_readAppDataNext;
    PStep* m_writeAppDataNext;
-   PStep* m_pushSessionSave;
 
    SessionService* m_ss;
+   bool m_saved;
 
    /** Persistent data. */
    ThreadSpecific m_ctxdata;

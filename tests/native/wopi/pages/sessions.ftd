@@ -1,13 +1,13 @@
 <? 
 load timestamp
 session, mode, status = pre_data 
+
 ?><h1>Sessions test</h1>
 <p>This test checks for session usage allwoing to perform an emulated login/logout sequence.
    Also, two elements (one international string and a counter) are added to the session data.
    to be separately retreived.</p>
 <p>The user is "master" and the password is "1234".</p>
 <? if session ?>
-   <?= session.describe() ?>
    <!-- We're really logged in! -->
    <p>Welcome, <?= session["user"] ?>!</p>
    <p>You have been around <?= session["times"] ?> times.</p>
@@ -45,3 +45,5 @@ session, mode, status = pre_data
    </form>
 
 <? end ?>
+
+<? Wopi.save() ?>

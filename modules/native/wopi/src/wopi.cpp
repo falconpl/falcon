@@ -195,6 +195,44 @@ Wopi::ConfigEntry::~ConfigEntry()
 
 
 //==========================================================================================
+// Terminator function
+//
+
+class TerminateFunction: public Function
+{
+public:
+   TerminateFunction(Wopi* wopi):
+      Function("$TerminateFunction"),
+      m_wopi(wopi)
+   {}
+
+   virtual ~TerminateFunction() {}
+
+   virtual void invoke( VMContext* ctx, int32 )
+   {
+      SessionService* ss = m_wopi->sessionService();
+      if( ss != 0 && ! m_wopi->isSaved() )
+      {
+         long cd = ctx->codeDepth();
+         ss->record( ctx );
+         ss->save(ctx);
+         if( cd == ctx->codeDepth() )
+         {
+            ctx->returnFrame();
+         }
+         m_wopi->isSaved(true);
+      }
+      else {
+         ctx->returnFrame();
+      }
+   }
+
+public:
+   Wopi* m_wopi;
+};
+
+
+//==========================================================================================
 // Wopi Main object
 //
 
@@ -218,48 +256,14 @@ void Wopi::pdata_deletor( void* data )
 }
 
 
-class PStepPushSessionSave: public PStep
-{
-public:
-   PStepPushSessionSave() { apply = apply_; }
-   virtual ~PStepPushSessionSave() {}
-
-   virtual void describeTo( String& target ) const
-   {
-      target  = "PStepPushSessionSave";
-   }
-
-   static void apply_(const PStep*, VMContext* ctx)
-   {
-      TRACE2( "WOPI.PStepPushSessionSave.apply_ for %p", ctx );
-      // push the session->save cleanup on the topmost process
-      Wopi* wopi = ctx->tself<Wopi*>();
-      SessionService* ss = wopi->sessionService();
-      Item sessionItem;
-      ss->itemize(sessionItem);
-      Class* cls = sessionItem.asClass();
-      ctx->pushData(sessionItem);
-      cls->op_getProperty(ctx, sessionItem.asInst(), "save" );
-      Item cleanup = ctx->topData();
-
-      ModSpace* ms = ctx->process()->modSpace();
-      while( ms->parent() != 0 )
-      {
-         ms = ms->parent();
-      }
-
-      ms->process()->pushCleanup( cleanup );
-      ctx->returnFrame();
-   }
-};
-
 
 
 Wopi::Wopi():
       m_ctxdata( Wopi::pdata_deletor )
 {
    m_ss = 0;
-   m_pushSessionSave = new PStepPushSessionSave;
+   m_saved = false;
+   onTerminate = new TerminateFunction(this);
    initConfigOptions();
 }
 
@@ -273,7 +277,7 @@ void Wopi::initConfigOptions()
 Wopi::~Wopi()
 {
    delete m_ss;
-   delete m_pushSessionSave;
+   delete onTerminate;
 
    {
       ConfigMap::iterator iter = m_config.begin();
