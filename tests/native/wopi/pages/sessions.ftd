@@ -11,7 +11,8 @@ session, mode, status = pre_data
    <!-- We're really logged in! -->
    <p>Welcome, <?= session["user"] ?>!</p>
    <p>You have been around <?= session["times"] ?> times.</p>
-   <p>Session started at <?
+   <p>Session started at <?= session["started"] ?>
+      <?
       now = TimeStamp().current()
       distance = int((now.msSinceEpoch - session["started"].msSinceEpoch)/1000)
       ?>
