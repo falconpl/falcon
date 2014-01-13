@@ -148,6 +148,7 @@ private:
 };
 
 uint64 processId();
+uint64 threadId();
 bool processKill( uint64 id );
 bool processTerminate( uint64 id );
 

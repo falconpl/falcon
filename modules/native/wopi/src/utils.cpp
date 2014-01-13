@@ -282,9 +282,10 @@ void makeRandomFilename( String& target, int size )
    static const char* alphabeth= "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_";
    target.reserve( size );
 
+   MTRand_interlocked& rndgen = Engine::instance()->mtrand();
    for ( int i = 0; i < size; i ++ )
    {
-      target.append( alphabeth[rand() % 63] );
+      target.append( alphabeth[rndgen.randInt() % 63] );
    }
 }
 

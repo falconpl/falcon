@@ -416,6 +416,222 @@ void Function_clearError::invoke( VMContext* ctx, int32 )
 }
 
 
+
+static void internal_pdata( PData* pd, VMContext* ctx, Function* caller )
+{
+   // Get the ID of the persistent data
+   Falcon::Item *i_id = ctx->param( 0 );
+   Falcon::Item *i_func = ctx->param( 1 );
+
+   // parameter sanity check.
+   if ( i_id == 0 || ! i_id->isString() ||
+         ( i_func != 0 && ! (i_func->isCallable() || i_func->isNil() || i_func->isTreeStep()) )
+      )
+   {
+      throw caller->paramError();
+   }
+
+
+   Item target;
+   const String& id = *i_id->asString();
+   bool success = pd->get( id, target, true );
+
+   // Not found?
+   if( ! success )
+   {
+      // should we initialize the data?
+      if ( i_func != 0 )
+      {
+         if( i_func->isNil() )
+         {
+            pd->remove(id);
+            ctx->returnFrame(target);
+         }
+         else {
+            ClassVMProcess* clw = static_cast<ClassVMProcess*>(caller->methodOf());
+            ctx->pushCode( clw->m_stepAfterPersist );
+            ctx->addLocals(1);
+            ctx->local(0)->setOpaque("PData", pd);
+            ctx->callItem(*i_func);
+         }
+      }
+      else
+      {
+         throw FALCON_SIGN_XERROR( AccessError, e_object_not_found, .extra(id) );
+      }
+   }
+   // otherwise, all ok
+   else {
+      ctx->returnFrame(target);
+   }
+}
+
+
+static void internal_pdata_set( PData* pd, VMContext* ctx, Function* caller )
+{
+   // Get name of the file.
+   Falcon::Item *i_id = ctx->param( 0 );
+   Falcon::Item *i_item = ctx->param( 1 );
+
+   // parameter sanity check.
+   if ( i_id == 0 || ! i_id->isString() || i_item == 0 )
+   {
+      throw caller->paramError();
+   }
+
+   const String& id = *i_id->asString();
+
+   if( i_item->isNil() )
+   {
+      pd->remove( id );
+   }
+   else {
+      pd->set( id, *i_item );
+   }
+
+   ctx->returnFrame();
+}
+
+/*#
+  @method pdata Process
+  @brief Adds or remove processor-wide persistent data.
+  \param id The symbolic ID name of the data to be set.
+  \optparam setup a callable that will be invoked to generate the item if not found.
+  \return the persistent item.
+  \raise AccessError if the given id is not associated with any object.
+
+   This method restores vm-context process-context specific
+   persistent data that was previously saved, possibly by another VM process
+   (i.e. another script).
+
+   An optional @b code parameter is evaluated in case the data under
+   the given @b id is not found; the evaluation result is
+   then d in the persistent data slot, as if @a process.pdataSet was
+   called with the same @b id to save the data, and is then returned to
+   the caller of this method.
+
+   If setup is nil, the persistent object will be removed, if found.
+
+   If the object is not found and @b setup is not given, an @a AccessError
+   will be raised.
+ */
+FALCON_DECLARE_FUNCTION( pdata, "id:S,setup:[C]" )
+FALCON_DEFINE_FUNCTION_P1(pdata)
+{
+   PData* pd = Processor::currentProcessor()->pdata();
+   internal_pdata( pd, ctx, this );
+}
+
+
+/*#
+  @method pdataSet Process
+  @brief Unconditionally sets processor-wide data
+  \param id The symbolic ID name of the data to be set.
+  \param value the value to be set.
+
+
+   This method saves Virtual Machine process-specific data, to be
+   retrieved, eventually by another VM process at a later
+   execution under the same O/S context (usually, a thread or a process).
+
+   Persistent data is identified by an unique ID. An application
+   can present different persistent data naming them differently.
+
+   @note The id can be any a valid string, including an empty string.
+   So, "" can be used as a valid persistent key.
+
+   Setting the item to nil effectively removes the entry from the
+   persistent storage. However, the data will be reclaimed (and finalized)
+   during the next garbage collection loop.
+ */
+FALCON_DECLARE_FUNCTION( pdataSet, "id:S,value:X" )
+FALCON_DEFINE_FUNCTION_P1(pdataSet)
+{
+   PData* pd = Processor::currentProcessor()->pdata();
+   internal_pdata_set( pd, ctx, this );
+}
+
+
+/*#
+  @method vmdata Process
+  @brief Adds or remove virtual-machine wide persistent data.
+  \param id The symbolic ID name of the data to be set.
+  \optparam setup a callable that will be invoked to generate the item if not found.
+  \return the persistent item.
+ */
+FALCON_DECLARE_FUNCTION( vmdata, "id:S,setup:[C]" )
+FALCON_DEFINE_FUNCTION_P1(vmdata)
+{
+   Process* proc = static_cast<Process*>(ctx->self().asInst());
+   PData* pd = proc->vm()->pdata();
+   internal_pdata( pd, ctx, this );
+}
+
+
+/*#
+  @method vmdataSet Process
+  @brief Unconditionally sets virtual-machine wide persistent data.
+  \param id The symbolic ID name of the data to be set.
+  \param value the value to be set.
+ */
+FALCON_DECLARE_FUNCTION( vmdataSet, "id:S,value:X" )
+FALCON_DEFINE_FUNCTION_P1(vmdataSet)
+{
+   Process* proc = static_cast<Process*>(ctx->self().asInst());
+   PData* pd = proc->vm()->pdata();
+   internal_pdata_set( pd, ctx, this );
+}
+
+
+/*#
+  @method edata Process
+  @brief Adds or remove falcon engine (O/S process) wide persistent data.
+  \param id The symbolic ID name of the data to be set.
+  \optparam setup a callable that will be invoked to generate the item if not found.
+  \return the persistent item.
+ */
+FALCON_DECLARE_FUNCTION( edata, "id:S,setup:[C]" )
+FALCON_DEFINE_FUNCTION_P1(edata)
+{
+   static PData* pd = Engine::instance()->pdata();
+   internal_pdata( pd, ctx, this );
+}
+
+
+/*#
+  @method edataSet Process
+  @brief Unconditionally sets falcon engine (O/S process) wide persistent data.
+  \param id The symbolic ID name of the data to be set.
+  \param value the value to be set.
+ */
+FALCON_DECLARE_FUNCTION( edataSet, "id:S,value:X" )
+FALCON_DEFINE_FUNCTION_P1(edataSet)
+{
+   static PData* pd = Engine::instance()->pdata();
+   internal_pdata_set( pd, ctx, this );
+}
+
+class PStepAfterPersist: public PStep
+{
+public:
+   inline PStepAfterPersist() { apply = apply_; }
+   inline virtual ~PStepAfterPersist() {}
+   virtual void describeTo( String& target ) const { target = "VMProcess::StepAfterPersist"; }
+
+   static void apply_(const PStep*, VMContext* ctx)
+   {
+      // we have the object to be saved in the persist data in top,
+      // and the frame is that of the persist() method
+      Falcon::Item *i_id = ctx->param( 0 );
+      const String& src = *i_id->asString();
+      fassert( String("PData") == ctx->local(0)->asOpaqueName());
+      PData* pd = static_cast<PData*>(ctx->local(0)->asOpaque());
+      Item top = ctx->topData();
+      pd->set( src, top );
+      ctx->returnFrame(top);
+   }
+};
+
 }
 
 //==========================================================================
@@ -426,6 +642,8 @@ ClassVMProcess::ClassVMProcess():
          Class("VMProcess")
 {
    m_bHasSharedInstances = true;
+   m_stepAfterPersist = new CVMProcess::PStepAfterPersist;
+
 
    addProperty( "current", &get_current, 0, true ); //static
 
@@ -443,11 +661,18 @@ ClassVMProcess::ClassVMProcess():
    addMethod( new CVMProcess::Function_pushCleanup );
    addMethod( new CVMProcess::Function_clearError );
 
+   addMethod( new CVMProcess::Function_pdata );
+   addMethod( new CVMProcess::Function_pdataSet );
+   addMethod( new CVMProcess::Function_vmdata );
+   addMethod( new CVMProcess::Function_vmdataSet );
+   addMethod( new CVMProcess::Function_edata );
+   addMethod( new CVMProcess::Function_edataSet );
+
 }
 
 ClassVMProcess::~ClassVMProcess()
 {
-
+   delete m_stepAfterPersist;
 }
 
 void* ClassVMProcess::createInstance() const

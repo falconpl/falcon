@@ -29,6 +29,7 @@
 #include <falcon/locationinfo.h>
 #include <falcon/stderrors.h>
 #include <falcon/scheduler.h>
+#include <falcon/gclock.h>
 
 #include <falcon/vm.h>
 
@@ -37,6 +38,36 @@
 #define FALCON_PROCESS_TIMESLICE 100
 
 namespace Falcon {
+
+   /** Persistent data map.
+      We have one of these per thread.
+   */
+class Processor::Private
+{
+public:
+   typedef std::map<String, GCLock*> PDataMap;
+   PDataMap* pdata;
+
+   Private()
+   {
+      pdata = new PDataMap;
+   }
+
+   ~Private()
+   {
+      PDataMap::iterator iter = pdata->begin();
+
+      while( iter != pdata->end() )
+      {
+         GCLock* gl = iter->second;
+         gl->dispose();
+         ++iter;
+      }
+
+      delete pdata;
+   }
+};
+
 
 // we can't have an init fiasco as m_me is used only after starting some processor thread.
 ThreadSpecific Processor::m_me;
@@ -47,6 +78,16 @@ Processor::Processor( int32 id, VMachine* owner ):
       m_thread(0),
       m_activity(0)
 {
+   _p = new Private;
+   m_pdata = new PData;
+}
+
+
+Processor::~Processor()
+{
+   join();
+   delete _p;
+   delete m_pdata;
 }
 
 
@@ -78,10 +119,6 @@ void Processor::join()
    }
 }
 
-Processor::~Processor()
-{
-   join();
-}
 
 void Processor::onError( Error* e )
 {

@@ -29,23 +29,13 @@
 #define FALCON_ERROR_WOPI_SESS_AFTER_OUT     (FALCON_ERROR_WOPI_BASE + 2 )
 #define FALCON_ERROR_WOPI_APPDATA_SER        (FALCON_ERROR_WOPI_BASE + 3 )
 #define FALCON_ERROR_WOPI_APPDATA_DESER      (FALCON_ERROR_WOPI_BASE + 4 )
-#define FALCON_ERROR_WOPI_PERSIST_NOT_FOUND  (FALCON_ERROR_WOPI_BASE + 5 )
-#define FALCON_ERROR_WOPI_FIELD_NOT_FOUND    (FALCON_ERROR_WOPI_BASE + 6 )
-#define FALCON_ERROR_WOPI_INVALID_CONFIG     (FALCON_ERROR_WOPI_BASE + 7 )
-#define FALCON_ERROR_WOPI_UPLOAD_TOO_BIG     (FALCON_ERROR_WOPI_BASE + 8 )
-#define FALCON_ERROR_WOPI_IO                 (FALCON_ERROR_WOPI_BASE + 9 )
-#define FALCON_ERROR_WOPI_REQUEST_PARSE      (FALCON_ERROR_WOPI_BASE + 10 )
+#define FALCON_ERROR_WOPI_FIELD_NOT_FOUND    (FALCON_ERROR_WOPI_BASE + 5 )
+#define FALCON_ERROR_WOPI_INVALID_CONFIG     (FALCON_ERROR_WOPI_BASE + 6 )
+#define FALCON_ERROR_WOPI_UPLOAD_TOO_BIG     (FALCON_ERROR_WOPI_BASE + 7 )
+#define FALCON_ERROR_WOPI_IO                 (FALCON_ERROR_WOPI_BASE + 8 )
+#define FALCON_ERROR_WOPI_REQUEST_PARSE      (FALCON_ERROR_WOPI_BASE + 9 )
 
 namespace Falcon {
-
-/*#
- @class PersistError
- @brief Error raised when problems saving or restoring persistent data are detected.
- */
-   FALCON_DECLARE_ERROR_INSTANCE( PersistError );
-   FALCON_DECLARE_ERROR_CLASS_EX( PersistError, \
-            addConstant("NotFound", FALCON_ERROR_WOPI_PERSIST_NOT_FOUND );\
-            );
 
 /*#
    @class WopiError
@@ -75,7 +65,6 @@ FALCON_DECLARE_ERROR_INSTANCE_WITH_DESC( WopiError,
          FALCON_ERROR_CLASS_DESC( FALCON_ERROR_WOPI_SESS_AFTER_OUT, "Session started after output" )
          FALCON_ERROR_CLASS_DESC( FALCON_ERROR_WOPI_APPDATA_SER, "Cannot store/save application specific data" )
          FALCON_ERROR_CLASS_DESC( FALCON_ERROR_WOPI_APPDATA_DESER, "Cannot restore application-specific data" )
-         FALCON_ERROR_CLASS_DESC( FALCON_ERROR_WOPI_PERSIST_NOT_FOUND, "Required field was not presented in the remote request" )
          FALCON_ERROR_CLASS_DESC( FALCON_ERROR_WOPI_INVALID_CONFIG, "Invalid configuration key or value" )
          FALCON_ERROR_CLASS_DESC( FALCON_ERROR_WOPI_UPLOAD_TOO_BIG, "Upload too big" )
          FALCON_ERROR_CLASS_DESC( FALCON_ERROR_WOPI_IO, "Generic input/output error" )
@@ -87,7 +76,6 @@ FALCON_DECLARE_ERROR_CLASS_EX( WopiError, \
          addConstant("SessionOutput", FALCON_ERROR_WOPI_SESS_AFTER_OUT);\
          addConstant("AppDataStore", FALCON_ERROR_WOPI_APPDATA_SER);\
          addConstant("AppDataRestore", FALCON_ERROR_WOPI_APPDATA_DESER);\
-         addConstant("PeristNotFound", FALCON_ERROR_WOPI_PERSIST_NOT_FOUND);\
          addConstant("FieldNotFound", FALCON_ERROR_WOPI_FIELD_NOT_FOUND);\
          addConstant("InvalidConfigKey", FALCON_ERROR_WOPI_INVALID_CONFIG);\
          addConstant("UploadTooBig", FALCON_ERROR_WOPI_UPLOAD_TOO_BIG); \

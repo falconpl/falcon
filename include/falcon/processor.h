@@ -26,6 +26,7 @@ class VMachine;
 class VMContext;
 class Error;
 class Item;
+class PData;
 
 /**
  Class representing a Virtual machine processor.
@@ -67,7 +68,13 @@ public:
     */
    VMContext* currentContext() const { return m_currentContext;  }
 
+   /** Get the Processor-wide persistent data. */
+   PData* pdata() const { return m_pdata; }
+
 private:
+   class Private;
+   Private* _p;
+
    int32 m_id;
    VMachine* m_owner;
    SysThread* m_thread;
@@ -77,6 +84,7 @@ private:
    static ThreadSpecific m_me;
 
    Scheduler::Activity* m_activity;
+   PData* m_pdata;
 
    static void onTimesliceExpired( void* data, Scheduler::Activity* activity );
 

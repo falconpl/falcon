@@ -36,6 +36,7 @@
 #include <falcon/modloader.h>
 #include <falcon/transcoder.h>
 #include <falcon/symbol.h>
+#include <falcon/processor.h>
 
 #include <falcon/engine.h>
 #include <falcon/stdhandlers.h>
@@ -50,25 +51,6 @@ namespace Falcon {
 namespace WOPI {
 
 namespace {
-class PStepAfterPersist: public PStep
-{
-public:
-   inline PStepAfterPersist() { apply = apply_; }
-   inline virtual ~PStepAfterPersist() {}
-   virtual void describeTo( String& target ) const { target = "PStepAfterPersist"; }
-
-   static void apply_(const PStep*, VMContext* ctx)
-   {
-      // we have the object to be saved in the persist data in top,
-      // and the frame is that of the persist() method
-      Falcon::Item *i_id = ctx->param( 0 );
-      Wopi* wopi = static_cast<Wopi*>(ctx->self().asInst());
-      const String& src = *i_id->asString();
-      wopi->setContextData( src, ctx->topData() );
-      ctx->returnFrame();
-   }
-
-};
 
 
 /*#
@@ -215,159 +197,6 @@ static void get_sdata(const Class*, const String&, void* instance, Item& value )
    is exposed through @a Request, @a Reply or @a Wopi.
 */
 
-
-
-
-/*#
-   @method getAppData Wopi
-   @brief Gets global, persistent web application data.
-   @optparam app Application name for the specific data.
-   
-   This method restores application-wide data set through
-   the @a Wopi.setData method. The optional parameter @b app
-   may be specified to indicate a different applicaiton
-   name under which the data are to be saved and restored.
-
-   See @a wopi_appdata for further details.
-*/
-
-
-/*#
-   @method setAppData Wopi
-   @brief Sets global, persistent web application data.
-   @param data The data to be saved (in a dictionary)
-   @optparam app Application name for the specific data.
-   @return True if the synchronization with the application
-           data was successful, false in case the data was
-           already changed.
-   
-   This method saves application-wide data, that can be
-   retrieved elsewhere to have persistent data. The
-   optional parameter @b app
-   may be specified to indicate a different applicaiton
-   name under which the data are to be saved and restored.
-   
-   @note Important: be sure that the data to be saved can be
-   safely and directly serialized.
-
-   The function may return false if the synchronization failed.
-   If you want to atomically receive the new contents of the
-   data, pass it by reference.
-
-   See @a wopi_appdata for further details.
-*/
-
-
-/*#
-   @method persist Wopi
-   @brief Retrieves or eventually creates per-context persistent data
-   @param id Unique ID for persistent data.
-   @optparam creator Code or callable evaluated to create the persistent data.
-   @return The previously saved item.
-   @raise PersistError if the persistent key is not found and creator code is not given.
-
-   This method restores execution-context (usually process or thread) specific
-   persistent data that was previously saved, possibly by another VM process
-   (i.e. another script).
-
-   An optional @b code parameter is evaluated in case the data under
-   the given @b id is not found; the evaluation result is
-   then d in the persistent data slot, as if @a Wopi.setPersist was
-   called with the same @b id to save the data, and is then returned to
-   the caller of this method.
-
-   See @a wopi_pdata for further details.
-*/
-FALCON_DECLARE_FUNCTION(persist, "id:S,code:[C]")
-FALCON_DEFINE_FUNCTION_P1(persist)
-{
-   // Get the ID of the persistent data
-   Falcon::Item *i_id = ctx->param( 0 );
-   Falcon::Item *i_func = ctx->param( 1 );
-
-   // parameter sanity check.
-   if ( i_id == 0 || ! i_id->isString() ||
-         ( i_func != 0 && ! (i_func->isCallable() || i_func->isTreeStep()) )
-      )
-   {
-      throw paramError();
-   }
-
-   Wopi* wopi = static_cast<Wopi*>(ctx->self().asInst());
-
-   Item target;
-   bool success = wopi->getContextData( *i_id->asString(), target );
-
-   // Not found?
-   if( ! success )
-   {
-      // should we initialize the data?
-      if ( i_func != 0 )
-      {
-         ClassWopi* clw = static_cast<ClassWopi*>(methodOf());
-         ctx->pushCode( clw->m_stepAfterPersist );
-         ctx->callItem(*i_func);
-      }
-      else
-      {
-         throw FALCON_SIGN_ERROR( PersistError, FALCON_ERROR_WOPI_PERSIST_NOT_FOUND);
-      }
-   }
-   // otherwise, all ok
-   else {
-      ctx->returnFrame(target);
-   }
-}
-
-
-/*#
-   @method setPersist Wopi
-   @brief Creates, updates or remove local per-thread persistent data.
-   @param id Unique ID for persistent data.
-   @param item A data to be stored persistently.
-
-   This method saves O/S context-specific data, to be
-   retrieved, eventually by another VM process at a later
-   execution under the same O/S context (usually, a thread or a process).
-
-   Persistent data is identified by an unique ID. An application
-   can present different persistent data naming them differently.
-
-   @note The id can be any a valid string, including an empty string.
-   So, "" can be used as a valid persistent key.
-
-   Setting the item to nil effectively removes the entry from the
-   persistent storage. However, the data will be reclaimed (and finalized)
-   during the next garbage collection loop.
-
-   See @a wopi_pdata for further details.
-*/
-FALCON_DECLARE_FUNCTION(setPersist, "id:S,item:X")
-FALCON_DEFINE_FUNCTION_P1(setPersist)
-{
-   // Get name of the file.
-   Falcon::Item *i_id = ctx->param( 0 );
-   Falcon::Item *i_item = ctx->param( 1 );
-
-   // parameter sanity check.
-   if ( i_id == 0 || ! i_id->isString() || i_item == 0 )
-   {
-      throw paramError();
-   }
-
-   Wopi* wopi = static_cast<Wopi*>(ctx->self().asInst());
-   const String& id = *i_id->asString();
-
-   if( i_item->isNil() )
-   {
-      wopi->removeContextData( id );
-   }
-   else {
-      wopi->setContextData( id, *i_item );
-   }
-
-   ctx->returnFrame();
-}
 
 
 /*#
@@ -903,8 +732,6 @@ FALCON_DEFINE_FUNCTION_P1(getcfg)
 ClassWopi::ClassWopi():
          Class("%Wopi")
 {
-   m_stepAfterPersist = new PStepAfterPersist;
-
    addProperty("scriptName", &get_scriptName );
    addProperty("scriptPath", &get_scriptPath );
    addProperty("sdata", &get_sdata );
@@ -927,7 +754,6 @@ ClassWopi::ClassWopi():
 
 ClassWopi::~ClassWopi()
 {
-   delete m_stepAfterPersist;
 }
 
 void ClassWopi::dispose( void* ) const

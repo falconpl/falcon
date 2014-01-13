@@ -21,7 +21,10 @@
 #include <falcon/collectoralgorithm.h>
 
 namespace Falcon {
+class PStep;
+
 namespace Ext {
+
 
 /*#
  @class VMProcess 
@@ -49,6 +52,8 @@ public:
    virtual bool gcCheckInstance( void* instance, uint32 mark ) const;
 
    //virtual bool op_init( VMContext* ctx, void*, int pcount ) const;
+
+   PStep* m_stepAfterPersist;
 };
 
 }

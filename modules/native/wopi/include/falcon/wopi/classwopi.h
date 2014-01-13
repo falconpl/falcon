@@ -37,8 +37,6 @@ public:
    virtual void dispose( void* instance ) const;
    virtual void* clone( void* instance ) const;
    virtual void* createInstance() const;
-
-   PStep* m_stepAfterPersist;
 };
 
 }

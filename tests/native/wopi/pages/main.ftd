@@ -11,7 +11,6 @@
 <li>Session control test: <?= makeTestLink( "sessions" ) ?></li>
 <li>Session with explicit ID test: <?= makeTestLink( "sessions_expl" ) ?></li>
 <li>Persistent data test: <?= makeTestLink( "persistent" ) ?></li>
-<li>Application wide data control: <?= makeTestLink( "appdata" ) ?></li>
 </ul>
 <?
    function makeTestLink( id )

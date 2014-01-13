@@ -34,6 +34,10 @@
 #include <falcon/autocstring.h>
 #include <falcon/filedata_posix.h>
 
+#ifdef __gnu_linux__
+#include <linux/unistd.h>
+#endif
+
 #include <string.h>
 
 #include <vector>
@@ -423,6 +427,16 @@ void Process::sys_open( const String& cmd, int params )
 uint64 processId()
 {
    return (uint64) getpid();
+}
+
+uint64 threadId()
+{
+#ifdef __gnu_linux__
+   return (int64) syscall( __NR_gettid );
+
+#else
+   return 0;
+#endif
 }
 
 bool processKill( uint64 id )

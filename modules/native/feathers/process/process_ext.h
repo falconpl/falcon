@@ -31,6 +31,7 @@ namespace Falcon {
 namespace Ext {
 
 FALCON_DECLARE_FUNCTION( pid, "" );
+FALCON_DECLARE_FUNCTION( tid, "" );
 FALCON_DECLARE_FUNCTION( kill, "pid:N,severe:[B]" );
 FALCON_DECLARE_FUNCTION( system, "command:S,background:[B]" );
 FALCON_DECLARE_FUNCTION( systemCall, "command:S,background:[B],usePath:[B]" );

@@ -45,6 +45,7 @@ class PoolList;
 class Pool;
 class GCLock;
 class Symbol;
+class PData;
 class SymbolPool;
 
 class Module;
@@ -345,6 +346,9 @@ public:
    const String& fullVersion() const;
    int64 versionID() const;
 
+   /** Get the engine-wide persistent data. */
+   PData* pdata() const { return m_pdata; }
+
 protected:
    Engine();
    ~Engine();
@@ -399,7 +403,7 @@ protected:
 
    MantraMap* m_mantras;
    PredefMap* m_predefs;
-
+   PData* m_pdata;
    
    MantraMap* m_errHandlers;
    mutable Mutex m_mtxEH;

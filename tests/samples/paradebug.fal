@@ -1,0 +1,24 @@
+
+barrier = Barrier()
+count = 0
+
+function dbg()
+   /* 
+      Use "eval count" command to get current count 
+      Use "cont" command to exit the debugger.
+   */      
+   Debugger.breakpoint()
+   barrier.open()
+end
+
+function doThing()
+   wt = Waiter(barrier)
+   
+   while not wt.wait(2500)
+      > "More things to do... ", ++count
+   end
+end
+
+> "Main"
+Parallel(dbg, doThing).launch(  )
+> "Main complete"

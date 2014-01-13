@@ -7,11 +7,13 @@ assigned to the calling process, instead of reopened each time a page is loaded)
 from a new page. Reload the page to see it in action.<p>
 <p>Please, notice that the counter will be always re-initialized in CGI-based frameworks.</p>
 <?
-import from process
-import from threading
+import from process in process
 
 class MyData
    counter = 0
+   init 
+      > "Hello"
+   end
    
    function update()
       if self.counter == 0
@@ -24,15 +26,18 @@ class MyData
 end
 
 if Request.getField( "reset", nil )
-   Wopi.setPData( "counter", nil )
+   VMProcess.current.pdataSet( "counter", nil )
+   VMProcess.current.edataSet( "counter", nil )
 end
 
-inst = Wopi.getPData( "counter", .[ MyData ] )
+pinst = VMProcess.current.pdata( "counter", MyData )
+einst = VMProcess.current.edata( "counter", {() MyData() } )
 ?>
 <table border="0" cellspacing="2" cellpadding="4">
-<tr><td>Current process:</td><td><b><?= process.processId() ?></b></td></tr>
-<tr><td>Current thread:</td><td><b><?= threading.Threading.getCurrentID() ?></b></td></tr>
-<tr><td>Stauts:</td><td><b><?= inst.update() ?></b></td></tr>
+<tr><td>Current process:</td><td><b><?= process.pid() ?></b></td></tr>
+<tr><td>Current thread:</td><td><b><?= process.tid() ?></b></td></tr>
+<tr><td>Processor persistent:</td><td><b><?= pinst.update() ?></b></td></tr>
+<tr><td>Engine persistent:</td><td><b><?= einst.update() ?></b></td></tr>
 </table>
 <br/>
 <p>To reset this process, <a href="<?= makeLink(Request.gets["p"]) +"&reset=yes" ?>">click here</a>.</p>

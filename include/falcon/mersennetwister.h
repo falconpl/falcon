@@ -64,6 +64,7 @@
 #include <time.h>
 #include <math.h>
 #include <falcon/types.h>
+#include <falcon/sys.h>
 
 #include <falcon/mt.h>
 
@@ -129,6 +130,7 @@ public:
 	void seed( const uint32 oneSeed );
 	void seed( uint32 *const bigSeed, const uint32 seedLength = N );
 	void seed();
+	void seedWithPid();
 
 	// Saving and loading generator state
 	void save( uint32* saveArray ) const;  // to array of size SAVE
@@ -354,6 +356,12 @@ inline void MTRand::seed()
 {
 	// Seed the generator with hash of time() and clock() values
 	seed( hash( time(NULL), clock() ) );
+}
+
+inline void MTRand::seedWithPid()
+{
+   // Seed the generator with hash of time() and clock() values
+   seed( hash( time_t(Falcon::Sys::_getpid()), clock() ) );
 }
 
 

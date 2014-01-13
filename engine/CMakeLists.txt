@@ -389,6 +389,7 @@ add_library(falcon_engine SHARED
   module.cpp
   multiplex.cpp
   overridableclass.cpp
+  pdata.cpp
   process.cpp
   processor.cpp
   prototypeclass.cpp

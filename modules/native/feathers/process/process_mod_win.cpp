@@ -90,6 +90,11 @@ uint64 processId()
    return (uint64) GetCurrentProcessId();
 }
 
+uint64 threadId()
+{
+   return (uint64) GetCurrentThreadId();
+}
+
 bool processKill( uint64 id )
 {
    HANDLE hProc = OpenProcess( PROCESS_TERMINATE, FALSE, (uint32) id );

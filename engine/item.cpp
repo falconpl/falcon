@@ -75,6 +75,7 @@ bool Item::isCallable() const
    return isFunction()
             || (isArray() && (!asArray()->at(0).isArray() && asArray()->at(0).isCallable()))
             || isMethod()
+            || isClass()
             || (isUser() && asClass()->typeID() == FLC_CLASS_ID_CLOSURE);
 }
 

@@ -68,6 +68,7 @@
 #include <falcon/bom.h>
 #include <falcon/stdsteps.h>
 #include <falcon/synfunc.h>
+#include <falcon/gclock.h>
 
 //--- object headers ---
 #include <falcon/pseudofunc.h>
@@ -83,6 +84,7 @@
 #include <falcon/symbol.h>
 
 #include <falcon/item.h>         // for builtin
+#include <falcon/pdata.h>
 
 #include <falcon/stdmpxfactories.h>
 #include <falcon/sys.h>
@@ -224,7 +226,8 @@ Engine::Engine()
    }   
    m_instance = this; // modules need the engine.
 
-   m_rand.seed( (int32) Sys::_milliseconds() );
+   m_rand.seedWithPid();
+   m_pdata = new PData;
    m_mtx = new Mutex;
    m_log = new Log;
 
@@ -419,6 +422,7 @@ Engine::~Engine()
    //
    delete m_bom;
    delete m_stdSteps;
+   delete m_pdata;
 
    delete m_mtx;
    
@@ -792,6 +796,9 @@ void Engine::releaseSymbol( Symbol* sym )
    fassert( m_instance != 0 );
    m_instance->m_symbols->release(sym);
 }
+
+
+
 
 }
 

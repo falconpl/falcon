@@ -77,7 +77,6 @@ ModuleWopi::ModuleWopi( const String& name, Request* req, Reply* rep ):
          << m_classRequest
          << m_classWopi
          << m_classUploaded
-         << new ClassPersistError
          << new ClassWopiError
    ;
 

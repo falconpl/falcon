@@ -54,6 +54,25 @@ FALCON_DEFINE_FUNCTION_P1(pid)
    ctx->returnFrame( Item().setInteger(Mod::processId()) );
 }
 
+
+/*#
+   @funciton tid
+   @brief Returns the thread ID of the process hosting the Falcon VM (if any).
+
+   For command line Falcon interpreter, this ID may be considered the ID
+   of the Falcon program being executed; in embedding applications, the
+   function will return the thread ID associated with the thread running the current
+   context in the host application.
+
+   \note This number is not significant on many POSIX systems. A direct usage
+   of a POSIX Pthread library wrapping may be necessary on those systems to
+   have a consistent information.
+*/
+FALCON_DEFINE_FUNCTION_P1(tid)
+{
+   ctx->returnFrame( Item().setInteger(Mod::threadId()) );
+}
+
 /*#
    @function kill
    @brief Terminates the given process given its ID, if possible.
@@ -771,6 +790,7 @@ ProcessModule::ProcessModule():
    *this
          << new ::Falcon::Ext::Function_kill
          << new ::Falcon::Ext::Function_pid
+         << new ::Falcon::Ext::Function_tid
          << new ::Falcon::Ext::Function_system
          << new ::Falcon::Ext::Function_systemCall
          << new ::Falcon::Ext::Function_pread

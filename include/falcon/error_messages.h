@@ -308,6 +308,7 @@ FAL_ERRORDECL( e_expr_assign, 910, "Given tree step cannot be assigned to the ho
 FAL_ERRORDECL( e_param_compo, 911, "Positional parameter given after named parameter" );
 FAL_ERRORDECL( e_param_noname, 912, "Target item doesn't support named parameters" );
 FAL_ERRORDECL( e_param_notfound, 913, "Can't find parameter given by name" );
+FAL_ERRORDECL( e_object_not_found, 914, "Accessed entity not found in enumeration or set");
 
 FAL_ERRORDECL( e_internal, 998, "Intenral error" )
 FAL_ERRORDECL( e_paranoid, 999, "Paranoid check failed" );

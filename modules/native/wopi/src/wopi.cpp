@@ -236,30 +236,8 @@ public:
 // Wopi Main object
 //
 
-void Wopi::pdata_deletor( void* data )
-{
-   // maybe an overkill, but...
-   if ( data == 0 )
-      return;
 
-   PDataMap* pm = (PDataMap*) data;
-   PDataMap::iterator iter = pm->begin();
-
-   while( iter != pm->end() )
-   {
-      GCLock* gl = iter->second;
-      gl->dispose();
-      ++iter;
-   }
-
-   delete pm;
-}
-
-
-
-
-Wopi::Wopi():
-      m_ctxdata( Wopi::pdata_deletor )
+Wopi::Wopi()
 {
    m_ss = 0;
    m_saved = false;
@@ -384,93 +362,6 @@ bool Wopi::addConfigOption( ConfigEntry::t_type t, const String& name, const Str
    m_config[name] = entry;
    return true;
 }
-
-bool Wopi::setContextData( const String& id, const Item& data )
-{
-   // get the thread-specific data map
-   PDataMap* pm = (PDataMap*) m_ctxdata.get();
-
-   // we don't have it?
-   if( pm == 0 )
-   {
-      pm = new PDataMap;
-      m_ctxdata.set( pm );
-   }
-
-   // search the key
-   PDataMap::iterator iter = pm->find( id );
-
-   // already around?
-   if( iter != pm->end() )
-   {
-      GCLock* gl = iter->second;
-      gl->item() = data;
-      return false;
-   }
-   else
-   {
-      (*pm)[id] = Engine::collector()->lock( data );
-   }
-
-   return true;
-}
-
-
-bool Wopi::getContextData( const String& id, Item& data ) const
-{
-   // get the thread-specific data map
-   PDataMap* pm = (PDataMap*) m_ctxdata.get();
-
-   // we don't have it?
-   if( pm == 0 )
-   {
-      // then we can hardly have the key
-      return false;
-   }
-
-   // search the key
-   PDataMap::iterator iter = pm->find( id );
-
-   // already around?
-   if( iter != pm->end() )
-   {
-      GCLock* gl = iter->second;
-      data = gl->item();
-      return true;
-   }
-
-   // didn't find it
-   return false;
-}
-
-
-bool Wopi::removeContextData( const String& id )
-{
-   // get the thread-specific data map
-   PDataMap* pm = (PDataMap*) m_ctxdata.get();
-
-   // we don't have it?
-   if( pm == 0 )
-   {
-      // nothing to remove
-      return false;
-   }
-
-   // search the key
-   PDataMap::iterator iter = pm->find( id );
-
-   // already around?
-   if( iter != pm->end() )
-   {
-      GCLock* gl = iter->second;
-      gl->dispose();
-      pm->erase(iter);
-      return true;
-   }
-
-   return false;
-}
-
 
 bool Wopi::setConfigValue(const String& key, const String& value, String& error )
 {

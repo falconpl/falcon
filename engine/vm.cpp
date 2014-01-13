@@ -119,6 +119,7 @@ VMachine::VMachine( Stream* stdIn, Stream* stdOut, Stream* stdErr )
    // create the first context
    TRACE( "Virtual machine created at %p", this );
    _p = new Private;
+   m_pdata = new PData;
 
    if ( stdIn == 0 )
    {
@@ -193,6 +194,7 @@ VMachine::~VMachine()
    m_stdErr->decref();
 
    delete _p;
+   delete m_pdata;
    
    TRACE( "Virtual machine destroyed at %p", this );
 }

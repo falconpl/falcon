@@ -25,6 +25,7 @@
 #include <falcon/syncqueue.h>
 #include <falcon/contextmanager.h>
 #include <falcon/scheduler.h>
+#include <falcon/pdata.h>
 
 #include <falcon/mersennetwister.h>
 
@@ -306,6 +307,9 @@ public:
 
    MTRand_interlocked& mtrand() const { return m_rand; }
 
+   /** Get the VM-wide persistent data. */
+   PData* pdata() const { return m_pdata; }
+
 protected:
 
    Stream *m_stdIn;
@@ -320,6 +324,8 @@ protected:
    ContextManager m_ctxMan;
 
    Scheduler m_scheduler;
+
+   PData* m_pdata;
 
    mutable MTRand_interlocked m_rand;
 

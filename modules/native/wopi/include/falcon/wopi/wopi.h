@@ -124,13 +124,6 @@ public:
    void enumerateConfigOptions( ConfigEnumerator& rator ) const;
 
    //============================================================
-   // By-context data
-   //
-   bool setContextData( const String& id, const Item& data );
-   bool getContextData( const String& id, Item& data ) const;
-   bool removeContextData( const String& id );
-
-   //============================================================
    // High level configs
    //
    bool configFromIni( TextReader* iniFile, String& errors );
@@ -188,10 +181,6 @@ public:
    void isSaved( bool b ) { m_saved = b; }
 
 private:
-   /** Persistent data map.
-      We have one of these per thread.
-   */
-   typedef std::map<String, GCLock*> PDataMap;
    typedef std::map<String, ConfigEntry*> ConfigMap;
 
    typedef std::list<String> TempFileList;
@@ -206,10 +195,6 @@ private:
 
    SessionService* m_ss;
    bool m_saved;
-
-   /** Persistent data. */
-   ThreadSpecific m_ctxdata;
-   static void pdata_deletor( void* );
 
    void initConfigOptions();
 };
