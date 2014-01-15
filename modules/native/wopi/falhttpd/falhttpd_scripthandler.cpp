@@ -49,6 +49,10 @@ void ScriptHandler::serve( Falcon::WOPI::Request* req )
    FalhttpdApp* app = FalhttpdApp::get();
    Process* process = app->vm()->createProcess();
 
+   // declare the process main context already active, so that the GC
+   // won't mark/sweep till we put the context in execution (or kill it).
+   process->mainContext()->setStatus(VMContext::statusReady);
+
    // we must have already checked for the engine having this encoding.
    process->setStdEncoding(m_client->options().m_sTextEncoding);
 
@@ -153,8 +157,7 @@ void ScriptHandler::serve( Falcon::WOPI::Request* req )
       String s = err->describe();
       reply->setContentType("text/plain");
       process->textOut()->write( s );
-      String text = "Script "+ m_sFile + " terminated with error: " + s;
-      LOGW( text );
+      LOGW( "Script "+ m_sFile + " terminated with error: " + s );
       err->decref();
    }
 

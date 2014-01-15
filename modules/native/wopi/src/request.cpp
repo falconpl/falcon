@@ -72,8 +72,6 @@ Request::~Request()
 
 void Request::parse( Stream* input )
 {
-   Engine::collector()->enable(false);
-
    try
    {
       parseHeader( input );
@@ -87,8 +85,6 @@ void Request::parse( Stream* input )
       Engine::collector()->enable(true);
       throw;
    }
-
-   Engine::collector()->enable(true);
 }
 
 
