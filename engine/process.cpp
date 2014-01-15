@@ -193,6 +193,12 @@ Process::~Process() {
       m_breakCallback->onUnistalled(this);
    }
 
+   // we might have already done this, but in that case,
+   // there will be no harm.
+   // Instead, we absolutely need this if we destroyed the process prior
+   // even trying to run it.
+   Engine::collector()->unregisterContext(m_context);
+
    m_context->decref();
    m_modspace->decref();
    if( m_error != 0 ) {
