@@ -41,24 +41,24 @@ public:
    //
 
    //! Do a complete parse of the whole input (headers and body)
-   void parse( Stream* input );
+   virtual void parse( Stream* input );
 
    //! parse the header part.
    /** \note this inserts Falcon GC relevant objects in the GC,
     *  if invoked from outside the VM, wrap in gc-disabled zone.
     *  (Also, the Request object should be already locked/reachable from GC)
     */
-   void parseHeader( Stream* input );
+   virtual void parseHeader( Stream* input );
 
    //! Parses the body.
    /** \note this inserts Falcon GC relevant objects in the GC,
     *  if invoked from outside the VM, wrap in gc-disabled zone.
     *  (Also, the Request object should be already locked/reachable from GC)
     */
-   void parseBody( Stream* input );
+   virtual void parseBody( Stream* input );
 
    //! Reads relevant CGI-environ variables
-   void parseEnviron();
+   virtual void parseEnviron();
 
    //=========================================================
 

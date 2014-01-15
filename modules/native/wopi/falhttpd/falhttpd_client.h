@@ -25,44 +25,42 @@ s
 #include <falcon/wopi/request.h>
 #include <falcon/wopi/reply.h>
 #include <falcon/wopi/mem_sm.h>
+#include <falcon/wopi/client.h>
+#include <falcon/wopi/errorhandler.h>
 
 namespace Falcon
 {
 
-class FalhttpdClient
+class FalhttpdClient: public WOPI::Client
 {
 public:
    FalhttpdClient( const FalhttpOptions& opts, Mod::Socket* skt );
-   ~FalhttpdClient();
+   virtual ~FalhttpdClient();
 
    void close();
    void serve();
 
-   void replyError( int errorID, const String& explain="" );
-   String codeDesc( int errorID );
-   String getServerSignature();
-   void consumeRequest();
-
-   void sendData( const String& sReply );
-   void sendData( const void* data, uint32 size );
-
    const FalhttpOptions& options() const { return m_options; }
    Mod::Socket* skt() const { return m_skt; }
-   Stream* stream() const { return m_stream; }
-   WOPI::Reply* reply() const { return m_reply; }
 
-   void detachReply() { m_bDeleteReply = false; }
+   WOPI::ErrorHandler& errhand() { return m_errhand; }
+
+   void replyError( int code, const String& msg = "" ) { m_errhand.replyError(this, code, msg); }
 private:
    void serveRequest(
          const String& sMethod, const String& sUri,  const String& sProto );
 
    Mod::Socket* m_skt;
-   bool m_bComplete;
-   StreamBuffer* m_stream;
-   WOPI::Reply* m_reply;
-
    const FalhttpOptions& m_options;
-   bool m_bDeleteReply;
+
+   class SHErrorHandler: public WOPI::ErrorHandler
+   {
+   public:
+      SHErrorHandler() {}
+      virtual ~SHErrorHandler() {}
+      virtual void replyError( WOPI::Client* client, int code, const String& message );
+   }
+   m_errhand;
 };
 
 }

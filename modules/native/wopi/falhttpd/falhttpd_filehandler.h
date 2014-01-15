@@ -29,7 +29,7 @@ class FileHandler: public FalhttpdRequestHandler
 public:
    FileHandler( const Falcon::String& sFile, FalhttpdClient* client );
    virtual ~FileHandler();
-   virtual void serve( Falcon::WOPI::Request* req );
+   virtual void serve();
 };
 
 }

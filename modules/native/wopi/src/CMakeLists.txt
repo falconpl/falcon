@@ -31,6 +31,8 @@ set(_files
   uploaded.cpp
   utils.cpp
   wopi.cpp
+  client.cpp
+  scriptrunner.cpp
   
   classrequest.cpp
   classreply.cpp

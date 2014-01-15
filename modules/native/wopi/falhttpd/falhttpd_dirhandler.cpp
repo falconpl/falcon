@@ -40,10 +40,11 @@ DirHandler::~DirHandler()
 }
 
 
-void DirHandler::serve( WOPI::Request* req )
+void DirHandler::serve()
 {
    // open the directory
    Falcon::Directory *de = 0;
+   WOPI::Request* req  = m_client->request();
 
    // read the rest of the request.
    try
@@ -52,8 +53,7 @@ void DirHandler::serve( WOPI::Request* req )
    }
    catch( Error* error )
    {
-      m_client->replyError( 400, error->describe(true) );
-      delete req;
+      m_client->errhand().replyError( m_client, 400, error->describe(true) );
       error->decref();
       return;
    }
@@ -95,11 +95,10 @@ void DirHandler::serve( WOPI::Request* req )
    catch(Error* e )
    {
       LOGW( "Can't open directory " + m_sFile );
-      m_client->replyError( 403 );
+      m_client->errhand().replyError( m_client, 403, "" );
    }
 
    delete de;
-   delete req;
 }
 
 }

@@ -31,7 +31,7 @@ class DirHandler: public FalhttpdRequestHandler
 public:
    DirHandler( const Falcon::String& sFile, FalhttpdClient* client );
    virtual ~DirHandler();
-   virtual void serve( Falcon::WOPI::Request* req );
+   virtual void serve();
 };
 
 }

@@ -9,7 +9,7 @@
    -------------------------------------------------------------------
    Author: Giancarlo Niccolai
    Begin: Wed, 24 Feb 2010 20:10:45 +0100
-s
+
    -------------------------------------------------------------------
    (C) Copyright 2010: the FALCON developers (see list in AUTHORS file)
 
@@ -42,23 +42,19 @@ s
 namespace Falcon {
 
 FalhttpdClient::FalhttpdClient( const FalhttpOptions& options, Mod::Socket* skt ):
+   Client( new WOPI::Request, new WOPI::Reply, new StreamBuffer(skt->makeStreamInterface()) ),
    m_skt( skt ),
-   m_bComplete( false ),
-   m_options( options ),
-   m_bDeleteReply(true)
+   m_options( options )
 {
    LOGI( "Incoming client from "+ skt->address()->toString() );
-   m_stream = new StreamBuffer(m_skt->makeStreamInterface());
-   m_reply = new WOPI::Reply;
    m_reply->setCommitHandler( new WOPI::StreamCommitHandler(m_stream) );
 }
 
+
 FalhttpdClient::~FalhttpdClient()
 {
-   close();
-   if( m_bDeleteReply )
-      delete m_reply;
 }
+
 
 void FalhttpdClient::close()
 {
@@ -79,7 +75,7 @@ void FalhttpdClient::serve()
 
    // get the header
    String sHeader;
-   StreamBuffer& si = *m_stream;
+   StreamBuffer& si = *static_cast<StreamBuffer*>(m_stream);
    uint32 chr;
    while ( ! sHeader.endsWith("\r\n") && si.get(chr) )
    {
@@ -117,7 +113,7 @@ void FalhttpdClient::serve()
    if ( type == 0 )
    {
       LOGW( "Client "+ m_skt->address()->toString() + " has sent an invalid type: " + sHeader );
-      replyError( 400, "Invalid requests type" );
+      m_errhand.replyError( this, 400, "Invalid requests type" );
       return;
    }
 
@@ -125,14 +121,14 @@ void FalhttpdClient::serve()
    if( ! uri.isValid() )
    {
       LOGW( "Client "+ m_skt->address()->toString() + " has sent an invalid URI: " + sHeader );
-      replyError( 400, "Invalid invalid uri" );
+      m_errhand.replyError( this, 400, "Invalid invalid uri" );
       return;
    }
 
    if( sProto != "HTTP/1.0" && sProto != "HTTP/1.1" )
    {
       LOGW( "Client "+ m_skt->address()->toString() + " has sent an invalid Protocol: " + sHeader );
-      replyError( 505 );
+      m_errhand.replyError( this, 505, "" );
       return;
    }
 
@@ -147,7 +143,7 @@ void FalhttpdClient::serveRequest(
 
    // first, read the headers.
 
-   WOPI::Request* req = new WOPI::Request;
+   WOPI::Request* req = m_request;
    req->startedAt( Sys::_seconds() );
 
    req->setURI( sUri );
@@ -159,8 +155,7 @@ void FalhttpdClient::serveRequest(
    if ( ! m_options.remap( sFile ) )
    {
       LOGW( "Not found file "+ sFile );
-      replyError( 404 );
-      delete req;
+      m_errhand.replyError( this, 404, "" );
    }
    else
    {
@@ -169,20 +164,23 @@ void FalhttpdClient::serveRequest(
 
       // and finally process the request through the appropriate request handler.
       FalhttpdRequestHandler* rh = m_options.getHandler( sFile, this );
-      rh->serve( req );
+      rh->serve();
       delete rh;
    }
    LOGI( "Served client "+ m_skt->address()->toString() );
 }
 
 
-void FalhttpdClient::replyError( int errorID, const String& explain )
+
+void FalhttpdClient::SHErrorHandler::replyError( WOPI::Client* client, int code, const String& explain )
 {
-   String sErrorDesc = codeDesc( errorID );
+   FalhttpdClient* cli = static_cast<FalhttpdClient*>(client);
+
+   String sErrorDesc = FalhttpdApp::codeDesc( code );
    String sReply;
    String sError;
-   m_reply->reason(sErrorDesc);
-   m_reply->status(errorID);
+   cli->reply()->reason(sErrorDesc);
+   cli->reply()->status(code);
 
    // for now, we create the docuemnt here.
    // TODO Read the error document from a file.
@@ -203,124 +201,20 @@ void FalhttpdClient::replyError( int errorID, const String& explain )
       sErrorDoc += "<p>An error of type <b>" + sError + "</b> has been detected while parsing your request.</p>\n";
    }
 
-   sErrorDoc += getServerSignature();
+   sErrorDoc += FalhttpdApp::serverSignature();
    sErrorDoc += "</body>\n</html>\n";
 
    AutoCString content( sErrorDoc );
 
    TimeStamp now;
    now.currentTime();
-   m_reply->setHeader( "Date", now.toRFC2822() );
+   cli->reply()->setHeader( "Date", now.toRFC2822() );
 
-   m_reply->setHeader( "Content-Length", String().N( (int64) content.length() ));
-   m_reply->setContentType("text/html; charset=utf-8");
+   cli->reply()->setHeader( "Content-Length", String().N( (int64) content.length() ));
+   cli->reply()->setContentType("text/html; charset=utf-8");
 
-   LOGI( "Sending ERROR reply to client " + m_skt->address()->toString() + ": " + sError );
-   sendData( content.c_str(), content.length() );
-
-}
-
-String FalhttpdClient::getServerSignature()
-{
-   //TODO Make this configurable
-   String sString = "<br/><hr/>\n<p><i>Falcon HTTPD simple server.</i></p>\n";
-
-   return sString;
-}
-
-
-void FalhttpdClient::consumeRequest()
-{
-   unsigned char buffer[2048];
-   while( m_skt->recv(buffer,2048) == 2048);
-}
-
-
-String FalhttpdClient::codeDesc( int errorID )
-{
-   switch( errorID )
-   {
-   // continue codes
-   case 100: return "Continue";
-   case 101: return "Switching Protocols";
-
-   // Success codes
-   case 200: return "OK";
-   case 201: return "Created";
-   case 202: return "Accepted";
-   case 203: return "Non-Authoritative Information";
-   case 204: return "No Content";
-   case 205: return "Reset Content";
-   case 206: return "Partial Content";
-
-   // Redirection Codes
-   case 300: return "Multiple Choices";
-   case 301: return "Moved Permanently";
-   case 302: return "Found";
-   case 303: return "See Other";
-   case 304: return "Not Modified";
-   case 305: return "Use Proxy";
-   case 307: return "Temporary Redirect";
-
-   // Client Error Codes
-
-   case 400: return "Bad Request";
-   case 401: return "Unauthorized";
-   case 402: return "Payment Required";
-   case 403: return "Forbidden";
-   case 404: return "Not Found";
-   case 405: return "Method Not Allowed";
-   case 406: return "Not Acceptable";
-   case 407: return "Proxy Authentication Required";
-   case 408: return "Request Timeout";
-   case 409: return "Conflict";
-   case 410: return "Gone";
-   case 411: return "Length Required";
-   case 412: return "Precondition Failed";
-   case 413: return "Request Entity Too Large";
-   case 414: return "Request-URI Too Large";
-   case 415: return "Unsupported Media Type";
-   case 416: return "Requested Range Not Satisfiable";
-   case 417: return "Expectation Failed";
-
-   // Server Error Codes
-   case 500: return "Internal Server Error";
-   case 501: return "Not Implemented";
-   case 502: return "Bad Gateway";
-   case 503: return "Service Unavailable";
-   case 504: return "Gateway Timeout";
-   case 505: return "HTTP Version not supported";
-
-   }
-
-   return "Unknown code";
-}
-
-
-void FalhttpdClient::sendData( const String& sReply )
-{
-   sendData( sReply.getRawStorage(), sReply.size() );
-}
-
-
-void FalhttpdClient::sendData( const void* data, uint32 size )
-{
-   uint32 sent = 0;
-   int res = 0;
-   const byte* bdata = (const byte* ) data;
-
-   m_reply->commit();
-
-   while( sent < size )
-   {
-      res = m_stream->write( bdata + sent, size - sent );
-      if( res < 0 )
-      {
-         LOGW( "Client "+ m_skt->address()->toString() + " had a send error." );
-         return;
-      }
-      sent += res;
-   }
+   LOGI( "Sending ERROR reply to client " + cli->skt()->address()->toString() + ": " + sError );
+   client->sendData( content.c_str(), content.length() );
 }
 
 }

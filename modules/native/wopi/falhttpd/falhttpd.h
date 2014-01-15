@@ -52,6 +52,8 @@ namespace Falcon
       int
       run();
 
+      inline Log* log() const { return m_log; }
+
       inline void
       logf(const Falcon::String& l)
       {
@@ -94,6 +96,9 @@ namespace Falcon
       }
 
       TextWriter* m_ss;
+
+      static String codeDesc( int errorID );
+      static String serverSignature();
 
       VMachine* vm() { return &m_vm; }
    private:

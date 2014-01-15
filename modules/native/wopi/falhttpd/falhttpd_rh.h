@@ -32,7 +32,7 @@ class FalhttpdRequestHandler
 public:
    FalhttpdRequestHandler( const Falcon::String& sFile, FalhttpdClient* client );
    virtual ~FalhttpdRequestHandler();
-   virtual void serve(  Falcon::WOPI::Request* req ) = 0;
+   virtual void serve() = 0;
 
    const Falcon::String& errorDesc() const { return m_sErrorDesc; }
 

@@ -24,6 +24,8 @@
 
 #include "falhttpd.h"
 #include "falhttpd_rh.h"
+#include <falcon/wopi/scriptrunner.h>
+#include <falcon/wopi/errorhandler.h>
 
 namespace Falcon {
 
@@ -32,8 +34,10 @@ class ScriptHandler: public FalhttpdRequestHandler
 public:
    ScriptHandler( const Falcon::String& sFile, FalhttpdClient* client );
    virtual ~ScriptHandler();
-   virtual void serve( Falcon::WOPI::Request* req );
+   virtual void serve();
 
+private:
+   WOPI::ScriptRunner* m_runner;
 };
 
 }
