@@ -23,16 +23,17 @@ endif()
 
 set(_files
    #${_files_sys}
+  client.cpp
+  errorhandler.cpp
   parthandler.cpp  
   request.cpp
   reply.cpp
   replystream.cpp
+  scriptrunner.cpp
   stream_ch.cpp
   uploaded.cpp
   utils.cpp
   wopi.cpp
-  client.cpp
-  scriptrunner.cpp
   
   classrequest.cpp
   classreply.cpp

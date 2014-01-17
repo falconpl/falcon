@@ -24,33 +24,57 @@
 #include "mod_falcon.h"
 #include "apache_errhand.h"
 #include "mod_falcon_config.h"
+#include "apache_request.h"
+#include "apache_reply.h"
 
-void ApacheErrorHandler::handleError( Falcon::Error *error )
+ApacheErrorHandler::ApacheErrorHandler(int cfgNotifyMode):
+   m_notifyMode(cfgNotifyMode)
+{}
+
+ApacheErrorHandler::~ApacheErrorHandler()
+{}
+
+void ApacheErrorHandler::replyError( Falcon::WOPI::Client* client, int code, const Falcon::String& message )
 {
-   // we do different things depending on our level.
-   if ( m_notifyMode == FM_ERROR_MODE_SILENT )
-      return;
-
-   // in all the other cases we have to log something.
-   Falcon::String serr;
-   error->toString( serr );
-
    // TODO: manage encoding. For now, UTF8 is ok
-   Falcon::AutoCString cerr( serr );
+   Falcon::AutoCString cerr( message );
+
+   ApacheRequest* req = static_cast<ApacheRequest*>(client->request());
+
    // surely, we have to log the error.
-   ap_log_rerror( APLOG_MARK, APLOG_WARNING, 0, m_output->request(),
+   ap_log_rerror( APLOG_MARK, APLOG_WARNING, 0, req->apacheRequest(),
          "Error in script when processing %s:\n%s",
-         m_output->request()->filename,
+         req->apacheRequest()->filename,
          cerr.c_str()
          );
 
+   // we do different things depending on our level.
+   if ( m_notifyMode == FM_ERROR_MODE_SILENT )
+   {
+      return;
+   }
+
    // should we just tell we had an error?
+   client->reply()->status(code);
+   client->c
+   client->reply()->commit();
    if ( m_notifyMode == FM_ERROR_MODE_KIND )
    {
-      m_output->write( "<B>Script error - check the logs.</B>" );
+      const char* msg = "<B>Falcon script error - check the logs.</B>";
+      client->stream()->write( msg, strlen(msg) );
    }
    else {
       // or shall we send everything?
-      m_output->write( cerr.c_str(), cerr.length() );
+      client->stream()->write( cerr.c_str(), cerr.length() );
    }
+
+   client->stream()->flush();
+}
+
+
+void ApacheErrorHandler::handleError( Falcon::WOPI::Client* client, Falcon::Error *error )
+{
+   // in all the other cases we have to log something.
+   Falcon::String serr = error->describe( true );
+   replyError( client, 500, serr );
 }

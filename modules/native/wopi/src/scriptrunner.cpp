@@ -109,7 +109,7 @@ void ScriptRunner::run( Client* client, const String& localScript )
       {
          client->consumeRequest();
       }
-      m_eh->replyError( client, 400, err->describe(true) );
+      m_eh->renderSysError( client, 400, err->describe(false) );
       err->decref();
       process->decref();
       wopi->decref();
@@ -134,7 +134,7 @@ void ScriptRunner::run( Client* client, const String& localScript )
       {
          String text = "Invalid configuration in module " + localScript + ":\n" + configErrors;
          LOGW( text );
-         m_eh->replyError( client, 500, text );
+         m_eh->renderSysError( client, 500, text );
          process->decref();
          wopi->decref();
          return;
@@ -152,19 +152,12 @@ void ScriptRunner::run( Client* client, const String& localScript )
       }
       else {
          String text = "No main function to be processed in " + localScript;
-         LOGW( text );
-         m_eh->replyError( client, 500, text );
-         process->decref();
-         wopi->decref();
-         return;
+         m_eh->renderSysError( client, 500, text );
       }
    }
    catch( Error* err )
    {
-      String s = err->describe();
-      reply->setContentType("text/plain");
-      process->textOut()->write( s );
-      LOGW( "Script "+ localScript + " terminated with error: " + s );
+      m_eh->renderError( client, err );
       err->decref();
    }
 

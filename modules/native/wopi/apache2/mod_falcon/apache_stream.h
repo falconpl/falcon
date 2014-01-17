@@ -18,57 +18,44 @@
 #define APACHE_STREAM_H
 
 #include <falcon/stream.h>
+#include <falcon/atomic.h>
+#include <http_protocol.h>
+#include <util_filter.h>
 
-class ApacheOutput;
+#include <httpd.h>
+#include <util_filter.h>
+#include <apr_strings.h>
+#include <apr_buckets.h>
+
 
 // Class translating falcon output requests to apache writes.
 class ApacheStream: public Falcon::Stream
 {
-   // The owning VM. Needed as the first write must send back
-   // the request.
-   ApacheOutput *m_output;
-   Falcon::int64 m_lastError;
-
 public:
-   ApacheStream( ApacheOutput *aout );
-   ApacheStream( const ApacheStream &other );
 
-    // We don't really need to implement all of those;
-   // as we want to reimplement output streams, we'll just
-   // set "unsupported" where we don't want to provide support.
-   bool writeString( const Falcon::String &source, Falcon::uint32 begin=0, Falcon::uint32 end = Falcon::csh::npos );
+   ApacheStream(request_rec *rec);
+   virtual ~ApacheStream();
+
+   virtual size_t read( void *buffer, size_t size );
+   virtual size_t write( const void *buffer, size_t size );
    virtual bool close();
-   virtual Falcon::int32 write( const void *buffer, Falcon::int32 size );
-   virtual Falcon::int32 writeAvailable( int, const Falcon::Sys::SystemData* );
-   virtual Falcon::int64 lastError() const;
-   virtual bool put( Falcon::uint32 chr );
-   virtual bool get( Falcon::uint32 &chr );
-   virtual ApacheStream *clone() const;
+   virtual Falcon::int64 tell();
+   virtual bool truncate( off_t pos=-1 );
+   virtual off_t seek( off_t pos, e_whence w );
+   virtual const Falcon::Multiplex::Factory* multiplexFactory() const;
+   virtual Stream *clone() const;
 
-   // Flushes the stream.
-   virtual bool flush();
-};
-
-// Class translating falcon output requests to apache reads.
-class ApacheInputStream: public Falcon::Stream
-{
-public:
-   ApacheInputStream(  request_rec *request );
-   virtual ~ApacheInputStream();
-
-   virtual bool close();
-   virtual Falcon::int32 read( void *buffer, Falcon::int32 size );
-   virtual Falcon::int32 readAvailable( int, const Falcon::Sys::SystemData* );
-   virtual Falcon::int64 lastError() const;
-   virtual bool get( Falcon::uint32 &chr );
-   virtual ApacheInputStream *clone() const;
+   bool isClosed() const { return Falcon::atomicFetch(m_isClosed) == 1; }
 
 private:
-   Falcon::int64 m_lastError;
-   request_rec* m_request;
-   apr_bucket_brigade *m_brigade;
-};
+   apr_bucket_brigade *m_inBrigade;
+   apr_bucket_brigade *m_outBrigade;
+   static apr_status_t s_onWriteOverflow( apr_bucket_brigade *bb, void *ctx );
 
+   request_rec *m_req;
+   Falcon::atomic_int m_isClosed;
+   Falcon::atomic_int m_isHeaderSent;
+};
 
 #endif
 

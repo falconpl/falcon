@@ -76,31 +76,16 @@ static int falcon_handler(request_rec *request)
       phand = true;
       force_ftd = true;
    }
+   else if( strcmp(request->handler, FALCON_FTD_TYPE) == 0 )
+   {
+      force_ftd = true;
+   }
    else if ( strcmp(request->handler, FALCON_FAM_TYPE) != 0 &&
-        strcmp(request->handler, FALCON_FAL_TYPE) != 0 &&
-        strcmp(request->handler, FALCON_FTD_TYPE) != 0)
+        strcmp(request->handler, FALCON_FAL_TYPE) != 0 )
    {
       return DECLINED;
    }
 
-   // first time in this process?
-   if( s_core == 0 )
-   {
-      Falcon::Engine::Init();
-      Falcon::memPool->rampMode( RAMP_MODE_STRICT_ID );
-
-      // create also the core; we know it's empty.
-      s_core = Falcon::core_module_init();
-
-      // tell the VM to create our request and reply object
-      s_ext = Falcon::WOPI::wopi_module_init( ApacheRequest::factory , ApacheReply::factory );
-
-      if( the_falcon_config->cacheModules )
-      {
-         Falcon::Engine::cacheModules( true );
-      }
-
-   }
 
    Falcon::numeric startedAt = Falcon::Sys::Time::seconds();
 
@@ -126,8 +111,9 @@ static int falcon_handler(request_rec *request)
    else
    {
       script_name = request->filename;
-      Falcon::FileStat::e_fileType st;
-      if ( ! Falcon::Sys::fal_fileType( script_name, st ) )
+      Falcon::URI uri(script_name);
+      Falcon::FileStat::t_fileType st = Falcon::Engine::instance()->vfs().fileType(uri, true);
+      if ( st != Falcon::FileStat::_normal  )
       {
          // sorry, the file do not exists, or we cannot access it.
          return DECLINED;

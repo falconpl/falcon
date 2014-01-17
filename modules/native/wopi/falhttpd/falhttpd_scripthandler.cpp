@@ -35,7 +35,7 @@ namespace Falcon {
 ScriptHandler::ScriptHandler( const Falcon::String& sFile, FalhttpdClient* cli ):
       FalhttpdRequestHandler( sFile, cli )
 {
-   m_runner = new WOPI::ScriptRunner( "FalHTTPD", FalhttpdApp::get()->vm(), FalhttpdApp::get()->log(), &cli->errhand() );
+   m_runner = new WOPI::ScriptRunner( "FalHTTPD", FalhttpdApp::get()->vm(), FalhttpdApp::get()->log(), FalhttpdApp::get()->eh() );
 }
 
 

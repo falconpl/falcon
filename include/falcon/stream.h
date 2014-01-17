@@ -107,6 +107,58 @@ public:
    */
    Stream( const Stream &other );
 
+   /** Reads from target stream.
+
+    At end of streams, returns 0 and sets the eof() status. If trying to read
+    when the eof() status is set, it might throw an error.
+
+    The returned read size may be smaller than the required size if there aren't
+    enough bytes available on the stream. If there isn't any data currently
+    available, the call blocks if the stream has blocking semantics, and it
+    returns zero if it's nonblocking. In this latter case, check the eof() status
+    to determine if the stream is completely read.
+
+      \param buffer the buffer where read data will be stored.
+      \param size the amount of bytes to read.
+      \return Count of read data; 0 on stream end or read not available, (size_t) -1 on error.
+   */
+   virtual size_t read( void *buffer, size_t size )=0;
+
+   /** Write to the target stream.
+
+     \param buffer the buffer where the output data is stored.
+     \param size the maximum amount of bytes to write.
+    */
+   virtual size_t write( const void *buffer, size_t size )=0;
+
+   /** Close target stream. */
+   virtual bool close() = 0;
+
+   /** Returns the current position in a file. */
+   virtual int64 tell() = 0;
+
+   /** Truncates the stream at a given position, or at current position if pos < 0 */
+   virtual bool truncate( off_t pos=-1 ) = 0;
+
+   /** Seks from a given position in a file. */
+   virtual off_t seek( off_t pos, e_whence w ) = 0;
+
+   /** Gets the factory generating a multiplex for this kind of streams.
+    *
+    * Each subclass of Stream should provide traits that
+    * help the engine handle all the similar subclasses.
+    */
+   virtual const Multiplex::Factory* multiplexFactory() const = 0;
+
+   /** Clones the stream.
+    The clone semantic is the same as the unix dup() operation; it should create
+    a new stream referring to the same underlying resource.
+
+    If the stream cannot be cloned, an unsupported error should be thrown.
+   */
+   virtual Stream *clone() const = 0;
+
+
    /** Returns the current stream status.
     The status may be one of the t_status enumeration,
     or a bit combination.
@@ -146,38 +198,6 @@ public:
    */
    inline bool error() const;
 
-   /** Reads from target stream.
-
-    At end of streams, returns 0 and sets the eof() status. If trying to read
-    when the eof() status is set, it might throw an error.
-
-    The returned read size may be smaller than the required size if there aren't
-    enough bytes available on the stream. If there isn't any data currently
-    available, the call blocks if the stream has blocking semantics, and it
-    returns zero if it's nonblocking. In this latter case, check the eof() status
-    to determine if the stream is completely read.
-    
-      \param buffer the buffer where read data will be stored.
-      \param size the amount of bytes to read.
-      \return Count of read data; 0 on stream end or read not available, (size_t) -1 on error.
-   */
-   virtual size_t read( void *buffer, size_t size )=0;
-
-   /** Write to the target stream.
-
-     \param buffer the buffer where the output data is stored.
-     \param size the maximum amount of bytes to write.
-    */
-   virtual size_t write( const void *buffer, size_t size )=0;
-
-   /** Close target stream. */
-   virtual bool close() = 0;
-   
-   /** Returns the current position in a file. */
-   virtual int64 tell() = 0;
-
-   /** Truncates the stream at a given position, or at current position if pos < 0 */
-   virtual bool truncate( off_t pos=-1 ) = 0;
 
    /** Seks from the beginning of a file. */
    inline off_t seekBegin( off_t pos ) { return seek( pos, ew_begin ); }
@@ -187,16 +207,6 @@ public:
 
    /** Seks from the end of a file. */
    inline off_t seekEnd( off_t pos ) { return seek( pos, ew_end ); }
-
-   /** Seks from a given position in a file. */
-   virtual off_t seek( off_t pos, e_whence w ) = 0;
-   
-   /** Gets the factory generating a multiplex for this kind of streams.
-    *
-    * Each subclass of Stream should provide traits that
-    * help the engine handle all the similar subclasses.
-    */
-   virtual const Multiplex::Factory* multiplexFactory() const = 0;
 
    /** Commits pending read/write operations on those streams supporting delayed rw. 
     \return true of the operation is completed, false on error (if not raising exceptions).
@@ -208,14 +218,6 @@ public:
 
    /** Returns the system error ID from the last I/O operation. */
    virtual size_t lastError() const { return m_lastError; }
-
-   /** Clones the stream.
-    The clone semantic is the same as the unix dup() operation; it should create
-    a new stream referring to the same underlying resource.
-    
-    If the stream cannot be cloned, an unsupported error should be thrown.
-   */
-   virtual Stream *clone() const = 0;
 
    /** Return true if this stream is required to throw an IOError. */
    inline bool shouldThrow() const { return m_bShouldThrow; }

@@ -35,6 +35,10 @@
 #define WOPI_OPT_SESSION_AUTO_ON       "ON"
 #define WOPI_OPT_SESSION_AUTO_OFF      "OFF"
 
+#define WOPI_OPT_ERROR_FANCY_ON_ID    0
+#define WOPI_OPT_ERROR_FANCY_OFF_ID   1
+#define WOPI_OPT_ERROR_FANCY_ON       "ON"
+#define WOPI_OPT_ERROR_FANCY_OFF      "OFF"
 
 #define WOPI_OPT_LOG_MODE_SILENT   "SILENT"
 #define WOPI_OPT_LOG_MODE_LOG      "LOG"
@@ -101,6 +105,12 @@ WOPI_OPTION_DFLT ( int   , SessionTimeout, "Default session timeout in seconds",
 WOPI_OPTION_CHECK( int   , SessionAuto, "Automatically apply session variables at script startup: ON or OFF", WOPI_OPT_SESSION_AUTO_ON )
 WOPI_OPTION_CHECK( int   , MaxUploadSize, "Maximum upload size in kilobytes", 2048 )
 WOPI_OPTION_CHECK( int   , MaxMemoryUploadSize, "Upload size in kilobytes under which memory-only upload is used", 4 )
+
+WOPI_OPTION_CHECK( int, ErrorFancyReport, "Send a full document when reporting an error", WOPI_OPT_ERROR_FANCY_ON )
+WOPI_OPTION      ( string, ErrorTemplateDocument, "HTML full Document template for error reporting (overrides fancy erorr reporting)" )
+WOPI_OPTION      ( string, ErrorTemplateSection, "HTML template used to report errors appended to ongoing script output" )
+WOPI_OPTION      ( string, ErrorTemplateEngine, "HTML template used to report engine or web errors (as part of Document Template or Section Template)" )
+WOPI_OPTION      ( string, ErrorTemplateScript, "HTML template used to report script errors (as part of Document Template or Section Template)" )
 
 // System specific default settings.
 #ifdef FALCON_SYSTEM_WIN

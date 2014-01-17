@@ -64,7 +64,6 @@ ENDIF( "${CMAKE_SYSTEM_NAME}" STREQUAL "SunOS" )
 set(SRC_FILES
   mod_falcon.c
   apache_errhand.cpp
-  apache_output.cpp
   apache_reply.cpp
   apache_request.cpp
   apache_stream.cpp
@@ -77,7 +76,6 @@ set(SRC_FILES
 # listed in the virtual file tree of Visual Studio.
 set(HDR_FILES
   apache_errhand.h
-  apache_output.h
   apache_reply.h
   apache_request.h
   apache_stream.h

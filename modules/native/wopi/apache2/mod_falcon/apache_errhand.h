@@ -1,6 +1,6 @@
 /*
    FALCON - The Falcon Programming Language.
-   FILE: mod_falcon_errhand.h
+   FILE: apache_errhand.h
 
    Falcon module for Apache 2
 
@@ -15,34 +15,31 @@
    See LICENSE file for licensing details.
 */
 
-#ifndef APACHE_ERRHAND_H
-#define APACHE_ERRHAND_H
+#ifndef _FALCON_WOPI_APACHE_ERRHAND_H_
+#define _FALCON_WOPI_APACHE_ERRHAND_H_
 
 #include <falcon/error.h>
-
-#include "apache_output.h"
+#include <falcon/string.h>
+#include "../include/falcon/wopi/client.h"
+#include "../include/falcon/wopi/errorhandler.h"
 
 /** Error handler specialized for the apache module.
-   This error handler knows how to handle output.
-
-   The scripts may change the
+   TODO: Add support for configurable error report form.
 */
-class ApacheErrorHandler
+class ApacheErrorHandler: public Falcon::WOPI::ErrorHandler
 {
-   int m_notifyMode;
-   ApacheOutput *m_output;
-
-   // Todo: add support for encoding.
 public:
-   ApacheErrorHandler( int nmode, ApacheOutput *aout ):
-      m_notifyMode( nmode ),
-      m_output( aout )
-   {}
+   ApacheErrorHandler(int cfgNotifyMode);
+   virtual ~ApacheErrorHandler();
 
-   void notifyMode( int nmode ) { m_notifyMode = nmode; }
-   int notifyMode() const { return m_notifyMode; }
+   virtual void replyError( Falcon::WOPI::Client* client, int code, const Falcon::String& message );
+   void handleError( Falcon::WOPI::Client* client, Falcon::Error* error );
 
-   virtual void handleError( Falcon::Error *error );
+private:
+   int m_notifyMode;
 };
 
-#endif
+#endif /* _FALCON_WOPI_APACHE_ERRHAND_H_ */
+
+/* end of apache_errhand.h */
+

@@ -113,7 +113,7 @@ void FalhttpdClient::serve()
    if ( type == 0 )
    {
       LOGW( "Client "+ m_skt->address()->toString() + " has sent an invalid type: " + sHeader );
-      m_errhand.replyError( this, 400, "Invalid requests type" );
+      FalhttpdApp::get()->eh()->renderSysError( this, 400, "Invalid requests type" );
       return;
    }
 
@@ -121,20 +121,21 @@ void FalhttpdClient::serve()
    if( ! uri.isValid() )
    {
       LOGW( "Client "+ m_skt->address()->toString() + " has sent an invalid URI: " + sHeader );
-      m_errhand.replyError( this, 400, "Invalid invalid uri" );
+      FalhttpdApp::get()->eh()->renderSysError( this, 400, "Invalid invalid uri" );
       return;
    }
 
    if( sProto != "HTTP/1.0" && sProto != "HTTP/1.1" )
    {
       LOGW( "Client "+ m_skt->address()->toString() + " has sent an invalid Protocol: " + sHeader );
-      m_errhand.replyError( this, 505, "" );
+      FalhttpdApp::get()->eh()->renderSysError( this, 505, "Invalid protocol in header" );
       return;
    }
 
    // ok, we got a valid header -- proceed in serving the request.
    serveRequest( sMethod, sUri, sProto );
 }
+
 
 void FalhttpdClient::serveRequest(
       const String& sMethod, const String& sUri,  const String& sProto )
@@ -155,7 +156,7 @@ void FalhttpdClient::serveRequest(
    if ( ! m_options.remap( sFile ) )
    {
       LOGW( "Not found file "+ sFile );
-      m_errhand.replyError( this, 404, "" );
+      FalhttpdApp::get()->eh()->renderSysError( this, 404, "" );
    }
    else
    {
@@ -171,50 +172,9 @@ void FalhttpdClient::serveRequest(
 }
 
 
-
-void FalhttpdClient::SHErrorHandler::replyError( WOPI::Client* client, int code, const String& explain )
+void FalhttpdClient::replyError( int code, const String& msg )
 {
-   FalhttpdClient* cli = static_cast<FalhttpdClient*>(client);
-
-   String sErrorDesc = FalhttpdApp::codeDesc( code );
-   String sReply;
-   String sError;
-   cli->reply()->reason(sErrorDesc);
-   cli->reply()->status(code);
-
-   // for now, we create the docuemnt here.
-   // TODO Read the error document from a file.
-   String sErrorDoc = "<html>\n"
-         "<head>\r\n"
-         "<title>Error " +sError + "</title>\n"
-         "</head>\n"
-         "<body>\n"
-         "<h1>" + sError + "</h1>\n";
-
-   if( explain.size() != 0 )
-   {
-      sErrorDoc += "<p>This abnormal condition has been encountered while receiving and processing Your request:</p>\n";
-      sErrorDoc += "<p><b>" + explain + "</b></p>\n";
-   }
-   else
-   {
-      sErrorDoc += "<p>An error of type <b>" + sError + "</b> has been detected while parsing your request.</p>\n";
-   }
-
-   sErrorDoc += FalhttpdApp::serverSignature();
-   sErrorDoc += "</body>\n</html>\n";
-
-   AutoCString content( sErrorDoc );
-
-   TimeStamp now;
-   now.currentTime();
-   cli->reply()->setHeader( "Date", now.toRFC2822() );
-
-   cli->reply()->setHeader( "Content-Length", String().N( (int64) content.length() ));
-   cli->reply()->setContentType("text/html; charset=utf-8");
-
-   LOGI( "Sending ERROR reply to client " + cli->skt()->address()->toString() + ": " + sError );
-   client->sendData( content.c_str(), content.length() );
+   FalhttpdApp::get()->eh()->renderSysError(this, code, msg);
 }
 
 }

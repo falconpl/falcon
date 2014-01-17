@@ -64,7 +64,8 @@ static const command_rec mod_falcon_cmds[] =
            RSRC_CONF,
            "Whether the Falcon engine should cache its modules or not."
            ),
-   {NULL}
+
+     AP_INIT_TAKE1(NULL, NULL, NULL, 0, NULL )
 };
 
 module AP_MODULE_DECLARE_DATA falcon_module = {

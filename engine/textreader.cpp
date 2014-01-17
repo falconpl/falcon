@@ -277,8 +277,8 @@ int TextReader::readTokenInternal( String& target, struct token* tokens, int32 t
       
       if( ! fetch( m_decoder->encodingSize(maxCount - target.length())) )
       {
-         // eof?
-         return -1;
+         // eof? -- return the last token.
+         return target.size() == 0 ? -1 : 1;
       }
 
       length_t pos = m_bufPos;

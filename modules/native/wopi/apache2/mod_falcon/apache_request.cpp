@@ -27,14 +27,27 @@
 #include <apr_strings.h>
 #include <http_log.h>
 
+using namespace Falcon;
+
 //=====================================================================
 // Helpers
 //
 
+struct table_callback
+{
+   request_rec* request;
+   Falcon::ItemDict *headers;
+   Falcon::ItemDict *cookies;
+   // multipart management
+   bool bIsMultiPart;
+   int contentLength;
+   char boundary[BOUNDARY_SIZE];
+   int boundaryLen;
+};
 
 static int table_to_dict(void *rec, const char *key, const char *value)
 {
-   struct ApacheRequest::table_callback *tbc = (struct ApacheRequest::table_callback *) rec;
+   struct table_callback *tbc = (struct table_callback *) rec;
    if ( apr_strnatcasecmp( key, "Cookie" ) == 0 )
    {
       // break the cookie.
@@ -54,13 +67,13 @@ static int table_to_dict(void *rec, const char *key, const char *value)
    else
    {
       // anyhow, add the field.
-      Falcon::CoreString* sKey = new Falcon::CoreString;
-      Falcon::CoreString* sValue = new Falcon::CoreString;
+      String* sKey = new String;
+      String* sValue = new String;
       sKey->fromUTF8( key );
       sValue->fromUTF8( value );
 
       // we suppose the headers can't have []
-      tbc->headers->put( sKey, sValue );
+      tbc->headers->insert( FALCON_GC_HANDLE(sKey), FALCON_GC_HANDLE(sValue) );
 
       // then check it
       if ( apr_strnatcasecmp( key, "Content-Type" ) == 0 )
@@ -107,27 +120,21 @@ static int table_to_dict(void *rec, const char *key, const char *value)
 // Main class
 //
 
-ApacheRequest::ApacheRequest( const Falcon::CoreClass* base ):
-   CoreRequest( base )
+ApacheRequest::ApacheRequest( Falcon::WOPI::ModuleWopi* owner, request_rec* req ):
+   WOPI::Request(owner)
 {
-   m_provider = "apache2";
+   m_request = req;
 }
 
-void ApacheRequest::init( request_rec* request, Falcon::CoreClass* upd,
-      Falcon::WOPI::Reply* reply,
-      Falcon::WOPI::SessionManager* sm )
+void ApacheRequest::parseHeader( Stream* )
 {
-   CoreRequest::init( upd, reply, sm );
-   m_request = request;
-}
+   // in apache, the server has already processed the headers, the stream has not them.
 
-void ApacheRequest::process()
-{
    //================================================
    // Parse headers
    struct table_callback tbc;
-   tbc.headers = &m_base->headers()->items();
-   tbc.cookies = &m_base->cookies()->items();
+   tbc.headers = headers();
+   tbc.cookies = cookies();
    tbc.bIsMultiPart = false;
    tbc.contentLength = 0;
    tbc.request = m_request;
@@ -135,21 +142,19 @@ void ApacheRequest::process()
    // parse all the headers
    apr_table_do( table_to_dict, &tbc, m_request->headers_in, NULL );
 
-   //headers->put( new Falcon::CoreString(vm, "remaining"), request->remaining );
-
    //================================================
    // Parse get -- this is to be done anyhow.
 
    if ( m_request->args != 0 )
    {
-      Falcon::WOPI::Utils::parseQuery( m_request->args, m_base->gets()->items() );
+      Falcon::WOPI::Utils::parseQuery( m_request->args, *gets() );
    }
 
    //================================================
    // Prepare the post parameters
    if ( m_request->method_number == M_POST )
    {
-      m_base->m_content_length = tbc.contentLength;
+      m_content_length = tbc.contentLength;
 
       // but refuse to read the rest if content length is too wide
       if ( the_falcon_config->maxUpload > 0 &&
@@ -161,72 +166,57 @@ void ApacheRequest::process()
          reason.writeNumber( (Falcon::int64) the_falcon_config->maxUpload );
          reason += ")";
 
-         m_base->posts()->put( new Falcon::CoreString(":error"), new Falcon::CoreString(reason) );
+         posts()->insert(
+                  FALCON_GC_HANDLE(new String(":error")),
+                  FALCON_GC_HANDLE(new String(reason)) );
       }
       else
       {
          if( tbc.bIsMultiPart )
          {
             // apache already attaches the 2 extra  -- for the boundary begin.
-            m_base->partHandler().setBoundary( Falcon::String( tbc.boundary+2, tbc.boundaryLen -2 ) );
+            partHandler().setBoundary( Falcon::String( tbc.boundary+2, tbc.boundaryLen -2 ) );
          }
-
-         // prepare for upload
-         ApacheInputStream input( m_request );
-
-         // on error, proper fields are set.
-         m_base->parseBody( &input );
-         processMultiPartBody();
       }
    }
 
    apr_uri_t* parsed_uri = &m_request->parsed_uri;
-   if( parsed_uri->scheme ) m_base->parsedUri().scheme( parsed_uri->scheme );
+   if( parsed_uri->scheme ) parsedUri().scheme( parsed_uri->scheme );
 
-   if( parsed_uri->user )
-   {
-      if( parsed_uri->password )
-         m_base->parsedUri().userInfo( Falcon::String( parsed_uri->user ) + ":" + parsed_uri->password );
-      else
-         m_base->parsedUri().userInfo( parsed_uri->user );
-   }
+   if( parsed_uri->user ) parsedUri().user() = parsed_uri->user;
+   if( parsed_uri->password )  parsedUri().password() = parsed_uri->password;
 
-   if( parsed_uri->hostname ) m_base->parsedUri().host( parsed_uri->hostname );
-   if( parsed_uri->port_str ) m_base->parsedUri().port( parsed_uri->port_str );
+   if( parsed_uri->hostname ) parsedUri().host() = parsed_uri->hostname;
+   if( parsed_uri->port_str ) parsedUri().port() = parsed_uri->port_str;
    if( parsed_uri->path )
    {
-      m_base->parsedUri().path( parsed_uri->path );
-      m_base->m_location.bufferize( parsed_uri->path );
+      parsedUri().path().parse( parsed_uri->path );
+      m_location.bufferize( parsed_uri->path );
    }
-   if( parsed_uri->query ) m_base->parsedUri().query( parsed_uri->query );
-   if( parsed_uri->fragment ) m_base->parsedUri().fragment( parsed_uri->fragment );
+   if( parsed_uri->query ) parsedUri().query().parse( parsed_uri->query );
+   if( parsed_uri->fragment ) parsedUri().fragment( parsed_uri->fragment );
 
    // add in some other data elements from request_rec
    // avoiding redundant data
-   if( m_request->method != 0 ) m_base->m_method = m_request->method;
-   if( m_request->content_type != 0 ) m_base->m_content_type = m_request->content_type;
-   if( m_request->content_encoding != 0 ) m_base->m_content_encoding = m_request->content_encoding;
-   if( m_request->ap_auth_type != 0 ) m_base->m_ap_auth_type = m_request->ap_auth_type;
-   if( m_request->user != 0 ) m_base->m_user = m_request->user;
+   if( m_request->method != 0 ) m_method = m_request->method;
+   if( m_request->content_type != 0 ) m_content_type = m_request->content_type;
+   if( m_request->content_encoding != 0 ) m_content_encoding = m_request->content_encoding;
+   if( m_request->ap_auth_type != 0 ) m_ap_auth_type = m_request->ap_auth_type;
+   if( m_request->user != 0 ) m_user = m_request->user;
 
-   if( m_request->path_info != 0 ) m_base->m_path_info = m_request->path_info;
-   if( m_request->filename != 0 ) m_base->m_filename = m_request->filename;
-   if( m_request->protocol != 0 ) m_base->m_protocol = m_request->protocol;
-   if( m_request->args != 0 ) m_base->m_args = m_request->args;
-   if( m_request->connection->remote_ip != 0 ) m_base->m_remote_ip = m_request->connection->remote_ip;
-   if( m_request->unparsed_uri != 0 ) m_base->m_sUri = m_request->unparsed_uri;
+   if( m_request->path_info != 0 ) m_path_info = m_request->path_info;
+   if( m_request->filename != 0 ) m_filename = m_request->filename;
+   if( m_request->protocol != 0 ) m_protocol = m_request->protocol;
+   if( m_request->args != 0 ) m_args = m_request->args;
+   if( m_request->connection->remote_ip != 0 ) m_remote_ip = m_request->connection->remote_ip;
+   if( m_request->unparsed_uri != 0 ) m_sUri = m_request->unparsed_uri;
 
-   m_base->m_request_time = (Falcon::int64) m_request->request_time;
-   m_base->m_bytes_sent = (Falcon::int64) m_request->bytes_sent;
+   m_request_time = (Falcon::int64) m_request->request_time;
+   m_bytes_received = (Falcon::int64) m_request->bytes_sent;
 }
 
 ApacheRequest::~ApacheRequest()
 {
-}
-
-Falcon::CoreObject* ApacheRequest::factory( const Falcon::CoreClass* cls, void* , bool )
-{
-   return new ApacheRequest( cls );
 }
 
 

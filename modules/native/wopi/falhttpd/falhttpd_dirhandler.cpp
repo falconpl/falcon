@@ -53,7 +53,7 @@ void DirHandler::serve()
    }
    catch( Error* error )
    {
-      m_client->errhand().replyError( m_client, 400, error->describe(true) );
+      FalhttpdApp::get()->eh()->renderError( m_client, error );
       error->decref();
       return;
    }
@@ -95,7 +95,7 @@ void DirHandler::serve()
    catch(Error* e )
    {
       LOGW( "Can't open directory " + m_sFile );
-      m_client->errhand().replyError( m_client, 403, "" );
+      FalhttpdApp::get()->eh()->renderSysError( m_client, 403, "Can't open directory " + m_sFile );
    }
 
    delete de;

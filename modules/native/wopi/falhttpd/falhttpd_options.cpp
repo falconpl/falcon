@@ -158,6 +158,7 @@ bool FalhttpOptions::init( int argc, char* argv[] )
 
    if( ! m_configFile.empty() )
    {
+      m_wopiIni = m_configFile;
       parseIni();
       parseMimeTypes();
    }
@@ -284,6 +285,7 @@ bool FalhttpOptions::remap( Falcon::String& sFname ) const
 void FalhttpOptions::parseIni()
 {
    try {
+
       Stream* stream = Engine::instance()->vfs().openRO( m_configFile );
       TextReader input(stream, Engine::instance()->getTranscoder(m_sSourceEncoding) );
       stream->decref();

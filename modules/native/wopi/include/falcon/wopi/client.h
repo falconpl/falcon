@@ -56,7 +56,7 @@ public:
    virtual void consumeRequest();
 
    /** Declare the client completely served. */
-   void complete( bool mode = true) { m_bComplete = mode; }
+   void complete( bool mode = true ) { m_bComplete = mode; }
 
    bool isComplete() const { return m_bComplete; }
 

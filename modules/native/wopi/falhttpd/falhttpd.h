@@ -30,6 +30,7 @@
 #include <falcon/log.h>
 #include <falcon/vm.h>
 #include "falhttpd_options.h"
+#include "falhttpd_eh.h"
 
 namespace Falcon
 {
@@ -97,10 +98,12 @@ namespace Falcon
 
       TextWriter* m_ss;
 
-      static String codeDesc( int errorID );
       static String serverSignature();
 
       VMachine* vm() { return &m_vm; }
+
+      SHErrorHandler* eh() const { return m_eh; }
+
    private:
       /**
        * The logger for the Falcon application.
@@ -122,6 +125,7 @@ namespace Falcon
       };
 
       Log* m_log;
+      SHErrorHandler* m_eh;
       LogListener* m_ll;
 
       Falcon::Module* m_coreModule;
@@ -132,12 +136,10 @@ namespace Falcon
 
       static FalhttpdApp* m_theApp;
 
-      bool
-      readyLog();
-      bool
-      readyNet();
-      bool
-      readyVM();
+      bool readyLog();
+      bool readyEH();
+      bool readyNet();
+      bool readyVM();
    };
 
 #define LOGF(__x__) do{ FalhttpdApp::get()->logf(__x__); } while(0)

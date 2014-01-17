@@ -315,6 +315,63 @@ public:
    */
    virtual String &heading( String &target ) const;
 
+   /** Renders the full code of this error.
+    * \param target The target string where to place the result.
+    * \return the target string;
+    *
+    * A complete error code is formed with a two-letter code indicating the
+    * error origin, and a 0-padded 4 cyphers numeric code.
+    *
+    * \note The \b target string is used additively (it is not cleared when the description is added).
+    */
+   String& fullCode( String& target ) const;
+
+   /** Renders the location (module, function, line and character) of this error.
+    * \param target The target string where to place the result.
+    * \return the target string;
+    * \note The \b target string is used additively (it is not cleared when the description is added).
+    */
+   String& location( String& target ) const;
+
+   /** Render the generator errors.
+    * \param target the string where to add the errors.
+    * \param addSignature If true, the signature field of the sub-errors is added to their description.
+    * \return the target string
+    *
+    * \note The \b target string is used additively (it is not cleared when the description is added).
+    */
+   String& describeSubErrors( String& target, bool addSignature=true ) const;
+
+   /** Render the trace.
+    * \param target the string where to add the errors.
+    * \param addSignature If true, the signature field of the sub-errors is added to their description.
+    * \return the target string
+    *
+    * \note The \b target string is used additively (it is not cleared when the description is added).
+    */
+   String& describeTrace( String& target ) const;
+
+   /** Renders the two-characters origin code for this error.
+    *
+    * \param target The target string where to place the result.
+    * \return the target string.
+    *
+    * The origin code of the error is a two-letter code that indicates
+    * which part of the Falcon system generated the error. It can be one
+    * of the following:
+    *
+    * - Compiler: "CP"
+      - Linker: "LK";
+      - Loader: "LD"
+      - Virtual Machine: "VM"
+      - Runtime: "RT"
+      - Module/extension: "MD"
+      - Script/source Falcon code: "SC"
+
+    * \note The \b target string is used additively (it is not cleared when the description is added).
+    */
+   String& originCode(String& target ) const;
+
    /** Adds a sub-error to this error.
 
     Some errors store multiple errors that cause a more general error condition.

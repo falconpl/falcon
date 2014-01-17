@@ -28,22 +28,11 @@
 class ApacheReply: public Falcon::WOPI::Reply
 {
 public:
-
-   ApacheReply( const Falcon::CoreClass* base );
+   ApacheReply( Falcon::WOPI::ModuleWopi* mod, request_rec* req );
    virtual ~ApacheReply();
 
-   void init( request_rec* r, ApacheOutput* aout );
-
-   static Falcon::CoreObject* factory( const Falcon::CoreClass* cls, void* ud, bool bDeser );
-
-protected:
-   virtual void startCommit();
-   virtual Falcon::Stream* makeOutputStream();
-   virtual void commitHeader( const Falcon::String& name, const Falcon::String& value );
-   virtual void endCommit();
 private:
    request_rec* m_request;
-   ApacheOutput* m_aout;
 };
 
 #endif

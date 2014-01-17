@@ -74,20 +74,4 @@ void ApacheOutput::close()
 }
 
 
-apr_status_t ApacheOutput::s_onWriteOverflow( apr_bucket_brigade *bb, void *ctx )
-{
-   ApacheOutput *aout = (ApacheOutput*) ctx;
-
-   // first time here?
-   if( ! aout->m_bHeaderSent )
-   {
-      ap_rflush( aout->request() );
-      aout->m_bHeaderSent = true;
-   }
-
-   // perform real overwlow flushing
-   ap_filter_flush( aout->m_brigade, aout->request()->output_filters );
-
-   return APR_SUCCESS;
-}
 

@@ -18,39 +18,27 @@
 #define APACHE_REQUEST_H
 
 #include <falcon/wopi/request.h>
-#include <falcon/wopi/session_manager.h>
 
 #include <httpd.h>
 #include <http_request.h>
 
 #define BOUNDARY_SIZE   128
 
-class ApacheRequest: public Falcon::WOPI::CoreRequest
+class ApacheRequest: public Falcon::WOPI::Request
 {
 public:
-   struct table_callback
-   {
-      request_rec* request;
-      Falcon::ItemDict *headers;
-      Falcon::ItemDict *cookies;
-      // multipart management
-      bool bIsMultiPart;
-      int contentLength;
-      char boundary[BOUNDARY_SIZE];
-      int boundaryLen;
-   };
 
-   ApacheRequest( const Falcon::CoreClass* base );
+   ApacheRequest( Falcon::WOPI::ModuleWopi*, request_rec* req );
    virtual ~ApacheRequest();
 
-   void init( request_rec* request,
-         Falcon::CoreClass* upld_c,
-         Falcon::WOPI::Reply* rep,
-         Falcon::WOPI::SessionManager* sm  );
+   //! parse the header part.
+   /** \note this inserts Falcon GC relevant objects in the GC,
+    *  if invoked from outside the VM, wrap in gc-disabled zone.
+    *  (Also, the Request object should be already locked/reachable from GC)
+    */
+   virtual void parseHeader( Falcon::Stream* input );
 
-   void process();
-
-   static Falcon::CoreObject* factory( const Falcon::CoreClass* cls, void* ud, bool bDeser );
+   request_rec* apacheRequest() const { return m_request; }
 
 private:
 

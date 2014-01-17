@@ -78,18 +78,22 @@ static bool s_check_wopi_opt_LogErrors( const String &configValue, Wopi::ConfigE
    if( configValue.compareIgnoreCase(WOPI_OPT_LOG_MODE_SILENT) == 0 || ivalue == WOPI_OPT_LOG_MODE_SILENT_ID )
    {
       entry->m_sValue = WOPI_OPT_LOG_MODE_SILENT;
+      ivalue = WOPI_OPT_LOG_MODE_SILENT_ID;
    }
    else if( configValue.compareIgnoreCase(WOPI_OPT_LOG_MODE_LOG) == 0 || ivalue == WOPI_OPT_LOG_MODE_LOG_ID )
    {
       entry->m_sValue = WOPI_OPT_LOG_MODE_LOG;
+      ivalue = WOPI_OPT_LOG_MODE_LOG_ID;
    }
    else if( configValue.compareIgnoreCase(WOPI_OPT_LOG_MODE_KIND) == 0 || ivalue == WOPI_OPT_LOG_MODE_KIND_ID )
    {
       entry->m_sValue = WOPI_OPT_LOG_MODE_KIND;
+      ivalue = WOPI_OPT_LOG_MODE_KIND_ID;
    }
    else if( configValue.compareIgnoreCase(WOPI_OPT_LOG_MODE_FULL) == 0 || ivalue == WOPI_OPT_LOG_MODE_FULL_ID )
    {
       entry->m_sValue = WOPI_OPT_LOG_MODE_FULL;
+      ivalue = WOPI_OPT_LOG_MODE_FULL_ID;
    }
    else {
       return false;
@@ -107,10 +111,12 @@ static bool s_check_wopi_opt_SessionMode( const String &configValue, Wopi::Confi
    if( configValue.compareIgnoreCase(WOPI_OPT_SESSION_MODE_FILE) == 0 || ivalue == WOPI_OPT_SESSION_MODE_FILE_ID )
    {
       entry->m_sValue = WOPI_OPT_SESSION_MODE_FILE;
+      ivalue = WOPI_OPT_SESSION_MODE_FILE_ID;
    }
    else if( configValue.compareIgnoreCase(WOPI_OPT_SESSION_MODE_NONE) == 0 || ivalue == WOPI_OPT_SESSION_MODE_NONE_ID )
    {
       entry->m_sValue = WOPI_OPT_SESSION_MODE_NONE;
+      ivalue = WOPI_OPT_SESSION_MODE_NONE_ID;
    }
    else {
       return false;
@@ -128,10 +134,35 @@ static bool s_check_wopi_opt_SessionAuto( const String &configValue, Wopi::Confi
    if( configValue.compareIgnoreCase(WOPI_OPT_SESSION_AUTO_ON) == 0 || ivalue == WOPI_OPT_SESSION_AUTO_ON_ID )
    {
       entry->m_sValue = WOPI_OPT_SESSION_AUTO_ON;
+      ivalue = WOPI_OPT_SESSION_AUTO_ON_ID;
    }
    else if( configValue.compareIgnoreCase(WOPI_OPT_SESSION_AUTO_OFF) == 0 || ivalue == WOPI_OPT_SESSION_AUTO_OFF_ID )
    {
       entry->m_sValue = WOPI_OPT_SESSION_AUTO_OFF;
+      ivalue = WOPI_OPT_SESSION_AUTO_OFF_ID;
+   }
+   else {
+      return false;
+   }
+
+   entry->m_iValue = ivalue;
+   return true;
+}
+
+static bool s_check_wopi_opt_ErrorFancyReport( const String &configValue, Wopi::ConfigEntry* entry )
+{
+   int64 ivalue = -1;
+   configValue.parseInt(ivalue);
+
+   if( configValue.compareIgnoreCase(WOPI_OPT_ERROR_FANCY_ON) == 0 || ivalue == WOPI_OPT_ERROR_FANCY_ON_ID )
+   {
+      entry->m_sValue = WOPI_OPT_ERROR_FANCY_ON;
+      ivalue = WOPI_OPT_ERROR_FANCY_ON_ID;
+   }
+   else if( configValue.compareIgnoreCase(WOPI_OPT_ERROR_FANCY_OFF) == 0 || ivalue == WOPI_OPT_ERROR_FANCY_OFF_ID )
+   {
+      entry->m_sValue = WOPI_OPT_ERROR_FANCY_OFF;
+      ivalue = WOPI_OPT_ERROR_FANCY_OFF_ID;
    }
    else {
       return false;
@@ -269,49 +300,6 @@ Wopi::~Wopi()
    }
 }
 
-/*
-SharedMem* Wopi::inner_create_appData( const String& appName )
-{
-   SharedMem* pAppMem = 0;
-
-   // a new application data. Maybe.
-   String sAppName = appName == "" ? "DFLT_"
-         : "N_" + appName;
-
-   // shall we get a backed up application data?
-   if( m_sAppDataLoc != "" )
-   {
-      String sAppLoc = appName == "" ? m_sAppDataLoc + "/_WOPI_DEFAULT_DATA"
-                  : m_sAppDataLoc + "/" + appName + ".fdt";
-      pAppMem = new SharedMem( sAppName, sAppLoc );
-   }
-   else
-   {
-      pAppMem = new SharedMem( sAppName );
-   }
-
-   // ok; but someone may have added the shared mem in the meanwhile.
-   // If it's so, ok, np.  Just discard our copy.
-   m_mtx.lock();
-   AppDataMap::const_iterator pos = m_admap.find( appName );
-   if( pos == m_admap.end() )
-   {
-      m_admap[ appName ] = pAppMem;
-      m_mtx.unlock();
-   }
-   else
-   {
-      SharedMem* pOld = pAppMem;
-      pAppMem = pos->second;
-      m_mtx.unlock();
-
-      delete pOld;
-   }
-
-   return pAppMem;
-}
-
-*/
 
 bool Wopi::addConfigOption( ConfigEntry::t_type t, const String& name, const String& desc )
 {

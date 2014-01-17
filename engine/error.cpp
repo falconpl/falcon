@@ -148,36 +148,122 @@ void Error::describeTo( String &target, bool addSignature ) const
       target += "\n   Signed by: " + m_signature;
    }
 
+   if ( m_bHasRaised )
+   {
+      target += "\n   Raised item: " + m_raised.describe();
+   }
+
    if ( ! _p->m_steps.empty() )
    {
-      target += "\n   Traceback:";
-
-      std::deque<TraceStep>::const_iterator iter = _p->m_steps.begin();
-      while( iter != _p->m_steps.end() )
-      {
-          target += "\n   ";
-          const TraceStep& step = *iter;
-          step.toString( target );
-          ++iter;
-      }
+      target += "\n   Traceback:\n";
+      describeTrace(target);
    }
 
    if (! _p->m_subErrors.empty() )
    {
       target += "\n   Because of:\n";
-      std::deque<Error*>::const_iterator iter = _p->m_subErrors.begin();
-      while( iter != _p->m_subErrors.end() )
+      describeSubErrors( target, addSignature );
+   }
+}
+
+
+String& Error::describeSubErrors( String& target, bool addSignature ) const
+{
+   std::deque<Error*>::const_iterator iter = _p->m_subErrors.begin();
+   while( iter != _p->m_subErrors.end() )
+   {
+      target += "\n    ";
+      target += (*iter)->describe(addSignature);
+      ++iter;
+      if(iter != _p->m_subErrors.end() )
       {
-         target += (*iter)->describe(addSignature) +"\n";
-         
-         ++iter;
+         target +="\n";
       }
    }
 
-   if ( m_bHasRaised )
+   return target;
+}
+
+
+String& Error::describeTrace( String& target ) const
+{
+   std::deque<TraceStep>::const_iterator iter = _p->m_steps.begin();
+   while( iter != _p->m_steps.end() )
    {
-      target += "   Raised item: " + m_raised.describe();
+       target += "    ";
+       const TraceStep& step = *iter;
+       step.toString( target );
+       ++iter;
+       if(iter != _p->m_steps.end() )
+       {
+          target +="\n";
+       }
    }
+
+   return target;
+}
+
+
+
+String& Error::originCode( String& target ) const
+{
+   switch( m_origin )
+      {
+      case ErrorParam::e_orig_compiler: target += "CP"; break;
+      case ErrorParam::e_orig_linker: target += "LK"; break;
+      case ErrorParam::e_orig_loader: target += "LD"; break;
+      case ErrorParam::e_orig_vm: target += "VM"; break;
+      case ErrorParam::e_orig_runtime: target += "RT"; break;
+      case ErrorParam::e_orig_mod: target += "MD"; break;
+      case ErrorParam::e_orig_script: target += "SC"; break;
+      default: target += "??"; break;
+      }
+
+   return target;
+}
+
+
+String& Error::fullCode( String& target ) const
+{
+   originCode(target);
+
+   uint32 ecode = (uint32) m_errorCode;
+   for ( int number = 1000; number > 0; number /= 10 )
+   {
+      int64 cipher = ecode / number;
+      ecode %= number;
+      target.writeNumber( cipher );
+   }
+
+   return target;
+}
+
+String& Error::location( String& target ) const
+{
+   if ( m_module.size() != 0 )
+   {
+      target += m_module;
+      if ( m_mantra.size() != 0 )
+         target += "." + m_mantra;
+      target += ":";
+   }
+   else if (m_mantra.size() != 0 )
+   {
+      target += "." + m_mantra;
+      target += ":";
+   }
+
+   if ( m_line != 0 )
+      target.writeNumber( (int64) m_line );
+   {
+      if ( m_chr != 0 )
+      {
+         target += ",";
+         target.writeNumber( (int64) m_chr );
+      }
+   }
+
+   return target;
 }
 
 
@@ -185,27 +271,7 @@ String &Error::heading( String &target ) const
 {
    target += m_name;
    target += " ";
-
-   switch( m_origin )
-   {
-   case ErrorParam::e_orig_compiler: target += "CP"; break;
-   case ErrorParam::e_orig_linker: target += "LK"; break;
-   case ErrorParam::e_orig_loader: target += "LD"; break;
-   case ErrorParam::e_orig_vm: target += "VM"; break;
-   case ErrorParam::e_orig_runtime: target += "RT"; break;
-   case ErrorParam::e_orig_mod: target += "MD"; break;
-   case ErrorParam::e_orig_script: target += "SC"; break;
-   default: target += "??"; break;
-   }
-
-   uint32 ecode = (uint32) m_errorCode;
-
-   for ( int number = 1000; number > 0; number /= 10 )
-   {
-      int64 cipher = ecode / number;
-      ecode %= number;
-      target.writeNumber( cipher );
-   }
+   fullCode(target);
 
    if ( m_sysError != 0 )
    {
@@ -220,22 +286,7 @@ String &Error::heading( String &target ) const
    if( m_line != 0 || m_module.size() != 0 )
       target += " at ";
 
-   if ( m_module.size() != 0 )
-   {
-      target += m_module;
-      if ( m_mantra.size() != 0 )
-         target += "." + m_mantra;
-      target += ":";
-   }
-
-   if ( m_line != 0 )
-      target.writeNumber( (int64) m_line );
-
-   if ( m_chr != 0 )
-   {
-      target += ":";
-      target.writeNumber( (int64) m_chr );
-   }
+   location(target);
 
    if ( m_description.size() > 0 )
    {

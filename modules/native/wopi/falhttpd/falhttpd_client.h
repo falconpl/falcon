@@ -1,6 +1,6 @@
 /*
    FALCON - The Falcon Programming Language.
-   FILE: falhttpd_client.cpp
+   FILE: falhttpd_client.h
 
    Micro HTTPD server providing Falcon scripts on the web.
 
@@ -43,24 +43,14 @@ public:
    const FalhttpOptions& options() const { return m_options; }
    Mod::Socket* skt() const { return m_skt; }
 
-   WOPI::ErrorHandler& errhand() { return m_errhand; }
+   void replyError( int code, const String& msg = "" );
 
-   void replyError( int code, const String& msg = "" ) { m_errhand.replyError(this, code, msg); }
 private:
    void serveRequest(
          const String& sMethod, const String& sUri,  const String& sProto );
 
    Mod::Socket* m_skt;
    const FalhttpOptions& m_options;
-
-   class SHErrorHandler: public WOPI::ErrorHandler
-   {
-   public:
-      SHErrorHandler() {}
-      virtual ~SHErrorHandler() {}
-      virtual void replyError( WOPI::Client* client, int code, const String& message );
-   }
-   m_errhand;
 };
 
 }

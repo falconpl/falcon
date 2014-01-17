@@ -43,6 +43,7 @@ set(SRC_FILES
   falhttpd_options.cpp
   falhttpd_rh.cpp
   falhttpd_scripthandler.cpp
+  falhttpd_eh.cpp
   
   falhttpd_loglistener.cpp
   ${PROJECT_SOURCE_DIR}/../feathers/inet/inet_mod.cpp
@@ -62,6 +63,7 @@ set(HDR_FILES
   falhttpd_options.h
   falhttpd_rh.h
   falhttpd_scripthandler.h
+  falhttpd_eh.h
 
   ${WOPI_HEADERS}
 )

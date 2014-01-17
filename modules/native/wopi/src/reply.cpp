@@ -44,8 +44,6 @@ Reply::Reply( ModuleWopi* wopi ):
    setHeader( "Pragma", "no-cache" );
    setHeader( "Cache-Control", "no-cache" );
 
-   m_commitHandler = 0;
-
    // and THEN tell we're using the defaults.
    m_bDefaultContent = true;
 

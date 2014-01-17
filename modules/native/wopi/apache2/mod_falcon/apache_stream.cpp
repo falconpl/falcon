@@ -14,197 +14,160 @@
    See LICENSE file for licensing details.
 */
 
-#include <falcon/engine.h>
+#include <falcon/stderrors.h>
 
 #include <httpd.h>
 #include <util_filter.h>
 #include <apr_strings.h>
 
-
 #include "apache_stream.h"
-#include "apache_output.h"
 
-ApacheStream::ApacheStream( ApacheOutput *output ):
-   Falcon::Stream( Falcon::Stream::t_membuf ),
-   m_output( output ),
-   m_lastError( 0 )
-{}
+using namespace Falcon;
 
-ApacheStream::ApacheStream( const ApacheStream &other ):
-   Falcon::Stream( Falcon::Stream::t_membuf ),
-   m_output( other.m_output ),
-   m_lastError( other.lastError() )
+ApacheStream::ApacheStream(request_rec *rec)
+{
+   m_bPS = true;
+   m_req = rec;
+   m_isClosed = 0;
+   m_isHeaderSent = 0;
+
+   // create the bucket brigade we may need
+   m_inBrigade = apr_brigade_create(
+            rec->pool,
+            rec->connection->bucket_alloc);
+
+   m_outBrigade = apr_brigade_create(rec->pool, rec->connection->bucket_alloc);
+}
+
+ApacheStream::~ApacheStream()
 {
 }
 
-Falcon::int32 ApacheStream::write( const void *buffer, Falcon::int32 size )
-{
-   if( m_output->write( (const char*) buffer, size ) )
-   {
-      return size;
-   }
 
-   m_lastError = m_output->lastError();
-   return -1;
-}
-
-
-// Text oriented write
-bool ApacheStream::writeString( const Falcon::String &source, Falcon::uint32 begin, Falcon::uint32 end )
-{
-   Falcon::AutoCString buffer( begin == 0 && end == Falcon::String::npos ?
-         source :
-         source.subString( begin, end ) );
-
-   if( m_output->write( (const char*) buffer.c_str(), buffer.length() ) )
-   {
-      return buffer.length();
-   }
-
-   m_lastError = m_output->lastError();
-   return -1;
-}
-
-// char oriented write (used mainly by transcoders)
-bool ApacheStream::put( Falcon::uint32 chr )
-{
-    m_lastError = 0;
-
-   // chr may be an UTF-8 code, so we use Falcon::String facilites to encode it.
-   Falcon::String temp;
-   temp.append( chr );
-   Falcon::AutoCString buffer( temp );
-
-   if( m_output->write( (const char*) buffer.c_str(), buffer.length() ) )
-   {
-      return true;
-   }
-
-   m_lastError = m_output->lastError();
-   return false;
-}
-
-bool ApacheStream::close()
-{
-
-   return true;
-}
-
-Falcon::int32 ApacheStream::writeAvailable( int, const Falcon::Sys::SystemData* )
-{
-   return 1;
-}
-
-Falcon::int64 ApacheStream::lastError() const
-{
-   return m_lastError;
-}
-
-bool ApacheStream::get( Falcon::uint32 &chr )
-{
-   status( Falcon::Stream::t_unsupported );
-   return -1;
-}
-
-
-bool ApacheStream::flush()
-{
-   // Do nothing;
-   // flush is so heavy here that we want to do it explicitly on the apache output item.
-   return true;
-}
-
-ApacheStream *ApacheStream::clone() const
-{
-   return new ApacheStream( *this );
-}
-
-//================================================================
-// Input stream
-//
-
-ApacheInputStream::ApacheInputStream( request_rec *request ):
-      Falcon::Stream( Falcon::Stream::t_membuf ),
-      m_lastError(0),
-      m_request( request )
-{
-   m_brigade = apr_brigade_create(
-              request->pool,
-              request->connection->bucket_alloc);
-}
-
-ApacheInputStream::~ApacheInputStream()
-{
-
-}
-
-
-bool ApacheInputStream::close()
-{
-   return true;
-}
-
-Falcon::int32 ApacheInputStream::read( void *buffer, Falcon::int32 size )
+size_t ApacheStream::read( void *buffer, size_t size )
 {
    apr_size_t len = (apr_size_t) size;
 
-   if( ap_get_brigade(
-            m_request->input_filters, m_brigade, AP_MODE_READBYTES, APR_BLOCK_READ, len)
-         == APR_SUCCESS)
+   apr_status_t status = ap_get_brigade(m_req->input_filters, m_inBrigade, AP_MODE_READBYTES, APR_BLOCK_READ, len);
+   if( status == APR_SUCCESS)
    {
-      apr_brigade_flatten(m_brigade, (char*) buffer, &len);
-      apr_brigade_cleanup(m_brigade);
+      apr_brigade_flatten(m_inBrigade, (char*) buffer, &len);
+      apr_brigade_cleanup(m_inBrigade);
       if( len == 0 )
+      {
          status( t_eof );
+      }
 
-      m_lastMoved = len;
       return len;
    }
 
-   m_lastError = -1;
+   if( shouldThrow() )
+   {
+      throw new FALCON_SIGN_XERROR( IOError, e_io_read,
+               .extra( String("Reading from Apache Stream: ").N(status)) );
+   }
+
    return -1;
 }
 
-Falcon::int32 ApacheInputStream::readAvailable( int, const Falcon::Sys::SystemData* )
+
+virtual size_t ApacheStream::write( const void *buffer, size_t size )
 {
-   return 1;
-}
+   if ( m_isClosed )
+      return 0;
 
-Falcon::int64 ApacheInputStream::lastError() const
-{
-   return m_lastError;
-}
+   apr_status_t status = apr_brigade_write( m_outBrigade,
+      s_onWriteOverflow,
+      this,
+      buffer,
+      size
+   );
 
-
-bool ApacheInputStream::get( Falcon::uint32 &chr )
-{
-   // inefficient, but we're using the buffered read.
-   apr_size_t len = 1;
-   Falcon::byte b;
-
-   if( ap_get_brigade(
-            m_request->input_filters, m_brigade, AP_MODE_READBYTES, APR_BLOCK_READ, 1)
-         == APR_SUCCESS)
+   if( status != APR_SUCCESS )
    {
-      apr_brigade_flatten(m_brigade, (char*)&b, &len);
-      apr_brigade_cleanup(m_brigade);
-      if( len == 0 )
-         status( t_eof );
+      if( shouldThrow() )
+      {
+         throw new FALCON_SIGN_XERROR( IOError, e_io_write,
+                  .extra(String("Writing to Apache Stream: ").N(status)) );
+      }
 
-      m_lastMoved = len;
-      chr = (Falcon::uint32) b;
-
-      return true;
+      return -1;
    }
 
+   return true;
+}
 
+
+virtual bool ApacheStream::close()
+{
+   if( atomicCAS(m_isClosed, 0, 1) )
+   {
+      flush();
+      ap_rflush( m_req );
+      ap_filter_flush( m_outBrigade, m_req->output_filters );
+      apr_brigade_cleanup( m_outBrigade );
+      apr_brigade_cleanup( m_inBrigade );
+      return true;
+   }
    return false;
+}
+
+
+Falcon::int64 ApacheStream::tell()
+{
+   throwUnsupported();
+   return -1;
+}
+
+
+bool ApacheStream::truncate( off_t )
+{
+   throwUnsupported();
+   return false;
+}
+
+
+off_t ApacheStream::seek( off_t, e_whence )
+{
+   throwUnsupported();
+   return -1;
+}
+
+
+const Falcon::Multiplex::Factory* ApacheStream::multiplexFactory() const
+{
+   // not multiplexable -- nor exported to scripts.
+   return 0;
+}
+
+
+Stream *ApacheStream::clone() const
+{
+   // not cloneable -- nor exported to scripts.
+   return 0;
 }
 
 
 ApacheInputStream *ApacheInputStream::clone() const
 {
    return 0;
+}
+
+
+apr_status_t ApacheOutput::s_onWriteOverflow( apr_bucket_brigade *bb, void *ctx )
+{
+   ApacheStream* stream = static_cast<ApacheStream*>(ctx);
+
+   // first time here?
+   if( atomicCAS(stream->m_isHeaderSent, 0, 1 ) )
+   {
+      ap_rflush( stream->m_req );
+   }
+
+   // perform real overwlow flushing
+   apr_status_t status = ap_filter_flush( stream->m_outBrigade, stream->m_req->output_filters );
+
+   return status;
 }
 
 
