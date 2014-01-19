@@ -41,29 +41,6 @@ static const command_rec mod_falcon_cmds[] =
          "handler script (string) -- Program invoked when falcon-program handler is excited."
          ),
 
-   AP_INIT_TAKE1(
-      "FalconLoadPath",
-           (const char *(*)())falcon_mod_set_path,
-           NULL,
-           ACCESS_CONF | RSRC_CONF,
-           "Falcon modules default load path (string)."
-           ),
-
-   AP_INIT_TAKE1(
-      "FalconAppDataDir",
-          (const char *(*)())falcon_mod_set_pdataDir,
-          NULL,
-          ACCESS_CONF | RSRC_CONF,
-          "Application wide data directory (string)."
-          ),
-
-    AP_INIT_TAKE1(
-       "FalconCacheModules",
-           (const char *(*)())falcon_mod_set_cacheModules,
-           NULL,
-           RSRC_CONF,
-           "Whether the Falcon engine should cache its modules or not."
-           ),
 
      AP_INIT_TAKE1(NULL, NULL, NULL, 0, NULL )
 };

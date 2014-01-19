@@ -42,6 +42,7 @@ public:
        m_request->status = reply->status();
        Falcon::AutoCString csline( reply->reason() );
        m_request->status_line = apr_pstrdup ( m_request->pool, csline.c_str() );
+       m_request->no_cache = true;
     }
 
    //! Invoked to finalize an header

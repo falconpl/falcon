@@ -27,54 +27,53 @@
 #include "apache_request.h"
 #include "apache_reply.h"
 
-ApacheErrorHandler::ApacheErrorHandler(int cfgNotifyMode):
-   m_notifyMode(cfgNotifyMode)
+ApacheErrorHandler::ApacheErrorHandler( bool bFancy ):
+   ErrorHandler(bFancy)
 {}
 
 ApacheErrorHandler::~ApacheErrorHandler()
 {}
 
-void ApacheErrorHandler::replyError( Falcon::WOPI::Client* client, int code, const Falcon::String& message )
+
+void ApacheErrorHandler::replyError( Falcon::WOPI::Client* client, const Falcon::String& message )
 {
-   // TODO: manage encoding. For now, UTF8 is ok
+   // should we just tell we had an error?
+   client->reply()->commit();
+   // or shall we send everything?
+   Falcon::AutoCString cerr(message);
+   client->stream()->write( cerr.c_str(), cerr.length() );
+   client->stream()->flush();
+}
+
+
+void ApacheErrorHandler::logSysError( Falcon::WOPI::Client* client, int code, const Falcon::String& message )
+{
    Falcon::AutoCString cerr( message );
 
    ApacheRequest* req = static_cast<ApacheRequest*>(client->request());
 
    // surely, we have to log the error.
    ap_log_rerror( APLOG_MARK, APLOG_WARNING, 0, req->apacheRequest(),
-         "Error in script when processing %s:\n%s",
+         "Engine error while processing %s: %d - %s",
+         req->apacheRequest()->filename,
+         code,
+         cerr.c_str()
+         );
+}
+
+
+void ApacheErrorHandler::logError( Falcon::WOPI::Client* client, Falcon::Error* error )
+{
+   Falcon::AutoCString cerr( error->describe(true) );
+
+   ApacheRequest* req = static_cast<ApacheRequest*>(client->request());
+
+   // surely, we have to log the error.
+   ap_log_rerror( APLOG_MARK, APLOG_WARNING, 0, req->apacheRequest(),
+         "Script error while processing %s:\n %s",
          req->apacheRequest()->filename,
          cerr.c_str()
          );
-
-   // we do different things depending on our level.
-   if ( m_notifyMode == FM_ERROR_MODE_SILENT )
-   {
-      return;
-   }
-
-   // should we just tell we had an error?
-   client->reply()->status(code);
-   client->c
-   client->reply()->commit();
-   if ( m_notifyMode == FM_ERROR_MODE_KIND )
-   {
-      const char* msg = "<B>Falcon script error - check the logs.</B>";
-      client->stream()->write( msg, strlen(msg) );
-   }
-   else {
-      // or shall we send everything?
-      client->stream()->write( cerr.c_str(), cerr.length() );
-   }
-
-   client->stream()->flush();
 }
 
-
-void ApacheErrorHandler::handleError( Falcon::WOPI::Client* client, Falcon::Error *error )
-{
-   // in all the other cases we have to log something.
-   Falcon::String serr = error->describe( true );
-   replyError( client, 500, serr );
-}
+/* end of apache_error.cpp */

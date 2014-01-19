@@ -90,9 +90,10 @@ void ScriptRunner::run( Client* client, const String& localScript )
 
    WOPI::ReplyStream* r_stdout = new WOPI::ReplyStream(wopi->reply(), client->stream(), false );
    WOPI::ReplyStream* r_stderr = new WOPI::ReplyStream(wopi->reply(), process->stdErr(), false );
-   wopi->reply()->setCommitHandler( new WOPI::StreamCommitHandler(client->stream()) );
    process->stdOut(r_stdout);
    process->stdErr(r_stderr);
+   r_stdout->decref();
+   r_stderr->decref();
 
    wopi->scriptName(path.filename());
    wopi->scriptPath(localScript);

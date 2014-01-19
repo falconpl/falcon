@@ -16,6 +16,7 @@
 
 
 #include <falcon/wopi/utils.h>
+#include <falcon/wopi/wopi.h>
 #include <falcon/string.h>
 #include <falcon/streambuffer.h>
 
@@ -156,14 +157,18 @@ void ApacheRequest::parseHeader( Stream* )
    {
       m_content_length = tbc.contentLength;
 
+      // we need the configured maximum upload length
+      Falcon::int64 maxSize=0;
+      Falcon::String error;
+      Falcon::WOPI::Wopi* tplWopi = static_cast<Falcon::WOPI::Wopi*>(the_falcon_config->templateWopi);
+      tplWopi->getConfigValue( Falcon::WOPI::OPT_MaxUploadSize, maxSize, error );
       // but refuse to read the rest if content length is too wide
-      if ( the_falcon_config->maxUpload > 0 &&
-           the_falcon_config->maxUpload < tbc.contentLength )
+      if ( maxSize > 0 && maxSize < tbc.contentLength )
       {
          Falcon::String reason = "Upload too large ";
          reason.writeNumber( (Falcon::int64) tbc.contentLength );
          reason += " (max ";
-         reason.writeNumber( (Falcon::int64) the_falcon_config->maxUpload );
+         reason.writeNumber( (Falcon::int64) maxSize );
          reason += ")";
 
          posts()->insert(
@@ -183,11 +188,11 @@ void ApacheRequest::parseHeader( Stream* )
    apr_uri_t* parsed_uri = &m_request->parsed_uri;
    if( parsed_uri->scheme ) parsedUri().scheme( parsed_uri->scheme );
 
-   if( parsed_uri->user ) parsedUri().user() = parsed_uri->user;
-   if( parsed_uri->password )  parsedUri().password() = parsed_uri->password;
+   if( parsed_uri->user ) parsedUri().auth().user(parsed_uri->user);
+   if( parsed_uri->password )  parsedUri().auth().password(parsed_uri->password);
 
-   if( parsed_uri->hostname ) parsedUri().host() = parsed_uri->hostname;
-   if( parsed_uri->port_str ) parsedUri().port() = parsed_uri->port_str;
+   if( parsed_uri->hostname ) parsedUri().auth().host(parsed_uri->hostname);
+   if( parsed_uri->port_str ) parsedUri().auth().port(parsed_uri->port_str);
    if( parsed_uri->path )
    {
       parsedUri().path().parse( parsed_uri->path );

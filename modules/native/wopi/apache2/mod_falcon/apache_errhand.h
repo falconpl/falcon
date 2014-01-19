@@ -29,11 +29,12 @@
 class ApacheErrorHandler: public Falcon::WOPI::ErrorHandler
 {
 public:
-   ApacheErrorHandler(int cfgNotifyMode);
+   ApacheErrorHandler(bool bFancy=true);
    virtual ~ApacheErrorHandler();
 
-   virtual void replyError( Falcon::WOPI::Client* client, int code, const Falcon::String& message );
-   void handleError( Falcon::WOPI::Client* client, Falcon::Error* error );
+   virtual void replyError( Falcon::WOPI::Client* client, const Falcon::String& message );
+   virtual void logSysError( Falcon::WOPI::Client* client, int code, const Falcon::String& message );
+   virtual void logError( Falcon::WOPI::Client* client, Falcon::Error* error );
 
 private:
    int m_notifyMode;

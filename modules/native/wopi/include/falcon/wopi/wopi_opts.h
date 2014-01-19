@@ -40,11 +40,6 @@
 #define WOPI_OPT_ERROR_FANCY_ON       "ON"
 #define WOPI_OPT_ERROR_FANCY_OFF      "OFF"
 
-#define WOPI_OPT_LOG_MODE_SILENT   "SILENT"
-#define WOPI_OPT_LOG_MODE_LOG      "LOG"
-#define WOPI_OPT_LOG_MODE_KIND     "KIND"
-#define WOPI_OPT_LOG_MODE_FULL     "FULL"
-
 #define WOPI_OPT_LOG_MODE_SILENT_ID 0
 #define WOPI_OPT_LOG_MODE_LOG_ID    1
 #define WOPI_OPT_LOG_MODE_KIND_ID   2
@@ -98,7 +93,6 @@ WOPI_OPTION      ( string, LoadPath, "Default load path for the Falcon engine" )
 WOPI_OPTION_DFLT ( string, SourceEncoding, "Default source encoding for the Falcon engine", "utf8" )
 WOPI_OPTION_DFLT ( string, OutputEncoding, "Default output encoding for the Falcon engine", "utf8" )
 WOPI_OPTION      ( string, FalconHandler, "General script handling incoming requests" )
-WOPI_OPTION_CHECK( int   , LogErrors, "Error log mode - can be one of: SILENT LOG KIND FULL", WOPI_OPT_LOG_MODE_FULL )
 WOPI_OPTION_DFLT ( string, SessionField, "Session ID field name (defaluts to SID)", "SID" )
 WOPI_OPTION_CHECK( int   , SessionMode, "Session storage mode - can be one of: NONE FILE SHMEM SHF", WOPI_OPT_SESSION_MODE_FILE )
 WOPI_OPTION_DFLT ( int   , SessionTimeout, "Default session timeout in seconds", 600 )

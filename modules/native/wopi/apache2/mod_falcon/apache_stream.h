@@ -40,8 +40,8 @@ public:
    virtual size_t write( const void *buffer, size_t size );
    virtual bool close();
    virtual Falcon::int64 tell();
-   virtual bool truncate( off_t pos=-1 );
-   virtual off_t seek( off_t pos, e_whence w );
+   virtual bool truncate( Falcon::off_t pos=-1 );
+   virtual Falcon::off_t seek( Falcon::off_t pos, Falcon::Stream::e_whence w );
    virtual const Falcon::Multiplex::Factory* multiplexFactory() const;
    virtual Stream *clone() const;
 

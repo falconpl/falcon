@@ -48,8 +48,8 @@ size_t ApacheStream::read( void *buffer, size_t size )
 {
    apr_size_t len = (apr_size_t) size;
 
-   apr_status_t status = ap_get_brigade(m_req->input_filters, m_inBrigade, AP_MODE_READBYTES, APR_BLOCK_READ, len);
-   if( status == APR_SUCCESS)
+   apr_status_t result = ap_get_brigade(m_req->input_filters, m_inBrigade, AP_MODE_READBYTES, APR_BLOCK_READ, len);
+   if( result == APR_SUCCESS)
    {
       apr_brigade_flatten(m_inBrigade, (char*) buffer, &len);
       apr_brigade_cleanup(m_inBrigade);
@@ -63,15 +63,15 @@ size_t ApacheStream::read( void *buffer, size_t size )
 
    if( shouldThrow() )
    {
-      throw new FALCON_SIGN_XERROR( IOError, e_io_read,
-               .extra( String("Reading from Apache Stream: ").N(status)) );
+      throw FALCON_SIGN_XERROR( IOError, e_io_read,
+               .extra( String("Reading from Apache Stream: ").N(result)) );
    }
 
    return -1;
 }
 
 
-virtual size_t ApacheStream::write( const void *buffer, size_t size )
+size_t ApacheStream::write( const void *buffer, size_t size )
 {
    if ( m_isClosed )
       return 0;
@@ -79,7 +79,7 @@ virtual size_t ApacheStream::write( const void *buffer, size_t size )
    apr_status_t status = apr_brigade_write( m_outBrigade,
       s_onWriteOverflow,
       this,
-      buffer,
+      static_cast<const char*>(buffer),
       size
    );
 
@@ -87,18 +87,18 @@ virtual size_t ApacheStream::write( const void *buffer, size_t size )
    {
       if( shouldThrow() )
       {
-         throw new FALCON_SIGN_XERROR( IOError, e_io_write,
+         throw FALCON_SIGN_XERROR( IOError, e_io_write,
                   .extra(String("Writing to Apache Stream: ").N(status)) );
       }
 
       return -1;
    }
 
-   return true;
+   return size;
 }
 
 
-virtual bool ApacheStream::close()
+bool ApacheStream::close()
 {
    if( atomicCAS(m_isClosed, 0, 1) )
    {
@@ -120,14 +120,14 @@ Falcon::int64 ApacheStream::tell()
 }
 
 
-bool ApacheStream::truncate( off_t )
+bool ApacheStream::truncate( Falcon::off_t )
 {
    throwUnsupported();
    return false;
 }
 
 
-off_t ApacheStream::seek( off_t, e_whence )
+Falcon::off_t ApacheStream::seek( Falcon::off_t, Falcon::Stream::e_whence )
 {
    throwUnsupported();
    return -1;
@@ -148,13 +148,7 @@ Stream *ApacheStream::clone() const
 }
 
 
-ApacheInputStream *ApacheInputStream::clone() const
-{
-   return 0;
-}
-
-
-apr_status_t ApacheOutput::s_onWriteOverflow( apr_bucket_brigade *bb, void *ctx )
+apr_status_t ApacheStream::s_onWriteOverflow( apr_bucket_brigade *, void *ctx )
 {
    ApacheStream* stream = static_cast<ApacheStream*>(ctx);
 

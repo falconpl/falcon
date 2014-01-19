@@ -69,7 +69,6 @@ set(SRC_FILES
   apache_stream.cpp
   falcon_functions.cpp
   mod_falcon_config.cpp
-  mod_falcon_error.cpp
 )
 
 # These are actually not needed by cmake to build. But if omitted they won't be
@@ -80,7 +79,6 @@ set(HDR_FILES
   apache_request.h
   apache_stream.h
   mod_falcon_config.h
-  mod_falcon_error.h
   mod_falcon.h
 )
 

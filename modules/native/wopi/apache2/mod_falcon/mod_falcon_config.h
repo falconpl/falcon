@@ -23,8 +23,7 @@
 #define FM_ERROR_MODE_REPORT 2
 #define FM_ERROR_MODE_KIND 3
 
-#define FM_DEFAULT_MAX_UPLOAD   1000
-#define MAX_UPLOAD_DIR          512
+#define MAX_LOAD_PATH          1024
 #define FM_DEFAULT_SESSION_TO   600
 #define FM_DEFAULT_SESSION_MODE 1
 
@@ -39,26 +38,22 @@
 typedef struct
 {
    apr_pool_t *pool;
-   const char *init_file;
    int loaded;
-   int errorMode;
-   int maxUpload;
-   int maxMemUpload;
-   char uploadDir[MAX_UPLOAD_DIR];
-   char loadPath[MAX_UPLOAD_DIR];
-   char pdataDir[MAX_UPLOAD_DIR];
-   char falconHandler[MAX_UPLOAD_DIR];
-   int sessionTimeout;
-   int sessionMode;
-   int cacheModules;
+   char init_file[MAX_LOAD_PATH];
+   char falconHandler[MAX_LOAD_PATH];
+
+   void* templateWopi;
+   void* errHand;
 
 } falcon_mod_config;
 
 typedef struct
 {
-   char falconHandler[MAX_UPLOAD_DIR];
-   char loadPath[MAX_UPLOAD_DIR];
-   char pdataDir[MAX_UPLOAD_DIR];
+   char init_file[MAX_LOAD_PATH];
+   char falconHandler[MAX_LOAD_PATH];
+
+   void* templateWopi;
+   void* errHand;
 } falcon_dir_config;
 
 
@@ -71,9 +66,7 @@ ext_c void *falcon_mod_merge_dir_config(apr_pool_t *p, void* BASE, void* ADD );
 
 ext_c const char *falcon_mod_set_config(cmd_parms *parms, void *mconfig, const char *arg);
 ext_c const char *falcon_mod_set_handler(cmd_parms *parms, void *mconfig, const char *arg);
-ext_c const char *falcon_mod_set_path(cmd_parms *parms, void *mconfig, const char *arg);
-ext_c const char *falcon_mod_set_pdataDir(cmd_parms *parms, void *mconfig, const char *arg);
-ext_c const char *falcon_mod_set_cacheModules(cmd_parms *parms, void *mconfig, const char *arg);
+
 int falcon_mod_load_config( falcon_mod_config *cfg );
 
 #endif

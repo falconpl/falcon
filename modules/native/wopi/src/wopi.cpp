@@ -69,7 +69,7 @@ static bool getHumanSize( const String& value, int64& val )
 //==========================================================================================
 // Option check callbacks
 //
-
+/*
 static bool s_check_wopi_opt_LogErrors( const String &configValue, Wopi::ConfigEntry* entry )
 {
    int64 ivalue = -1;
@@ -102,6 +102,8 @@ static bool s_check_wopi_opt_LogErrors( const String &configValue, Wopi::ConfigE
    entry->m_iValue = ivalue;
    return true;
 }
+
+*/
 
 static bool s_check_wopi_opt_SessionMode( const String &configValue, Wopi::ConfigEntry* entry )
 {
@@ -535,19 +537,24 @@ bool Wopi::configFromIni( TextReader* iniFile, String& errors )
          value = buffer.subString(pos+1);
          uint32 posComment1 = value.rfind(';');
          uint32 posComment2 = value.rfind('#');
-         uint32 posQuote = value.rfind('"');
+         uint32 posQuoteStart = value.find('"');
+         uint32 posQuoteEnd = value.rfind('"');
 
-         if ( (posComment1 != String::npos && posComment1 < posQuote) )
+         if ( (posComment1 != String::npos && posQuoteStart != posQuoteEnd && posComment1 > posQuoteEnd) )
          {
             value = value.subString(0,posComment1);
          }
          // no else
-         if ( (posComment2 != String::npos && posComment2 < posQuote) )
+         if ( (posComment2 != String::npos && posQuoteStart != posQuoteEnd && posComment2 > posQuoteEnd) )
          {
             value = value.subString(0,posComment2);
          }
 
          value.trim();
+         if( value.length() > 1 && value.getCharAt(0) == '"' && value.getCharAt(value.length()-1) == '"' )
+         {
+            value = value.subString(1, value.length()-1);
+         }
 
          String error;
          if( ! setConfigValue(key, value, error) )
