@@ -23,27 +23,22 @@
 #include <httpd.h>
 #include <http_log.h>
 
-namespace Falcon {
-namespace WOPI {
-
 /** App Log Listener for WOPI.
  *
  */
-class ApacheLogListener: public Log::Listener
+class ApacheLogListener: public Falcon::Log::Listener
 {
 public:
    ApacheLogListener( apr_pool_t* pool );
    virtual ~ApacheLogListener();
 
 protected:
-   virtual void onMessage( int fac, int lvl, const String& message );
+   virtual void onMessage( int fac, int lvl, const Falcon::String& message );
 
 private:
    apr_pool_t* m_pool;
 };
 
-}
-}
 
 #endif
 

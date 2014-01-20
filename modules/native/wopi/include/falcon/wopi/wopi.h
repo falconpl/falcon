@@ -183,11 +183,11 @@ public:
    bool isSaved() const { return m_saved; }
    void isSaved( bool b ) { m_saved = b; }
 
-   /** Special applications with their log system can invoke this to set a different log listener */
-   void setAppLogListener( Log::Listener* ll );
-
    /** Invoked by the script runner before starting a script */
    void setupLogListener();
+
+   /** Utility setting the application listener level as required by the config values. */
+   void configureAppLogListener( Log::Listener* ll );
 
    void renderWebLogs( Stream* target );
    void removeLogListener();
@@ -208,7 +208,6 @@ private:
    SessionService* m_ss;
    bool m_saved;
    WebLogListener* m_webll;
-   Log::Listener* m_appll;
 
    void initConfigOptions();
 };

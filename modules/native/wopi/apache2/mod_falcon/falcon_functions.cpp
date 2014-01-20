@@ -22,6 +22,7 @@
 #include <falcon/wopi/scriptrunner.h>
 #include <falcon/engine.h>
 #include <falcon/vm.h>
+#include <falcon/autocstring.h>
 
 #include <stdio.h>
 
@@ -31,6 +32,7 @@
 #include "apache_stream.h"
 #include "apache_request.h"
 #include "apache_reply.h"
+#include "apache_ll.h"
 
 #include <http_log.h>
 #include <util_filter.h>
@@ -39,10 +41,71 @@ using namespace Falcon;
 
 /** Module wide VM */
 static VMachine* s_vm = 0;
+static ApacheLogListener* the_log_listener = 0;
 
 //=============================================
 // Global pointers to the core and RTL modules
 //
+
+//=============================================================
+// Utilities
+//
+
+void falcon_mod_load_ini()
+{
+   Falcon::WOPI::Wopi* templateWopi = new Falcon::WOPI::Wopi;
+   Falcon::WOPI::ErrorHandler* errorHand = new ApacheErrorHandler;
+
+   the_falcon_config->errHand = errorHand;
+   the_falcon_config->templateWopi = templateWopi;
+
+   Falcon::String iniName(the_falcon_config->init_file);
+    try
+    {
+       Falcon::Stream* stream = Falcon::Engine::instance()->vfs().openRO( iniName );
+       Falcon::Transcoder* tc = Falcon::Engine::instance()->getTranscoder("utf8");
+       fassert(tc != 0);
+       Falcon::TextReader tr( stream, tc );
+       Falcon::String errors;
+       if( ! templateWopi->configFromIni( &tr, errors ) )
+       {
+          Falcon::AutoCString cs(errors);
+          ap_log_perror( APLOG_MARK, APLOG_WARNING, 0, the_falcon_config->pool,
+             "Error in Falcon configuration file \"%s\": %s",
+             the_falcon_config->init_file, cs.c_str() );
+       }
+
+       errorHand->loadConfigFromWopi(templateWopi);
+       templateWopi->configureAppLogListener( the_log_listener );
+
+       the_falcon_config->loaded = 1;
+    }
+    catch( Falcon::Error *e )
+    {
+       Falcon::AutoCString cs(e->describe(true));
+       the_falcon_config->loaded = -1;
+
+       ap_log_perror( APLOG_MARK, APLOG_WARNING, 0, the_falcon_config->pool,
+          "I/O error in accessing Falcon configuration file \"%s\": %s",
+          the_falcon_config->init_file, cs.c_str() );
+       e->decref();
+    }
+}
+
+
+static void start_engine( apr_pool_t* p )
+{
+   Engine::init();
+   s_vm = new VMachine;
+
+   ApacheLogListener* ll = new ApacheLogListener(p);
+   the_log_listener = ll;
+   ll->facility(Falcon::Log::fac_all);
+   ll->logLevel(Falcon::Log::lvl_debug2);
+   Engine::instance()->log()->addListener(ll);
+
+   falcon_mod_load_ini();
+}
 
 extern "C" {
 
@@ -74,6 +137,12 @@ static int falcon_handler(request_rec *request)
    const char *script_name = 0;
    falcon_dir_config* dircfg = (falcon_dir_config*)ap_get_module_config(request->per_dir_config, &falcon_module ) ;
    
+   // Ok, we're here, but did we start our engine?
+   if( s_vm == 0 )
+   {
+      start_engine(the_falcon_config->pool);
+   }
+
    if ( phand )
    {
       // do we have a request configuration?
@@ -130,6 +199,10 @@ static int falcon_handler(request_rec *request)
       runner.textEncoding(textEnc);
    }
 
+   Falcon::Engine::instance()->log()->log(Falcon::Log::fac_app,
+                 Falcon::Log::lvl_info,
+                 String("Running ").A(script_name));
+
    ApacheRequest* arequest = new ApacheRequest(0,request);
    ApacheReply* areply = new ApacheReply(0,request);
    ApacheStream* astream = new ApacheStream(request);
@@ -143,11 +216,10 @@ static int falcon_handler(request_rec *request)
 //========================================
 // Falcon module registration
 //
-void falcon_register_hook( apr_pool_t * )
+void falcon_register_hook( apr_pool_t *p )
 {
    // create falcon standard modules.
-   Engine::init();
-   s_vm = new VMachine;
+   ap_log_perror( APLOG_MARK, APLOG_INFO, 0, p, "-- registering module handler" );
    ap_hook_handler(falcon_handler, NULL, NULL, APR_HOOK_MIDDLE);
 }
 

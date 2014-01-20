@@ -120,7 +120,7 @@ WOPI_OPTION_CHECK( int   , AppLogLevel, "Send engine and/or script logs to the a
 WOPI_OPTION_CHECK( int   , WebLogInternal, "Web log records Falcon engine logs not coming from the scritps; can be ON or [OFF]", WOPI_OPT_BOOL_OFF )
 WOPI_OPTION_CHECK( int   , AppLogInternal, "App log records Falcon engine logs not coming from the scripts; to the application-specific log facility. Can be ON or [OFF]", WOPI_OPT_BOOL_OFF )
 
-WOPI_OPTION_CHECK( int, ErrorFancyReport, "Send a full document when reporting an error", WOPI_OPT_BOOL_ON )
+WOPI_OPTION_CHECK( int   , ErrorFancyReport, "Send a full document when reporting an error", WOPI_OPT_BOOL_ON )
 WOPI_OPTION      ( string, ErrorTemplateDocument, "HTML full Document template for error reporting (overrides fancy erorr reporting)" )
 WOPI_OPTION      ( string, ErrorTemplateSection, "HTML template used to report errors appended to ongoing script output" )
 WOPI_OPTION      ( string, ErrorTemplateEngine, "HTML template used to report engine or web errors (as part of Document Template or Section Template)" )

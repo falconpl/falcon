@@ -78,27 +78,27 @@ void ScriptRunner::run( Client* client, const String& localScript, const Wopi* c
    WOPI::Request* req = client->request();
    WOPI::Reply* reply = client->reply();
 
-   WOPI::ModuleWopi* wopi = new WOPI::ModuleWopi(m_provider, req, reply );
+   WOPI::ModuleWopi* modwopi = new WOPI::ModuleWopi(m_provider, req, reply );
    client->detach();
 
    process->modSpace()->add( core );
    // we don't need an extra ref for core
    core->decref();
-   process->modSpace()->add( wopi );
+   process->modSpace()->add( modwopi );
    // we DO need an extra ref for wopi, as we'll use it after the process is gone.
    if( cfgTemplate != 0 ) {
-      wopi->wopi()->configFromWopi( *cfgTemplate );
+      modwopi->wopi()->configFromWopi( *cfgTemplate );
    }
 
-   WOPI::ReplyStream* r_stdout = new WOPI::ReplyStream(wopi->reply(), client->stream(), false );
-   WOPI::ReplyStream* r_stderr = new WOPI::ReplyStream(wopi->reply(), process->stdErr(), false );
+   WOPI::ReplyStream* r_stdout = new WOPI::ReplyStream(modwopi->reply(), client->stream(), false );
+   WOPI::ReplyStream* r_stderr = new WOPI::ReplyStream(modwopi->reply(), process->stdErr(), false );
    process->stdOut(r_stdout);
    process->stdErr(r_stderr);
    r_stdout->decref();
    r_stderr->decref();
 
-   wopi->scriptName(path.filename());
-   wopi->scriptPath(localScript);
+   modwopi->scriptName(path.filename());
+   modwopi->scriptPath(localScript);
 
    // now that the module (and so, the request) is fully configured,
    // we can read the incoming data
@@ -115,17 +115,18 @@ void ScriptRunner::run( Client* client, const String& localScript, const Wopi* c
       m_eh->renderSysError( client, 400, err->describe(false) );
       err->decref();
       process->decref();
-      wopi->decref();
+      modwopi->decref();
       return;
    }
 
 
    try
    {
-      wopi->wopi()->setupLogListener();
+      modwopi->wopi()->setupLogListener();
+
       Process* loadProc = process->modSpace()->loadModule( localScript, true, true, true );
       LOGI( String("Starting loader process on: ") + localScript );
-      process->modSpace()->resolveDeps(loadProc->mainContext(), wopi );
+      process->modSpace()->resolveDeps(loadProc->mainContext(), modwopi );
       loadProc->start();
       loadProc->wait();
       LOGI( String("Completed loading script on: ") + localScript );
@@ -135,13 +136,13 @@ void ScriptRunner::run( Client* client, const String& localScript, const Wopi* c
       loadProc->decref();
 
       String configErrors;
-      if ( ! wopi->wopi()->configFromModule( mod, configErrors ) )
+      if ( ! modwopi->wopi()->configFromModule( mod, configErrors ) )
       {
          String text = "Invalid configuration in module " + localScript + ":\n" + configErrors;
          LOGW( text );
          m_eh->renderSysError( client, 500, text );
          process->decref();
-         wopi->decref();
+         modwopi->decref();
          return;
       }
 
@@ -149,8 +150,8 @@ void ScriptRunner::run( Client* client, const String& localScript, const Wopi* c
       if( mainFunc != 0 )
       {
          LOGI( String("Launching main script function on: ") + localScript );
-         mod->addMantra( wopi->wopi()->onTerminate, false );
-         process->pushCleanup( wopi->wopi()->onTerminate );
+         mod->addMantra( modwopi->wopi()->onTerminate, false );
+         process->pushCleanup( modwopi->wopi()->onTerminate );
          process->start( mainFunc );
          process->wait();
          LOGI( "Script " + localScript + " completed." );
@@ -166,14 +167,14 @@ void ScriptRunner::run( Client* client, const String& localScript, const Wopi* c
       err->decref();
    }
 
-   wopi->reply()->commit();
-   wopi->wopi()->renderWebLogs(client->stream());
-   wopi->wopi()->removeLogListener();
+   modwopi->reply()->commit();
+   modwopi->wopi()->renderWebLogs(client->stream());
+   modwopi->wopi()->removeLogListener();
    client->stream()->flush();
    process->decref();
 
-   wopi->wopi()->removeTempFiles();
-   wopi->decref();
+   modwopi->wopi()->removeTempFiles();
+   modwopi->decref();
 }
 
 

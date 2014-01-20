@@ -23,57 +23,15 @@
 #include <falcon/textreader.h>
 #include <falcon/engine.h>
 #include <falcon/vfsiface.h>
-#include <falcon/wopi/wopi.h>
-#include <falcon/wopi/errorhandler.h>
 
 #include "mod_falcon_config.h"
 #include "apache_errhand.h"
+#include "apache_ll.h"
 
 extern module AP_MODULE_DECLARE_DATA falcon_module;
 
 falcon_mod_config *the_falcon_config;
 
-//=============================================================
-// Utilities
-//
-
-static int falcon_mod_load_ini( const char* fname, void* tw, void* eh, apr_pool_t* pool )
-{
-   Falcon::WOPI::Wopi& templateWopi = *static_cast<Falcon::WOPI::Wopi*>(tw);
-   Falcon::WOPI::ErrorHandler& errorHand = *static_cast<Falcon::WOPI::ErrorHandler*>(eh);
-
-   Falcon::String iniName(fname);
-    try
-    {
-       Falcon::Stream* stream = Falcon::Engine::instance()->vfs().openRO( iniName );
-       Falcon::Transcoder* tc = Falcon::Engine::instance()->getTranscoder("utf8");
-       fassert(tc != 0);
-       Falcon::TextReader tr( stream, tc );
-       Falcon::String errors;
-       if( ! templateWopi.configFromIni( &tr, errors ) )
-       {
-          Falcon::AutoCString cs(errors);
-          ap_log_perror( APLOG_MARK, APLOG_WARNING, 0, pool,
-             "Error in Falcon configuration file \"%s\": %s",
-             fname, cs.c_str() );
-       }
-
-       errorHand.loadConfigFromWopi(&templateWopi);
-    }
-    catch( Falcon::Error *e )
-    {
-       Falcon::AutoCString cs(e->describe(true));
-
-       ap_log_perror( APLOG_MARK, APLOG_WARNING, 0, pool,
-          "I/O error in accessing Falcon configuration file \"%s\": %s",
-          fname, cs.c_str() );
-       e->decref();
-
-       return -1;
-    }
-
-    return 1;
-}
 
 //=============================================================
 // APACHE hooks
@@ -85,9 +43,10 @@ void *falcon_mod_create_config(apr_pool_t *p, server_rec *)
    apr_cpystrn( newcfg->init_file, DEFAULT_CONFIG_FILE, MAX_LOAD_PATH);
    newcfg->pool = p;
    newcfg->loaded = 0;
-   newcfg->templateWopi = new Falcon::WOPI::Wopi;
-   newcfg->errHand = new ApacheErrorHandler;
+   newcfg->templateWopi = 0;
+   newcfg->errHand = 0;
 
+   // Prepare to listen what Falcon has to say
    apr_cpystrn( newcfg->falconHandler, DEFAULT_HANDLER_NAME, MAX_LOAD_PATH );
    apr_cpystrn( newcfg->init_file, "", MAX_LOAD_PATH );
 
@@ -103,12 +62,6 @@ const char *falcon_mod_set_config(cmd_parms *parms, void *, const char *arg)
                               ap_get_module_config( parms->server->module_config, &falcon_module);
    
    apr_cpystrn( cfg->init_file, arg, MAX_LOAD_PATH );
-   
-   // perform loading
-   if ( ! falcon_mod_load_config( the_falcon_config ) )
-      cfg->loaded = -1;
-   else
-      cfg->loaded = 1;
    return NULL;
 }
 
@@ -122,8 +75,8 @@ void *falcon_mod_create_dir_config(apr_pool_t *p, char *)
    newcfg = (falcon_dir_config *) apr_pcalloc(p, sizeof(falcon_dir_config));
    newcfg->falconHandler[0] = '\0';
    newcfg->init_file[0] = '\0';
-   newcfg->templateWopi = new Falcon::WOPI::Wopi;
-   newcfg->errHand = new ApacheErrorHandler;
+   newcfg->templateWopi = 0;
+   newcfg->errHand = 0;
    
    return (void *) newcfg;
 }
@@ -151,18 +104,10 @@ void *falcon_mod_merge_dir_config(apr_pool_t *p, void* BASE, void* ADD )
    if ( add->init_file[0] != '\0' )
    {
       apr_cpystrn( newcfg->init_file, add->init_file, MAX_LOAD_PATH );
-      falcon_mod_load_ini( newcfg->init_file, newcfg->templateWopi, newcfg->errHand, p );
    }
    else if( base->init_file[0] != '\0' )
    {
       apr_cpystrn( newcfg->init_file, base->init_file, MAX_LOAD_PATH );
-
-      Falcon::WOPI::Wopi* basewopi = static_cast<Falcon::WOPI::Wopi*>(base->templateWopi);
-      Falcon::WOPI::Wopi* newwopi = static_cast<Falcon::WOPI::Wopi*>(newcfg->templateWopi);
-      newwopi->configFromWopi( *basewopi );
-
-      Falcon::WOPI::ErrorHandler* eh = static_cast<Falcon::WOPI::ErrorHandler*>(newcfg->errHand);
-      eh->loadConfigFromWopi(newwopi);
    }
    
    return (void *) newcfg;
@@ -195,5 +140,5 @@ int falcon_mod_load_config( falcon_mod_config *cfg )
       "Performing lazy initialization of Falcon Config file %s",
       cfg->init_file );
 
-   return falcon_mod_load_ini( cfg->init_file, cfg->templateWopi, cfg->errHand, cfg->pool );
+   return 1;
 }

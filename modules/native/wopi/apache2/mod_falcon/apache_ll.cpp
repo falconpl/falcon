@@ -16,8 +16,7 @@
 #include "apache_ll.h"
 #include <falcon/autocstring.h>
 
-namespace Falcon {
-namespace WOPI {
+using namespace Falcon;
 
 ApacheLogListener::ApacheLogListener( apr_pool_t* pool ):
          m_pool(pool)
@@ -35,7 +34,8 @@ void ApacheLogListener::onMessage( int fac, int lvl, const String& message )
    case Log::lvl_critical: level = APLOG_CRIT; break;
    case Log::lvl_error: level = APLOG_ERR; break;
    case Log::lvl_warn: level = APLOG_WARNING; break;
-   case Log::lvl_info: level = APLOG_INFO; break;
+   case Log::lvl_info: level = APLOG_NOTICE; break;
+   case Log::lvl_detail: level = APLOG_INFO; break;
    default: level = APLOG_DEBUG;  break;
    }
 
@@ -44,11 +44,8 @@ void ApacheLogListener::onMessage( int fac, int lvl, const String& message )
    AutoCString cmsg(message);
 
    ap_log_perror( APLOG_MARK, level, 0, m_pool,
-      "<%s/%s> %s", sFac, sLvl, cmsg.c_str() );
-
+      "%s:%s %s", sFac, sLvl, cmsg.c_str() );
 }
 
-}
-}
 
 /* end of apache_ll.cpp */

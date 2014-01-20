@@ -74,12 +74,10 @@ static bool check_boolean_entry( const String &configValue, Wopi::ConfigEntry* e
 
    if( configValue.compareIgnoreCase(WOPI_OPT_BOOL_ON) == 0 || ivalue == WOPI_OPT_BOOL_ON_ID )
    {
-      entry->m_sValue = WOPI_OPT_BOOL_ON;
       ivalue = WOPI_OPT_BOOL_ON_ID;
    }
    else if( configValue.compareIgnoreCase(WOPI_OPT_BOOL_OFF) == 0 || ivalue == WOPI_OPT_BOOL_OFF_ID )
    {
-      entry->m_sValue = WOPI_OPT_BOOL_OFF;
       ivalue = WOPI_OPT_BOOL_OFF_ID;
    }
    else {
@@ -133,6 +131,10 @@ static bool check_log_entry( const String &configValue, Wopi::ConfigEntry* entry
       else {
          return false;
       }
+   }
+   else if( entry->m_iValue < WOPI_OPT_LOG_LEVEL_OFF_ID || entry->m_iValue > WOPI_OPT_LOG_LEVEL_DBG2_ID )
+   {
+      return false;
    }
 
    return true;
@@ -333,7 +335,6 @@ public:
 Wopi::Wopi()
 {
    m_webll = 0;
-   m_appll = 0;
    m_ss = 0;
    m_saved = false;
    onTerminate = new TerminateFunction(this);
@@ -390,13 +391,22 @@ bool Wopi::addConfigOption( ConfigEntry::t_type t, const String& name, const Str
    }
 
    ConfigEntry* entry = new ConfigEntry(name, t, desc, check);
-   entry->m_sValue = deflt;
-   int64 dv = 0;
-   if( getHumanSize(deflt, dv) )
+   if( check == 0 )
    {
-      entry->m_iValue = dv;
+      int64 dv = 0;
+      if( getHumanSize(deflt, dv) )
+      {
+         entry->m_iValue = dv;
+      }
+   }
+   else {
+      if( ! entry->m_checkFunc(deflt, entry) )
+      {
+         return false;
+      }
    }
 
+   entry->m_sValue = deflt;
    m_config[name] = entry;
    return true;
 }
@@ -802,31 +812,8 @@ void Wopi::removeTempFiles()
 }
 
 
-void Wopi::setAppLogListener( Log::Listener* ll )
-{
-   if( m_appll != 0 )
-   {
-      Engine::instance()->log()->removeListener(m_appll);
-      m_appll->decref();
-   }
-
-   m_appll = ll;
-   ll->incref();
-   Engine::instance()->log()->addListener(ll);
-
-   setupLogListener();
-}
-
-
 void Wopi::removeLogListener()
 {
-   if( m_appll != 0 )
-   {
-      Engine::instance()->log()->removeListener(m_appll);
-      m_appll->decref();
-      m_appll = 0;
-   }
-
    if( m_webll != 0 )
    {
       Engine::instance()->log()->removeListener(m_webll);
@@ -836,7 +823,7 @@ void Wopi::removeLogListener()
 }
 
 
-void Wopi::setupLogListener()
+void Wopi::configureAppLogListener( Log::Listener* ll )
 {
    int64 iMode = WOPI_OPT_BOOL_OFF_ID;
    int64 iLvl = -1;
@@ -845,45 +832,41 @@ void Wopi::setupLogListener()
    // application check
    getConfigValue(OPT_AppLogInternal, iMode, error);
    getConfigValue(OPT_AppLogLevel, iLvl, error);
-   if ( iLvl >= 0 )
-   {
-      if( m_appll == 0 )
-      {
-         m_appll = new AppLogListener;
-         Engine::instance()->log()->addListener(m_appll);
-      }
 
-      if( iMode == WOPI_OPT_BOOL_OFF_ID ) {
-         m_appll->facility( Log::fac_script );
-      }
-      else {
-         m_appll->facility( Log::fac_all );
-      }
-      m_appll->logLevel(iLvl);
+   if( iMode == WOPI_OPT_BOOL_OFF_ID ) {
+      ll->facility( Log::fac_script );
    }
+   else {
+      ll->facility( Log::fac_all );
+   }
+   ll->logLevel(iLvl);
+}
+
+
+void Wopi::setupLogListener()
+{
+   int64 iMode = WOPI_OPT_BOOL_OFF_ID;
+   int64 iLvl = -1;
+   String error;
 
    // Web logger check
    getConfigValue(OPT_WebLogInternal, iMode, error);
    getConfigValue(OPT_WebLogLevel, iLvl, error);
-
-   if ( iLvl >= 0 )
+   if( m_webll == 0 )
    {
-      if( m_webll == 0 )
-      {
-         m_webll = new WebLogListener;
-         // don't add the welcome message to the log listener,
-         // as it might generate a useless log section at the end of each page.
-         Engine::instance()->log()->addListener(m_webll, false);
-      }
-
-      if( iMode == WOPI_OPT_BOOL_OFF_ID ) {
-         m_webll->facility( Log::fac_script );
-      }
-      else {
-         m_webll->facility( Log::fac_all );
-      }
-      m_webll->logLevel(iLvl);
+      m_webll = new WebLogListener;
+      // don't add the welcome message to the log listener,
+      // as it might generate a useless log section at the end of each page.
+      Engine::instance()->log()->addListener(m_webll, false);
    }
+
+   if( iMode == WOPI_OPT_BOOL_OFF_ID ) {
+      m_webll->facility( Log::fac_script );
+   }
+   else {
+      m_webll->facility( Log::fac_all );
+   }
+   m_webll->logLevel(iLvl);
 }
 
 void Wopi::renderWebLogs( Stream* target )

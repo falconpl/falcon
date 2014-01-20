@@ -413,7 +413,7 @@ void ErrorHandler::loadScriptErrorTemplate( const String& localFile )
 void ErrorHandler::loadConfigFromWopi( Wopi* wopi )
 {
    String error;
-   int64 iValue;
+   int64 iValue = WOPI_OPT_BOOL_ON_ID;
    wopi->getConfigValue( OPT_ErrorFancyReport, iValue, error );
 
    if( iValue == WOPI_OPT_BOOL_ON_ID )

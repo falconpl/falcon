@@ -69,6 +69,8 @@ private:
    Log* m_log;
    ErrorHandler* m_eh;
 
+   Log::Listener* m_defaultAppLog;
+
    String m_sTextEncoding;
    String m_sSourceEncoding;
    String m_loadPath;
