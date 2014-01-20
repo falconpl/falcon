@@ -318,7 +318,12 @@ void Log::handleMessage( void* data ) {
    Private::ListenerSet::iterator iter = _p->m_listeners.begin();
    Private::ListenerSet::iterator end = _p->m_listeners.end();
    while( iter != end ) {
-      (*iter)->onMessage( m.content.data.facility, m.content.data.level, *m.content.data.message );
+      Listener* l = *iter;
+      if( (l->facility() == fac_all || l->facility() == m.content.data.facility)
+         && (l->level() >= m.content.data.level) )
+      {
+         (*iter)->onMessage( m.content.data.facility, m.content.data.level, *m.content.data.message );
+      }
       ++iter;
    }
 
