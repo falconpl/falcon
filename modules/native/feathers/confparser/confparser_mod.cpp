@@ -468,7 +468,6 @@ bool ConfigSection::addLine( ConfigFileLine* line )
    _p->m_lines.push_back(line);
    if( line->m_type == ConfigFileLine::t_keyval )
    {
-      _p->m_lines.push_back( line );
       line->_p->m_posAsLine = _p->m_lines.end();
       line->_p->m_posAsLine--;
       line->_p->m_posAsEntry = _p->m_entries.insert( std::make_pair(line->m_key, line) );
