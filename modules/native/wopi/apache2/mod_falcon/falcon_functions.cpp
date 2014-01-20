@@ -27,7 +27,6 @@
 
 #include "mod_falcon.h"
 #include "mod_falcon_config.h"
-#include "mod_falcon_error.h"
 #include "apache_errhand.h"
 #include "apache_stream.h"
 #include "apache_request.h"
@@ -131,14 +130,11 @@ static int falcon_handler(request_rec *request)
       runner.textEncoding(textEnc);
    }
 
-   runner.templateWopi().configFromWopi( *wopi );
-
-
    ApacheRequest* arequest = new ApacheRequest(0,request);
    ApacheReply* areply = new ApacheReply(0,request);
    ApacheStream* astream = new ApacheStream(request);
    WOPI::Client client( arequest, areply, astream );
-   runner.run(&client, script_name);
+   runner.run(&client, script_name, wopi );
 
    return OK;
 }

@@ -376,7 +376,7 @@ FALCON_DEFINE_FUNCTION_P(session)
    // shall we apply? -----------------------------------------------
    int64 sessionMode = 0;
    int64 sessionTO = 0;
-   int64 sessionAuto = WOPI_OPT_SESSION_AUTO_ON_ID;
+   int64 sessionAuto = WOPI_OPT_BOOL_ON_ID;
    wopi->getConfigValue(OPT_SessionAuto, sessionAuto, sERR);
    wopi->getConfigValue(OPT_SessionMode, sessionMode, sERR);
    wopi->getConfigValue(OPT_SessionTimeout, sessionTO, sERR);

@@ -22,7 +22,6 @@
 
 #include <httpd.h>
 #include <http_request.h>
-#include "apache_output.h"
 
 /** Apache-specific reply manager */
 class ApacheReply: public Falcon::WOPI::Reply

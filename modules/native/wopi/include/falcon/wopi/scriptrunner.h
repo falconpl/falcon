@@ -57,18 +57,14 @@ public:
    ScriptRunner( const String& provider, VMachine* vm, Log* log, ErrorHandler* eh );
    ~ScriptRunner();
 
-   void run( Client* client, const String& localScript );
+   void run( Client* client, const String& localScript, const Wopi* cfgTemplate );
 
    void textEncoding( const String& value ) { m_sTextEncoding = value; }
    void sourceEncoding( const String& value ) { m_sSourceEncoding = value; }
    void loadPath( const String& value ) { m_loadPath = value; }
 
-   /** Template WOPI object used for configuration */
-   Wopi& templateWopi() { return m_template; }
-
 private:
    String m_provider;
-   Wopi m_template;
    VMachine* m_vm;
    Log* m_log;
    ErrorHandler* m_eh;

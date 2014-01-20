@@ -50,7 +50,7 @@ ScriptRunner::~ScriptRunner()
 }
 
 
-void ScriptRunner::run( Client* client, const String& localScript )
+void ScriptRunner::run( Client* client, const String& localScript, const Wopi* cfgTemplate )
 {
    Process* process = m_vm->createProcess();
 
@@ -86,7 +86,9 @@ void ScriptRunner::run( Client* client, const String& localScript )
    core->decref();
    process->modSpace()->add( wopi );
    // we DO need an extra ref for wopi, as we'll use it after the process is gone.
-   wopi->wopi()->configFromWopi( m_template );
+   if( cfgTemplate != 0 ) {
+      wopi->wopi()->configFromWopi( *cfgTemplate );
+   }
 
    WOPI::ReplyStream* r_stdout = new WOPI::ReplyStream(wopi->reply(), client->stream(), false );
    WOPI::ReplyStream* r_stderr = new WOPI::ReplyStream(wopi->reply(), process->stdErr(), false );
@@ -117,8 +119,10 @@ void ScriptRunner::run( Client* client, const String& localScript )
       return;
    }
 
+
    try
    {
+      wopi->wopi()->setupLogListener();
       Process* loadProc = process->modSpace()->loadModule( localScript, true, true, true );
       LOGI( String("Starting loader process on: ") + localScript );
       process->modSpace()->resolveDeps(loadProc->mainContext(), wopi );
@@ -163,6 +167,8 @@ void ScriptRunner::run( Client* client, const String& localScript )
    }
 
    wopi->reply()->commit();
+   wopi->wopi()->renderWebLogs(client->stream());
+   wopi->wopi()->removeLogListener();
    client->stream()->flush();
    process->decref();
 

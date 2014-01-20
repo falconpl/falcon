@@ -51,9 +51,8 @@ void ScriptHandler::serve()
    m_runner->textEncoding(m_client->options().m_sTextEncoding);
    m_runner->sourceEncoding(m_client->options().m_sSourceEncoding);
    m_runner->loadPath(m_client->options().m_loadPath);
-   m_runner->templateWopi().configFromWopi(m_client->options().m_templateWopi);
 
-   m_runner->run( m_client, m_sFile );
+   m_runner->run( m_client, m_sFile, &m_client->options().m_templateWopi );
 }
 
 

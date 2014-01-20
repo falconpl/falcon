@@ -1,0 +1,31 @@
+<? Log.i( "This is an information") ?>
+
+<h1>Logging system test.</h1>
+
+<? Log.d( "Title generated" ) ?>
+ 
+<p>This test creates several log entries. How (and if) they are reported depends on
+various settings of the WOPI system.</p>
+
+<? Log.d( "First paragraph generated" ) ?>
+
+<p>The settings are the following:</p>
+<ul>
+<li><b>WebLogLevel:</b>
+   Send engine and/or script logs at the end of the page. 
+   Can be [OFF], CRIT, ERR, WARN, INFO, DET, DBG, DBG1, DBG2
+</li>
+<li><b>AppLogLevel:</b> 
+Send engine and/or script logs to the application-specific log facility. Can be OFF, CRIT, ERR, WARN, INFO, DET, [DBG], DBG1, DBG2
+</li>
+<li><b>WebLogInternal</b>: Web log records Falcon engine logs not coming from the scritps; can be ON or [OFF]
+</li>
+<li><b>AppLogInternal:</b> App log records Falcon engine logs not coming from the scripts; to the application-specific log facility. Can be ON or [OFF]
+</li>
+</ul>
+
+<? Log.d( "Second paragraph generated" ) ?>
+
+<p>The settings are ususally read from a configuration file.</p>
+
+<? Log.w( "Page over" ) ?>

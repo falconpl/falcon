@@ -3,6 +3,7 @@
 <ul>
 <li>Info test: <?= makeTestLink( "info" ) ?></li>
 <li>Redirect test: <?= makeTestLink( "redir_1" ) ?></li>
+<li>Logging test: <?= makeTestLink( "logging" ) ?></li>
 <li>Get fields test: <?= makeTestLink( "gets" ) ?></li>
 <li>Standard form processing test: <?= makeTestLink( "stdform" ) ?></li>
 <li>Simple upload processing test: <?= makeTestLink( "upload" ) ?></li>

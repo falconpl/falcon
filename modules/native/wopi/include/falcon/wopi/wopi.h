@@ -24,6 +24,9 @@
 #include <falcon/pstep.h>
 #include <falcon/gclock.h>
 
+#include <falcon/wopi/apploglistener.h>
+#include <falcon/wopi/webloglistener.h>
+
 #include "../../feathers/shmem/session_srv.h"
 
 #include <map>
@@ -180,6 +183,15 @@ public:
    bool isSaved() const { return m_saved; }
    void isSaved( bool b ) { m_saved = b; }
 
+   /** Special applications with their log system can invoke this to set a different log listener */
+   void setAppLogListener( Log::Listener* ll );
+
+   /** Invoked by the script runner before starting a script */
+   void setupLogListener();
+
+   void renderWebLogs( Stream* target );
+   void removeLogListener();
+
 private:
    typedef std::map<String, ConfigEntry*> ConfigMap;
 
@@ -195,6 +207,8 @@ private:
 
    SessionService* m_ss;
    bool m_saved;
+   WebLogListener* m_webll;
+   Log::Listener* m_appll;
 
    void initConfigOptions();
 };

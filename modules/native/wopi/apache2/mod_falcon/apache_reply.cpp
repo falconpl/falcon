@@ -19,7 +19,6 @@
 #include <apr_strings.h>
 
 #include "apache_reply.h"
-#include "apache_output.h"
 #include "apache_stream.h"
 
 using namespace Falcon;

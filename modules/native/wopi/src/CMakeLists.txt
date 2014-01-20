@@ -23,6 +23,7 @@ endif()
 
 set(_files
    #${_files_sys}
+  apploglistener.cpp
   client.cpp
   errorhandler.cpp
   parthandler.cpp  
@@ -33,6 +34,7 @@ set(_files
   stream_ch.cpp
   uploaded.cpp
   utils.cpp
+  webloglistener.cpp
   wopi.cpp
   
   classrequest.cpp

@@ -66,6 +66,79 @@ static bool getHumanSize( const String& value, int64& val )
    return result;
 }
 
+
+static bool check_boolean_entry( const String &configValue, Wopi::ConfigEntry* entry )
+{
+   int64 ivalue = -1;
+   configValue.parseInt(ivalue);
+
+   if( configValue.compareIgnoreCase(WOPI_OPT_BOOL_ON) == 0 || ivalue == WOPI_OPT_BOOL_ON_ID )
+   {
+      entry->m_sValue = WOPI_OPT_BOOL_ON;
+      ivalue = WOPI_OPT_BOOL_ON_ID;
+   }
+   else if( configValue.compareIgnoreCase(WOPI_OPT_BOOL_OFF) == 0 || ivalue == WOPI_OPT_BOOL_OFF_ID )
+   {
+      entry->m_sValue = WOPI_OPT_BOOL_OFF;
+      ivalue = WOPI_OPT_BOOL_OFF_ID;
+   }
+   else {
+      return false;
+   }
+
+   entry->m_iValue = ivalue;
+   return true;
+}
+
+static bool check_log_entry( const String &configValue, Wopi::ConfigEntry* entry )
+{
+   if( ! configValue.parseInt(entry->m_iValue) )
+   {
+      if( configValue.compareIgnoreCase(WOPI_OPT_LOG_LEVEL_OFF) == 0 )
+      {
+         entry->m_iValue = WOPI_OPT_LOG_LEVEL_OFF_ID;
+      }
+      else if( configValue.compareIgnoreCase(WOPI_OPT_LOG_LEVEL_CRIT) == 0 )
+      {
+         entry->m_iValue = WOPI_OPT_LOG_LEVEL_CRIT_ID;
+      }
+      else if( configValue.compareIgnoreCase(WOPI_OPT_LOG_LEVEL_ERR) == 0 )
+      {
+         entry->m_iValue  = WOPI_OPT_LOG_LEVEL_ERR_ID;
+      }
+      else if( configValue.compareIgnoreCase(WOPI_OPT_LOG_LEVEL_WARN) == 0 )
+      {
+         entry->m_iValue = WOPI_OPT_LOG_LEVEL_WARN_ID;
+      }
+      else if( configValue.compareIgnoreCase(WOPI_OPT_LOG_LEVEL_INFO) == 0 )
+      {
+         entry->m_iValue = WOPI_OPT_LOG_LEVEL_INFO_ID;
+      }
+      else if( configValue.compareIgnoreCase(WOPI_OPT_LOG_LEVEL_DET) == 0 )
+      {
+         entry->m_iValue = WOPI_OPT_LOG_LEVEL_DET_ID;
+      }
+      else if( configValue.compareIgnoreCase(WOPI_OPT_LOG_LEVEL_DBG) == 0 )
+      {
+         entry->m_iValue = WOPI_OPT_LOG_LEVEL_DBG_ID;
+      }
+      else if( configValue.compareIgnoreCase(WOPI_OPT_LOG_LEVEL_DBG1) == 0 )
+      {
+         entry->m_iValue = WOPI_OPT_LOG_LEVEL_DBG1_ID;
+      }
+      else if( configValue.compareIgnoreCase(WOPI_OPT_LOG_LEVEL_DBG2) == 0 )
+      {
+         entry->m_iValue = WOPI_OPT_LOG_LEVEL_DBG2_ID;
+      }
+      else {
+         return false;
+      }
+   }
+
+   return true;
+}
+
+
 //==========================================================================================
 // Option check callbacks
 //
@@ -130,49 +203,36 @@ static bool s_check_wopi_opt_SessionMode( const String &configValue, Wopi::Confi
 
 static bool s_check_wopi_opt_SessionAuto( const String &configValue, Wopi::ConfigEntry* entry )
 {
-   int64 ivalue = -1;
-   configValue.parseInt(ivalue);
-
-   if( configValue.compareIgnoreCase(WOPI_OPT_SESSION_AUTO_ON) == 0 || ivalue == WOPI_OPT_SESSION_AUTO_ON_ID )
-   {
-      entry->m_sValue = WOPI_OPT_SESSION_AUTO_ON;
-      ivalue = WOPI_OPT_SESSION_AUTO_ON_ID;
-   }
-   else if( configValue.compareIgnoreCase(WOPI_OPT_SESSION_AUTO_OFF) == 0 || ivalue == WOPI_OPT_SESSION_AUTO_OFF_ID )
-   {
-      entry->m_sValue = WOPI_OPT_SESSION_AUTO_OFF;
-      ivalue = WOPI_OPT_SESSION_AUTO_OFF_ID;
-   }
-   else {
-      return false;
-   }
-
-   entry->m_iValue = ivalue;
-   return true;
+   return check_boolean_entry( configValue, entry );
 }
 
 static bool s_check_wopi_opt_ErrorFancyReport( const String &configValue, Wopi::ConfigEntry* entry )
 {
-   int64 ivalue = -1;
-   configValue.parseInt(ivalue);
-
-   if( configValue.compareIgnoreCase(WOPI_OPT_ERROR_FANCY_ON) == 0 || ivalue == WOPI_OPT_ERROR_FANCY_ON_ID )
-   {
-      entry->m_sValue = WOPI_OPT_ERROR_FANCY_ON;
-      ivalue = WOPI_OPT_ERROR_FANCY_ON_ID;
-   }
-   else if( configValue.compareIgnoreCase(WOPI_OPT_ERROR_FANCY_OFF) == 0 || ivalue == WOPI_OPT_ERROR_FANCY_OFF_ID )
-   {
-      entry->m_sValue = WOPI_OPT_ERROR_FANCY_OFF;
-      ivalue = WOPI_OPT_ERROR_FANCY_OFF_ID;
-   }
-   else {
-      return false;
-   }
-
-   entry->m_iValue = ivalue;
-   return true;
+   return check_boolean_entry( configValue, entry );
 }
+
+
+static bool s_check_wopi_opt_WebLogLevel( const String &configValue, Wopi::ConfigEntry* entry )
+{
+   return check_log_entry( configValue, entry );
+}
+
+static bool s_check_wopi_opt_AppLogLevel( const String &configValue, Wopi::ConfigEntry* entry )
+{
+   return check_log_entry( configValue, entry );
+}
+
+
+static bool s_check_wopi_opt_WebLogInternal( const String &configValue, Wopi::ConfigEntry* entry )
+{
+   return check_boolean_entry( configValue, entry );
+}
+
+static bool s_check_wopi_opt_AppLogInternal( const String &configValue, Wopi::ConfigEntry* entry )
+{
+   return check_boolean_entry( configValue, entry );
+}
+
 
 static bool human_option( const String &configValue, Wopi::ConfigEntry* entry )
 {
@@ -272,6 +332,8 @@ public:
 
 Wopi::Wopi()
 {
+   m_webll = 0;
+   m_appll = 0;
    m_ss = 0;
    m_saved = false;
    onTerminate = new TerminateFunction(this);
@@ -300,6 +362,8 @@ Wopi::~Wopi()
       }
       m_config.clear();
    }
+
+   removeLogListener();
 }
 
 
@@ -737,6 +801,100 @@ void Wopi::removeTempFiles()
    m_tempFiles.clear();
 }
 
+
+void Wopi::setAppLogListener( Log::Listener* ll )
+{
+   if( m_appll != 0 )
+   {
+      Engine::instance()->log()->removeListener(m_appll);
+      m_appll->decref();
+   }
+
+   m_appll = ll;
+   ll->incref();
+   Engine::instance()->log()->addListener(ll);
+
+   setupLogListener();
+}
+
+
+void Wopi::removeLogListener()
+{
+   if( m_appll != 0 )
+   {
+      Engine::instance()->log()->removeListener(m_appll);
+      m_appll->decref();
+      m_appll = 0;
+   }
+
+   if( m_webll != 0 )
+   {
+      Engine::instance()->log()->removeListener(m_webll);
+      m_webll->decref();
+      m_webll = 0;
+   }
+}
+
+
+void Wopi::setupLogListener()
+{
+   int64 iMode = WOPI_OPT_BOOL_OFF_ID;
+   int64 iLvl = -1;
+   String error;
+
+   // application check
+   getConfigValue(OPT_AppLogInternal, iMode, error);
+   getConfigValue(OPT_AppLogLevel, iLvl, error);
+   if ( iLvl >= 0 )
+   {
+      if( m_appll == 0 )
+      {
+         m_appll = new AppLogListener;
+         Engine::instance()->log()->addListener(m_appll);
+      }
+
+      if( iMode == WOPI_OPT_BOOL_OFF_ID ) {
+         m_appll->facility( Log::fac_script );
+      }
+      else {
+         m_appll->facility( Log::fac_all );
+      }
+      m_appll->logLevel(iLvl);
+   }
+
+   // Web logger check
+   getConfigValue(OPT_WebLogInternal, iMode, error);
+   getConfigValue(OPT_WebLogLevel, iLvl, error);
+
+   if ( iLvl >= 0 )
+   {
+      if( m_webll == 0 )
+      {
+         m_webll = new WebLogListener;
+         // don't add the welcome message to the log listener,
+         // as it might generate a useless log section at the end of each page.
+         Engine::instance()->log()->addListener(m_webll, false);
+      }
+
+      if( iMode == WOPI_OPT_BOOL_OFF_ID ) {
+         m_webll->facility( Log::fac_script );
+      }
+      else {
+         m_webll->facility( Log::fac_all );
+      }
+      m_webll->logLevel(iLvl);
+   }
+}
+
+void Wopi::renderWebLogs( Stream* target )
+{
+   if( m_webll != 0 && m_webll->hasLogs() )
+   {
+      Transcoder* tc = Engine::instance()->getTranscoder("utf8");
+      TextWriter tw(target, tc);
+      m_webll->renderLogs(&tw);
+   }
+}
 
 }
 }

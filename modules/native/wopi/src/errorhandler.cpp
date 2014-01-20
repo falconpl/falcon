@@ -416,7 +416,7 @@ void ErrorHandler::loadConfigFromWopi( Wopi* wopi )
    int64 iValue;
    wopi->getConfigValue( OPT_ErrorFancyReport, iValue, error );
 
-   if( iValue == WOPI_OPT_ERROR_FANCY_ON_ID )
+   if( iValue == WOPI_OPT_BOOL_ON_ID )
    {
       loadFancyErrorStyle();
    }
