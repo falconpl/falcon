@@ -13,11 +13,163 @@
  * See LICENSE file for licensing details.
  */
 
+#define SRC "modules/native/dbi/dbi/dbi.cpp"
+
 #include "dbi.h"
-#include "version.h"
-#include "dbi_ext.h"
-#include "dbi_st.h"
+#include <falcon/dbi_handle.h>
+#include <falcon/syntree.h>
+#include <falcon/classes/classmodule.h>
+#include "dbi_classhandle.h"
+#include "dbi_classrecordset.h"
+#include "dbi_classstatement.h"
+
 #include <falcon/dbi_error.h>
+#include <falcon/dbi_service.h>
+#include <falcon/pstep.h>
+#include <falcon/vmcontext.h>
+#include <falcon/modspace.h>
+#include <falcon/stdhandlers.h>
+
+#include "version.h"
+
+/*# @beginmodule  dbi */
+
+namespace Falcon {
+
+namespace {
+
+class PStepCatchSubmoduleLoadError: public SynTree
+{
+public:
+   PStepCatchSubmoduleLoadError() { apply = apply_; setTracedCatch(); }
+   virtual ~PStepCatchSubmoduleLoadError() {}
+   virtual void describeTo( String& target ) const
+   {
+      target = "PStepCatchSubmoduleLoadError";
+   }
+
+
+   static void apply_(const PStep*, VMContext* ctx)
+   {
+      DBIError* error = new DBIError(ErrorParam(FALCON_DBI_ERROR_INVALID_DRIVER, __LINE__, SRC).symbol("connect"));
+      error->appendSubError(ctx->thrownError());
+      ctx->popCode();
+      ctx->raiseError(error);
+   }
+};
+
+class PStepAfterSubmoduleLoad: public PStep
+{
+public:
+   PStepAfterSubmoduleLoad() { apply = apply_; }
+   virtual ~PStepAfterSubmoduleLoad() {}
+   virtual void describeTo( String& target ) const
+   {
+      target = "PStepAfterSubmoduleLoad";
+   }
+
+
+   static void apply_(const PStep*, VMContext* ctx)
+   {
+      Module* loaded = static_cast<Module*>(ctx->topData().asInst());
+      // todo; more robust check.
+
+      DBIService* srv = static_cast<DBIService*>(loaded->createService(FALCON_DBI_HANDLE_SERVICE_NAME));
+      if( srv == 0 )
+      {
+         throw FALCON_SIGN_XERROR(DBIError, FALCON_DBI_ERROR_INVALID_DRIVER, .extra("Given module is nota  DBI driver") );
+      }
+
+      String* params = ctx->param(0)->asString();
+      uint32 colonPos = params->find( ":" );
+      String connString;
+      if ( colonPos != csh::npos )
+      {
+         connString = params->subString( colonPos + 1 );
+      }
+
+      // can throw, and it's ok.
+      DBIHandle* dbh = srv->connect(connString);
+      // same
+      if( ctx->paramCount() > 1 )
+      {
+         dbh->options( *ctx->param(1)->asString() );
+      }
+
+      // the proper class handler is provided by the handler itself,
+      // and that class handler will keep the module alive.
+      ctx->returnFrame(FALCON_GC_HANDLE(dbh));
+      // we don't have to free the service
+   }
+};
+
+/*#
+   @function connect
+   @brief Connect to a database server through a DBI driver.
+   @param conn SQL connection string.
+   @optparam queryops Default transaction options to be applied to
+                 operations performed on the returned handler returned handle.
+   @return an instance of @a Handle.
+   @raise DBIError if the connection fails.
+
+  This function acts as a front-end to dynamically determine the DBI driver
+  that should be used to connect to a determined database.
+
+  The @b conn connection string is in the format described in @a dbi_load.
+  An optional parameter @b queryops can be given to change some default
+  value in the connection.
+
+  @see Handle.options
+*/
+FALCON_DECLARE_FUNCTION(connect, "conn:S,queryops:[S]");
+FALCON_DEFINE_FUNCTION_P1(connect)
+{
+   //static Log* log = Engine::instance()->log();
+
+   Item *paramsI = ctx->param(0);
+   Item *i_tropts = ctx->param(1);
+   if (  paramsI == 0 || ! paramsI->isString()
+         || ( i_tropts != 0 && ! i_tropts->isString() ) )
+   {
+      throw paramError(__LINE__);
+   }
+
+   String *params = paramsI->asString();
+   String provName;
+   //String connString = "";
+   uint32 colonPos = params->find( ":" );
+
+   if ( colonPos != csh::npos )
+   {
+      provName = "dbi." + params->subString( 0, colonPos );
+      //connString = params->subString( colonPos + 1 );
+   }
+   else {
+      provName = "dbi." + *params;
+   }
+
+   DBIModule* mod = static_cast<DBIModule*>(module());
+   ctx->pushCodeWithUnrollPoint(mod->m_stepCatchSubmoduleLoadError);
+   ctx->pushCode(mod->m_stepAfterSubmoduleLoad);
+
+   // Work in our own module workspace
+   ModSpace* ms = mod->modSpace();
+   // already there?
+   Module* driver = ms->findByName(provName);
+   if( driver != 0 )
+   {
+      static Class* modClass = Engine::instance()->stdHandlers()->moduleClass();
+      // let our steps to manage the situation.
+      ctx->pushData( Item(modClass, driver) );
+   }
+   else {
+      // ask the module space to try loading this module.
+      ms->loadModuleInContext( provName, false, false, false, ctx, mod, true);
+   }
+   // don't return.
+}
+
+} // end of nameless namespace
 
 /*#
    @module dbi Falcon Database Interface.
@@ -239,8 +391,9 @@
 		 string stream or using the transcodeTo/transcodeFrom string methods).
     - @b MemBuf: Falcon memory buffers can be used to store binary data into binary blobs, and are created
                  when reading binary blob fields from the database. Usually, they can also be sent to
-		 text fields, in which case they will be stored in the database as binary sequences without
-		 any database conversion.
+                text fields, in which case they will be stored in the database as binary sequences without
+                any database conversion. To create a memory buffer, use a mutable string and set its
+                isText field to false.
     - @b TimeStamp: Falcon TimeStamp standard class instances can be used to store date and time related
                  datatype, and they are created when retrieving this kind of fields. Timezones
 		 are ignored, and they are not restored when reading informations from the database.
@@ -263,203 +416,40 @@
    @beginmodule dbi
 */
 
-// Instantiate the loader service
-Falcon::DBILoaderImpl theDBIService;
 
 // the main module
+DBIModule::DBIModule():
+   Module("dbi")
+{
+   m_stepCatchSubmoduleLoadError = new PStepCatchSubmoduleLoadError;
+   m_stepAfterSubmoduleLoad = new PStepAfterSubmoduleLoad;
+
+   m_handleClass = new ClassHandle;
+   m_statementClass = new ClassStatement;
+   m_recordsetClass = new ClassRecordset;
+
+   *this
+      << new Function_connect
+      << m_handleClass
+      << m_statementClass
+      << m_recordsetClass
+      << new ClassDBIError
+      ;
+}
+
+DBIModule::~DBIModule()
+{
+   delete m_stepCatchSubmoduleLoadError;
+   delete m_stepAfterSubmoduleLoad;
+}
+
+}
+
+
 FALCON_MODULE_DECL
 {
-   #define FALCON_DECLARE_MODULE self
-
-   // Module declaration
-   Falcon::Module *self = new Falcon::Module();
-   self->name( "dbi" );
-   self->engineVersion( FALCON_VERSION_NUM );
-   self->version( VERSION_MAJOR, VERSION_MINOR, VERSION_REVISION );
-
-   //====================================
-   // Message setting
-   #include "dbi_st.h"
-
-   // main factory function
-   self->addExtFunc( "connect", &Falcon::Ext::DBIConnect )->
-      addParam("params")->addParam("queryops");
-
-
-   /*#
-      @class Statement
-      @brief Prepared statements abstraction class
-      
-      This class represents a statement prepared through the 
-      @a Handle.prepare method which is ready to be excecuted 
-      multiple times.
-      
-      When done, use the @a Statement.close method to release the 
-      resources and refresh the database connection status.
-      
-      @note Closing the database handle while the statement is still open and in use 
-      may lead to various kind of errors. It's a thing that should be generally avoided.
-   */
-   Falcon::Symbol *stmt_class = self->addClass( "%Statement", false ); // private class
-   stmt_class->setWKS( true );
-   self->addClassMethod( stmt_class, "execute", &Falcon::Ext::Statement_execute );
-   self->addClassMethod( stmt_class, "aexec", &Falcon::Ext::Statement_aexec ).asSymbol()->
-         addParam( "params" );
-   self->addClassMethod( stmt_class, "reset", &Falcon::Ext::Statement_reset );
-   self->addClassMethod( stmt_class, "close", &Falcon::Ext::Statement_close );
-   self->addClassProperty( stmt_class, "affected" ).setReflectFunc( &Falcon::Ext::Statement_affected );
-
-   /*#
-    @class Handle
-    @brief DBI connection handle returned by @a connect.
-   
-    This is the main database interface connection abstraction,
-    which allows to issue SQL statements and inspect
-    the result of SQL queries.    
-   */
-
-   // create the base class DBIHandler for falcon
-   Falcon::Symbol *handler_class = self->addClass( "%Handle", true );
-   handler_class->setWKS( true );
-   self->addClassMethod( handler_class, "options", &Falcon::Ext::Handle_options ).asSymbol()
-      ->addParam("options");
-   self->addClassMethod( handler_class, "query", &Falcon::Ext::Handle_query ).asSymbol()->
-         addParam("sql");
-   self->addClassMethod( handler_class, "aquery", &Falcon::Ext::Handle_aquery ).asSymbol()->
-         addParam("sql")->addParam("params");
-   self->addClassMethod( handler_class, "prepare", &Falcon::Ext::Handle_prepare ).asSymbol()->
-         addParam("sql");
-   self->addClassMethod( handler_class, "close", &Falcon::Ext::Handle_close );
-   self->addClassMethod( handler_class, "getLastID",  &Falcon::Ext::Handle_getLastID ).asSymbol()
-         ->addParam("name");
-   self->addClassMethod( handler_class, "begin", &Falcon::Ext::Handle_begin );
-   self->addClassMethod( handler_class, "commit", &Falcon::Ext::Handle_commit );
-   self->addClassMethod( handler_class, "rollback", &Falcon::Ext::Handle_rollback );
-   self->addClassMethod( handler_class, "expand", &Falcon::Ext::Handle_expand ).asSymbol()
-         ->addParam("sql");
-   self->addClassMethod( handler_class, "lselect", &Falcon::Ext::Handle_lselect ).asSymbol()
-         ->addParam("sql")->addParam("begin")->addParam("count");
-
-   self->addClassProperty( handler_class, "affected" ).setReflectFunc( &Falcon::Ext::Handle_affected );
-
-   /*#
-      @class Recordset
-      @brief Data retuned by SQL queries.
-
-      The recordset class abstracts a set of data returned by SQL queries.
-      
-      Data can be fetched row by row into Falcon arrays or dictionaries by
-      the @a Recordset.fetch method. In the first case, the value extracted
-      from each column is returned in the corresponding position of the 
-      returned array (the first column value at array position [0], the second
-      column value in the array [1] and so on).
-      
-      When fetching a dictionary, it will be filled with column names and values
-      respectively as the key corresponding value entries.
-      
-      The @a Recordset.fetch method can also be used to retrieve all the recordset
-      contents (or part of it) into a Falcon Table.
-      
-      Returned values can be of various falcon item types or classes; see the 
-      @a dbi_value_types section for further details.
-      
-      Other than fetching data, the @a Recordset class can be used to retrieve general
-      informations about the recordset (as the returned column size and names).
-      
-      @note Closing the database handle while the recordset is still open and in use 
-      may lead to various kind of errors. It's a thing that should be generally avoided.
-   */
-
-   // create the base class DBIRecordset for falcon
-   Falcon::Symbol *rs_class = self->addClass( "%Recordset", false ); // private class
-   rs_class->setWKS( true );
-   self->addClassMethod( rs_class, "discard", &Falcon::Ext::Recordset_discard ).asSymbol()->
-         addParam( "count" );
-   self->addClassMethod( rs_class, "fetch",&Falcon::Ext::Recordset_fetch ).asSymbol()->
-            addParam( "item" )->addParam( "count" );
-   self->addClassMethod( rs_class, "do", &Falcon::Ext::Recordset_do ).asSymbol()->
-            addParam( "cb" )->addParam( "item" );
-
-   self->addClassMethod( rs_class, "next", &Falcon::Ext::Recordset_next );
-   self->addClassMethod( rs_class, "getCurrentRow", &Falcon::Ext::Recordset_getCurrentRow );
-   self->addClassMethod( rs_class, "getRowCount", &Falcon::Ext::Recordset_getRowCount );
-   self->addClassMethod( rs_class, "getColumnCount", &Falcon::Ext::Recordset_getColumnCount );
-   self->addClassMethod( rs_class, "getColumnNames", &Falcon::Ext::Recordset_getColumnNames );
-   self->addClassMethod( rs_class, "close", &Falcon::Ext::Recordset_close );
-
-   /*#
-    @class DBIError
-    @brief DBI specific error.
-
-    Inherited class from Error to distinguish from a standard Falcon error. In many
-    cases, DBIError.extra will contain the SQL query that caused the problem.
-
-    Error code is one of the following:
-    - DBIError.COLUMN_RANGE
-    - DBIError.INVALID_DRIVER
-    - DBIError.NOMEM
-    - DBIError.CONNPARAMS
-    - DBIError.CONNECT
-    - DBIError.QUERY
-    - DBIError.QUERY_EMPTY
-    - DBIError.OPTPARAMS
-    - DBIError.NO_SUBTRANS
-    - DBIError.NO_MULTITRANS
-    - DBIError.UNPREP_EXEC
-    - DBIError.BIND_SIZE
-    - DBIError.BIND_MIX
-    - DBIError.EXEC
-    - DBIError.FETCH
-    - DBIError.UNHANDLED_TYPE
-    - DBIError.RESET
-    - DBIError.BIND_INTERNAL
-    - DBIError.TRANSACTION
-    - DBIError.CLOSED_STMT
-    - DBIError.CLOSED_RSET
-    - DBIError.CLOSED_DB
-    - DBIError.DB_NOTFOUND
-    - DBIError.CONNECT_CREATE
-   */
-
-   // create the base class DBIError for falcon
-   Falcon::Symbol *error_class = self->addExternalRef( "Error" ); // it's external
-   Falcon::Symbol *dbierr_cls = self->addClass( "DBIError", &Falcon::Ext::DBIError_init );
-   dbierr_cls->setWKS( true );
-   dbierr_cls->getClassDef()->addInheritance(  new Falcon::InheritDef( error_class ) );
-
-   // exporting error codes
-   self->addClassProperty( dbierr_cls, "COLUMN_RANGE").setInteger( FALCON_DBI_ERROR_COLUMN_RANGE);
-   self->addClassProperty( dbierr_cls, "INVALID_DRIVER" ).setInteger(FALCON_DBI_ERROR_INVALID_DRIVER);
-   self->addClassProperty( dbierr_cls, "NOMEM" ).setInteger(FALCON_DBI_ERROR_NOMEM);
-   self->addClassProperty( dbierr_cls, "CONNPARAMS" ).setInteger(FALCON_DBI_ERROR_CONNPARAMS);
-   self->addClassProperty( dbierr_cls, "CONNECT" ).setInteger(FALCON_DBI_ERROR_CONNECT);
-   self->addClassProperty( dbierr_cls, "QUERY" ).setInteger(FALCON_DBI_ERROR_QUERY);
-   self->addClassProperty( dbierr_cls, "QUERY_EMPTY" ).setInteger(FALCON_DBI_ERROR_QUERY_EMPTY);
-   self->addClassProperty( dbierr_cls, "OPTPARAMS" ).setInteger(FALCON_DBI_ERROR_OPTPARAMS);
-   self->addClassProperty( dbierr_cls, "NO_SUBTRANS" ).setInteger(FALCON_DBI_ERROR_NO_SUBTRANS);
-   self->addClassProperty( dbierr_cls, "NO_MULTITRANS" ).setInteger(FALCON_DBI_ERROR_NO_MULTITRANS);
-   self->addClassProperty( dbierr_cls, "UNPREP_EXEC" ).setInteger(FALCON_DBI_ERROR_UNPREP_EXEC );
-   self->addClassProperty( dbierr_cls, "BIND_SIZE" ).setInteger(FALCON_DBI_ERROR_BIND_SIZE );
-   self->addClassProperty( dbierr_cls, "BIND_MIX" ).setInteger(FALCON_DBI_ERROR_BIND_MIX );
-   self->addClassProperty( dbierr_cls, "EXEC" ).setInteger(FALCON_DBI_ERROR_EXEC );
-   self->addClassProperty( dbierr_cls, "FETCH" ).setInteger(FALCON_DBI_ERROR_FETCH );
-   self->addClassProperty( dbierr_cls, "UNHANDLED_TYPE" ).setInteger(FALCON_DBI_ERROR_UNHANDLED_TYPE );
-   self->addClassProperty( dbierr_cls, "RESET" ).setInteger(FALCON_DBI_ERROR_RESET);
-   self->addClassProperty( dbierr_cls, "BIND_INTERNAL" ).setInteger(FALCON_DBI_ERROR_BIND_INTERNAL );
-   self->addClassProperty( dbierr_cls, "TRANSACTION" ).setInteger(FALCON_DBI_ERROR_TRANSACTION );
-   self->addClassProperty( dbierr_cls, "CLOSED_STMT" ).setInteger(FALCON_DBI_ERROR_CLOSED_STMT );
-   self->addClassProperty( dbierr_cls, "CLOSED_RSET" ).setInteger(FALCON_DBI_ERROR_CLOSED_RSET );
-   self->addClassProperty( dbierr_cls, "CLOSED_DB" ).setInteger(FALCON_DBI_ERROR_CLOSED_DB );
-   self->addClassProperty( dbierr_cls, "DB_NOTFOUND" ).setInteger(FALCON_DBI_ERROR_DB_NOTFOUND );
-   self->addClassProperty( dbierr_cls, "CONNECT_CREATE").setInteger(FALCON_DBI_ERROR_CONNECT_CREATE );
-
-   // service publication
-   self->publishService( &theDBIService );
-
-   // we're done
-   return self;
+    return new Falcon::DBIModule;
 }
 
 /* end of dbi.cpp */
-
 

@@ -19,7 +19,6 @@
 #include <falcon/setup.h>
 #include <falcon/types.h>
 #include <falcon/string.h>
-#include <falcon/basealloc.h>
 #include <falcon/autocstring.h>
 
 namespace Falcon {
@@ -27,7 +26,7 @@ namespace Falcon {
 /** An utility used by many drivers to break connection strings.
    Base class for more specific
 */
-class DBIParams: public BaseAlloc
+class DBIParams
 {
 
 protected:

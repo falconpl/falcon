@@ -16,18 +16,28 @@
 #include <falcon/setup.h>
 #include <falcon/types.h>
 
-#ifndef SQLITE3_EXT_H
-#define SQLITE3_EXT_H
+#ifndef FALCON_DBI_SQLITE3_EXT_H
+#define FALCON_DBI_SQLITE3_EXT_H
 
+#include <falcon/class.h>
 namespace Falcon
 {
-
-class VMachine;
-
 namespace Ext
 {
 
-FALCON_FUNC SQLite3_init( VMachine *vm );
+class ClassSqlite3DBIHandle: public Class
+{
+public:
+   ClassSqlite3DBIHandle();
+   virtual ~ClassSqlite3DBIHandle();
+
+   virtual void dispose( void* instance ) const;
+   virtual void* clone( void* instance ) const;
+   virtual void* createInstance() const;
+
+   virtual void gcMarkInstance( void* instance, uint32 mark ) const;
+   virtual bool gcCheckInstance( void* instance, uint32 mark ) const;
+};
 
 }
 }

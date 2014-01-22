@@ -12972,7 +12972,7 @@ static void *sqlite3MemMalloc(int nByte){
   sqlite3_int64 *p;
   assert( nByte>0 );
   nByte = ROUND8(nByte);
-  p = memAlloc( nByte+8 );
+  p = malloc( nByte+8 );
   if( p ){
     p[0] = nByte;
     p++;
@@ -13336,7 +13336,7 @@ static void *sqlite3MemMalloc(int nByte){
   nReserve = ROUND8(nByte);
   totalSize = nReserve + sizeof(*pHdr) + sizeof(int) +
                mem.nBacktrace*sizeof(void*) + mem.nTitle;
-  p = memAlloc(totalSize);
+  p = malloc(totalSize);
   if( p ){
     z = p;
     pBt = (void**)&z[mem.nTitle];
@@ -28244,7 +28244,7 @@ static WCHAR *utf8ToUnicode(const char *zFilename){
   WCHAR *zWideFilename;
 
   nChar = MultiByteToWideChar(CP_UTF8, 0, zFilename, -1, NULL, 0);
-  zWideFilename = memAlloc( nChar*sizeof(zWideFilename[0]) );
+  zWideFilename = malloc( nChar*sizeof(zWideFilename[0]) );
   if( zWideFilename==0 ){
     return 0;
   }
@@ -28265,7 +28265,7 @@ static char *unicodeToUtf8(const WCHAR *zWideFilename){
   char *zFilename;
 
   nByte = WideCharToMultiByte(CP_UTF8, 0, zWideFilename, -1, 0, 0, 0, 0);
-  zFilename = memAlloc( nByte );
+  zFilename = malloc( nByte );
   if( zFilename==0 ){
     return 0;
   }
@@ -28291,7 +28291,7 @@ static WCHAR *mbcsToUnicode(const char *zFilename){
   int codepage = AreFileApisANSI() ? CP_ACP : CP_OEMCP;
 
   nByte = MultiByteToWideChar(codepage, 0, zFilename, -1, NULL,0)*sizeof(WCHAR);
-  zMbcsFilename = memAlloc( nByte*sizeof(zMbcsFilename[0]) );
+  zMbcsFilename = malloc( nByte*sizeof(zMbcsFilename[0]) );
   if( zMbcsFilename==0 ){
     return 0;
   }
@@ -28316,7 +28316,7 @@ static char *unicodeToMbcs(const WCHAR *zWideFilename){
   int codepage = AreFileApisANSI() ? CP_ACP : CP_OEMCP;
 
   nByte = WideCharToMultiByte(codepage, 0, zWideFilename, -1, 0, 0, 0, 0);
-  zFilename = memAlloc( nByte );
+  zFilename = malloc( nByte );
   if( zFilename==0 ){
     return 0;
   }
@@ -29657,7 +29657,7 @@ static int winFullPathname(
   if( isNT() ){
     WCHAR *zTemp;
     nByte = GetFullPathNameW((WCHAR*)zConverted, 0, 0, 0) + 3;
-    zTemp = memAlloc( nByte*sizeof(zTemp[0]) );
+    zTemp = malloc( nByte*sizeof(zTemp[0]) );
     if( zTemp==0 ){
       free(zConverted);
       return SQLITE_NOMEM;
@@ -29674,7 +29674,7 @@ static int winFullPathname(
   }else{
     char *zTemp;
     nByte = GetFullPathNameA((char*)zConverted, 0, 0, 0) + 3;
-    zTemp = memAlloc( nByte*sizeof(zTemp[0]) );
+    zTemp = malloc( nByte*sizeof(zTemp[0]) );
     if( zTemp==0 ){
       free(zConverted);
       return SQLITE_NOMEM;
@@ -40122,6 +40122,7 @@ static Pgno pagerPagecount(BtShared *pBt){
   int rc;
   assert( pBt->pPage1 );
   rc = sqlite3PagerPagecount(pBt->pPager, &nPage);
+  rc = rc;
   assert( rc==SQLITE_OK || nPage==-1 );
   return (Pgno)nPage;
 }
@@ -44615,9 +44616,9 @@ static int balance_nonroot(
       }
     }
     if( minI>i ){
-      int t;
+      //int t;
       MemPage *pT;
-      t = apNew[i]->pgno;
+      //t = apNew[i]->pgno;
       pT = apNew[i];
       apNew[i] = apNew[minI];
       apNew[minI] = pT;
@@ -51996,6 +51997,7 @@ static Mem *columnMem(sqlite3_stmt *pStmt, int i){
   if( pVm && pVm->pResultSet!=0 && i<pVm->nResColumn && i>=0 ){
     sqlite3_mutex_enter(pVm->db->mutex);
     vals = sqlite3_data_count(pStmt);
+    vals = vals;
     pOut = &pVm->pResultSet[i];
   }else{
     /* If the value passed as the second argument is out of range, return
@@ -67727,6 +67729,7 @@ static void sqlite3DeleteIndex(Index *p){
   pOld = sqlite3HashInsert(&p->pSchema->idxHash, zName,
                            sqlite3Strlen30(zName), 0);
   assert( pOld==0 || pOld==p );
+  pOld = pOld;
   freeIndex(p);
 }
 
@@ -69679,6 +69682,7 @@ static void sqlite3RefillIndex(Parse *pParse, Index *pIndex, int memRootPage){
   sqlite3OpenTable(pParse, iTab, iDb, pTab, OP_OpenRead);
   addr1 = sqlite3VdbeAddOp2(v, OP_Rewind, iTab, 0);
   regRecord = sqlite3GetTempReg(pParse);
+  regRecord = regRecord;
   regIdxKey = sqlite3GenerateIndexKey(pParse, pIndex, iTab, regRecord, 1);
   if( pIndex->onError!=OE_None ){
     const int regRowid = regIdxKey + pIndex->nColumn;
@@ -70701,6 +70705,7 @@ SQLITE_PRIVATE void sqlite3CommitTransaction(Parse *pParse){
   assert( pParse!=0 );
   db = pParse->db;
   assert( db!=0 );
+  db = db;
 /*  if( db->aDb[0].pBt==0 ) return; */
   if( sqlite3AuthCheck(pParse, SQLITE_TRANSACTION, "COMMIT", 0, 0) ){
     return;
@@ -70721,6 +70726,7 @@ SQLITE_PRIVATE void sqlite3RollbackTransaction(Parse *pParse){
   assert( pParse!=0 );
   db = pParse->db;
   assert( db!=0 );
+  db = db;
 /*  if( db->aDb[0].pBt==0 ) return; */
   if( sqlite3AuthCheck(pParse, SQLITE_TRANSACTION, "ROLLBACK", 0, 0) ){
     return;
@@ -74450,6 +74456,7 @@ SQLITE_PRIVATE void sqlite3FkCheck(
   if( (db->flags&SQLITE_ForeignKeys)==0 ) return;
 
   v = sqlite3GetVdbe(pParse);
+  v = v;
   iDb = sqlite3SchemaToIndex(db, pTab->pSchema);
   zDb = db->aDb[iDb].zName;
 
@@ -75739,6 +75746,7 @@ SQLITE_PRIVATE void sqlite3Insert(
   ** the content of the new row, and the assemblied row record.
   */
   regRecord = ++pParse->nMem;
+  regRecord = regRecord;
   regRowid = regIns = pParse->nMem+1;
   pParse->nMem += pTab->nCol + 1;
   if( IsVirtual(pTab) ){
@@ -86110,6 +86118,7 @@ SQLITE_PRIVATE void sqlite3Update(
   regNew = pParse->nMem + 1;
   pParse->nMem += pTab->nCol;
   regRec = ++pParse->nMem;
+  regRec = regRec;
 
   /* Start the view context. */
   if( isView ){
@@ -91042,6 +91051,7 @@ static Bitmask codeOneLoopStart(
     assert( (pTerm->wtFlags & TERM_ORINFO)!=0 );
     pOrWc = &pTerm->u.pOrInfo->wc;
     pFinal = &pOrWc->a[pOrWc->nTerm-1];
+    pFinal = pFinal;
     pLevel->op = OP_Return;
     pLevel->p1 = regReturn;
 
@@ -95178,6 +95188,7 @@ SQLITE_PRIVATE void sqlite3Parser(
     yyact = yy_find_shift_action(yypParser,(YYCODETYPE)yymajor);
     if( yyact<YYNSTATE ){
       assert( !yyendofinput );  /* Impossible to shift the $ token */
+      yyendofinput = yyendofinput;
       yy_shift(yypParser,yyact,yymajor,&yyminorunion);
       yypParser->yyerrcnt--;
       yymajor = YYNOCODE;

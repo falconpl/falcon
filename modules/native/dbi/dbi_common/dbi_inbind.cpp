@@ -18,9 +18,7 @@
 #include <falcon/item.h>
 #include <falcon/vm.h>
 #include <falcon/timestamp.h>
-#include <falcon/memory.h>
 #include <falcon/itemarray.h>
-#include <falcon/membuf.h>
 
 #include <falcon/dbi_error.h>
 
@@ -37,8 +35,8 @@ void DBITimeConverter_ISO::convertTime( TimeStamp* ts, void* buffer, int& bufsiz
    fassert( bufsize > 19 );
 
    sprintf( (char*) buffer, "%4.0d-%2.0d-%2.0d %2.0d:%2.0d:%2.0d",
-         ts->m_year, ts->m_month, ts->m_day,
-         ts->m_hour, ts->m_minute, ts->m_second );
+         (int32) ts->year(), ts->month(), ts->day(),
+         ts->hour(), ts->minute(), ts->second() );
 
    bufsize = 19;
 }
@@ -128,68 +126,58 @@ void DBIBindItem::set(const Item& value, const DBITimeConverter& tc, const DBISt
    switch( value.type() )
    {
    case FLC_ITEM_NIL:
-      break;
+      m_type = t_nil;
+      return;
 
    case FLC_ITEM_BOOL:
       m_type = t_bool;
       m_cdata.v_bool = value.asBoolean();
-      break;
+      return;
 
    case FLC_ITEM_INT:
       m_type = t_int;
       m_cdata.v_int64 = value.asInteger();
-      break;
+      return;
 
    case FLC_ITEM_NUM:
       m_type = t_double;
       m_cdata.v_double = (double) value.asNumeric();
-      break;
+      return;
 
-   case FLC_ITEM_STRING:
-      m_type = t_string;
-      m_buflen = bufsize;
-      m_cdata.v_string = sc.convertString( *value.asString(), m_buffer, m_buflen );
-      break;
-
-   case FLC_ITEM_MEMBUF:
-      m_type = t_buffer;
-      m_buflen = value.asMemBuf()->length();
-      m_cdata.v_buffer = value.asMemBuf()->data();
-      break;
-
-   case FLC_ITEM_OBJECT:
+   case FLC_ITEM_USER:
+      switch( value.asClass()->typeID() )
       {
-         CoreObject* obj = value.asObjectSafe();
-         if( obj->derivedFrom( "TimeStamp" ) )
+      case FLC_CLASS_ID_STRING:
+         if( value.asString()->isMemBuf() )
          {
-            m_type = t_time;
-            TimeStamp* ts = static_cast<TimeStamp*>( obj->getFalconData() );
+            m_type = t_buffer;
+            m_buflen = value.asString()->size();
+            m_cdata.v_buffer = value.asString()->getRawStorage();
+         }
+         else {
+            m_type = t_string;
             m_buflen = bufsize;
-            tc.convertTime( ts, m_buffer, m_buflen );
-            m_cdata.v_buffer = m_buffer;
-            break;
+            m_cdata.v_string = sc.convertString( *value.asString(), m_buffer, m_buflen );
          }
-      }
-      // else, fall through
+         return;
 
-   default:
-      {
-         VMachine* vm = VMachine::getCurrent();
-         String str;
-         if( vm != 0 )
-         {
-            vm->itemToString( str, &value );
-         }
-         else
-         {
-            str = "<unknown>";
-         }
-
-         m_type = t_string;
+      case FLC_CLASS_ID_TIMESTAMP:
+         m_type = t_time;
+         TimeStamp* ts = static_cast<TimeStamp*>( value.asInst() );
          m_buflen = bufsize;
-         m_cdata.v_string = sc.convertString( str, m_buffer, m_buflen );
+         tc.convertTime( ts, m_buffer, m_buflen );
+         m_cdata.v_buffer = m_buffer;
+         return;
       }
+      // fallthrough
+      break;
    }
+
+   String str;
+   value.describe(str);
+   m_type = t_string;
+   m_buflen = bufsize;
+   m_cdata.v_string = sc.convertString( str, m_buffer, m_buflen );
 }
 
 

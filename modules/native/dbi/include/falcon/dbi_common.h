@@ -33,8 +33,8 @@ class String;
 class VMachine;
 class Item;
 
-bool dbi_itemToSqlValue( const Item &item, String &value );
-void dbi_escapeString( const String& input, String& value );
+bool dbi_itemToSqlValue( const Item &item, String &value, char quoteChr='\'' );
+void dbi_escapeString( const String& input, String& value, char quoteChr='\'' );
 bool dbi_sqlExpand( const String& input, String& output, const ItemArray& arr );
 
 }

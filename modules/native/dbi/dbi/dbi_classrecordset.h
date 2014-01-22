@@ -1,6 +1,6 @@
 /*
  * FALCON - The Falcon Programming Language.
- * FILE: dbi_classstatement.h
+ * FILE: dbi_classrecordset.h
  *
  * DBI Falcon extension interface
  * -------------------------------------------------------------------
@@ -17,29 +17,29 @@
 #include <falcon/types.h>
 #include <falcon/function.h>
 
-#ifndef _FALCON_DBI_STATEMENT_H_
-#define _FALCON_DBI_STATEMENT_H_
+#ifndef _FALCON_DBI_CLASSRECORDSET_H_
+#define _FALCON_DBI_CLASSRECORDSET_H_
 
 namespace Falcon {
-namespace DBI {
 
-
-class ClassStatement: public Class
+class ClassRecordset: public Class
 {
 public:
-   ClassStatement();
-   virtual ~ClassStatement();
+   ClassRecordset();
+   virtual ~ClassRecordset();
    virtual void dispose( void* instance ) const;
    virtual void* clone( void* instance ) const;
    virtual void* createInstance() const;
 
    virtual void gcMarkInstance( void* instance, uint32 mark ) const;
    virtual bool gcCheckInstance( void* instance, uint32 mark ) const;
+
+   PStep* m_stepDoNext;
+   PStep* m_stepStoreFetchedProperties;
 };
 
-}
 }
 
 #endif
 
-/* dbi_classstatement.h */
+/* dbi_classrecordset.h */

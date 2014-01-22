@@ -80,7 +80,7 @@ public:
     * Setting this will automatically clear the target namespace, as the two
     * declarations are incompatible.
     */
-   void addSourceSymbol( const String& sym );
+   ImportDef& addSourceSymbol( const String& sym );
 
    /** Sets a source module for the import directive.
     * @param src The name of the new source module.

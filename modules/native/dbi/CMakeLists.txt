@@ -59,7 +59,6 @@ INCLUDE_DIRECTORIES(${Falcon_INCLUDE_DIRS})
 # Common files
 set( dbi_common_files
    ../dbi_common/dbi_common.cpp
-   ../dbi_common/dbi_error.cpp
    ../dbi_common/dbi_handle.cpp
    ../dbi_common/dbi_inbind.cpp
    ../dbi_common/dbi_outbind.cpp
@@ -75,6 +74,7 @@ set( dbi_common_files
    ../include/falcon/dbi_params.h
    ../include/falcon/dbi_recordset.h
    ../include/falcon/dbi_stmt.h
+   ../include/falcon/dbi_service.h
 )
 
 

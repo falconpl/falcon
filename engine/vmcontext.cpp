@@ -1038,6 +1038,12 @@ public:
    {
       if( ps.isTry()  )
       {
+         if( ps.isTracedCatch() )
+         {
+            ctx->setCatchBlock( static_cast<const SynTree*>(&ps) );
+            return true;
+         }
+
          const StmtTry* stry = static_cast<const StmtTry*>( &ps );
 
          if( stry->catchSelect().arity() == 0 && stry->catchSelect().getDefault() == 0 )

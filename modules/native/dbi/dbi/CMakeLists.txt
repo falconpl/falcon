@@ -19,10 +19,13 @@ ADD_LIBRARY( ${FALCON_MODULE} MODULE
    ${dbi_common_files}
 
    dbi.cpp
-   dbi_ext.cpp
-   dbi_st.cpp
-   dbi_service.cpp
-   dbiloaderimpl.cpp
+   dbi_classhandle.cpp
+   dbi_classhandle.h
+   dbi_classrecordset.cpp
+   dbi_classrecordset.h
+   dbi_classstatement.cpp
+   dbi_classstatement.h
+   dbi_mod.h   
 )
 
 #Link

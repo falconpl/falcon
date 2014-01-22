@@ -216,18 +216,13 @@ bool Module::resolveImports( Error*& error )
 
       Symbol* sym = iter->first;
       // get them directly from import.
-      Private::Externals::iterator pext = _p->m_externals.find( sym );
-      if( pext != _p->m_externals.end() )
+      Private::ExtDef& def = iter->second;
+      ImportDef* idef = def.m_def;
+      if( idef != 0 && idef->modReq() != 0 && idef->modReq()->module() != 0 )
       {
-         // found, but can we i,port this stuff?
-         Private::ExtDef& def = iter->second;
-         ImportDef* idef = def.m_def;
-         if( idef != 0 && idef->modReq() != 0 && idef->modReq()->module() != 0 )
-         {
 
-            Module* srcMod = idef->modReq()->module();
-            value = srcMod->resolveLocally( def.m_srcSym );
-         }
+         Module* srcMod = idef->modReq()->module();
+         value = srcMod->resolveLocally( def.m_srcSym );
       }
 
       // try the last trump card, resolve the symbol globally.
@@ -249,6 +244,7 @@ bool Module::resolveImports( Error*& error )
 
       if( value != 0 )
       {
+         onImportResolved(idef, sym, value);
          m_globals.addExtern(sym, value);
       }
 

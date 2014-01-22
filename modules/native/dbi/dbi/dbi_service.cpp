@@ -13,7 +13,7 @@
  * See LICENSE file for licensing details.
 */
 
-#include <falcon/srv/dbi_service.h>
+#include <falcon/dbi_service.h>
 
 namespace Falcon
 {

@@ -17,16 +17,15 @@
 #define FALCON_DBI_MOD_H
 
 #include <falcon/string.h>
-#include <falcon/srv/dbi_service.h>
+#include <falcon/dbi_handle.h>
 
 namespace Falcon {
 
 int dbh_itemToSqlValue( DBIHandle *dbh, const Item *i, String &value );
-int dbh_realSqlExpand( VMachine *vm, DBIHandle *dbh, String &sql, int startAt=0 );
+int dbh_realSqlExpand( VMContext *vm, DBIHandle *dbh, String &sql, int startAt=0 );
 void dbh_escapeString( const String& input, String& value );
 void dbh_throwError( const char* file, int line, int code, const String& desc );
-
-void dbh_return_recordset( VMachine *vm, DBIRecordset *rec );
+void dbh_return_recordset( VMContext *vm, DBIRecordset *rec );
 
 }
 

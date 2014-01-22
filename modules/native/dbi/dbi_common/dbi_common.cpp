@@ -18,6 +18,8 @@
 #include <falcon/item.h>
 #include <falcon/error.h>
 #include <falcon/timestamp.h>
+#include <falcon/itemarray.h>
+#include <falcon/itemdict.h>
 
 /******************************************************************************
  * Local Helper Functions - DBH database handle
@@ -25,9 +27,13 @@
 namespace Falcon
 {
 
-bool dbi_itemToSqlValue( const Item &item, String &value )
+bool dbi_itemToSqlValue( const Item &item, String &value, char quote )
 {
    switch( item.type() ) {
+      case FLC_ITEM_NIL:
+         value = "NULL";
+         return true;
+
       case FLC_ITEM_BOOL:
          value = item.asBoolean() ? "TRUE" : "FALSE";
          return true;
@@ -40,39 +46,34 @@ bool dbi_itemToSqlValue( const Item &item, String &value )
          value.writeNumber( item.asNumeric(), "%f" );
          return true;
 
-      case FLC_ITEM_STRING:
-         dbi_escapeString( *item.asString(), value );
-         value.prepend( "'" );
-         value.append( "'" );
-         return true;
+      case FLC_ITEM_USER:
+         switch( item.asClass()->typeID() )
+         {
+         case FLC_CLASS_ID_STRING:
+            dbi_escapeString( *item.asString(), value );
+            return true;
 
-      case FLC_ITEM_OBJECT: {
-            CoreObject *o = item.asObject();
-            //vm->itemToString( value, ??? )
-            if ( o->derivedFrom( "TimeStamp" ) ) {
-               TimeStamp *ts = (TimeStamp *) o->getUserData();
-               value.prepend( "'" );
-               value.append( "'" );
-               return true;
-            }
-            return false;
+         case FLC_CLASS_ID_TIMESTAMP:
+            value.size(0);
+            value.append(quote);
+            TimeStamp* ts = static_cast<TimeStamp*>(item.asInst());
+            ts->toString(value);
+            value.append(quote);
+            return true;
          }
-
-      case FLC_ITEM_NIL:
-         value = "NULL";
-         return true;
-
-      default:
-         return false;
+         break;
    }
+
+   return false;
 }
 
 
-void dbi_escapeString( const String& input, String& value )
+void dbi_escapeString( const String& input, String& value, char quoteChr )
 {
    uint32 len = input.length();
    uint32 pos = 0;
    value.reserve( len + 8 );
+   value.append(quoteChr);
 
    while( pos < len )
    {
@@ -96,9 +97,11 @@ void dbi_escapeString( const String& input, String& value )
 
          default:
             value.append( chr );
+            break;
       }
       ++pos;
    }
+   value.append(quoteChr);
 }
 
 
@@ -140,7 +143,6 @@ bool dbi_sqlExpand( const String& input, String& output, const ItemArray& arr )
    return true;
 }
 
-
 }
 
-/* end of dbi_mod.cpp */
+/* end of dbi_common.cpp */

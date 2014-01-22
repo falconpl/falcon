@@ -14,29 +14,27 @@
 */
 
 #include <falcon/dbi_recordset.h>
+#include <falcon/dbi_handle.h>
 
 namespace Falcon {
 
 DBIRecordset::DBIRecordset( DBIHandle* generator ):
-      m_dbh( generator )
+      m_dbh( generator ),
+      m_mark(0)
 {}
 
 DBIRecordset::~DBIRecordset()
 {}
-
-FalconData *DBIRecordset::clone() const
-{
-   return 0;
-}
 
 DBIRecordset *DBIRecordset::getNext()
 {
    return 0;
 }
 
-
-void DBIRecordset::gcMark( uint32 v )
+void DBIRecordset::gcMark( uint32 mark )
 {
+   m_mark = mark;
+   m_dbh->gcMark(mark);
 }
 
 }

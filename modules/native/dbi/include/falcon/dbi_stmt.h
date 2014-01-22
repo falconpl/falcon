@@ -1,8 +1,8 @@
 /*
    FALCON - The Falcon Programming Language.
-   FILE: dbi_trans.h
+   FILE: dbi_stmt.h
 
-   Database Interface - SQL Transaction class.
+   Database Interface - SQL Statement class.
    -------------------------------------------------------------------
    Author: Giancarlo Niccolai
    Begin: Sun, 16 May 2010 00:09:13 +0200
@@ -13,26 +13,24 @@
    See LICENSE file for licensing details.
 */
 
-#ifndef FALCON_DBI_TRANS_H_
-#define FALCON_DBI_TRANS_H_
+#ifndef FALCON_DBI_STMT_H_
+#define FALCON_DBI_STMT_H_
 
-#include <falcon/falcondata.h>
 #include <falcon/string.h>
 
 namespace Falcon
 {
+class ItemArray;
+
 class DBIHandle;
 class DBISettingParams;
 class DBIRecordset;
-class ItemArray;
 
 
 /** Abstraction of statement class.
-
-
 */
 
-class DBIStatement: public FalconData
+class DBIStatement
 {
 
 public:
@@ -83,8 +81,8 @@ public:
        */
    DBIHandle *getHandle() const { return m_dbh; }
 
-   virtual void gcMark( uint32 );
-   virtual FalconData* clone() const;
+   virtual void gcMark( uint32 mark );
+   uint32 currentMark() const { return m_mark; }
    
    /** returns the count of rows affected by the last query() operation */
    int64 affectedRows() const { return m_nLastAffected; }
@@ -92,10 +90,11 @@ public:
 protected:
    DBIHandle *m_dbh;
    int64 m_nLastAffected;
+   uint32 m_mark;
 };
 
 }
 
 #endif
 
-/* end of dbi_trans.h */
+/* end of dbi_stmt.h */

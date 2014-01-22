@@ -14,14 +14,87 @@
    See LICENSE file for licensing details.
 */
 
+#define SRC "modules/dbi/sqlite3/sqlite3_fm.cpp"
+
 #include "sqlite3_mod.h"
 #include "sqlite3_ext.h"
 #include "version.h"
 
-#include <falcon/module.h>
+#include "sqlite3_fm.h"
 
-// Instantiate the driver service
-Falcon::DBIServiceSQLite3 theSQLite3Service;
+#include <falcon/importdef.h>
+#include <falcon/log.h>
+#include <falcon/stderrors.h>
+#include <falcon/symbol.h>
+#include <falcon/dbi_handle.h>
+
+namespace Falcon {
+
+Sqlite3DBIModule::Sqlite3DBIModule():
+         Module("dbi.sqlite3")
+{
+   m_dbiHandle = 0;
+   m_dbiService = new Sqlite3Service(this);
+   Error* def = 0;
+   addImport( new ImportDef("dbi", false, FALCON_DBI_HANDLE_CLASS_NAME, FALCON_DBI_HANDLE_CLASS_NAME, false), def, 0 );
+
+   m_classSql3liteDBIHandle = new Ext::ClassSqlite3DBIHandle;
+   *this
+      << m_classSql3liteDBIHandle;
+}
+
+
+Sqlite3DBIModule::~Sqlite3DBIModule()
+{
+   delete m_dbiHandle;
+}
+
+
+void Sqlite3DBIModule::onImportResolved( ImportDef*, Symbol* sym, Item* value )
+{
+   if( sym->name() == FALCON_DBI_HANDLE_CLASS_NAME )
+   {
+      Engine::instance()->log()->log(Log::fac_engine_io, Log::lvl_detail, "Linking DBIHandle class from DBI module");
+      m_dbiHandle = static_cast<Class*>(value->asInst());
+      m_classSql3liteDBIHandle->setParent( m_dbiHandle );
+   }
+}
+
+void Sqlite3DBIModule::onLinkComplete( VMContext* )
+{
+   // this is an overkill, the link system should have raised already.
+   if( m_dbiHandle == 0 )
+   {
+      throw new LinkError(ErrorParam(e_mod_notfound, __LINE__, SRC).extra("dbi"));
+   }
+}
+
+Sqlite3DBIModule::Sqlite3Service::Sqlite3Service( Module* master ):
+         DBIService( FALCON_DBI_HANDLE_SERVICE_NAME, master )
+{}
+
+Sqlite3DBIModule::Sqlite3Service::~Sqlite3Service()
+{}
+
+DBIHandle *Sqlite3DBIModule::Sqlite3Service::connect( const String &parameters )
+{
+   Sqlite3DBIModule* mod = static_cast<Sqlite3DBIModule*>(module());
+   DBIHandleSQLite3* handle = new DBIHandleSQLite3(mod->classSql3liteDBIHandle());
+   handle->connect(parameters);
+   return handle;
+}
+
+
+Service* Sqlite3DBIModule::createService( const String& name )
+{
+   if( name == FALCON_DBI_HANDLE_SERVICE_NAME )
+   {
+      return m_dbiService;
+   }
+   return 0;
+}
+
+}
 
 /*#
    @module dbi.sqlite3 Sqlite driver module
@@ -33,28 +106,7 @@ Falcon::DBIServiceSQLite3 theSQLite3Service;
 
 FALCON_MODULE_DECL
 {
-   // Module declaration
-   Falcon::Module *self = new Falcon::Module();
-   self->name( "sqlite3" );
-   self->engineVersion( FALCON_VERSION_NUM );
-   self->version( VERSION_MAJOR, VERSION_MINOR, VERSION_REVISION );
-
-   // first of all, we need to declare our dependency from the DBI module.
-   self->addDepend( "dbi", "dbi", true, false );
-
-   // also, we declare a SQLite3 class, which derives from DBIHandler which
-   // is in the DBI module.
-   Falcon::Symbol *dbh_class = self->addExternalRef( "dbi.%Handle" ); // it's external
-   dbh_class->imported( true );
-   Falcon::Symbol *sqlite3_class = self->addClass( "SQLite3", Falcon::Ext::SQLite3_init )
-      ->addParam("connect")->addParam("options");
-   sqlite3_class->getClassDef()->addInheritance( new Falcon::InheritDef( dbh_class ) );
-   sqlite3_class->setWKS( true );
-
-   // service publication
-   self->publishService( &theSQLite3Service );
-
-   return self;
+   return new Falcon::Sqlite3DBIModule;
 }
 
 /* end of sqlite3_fm.cpp */

@@ -15,10 +15,10 @@
 */
 
 #include <falcon/dbi_outbind.h>
-#include <falcon/memory.h>
 #include <falcon/fassert.h>
 
 #include <string.h>
+#include <stdlib.h>
 
 namespace Falcon {
 
@@ -133,7 +133,7 @@ void* DBIOutBind::alloc( unsigned size )
    }
    else
    {
-      m_memory = memRealloc( m_memory, size );
+      m_memory = realloc( m_memory, size );
    }
 
    m_allocated = size;
@@ -155,7 +155,7 @@ void* DBIOutBind::reserve( unsigned size )
    }
    else
    {
-      m_memory = memRealloc( m_memory, size );
+      m_memory = realloc( m_memory, size );
    }
 
    m_allocated = size;

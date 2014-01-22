@@ -16,16 +16,16 @@
 #ifndef FALCON_DBI_HANDLE_H_
 #define FALCON_DBI_HANDLE_H_
 
-#include <falcon/falcondata.h>
+#define FALCON_DBI_HANDLE_CLASS_NAME "%Handle"
+
 #include <falcon/string.h>
 
-namespace Falcon
-{
+namespace Falcon {
+class ItemArray;
 
 class DBIStatement;
 class DBIRecordset;
 class DBISettingParams;
-class ItemArray;
 
 /**
  * Base class for handlers.
@@ -42,11 +42,11 @@ class ItemArray;
  * The handle is derived from UserData as it is likely to be assigned
  * to a CoreObject.
  */
-class DBIHandle: public FalconData
+class DBIHandle
 {
 public:
 
-   DBIHandle();
+   DBIHandle( const Class* h );
    virtual ~DBIHandle();
 
    /** Sets the common transaction options.
@@ -141,14 +141,18 @@ public:
     * Will throw an adequate DBI error in case of expansion error.
     */
    virtual void sqlExpand( const String& sql, String& tgt, const ItemArray& values );
-   virtual void gcMark( uint32 );
-   virtual FalconData* clone() const;
+   virtual void gcMark( uint32 mark ) { m_mark = mark; }
+   uint32 currentMark() const { return m_mark; }
 
    /** returns the count of rows affected by the last query() operation */
    int64 affectedRows();
 
+   const Class* handler() const { return m_handler; }
+
 protected:
    int64 m_nLastAffected;
+   uint32 m_mark;
+   const Class* m_handler;
 };
 
 }

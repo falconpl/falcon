@@ -72,7 +72,7 @@ void ImportDef::setTargetSymbol( const String &sym )
 }
 
 
-void ImportDef::addSourceSymbol( const String& sym )
+ImportDef& ImportDef::addSourceSymbol( const String& sym )
 {
    if( m_symList == 0 )
    {
@@ -80,6 +80,7 @@ void ImportDef::addSourceSymbol( const String& sym )
    }
    
    m_symList->push_back( sym );
+   return *this;
 }
 
 
@@ -102,10 +103,6 @@ void ImportDef::setLoad( const String& src, bool bIsPath )
 bool ImportDef::setImportFrom( const String& path, bool isFsPath, const String& symName,
    const String& nsName, bool bIsNS )
 {
-   if( ! (bIsNS || path.size() == 0 || symName.size() == 0 ) )
-   {
-      return false;
-   }
    
    m_bIsLoad = false;
    m_bIsUri = isFsPath;
@@ -114,7 +111,10 @@ bool ImportDef::setImportFrom( const String& path, bool isFsPath, const String& 
    m_module = path;
    if( m_symList == 0 )
    {
-      m_symList = new SymbolList;
+      if( symName.size() != 0 )
+      {
+         m_symList = new SymbolList;
+      }
    }
    else
    {

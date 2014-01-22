@@ -17,8 +17,7 @@
 #ifndef FALCON_DBI_REFCOUNT_H
 #define FALCON_DBI_REFCOUNT_H
 
-namespace Falcon
-{
+namespace Falcon {
 
 template<class _T>
 class DBIRefCounter

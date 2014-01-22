@@ -17,12 +17,13 @@
 #include <falcon/dbi_error.h>
 #include <falcon/dbi_common.h>
 #include <falcon/itemarray.h>
+#include <falcon/itemarray.h>
 
-namespace Falcon
-{
+namespace Falcon {
 
-DBIHandle::DBIHandle():
-   m_nLastAffected(-1)
+DBIHandle::DBIHandle( const Class* h):
+   m_nLastAffected(-1),
+   m_handler(h)
 {
 }
 
@@ -44,17 +45,6 @@ void DBIHandle::sqlExpand( const String& sql, String& tgt, const ItemArray& para
    }
 }
 
-
-
-void DBIHandle::gcMark( uint32 )
-{
-
-}
-
-FalconData* DBIHandle::clone() const
-{
-   return 0;
-}
 
 int64 DBIHandle::affectedRows()
 {

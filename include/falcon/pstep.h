@@ -162,7 +162,7 @@ public:
    inline bool isComposed() const { return m_bIsComposed; }
    inline bool isNextBase() const { return m_bIsNextBase; }
    inline bool isLoopBase() const { return m_bIsLoopBase; }
-   inline bool isTry() const { return m_catchMode == 1; }
+   inline bool isTry() const { return m_catchMode != 0; }
    inline bool isTracedCatch() const { return m_catchMode == 2; }
 
    inline void setNextBase() { m_bIsNextBase = true; }

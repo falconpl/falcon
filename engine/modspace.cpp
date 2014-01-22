@@ -24,7 +24,6 @@
 #include <falcon/modloader.h>
 #include <falcon/stderrors.h>
 #include <falcon/itemarray.h>
-#include <falcon/importdef.h>
 #include <falcon/pseudofunc.h>
 #include <falcon/process.h>
 #include <falcon/vm.h>

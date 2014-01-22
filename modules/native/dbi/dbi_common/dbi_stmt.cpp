@@ -14,13 +14,15 @@
 */
 
 #include <falcon/dbi_stmt.h>
+#include <falcon/dbi_handle.h>
 
 namespace Falcon {
 
 
 DBIStatement::DBIStatement( DBIHandle *dbh ):
       m_dbh( dbh ),
-      m_nLastAffected(-1)
+      m_nLastAffected(-1),
+      m_mark(0)
 {
 }
 
@@ -29,16 +31,12 @@ DBIStatement::~DBIStatement()
 {
 }
 
-
-FalconData *DBIStatement::clone() const
+void DBIStatement::gcMark( uint32 mark )
 {
-   return 0;
+   m_mark = mark;
+   m_dbh->gcMark(mark);
 }
 
-
-void DBIStatement::gcMark( uint32 v )
-{
-}
 
 }
 

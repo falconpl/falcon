@@ -19,7 +19,6 @@
 
 #include <falcon/setup.h>
 #include <falcon/types.h>
-#include <falcon/basealloc.h>
 
 namespace Falcon {
 
@@ -28,6 +27,7 @@ class GarbageLock;
 class TimeStamp;
 class String;
 class ItemArray;
+
 
 /** Helper class to store (variable) memory for output binds.
 
@@ -51,7 +51,7 @@ class ItemArray;
     In this case, getMemory() would return 0; so, if you need to get the memory
     even if small, use allocate() before getMemory().
 */
-class DBIOutBind: public BaseAlloc
+class DBIOutBind
 {
 public:
    DBIOutBind();

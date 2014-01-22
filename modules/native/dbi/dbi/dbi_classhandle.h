@@ -17,11 +17,10 @@
 #include <falcon/types.h>
 #include <falcon/function.h>
 
-#ifndef _FALCON_DBI_HANDLE_H_
-#define _FALCON_DBI_HANDLE_H_
+#ifndef _FALCON_DBI_CLASSHANDLE_H_
+#define _FALCON_DBI_CLASSHANDLE_H_
 
 namespace Falcon {
-namespace DBI {
 
 class ClassHandle: public Class
 {
@@ -36,7 +35,6 @@ public:
    virtual bool gcCheckInstance( void* instance, uint32 mark ) const;
 };
 
-}
 }
 
 #endif

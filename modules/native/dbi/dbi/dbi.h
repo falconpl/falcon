@@ -5,42 +5,48 @@
  * Short description
  * -------------------------------------------------------------------
  * Author: Giancarlo Niccolai and Jeremy Cowgar
- * Begin: Sun, 23 Dec 2007 20:33:57 +0100
+ * Begin: Tue, 21 Jan 2014 15:11:56 +0100
  *
  * -------------------------------------------------------------------
- * (C) Copyright 2004: the FALCON developers (see list in AUTHORS file)
+ * (C) Copyright 2014: the FALCON developers (see list in AUTHORS file)
  *
  * See LICENSE file for licensing details.
  */
 
-#ifndef DBI_H
-#define DBI_H
+#ifndef _FALCON_DBI_H_
+#define _FALCON_DBI_H_
 
-#include <falcon/modloader.h>
-#include <falcon/srv/dbi_service.h>
+#include <falcon/module.h>
+#include <falcon/pstep.h>
 
-namespace Falcon
-{
+#include "dbi_classhandle.h"
+#include "dbi_classrecordset.h"
+#include "dbi_classstatement.h"
 
-/**
- * Load the DBI driver.
- */
-class DBILoaderImpl: public DBILoader
+namespace Falcon {
+
+class DBIModule: public Module
 {
 public:
-   DBILoaderImpl();
-   ~DBILoaderImpl();
+   DBIModule();
+   virtual ~DBIModule();
 
-   virtual DBIService *loadDbProvider( VMachine *vm, const String &provName );
+   ClassRecordset* recordsetClass() const { return m_recordsetClass; }
+   ClassHandle* handleClass() const { return m_handleClass; }
+   ClassStatement* statementClass() const { return m_statementClass; }
+
+   PStep* m_stepCatchSubmoduleLoadError;
+   PStep* m_stepAfterSubmoduleLoad;
+
+private:
+   ClassRecordset* m_recordsetClass;
+   ClassHandle* m_handleClass;
+   ClassStatement* m_statementClass;
 
 };
 
 }
 
-// Singleton instance.
-extern Falcon::DBILoaderImpl theDBIService;
-
 #endif
 
 /* end of dbi.h */
-

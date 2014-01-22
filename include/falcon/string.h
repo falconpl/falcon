@@ -619,6 +619,7 @@ public:
        binary data memory buffer.
     */
    bool isText() const { return m_class->type() != csh::cs_membuf; }
+   bool isMemBuf() const { return m_class->type() == csh::cs_membuf; }
 
    /**
        Return true if the string is static.

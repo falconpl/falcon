@@ -19,41 +19,12 @@
 
 #include <sqlite3.h>
 #include <falcon/dbi_common.h>
-#include <falcon/srv/dbi_service.h>
+#include <falcon/dbi_service.h>
 
 namespace Falcon
 {
 
 class DBIHandleSQLite3;
-
-
-class SQLite3StatementHandler: public DBIRefCounter<sqlite3_stmt*>
-{
-public:
-   SQLite3StatementHandler( sqlite3_stmt* p ):
-      DBIRefCounter<sqlite3_stmt*>(p)
-      {}
-
-   virtual ~SQLite3StatementHandler() {
-      sqlite3_finalize( handle() );
-   }
-};
-
-
-class SQLite3Handler: public DBIRefCounter<sqlite3*>
-{
-public:
-   SQLite3Handler( sqlite3* p ):
-      DBIRefCounter<sqlite3*>(p)
-      {}
-
-
-   virtual ~SQLite3Handler() {
-      sqlite3_close( handle() );
-   }
-};
-
-
 
 class Sqlite3InBind: public DBIInBind
 {
@@ -75,14 +46,11 @@ class DBIRecordsetSQLite3 : public DBIRecordset
 protected:
    int m_row;
    int m_columnCount;
-   SQLite3StatementHandler* m_pStmt;
-   SQLite3Handler* m_pDbh;
    // caching for simpler access
    sqlite3_stmt* m_stmt;
    bool m_bAsString;
 
 public:
-   DBIRecordsetSQLite3( DBIHandleSQLite3 *dbt, SQLite3StatementHandler* pStmt );
    DBIRecordsetSQLite3( DBIHandleSQLite3 *dbt, sqlite3_stmt* stmt );
    virtual ~DBIRecordsetSQLite3();
 
@@ -100,7 +68,6 @@ public:
 class DBIStatementSQLite3: public DBIStatement
 {
 public:
-   DBIStatementSQLite3( DBIHandleSQLite3 *dbh, SQLite3StatementHandler* pStmt );
    DBIStatementSQLite3( DBIHandleSQLite3 *dbh, sqlite3_stmt* stmt );
    virtual ~DBIStatementSQLite3();
 
@@ -112,9 +79,7 @@ public:
 
 protected:
    sqlite3_stmt* m_statement;
-   SQLite3StatementHandler* m_pStmt;
    Sqlite3InBind m_inBind;
-   SQLite3Handler* m_pDbh;
    bool m_bFirst;
 };
 
@@ -123,17 +88,17 @@ class DBIHandleSQLite3 : public DBIHandle
 {
 protected:
    sqlite3* m_conn;
-   SQLite3Handler* m_connRef;
    DBISettingParams m_settings;
    bool m_bInTrans;
 
    sqlite3_stmt* int_prepare( const String &query ) const;
 
 public:
-   DBIHandleSQLite3();
-   DBIHandleSQLite3( sqlite3 *conn );
+   DBIHandleSQLite3( const Class* h );
+   DBIHandleSQLite3( const Class* h, sqlite3 *conn );
    virtual ~DBIHandleSQLite3();
 
+   void connect( const String& params );
    virtual void options( const String& params );
    virtual const DBISettingParams* options() const;
    virtual void close();
@@ -151,22 +116,17 @@ public:
 
    static void throwError( int falconError, int sql3Error, char* edesc=0 );
    static String errorDesc( int error );
-   SQLite3Handler* getConn() { return m_connRef; }
 };
+
 
 class DBIServiceSQLite3 : public DBIService
 {
 public:
-   DBIServiceSQLite3();
-
-   virtual void init();
+   DBIServiceSQLite3(Module* mod);
    virtual DBIHandle *connect( const String &parameters );
-   virtual CoreObject *makeInstance( VMachine *vm, DBIHandle *dbh );
 };
 
 }
-
-extern Falcon::DBIServiceSQLite3 theSQLite3Service;
 
 #endif
 

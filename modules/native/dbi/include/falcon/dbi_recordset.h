@@ -13,10 +13,12 @@
    See LICENSE file for licensing details.
 */
 
-#ifndef FALCON_DBI_RECORDSET_H_
-#define FALCON_DBI_RECORDSET_H_
+#ifndef _FALCON_DBI_RECORDSET_H_
+#define _FALCON_DBI_RECORDSET_H_
 
-#include <falcon/falcondata.h>
+#include <falcon/setup.h>
+#include <falcon/types.h>
+#include <falcon/string.h>
 
 namespace Falcon {
 
@@ -30,7 +32,7 @@ class Item;
  * It represents a single database query with results. Through this class, query data
  * can be accessed.
  */
-class DBIRecordset : public FalconData
+class DBIRecordset
 {
 
 public:
@@ -107,11 +109,13 @@ public:
    //=========================================================
    // Manage base class control.
    //
-   virtual FalconData *clone() const;
-   virtual void gcMark( uint32 );
+
+   virtual void gcMark( uint32 mark );
+   uint32 currentMark() const { return m_mark; }
 
 protected:
    DBIHandle* m_dbh;
+   uint32 m_mark;
 };
 
 }

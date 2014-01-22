@@ -34,7 +34,7 @@ Sqlite3InBind::~Sqlite3InBind()
 }
 
 
-void Sqlite3InBind::onFirstBinding( int size )
+void Sqlite3InBind::onFirstBinding( int )
 {
    // nothing to allocate here.
 }
@@ -88,27 +88,13 @@ void Sqlite3InBind::onItemChanged( int num )
 
 DBIRecordsetSQLite3::DBIRecordsetSQLite3( DBIHandleSQLite3 *dbh, sqlite3_stmt *res )
     : DBIRecordset( dbh ),
-      m_pStmt( new SQLite3StatementHandler(res) ),
       m_stmt( res )
 {
-   m_pDbh = dbh->getConn();
-   m_pDbh->incref();
    m_bAsString = dbh->options()->m_bFetchStrings;
    m_row = -1; // BOF
    m_columnCount = sqlite3_column_count( res );
 }
 
-DBIRecordsetSQLite3::DBIRecordsetSQLite3( DBIHandleSQLite3 *dbh, SQLite3StatementHandler *res )
-    : DBIRecordset( dbh ),
-      m_stmt( res->handle() )
-{
-   res->incref();
-   m_pDbh = dbh->getConn();
-   m_pDbh->incref();
-   m_bAsString = dbh->options()->m_bFetchStrings;
-   m_row = -1; // BOF
-   m_columnCount = sqlite3_column_count( m_stmt );
-}
 
 DBIRecordsetSQLite3::~DBIRecordsetSQLite3()
 {
@@ -185,9 +171,7 @@ void DBIRecordsetSQLite3::close()
 {
    if( m_stmt != 0 )
    {
-      m_pDbh->decref();
-      m_pStmt->decref();
-      m_pStmt = 0;
+      sqlite3_finalize(m_stmt);
       m_stmt = 0;
    }
 }
@@ -211,7 +195,7 @@ bool DBIRecordsetSQLite3::getColumnValue( int nCol, Item& value )
    case SQLITE_INTEGER:
       if( m_bAsString )
       {
-         value = new CoreString( (const char*)sqlite3_column_text(m_stmt, nCol), -1 );
+         value = FALCON_GC_HANDLE(new String( (const char*)sqlite3_column_text(m_stmt, nCol), -1 ));
       }
       else
       {
@@ -222,7 +206,7 @@ bool DBIRecordsetSQLite3::getColumnValue( int nCol, Item& value )
    case SQLITE_FLOAT:
       if( m_bAsString )
       {
-         value = new CoreString( (const char*)sqlite3_column_text( m_stmt, nCol ), -1 );
+         value =  FALCON_GC_HANDLE(new String( (const char*)sqlite3_column_text( m_stmt, nCol ), -1 ));
       }
       else
       {
@@ -233,18 +217,22 @@ bool DBIRecordsetSQLite3::getColumnValue( int nCol, Item& value )
    case SQLITE_BLOB:
       {
          int len =  sqlite3_column_bytes( m_stmt, nCol );
-         MemBuf* mb = new MemBuf_1( len );
-         memcpy( mb->data(), (byte*) sqlite3_column_blob( m_stmt, nCol ), len );
-         value = mb;
+         String* sVal = new String();
+         sVal->reserve(len);
+         sVal->toMemBuf();
+         memcpy( sVal->getRawStorage(), (byte*) sqlite3_column_blob( m_stmt, nCol ), len );
+         sVal->size(len);
+
+         value = FALCON_GC_HANDLE(sVal);
       }
       return true;
 
 
    case SQLITE_TEXT:
       {
-         CoreString* cs = new CoreString;
+         String* cs = new String;
          cs->fromUTF8( (const char*) sqlite3_column_text( m_stmt, nCol ) );
-         value = cs;
+         value = FALCON_GC_HANDLE(cs);
       }
       return true;
    }
@@ -259,25 +247,10 @@ bool DBIRecordsetSQLite3::getColumnValue( int nCol, Item& value )
 
 DBIStatementSQLite3::DBIStatementSQLite3( DBIHandleSQLite3 *dbh, sqlite3_stmt* stmt ):
    DBIStatement( dbh ),
-   m_pStmt( new SQLite3StatementHandler( stmt ) ),
    m_statement( stmt ),
    m_inBind( stmt ),
    m_bFirst( false )
 {
-   m_pDbh = dbh->getConn();
-   m_pDbh->incref();
-}
-
-DBIStatementSQLite3::DBIStatementSQLite3( DBIHandleSQLite3 *dbh, SQLite3StatementHandler* pStmt ):
-   DBIStatement( dbh ),
-   m_pStmt( pStmt ),
-   m_statement( pStmt->handle() ),
-   m_inBind( pStmt->handle() ),
-   m_bFirst( false )
-{
-   pStmt->incref();
-   m_pDbh = dbh->getConn();
-   m_pDbh->incref();
 }
 
 
@@ -350,9 +323,7 @@ void DBIStatementSQLite3::close()
 {
    if( m_statement != 0 )
    {
-      m_pDbh->decref();
-      m_pStmt->decref();
-      m_pStmt = 0;
+      sqlite3_finalize( m_statement );
       m_statement = 0;
    }
 }
@@ -361,23 +332,96 @@ void DBIStatementSQLite3::close()
  * DB Handler class
  *****************************************************************************/
 
-DBIHandleSQLite3::DBIHandleSQLite3():
+DBIHandleSQLite3::DBIHandleSQLite3( const Class* h ):
+      DBIHandle(h),
       m_bInTrans(false)
 {
    m_conn = NULL;
 }
 
-DBIHandleSQLite3::DBIHandleSQLite3( sqlite3 *conn ):
+DBIHandleSQLite3::DBIHandleSQLite3( const Class* h, sqlite3 *conn ):
+      DBIHandle(h),
       m_bInTrans(false)
 {
    m_conn = conn;
-   m_connRef = new SQLite3Handler( m_conn );
    sqlite3_extended_result_codes( conn, 1 );
 }
 
 DBIHandleSQLite3::~DBIHandleSQLite3()
 {
    close();
+}
+
+
+void DBIHandleSQLite3::connect( const String& parameters )
+{
+   // Parse the connection string.
+   DBIConnParams connParams;
+
+   if( ! connParams.parse( parameters ) || connParams.m_szDb == 0 )
+   {
+      throw new DBIError( ErrorParam( FALCON_DBI_ERROR_CONNPARAMS, __LINE__)
+         .extra( parameters )
+      );
+   }
+
+   int flags = SQLITE_OPEN_READWRITE;
+   if( connParams.m_sCreate == "always" )
+   {
+      flags |= SQLITE_OPEN_CREATE;
+
+      // sqlite3 doesn't drop databases: delete files.
+      String sURI(connParams.m_szDb);
+      if ( Engine::instance()->vfs().fileType( sURI, true ) == FileStat::_normal )
+      {
+         try
+         {
+            Engine::instance()->vfs().erase( sURI );
+         }
+         catch (Error* e)
+         {
+            e->decref();
+            throw new DBIError( ErrorParam( FALCON_DBI_ERROR_CONNECT_CREATE, __LINE__)
+                      .extra( parameters )
+                   );
+         }
+      }
+   }
+   else if ( connParams.m_sCreate == "cond" )
+   {
+      flags |= SQLITE_OPEN_CREATE;
+   }
+   else if( connParams.m_sCreate != "" )
+   {
+      throw new DBIError( ErrorParam( FALCON_DBI_ERROR_CONNPARAMS, __LINE__)
+              .extra( parameters )
+           );
+   }
+
+   sqlite3 *conn;
+   int result = sqlite3_open_v2( connParams.m_szDb, &conn, flags, NULL );
+
+   if ( conn == NULL )
+   {
+      throw new DBIError( ErrorParam( FALCON_DBI_ERROR_NOMEM, __LINE__) );
+   }
+   else if ( result == SQLITE_CANTOPEN )
+   {
+      int er = connParams.m_sCreate == "cond" ?
+               FALCON_DBI_ERROR_CONNECT_CREATE : FALCON_DBI_ERROR_DB_NOTFOUND;
+
+      throw new DBIError( ErrorParam( er, __LINE__)
+                    .extra( sqlite3_errmsg( conn ) )
+                 );
+   }
+   else if ( result != SQLITE_OK )
+   {
+      throw new DBIError( ErrorParam( FALCON_DBI_ERROR_CONNECT, __LINE__)
+              .extra( sqlite3_errmsg( conn ) )
+           );
+   }
+
+   m_conn = conn;
 }
 
 void DBIHandleSQLite3::options( const String& params )
@@ -638,7 +682,7 @@ void DBIHandleSQLite3::close()
          m_bInTrans = false;
       }
 
-      m_connRef->decref();
+      sqlite3_close(m_conn);
       m_conn = NULL;
    }
 }

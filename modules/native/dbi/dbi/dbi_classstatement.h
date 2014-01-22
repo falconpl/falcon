@@ -17,8 +17,25 @@
 #include <falcon/types.h>
 #include <falcon/function.h>
 
-#ifndef _FALCON_DBI_HANDLE_H_
-#define _FALCON_DBI_HANDLE_H_
+#ifndef _FALCON_DBI_CLASSSTATEMENT_H_
+#define _FALCON_DBI_CLASSSTATEMENT_H_
+
+namespace Falcon {
+
+class ClassStatement: public Class
+{
+public:
+   ClassStatement();
+   virtual ~ClassStatement();
+   virtual void dispose( void* instance ) const;
+   virtual void* clone( void* instance ) const;
+   virtual void* createInstance() const;
+
+   virtual void gcMarkInstance( void* instance, uint32 mark ) const;
+   virtual bool gcCheckInstance( void* instance, uint32 mark ) const;
+};
+
+}
 
 #endif
 

@@ -29,7 +29,6 @@ set(SRC_FILES
    sqlite3_fm.cpp
    sqlite3_mod.cpp
    sqlite3_ext.cpp
-   sqlite3_srv.cpp
 )
 
 set(HDR_FILES
@@ -66,13 +65,17 @@ add_library( ${FALCON_MODULE} MODULE
 )
 
 #Link
-target_link_libraries(${FALCON_MODULE}
+target_link_libraries( ${FALCON_MODULE}
    falcon_engine
    ${Sqlite_LIBRARIES}
 )
 if(NOT WIN32)
    #Non-win32 builds require pthreads
-   target_link_libraries(${FALCON_MODULE} pthread)
+   target_link_libraries( ${FALCON_MODULE} pthread)
 endif()
 
 falcon_install_module2( ${FALCON_MODULE} dbi )
+
+set_target_properties( ${FALCON_MODULE}
+	  PROPERTIES 
+      LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/${Falcon_MOD_DIR}/dbi" )

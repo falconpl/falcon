@@ -19,12 +19,10 @@
 
 #include <falcon/setup.h>
 #include <falcon/types.h>
-#include <falcon/basealloc.h>
 
 namespace Falcon {
 
 class Item;
-class GarbageLock;
 class TimeStamp;
 class String;
 class ItemArray;
@@ -34,7 +32,7 @@ class ItemArray;
     transforming a Falcon TimeStamp class into a local
     timestamp representation.
 */
-class DBITimeConverter: public BaseAlloc
+class DBITimeConverter
 {
 public:
    inline void operator() ( TimeStamp* ts, void* buffer, int& bufsize ) const
@@ -65,7 +63,7 @@ extern DBITimeConverter_ISO DBITimeConverter_ISO_impl;
     transforming a Falcon string class into a local
     string representation. 
 */
-class DBIStringConverter: public BaseAlloc
+class DBIStringConverter
 {
 public:
    inline char* operator() ( const String& str, char* target, int &bufsize ) const
@@ -118,7 +116,7 @@ extern DBIStringConverter_WCHAR DBIStringConverter_WCHAR_impl;
     that must be provided by the engine re-implementations.
 
  */
-class DBIBindItem: public BaseAlloc
+class DBIBindItem
 {
 public:
    static const int bufsize = 128;
@@ -223,7 +221,7 @@ private:
 
     In that case, an appropriate DBI error is raised.
  */
-class DBIInBind: public BaseAlloc
+class DBIInBind
 {
 public:
    /** Creates a input binding.
