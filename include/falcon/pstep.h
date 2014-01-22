@@ -166,7 +166,24 @@ public:
    inline bool isTracedCatch() const { return m_catchMode == 2; }
 
    inline void setNextBase() { m_bIsNextBase = true; }
+   /** Declare that this pstep is a try-catch statement.
+    *
+    *  The pstep must be derived from StmtTry
+    *
+    *  Remember to push via VMContext::pushWithUnrollContext
+    */
    inline void setTry() { m_catchMode = 1; }
+   /** Declared this as a traced catch.
+    *
+    *  If this pstep is a catch clause being part of a try-catch statement,
+    *  then this option forces the VM to generate a traceback immediately
+    *  as the catch path is followed.
+    *
+    *  If this pstep is not part of try-catch statement, then it is
+    *  considered a SynTree that will act as a catch-all clause
+    *  for any raised error. In this case,
+    *  remember to push via VMContext::pushWithUnrollContext
+    */
    inline void setTracedCatch() { m_catchMode = 2; }
 
    /**
