@@ -374,7 +374,7 @@ SourceParser::SourceParser():
    
    // We use a selector strategy to reduce the amount of tokens visible to the root state.s
    S_Import << "import" << import_errhand;
-   S_Import << ( r_import_rule << "import_rule" << apply_import << T_import << ImportClause );
+   S_Import << ( r_import_rule << "import_rule" << apply_import << T_import << ImportClause << T_EOL );
    
    ImportClause << "ImportClause";
    ImportClause << ( r_import_star_from_string_in << "import_star_from_string_in" << apply_import_star_from_string_in

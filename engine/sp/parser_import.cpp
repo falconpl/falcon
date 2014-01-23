@@ -57,9 +57,9 @@ bool import_errhand(const NonTerminal&, Parser& p)
 
 void apply_import( const Rule&, Parser& p )
 {
-   //<< T_import << ImportClause  );
+   //<< T_import << ImportClause << T_EOL  );
    //we have already applied the import
-   p.simplify(2);
+   p.simplify(3);
 }
 
 
@@ -344,7 +344,7 @@ void apply_import_from_modspec( const Rule&, Parser& p )
 
 void apply_import_syms( const Rule&, Parser& p )
 {
-   // << ListSymbol << T_EOL
+   // << ImportSpec << T_EOL
    
    TokenInstance* tnamelist = p.getNextToken();
    NameList* list = static_cast<NameList*>(tnamelist->asData());
@@ -411,11 +411,13 @@ void apply_import_syms( const Rule&, Parser& p )
       delete id;
    }
    
-   // Declaret that this namelist is a valid ImportClause
+   // Declare that this namelist is a valid ImportClause
    SourceParser& sp = *static_cast<SourceParser*>(&p);
-   p.getNextToken()->token( sp.ImportClause ); // turn the EOL in importclause
+   /*p.getNextToken()->token( sp.ImportClause ); // turn the EOL in importclause
    // and remove the list token.
    p.simplify(1,0);
+   */
+   tnamelist->token(sp.ImportClause);
 }
 
 

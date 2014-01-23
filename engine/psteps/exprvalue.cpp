@@ -150,7 +150,7 @@ void ExprValue::render( TextWriter* tw, int32 depth ) const
          mantra->render( tw, depth );
       }
       else {
-         cls->describe(inst, str, 1, -1 );
+         str = mantra->name();
       }
    }
    else {
