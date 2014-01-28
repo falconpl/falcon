@@ -45,6 +45,7 @@ TimeStamp::TimeStamp()
 {
    // date set to 0
    m_bChanged = true;
+   m_displacement = 0;
    m_timezone = tz_UTC;
 }
 
@@ -54,6 +55,9 @@ TimeStamp::TimeStamp( const Date& date, bool localTime ):
 {
    m_bChanged = true;
    m_timezone = localTime ? getLocalTimeZone() : tz_UTC;
+   int16 h,m;
+   getTZDisplacement(m_timezone, h, m);
+   m_displacement = h*60 + m;
 }
 
 
@@ -68,7 +72,7 @@ void TimeStamp::computeDateFields() const
    m_bChanged = false;
 
    // first, calculate the date since epoch.
-   int64 secs = m_date.seconds();
+   int64 secs = m_date.seconds() + (m_displacement*60);
    int64 days_since_epoch = secs;
    days_since_epoch /= SECOND_PER_DAY;
    secs %= SECOND_PER_DAY;
@@ -160,7 +164,7 @@ void TimeStamp::setCurrent(bool bLocal)
    m_date.setCurrent();
    if ( bLocal )
    {
-      changeTimeZone(getLocalTimeZone());
+      timeZone(getLocalTimeZone());
    }
 
 }
@@ -181,6 +185,7 @@ void TimeStamp::copy( const TimeStamp &ts )
 
    m_bChanged = ts.m_bChanged;
    m_timezone = ts.m_timezone;
+   m_displacement = ts.m_displacement;
    m_date = ts.m_date;
 }
 
@@ -188,14 +193,16 @@ void TimeStamp::copy( const TimeStamp &ts )
 const char *TimeStamp::getRFC2822_ZoneName( TimeZone tz, bool bSemantic, bool bSaving )
 {
    if ( tz == tz_local )
+   {
       tz = getLocalTimeZone();
+   }
 
    switch( tz )
    {
       case tz_local: return "+????";
       case tz_NONE: case tz_UTC: if ( bSemantic ) return "GMT"; return "+0000";
-      case tz_UTC_E_1: return "+0100";
-      case tz_UTC_E_2: return "+0200";
+      case tz_UTC_E_1: if ( bSemantic && !bSaving) return "CET"; return "+0100";
+      case tz_UTC_E_2: if ( bSemantic && bSaving) return "CET"; return "+0200";
       case tz_UTC_E_3: return "+0300";
       case tz_UTC_E_4: return "+0400";
       case tz_UTC_E_5: return "+0500";
@@ -233,6 +240,7 @@ const char *TimeStamp::getRFC2822_ZoneName( TimeZone tz, bool bSemantic, bool bS
 TimeStamp::TimeZone TimeStamp::getRFC2822_Zone( const char *csZoneName )
 {
    if( strncmp( "UT", csZoneName, 2 ) == 0 ||
+      strncmp( "UTC", csZoneName, 3 ) == 0 ||
       strncmp( "GMT", csZoneName, 3 ) == 0 ||
       strncmp( "+0000", csZoneName, 5 ) == 0 )
    {
@@ -474,13 +482,15 @@ bool TimeStamp::fromRFC2822( TimeStamp &target, const char *source )
    mon++;
    TimeZone tz = getRFC2822_Zone( mon );
    if( tz == tz_NONE )
-      return false;
-
-   if( ! target.set(year,month,day,hour,minute,second,0) )
    {
       return false;
    }
-   target.changeTimeZone(tz);
+
+   if( ! target.set(year,month,day,hour,minute,second,0,tz) )
+   {
+      return false;
+   }
+
    return true;
 }
 
@@ -623,7 +633,7 @@ void TimeStamp::add( int64 msecs )
 
 int64 TimeStamp::compare( const TimeStamp &ts ) const
 {
-   int64 dist = m_date.seconds() - ts.m_date.seconds();
+   int64 dist = m_date.seconds() + (m_displacement*60) - ts.m_date.seconds() - (ts.m_displacement*60);
    if( dist == 0 )
    {
       dist = m_date.femtoseconds() - ts.m_date.femtoseconds();
@@ -1233,17 +1243,21 @@ bool TimeStamp::msec(int16 value)
 bool TimeStamp::set( int64 y, int16 M, int16 d, int16 h, int16 m,
          int16 s, int16 ms, TimeZone tz )
 {
+   int16 hdisp = 0, mdisp = 0;
+   getTZDisplacement(tz, hdisp, mdisp);
+   return set( y, M, d, h, m, s, ms, hdisp*60 + mdisp );
+}
+
+
+bool TimeStamp::set( int64 y, int16 M, int16 d, int16 h, int16 m,
+         int16 s, int16 ms, int16 disp )
+{
    if( M < 1 || M > 12 || d < 1 || d > getDaysOfMonth(M,y) )
    {
       return false;
    }
 
-   int16 hdisp = 0, mdisp = 0;
-   getTZDisplacement(tz, hdisp, mdisp);
-   int64 msecdisp = hdisp * 60*60 + mdisp*60;
-   msecdisp *= 1000;
    int64 baseMs = 0;
-
 
    // now the fun part, calculate the year displacement.
    if( y >= 1970 )
@@ -1289,9 +1303,7 @@ bool TimeStamp::set( int64 y, int16 M, int16 d, int16 h, int16 m,
       baseMs += days*SECOND_PER_DAY*1000;
    }
 
-   baseMs -= msecdisp;
    m_date.fromMilliseconds(baseMs);
-   m_timezone = tz;
 
    m_year = y;
    m_month = M;
@@ -1300,9 +1312,10 @@ bool TimeStamp::set( int64 y, int16 M, int16 d, int16 h, int16 m,
    m_minute = m;
    m_second = s;
    m_msec = ms;
+   m_timezone = displacementToTZ(disp);
+   m_displacement = disp;
 
-   // TEST: Recalculate all.
-   m_bChanged = true;
+   m_bChanged = false;
 
    return true;
 }
@@ -1324,23 +1337,138 @@ void TimeStamp::set( const Date& date )
 
 void TimeStamp::changeTimeZone( TimeZone tz )
 {
-   if ( tz == tz_local )
-      tz = getLocalTimeZone();
+   TimeZone tz1 = tz;
+   if ( tz1 == tz_local )
+   {
+      tz1 = getLocalTimeZone();
+   }
 
    // no shift?
-   if ( tz == m_timezone )
+   if ( tz1 == m_timezone || m_timezone == tz_local )
+   {
       return;
+   }
 
    // get the relative total shift.
-   int16 currentHour=0, currentMin=0, newHour=0, newMin=0;
-   getTZDisplacement( tz, newHour, newMin );
-   getTZDisplacement( m_timezone, currentHour, currentMin );
-   m_date.seconds( m_date.seconds()
-            - (currentHour*60*60) - (currentMin*60)
-            + (newHour*60*60) + (newMin*60)
-            );
+   int16 newHour=0, newMin=0;
+   getTZDisplacement( tz1, newHour, newMin );
+
+   // bring displacement back into the date, to keep it constant with the new displacement.
+   int16 newDisp = newHour*60 + newMin;
+   m_date.addSeconds( (m_displacement * 60) - (newDisp * 60));
+   m_displacement = newDisp;
    m_timezone = tz;
+}
+
+
+void TimeStamp::msSinceEpoch( int64 v )
+{
+   int64 disp = m_displacement;
+   disp *= 60000;
+   m_date.fromMilliseconds(v - disp);
+}
+
+
+int64 TimeStamp::msSinceEpoch() const
+{
+   int64 ms = m_displacement;
+   ms *= 60000;
+   ms += m_date.toMilliseconds();
+   return ms;
+}
+
+
+bool TimeStamp::changeDisplacement(int16 value)
+{
+   if( value < -7200 || value > 7200 )
+   {
+      return false;
+   }
+
+   m_date.addSeconds( (m_displacement * 60) - (value * 60));
+   m_displacement = value;
+   m_timezone = displacementToTZ(value);
    m_bChanged = true;
+   return true;
+}
+
+
+bool TimeStamp::displacement(int16 value)
+{
+   if( value < -7200 || value > 7200 )
+   {
+      return false;
+   }
+
+   m_displacement = value;
+   m_timezone = displacementToTZ(value);
+   m_bChanged = true;
+   return true;
+}
+
+
+void TimeStamp::timeZone(TimeZone tz)
+{
+   TimeZone tz1 = tz;
+   if ( tz1 == tz_local )
+   {
+      tz1 = getLocalTimeZone();
+   }
+
+   // no shift?
+   if ( tz1 == m_timezone || m_timezone == tz_local )
+   {
+      return;
+   }
+
+   // get the relative total shift.
+   int16 newHour=0, newMin=0;
+   getTZDisplacement( tz1, newHour, newMin );
+   m_displacement = newHour*60 + newMin;
+   m_timezone = tz;  // keep tz_local if it was set
+   m_bChanged = true;
+}
+
+
+TimeStamp::TimeZone TimeStamp::displacementToTZ( int16 mindisp )
+{
+   switch( mindisp )
+   {
+      case 0: return tz_UTC;
+
+      case 1 * 60: return tz_UTC_E_1;
+      case 2 * 60: return tz_UTC_E_2;
+      case 3 * 60: return tz_UTC_E_3;
+      case 4 * 60: return tz_UTC_E_4;
+      case 5 * 60: return tz_UTC_E_5;
+      case 6 * 60: return tz_UTC_E_6;
+      case 7 * 60: return tz_UTC_E_7;
+      case 8 * 60: return tz_UTC_E_8;
+      case 9 * 60: return tz_UTC_E_9;
+      case 10 * 60: return tz_UTC_E_10;
+      case 11 * 60: return tz_UTC_E_11;
+      case 12 * 60: return tz_UTC_E_12;
+
+      case -1 * 60: return tz_UTC_W_1;
+      case -2 * 60: return tz_UTC_W_2;
+      case -3 * 60: return tz_UTC_W_3;
+      case -4 * 60: return tz_UTC_W_4;
+      case -5 * 60: return tz_UTC_W_5;
+      case -6 * 60: return tz_UTC_W_6;
+      case -7 * 60: return tz_UTC_W_7;
+      case -8 * 60: return tz_UTC_W_8;
+      case -9 * 60: return tz_UTC_W_9;
+      case -10 * 60: return tz_UTC_W_10;
+      case -11 * 60: return tz_UTC_W_11;
+      case -12 * 60: return tz_UTC_W_12;
+
+      case 10 * 60+30: return tz_ACDT;
+      case 11 * 60+30: return tz_NFT;
+      case -2 * 60-30: return tz_HAT;
+      case -3 * 60-30: return tz_NST;
+   }
+
+   return tz_NONE;
 }
 
 
@@ -1353,6 +1481,7 @@ TimeStamp *TimeStamp::clone() const
 void TimeStamp::store( DataWriter* dw ) const
 {
    dw->write((char) m_timezone);
+   dw->write(m_displacement);
    dw->write(m_date);
 }
 
@@ -1360,9 +1489,12 @@ void TimeStamp::store( DataWriter* dw ) const
 void TimeStamp::restore( DataReader* dr )
 {
    char tz;
+   int16 dist;
    dr->read(tz);
+   dr->read(dist);
    dr->read(m_date);
    m_timezone = (TimeZone) tz;
+   m_displacement = dist;
    m_bChanged = true;
 }
 

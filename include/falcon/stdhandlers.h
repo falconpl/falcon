@@ -446,6 +446,7 @@ private:
    ClassModule* m_moduleClass;
    Class* m_modSpaceClass;
    Class* m_messageQueueClass;
+   Class* m_timestampClass;
 };
 
 }

@@ -310,6 +310,7 @@ add_library(falcon_engine SHARED
   classes/classstringstream.cpp  
   classes/classsymbol.cpp
   classes/classsynfunc.cpp
+  classes/classtimestamp.cpp
   classes/classtreestep.cpp
   classes/metaclass.cpp
   classes/metafalconclass.cpp

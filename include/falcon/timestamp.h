@@ -402,6 +402,7 @@ public:
    int16 minute() const { computeDateFields(); return m_minute; }
    int16 second() const { computeDateFields();  return m_second; }
    int16 msec() const { computeDateFields();return m_msec; }
+   int16 displacement() const { return m_displacement; }
    TimeZone timeZone() const { return m_timezone; }
 
    /** Sets the year of the current date.
@@ -469,12 +470,51 @@ public:
     */
    bool msec(int16 value);
 
+   /** Sets the displacement (disatance from GMT).
+    * \param value The displacement to be set.
+    * \return false if the displacement is outside -7200 : +7200 range.
+    *
+    * This method will also adjust the date timezone. If the displacement
+    * corresponds to a known timezone, that timezone will be set, otherwise
+    * the timezone will be set to NONE.
+    *
+    * The set displacement will cause the reported date to move accordingly,
+    * so that if the time set is 22:00, and displacement is set to +30 minutes,
+    * the date reported will be 22:30.
+    *
+    * To change the displacement without changing the reported time, use
+    * changeDisplacement()
+    */
+   bool displacement(int16 value);
+
+   /** Sets the displacement (disatance from GMT).
+    * \param value The displacement to be set.
+    * \return false if the displacement is outside -7200 : +7200 range.
+    *
+    * This method will also adjust the date timezone. If the displacement
+    * corresponds to a known timezone, that timezone will be set, otherwise
+    * the timezone will be set to NONE.
+    *
+    * This method will not change the reported time, so that if the time
+    * is currently 22:00 GMT, setting a displacement of +60 will cause
+    * the time to be set as 22:00 GMT+1. To displace the reported time,
+    * use the displacement() method.
+    */
+   bool changeDisplacement(int16 value);
+
    /** Sets the date.
-    * \bool true if the date can be set, false if its' invalid.
+    * \bool true if the date can be set, false if it's invalid.
+    *
+    */
+   bool set( int64 y, int16 M, int16 d, int16 h, int16 m,
+            int16 s, int16 ms, TimeZone tz );
+
+   /** Sets the date.
+    * \bool true if the date can be set, false if it's invalid.
     *
     */
    bool set( int64 y, int16 M, int16 d, int16 h=0, int16 m=0,
-            int16 s=0, int16 ms = 0, TimeZone tz=tz_NONE );
+            int16 s=0, int16 ms = 0, int16 displacement=0 );
 
    /** Sets the time for the given date.
     * \bool true if the date can be set, false if its' invalid.
@@ -487,14 +527,16 @@ public:
    void set( const Date& date );
 
    /** Changes the timezone associated with this date.
+    *
     * This will change the timezone, so that if you have a date in GMT,
     * and the timezone is set to GMT+2, the time will be moved 2 hours
-    * forward.
+    * forward. For instance, it the time is 20:31 GMT, and the new timezone
+    * is GMT+2, the time will be set to 18:31 GMT+2.
     *
     * To change the timezone without changing the timestamp value,
     * use changeTimeZone().
     */
-   void timeZone(TimeZone tz) { m_bChanged = true; m_timezone = tz; }
+   void timeZone(TimeZone tz);
 
    /** Shifts this timestamp moving the old timezone into the new one.
     * \param tz new timezone.
@@ -506,6 +548,9 @@ public:
     * use the timeZone() method.
     */
    void changeTimeZone( TimeZone tz );
+
+   void msSinceEpoch( int64 v );
+   int64 msSinceEpoch() const;
 
 
    /** Returns the adjustment for week-based year (According with ISO8601:2000)
@@ -528,6 +573,8 @@ public:
     */
    static int16 adjust_iso8601_2000( int64 year, int16 month, int16 day );
 
+   /** Return the timezone corresponding to the given displacement in minutes. */
+   static TimeZone displacementToTZ( int16 mindisp );
 
    void gcMark(uint32 mark ) { m_gcMark = mark; }
    uint32 currentMark() const { return m_gcMark; }
@@ -543,6 +590,7 @@ private:
    mutable int16 m_msec;
 
    TimeZone m_timezone;
+   int16 m_displacement;
 
    mutable bool m_bChanged;
 

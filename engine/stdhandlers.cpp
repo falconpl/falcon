@@ -45,6 +45,7 @@
 #include <falcon/classes/classstream.h>
 #include <falcon/classes/classstringstream.h>
 #include <falcon/classes/classre.h>
+#include <falcon/classes/classtimestamp.h>
 
 #include <falcon/classes/classmodule.h>
 #include <falcon/classes/classmodspace.h>
@@ -111,6 +112,8 @@ void StdHandlers::subscribe(Engine* engine)
    m_modSpaceClass = new ClassModSpace;
    m_moduleClass = new ClassModule;
 
+   m_timestampClass = new ClassTimeStamp;
+
    engine->addMantra( m_functionClass );
    engine->addMantra( m_stringClass );
    engine->addMantra( m_arrayClass );
@@ -141,6 +144,7 @@ void StdHandlers::subscribe(Engine* engine)
    engine->addMantra(m_reClass);
    engine->addMantra(m_streamClass);
    engine->addMantra(m_stringStreamClass);
+   engine->addMantra(m_timestampClass);
 
    engine->addMantra( new ClassComposition );
 }
