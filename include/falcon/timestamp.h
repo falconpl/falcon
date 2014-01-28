@@ -127,6 +127,9 @@ public:
    /** Return the local timezone. */
    static TimeZone getLocalTimeZone();
 
+   /** Return true if DST is in effect in the local timezone. */
+   static bool getLocalDST();
+
    /**
     * Gets the date represented in this timestamp.
     */
@@ -404,6 +407,7 @@ public:
    int16 msec() const { computeDateFields();return m_msec; }
    int16 displacement() const { return m_displacement; }
    TimeZone timeZone() const { return m_timezone; }
+   bool isDST() const { return m_dst; }
 
    /** Sets the year of the current date.
     * \param value The year to be set.
@@ -487,7 +491,7 @@ public:
     */
    bool displacement(int16 value);
 
-   /** Sets the displacement (disatance from GMT).
+   /** Sets the displacement (disatance from GMT) while keeping the same day-time value.
     * \param value The displacement to be set.
     * \return false if the displacement is outside -7200 : +7200 range.
     *
@@ -501,6 +505,22 @@ public:
     * use the displacement() method.
     */
    bool changeDisplacement(int16 value);
+
+   /** Sets the daylight saving time.
+    * \param True to set DST on, false to disable it.
+    *
+    */
+   void setDST( bool dst );
+
+   /** Sets the daylight saving time status while keeping the same day-time value.
+    * \param True to set DST on, false to disable it.
+    *
+    * This method will not change the reported time, so that if the time
+    * is currently 22:00 GMT, setting a displacement of DST will cause
+    * the time to be set as 22:00 GMT+1. To change the reported time, use
+    * the setDST method.
+    */
+   void changeDST( bool dst );
 
    /** Sets the date.
     * \bool true if the date can be set, false if it's invalid.
@@ -591,6 +611,7 @@ private:
 
    TimeZone m_timezone;
    int16 m_displacement;
+   bool m_dst;
 
    mutable bool m_bChanged;
 

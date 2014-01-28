@@ -47,6 +47,7 @@ TimeStamp::TimeStamp()
    m_bChanged = true;
    m_displacement = 0;
    m_timezone = tz_UTC;
+   m_dst = false;
 }
 
 
@@ -54,7 +55,9 @@ TimeStamp::TimeStamp( const Date& date, bool localTime ):
    m_date( date )
 {
    m_bChanged = true;
+   m_dst = localTime ? getLocalDST() : false;
    m_timezone = localTime ? getLocalTimeZone() : tz_UTC;
+
    int16 h,m;
    getTZDisplacement(m_timezone, h, m);
    m_displacement = h*60 + m;
@@ -1147,7 +1150,7 @@ bool TimeStamp::strftimeChar( int32 chr, String &target ) const
    case 'Z':
       if( m_timezone != tz_NONE )
       {
-         target.append(getRFC2822_ZoneName(m_timezone, true, false));
+         target.append(getRFC2822_ZoneName(m_timezone, true, m_dst));
       }
       break;
 
@@ -1482,6 +1485,7 @@ void TimeStamp::store( DataWriter* dw ) const
 {
    dw->write((char) m_timezone);
    dw->write(m_displacement);
+   dw->write(m_dst);
    dw->write(m_date);
 }
 
@@ -1490,11 +1494,15 @@ void TimeStamp::restore( DataReader* dr )
 {
    char tz;
    int16 dist;
+   bool dst;
    dr->read(tz);
    dr->read(dist);
+   dr->read(dst);
    dr->read(m_date);
+
    m_timezone = (TimeZone) tz;
    m_displacement = dist;
+   m_dst = dst;
    m_bChanged = true;
 }
 
@@ -1503,6 +1511,42 @@ void TimeStamp::currentTime()
 {
    setCurrent(true);
 }
+
+
+void TimeStamp::setDST( bool dst )
+{
+   // nothing to do?
+   if( dst == m_dst )
+   {
+      return;
+   }
+
+   if( dst )
+   {
+      m_displacement += 60;
+   }
+   else {
+      m_displacement -= 60;
+   }
+
+   m_dst = dst;
+   m_timezone = displacementToTZ(m_displacement);
+   m_bChanged = true;
+}
+
+
+void TimeStamp::changeDST( bool dst )
+{
+   // nothing to do?
+   if( dst == m_dst )
+   {
+      return;
+   }
+
+   m_dst = dst;
+   changeDisplacement( m_displacement + (dst? +60 : -60) );
+}
+
 
 }
 

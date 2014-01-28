@@ -92,7 +92,7 @@ TimeStamp::TimeZone TimeStamp::getLocalTimeZone()
 
          case 12: s_cached_timezone = tz_UTC_E_11; break;
 
-         case -1: s_cached_timezone = tz_UTC_W_1;
+         case -1: s_cached_timezone = tz_UTC_W_1; break;
          case -2:
             if( minutes == 30 )
                s_cached_timezone = tz_HAT;
@@ -124,6 +124,13 @@ TimeStamp::TimeZone TimeStamp::getLocalTimeZone()
    return s_cached_timezone;
 }
 
+bool TimeStamp::getLocalDST()
+{
+   struct timeval tv;
+   struct timezone tz;
+   gettimeofday(&tv, &tz);
+   return tz.tz_dsttime != 0;
+}
 }
 
 /* end of timestamp_posix.cpp */

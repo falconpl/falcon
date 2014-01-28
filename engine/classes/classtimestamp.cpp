@@ -383,6 +383,29 @@ void Function_changeDisplacement::invoke ( ::Falcon::VMContext* ctx, int32 )
    ctx->returnFrame();
 }
 
+/*#
+ @method changeDST TimeStamp
+ @brief Change the zone DST (daylight saving time) status.
+ @param dst True to set DST displacement.
+
+ This methods shifts forward or backward this timestamp according with the relative
+ shift between the previous and set values of the DST status.
+*/
+FALCON_DECLARE_FUNCTION(changeDST, "dst:B")
+void Function_changeDST::invoke ( ::Falcon::VMContext* ctx, int32 )
+{
+   Item *i_tz = ctx->param(0);
+   if( i_tz == 0 )
+   {
+      throw paramError( __LINE__, SRC );
+   }
+
+   TimeStamp* self = static_cast<TimeStamp*>(ctx->self().asInst());
+   self->changeDST( i_tz->isTrue() );
+   ctx->returnFrame();
+}
+
+
 //typedef void (*setter)( const Class* cls, const String& name, void *instance, const Item& value );
 // typedef void (*getter)( const Class* cls, const String& name, void *instance, Item& value );
  /*#
@@ -604,6 +627,19 @@ static void set_displacement( const Class*, const String&, void *instance, const
 }
 
 
+static void get_dst( const Class*, const String&, void *instance, Item& value )
+{
+  TimeStamp* self = static_cast<TimeStamp*>(instance);
+  value.setBoolean(self->isDST());
+}
+
+static void set_dst( const Class*, const String&, void *instance, const Item& value )
+{
+  TimeStamp* self = static_cast<TimeStamp*>(instance);
+  self->setDST(value.isTrue());
+}
+
+
 static void get_timezone( const Class*, const String&, void *instance, Item& value )
 {
   TimeStamp* self = static_cast<TimeStamp*>(instance);
@@ -787,10 +823,12 @@ ClassTimeStamp::ClassTimeStamp():
 
    addMethod( new Function_changeZone);
    addMethod( new Function_changeDisplacement);
+   addMethod( new Function_changeDST);
    addMethod( new Function_compare);
    addMethod( new Function_setCurrent);
    addMethod( new Function_fromRFC2822 );
    addMethod( new Function_strftime );
+   addMethod( new Function_toRFC2822 );
    addMethod( new Function_toRFC2822 );
 
    addMethod( new Function_currentTime, true );
@@ -809,6 +847,7 @@ ClassTimeStamp::ClassTimeStamp():
    addProperty("timezone", &get_timezone, &set_timezone );
    addProperty("displacement", &get_displacement, &set_displacement );
    addProperty("msSinceEpoch", &get_msSinceEpoch, &set_msSinceEpoch );
+   addProperty("dst", &get_dst, &set_dst );
 
    addProperty("localZone", &get_localZone, 0, true, false );
 

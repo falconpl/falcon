@@ -104,6 +104,12 @@ TimeStamp::TimeZone TimeStamp::getLocalTimeZone()
    return s_cached_timezone;
 }
 
+bool TimeStamp::getLocalDST()
+{
+   TIME_ZONE_INFORMATION zoneInfo;
+   GetTimeZoneInformation( &zoneInfo );
+   return zoneInfo.DaylightBias != 0;
+}
 
 }
 
