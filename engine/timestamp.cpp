@@ -1,6 +1,6 @@
 /*
    FALCON - The Falcon Programming Language.
-   FILE: TimeStamp.cpp
+   FILE: timestamp.cpp
 
    Implementation of the non-system specific TimeStamp class
    -------------------------------------------------------------------
@@ -1383,7 +1383,7 @@ int64 TimeStamp::msSinceEpoch() const
 
 bool TimeStamp::changeDisplacement(int16 value)
 {
-   if( value < -7200 || value > 7200 )
+   if( value < -7260 || value > 7260 )
    {
       return false;
    }
@@ -1550,4 +1550,4 @@ void TimeStamp::changeDST( bool dst )
 
 }
 
-/* end of TimeStampapi.cpp */
+/* end of timestamp.cpp */

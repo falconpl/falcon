@@ -405,6 +405,7 @@ public:
     */
    Class* modSpaceClass() const { return m_modSpaceClass; }
 
+   Class* timestampClass() const { return m_timestampClass; }
 private:
    //===============================================
    // Global type handlers

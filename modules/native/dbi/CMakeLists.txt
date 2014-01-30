@@ -65,6 +65,8 @@ set( dbi_common_files
    ../dbi_common/dbi_params.cpp
    ../dbi_common/dbi_recordset.cpp
    ../dbi_common/dbi_stmt.cpp
+   ../dbi_common/dbi_drivermod.cpp
+   ../dbi_common/dbi_driverclass.cpp
 
    # Header files are useful for IDEs
    ../include/falcon/dbi_error.h
@@ -75,6 +77,8 @@ set( dbi_common_files
    ../include/falcon/dbi_recordset.h
    ../include/falcon/dbi_stmt.h
    ../include/falcon/dbi_service.h
+   ../include/falcon/dbi_drivermod.h
+   ../include/falcon/dbi_driverclass.h
 )
 
 

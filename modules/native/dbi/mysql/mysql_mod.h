@@ -13,38 +13,17 @@
  * See LICENSE file for licensing details.
  */
 
-#ifndef DBI_MYSQL_H
-#define DBI_MYSQL_H
+#ifndef _FALCON_DBI_MYSQL_H_
+#define _FALCON_DBI_MYSQL_H_
 
 #include <falcon/dbi_common.h>
-#include <falcon/srv/dbi_service.h>
+#include <falcon/dbi_service.h>
 
 #include <mysql.h>
 
 namespace Falcon
 {
 
-class MYSQLHandle: public DBIRefCounter<MYSQL*> {
-public:
-   MYSQLHandle( MYSQL* m ):
-      DBIRefCounter<MYSQL*>( m )
-   {}
-
-   virtual ~MYSQLHandle()
-   {
-      mysql_close( handle() );
-   }
-};
-
-
-class MYSQLStmtHandle: public DBIRefCounter<MYSQL_STMT*> {
-public:
-   MYSQLStmtHandle( MYSQL_STMT* m ):
-      DBIRefCounter<MYSQL_STMT*>( m )
-   {}
-
-   virtual ~MYSQLStmtHandle();
-};
 
 class MyDBIInBind: public DBIInBind
 {
@@ -93,8 +72,6 @@ protected:
 
    bool m_bCanSeek;
 
-   MYSQLHandle *m_pConn;
-
 public:
    DBIRecordsetMySQL( DBIHandleMySQL *dbt, MYSQL_RES *res, bool bCanSeek = false );
    virtual ~DBIRecordsetMySQL();
@@ -106,11 +83,12 @@ public:
    virtual void close();
 };
 
+class DBIStatementMySQL;
+
 class DBIRecordsetMySQL_STMT: public DBIRecordsetMySQL
 {
 protected:
-   MYSQL_STMT *m_stmt;
-   MYSQLStmtHandle *m_pStmt;
+   DBIStatementMySQL *m_stmt;
 
    // Binding data
    MYSQL_BIND* m_pMyBind;
@@ -121,8 +99,7 @@ protected:
    int m_nBlobCount;
 
 public:
-   DBIRecordsetMySQL_STMT( DBIHandleMySQL *dbt, MYSQL_RES *res, MYSQLStmtHandle *pStmt, bool bCanSeek = false );
-   DBIRecordsetMySQL_STMT( DBIHandleMySQL *dbt, MYSQL_RES *res, MYSQL_STMT *stmt, bool bCanSeek = false );
+   DBIRecordsetMySQL_STMT( DBIHandleMySQL *dbt, MYSQL_RES *res, DBIStatementMySQL *stmt, bool bCanSeek = false );
    virtual ~DBIRecordsetMySQL_STMT();
 
    void init();
@@ -134,6 +111,8 @@ public:
 
    /** This cind of recordsets can generate a next recordset. */
    virtual DBIRecordset* getNext();
+
+   virtual void gcMark( uint32 mark );
 };
 
 
@@ -141,7 +120,7 @@ class DBIRecordsetMySQL_RES : public DBIRecordsetMySQL
 {
 protected:
    MYSQL_ROW m_rowData;
-   CoreObject* makeTimestamp( const String& str );
+   void makeTimestamp( const String& str, Item& target );
 
 public:
    DBIRecordsetMySQL_RES( DBIHandleMySQL *dbt, MYSQL_RES *res, bool bCanSeek = false );
@@ -166,17 +145,16 @@ class DBIHandleMySQL : public DBIHandle
 {
 protected:
    MYSQL *m_conn;
-   MYSQLHandle *m_pConn;
    DBISettingParams m_settings;
 
    MYSQL_STMT* my_prepare( const String &query, bool bCanFallback = false );
    int64 my_execute( MYSQL_STMT* stmt, MyDBIInBind& bindings, ItemArray* params );
 
 public:
-   DBIHandleMySQL();
-   DBIHandleMySQL( MYSQL *conn );
+   DBIHandleMySQL( const Class* h );
    virtual ~DBIHandleMySQL();
 
+   virtual void connect( const String& options );
    virtual void options( const String& params );
    virtual const DBISettingParams* options() const;
    virtual void close();
@@ -192,10 +170,10 @@ public:
    virtual void selectLimited( const String& query,
          int64 nBegin, int64 nCount, String& result );
 
-   MYSQLHandle *getConn() { return m_pConn; }
-
    // Throws a DBI error, using the last error code and description.
    void throwError( const char* file, int line, int code );
+
+   MYSQL* mysql() const { return m_conn; }
 };
 
 
@@ -203,10 +181,9 @@ class DBIStatementMySQL : public DBIStatement
 {
 protected:
    MYSQL_STMT* m_statement;
-   MYSQLHandle* m_pConn;
-   MYSQLStmtHandle *m_pStmt;
    MyDBIInBind* m_inBind;
    bool m_bBound;
+   bool m_owned;
 
 public:
    DBIStatementMySQL( DBIHandleMySQL *dbh, MYSQL_STMT* stmt );
@@ -218,22 +195,20 @@ public:
 
    DBIHandleMySQL* getMySql() const { return static_cast<DBIHandleMySQL*>( m_dbh ); }
    MYSQL_STMT* my_statement() const { return m_statement; }
+   void owned( bool w ) { m_owned = w; }
+   bool owned() const { return m_owned; }
 };
 
 
 class DBIServiceMySQL : public DBIService
 {
 public:
-   DBIServiceMySQL() : DBIService( "DBI_mysql" ) {}
+   DBIServiceMySQL(Module* owner) : DBIService( FALCON_DBI_HANDLE_SERVICE_NAME, owner ) {}
 
-   virtual void init();
    virtual DBIHandle *connect( const String &parameters );
-   virtual CoreObject *makeInstance( VMachine *vm, DBIHandle *dbh );
 };
 
 }
-
-extern Falcon::DBIServiceMySQL theMySQLService;
 
 #endif /* DBI_MYSQL_H */
 

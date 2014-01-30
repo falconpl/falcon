@@ -98,7 +98,7 @@ public:
    DBIHandleSQLite3( const Class* h, sqlite3 *conn );
    virtual ~DBIHandleSQLite3();
 
-   void connect( const String& params );
+   virtual void connect( const String& params );
    virtual void options( const String& params );
    virtual const DBISettingParams* options() const;
    virtual void close();

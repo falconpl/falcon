@@ -40,7 +40,6 @@ add_subdirectory(regex)
 add_subdirectory(rnd)
 add_subdirectory(shmem)
 add_subdirectory(sys)
-add_subdirectory(timestamp)
 add_subdirectory(vm)
 #add_subdirectory(zlib)
 

@@ -39,8 +39,6 @@ class DBISettingParams;
  * level, each instance of database object must receive a different
  * handler.
  *
- * The handle is derived from UserData as it is likely to be assigned
- * to a CoreObject.
  */
 class DBIHandle
 {
@@ -48,6 +46,11 @@ public:
 
    DBIHandle( const Class* h );
    virtual ~DBIHandle();
+
+   /** Creates a connection with the database system.
+    *
+    */
+   virtual void connect( const String& params ) = 0;
 
    /** Sets the common transaction options.
     *
@@ -148,6 +151,7 @@ public:
    int64 affectedRows();
 
    const Class* handler() const { return m_handler; }
+
 
 protected:
    int64 m_nLastAffected;

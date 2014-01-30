@@ -18,6 +18,9 @@
 #include <errmsg.h>
 
 #include <falcon/engine.h>
+#include <falcon/stdhandlers.h>
+#include <falcon/itemarray.h>
+
 #include <falcon/dbi_error.h>
 #include "mysql_mod.h"
 #include <mysqld_error.h>
@@ -33,6 +36,7 @@ namespace Falcon
 class DBITimeConverter_MYSQL_TIME: public DBITimeConverter
 {
 public:
+   virtual ~DBITimeConverter_MYSQL_TIME() {}
    virtual void convertTime( TimeStamp* ts, void* buffer, int& bufsize ) const;
 } DBITimeConverter_MYSQL_TIME_impl;
 
@@ -41,13 +45,13 @@ void DBITimeConverter_MYSQL_TIME::convertTime( TimeStamp* ts, void* buffer, int&
    fassert( ((unsigned)bufsize) >= sizeof( MYSQL_TIME ) );
 
    MYSQL_TIME* mtime = (MYSQL_TIME*) buffer;
-   mtime->year = (unsigned) ts->m_year;
-   mtime->month = (unsigned) ts->m_month;
-   mtime->day = (unsigned) ts->m_day;
-   mtime->hour = (unsigned) ts->m_hour;
-   mtime->minute = (unsigned) ts->m_minute;
-   mtime->second = (unsigned) ts->m_second;
-   mtime->second_part = (unsigned) ts->m_msec;
+   mtime->year = (unsigned) ts->year();
+   mtime->month = (unsigned) ts->month();
+   mtime->day = (unsigned) ts->day();
+   mtime->hour = (unsigned) ts->hour();
+   mtime->minute = (unsigned) ts->minute();
+   mtime->second = (unsigned) ts->second();
+   mtime->second_part = (unsigned) ts->msec();
    mtime->neg = 0;
 
    bufsize = sizeof( MYSQL_TIME );
@@ -149,9 +153,8 @@ DBIRecordsetMySQL::DBIRecordsetMySQL( DBIHandleMySQL *dbh, MYSQL_RES *res, bool 
    m_rowCount = -1; // default -- not known
    m_columnCount = mysql_num_fields( res );
    m_fields = mysql_fetch_fields( res );
-   m_pConn = dbh->getConn();
-   m_pConn->incref();
 }
+
 
 DBIRecordsetMySQL::~DBIRecordsetMySQL()
 {
@@ -191,7 +194,6 @@ void DBIRecordsetMySQL::close()
    if ( m_res != 0 ) {
       mysql_free_result( m_res );
       m_res = 0;
-      m_pConn->decref();
    }
 }
 
@@ -199,18 +201,9 @@ void DBIRecordsetMySQL::close()
  * Recordset class --- when using statements.
  *****************************************************************************/
 
-DBIRecordsetMySQL_STMT::DBIRecordsetMySQL_STMT( DBIHandleMySQL *dbh, MYSQL_RES *res, MYSQLStmtHandle *pStmt, bool bCanSeek )
+DBIRecordsetMySQL_STMT::DBIRecordsetMySQL_STMT( DBIHandleMySQL *dbh, MYSQL_RES *res, DBIStatementMySQL *stmt, bool bCanSeek )
     : DBIRecordsetMySQL( dbh, res, bCanSeek ),
-      m_stmt( pStmt->handle() ),
-      m_pStmt( pStmt )
-{
-   pStmt->incref();
-}
-
-DBIRecordsetMySQL_STMT::DBIRecordsetMySQL_STMT( DBIHandleMySQL *dbh, MYSQL_RES *res, MYSQL_STMT *stmt, bool bCanSeek )
-    : DBIRecordsetMySQL( dbh, res, bCanSeek ),
-      m_stmt( stmt ),
-      m_pStmt( new MYSQLStmtHandle(stmt) )
+      m_stmt( stmt )
 {
 }
 
@@ -265,13 +258,13 @@ void DBIRecordsetMySQL_STMT::init()
 
    }
 
-   if( mysql_stmt_bind_result( m_stmt, m_pMyBind ) != 0 )
+   if( mysql_stmt_bind_result( m_stmt->my_statement(), m_pMyBind ) != 0 )
    {
       static_cast<DBIHandleMySQL*>(m_dbh)->
                throwError( __FILE__, __LINE__, FALCON_DBI_ERROR_BIND_MIX );
    }
 
-   m_rowCount = mysql_stmt_affected_rows( m_stmt );
+   m_rowCount = mysql_stmt_affected_rows( m_stmt->my_statement() );
 }
 
 DBIRecordsetMySQL_STMT::~DBIRecordsetMySQL_STMT()
@@ -281,6 +274,13 @@ DBIRecordsetMySQL_STMT::~DBIRecordsetMySQL_STMT()
    free( m_pMyBind );
    delete m_pOutBind;
    delete[] m_pBlobId;
+}
+
+
+void DBIRecordsetMySQL_STMT::gcMark( uint32 mark )
+{
+   DBIRecordset::gcMark(mark);
+   m_stmt->gcMark(mark);
 }
 
 
@@ -309,7 +309,6 @@ bool DBIRecordsetMySQL_STMT::getColumnValue( int nCol, Item& value )
 
    case MYSQL_TYPE_TINY:
      value.setInteger( (*(char*) outbind.memory() ) );
-
       break;
 
    case MYSQL_TYPE_YEAR:
@@ -353,25 +352,10 @@ bool DBIRecordsetMySQL_STMT::getColumnValue( int nCol, Item& value )
    case MYSQL_TYPE_TIMESTAMP:
    case MYSQL_TYPE_NEWDATE:
       {
-         VMachine* vm = VMachine::getCurrent();
-         if( vm == 0 )
-         {
-            return false;
-         }
          MYSQL_TIME* mtime = (MYSQL_TIME*) outbind.memory();
          TimeStamp* ts = new TimeStamp;
-
-         ts->m_year = mtime->year;
-         ts->m_month = mtime->month;
-         ts->m_day = mtime->day;
-         ts->m_hour = mtime->hour;
-         ts->m_minute = mtime->minute;
-         ts->m_second = mtime->second;
-         ts->m_msec = mtime->second_part;
-
-         CoreObject *ots = vm->findWKI("TimeStamp")->asClass()->createInstance();
-         ots->setUserData( ts );
-         value = ots;
+         ts->set( mtime->year, mtime->month, mtime->day, mtime->hour, mtime->minute, mtime->second, mtime->second_part, 0 );
+         value.setUser( FALCON_GC_STORE(Engine::instance()->stdHandlers()->timestampClass(), ts) );
       }
       break;
 
@@ -380,34 +364,39 @@ bool DBIRecordsetMySQL_STMT::getColumnValue( int nCol, Item& value )
    case MYSQL_TYPE_STRING:
    case MYSQL_TYPE_VARCHAR:
    case MYSQL_TYPE_VAR_STRING:
+   {
+      String* res = new String;
       // text?
       if( m_fields[nCol].charsetnr == 63 ) // sic -- from manual
       {
-         value = new MemBuf_1( (byte*) outbind.memory(), dlen );
+         res->adopt((char*)outbind.memory(), dlen, 0);
+         res->bufferize();
+         res->toMemBuf();
       }
       else
       {
-         CoreString* res = new CoreString;
          if( dlen > 0 )
          {
             //((char*) outbind.memory())[ dlen -1] = 0;
             res->fromUTF8( (char*) outbind.memory() );
          }
-         value = res;
       }
+      value = FALCON_GC_HANDLE(res);
+   }
    break;
 
    case MYSQL_TYPE_TINY_BLOB:
    case MYSQL_TYPE_BLOB:
    case MYSQL_TYPE_MEDIUM_BLOB:
    case MYSQL_TYPE_LONG_BLOB:
+   {
       // read the missing memory -- and be sure to alloc
       if( dlen != 0 )
       {
          outbind.alloc( dlen + 1 );
          m_pMyBind[nCol].buffer_length = dlen+1;
          m_pMyBind[nCol].buffer = outbind.memory();
-         if(  mysql_stmt_fetch_column( m_stmt, m_pMyBind + nCol, nCol, 0 ) != 0 )
+         if(  mysql_stmt_fetch_column( m_stmt->my_statement(), m_pMyBind + nCol, nCol, 0 ) != 0 )
          {
             static_cast< DBIHandleMySQL *>(m_dbh)
                   ->throwError( __FILE__, __LINE__, FALCON_DBI_ERROR_FETCH );
@@ -415,40 +404,34 @@ bool DBIRecordsetMySQL_STMT::getColumnValue( int nCol, Item& value )
       }
 
       // text?
+      String* out = new String;
       if( m_fields[nCol].charsetnr == 63 ) // sic -- from manual
       {
+         out->toMemBuf();
+
          // give ownership
-         if( dlen == 0 )
+         if( dlen != 0 )
          {
-            value = new MemBuf_1( 0, 0 );
-         }
-         else
-         {
-            value = new MemBuf_1(
-               (byte*) outbind.getMemory(),
-               dlen,
-               free( );
+            out->adopt((char*)outbind.memory(), dlen, 0);
+            out->bufferize();
          }
       }
       else
       {
-         if( dlen == 0 )
-         {
-            value = new CoreString( "" );
-         }
-         else
+         if( dlen != 0 )
          {
             ((char*) outbind.memory())[ dlen ] = 0;
-            CoreString* res = new CoreString;
-            res->fromUTF8( (char*) outbind.memory() );
-            value = res;
+            out->fromUTF8( (char*) outbind.memory() );
          }
       }
-      break;
+      value = FALCON_GC_HANDLE(out);
+   }
+   break;
 
    default:
       static_cast< DBIHandleMySQL *>(m_dbh)
          ->throwError( __FILE__, __LINE__, FALCON_DBI_ERROR_UNHANDLED_TYPE );
+      break;
    }
 
    return true;
@@ -462,13 +445,13 @@ bool DBIRecordsetMySQL_STMT::discard( int64 ncount )
    // we have all the records. We may seek
    if( m_bCanSeek )
    {
-      mysql_stmt_data_seek( m_stmt, (uint64) ncount + (m_row == 0 ? 0 : m_row+1) );
+      mysql_stmt_data_seek( m_stmt->my_statement(), (uint64) ncount + (m_row == 0 ? 0 : m_row+1) );
    }
    else
    {
       for ( int64 i = 0; i < ncount; ++i )
       {
-         int res = mysql_stmt_fetch( m_stmt );
+         int res = mysql_stmt_fetch( m_stmt->my_statement() );
          if( res == MYSQL_NO_DATA )
             return false;
          if( res == 1 )
@@ -497,7 +480,7 @@ bool DBIRecordsetMySQL_STMT::fetchRow()
    }
 
    // then do the real fetch
-   int res = mysql_stmt_fetch( m_stmt );
+   int res = mysql_stmt_fetch( m_stmt->my_statement() );
    if( res == 1 )
    {
       // there's an error.
@@ -517,31 +500,37 @@ bool DBIRecordsetMySQL_STMT::fetchRow()
 void DBIRecordsetMySQL_STMT::close()
 {
    DBIRecordsetMySQL::close();
+   DBIHandleMySQL* mp = static_cast<DBIHandleMySQL*>(m_dbh);
 
    if ( m_stmt != 0 ) 
    {
-      while( mysql_next_result( m_pConn->handle() ) == 0 )
+      while( mysql_next_result( mp->mysql() ) == 0 )
       {
-         MYSQL_RES *res = mysql_use_result( m_pConn->handle() );
+         MYSQL_RES *res = mysql_use_result( mp->mysql() );
          if( res != NULL )
          {
             mysql_free_result( res );
          }
       }
 
+      m_stmt->close();
+      if( m_stmt->owned() )
+      {
+         delete m_stmt;
+      }
       m_stmt = 0;
-      m_pStmt->decref();
    }
 }
+
 
 DBIRecordset* DBIRecordsetMySQL_STMT::getNext()
 {
    DBIHandleMySQL* mysql = static_cast<DBIHandleMySQL*>(m_dbh);
 
-   if ( mysql_next_result( m_pConn->handle() ) == 0 )
+   if ( mysql_next_result( mysql->mysql() ) == 0 )
    {
       // We want a result recordset
-      MYSQL_RES * meta = mysql_stmt_result_metadata( m_pStmt->handle() );
+      MYSQL_RES * meta = mysql_stmt_result_metadata( m_stmt->my_statement() );
       if( meta == 0 )
       {
          //No, we have nothing to return.
@@ -551,15 +540,15 @@ DBIRecordset* DBIRecordsetMySQL_STMT::getNext()
       // ok. Do the user wanted all the result back?
       if( m_dbh->options()->m_nPrefetch < 0 )
       {
-         if( mysql_stmt_store_result( m_pStmt->handle() ) != 0
-             && mysql_errno( m_pConn->handle() ) != 0 )
+         if( mysql_stmt_store_result( m_stmt->my_statement() ) != 0
+             && mysql_errno( mysql->mysql() ) != 0 )
          {
             mysql_free_result( meta );
             mysql->throwError( __FILE__, __LINE__, FALCON_DBI_ERROR_FETCH );
          }
       }
 
-      DBIRecordsetMySQL_STMT* recset = new DBIRecordsetMySQL_STMT( mysql, meta, m_pStmt );
+      DBIRecordsetMySQL_STMT* recset = new DBIRecordsetMySQL_STMT( mysql, meta, m_stmt );
 
       // -- may throw
       try {
@@ -642,17 +631,17 @@ bool DBIRecordsetMySQL_RES::getColumnValue( int nCol, Item& value )
       break;
 
    case MYSQL_TYPE_DATE:
-      value = makeTimestamp( String(data) + " 00:00:00");
+      makeTimestamp( String(data) + " 00:00:00", value);
       break;
 
    case MYSQL_TYPE_TIME:
-      value = makeTimestamp( String( "0000-00-00 " ) + String(data) );
+      makeTimestamp( String( "0000-00-00 " ) + String(data), value );
       break;
 
    case MYSQL_TYPE_DATETIME:
    case MYSQL_TYPE_TIMESTAMP:
    case MYSQL_TYPE_NEWDATE:
-      value = makeTimestamp( String(data) );
+      makeTimestamp( String(data), value );
       break;
 
    // string types
@@ -664,59 +653,57 @@ bool DBIRecordsetMySQL_RES::getColumnValue( int nCol, Item& value )
    case MYSQL_TYPE_BLOB:
    case MYSQL_TYPE_MEDIUM_BLOB:
    case MYSQL_TYPE_LONG_BLOB:      // text?
+   {
+      String* vs = new String;
       if( m_fields[nCol].flags & BINARY_FLAG ) // sic -- from manual
       {
          unsigned long* lengths = mysql_fetch_lengths( m_res );
-         byte* mem = (byte*) malloc( lengths[nCol] );
+         char* mem = (char*) malloc( lengths[nCol] );
          memcpy( mem, data, lengths[nCol] );
-         value = new MemBuf_1( mem, lengths[nCol], free( );
+         vs->adopt(mem, lengths[nCol], lengths[nCol] );
+         vs->toMemBuf();
       }
       else
       {
-         CoreString* vs = new CoreString;
          vs->fromUTF8( data );
-         value = vs;
       }
-      break;
+      value = FALCON_GC_HANDLE(vs);
+   }
+   break;
 
 
    default:
       static_cast< DBIHandleMySQL *>(m_dbh)
          ->throwError( __FILE__, __LINE__, FALCON_DBI_ERROR_UNHANDLED_TYPE );
+      break;
    }
 
    return true;
 }
 
 
-CoreObject* DBIRecordsetMySQL_RES::makeTimestamp( const String& str )
+void DBIRecordsetMySQL_RES::makeTimestamp( const String& str, Item& target )
 {
-   VMachine* vm = VMachine::getCurrent();
-   if( vm == 0 )
-   {
-      static_cast< DBIHandleMySQL *>(m_dbh)
-            ->throwError( __FILE__, __LINE__, FALCON_DBI_ERROR_UNHANDLED_TYPE );
-   }
-   CoreObject *ots = vm->findWKI("TimeStamp")->asClass()->createInstance();
+   static Class* cls = Engine::instance()->stdHandlers()->timestampClass();
+
    TimeStamp* ts = new TimeStamp;
 
    int64 ival;
    str.subString(0,4).parseInt(ival);
-   ts->m_year = ival;
+   ts->year(ival);
    str.subString(5,7).parseInt(ival);
-   ts->m_month = ival;
+   ts->month(ival);
    str.subString(8,10).parseInt(ival);
-   ts->m_day = ival;
+   ts->day(ival);
    str.subString(11,13).parseInt(ival);
-   ts->m_hour = ival;
+   ts->hour(ival);
    str.subString(14,16).parseInt(ival);
-   ts->m_minute = ival;
+   ts->minute(ival);
    str.subString(17).parseInt(ival);
-   ts->m_second = ival;
-   ts->m_msec = 0;
+   ts->second(ival);
+   ts->msec(0);
 
-   ots->setUserData( ts );
-   return ots;
+   target = FALCON_GC_STORE( cls, ts );
 }
 
 
@@ -738,12 +725,12 @@ bool DBIRecordsetMySQL_RES::discard( int64 ncount )
       {
          MYSQL_ROW row = mysql_fetch_row( m_res );
 
+         DBIHandleMySQL *my = static_cast< DBIHandleMySQL *>(m_dbh);
          if( row == 0 )
          {
-            if ( mysql_errno( m_pConn->handle() ) != 0 )
+            if ( mysql_errno( my->mysql() ) != 0 )
             {
-               static_cast< DBIHandleMySQL *>(m_dbh)
-                   ->throwError( __FILE__, __LINE__, FALCON_DBI_ERROR_UNHANDLED_TYPE );
+               my->throwError( __FILE__, __LINE__, FALCON_DBI_ERROR_UNHANDLED_TYPE );
             }
             return false;
          }
@@ -799,15 +786,18 @@ bool DBIRecordsetMySQL_RES_STR::getColumnValue( int nCol, Item& value )
    else if( m_fields[nCol].charsetnr == 63 && IS_LONGDATA(m_fields[nCol].type ) ) // sic -- from manual
    {
       unsigned long* lengths = mysql_fetch_lengths( m_res );
-      byte* mem = (byte*) malloc( lengths[nCol] );
+      char* mem = (char*) malloc( lengths[nCol] );
       memcpy( mem, data, lengths[nCol] );
-      value = new MemBuf_1( mem, lengths[nCol], free( );
+      String* vs = new String;
+      vs->adopt(mem,lengths[nCol],lengths[nCol]);
+      vs->toMemBuf();
+      value = FALCON_GC_HANDLE(vs);
    }
    else
    {
-      CoreString* vs = new CoreString;
+      String* vs = new String;
       vs->fromUTF8( data );
-      value = vs;
+      value = FALCON_GC_HANDLE(vs);
    }
 
    return true;
@@ -824,9 +814,7 @@ DBIStatementMySQL::DBIStatementMySQL( DBIHandleMySQL *dbh, MYSQL_STMT* stmt ):
       m_inBind(0),
       m_bBound( false )
 {
-   m_pConn = dbh->getConn();
-   m_pConn->incref();
-   m_pStmt = new MYSQLStmtHandle( stmt );
+   m_owned = false;
 }
 
 
@@ -919,7 +907,7 @@ DBIRecordset* DBIStatementMySQL::execute( ItemArray* params )
          }
       }
 
-      DBIRecordsetMySQL_STMT* recset = new DBIRecordsetMySQL_STMT( mysql, meta, m_pStmt );
+      DBIRecordsetMySQL_STMT* recset = new DBIRecordsetMySQL_STMT( mysql, meta, this );
 
       // -- may throw
       try {
@@ -952,18 +940,13 @@ void DBIStatementMySQL::close()
 {
   if ( m_statement != 0 )
   {
+     mysql_stmt_close( m_statement );
      m_statement = 0;
      delete m_inBind;
      m_inBind = 0;
-     m_pConn->decref();
-     m_pStmt->decref();
   }
 }
 
-MYSQLStmtHandle::~MYSQLStmtHandle()
-{
-   mysql_stmt_close( handle() );
-}
 
 /******************************************************************************
  * DB Handler class
@@ -972,6 +955,7 @@ DBIHandleMySQL::~DBIHandleMySQL()
 {
    DBIHandleMySQL::close();
 }
+
 
 void DBIHandleMySQL::options( const String& params )
 {
@@ -986,27 +970,107 @@ void DBIHandleMySQL::options( const String& params )
    }
 }
 
+
 const DBISettingParams* DBIHandleMySQL::options() const
 {
    return &m_settings;
 }
 
 
-DBIHandleMySQL::DBIHandleMySQL()
+DBIHandleMySQL::DBIHandleMySQL( const Class* h ):
+         DBIHandle(h)
 {
    m_conn = NULL;
 }
 
-DBIHandleMySQL::DBIHandleMySQL( MYSQL *conn )
+
+void DBIHandleMySQL::connect( const String &parameters )
 {
-   m_conn = conn;
-   m_pConn = new MYSQLHandle( conn );
+   MYSQL *conn = mysql_init( NULL );
+
+   if ( conn == NULL )
+   {
+      throw new DBIError( ErrorParam( FALCON_DBI_ERROR_NOMEM, __LINE__) );
+   }
+
+   // Parse the connection string.
+   DBIConnParams connParams;
+
+   // add MySQL specific parameters
+   String sSocket, sFlags;
+   const char *szSocket = 0;
+   connParams.addParameter( "socket", sSocket, &szSocket );
+   connParams.addParameter( "flags", sFlags );
+
+   if( ! connParams.parse( parameters ) )
+   {
+      mysql_close( conn );
+      throw new DBIError( ErrorParam( FALCON_DBI_ERROR_CONNPARAMS, __LINE__)
+         .extra( parameters )
+      );
+   }
+
+   long szFlags = CLIENT_MULTI_STATEMENTS|CLIENT_MULTI_RESULTS;
+   // TODO parse flags
+
+   if ( mysql_real_connect( conn,
+         connParams.m_szHost,
+         connParams.m_szUser,
+         connParams.m_szPassword,
+         connParams.m_szDb,
+         connParams.m_szPort == 0 ? 0 : atoi( connParams.m_szPort ),
+         szSocket, szFlags ) == NULL
+      )
+   {
+      int en = mysql_errno( conn ) == ER_BAD_DB_ERROR ?
+               FALCON_DBI_ERROR_DB_NOTFOUND : FALCON_DBI_ERROR_CONNECT;
+
+      String errorMessage = mysql_error( conn );
+      errorMessage.bufferize();
+      mysql_close( conn );
+
+      throw new DBIError( ErrorParam( en, __LINE__).extra( errorMessage ) );
+   }
+
+   if( connParams.m_sCreate == "always" )
+   {
+      String sDrop = "drop database IF EXIST " + connParams.m_sDb ;
+
+      AutoCString asQuery( sDrop );
+      if( mysql_real_query( conn, asQuery.c_str(), asQuery.length() ) != 0 )
+      {
+         throw new DBIError( ErrorParam(  FALCON_DBI_ERROR_CONNECT_CREATE, __LINE__ ));
+      }
+
+      String sCreate = "create database " + connParams.m_sDb ;
+      AutoCString asQuery2( sCreate );
+      if( mysql_real_query( conn, asQuery2.c_str(), asQuery2.length() ) != 0 )
+      {
+         throw new DBIError( ErrorParam(  FALCON_DBI_ERROR_CONNECT_CREATE, __LINE__ ));
+      }
+
+   }
+   else if ( connParams.m_sCreate == "cond" )
+   {
+      String sCreate = "create database if not exist " + connParams.m_sDb;
+      AutoCString asQuery2( sCreate );
+      if( mysql_real_query( conn, asQuery2.c_str(), asQuery2.length() ) != 0 )
+      {
+         throw new DBIError( ErrorParam(  FALCON_DBI_ERROR_CONNECT_CREATE, __LINE__ ));
+      }
+   }
+   else if( connParams.m_sCreate != "" )
+   {
+      throw new DBIError( ErrorParam( FALCON_DBI_ERROR_CONNPARAMS, __LINE__)
+              .extra( parameters )
+           );
+   }
 
    // we'll be using UTF-8 charset
    mysql_set_character_set( m_conn, "utf8" );
-
    mysql_autocommit( m_conn, m_settings.m_bAutocommit ? 1 : 0 );
 }
+
 
 DBIRecordset *DBIHandleMySQL::query( const String &sql, ItemArray* params )
 {
@@ -1048,7 +1112,9 @@ DBIRecordset *DBIHandleMySQL::query( const String &sql, ItemArray* params )
             }
 
             // -- may throw
-            recset = new DBIRecordsetMySQL_STMT( this, meta, stmt );
+            DBIStatementMySQL* mstmt = new DBIStatementMySQL(this,stmt);
+            mstmt->owned(true);
+            recset = new DBIRecordsetMySQL_STMT( this, meta, mstmt );
             recset->init();
             return recset;
          }
@@ -1155,7 +1221,7 @@ MYSQL_STMT* DBIHandleMySQL::my_prepare( const String &query, bool bCanFallback )
 int64 DBIHandleMySQL::my_execute( MYSQL_STMT* stmt, MyDBIInBind& bindings, ItemArray* params )
 {
    fassert( m_conn != 0 );
-   int count = mysql_stmt_param_count( stmt );
+   uint32 count = (uint32) mysql_stmt_param_count( stmt );
 
    if( params == 0 || params->length() == 0 )
    {
@@ -1195,7 +1261,7 @@ DBIStatement* DBIHandleMySQL::prepare( const String &query )
 }
 
 
-int64 DBIHandleMySQL::getLastInsertedId( const String& sequenceName )
+int64 DBIHandleMySQL::getLastInsertedId( const String& )
 {
    if( m_conn == 0 )
      throw new DBIError( ErrorParam( FALCON_DBI_ERROR_CLOSED_DB, __LINE__ ) );
@@ -1270,7 +1336,6 @@ void DBIHandleMySQL::close()
    if ( m_conn != NULL )
    {
       mysql_query( m_conn, "COMMIT" );
-      m_pConn->decref();
       m_conn = NULL;
    }
 }
@@ -1295,114 +1360,6 @@ void DBIHandleMySQL::throwError( const char* file, int line, int code )
       throw new DBIError( ErrorParam( code, line )
                   .module( file ) );
    }
-}
-
-
-/******************************************************************************
- * Main service class
- *****************************************************************************/
-
-void DBIServiceMySQL::init()
-{
-}
-
-DBIHandle *DBIServiceMySQL::connect( const String &parameters )
-{
-   MYSQL *conn = mysql_init( NULL );
-
-   if ( conn == NULL )
-   {
-      throw new DBIError( ErrorParam( FALCON_DBI_ERROR_NOMEM, __LINE__) );
-   }
-
-   // Parse the connection string.
-   DBIConnParams connParams;
-
-   // add MySQL specific parameters
-   String sSocket, sFlags;
-   const char *szSocket = 0;
-   connParams.addParameter( "socket", sSocket, &szSocket );
-   connParams.addParameter( "flags", sFlags );
-
-   if( ! connParams.parse( parameters ) )
-   {
-      mysql_close( conn );
-      throw new DBIError( ErrorParam( FALCON_DBI_ERROR_CONNPARAMS, __LINE__)
-         .extra( parameters )
-      );
-   }
-
-   long szFlags = CLIENT_MULTI_STATEMENTS|CLIENT_MULTI_RESULTS;
-   // TODO parse flags
-
-   if ( mysql_real_connect( conn,
-         connParams.m_szHost,
-         connParams.m_szUser,
-         connParams.m_szPassword,
-         connParams.m_szDb,
-         connParams.m_szPort == 0 ? 0 : atoi( connParams.m_szPort ),
-         szSocket, szFlags ) == NULL
-      )
-   {
-      int en = mysql_errno( conn ) == ER_BAD_DB_ERROR ?
-               FALCON_DBI_ERROR_DB_NOTFOUND : FALCON_DBI_ERROR_CONNECT;
-
-      String errorMessage = mysql_error( conn );
-      errorMessage.bufferize();
-      mysql_close( conn );
-
-      throw new DBIError( ErrorParam( en, __LINE__).extra( errorMessage ) );
-   }
-
-   if( connParams.m_sCreate == "always" )
-   {
-      String sDrop = "drop database IF EXIST " + connParams.m_sDb ;
-
-      AutoCString asQuery( sDrop );
-      if( mysql_real_query( conn, asQuery.c_str(), asQuery.length() ) != 0 )
-      {
-         throw new DBIError( ErrorParam(  FALCON_DBI_ERROR_CONNECT_CREATE, __LINE__ ));
-      }
-
-      String sCreate = "create database " + connParams.m_sDb ;
-      AutoCString asQuery2( sCreate );
-      if( mysql_real_query( conn, asQuery2.c_str(), asQuery2.length() ) != 0 )
-      {
-         throw new DBIError( ErrorParam(  FALCON_DBI_ERROR_CONNECT_CREATE, __LINE__ ));
-      }
-
-   }
-   else if ( connParams.m_sCreate == "cond" )
-   {
-      String sCreate = "create database if not exist " + connParams.m_sDb;
-      AutoCString asQuery2( sCreate );
-      if( mysql_real_query( conn, asQuery2.c_str(), asQuery2.length() ) != 0 )
-      {
-         throw new DBIError( ErrorParam(  FALCON_DBI_ERROR_CONNECT_CREATE, __LINE__ ));
-      }
-   }
-   else if( connParams.m_sCreate != "" )
-   {
-      throw new DBIError( ErrorParam( FALCON_DBI_ERROR_CONNPARAMS, __LINE__)
-              .extra( parameters )
-           );
-   }
-
-   return new DBIHandleMySQL( conn );
-}
-
-CoreObject *DBIServiceMySQL::makeInstance( VMachine *vm, DBIHandle *dbh )
-{
-   Item *cl = vm->findWKI( "MySQL" );
-   if ( cl == 0 || ! cl->isClass() )
-   {
-      throw new DBIError( ErrorParam( FALCON_DBI_ERROR_INVALID_DRIVER, __LINE__ ) );
-   }
-
-   CoreObject *obj = cl->asClass()->createInstance();
-   obj->setUserData( dbh );
-
-   return obj;
 }
 
 } /* namespace Falcon */

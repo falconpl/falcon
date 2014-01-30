@@ -13,7 +13,7 @@
  * See LICENSE file for licensing details.
  */
 
-#include <falcon/engine.h>
+#define SRC "modules/native/dbi/dbi_common/dbi_driverclass.cpp"
 
 #include "mysql_mod.h"
 #include "mysql_ext.h"
@@ -42,37 +42,22 @@ namespace Ext
    - socket: UNIX socket name for UNIX-socket based MySQL connections.
 */
 
-FALCON_FUNC MySQL_init( VMachine *vm )
+
+ClassMySQLDBIHandle::ClassMySQLDBIHandle():
+         ClassDriverDBIHandle("MySQL")
 {
-   Item *paramsI = vm->param(0);
-   Item *i_tropts = vm->param(1);
-   if (  paramsI == 0 || ! paramsI->isString()
-         || ( i_tropts != 0 && ! i_tropts->isString() ) )
-   {
-      throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
-                                         .extra( "S,[S]" ) );
-   }
+}
 
-   String *params = paramsI->asString();
 
-   DBIHandle *hand = 0;
-   try
-   {
-      hand = theMySQLService.connect( *params );
-      if( i_tropts != 0 )
-      {
-         hand->options( *i_tropts->asString() );
-      }
+ClassMySQLDBIHandle::~ClassMySQLDBIHandle()
+{
+}
 
-      // great, we have the database handler open. Now we must create a falcon object to store it.
-      CoreObject *instance = theMySQLService.makeInstance( vm, hand );
-      vm->retval( instance );
-   }
-   catch( DBIError* error )
-   {
-      delete hand;
-      throw error;
-   }
+
+void* ClassMySQLDBIHandle::createInstance() const
+{
+   DBIHandleMySQL* h = new DBIHandleMySQL(this);
+   return h;
 }
 
 } /* namespace Ext */

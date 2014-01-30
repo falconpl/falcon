@@ -13,29 +13,27 @@
  * See LICENSE file for licensing details.
  */
 
-/*
+#ifndef FALCON_DBI_MYSQL_EXT_H
+#define FALCON_DBI_MYSQL_EXT_H
+
 #include <falcon/setup.h>
 #include <falcon/types.h>
-*/
-#include <falcon/module.h>
+#include <falcon/dbi_driverclass.h>
 
-#ifndef MYSQL_EXT_H
-#define MYSQL_EXT_H
+namespace Falcon {
+namespace Ext {
 
-namespace Falcon
+class ClassMySQLDBIHandle: public ClassDriverDBIHandle
 {
-
-class VMachine;
-
-namespace Ext
-{
-
-FALCON_FUNC MySQL_init( VMachine *vm );
+public:
+   ClassMySQLDBIHandle();
+   virtual ~ClassMySQLDBIHandle();
+   virtual void* createInstance() const;
+};
 
 }
 }
 
-#endif /* MYSQL_EXT_H */
+#endif /* FALCON_DBI_MYSQL_EXT_H */
 
 /* end of mysql_ext.h */
-

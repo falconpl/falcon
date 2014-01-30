@@ -78,3 +78,8 @@ if(FALCON_DBI_MYSQL_MY_RPATH)
 endif()
 
 falcon_install_module2( ${FALCON_MODULE} dbi )
+
+set_target_properties( ${FALCON_MODULE}
+	  PROPERTIES 
+      LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/${Falcon_MOD_DIR}/dbi" )
+      
