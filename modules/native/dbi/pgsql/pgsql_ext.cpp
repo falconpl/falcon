@@ -13,7 +13,11 @@
  * See LICENSE file for licensing details.
  */
 
-#include <falcon/engine.h>
+#define SRC "modules/native/dbi/pgsql/pgsql_ext.cpp"
+
+#include <falcon/vmcontext.h>
+#include <falcon/function.h>
+#include "../dbi/dbi.h"
 
 #include "pgsql_ext.h"
 #include "pgsql_mod.h"
@@ -34,37 +38,6 @@ namespace Ext {
    The @b connect string is directly passed to the low level postgre driver.
  */
 
-FALCON_FUNC PgSQL_init( VMachine* vm )
-{
-    Item* i_params = vm->param( 0 );
-    Item* i_opts = vm->param( 1 );
-
-    if ( !i_params || !i_params->isString()
-        || ( i_opts != 0 && !i_opts->isString() ) )
-    {
-        throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
-                .extra( "S,[S]" ) );
-    }
-
-    String* params = i_params->asString();
-    DBIHandle* hand = 0;
-
-    try
-    {
-        hand = thePgSQLService.connect( *params );
-        if ( i_opts != 0 )
-            hand->options( *i_opts->asString() );
-        // great, we have the database handler open. Now we must create a falcon object to store it.
-        CoreObject* instance = thePgSQLService.makeInstance( vm, hand );
-        vm->retval( instance );
-    }
-    catch ( DBIError* error )
-    {
-        delete hand;
-        throw error;
-    }
-}
-
 
 /*#
     @method prepareNamed PgSQL
@@ -72,16 +45,19 @@ FALCON_FUNC PgSQL_init( VMachine* vm )
     @param name Name for the prepared statement
     @param query The query to prepare
  */
-FALCON_FUNC PgSQL_prepareNamed( VMachine* vm )
+FALCON_DECLARE_FUNCTION( prepareNamed, "name:S,query:S" )
+FALCON_DEFINE_FUNCTION_P1( prepareNamed )
 {
-    Item* i_name = vm->param( 0 );
-    Item* i_query = vm->param( 1 );
+    Item* i_name = ctx->param( 0 );
+    Item* i_query = ctx->param( 1 );
 
     if ( !i_name || !i_name->isString()
         || !i_query || !i_query->isString() )
-        throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).extra( "S,S" ) );
+    {
+        throw paramError(__LINE__,SRC);
+    }
 
-    DBIHandlePgSQL* dbh = static_cast<DBIHandlePgSQL*>( vm->self().asObjectSafe()->getUserData() );
+    DBIHandlePgSQL* dbh = ctx->tself<DBIHandlePgSQL*>();
     fassert( dbh );
 
     // names of stored procedures need to be lowercased
@@ -91,12 +67,25 @@ FALCON_FUNC PgSQL_prepareNamed( VMachine* vm )
     DBIStatement* trans = dbh->prepareNamed( name, *i_query->asString() );
 
     // snippet taken from dbi_ext.h - should be shared?
-    Item *trclass = vm->findWKI( "%Statement" );
-    fassert( trclass != 0 && trclass->isClass() );
-    CoreObject *oth = trclass->asClass()->createInstance();
-    oth->setUserData( trans );
-    vm->retval( oth );
+    DBIModule* dbm = static_cast<DBIModule*>(this->methodOf()->module());
+    Class* cls = dbm->statementClass();
+    ctx->returnFrame( FALCON_GC_STORE(cls, trans) );
+
 }
+
+
+ClassPGSQLDBIHandle::ClassPGSQLDBIHandle():
+         ClassDriverDBIHandle("PgSql")
+{}
+
+ClassPGSQLDBIHandle::~ClassPGSQLDBIHandle()
+{}
+
+void* ClassPGSQLDBIHandle::createInstance() const
+{
+   return new DBIHandlePgSQL(this);
+}
+
 
 } /* namespace Ext */
 } /* namespace Falcon */

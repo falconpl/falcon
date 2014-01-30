@@ -17,9 +17,7 @@
 #define PGSQL_MOD_H
 
 #include <libpq-fe.h>
-
 #include <falcon/dbi_common.h>
-#include <falcon/srv/dbi_service.h>
 
 namespace Falcon
 {
@@ -113,11 +111,12 @@ protected:
 
 public:
 
-    DBIHandlePgSQL( PGconn* = 0 );
+    DBIHandlePgSQL( const Class* h, PGconn* = 0 );
     virtual ~DBIHandlePgSQL();
 
     PGconn* getConn() { return m_conn; }
 
+    virtual void connect( const String &parameters );
     virtual void options( const String& params );
     virtual const DBISettingParams* options() const;
 
@@ -141,27 +140,6 @@ public:
 };
 
 
-class DBIServicePgSQL
-    :
-    public DBIService
-{
-public:
-
-    DBIServicePgSQL()
-        :
-        DBIService( "DBI_pgsql" )
-    {}
-
-    virtual void init();
-
-    virtual DBIHandle* connect( const String& parameters );
-
-    virtual CoreObject* makeInstance( VMachine* vm, DBIHandle* dbh );
-
-};
-
 } // !namespace Falcon
-
-extern Falcon::DBIServicePgSQL thePgSQLService;
 
 #endif /* PGSQL_MOD_H */

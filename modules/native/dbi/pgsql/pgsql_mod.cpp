@@ -16,7 +16,10 @@
 #include <string.h>
 #include <stdio.h>
 
-#include <falcon/engine.h>
+#include <falcon/timestamp.h>
+#include <falcon/stdhandlers.h>
+#include <falcon/itemarray.h>
+
 #include "pgsql_mod.h"
 
 /* Oid - see catalog/pg_type.h */
@@ -162,6 +165,8 @@ bool DBIRecordsetPgSQL::getColumnName( int nCol, String& name )
 
 bool DBIRecordsetPgSQL::getColumnValue( int nCol, Item& value )
 {
+   static Class* clsTS = Engine::instance()->stdHandlers()->timestampClass();
+
     if ( nCol < 0 || nCol >= m_columnCount )
         return false;
 
@@ -201,50 +206,36 @@ bool DBIRecordsetPgSQL::getColumnValue( int nCol, Item& value )
 
     case PG_TYPE_DATE:
         {
-            VMachine* vm = VMachine::getCurrent();
-            if ( vm == 0 )
-                return false;
-
             String tv( v );
             int64 year, month, day;
             tv.subString( 0, 4 ).parseInt( year );
             tv.subString( 5, 7 ).parseInt( month );
             tv.subString( 8, 10 ).parseInt( day );
-            TimeStamp* ts = new TimeStamp( year, month, day );
+            TimeStamp* ts = new TimeStamp;
+            ts->set( year, month, day, 0, 0, 0, 0, TimeStamp::tz_NONE );
 
-            CoreObject* ots = vm->findWKI( "TimeStamp" )->asClass()->createInstance();
-            ots->setUserData( ts );
-            value = ots;
+            value = FALCON_GC_STORE( clsTS, ts );
             break;
         }
 
     case PG_TYPE_TIME:
     case PG_TYPE_TIMETZ: // todo: handle tz
         {
-            VMachine* vm = VMachine::getCurrent();
-            if ( vm == 0 )
-                return false;
-
             String tv( v );
             int64 hour, minute, second;
             tv.subString( 0, 2 ).parseInt( hour );
             tv.subString( 3, 5 ).parseInt( minute );
             tv.subString( 6, 8 ).parseInt( second );
-            TimeStamp* ts = new TimeStamp( 0, 0, 0, hour, minute, second );
+            TimeStamp* ts = new TimeStamp;
+            ts->set( 0, 0, 0, hour, minute, second, 0, TimeStamp::tz_NONE );
 
-            CoreObject* ots = vm->findWKI( "TimeStamp" )->asClass()->createInstance();
-            ots->setUserData( ts );
-            value = ots;
+            value = FALCON_GC_STORE( clsTS, ts );
             break;
         }
 
     case PG_TYPE_TIMESTAMP:
     case PG_TYPE_TIMESTAMPTZ: // todo: handle tz
         {
-            VMachine* vm = VMachine::getCurrent();
-            if ( vm == 0 )
-                return false;
-
             String tv( v );
             int64 year, month, day, hour, minute, second;
             tv.subString(  0,  4 ).parseInt( year );
@@ -253,11 +244,10 @@ bool DBIRecordsetPgSQL::getColumnValue( int nCol, Item& value )
             tv.subString( 11, 13 ).parseInt( hour );
             tv.subString( 14, 16 ).parseInt( minute );
             tv.subString( 17, 19 ).parseInt( second );
-            TimeStamp* ts = new TimeStamp( year, month, day, hour, minute, second );
+            TimeStamp* ts = new TimeStamp;
+            ts->set( year, month, day, hour, minute, second, 0, TimeStamp::tz_NONE );
 
-            CoreObject* ots = vm->findWKI( "TimeStamp" )->asClass()->createInstance();
-            ots->setUserData( ts );
-            value = ots;
+            value = FALCON_GC_STORE( clsTS, ts );
             break;
         }
 
@@ -410,17 +400,43 @@ void DBIStatementPgSQL::close()
  *****************************************************************************/
 
 
-DBIHandlePgSQL::DBIHandlePgSQL( PGconn *conn )
-    :
+DBIHandlePgSQL::DBIHandlePgSQL( const Class* h, PGconn *conn ):
+    DBIHandle(h),
     m_conn( conn ),
     m_bInTrans( false ),
-    m_pConn( new PgSQLHandlerRef(conn) )
+    m_pConn( conn == 0 ? 0 : new PgSQLHandlerRef(conn) )
 {}
 
 
 DBIHandlePgSQL::~DBIHandlePgSQL()
 {
     close();
+}
+
+void DBIHandlePgSQL::connect( const String &parameters )
+{
+   AutoCString connParams( parameters );
+   PGconn *conn = PQconnectdb( connParams.c_str () );
+   if ( conn == NULL )
+   {
+      throw new DBIError( ErrorParam( FALCON_DBI_ERROR_NOMEM, __LINE__ ) );
+   }
+
+   if ( PQstatus( conn ) != CONNECTION_OK )
+   {
+      String errorMessage = PQerrorMessage( conn );
+      errorMessage.remove( errorMessage.length() - 1, 1 ); // Get rid of newline
+      errorMessage.bufferize();
+
+      PQfinish( conn );
+
+      throw new DBIError( ErrorParam( FALCON_DBI_ERROR_CONNECT, __LINE__ )
+              .extra( errorMessage ) );
+   }
+
+   m_conn = conn;
+   m_bInTrans = false;
+   m_pConn = new PgSQLHandlerRef(conn);
 }
 
 
@@ -610,7 +626,9 @@ DBIRecordset* DBIHandlePgSQL::query( const String &sql, ItemArray* params )
 DBIStatement* DBIHandlePgSQL::prepare( const String &query )
 {
     if ( m_conn == 0 )
+    {
         throw new DBIError( ErrorParam( FALCON_DBI_ERROR_CLOSED_DB, __LINE__ ) );
+    }
 
     DBIStatementPgSQL* stmt = new DBIStatementPgSQL( this );
 
@@ -684,54 +702,6 @@ void DBIHandlePgSQL::selectLimited( const String& query, int64 nBegin, int64 nCo
     result = "SELECT " + query + sCount + sBegin;
 }
 
-
-/******************************************************************************
- * Main service class
- *****************************************************************************/
-
-void DBIServicePgSQL::init()
-{
-}
-
-
-DBIHandle *DBIServicePgSQL::connect( const String &parameters )
-{
-   AutoCString connParams( parameters );
-   PGconn *conn = PQconnectdb( connParams.c_str () );
-   if ( conn == NULL )
-   {
-      throw new DBIError( ErrorParam( FALCON_DBI_ERROR_NOMEM, __LINE__ ) );
-   }
-
-   if ( PQstatus( conn ) != CONNECTION_OK )
-   {
-      String errorMessage = PQerrorMessage( conn );
-      errorMessage.remove( errorMessage.length() - 1, 1 ); // Get rid of newline
-      errorMessage.bufferize();
-
-      PQfinish( conn );
-
-      throw new DBIError( ErrorParam( FALCON_DBI_ERROR_CONNECT, __LINE__ )
-              .extra( errorMessage ) );
-   }
-
-   return new DBIHandlePgSQL( conn );
-}
-
-
-CoreObject *DBIServicePgSQL::makeInstance( VMachine *vm, DBIHandle *dbh )
-{
-   Item *cl = vm->findWKI( "PgSQL" );
-   if ( cl == 0 || ! cl->isClass() || cl->asClass()->symbol()->name() != "PgSQL" )
-   {
-      throw new DBIError( ErrorParam( FALCON_DBI_ERROR_INVALID_DRIVER, __LINE__ ) );
-   }
-
-   CoreObject *obj = cl->asClass()->createInstance();
-   obj->setUserData( dbh );
-
-   return obj;
-}
 
 } /* namespace Falcon */
 

@@ -22,10 +22,6 @@
 
 #include "sqlite3_fm.h"
 
-#include <falcon/importdef.h>
-#include <falcon/log.h>
-#include <falcon/stderrors.h>
-#include <falcon/symbol.h>
 #include <falcon/dbi_handle.h>
 
 namespace Falcon {

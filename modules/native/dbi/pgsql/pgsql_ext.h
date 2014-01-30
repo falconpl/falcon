@@ -4,7 +4,7 @@
  *
  * PgSQL Falcon service/driver
  * -------------------------------------------------------------------
- * Author: Jeremy Cowgar, Stanislas Marquis
+ * Author: Jeremy Cowgar, Stanislas Marquis, Giancarlo Niccolai
  * Begin: Sun Dec 23 21:54:42 2007
  *
  * -------------------------------------------------------------------
@@ -16,19 +16,25 @@
 #include <falcon/setup.h>
 #include <falcon/types.h>
 
-#ifndef PGSQL_EXT_H
-#define PGSQL_EXT_H
+#ifndef FALCON_DBI_PGSQL_EXT_H
+#define FALCON_DBI_PGSQL_EXT_H
+
+#include <falcon/setup.h>
+#include <falcon/types.h>
+#include <falcon/dbi_driverclass.h>
 
 namespace Falcon {
-
-class VMachine;
-
 namespace Ext {
 
-FALCON_FUNC PgSQL_init( VMachine* vm );
-FALCON_FUNC PgSQL_prepareNamed( VMachine* vm );
+class ClassPGSQLDBIHandle: public ClassDriverDBIHandle
+{
+public:
+   ClassPGSQLDBIHandle();
+   virtual ~ClassPGSQLDBIHandle();
+   virtual void* createInstance() const;
+};
 
-} // !Ext
-} // !Falcon
+}
+}
 
 #endif /* PGSQL_EXT_H */

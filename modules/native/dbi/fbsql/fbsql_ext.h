@@ -13,8 +13,8 @@
  * See LICENSE file for licensing details.
  */
 
-#ifndef FALCON_FIREBIRD_EXT_H
-#define FALCON_FIREBIRD_EXT_H
+#ifndef FALCON_DBI_FIREBIRD_EXT_H
+#define FALCON_DBI_FIREBIRD_EXT_H
 
 #include <falcon/setup.h>
 #include <falcon/types.h>

@@ -75,7 +75,7 @@ namespace Ext {
 */
 
 ClassFBSQLDBIHandle::ClassFBSQLDBIHandle():
-         ClassDriverDBIHandle("FBSql")
+         ClassDriverDBIHandle("Firebird")
 {
 }
 

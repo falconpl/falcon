@@ -1,8 +1,8 @@
 /*
    FALCON - The Falcon Programming Language.
-   FILE: sqlite3_fm.h
+   FILE: pgsql_fm.h
 
-   SQLite3 driver main module
+   Postgre driver main module
 
    -------------------------------------------------------------------
    Author: Giancarlo Niccolai
@@ -14,18 +14,18 @@
    See LICENSE file for licensing details.
 */
 
-#ifndef _FALCON_DBI_SQLITE3_H_
-#define _FALCON_DBI_SQLITE3_H_
+#ifndef _FALCON_DBI_PGSQL_H_
+#define _FALCON_DBI_PGSQL_H_
 
 #include <falcon/dbi_drivermod.h>
 
 namespace Falcon {
 
-class Sqlite3DBIModule: public DriverDBIModule
+class PGSQLDBIModule: public DriverDBIModule
 {
 public:
-   Sqlite3DBIModule();
-   virtual ~Sqlite3DBIModule();
+   PGSQLDBIModule();
+   virtual ~PGSQLDBIModule();
 };
 
 }
