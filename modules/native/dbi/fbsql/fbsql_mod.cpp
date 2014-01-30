@@ -20,12 +20,13 @@
 
 #include <falcon/engine.h>
 #include <falcon/dbi_error.h>
+#include <falcon/stdhandlers.h>
+#include <falcon/timestamp.h>
+#include <falcon/itemarray.h>
 #include "fbsql_mod.h"
 
 namespace Falcon
 {
-
-DBIServiceFB theFirebirdService;
 
 /******************************************************************************
  * Private class used to convert timestamp to Firebird format.
@@ -34,6 +35,7 @@ DBIServiceFB theFirebirdService;
 class DBITimeConverter_Firebird_TIME: public DBITimeConverter
 {
 public:
+   virtual ~DBITimeConverter_Firebird_TIME() {}
    virtual void convertTime( TimeStamp* ts, void* buffer, int& bufsize ) const;
 } DBITimeConverter_Firebird_TIME_impl;
 
@@ -44,15 +46,15 @@ void DBITimeConverter_Firebird_TIME::convertTime( TimeStamp* ts, void* buffer, i
    ISC_TIMESTAMP* mtime = (ISC_TIMESTAMP*) buffer;
    struct tm entry_time;
 
-   entry_time.tm_year = ts->m_year < 1900 ? 0 : ts->m_year - 1900;
-   entry_time.tm_mon = ts->m_month-1;
-   entry_time.tm_mday = (unsigned) ts->m_day;
-   entry_time.tm_hour = (unsigned) ts->m_hour;
-   entry_time.tm_min = (unsigned) ts->m_minute;
-   entry_time.tm_sec = (unsigned) ts->m_second;
+   entry_time.tm_year = ts->year() < 1900 ? 0 : ts->year() - 1900;
+   entry_time.tm_mon = ts->month()-1;
+   entry_time.tm_mday = (unsigned) ts->day();
+   entry_time.tm_hour = (unsigned) ts->hour();
+   entry_time.tm_min = (unsigned) ts->minute();
+   entry_time.tm_sec = (unsigned) ts->second();
 
    isc_encode_timestamp( &entry_time, mtime );
-   mtime->timestamp_time += ts->m_msec*10;
+   mtime->timestamp_time += ts->msec()*10;
    bufsize = sizeof( ISC_TIMESTAMP );
 }
 
@@ -100,7 +102,6 @@ void FBInBind::onItemChanged( int num )
    // Normally not nil
    var->sqlind = m_sqlInd+num;
    *var->sqlind = 0;
-   printf( "Binding item %d - %d/%d\n", num, item.type(), var->sqltype );
 
    switch( item.type() )
    {
@@ -193,7 +194,7 @@ ISC_QUAD FBInBind::createBlob( byte* data, int64 size )
       if( res != 0 )
       {
          ISC_STATUS dummy[20];
-         isc_cancel_blob( status, &handle );
+         isc_cancel_blob( dummy, &handle );
          DBIHandleFB::throwError( __LINE__, FALCON_DBI_ERROR_EXEC, status );
       }
 
@@ -360,6 +361,8 @@ void DBIRecordsetFB::close()
 
 bool DBIRecordsetFB::getColumnValue( int nCol, Item& value )
 {
+   static Class* clsTS = Engine::instance()->stdHandlers()->timestampClass();
+
    if( nCol < 0 || nCol >= m_data->varCount() )
    {
       return false;
@@ -381,7 +384,7 @@ bool DBIRecordsetFB::getColumnValue( int nCol, Item& value )
    {
      case SQL_VARYING:
          // pascal strings - a short with a length information followed by the data
-         value.setString( new CoreString );
+         value = FALCON_GC_HANDLE(new String);
          value.asString()->fromUTF8(var->sqldata + sizeof(short));
          break;
 
@@ -431,43 +434,41 @@ bool DBIRecordsetFB::getColumnValue( int nCol, Item& value )
         if( varType == SQL_TIMESTAMP )
         {
            isc_decode_timestamp( (ISC_TIMESTAMP*) buf, &tstamp );
-           ts->m_year = tstamp.tm_year+1900;
-           ts->m_month = tstamp.tm_mon+1;
-           ts->m_day = tstamp.tm_mday;
-           ts->m_hour = tstamp.tm_hour;
-           ts->m_minute = tstamp.tm_min;
-           ts->m_second = tstamp.tm_sec;
-           ts->m_msec = (((ISC_TIMESTAMP*) buf)->timestamp_time/10) %1000;
+           ts->year(tstamp.tm_year+1900);
+           ts->month(tstamp.tm_mon+1);
+           ts->day(tstamp.tm_mday);
+           ts->hour(tstamp.tm_hour);
+           ts->minute(tstamp.tm_min);
+           ts->second(tstamp.tm_sec);
+           ts->msec( (((ISC_TIMESTAMP*) buf)->timestamp_time/10) %1000 );
         }
         else if ( varType == SQL_TYPE_TIME )
         {
            isc_decode_sql_time( (ISC_TIME*) buf, &tstamp );
-           ts->m_hour = tstamp.tm_hour;
-           ts->m_minute = tstamp.tm_min;
-           ts->m_second = tstamp.tm_sec;
-           ts->m_msec = ((*(ISC_TIME*) buf)/10) %1000;
+           ts->hour( tstamp.tm_hour );
+           ts->minute( tstamp.tm_min );
+           ts->second( tstamp.tm_sec );
+           ts->msec( ((*(ISC_TIME*) buf)/10) %1000 );
         }
         else // date
         {
            isc_decode_sql_date( (ISC_DATE*) buf, &tstamp );
-           ts->m_year = tstamp.tm_year+1900;
-           ts->m_month = tstamp.tm_mon+1;
-           ts->m_day = tstamp.tm_mday;
+           ts->year( tstamp.tm_year+1900 );
+           ts->month( tstamp.tm_mon+1 );
+           ts->day( tstamp.tm_mday );
         }
 
-        CoreObject *ots = VMachine::getCurrent()->findWKI("TimeStamp")->asClass()->createInstance();
-        ots->setUserData( ts );
-        value = ots;
+        value = FALCON_GC_STORE( clsTS, ts );
         }
         break;
 
      case SQL_TEXT:
-         value.setString( new CoreString );
+         value= FALCON_GC_HANDLE( new String );
          value.asString()->fromUTF8(var->sqldata, var->sqllen );
          break;
 
      case SQL_BLOB:
-         value = fetchBlob((ISC_QUAD*)buf);
+         value = FALCON_GC_HANDLE(fetchBlob((ISC_QUAD*)buf));
          break;
 
      case SQL_ARRAY:
@@ -482,7 +483,7 @@ bool DBIRecordsetFB::getColumnValue( int nCol, Item& value )
 }
 
 
-MemBuf* DBIRecordsetFB::fetchBlob( ISC_QUAD *bId )
+String* DBIRecordsetFB::fetchBlob( ISC_QUAD *bId )
 {
    ISC_STATUS status[20];
    ISC_STATUS res;
@@ -550,11 +551,13 @@ MemBuf* DBIRecordsetFB::fetchBlob( ISC_QUAD *bId )
    }
 
    // save the membuffer
-   MemBuf* mb = new MemBuf_1( fullSize );
+   String* mb = new String( fullSize );
+   mb->toMemBuf();
+
    fullSize = 0;
    while( first != 0 )
    {
-      memcpy( mb->data() + fullSize, first->data, first->size );
+      memcpy( mb->getRawStorage() + fullSize, first->data, first->size );
       fullSize += first->size;
 
       current = first->next;
@@ -606,7 +609,6 @@ DBIRecordset* DBIStatementFB::execute( ItemArray* params )
 
    if( params != 0 )
    {
-      printf( "PArams size %d\n", params->length());
       m_inBind->bind( *params, DBITimeConverter_Firebird_TIME_impl );
    }
    else
@@ -845,7 +847,8 @@ bool DBISettingParamsFB::parse( const String& connStr )
  * DB Handler class
  *****************************************************************************/
 
-DBIHandleFB::DBIHandleFB():
+DBIHandleFB::DBIHandleFB(const Class* h):
+      DBIHandle(h),
       m_bCommitted( false )
 {
    m_pConn = 0;
@@ -853,7 +856,8 @@ DBIHandleFB::DBIHandleFB():
    m_nLastAffected = -1;
 }
 
-DBIHandleFB::DBIHandleFB( const isc_db_handle &conn ):
+DBIHandleFB::DBIHandleFB( const Class* h, const isc_db_handle &conn ):
+      DBIHandle(h),
       m_bCommitted( false )
 {
    m_pConn = new FBConnRef( conn );
@@ -889,6 +893,185 @@ isc_db_handle DBIHandleFB::getConnData()
    return m_pConn->handle();
 }
 
+
+
+static void checkParamNumber(char *&dpb, const String& value, byte dpb_type, const String &option )
+{
+   if ( value.length() )
+   {
+      int64 res;
+      if( ! value.parseInt(res) )
+         throw new DBIError( ErrorParam( FALCON_DBI_ERROR_CONNPARAMS, __LINE__)
+                  .extra( option + "=" + value )
+               );
+
+      *dpb++ = dpb_type;
+      *dpb++ = 1;
+      *dpb++ = (byte) res;
+   }
+}
+
+static void checkParamYesOrNo(char *&dpb, const String& value, byte dpb_type, const String &option )
+{
+   if ( value.size() )
+   {
+      *dpb++ = dpb_type;
+      *dpb++ = 1;
+
+     if( value.compareIgnoreCase( "yes" ) == 0 )
+        *dpb++ = (byte) 1;
+     else if( value.compareIgnoreCase( "no" ) == 0 )
+        *dpb++ = (byte) 0;
+     else
+        throw new DBIError( ErrorParam( FALCON_DBI_ERROR_CONNPARAMS, __LINE__)
+                 .extra( option + "=" + value )
+              );
+   }
+}
+
+static void checkParamString(char *&dpb, const String& value, const char* szValue, byte dpb_type )
+{
+   if ( value.size() )
+   {
+       *dpb = dpb_type;
+       ++dpb;
+       *dpb = (char) value.size();
+       ++dpb;
+       strcpy( dpb, szValue );
+       dpb += value.size();
+   }
+}
+
+
+void DBIHandleFB::connect( const String &parameters )
+{
+   isc_db_handle handle = 0L;
+
+   char dpb_buffer[256*10], *dpb;
+   // User name (uid)
+   // Password (pwd)
+
+   dpb = dpb_buffer;
+
+   // Parse the connection string.
+   DBIConnParams connParams;
+
+   // add Firebird specific parameters
+   // Encrypted password (epwd)
+   String sPwdEnc; const char* szPwdEncode;
+   connParams.addParameter( "epwd", sPwdEnc, &szPwdEncode );
+
+   // Role name (role)
+   String sRole; const char* szRole;
+   connParams.addParameter( "role", sRole, &szRole );
+
+   // System database administrator’s user name (sa)
+   String sSAName; const char* szSAName;
+   connParams.addParameter( "sa", sSAName, &szSAName );
+
+   // Authorization key for a software license (license)
+   String sLicense; const char* szLicense;
+   connParams.addParameter( "license", sLicense, &szLicense );
+
+   // Database encryption key (ekey)
+   String sKey; const char* szKey;
+   connParams.addParameter( "ekey", sKey, &szKey );
+
+   // Number of cache buffers (nbuf)
+   String sNBuf;
+   connParams.addParameter( "nbuf", sNBuf );
+
+   // dbkey context scope (kscope)
+   String sDBKeyScope;
+   connParams.addParameter( "kscope", sDBKeyScope );
+
+   // Specify whether or not to reserve a small amount of space on each database
+   // --- page for holding backup versions of records when modifications are made (noreserve)
+   String sNoRserve;
+   connParams.addParameter( "reserve", sNoRserve );
+
+   // Specify whether or not the database should be marked as damaged (dmg)
+   String sDmg;
+   connParams.addParameter( "dmg", sDmg );
+
+   // Perform consistency checking of internal structures (verify)
+   String sVerify;
+   connParams.addParameter( "verify", sVerify );
+
+   // Activate the database shadow, an optional, duplicate, in-sync copy of the database (shadow)
+   String sShadow;
+   connParams.addParameter( "shadow", sShadow );
+
+   // Delete the database shadow (delshadow)
+   String sDelShadow;
+   connParams.addParameter( "delshadow", sDelShadow );
+
+   // Activate a replay logging system to keep track of all database calls (beginlog)
+   String sBeginLog;
+   connParams.addParameter( "beginlog", sBeginLog );
+
+   // Deactivate the replay logging system (quitlog)
+   String sQuitLog;
+   connParams.addParameter( "quitlog", sQuitLog );
+
+   // Language-specific message file  (lcmsg)
+   String sLcMsg; const char* szLcMsg;
+   connParams.addParameter( "lcmsg", sLcMsg, &szLcMsg );
+
+   // Character set to be utilized (lctype)
+   String sLcType; const char* szLcType;
+   connParams.addParameter( "lctype", sLcType, &szLcType );
+
+   // Connection timeout (tout)
+   String sTimeout;
+   connParams.addParameter( "tout", sTimeout );
+
+   if( ! connParams.parse( parameters ) )
+   {
+      throw new DBIError( ErrorParam( FALCON_DBI_ERROR_CONNPARAMS, __LINE__)
+         .extra( parameters )
+      );
+   }
+
+   // create the dpb; first the numerical values.
+   *dpb++ = isc_dpb_version1;
+
+   checkParamNumber( dpb, sNBuf, isc_dpb_num_buffers, "nbuf" );
+   checkParamNumber( dpb, sTimeout, isc_dpb_connect_timeout, "tout" );
+
+   checkParamYesOrNo( dpb, sDBKeyScope, isc_dpb_no_reserve, "kscope" );
+   checkParamYesOrNo( dpb, sNoRserve, isc_dpb_no_reserve, "reserve" );
+   checkParamYesOrNo( dpb, sDmg, isc_dpb_damaged, "dmg" );
+   checkParamYesOrNo( dpb, sVerify, isc_dpb_verify, "verify" );
+   checkParamYesOrNo( dpb, sShadow, isc_dpb_activate_shadow, "shadow" );
+   checkParamYesOrNo( dpb, sDelShadow, isc_dpb_delete_shadow, "delshadow" );
+   checkParamYesOrNo( dpb, sBeginLog, isc_dpb_begin_log, "beginlog" );
+   checkParamYesOrNo( dpb, sQuitLog, isc_dpb_quit_log, "sQuitLog" );
+
+   checkParamString( dpb, connParams.m_sUser, connParams.m_szUser, isc_dpb_user_name );
+   checkParamString( dpb, connParams.m_sPassword, connParams.m_szPassword, isc_dpb_password );
+   checkParamString( dpb, sPwdEnc, szPwdEncode, isc_dpb_password_enc );
+   checkParamString( dpb, sRole, szRole, isc_dpb_sql_role_name );
+   checkParamString( dpb, sLicense, szLicense, isc_dpb_license );
+   checkParamString( dpb, sKey, szKey, isc_dpb_encrypt_key );
+   //checkParamString( dpb, sLcMsg, szLcMsg, isc_dpb_lc_messages );
+   // We'll ALWAYS use AutoCString to talk with Firebird, as such we'll ALWAYS use UTF8
+   checkParamString( dpb, "UTF8", "UTF8", isc_dpb_lc_messages );
+
+   /* Attach to the database. */
+   ISC_STATUS status_vector[20];
+
+   isc_attach_database(status_vector, strlen(connParams.m_szDb), connParams.m_szDb, &handle,
+         dpb-dpb_buffer,
+         dpb_buffer);
+
+   if ( status_vector[0] == 1 && status_vector[1] )
+   {
+      DBIHandleFB::throwError( __LINE__, FALCON_DBI_ERROR_CONNECT, status_vector );
+   }
+
+   m_pConn = new FBConnRef( handle );
+}
 
 
 void DBIHandleFB::options( const String& params )
@@ -977,6 +1160,9 @@ DBIRecordset *DBIHandleFB::query( const String &sql, ItemArray* params )
       isc_dsql_free_statement( status, &stmt, DSQL_drop );
       throw;
    }
+
+   // never actually reached
+   return 0;
 }
 
 
@@ -1014,6 +1200,7 @@ isc_stmt_handle DBIHandleFB::internal_prepare( const String& query )
    return stmt;
 }
 
+
 DBIStatement* DBIHandleFB::prepare( const String &query )
 {
    isc_stmt_handle stmt = internal_prepare( query );
@@ -1021,19 +1208,20 @@ DBIStatement* DBIHandleFB::prepare( const String &query )
    out_tab->describeOut( stmt );
    if( out_tab->varCount() != 0 )
    {
-      new DBIStatementFB( this, m_pTrans, stmt, out_tab );
+      return new DBIStatementFB( this, m_pTrans, stmt, out_tab );
    }
    else
    {
       delete out_tab;
       return new DBIStatementFB( this, m_pTrans, stmt, 0 );
    }
+
 }
 
 
-int64 DBIHandleFB::getLastInsertedId( const String& sequenceName )
+int64 DBIHandleFB::getLastInsertedId( const String& )
 {
-   isc_db_handle handle = getConnData();
+   //isc_db_handle handle = getConnData();
    return 0;
    // TODO
 }
@@ -1197,14 +1385,14 @@ void DBIHandleFB::throwError( int line, int code, ISC_STATUS* status )
    ISC_SCHAR msgBuffer[512];
 
    // Get the main error
-   ISC_STATUS* ep;
+   const ISC_STATUS* ep;
    ep = status;
-   isc_interprete( msgBuffer, &ep );
+   fb_interpret( msgBuffer, 512, &ep );
    desc += msgBuffer;
 
    // Write the secondary errors as a list of [...; ...; ...] messages
    bool bDone = false;
-   while( isc_interprete( msgBuffer, &ep ) )
+   while( fb_interpret( msgBuffer, 512, &ep ) )
    {
       if ( ! bDone )
       {
@@ -1224,7 +1412,6 @@ void DBIHandleFB::throwError( int line, int code, ISC_STATUS* status )
 
    throw new DBIError( ErrorParam( code, line ).extra(desc) );
 }
-
 
 } /* namespace Falcon */
 

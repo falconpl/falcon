@@ -57,7 +57,6 @@ ADD_LIBRARY( ${FALCON_MODULE} MODULE
    fbsql.cpp
    fbsql_ext.cpp
    fbsql_mod.cpp
-   fbsql_srv.cpp
 )
 
 # Link
@@ -67,4 +66,7 @@ ENDIF(MSVC)
 
 TARGET_LINK_LIBRARIES( ${FALCON_MODULE}  falcon_engine ${FIREBIRD_OPT_LIBS} ${FIREBIRD_LIBRARY})
 falcon_install_module2( ${FALCON_MODULE} dbi )
-
+set_target_properties( ${FALCON_MODULE}
+	  PROPERTIES 
+      LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/${Falcon_MOD_DIR}/dbi" )
+      

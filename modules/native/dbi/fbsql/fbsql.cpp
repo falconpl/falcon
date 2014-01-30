@@ -18,10 +18,8 @@
 
 #include "fbsql_mod.h"
 #include "fbsql_ext.h"
+#include "fbsql_fm.h"
 #include "version.h"
-
-// Instantiate the driver service
-Falcon::DBIServiceFB theFirebirdService;
 
 /*#
    @module dbi.fbsql Firebird Database driver module
@@ -32,27 +30,30 @@ Falcon::DBIServiceFB theFirebirdService;
    the @a dbi module.
 */
 
+namespace Falcon
+{
+
+ModuleFBSQL::ModuleFBSQL():
+   DriverDBIModule("dbi.fbsql")
+{
+   m_driverDBIHandle = new Ext::ClassFBSQLDBIHandle;
+
+   *this
+      << m_driverDBIHandle;
+}
+
+
+ModuleFBSQL::~ModuleFBSQL()
+{
+}
+
+}
+
 // the main module
 FALCON_MODULE_DECL
 {
    // Module declaration
-   Falcon::Module *self = new Falcon::Module();
-   self->name( "fbsql" );
-   self->engineVersion( FALCON_VERSION_NUM );
-   self->version( VERSION_MAJOR, VERSION_MINOR, VERSION_REVISION );
-
-   // first of all, we need to declare our dependency from the DBI module.
-   self->addDepend( "dbi", "dbi", true, false );
-
-   Falcon::Symbol *dbh_class = self->addExternalRef( "dbi.%Handle" ); // it's external
-   dbh_class->imported( true );
-   Falcon::Symbol *firebird_class = self->addClass( "FirebirdSQL", Falcon::Ext::Firebird_init );
-   firebird_class->getClassDef()->addInheritance( new Falcon::InheritDef( dbh_class ) );
-   firebird_class->setWKS( true );
-
-   // service publication
-   self->publishService( &theFirebirdService );
-
+   Falcon::Module *self = new Falcon::ModuleFBSQL;
    // we're done
    return self;
 }

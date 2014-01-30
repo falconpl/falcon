@@ -13,24 +13,23 @@
  * See LICENSE file for licensing details.
  */
 
-/*
-#include <falcon/setup.h>
-#include <falcon/types.h>
-*/
-#include <falcon/module.h>
-
 #ifndef FALCON_FIREBIRD_EXT_H
 #define FALCON_FIREBIRD_EXT_H
 
-namespace Falcon
+#include <falcon/setup.h>
+#include <falcon/types.h>
+#include <falcon/dbi_driverclass.h>
+
+namespace Falcon {
+namespace Ext {
+
+class ClassFBSQLDBIHandle: public ClassDriverDBIHandle
 {
-
-class VMachine;
-
-namespace Ext
-{
-
-FALCON_FUNC Firebird_init( VMachine *vm );
+public:
+   ClassFBSQLDBIHandle();
+   virtual ~ClassFBSQLDBIHandle();
+   virtual void* createInstance() const;
+};
 
 }
 }
@@ -38,4 +37,3 @@ FALCON_FUNC Firebird_init( VMachine *vm );
 #endif /* FALCON_FIREBIRD_EXT_H */
 
 /* end of fbsql_ext.h */
-

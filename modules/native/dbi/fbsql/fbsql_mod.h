@@ -13,11 +13,10 @@
  * See LICENSE file for licensing details.
  */
 
-#ifndef FALCON_FBSQL_H
-#define FALCON_FBSQL_H
+#ifndef FALCON_DBI_FBSQL_MOD_H
+#define FALCON_DBI_FBSQL_MOD_H
 
 #include <falcon/dbi_common.h>
-#include <falcon/srv/dbi_service.h>
 
 #include <ibase.h>
 #include <ib_util.h>
@@ -154,7 +153,7 @@ protected:
    FBStmtRef* m_sref;
    FBSqlData* m_data;
 
-   MemBuf* fetchBlob( ISC_QUAD *bId );
+   String* fetchBlob( ISC_QUAD *bId );
 };
 
 
@@ -162,8 +161,8 @@ class DBIStatementFB : public DBIStatement
 {
 protected:
    isc_stmt_handle m_statement;
-   FBStmtRef* m_pStmt;
    FBTransRef* m_pTref;
+   FBStmtRef* m_pStmt;
    FBConnRef* m_pConn;
 
    FBSqlData* m_outData;
@@ -201,10 +200,11 @@ class DBIHandleFB : public DBIHandle
 {
 
 public:
-   DBIHandleFB();
-   DBIHandleFB( const isc_db_handle &conn );
+   DBIHandleFB(const Class* h);
+   DBIHandleFB(const Class* h, const isc_db_handle &conn );
    virtual ~DBIHandleFB();
 
+   virtual void connect( const String& params );
    virtual void options( const String& params );
    virtual const DBISettingParamsFB* options() const;
    virtual void close();
@@ -239,21 +239,6 @@ private:
 
    isc_stmt_handle internal_prepare( const String& query );
 };
-
-
-
-
-class DBIServiceFB : public DBIService
-{
-public:
-   DBIServiceFB() : DBIService( "DBI_fbsql" ) {}
-
-   virtual void init();
-   virtual DBIHandle *connect( const String &parameters );
-   virtual CoreObject *makeInstance( VMachine *vm, DBIHandle *dbh );
-};
-
-extern DBIServiceFB theFirebirdService;
 
 }
 
