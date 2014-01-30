@@ -49,41 +49,22 @@ namespace Ext
      possible to send int64 data through prepared statements.
 */
 
-FALCON_FUNC ODBC_init( VMachine *vm )
+   
+ClassODBCDBIHandle::ClassODBCDBIHandle():
+         ClassDriverDBIHandle("ODBC")
 {
-   Item *paramsI = vm->param(0);
-   Item *i_connParams = vm->param(1);
-   if (  paramsI == 0 || ! paramsI->isString()
-         || ( i_connParams != 0 && ! i_connParams->isString() ) )
-   {
-      throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
-                                         .extra( "S,[S]" ) );
-   }
+}
 
-   CoreObject *self = vm->self().asObject();
-   String connectErrorMessage;
 
-   const String& params = i_connParams == 0 ? String("") : *i_connParams->asString();
+ClassODBCDBIHandle::~ClassODBCDBIHandle()
+{
+}
 
-   DBIHandle *hand = 0;
 
-   try
-   {
-      hand = theODBCService.connect( params );
-      if( i_connParams != 0 )
-      {
-         hand->options( *i_connParams->asString() );
-      }
-
-      // great, we have the database handler open. Now we must create a falcon object to store it.
-      CoreObject *instance = theODBCService.makeInstance( vm, hand );
-      vm->retval( instance );
-   }
-   catch( DBIError* error )
-   {
-      delete hand;
-      throw error;
-   }
+void* ClassODBCDBIHandle::createInstance() const
+{
+   DBIHandleODBC* h = new DBIHandleODBC(this);
+   return h;
 }
 
 } /* namespace Ext */

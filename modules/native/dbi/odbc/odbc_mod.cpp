@@ -12,8 +12,15 @@
 
    See LICENSE file for licensing details.
 */
+#define SRC "modules/native/dbi/odbc/odbc_mod.cpp"
 
 #include "odbc_mod.h"
+#include <falcon/timestamp.h>
+#include <falcon/itemarray.h>
+#include <falcon/stdhandlers.h>
+#include <falcon/autocstring.h>
+#include <falcon/autowstring.h>
+
 #include <string.h>
 
 #include <sqlucode.h>
@@ -42,13 +49,13 @@ void DBITimeConverter_ODBC_TIME::convertTime( TimeStamp* ts, void* buffer, int& 
    fassert( ((unsigned)bufsize) >= sizeof( TIMESTAMP_STRUCT ) );
 
    TIMESTAMP_STRUCT* mtime = (TIMESTAMP_STRUCT*) buffer;
-   mtime->year = (unsigned) ts->m_year;
-   mtime->month = (unsigned) ts->m_month;
-   mtime->day = (unsigned) ts->m_day;
-   mtime->hour = (unsigned) ts->m_hour;
-   mtime->minute = (unsigned) ts->m_minute;
-   mtime->second = (unsigned) ts->m_second;
-   mtime->fraction = (unsigned) ts->m_msec*100000;
+   mtime->year = (unsigned) ts->year();
+   mtime->month = (unsigned) ts->month();
+   mtime->day = (unsigned) ts->day();
+   mtime->hour = (unsigned) ts->hour();
+   mtime->minute = (unsigned) ts->minute();
+   mtime->second = (unsigned) ts->second();
+   mtime->fraction = (unsigned) ts->msec()*100000;
 
    bufsize = sizeof( TIMESTAMP_STRUCT );
 }
@@ -248,7 +255,7 @@ bool DBIRecordsetODBC::getColumnName( int nCol, String& name )
 {
    if( m_pStmt == 0 )
    {
-      throw new DBIError( ErrorParam( FALCON_DBI_ERROR_CLOSED_RSET, __LINE__ ) );
+      throw new DBIError( ErrorParam( FALCON_DBI_ERROR_CLOSED_RSET, __LINE__, SRC ) );
    }
 
    // a good moment to fetch the column data
@@ -299,7 +306,7 @@ void DBIRecordsetODBC::GetColumnInfo()
       if( ret != SQL_SUCCESS && ret != SQL_SUCCESS_WITH_INFO )
       {
          // Vital informations are not available; better bail out and close
-         DBIError* dbie = new DBIError( ErrorParam( FALCON_DBI_ERROR_FETCH, __LINE__ ).
+         DBIError* dbie = new DBIError( ErrorParam( FALCON_DBI_ERROR_FETCH, __LINE__, SRC ).
             extra( DBIHandleODBC::GetErrorMessage( SQL_HANDLE_STMT, hStmt, TRUE ) ) );
          close();
 
@@ -317,7 +324,7 @@ void DBIRecordsetODBC::GetColumnInfo()
 bool DBIRecordsetODBC::fetchRow()
 {
    if( m_pStmt == 0 )
-      throw new DBIError( ErrorParam( FALCON_DBI_ERROR_CLOSED_RSET, __LINE__ ) );
+      throw new DBIError( ErrorParam( FALCON_DBI_ERROR_CLOSED_RSET, __LINE__, SRC ) );
 
    SQLRETURN ret = SQLFetch( m_pStmt->handle() );
    if ( ret == SQL_NO_DATA )
@@ -368,8 +375,12 @@ void DBIRecordsetODBC::close()
 
 bool DBIRecordsetODBC::getColumnValue( int nCol, Item& value )
 {
+   static Class* clsTS = Engine::instance()->stdHandlers()->timestampClass();
+
    if( m_pStmt == 0 )
-     throw new DBIError( ErrorParam( FALCON_DBI_ERROR_CLOSED_RSET, __LINE__ ) );
+   {
+     throw new DBIError( ErrorParam( FALCON_DBI_ERROR_CLOSED_RSET, __LINE__, SRC ) );
+   }
 
    if ( nCol < 0 || nCol >= m_nColumnCount )
    {
@@ -409,7 +420,7 @@ bool DBIRecordsetODBC::getColumnValue( int nCol, Item& value )
          }
          else if( ExpSize == 0 )
          {
-            value = new CoreString("");
+            value = FALCON_GC_HANDLE(new String(""));
          }
          else
          {
@@ -419,10 +430,10 @@ bool DBIRecordsetODBC::getColumnValue( int nCol, Item& value )
             ret = SQLGetData( hStmt, nCol+1, SQL_C_WCHAR, cStr, alloc, &nSize);
 
             // save the data even in case we had an error, or we'll leak
-            CoreString* cs = new CoreString;
+            String* cs = new String;
             uint32 size = ExpSize/sizeof(wchar_t);
             cs->adopt( cStr, size, alloc );
-            value = cs;
+            value = FALCON_GC_HANDLE(cs);
          }
       }
       break;
@@ -441,7 +452,9 @@ bool DBIRecordsetODBC::getColumnValue( int nCol, Item& value )
             value.setNil();
          }
          else {
-            value.setString( &(new CoreString)->bufferize( buffer ) );
+            String* s = new String(buffer);
+            s->bufferize();
+            value = FALCON_GC_HANDLE(s);
          }
       }
       else 
@@ -484,7 +497,9 @@ bool DBIRecordsetODBC::getColumnValue( int nCol, Item& value )
             value.setNil();
          }
          else {
-            value.setString( &(new CoreString)->bufferize( buffer ) );
+            String* s = new String(buffer);
+            s->bufferize();
+            value = FALCON_GC_HANDLE(s);
          }
       }
       else
@@ -510,7 +525,7 @@ bool DBIRecordsetODBC::getColumnValue( int nCol, Item& value )
       {
          if( m_bAsString )
          {
-            value.setString( new CoreString( uchar ? "true" : "false" ) );
+            value = FALCON_GC_HANDLE( new String( uchar ? "true" : "false" ) );
          }
          else
          {
@@ -531,10 +546,13 @@ bool DBIRecordsetODBC::getColumnValue( int nCol, Item& value )
             return true;
          }
 
-         MemBuf* mb = new MemBuf_1( ExpSize );  
-         ret = SQLGetData( hStmt, nCol+1, SQL_C_BINARY, mb->data(), ExpSize , &nSize);
+         String* s = new String(ExpSize);
+         s->reserve(ExpSize);
+         ret = SQLGetData( hStmt, nCol+1, SQL_C_BINARY, s->getRawStorage(), ExpSize , &nSize);
+         s->size(nSize);
+         s->toMemBuf();
          // save the data nevertheless
-         value = mb;
+         value = FALCON_GC_HANDLE(s);
       }
       break;
 
@@ -550,7 +568,9 @@ bool DBIRecordsetODBC::getColumnValue( int nCol, Item& value )
             value.setNil();
          }
          else {
-            value.setString( &(new CoreString)->bufferize( buffer ) );
+            String* s = new String(buffer);
+            s->bufferize();
+            value = FALCON_GC_HANDLE(s);
          }
       }
       else
@@ -565,23 +585,21 @@ bool DBIRecordsetODBC::getColumnValue( int nCol, Item& value )
          {
             TimeStamp* ts = new TimeStamp;
 
-            ts->m_year = tstamp.year;
-            ts->m_month = tstamp.month;
-            ts->m_day = tstamp.day;
-            ts->m_hour = tstamp.hour;
-            ts->m_minute = tstamp.minute;
-            ts->m_second = tstamp.second;
-            ts->m_msec = (int16) tstamp.fraction/100000;
+            ts->set( tstamp.year,
+               tstamp.month,
+               tstamp.day,
+               tstamp.hour,            
+               tstamp.minute,
+               tstamp.second,
+               (int16) tstamp.fraction/100000 );
 
-            CoreObject *ots = VMachine::getCurrent()->findWKI("TimeStamp")->asClass()->createInstance();
-            ots->setUserData( ts );
-            value = ots;
+            value = FALCON_GC_STORE( clsTS, ts );
          }
       }
       break;
 
    default:
-      throw new DBIError( ErrorParam( FALCON_DBI_ERROR_UNHANDLED_TYPE, __LINE__ ) );
+      throw new DBIError( ErrorParam( FALCON_DBI_ERROR_UNHANDLED_TYPE, __LINE__, SRC ) );
    }
 
    if ( ret != SQL_SUCCESS && ret != SQL_SUCCESS_WITH_INFO )
@@ -616,7 +634,7 @@ DBIRecordset* DBIStatementODBC::execute( ItemArray* params )
 {
    if( m_pStmt == 0 )
    {
-      throw new DBIError( ErrorParam( FALCON_DBI_ERROR_CLOSED_STMT, __LINE__ ) );
+      throw new DBIError( ErrorParam( FALCON_DBI_ERROR_CLOSED_STMT, __LINE__, SRC ) );
    }
 
    if( params != 0 )
@@ -668,7 +686,7 @@ DBIRecordset* DBIStatementODBC::execute( ItemArray* params )
 void DBIStatementODBC::reset()
 {
    if( m_pStmt == 0 )
-      throw new DBIError( ErrorParam( FALCON_DBI_ERROR_CLOSED_STMT, __LINE__ ) );
+      throw new DBIError( ErrorParam( FALCON_DBI_ERROR_CLOSED_STMT, __LINE__, SRC ) );
 }
 
 void DBIStatementODBC::close()
@@ -686,15 +704,10 @@ void DBIStatementODBC::close()
  * DB Handler class
  *****************************************************************************/
 
-DBIHandleODBC::DBIHandleODBC()
+DBIHandleODBC::DBIHandleODBC( const Class* h ):
+   DBIHandle(h)
 {
 	m_conn = NULL;
-   m_bInTrans = false;
-}
-
-DBIHandleODBC::DBIHandleODBC( ODBCConn *conn )
-{
-   m_conn = conn;
    m_bInTrans = false;
 }
 
@@ -708,7 +721,7 @@ ODBCConn *DBIHandleODBC::getConnData()
 {
    if( m_conn == 0 )
    {
-     throw new DBIError( ErrorParam( FALCON_DBI_ERROR_CLOSED_DB, __LINE__ ) );
+     throw new DBIError( ErrorParam( FALCON_DBI_ERROR_CLOSED_DB, __LINE__, SRC ) );
    }
 
    return m_conn;
@@ -757,6 +770,74 @@ void DBIHandleODBC::close()
 	}
 }
 
+
+void DBIHandleODBC::connect( const String &parameters )
+{
+   AutoCString asConnParams( parameters );
+
+   SQLHENV hEnv;
+   SQLHDBC hHdbc;
+
+   RETCODE retcode = SQLAllocHandle (SQL_HANDLE_ENV, NULL, &hEnv);
+
+   if( ( retcode != SQL_SUCCESS_WITH_INFO ) && ( retcode != SQL_SUCCESS ) )
+   {
+      throw new DBIError( ErrorParam( FALCON_DBI_ERROR_CONNECT, __LINE__, SRC )
+         .extra( "Impossible to allocate the ODBC environment" ));
+   }
+
+   retcode = SQLSetEnvAttr( hEnv, SQL_ATTR_ODBC_VERSION, (SQLPOINTER) SQL_OV_ODBC3, SQL_IS_INTEGER );
+
+   if( ( retcode != SQL_SUCCESS_WITH_INFO ) && ( retcode != SQL_SUCCESS ) )
+   {
+	   SQLFreeHandle(SQL_HANDLE_ENV, hEnv );
+      throw new DBIError( ErrorParam( FALCON_DBI_ERROR_CONNECT, __LINE__)
+         .extra( "Impossible to notify ODBC that this is an ODBC 3.0 app." ));
+   }
+
+   // Allocate ODBC connection handle and connect.
+   retcode = SQLAllocHandle( SQL_HANDLE_DBC, hEnv, &hHdbc );
+
+   if( ( retcode != SQL_SUCCESS_WITH_INFO ) && ( retcode != SQL_SUCCESS ) )
+   {
+	   SQLFreeHandle(SQL_HANDLE_ENV, hEnv );
+      throw new DBIError( ErrorParam( FALCON_DBI_ERROR_CONNECT, __LINE__, SRC )
+         .extra( "Impossible to allocate ODBC connection handle and connect." ));
+   }
+
+   int nSec = 15;
+   SQLSetConnectAttr( hHdbc, SQL_LOGIN_TIMEOUT, (SQLPOINTER)(&nSec), 0 );
+
+   SQLCHAR OutConnStr[MAXBUFLEN];
+   short OutConnStrLen = MAXBUFLEN;
+
+   retcode = SQLDriverConnect(
+	   hHdbc, 
+	   NULL, 
+	   (SQLCHAR*)asConnParams.c_str(),
+      asConnParams.length(),
+	   OutConnStr,
+	   MAXBUFLEN, 
+	   &OutConnStrLen,
+	   SQL_DRIVER_NOPROMPT );
+
+   if( ( retcode != SQL_SUCCESS ) && ( retcode != SQL_SUCCESS_WITH_INFO ) )
+   {
+	   String errorMessage = 
+         String("SQLDriverConnect failed. Reason: ") + DBIHandleODBC::GetErrorMessage( SQL_HANDLE_DBC, hHdbc, FALSE );
+	   SQLDisconnect( hHdbc );
+	   SQLFreeHandle( SQL_HANDLE_DBC, hHdbc );
+	   SQLFreeHandle( SQL_HANDLE_ENV, hEnv );
+
+      throw new DBIError( ErrorParam( FALCON_DBI_ERROR_CONNECT, __LINE__, SRC)
+         .extra( errorMessage ));
+   }
+
+   ODBCConn* conn = new ODBCConn( hEnv, hHdbc );
+   m_conn = conn;
+}
+
+
 void DBIHandleODBC::options( const String& params )
 {
    ODBCConn* conn = getConnData();
@@ -769,7 +850,7 @@ void DBIHandleODBC::options( const String& params )
    }
    else
    {
-      throw new DBIError( ErrorParam( FALCON_DBI_ERROR_OPTPARAMS, __LINE__ )
+      throw new DBIError( ErrorParam( FALCON_DBI_ERROR_OPTPARAMS, __LINE__, SRC )
             .extra( params ) );
    }
 }
@@ -1014,7 +1095,7 @@ void DBIHandleODBC::throwError( int falconError, SQLSMALLINT plm_handle_type, SQ
    {
       SQLFreeHandle( plm_handle_type, plm_handle );
    }
-   throw new DBIError( ErrorParam(falconError, __LINE__ ).extra(err) );
+   throw new DBIError( ErrorParam(falconError, __LINE__, SRC ).extra(err) );
 }
 
 String DBIHandleODBC::GetErrorMessage(SQLSMALLINT plm_handle_type, SQLHANDLE plm_handle, int ConnInd)

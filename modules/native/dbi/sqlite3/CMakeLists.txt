@@ -35,6 +35,7 @@ set(HDR_FILES
    #Headers for IDE 
    sqlite3_ext.h  
    sqlite3_mod.h  
+   sqlite3_fm.h
    version.h
 )
 

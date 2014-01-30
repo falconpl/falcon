@@ -69,13 +69,13 @@ INCLUDE_DIRECTORIES(../include)
 ADD_LIBRARY( ${FALCON_MODULE} MODULE
    ${dbi_common_files}
 
-   odbc.cpp
+   odbc_fm.cpp
    odbc_ext.cpp
-   odbc_srv.cpp
    odbc_mod.cpp
 
    odbc_ext.h
    odbc_mod.h
+   odbc_fm.h
 )
 
 # Link
@@ -85,3 +85,7 @@ ENDIF(MSVC)
 
 TARGET_LINK_LIBRARIES( ${FALCON_MODULE} falcon_engine ${ODBC_OPT_LIBS} ${ODBC_LIBRARY} ${ODBCCP_LIBRARY})
 FALCON_INSTALL_MODULE2( ${FALCON_MODULE} dbi )
+
+set_target_properties( ${FALCON_MODULE}
+	  PROPERTIES 
+      LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/${Falcon_MOD_DIR}/dbi" )

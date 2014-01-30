@@ -17,7 +17,6 @@
 #define FALCON_DBI_ODBC_H
 
 #include <falcon/dbi_common.h>
-#include <falcon/srv/dbi_service.h>
 #include <sql.h>
 
 namespace Falcon
@@ -198,10 +197,10 @@ protected:
    
 
 public:
-   DBIHandleODBC();
-   DBIHandleODBC( ODBCConn *conn );
+   DBIHandleODBC( const Class* h );
    virtual ~DBIHandleODBC();
 
+   virtual void connect( const String& params );
    virtual void options( const String& params );
    virtual const DBISettingParamsODBC* options() const;
    virtual void close();
@@ -229,20 +228,7 @@ public:
    void decConnRef() { m_conn->decref(); }
 };
 
-
-class DBIServiceODBC : public DBIService
-{
-public:
-   DBIServiceODBC() : DBIService( "DBI_odbc" ) {}
-
-   virtual void init();
-   virtual DBIHandle *connect( const String &parameters );
-   virtual CoreObject *makeInstance( VMachine *vm, DBIHandle *dbh );
-};
-
 }
-
-extern Falcon::DBIServiceODBC theODBCService;
 
 #endif /* DBI_ODBC_H */
 

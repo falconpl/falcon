@@ -13,24 +13,23 @@
  * See LICENSE file for licensing details.
  */
 
-/*
+#ifndef FALCON_DBI_ODBC_EXT_H
+#define FALCON_DBI_ODBC_EXT_H
+
 #include <falcon/setup.h>
 #include <falcon/types.h>
-*/
-#include <falcon/module.h>
+#include <falcon/dbi_driverclass.h>
 
-#ifndef ODBC_EXT_H
-#define ODBC_EXT_H
+namespace Falcon {
+namespace Ext {
 
-namespace Falcon
+class ClassODBCDBIHandle: public ClassDriverDBIHandle
 {
-
-class VMachine;
-
-namespace Ext
-{
-
-FALCON_FUNC ODBC_init( VMachine *vm );
+public:
+   ClassODBCDBIHandle();
+   virtual ~ClassODBCDBIHandle();
+   virtual void* createInstance() const;
+};
 
 }
 }
