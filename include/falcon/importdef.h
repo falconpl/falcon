@@ -32,7 +32,7 @@ class DataReader;
  This structure holds all the information that can be expressed in an "import"
  or "load" module directive.
 */
-class ImportDef {
+class FALCON_DYN_CLASS ImportDef {
 public:
    /** Creates an empty import definition. */
    ImportDef();
