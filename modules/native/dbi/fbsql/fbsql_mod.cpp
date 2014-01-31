@@ -13,6 +13,8 @@
    See LICENSE file for licensing details.
 */
 
+#define SRC "modules/native/dbi/fgsql/fgsql_mod.cpp"
+
 #include <string.h>
 #include <stdio.h>
 
@@ -87,7 +89,7 @@ void FBInBind::onFirstBinding( int size )
    m_data.describeIn( m_stmt );
    if( size != m_data.varCount() )
    {
-      throw new DBIError( ErrorParam( FALCON_DBI_ERROR_BIND_SIZE, __LINE__ )
+      throw new DBIError( ErrorParam( FALCON_DBI_ERROR_BIND_SIZE, __LINE__, SRC )
             .extra( String("").N(size).A("!=").N(m_data.varCount())) );
    }
    m_sqlInd = (ISC_SHORT*) malloc( size * sizeof(ISC_SHORT) );
@@ -564,6 +566,7 @@ String* DBIRecordsetFB::fetchBlob( ISC_QUAD *bId )
       free( first );
       first = current;
    }
+   mb->size(fullSize);
 
    return mb;
 }
@@ -887,7 +890,7 @@ isc_db_handle DBIHandleFB::getConnData()
 {
    if( m_pConn == 0 )
    {
-     throw new DBIError( ErrorParam( FALCON_DBI_ERROR_CLOSED_DB, __LINE__ ) );
+     throw new DBIError( ErrorParam( FALCON_DBI_ERROR_CLOSED_DB, __LINE__, SRC ) );
    }
 
    return m_pConn->handle();
@@ -901,7 +904,7 @@ static void checkParamNumber(char *&dpb, const String& value, byte dpb_type, con
    {
       int64 res;
       if( ! value.parseInt(res) )
-         throw new DBIError( ErrorParam( FALCON_DBI_ERROR_CONNPARAMS, __LINE__)
+         throw new DBIError( ErrorParam( FALCON_DBI_ERROR_CONNPARAMS, __LINE__, SRC )
                   .extra( option + "=" + value )
                );
 
@@ -923,7 +926,7 @@ static void checkParamYesOrNo(char *&dpb, const String& value, byte dpb_type, co
      else if( value.compareIgnoreCase( "no" ) == 0 )
         *dpb++ = (byte) 0;
      else
-        throw new DBIError( ErrorParam( FALCON_DBI_ERROR_CONNPARAMS, __LINE__)
+        throw new DBIError( ErrorParam( FALCON_DBI_ERROR_CONNPARAMS, __LINE__, SRC )
                  .extra( option + "=" + value )
               );
    }
@@ -1028,7 +1031,7 @@ void DBIHandleFB::connect( const String &parameters )
 
    if( ! connParams.parse( parameters ) )
    {
-      throw new DBIError( ErrorParam( FALCON_DBI_ERROR_CONNPARAMS, __LINE__)
+      throw new DBIError( ErrorParam( FALCON_DBI_ERROR_CONNPARAMS, __LINE__, SRC )
          .extra( parameters )
       );
    }
@@ -1079,7 +1082,7 @@ void DBIHandleFB::options( const String& params )
    if( ! m_settings.parse( params ) )
    {
       // autocommit status is read on query
-      throw new DBIError( ErrorParam( FALCON_DBI_ERROR_OPTPARAMS, __LINE__ )
+      throw new DBIError( ErrorParam( FALCON_DBI_ERROR_OPTPARAMS, __LINE__, SRC )
             .extra( params ) );
    }
 }
@@ -1410,7 +1413,7 @@ void DBIHandleFB::throwError( int line, int code, ISC_STATUS* status )
       desc += "]";
    }
 
-   throw new DBIError( ErrorParam( code, line ).extra(desc) );
+   throw new DBIError( ErrorParam( code, line, SRC ).extra(desc) );
 }
 
 } /* namespace Falcon */

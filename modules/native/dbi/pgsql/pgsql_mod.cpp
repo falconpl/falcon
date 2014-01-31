@@ -13,6 +13,8 @@
  * See LICENSE file for licensing details.
  */
 
+#define SRC "modules/native/dbi/pgsql/pgsql_mod.cpp"
+
 #include <string.h>
 #include <stdio.h>
 
@@ -344,7 +346,7 @@ DBIRecordset* DBIStatementPgSQL::execute( ItemArray* params )
           (params != 0 && (params->length() != m_nParams
         || !dbi_sqlExpand( m_execString, output, *params ) ) ) )
     {
-        throw new DBIError( ErrorParam( FALCON_DBI_ERROR_BIND_SIZE, __LINE__ ) );
+        throw new DBIError( ErrorParam( FALCON_DBI_ERROR_BIND_SIZE, __LINE__, SRC ) );
     }
     AutoCString zQuery( output );
 
@@ -419,7 +421,7 @@ void DBIHandlePgSQL::connect( const String &parameters )
    PGconn *conn = PQconnectdb( connParams.c_str () );
    if ( conn == NULL )
    {
-      throw new DBIError( ErrorParam( FALCON_DBI_ERROR_NOMEM, __LINE__ ) );
+      throw new DBIError( ErrorParam( FALCON_DBI_ERROR_NOMEM, __LINE__, SRC ) );
    }
 
    if ( PQstatus( conn ) != CONNECTION_OK )
@@ -430,7 +432,7 @@ void DBIHandlePgSQL::connect( const String &parameters )
 
       PQfinish( conn );
 
-      throw new DBIError( ErrorParam( FALCON_DBI_ERROR_CONNECT, __LINE__ )
+      throw new DBIError( ErrorParam( FALCON_DBI_ERROR_CONNECT, __LINE__, SRC )
               .extra( errorMessage ) );
    }
 
@@ -461,7 +463,7 @@ void DBIHandlePgSQL::options( const String& params )
 {
     if ( !m_settings.parse( params ) )
     {
-        throw new DBIError( ErrorParam( FALCON_DBI_ERROR_OPTPARAMS, __LINE__ )
+        throw new DBIError( ErrorParam( FALCON_DBI_ERROR_OPTPARAMS, __LINE__, SRC )
             .extra( params ) );
     }
 }
@@ -488,7 +490,7 @@ void DBIHandlePgSQL::throwError( const char* file, int line, PGresult* res )
 
         PQclear( res );
 
-        throw new DBIError( ErrorParam( code, line )
+        throw new DBIError( ErrorParam( code, line, SRC )
             .extra( desc )
             .module( file ) );
     }
@@ -496,7 +498,7 @@ void DBIHandlePgSQL::throwError( const char* file, int line, PGresult* res )
     {
         PQclear( res );
 
-        throw new DBIError( ErrorParam( code, line )
+        throw new DBIError( ErrorParam( code, line, SRC )
             .module( file ) );
     }
 }
@@ -505,7 +507,7 @@ void DBIHandlePgSQL::throwError( const char* file, int line, PGresult* res )
 void DBIHandlePgSQL::begin()
 {
     if ( m_conn == 0 )
-        throw new DBIError( ErrorParam( FALCON_DBI_ERROR_CLOSED_DB, __LINE__ ) );
+        throw new DBIError( ErrorParam( FALCON_DBI_ERROR_CLOSED_DB, __LINE__, SRC ) );
 
     if ( m_bInTrans )
         return;
@@ -525,7 +527,7 @@ void DBIHandlePgSQL::begin()
 void DBIHandlePgSQL::commit()
 {
     if ( m_conn == 0 )
-        throw new DBIError( ErrorParam( FALCON_DBI_ERROR_CLOSED_DB, __LINE__ ) );
+        throw new DBIError( ErrorParam( FALCON_DBI_ERROR_CLOSED_DB, __LINE__, SRC ) );
 
     if ( !m_bInTrans )
         return;
@@ -545,7 +547,7 @@ void DBIHandlePgSQL::commit()
 void DBIHandlePgSQL::rollback()
 {
     if ( m_conn == 0 )
-        throw new DBIError( ErrorParam( FALCON_DBI_ERROR_CLOSED_DB, __LINE__ ) );
+        throw new DBIError( ErrorParam( FALCON_DBI_ERROR_CLOSED_DB, __LINE__, SRC ) );
 
     if ( !m_bInTrans )
         return;
@@ -590,7 +592,7 @@ PGresult* DBIHandlePgSQL::internal_exec( const String& sql, int64& affectedRows 
 DBIRecordset* DBIHandlePgSQL::query( const String &sql, ItemArray* params )
 {
     if ( m_conn == 0 )
-        throw new DBIError( ErrorParam( FALCON_DBI_ERROR_CLOSED_DB, __LINE__ ) );
+        throw new DBIError( ErrorParam( FALCON_DBI_ERROR_CLOSED_DB, __LINE__, SRC ) );
 
     PGresult* res = 0;
     if ( params != 0 && params->length() != 0 )
@@ -598,7 +600,7 @@ DBIRecordset* DBIHandlePgSQL::query( const String &sql, ItemArray* params )
         String output;
         if ( !dbi_sqlExpand( sql, output, *params ) )
         {
-            throw new DBIError( ErrorParam( FALCON_DBI_ERROR_QUERY, __LINE__ ) );
+            throw new DBIError( ErrorParam( FALCON_DBI_ERROR_QUERY, __LINE__, SRC ) );
         }
         res = internal_exec( output, m_nLastAffected );
     }
@@ -627,7 +629,7 @@ DBIStatement* DBIHandlePgSQL::prepare( const String &query )
 {
     if ( m_conn == 0 )
     {
-        throw new DBIError( ErrorParam( FALCON_DBI_ERROR_CLOSED_DB, __LINE__ ) );
+        throw new DBIError( ErrorParam( FALCON_DBI_ERROR_CLOSED_DB, __LINE__, SRC ) );
     }
 
     DBIStatementPgSQL* stmt = new DBIStatementPgSQL( this );
@@ -648,7 +650,7 @@ DBIStatement* DBIHandlePgSQL::prepare( const String &query )
 DBIStatement* DBIHandlePgSQL::prepareNamed( const String &name, const String& query )
 {
     if ( m_conn == 0 )
-        throw new DBIError( ErrorParam( FALCON_DBI_ERROR_CLOSED_DB, __LINE__ ) );
+        throw new DBIError( ErrorParam( FALCON_DBI_ERROR_CLOSED_DB, __LINE__, SRC ) );
 
     DBIStatementPgSQL* stmt = new DBIStatementPgSQL( this );
 
@@ -668,7 +670,7 @@ DBIStatement* DBIHandlePgSQL::prepareNamed( const String &name, const String& qu
 int64 DBIHandlePgSQL::getLastInsertedId( const String& name )
 {
     if ( m_conn == 0 )
-        throw new DBIError( ErrorParam( FALCON_DBI_ERROR_CLOSED_DB, __LINE__ ) );
+        throw new DBIError( ErrorParam( FALCON_DBI_ERROR_CLOSED_DB, __LINE__, SRC ) );
 
     /* so... PQoidValue does it but takes a PGresult.
     We can retrieve a PGresult in case of prepared statements only...
