@@ -12,6 +12,7 @@
  *
  * See LICENSE file for licensing details.
  */
+#define SRC "modules/native/dbi/mysql/mysql_mod.cpp"
 
 #include <string.h>
 #include <stdio.h>
@@ -369,8 +370,9 @@ bool DBIRecordsetMySQL_STMT::getColumnValue( int nCol, Item& value )
       // text?
       if( m_fields[nCol].charsetnr == 63 ) // sic -- from manual
       {
-         res->adopt((char*)outbind.memory(), dlen, 0);
-         res->bufferize();
+         char* mem = (char*) malloc( dlen );
+         memcpy( mem, outbind.memory(), dlen );
+         res->adopt(mem, dlen, dlen);
          res->toMemBuf();
       }
       else
@@ -412,8 +414,9 @@ bool DBIRecordsetMySQL_STMT::getColumnValue( int nCol, Item& value )
          // give ownership
          if( dlen != 0 )
          {
-            out->adopt((char*)outbind.memory(), dlen, 0);
-            out->bufferize();
+            char* mem = (char*) malloc( dlen );
+            memcpy( mem, outbind.memory(), dlen );
+            out->adopt(mem, dlen, 0);
          }
       }
       else
@@ -440,7 +443,7 @@ bool DBIRecordsetMySQL_STMT::getColumnValue( int nCol, Item& value )
 bool DBIRecordsetMySQL_STMT::discard( int64 ncount )
 {
    if( m_res == 0 )
-     throw new DBIError( ErrorParam( FALCON_DBI_ERROR_CLOSED_RSET, __LINE__ ) );
+     throw new DBIError( ErrorParam( FALCON_DBI_ERROR_CLOSED_RSET, __LINE__, SRC ) );
 
    // we have all the records. We may seek
    if( m_bCanSeek )
@@ -468,7 +471,7 @@ bool DBIRecordsetMySQL_STMT::discard( int64 ncount )
 bool DBIRecordsetMySQL_STMT::fetchRow()
 {
    if( m_res == 0 )
-     throw new DBIError( ErrorParam( FALCON_DBI_ERROR_CLOSED_RSET, __LINE__ ) );
+     throw new DBIError( ErrorParam( FALCON_DBI_ERROR_CLOSED_RSET, __LINE__, SRC ) );
 
    // first, zero excessively long blobs.
    for( int i = 0; i < m_nBlobCount; ++i  )
@@ -688,20 +691,15 @@ void DBIRecordsetMySQL_RES::makeTimestamp( const String& str, Item& target )
 
    TimeStamp* ts = new TimeStamp;
 
-   int64 ival;
-   str.subString(0,4).parseInt(ival);
-   ts->year(ival);
-   str.subString(5,7).parseInt(ival);
-   ts->month(ival);
-   str.subString(8,10).parseInt(ival);
-   ts->day(ival);
-   str.subString(11,13).parseInt(ival);
-   ts->hour(ival);
-   str.subString(14,16).parseInt(ival);
-   ts->minute(ival);
-   str.subString(17).parseInt(ival);
-   ts->second(ival);
-   ts->msec(0);
+   int64 ival0,ival1,ival2,ival3,ival4,ival5;
+   str.subString(0,4).parseInt(ival0);
+   str.subString(5,7).parseInt(ival1);
+   str.subString(8,10).parseInt(ival2);
+   str.subString(11,13).parseInt(ival3);
+   str.subString(14,16).parseInt(ival4);
+   str.subString(17).parseInt(ival5);
+
+   ts->set(ival0,ival1,ival2,ival3,ival4,ival5,0,0);
 
    target = FALCON_GC_STORE( cls, ts );
 }
@@ -710,7 +708,7 @@ void DBIRecordsetMySQL_RES::makeTimestamp( const String& str, Item& target )
 bool DBIRecordsetMySQL_RES::discard( int64 ncount )
 {
    if( m_res == 0 )
-     throw new DBIError( ErrorParam( FALCON_DBI_ERROR_CLOSED_RSET, __LINE__ ) );
+     throw new DBIError( ErrorParam( FALCON_DBI_ERROR_CLOSED_RSET, __LINE__, SRC ) );
 
    // we have all the records. We may seek
    if( m_dbh->options()->m_nPrefetch == -1 )
@@ -745,7 +743,7 @@ bool DBIRecordsetMySQL_RES::discard( int64 ncount )
 bool DBIRecordsetMySQL_RES::fetchRow()
 {
    if( m_res == 0 )
-     throw new DBIError( ErrorParam( FALCON_DBI_ERROR_CLOSED_RSET, __LINE__ ) );
+     throw new DBIError( ErrorParam( FALCON_DBI_ERROR_CLOSED_RSET, __LINE__, SRC ) );
 
    m_rowData = mysql_fetch_row( m_res );
    if ( m_rowData == 0 )
@@ -827,7 +825,7 @@ DBIStatementMySQL::~DBIStatementMySQL()
 DBIRecordset* DBIStatementMySQL::execute( ItemArray* params )
 {
    if( m_statement == 0 )
-     throw new DBIError( ErrorParam( FALCON_DBI_ERROR_CLOSED_STMT, __LINE__ ) );
+     throw new DBIError( ErrorParam( FALCON_DBI_ERROR_CLOSED_STMT, __LINE__, SRC ) );
 
    // should we bind with the statement? -- first time around?
    if ( ! m_bBound )
@@ -927,7 +925,7 @@ DBIRecordset* DBIStatementMySQL::execute( ItemArray* params )
 void DBIStatementMySQL::reset()
 {
    if( m_statement == 0 )
-     throw new DBIError( ErrorParam( FALCON_DBI_ERROR_CLOSED_STMT, __LINE__ ) );
+     throw new DBIError( ErrorParam( FALCON_DBI_ERROR_CLOSED_STMT, __LINE__, SRC ) );
 
    if( mysql_stmt_reset( m_statement ) != 0 )
    {
@@ -965,7 +963,7 @@ void DBIHandleMySQL::options( const String& params )
    }
    else
    {
-      throw new DBIError( ErrorParam( FALCON_DBI_ERROR_OPTPARAMS, __LINE__ )
+      throw new DBIError( ErrorParam( FALCON_DBI_ERROR_OPTPARAMS, __LINE__, SRC )
             .extra( params ) );
    }
 }
@@ -990,7 +988,7 @@ void DBIHandleMySQL::connect( const String &parameters )
 
    if ( conn == NULL )
    {
-      throw new DBIError( ErrorParam( FALCON_DBI_ERROR_NOMEM, __LINE__) );
+      throw new DBIError( ErrorParam( FALCON_DBI_ERROR_NOMEM, __LINE__, SRC) );
    }
 
    // Parse the connection string.
@@ -1005,7 +1003,7 @@ void DBIHandleMySQL::connect( const String &parameters )
    if( ! connParams.parse( parameters ) )
    {
       mysql_close( conn );
-      throw new DBIError( ErrorParam( FALCON_DBI_ERROR_CONNPARAMS, __LINE__)
+      throw new DBIError( ErrorParam( FALCON_DBI_ERROR_CONNPARAMS, __LINE__, SRC)
          .extra( parameters )
       );
    }
@@ -1029,7 +1027,7 @@ void DBIHandleMySQL::connect( const String &parameters )
       errorMessage.bufferize();
       mysql_close( conn );
 
-      throw new DBIError( ErrorParam( en, __LINE__).extra( errorMessage ) );
+      throw new DBIError( ErrorParam( en, __LINE__, SRC).extra( errorMessage ) );
    }
 
    if( connParams.m_sCreate == "always" )
@@ -1039,14 +1037,14 @@ void DBIHandleMySQL::connect( const String &parameters )
       AutoCString asQuery( sDrop );
       if( mysql_real_query( conn, asQuery.c_str(), asQuery.length() ) != 0 )
       {
-         throw new DBIError( ErrorParam(  FALCON_DBI_ERROR_CONNECT_CREATE, __LINE__ ));
+         throw new DBIError( ErrorParam(  FALCON_DBI_ERROR_CONNECT_CREATE, __LINE__, SRC ));
       }
 
       String sCreate = "create database " + connParams.m_sDb ;
       AutoCString asQuery2( sCreate );
       if( mysql_real_query( conn, asQuery2.c_str(), asQuery2.length() ) != 0 )
       {
-         throw new DBIError( ErrorParam(  FALCON_DBI_ERROR_CONNECT_CREATE, __LINE__ ));
+         throw new DBIError( ErrorParam(  FALCON_DBI_ERROR_CONNECT_CREATE, __LINE__, SRC ));
       }
 
    }
@@ -1056,12 +1054,12 @@ void DBIHandleMySQL::connect( const String &parameters )
       AutoCString asQuery2( sCreate );
       if( mysql_real_query( conn, asQuery2.c_str(), asQuery2.length() ) != 0 )
       {
-         throw new DBIError( ErrorParam(  FALCON_DBI_ERROR_CONNECT_CREATE, __LINE__ ));
+         throw new DBIError( ErrorParam(  FALCON_DBI_ERROR_CONNECT_CREATE, __LINE__, SRC ));
       }
    }
    else if( connParams.m_sCreate != "" )
    {
-      throw new DBIError( ErrorParam( FALCON_DBI_ERROR_CONNPARAMS, __LINE__)
+      throw new DBIError( ErrorParam( FALCON_DBI_ERROR_CONNPARAMS, __LINE__, SRC)
               .extra( parameters )
            );
    }
@@ -1075,7 +1073,7 @@ void DBIHandleMySQL::connect( const String &parameters )
 DBIRecordset *DBIHandleMySQL::query( const String &sql, ItemArray* params )
 {
    if( m_conn == 0 )
-     throw new DBIError( ErrorParam( FALCON_DBI_ERROR_CLOSED_DB, __LINE__ ) );
+     throw new DBIError( ErrorParam( FALCON_DBI_ERROR_CLOSED_DB, __LINE__, SRC ) );
 
    // do we want to fetch strings?
    if( ! options()->m_bFetchStrings )
@@ -1175,7 +1173,7 @@ DBIRecordset *DBIHandleMySQL::query( const String &sql, ItemArray* params )
 MYSQL_STMT* DBIHandleMySQL::my_prepare( const String &query, bool bCanFallback )
 {
    if( m_conn == 0 )
-     throw new DBIError( ErrorParam( FALCON_DBI_ERROR_CLOSED_DB, __LINE__ ) );
+     throw new DBIError( ErrorParam( FALCON_DBI_ERROR_CLOSED_DB, __LINE__, SRC ) );
 
    MYSQL_STMT* stmt = mysql_stmt_init( m_conn );
    if( stmt == 0 )
@@ -1264,7 +1262,7 @@ DBIStatement* DBIHandleMySQL::prepare( const String &query )
 int64 DBIHandleMySQL::getLastInsertedId( const String& )
 {
    if( m_conn == 0 )
-     throw new DBIError( ErrorParam( FALCON_DBI_ERROR_CLOSED_DB, __LINE__ ) );
+     throw new DBIError( ErrorParam( FALCON_DBI_ERROR_CLOSED_DB, __LINE__, SRC ) );
 
    return mysql_insert_id( m_conn );
 }
@@ -1273,7 +1271,7 @@ int64 DBIHandleMySQL::getLastInsertedId( const String& )
 void DBIHandleMySQL::begin()
 {
    if( m_conn == 0 )
-     throw new DBIError( ErrorParam( FALCON_DBI_ERROR_CLOSED_DB, __LINE__ ) );
+     throw new DBIError( ErrorParam( FALCON_DBI_ERROR_CLOSED_DB, __LINE__, SRC ) );
 
    if( mysql_query( m_conn, "BEGIN" ) != 0 )
    {
@@ -1285,7 +1283,7 @@ void DBIHandleMySQL::begin()
 void DBIHandleMySQL::commit()
 {
    if( m_conn == 0 )
-     throw new DBIError( ErrorParam( FALCON_DBI_ERROR_CLOSED_DB, __LINE__ ) );
+     throw new DBIError( ErrorParam( FALCON_DBI_ERROR_CLOSED_DB, __LINE__, SRC ) );
 
    if( mysql_query( m_conn, "COMMIT" ) != 0 )
    {
@@ -1297,7 +1295,7 @@ void DBIHandleMySQL::commit()
 void DBIHandleMySQL::rollback()
 {
    if( m_conn == 0 )
-     throw new DBIError( ErrorParam( FALCON_DBI_ERROR_CLOSED_DB, __LINE__ ) );
+     throw new DBIError( ErrorParam( FALCON_DBI_ERROR_CLOSED_DB, __LINE__, SRC ) );
 
    if( mysql_query( m_conn, "ROLLBACK" ) != 0 )
    {
@@ -1351,13 +1349,13 @@ void DBIHandleMySQL::throwError( const char* file, int line, int code )
       String description;
       description.N( (int64) mysql_errno( m_conn ) ).A(": ");
       description.A( errorMessage );
-      throw new DBIError( ErrorParam( code, line )
+      throw new DBIError( ErrorParam( code, line, SRC )
             .extra(description)
             .module( file ) );
    }
    else
    {
-      throw new DBIError( ErrorParam( code, line )
+      throw new DBIError( ErrorParam( code, line, SRC )
                   .module( file ) );
    }
 }

@@ -108,19 +108,20 @@ void FalconApp::guardAndGo( int argc, char* argv[] )
       }
       else if( m_options.m_bEval )
       {
-         evaluate( m_options.m_sEval );
+         evaluate( m_options.m_sEval, false );
       }
       else
       {
          if ( scriptPos <= 0 )
          {
-            out.write( "Please, add a filename (for now)\n" );
-            return;
+            log->log(Log::fac_app, Log::lvl_info, "Reading script from standard input" );
+            evaluate( "", true );
          }
-
-         String script = argv[scriptPos-1];
-         log->log(Log::fac_app, Log::lvl_info, String("Starting execution of: ") + script );
-         launch( script, argc, argv, scriptPos );
+         else {
+            String script = argv[scriptPos-1];
+            log->log(Log::fac_app, Log::lvl_info, String("Starting execution of: ") + script );
+            launch( script, argc, argv, scriptPos );
+         }
       }
    }
    catch( Error* e )
@@ -246,7 +247,7 @@ void FalconApp::launch( const String& script, int argc, char* argv[], int pos )
 
 
 
-void FalconApp::evaluate( const String& script )
+void FalconApp::evaluate( const String& script, bool stdin )
 {
    Log* log = Engine::instance()->log();
 
@@ -256,8 +257,18 @@ void FalconApp::evaluate( const String& script )
    configureVM( vm, process );
 
    IntCompiler ic;
-   StringStream* sinput = new StringStream( script );
-   TextReader* tr = new TextReader(sinput);
+   Stream* input;
+   if( stdin )
+   {
+      input = new StdInStream;
+      ic.sp().interactive(false);
+   }
+   else
+   {
+      input = new StringStream( script );
+   }
+   TextReader* tr = new TextReader(input);
+   input->decref();
    Module* mod = 0;
 
    try {
@@ -287,6 +298,7 @@ void FalconApp::evaluate( const String& script )
       mod->decref();
       process->decref();
       delete& vm;
+      delete tr;
       Engine::instance()->collector()->performGC(true);
       log->log(Log::fac_app, Log::lvl_info, "Performing cleanup sequence complete" );
    }
@@ -295,6 +307,7 @@ void FalconApp::evaluate( const String& script )
       if (mod != 0) mod->decref();
       process->decref();
       delete& vm;
+      delete tr;
       throw;
    }
 }
