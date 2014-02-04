@@ -27,6 +27,7 @@ unset(_project_targets)
 add_subdirectory(bitbuf)
 add_subdirectory(cmdline)
 add_subdirectory(confparser)
+add_subdirectory(containers)
 
 ##add_subdirectory(funcext)
 add_subdirectory(hash)

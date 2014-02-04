@@ -42,6 +42,7 @@
 #define FALCON_LOGGING_ERROR_BASE         1200
 #define FALCON_JSON_ERROR_BASE            1210
 #define FALCON_SHMEM_ERROR_BASE           1240
+#define FALCON_CONTAINERS_ERROR_BASE      1260
 
 #define FALCON_DBI_ERROR_BASE             2000
 #define FALCON_SDL_ERROR_BASE             2100

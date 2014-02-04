@@ -248,7 +248,7 @@ public:
 
     The default behavior is that of always returning 0.
     */
-   virtual Class* getParent( const String& name ) const;
+   virtual const Class* getParent( const String& name ) const;
 
    /** Check if the given class is derived from this class.
     \param cls The possibly base class.
@@ -262,7 +262,7 @@ public:
     */
    virtual bool isDerivedFrom( const Class* cls ) const;
 
-   typedef Enumerator<Class* > ClassEnumerator;
+   typedef Enumerator<const Class* > ClassEnumerator;
 
    virtual void enumerateParents( ClassEnumerator& cb ) const;
 
@@ -888,7 +888,7 @@ public:
      \param vm the virtual machine that will receive the result.
      \param instance the instance (or 0 on flat items)
 
-    \note The operand is binary -- requires OpToken with 2 parameters.
+    \note Signature: (1: Comparand) (0: self item) --> (0: result)
 
     This method is called back on any comparison operation, including the six
     basic comparison operators (<, >, <=, >=, == and !=) but also in other
@@ -1003,7 +1003,7 @@ public:
     This is always called after a sccessful op_iter to get an ready-to-be-used
     iterator in the collection.
 
-    If the class is able to know that, it should post an item with the last
+    If the class is able to know that, it should post an item with the doubt
     bit set when the last nth item of a n-sized collection is retreived. When
     the collection is exausted, it should post a nil item with the break bit
     set at top of the stack.
@@ -1178,7 +1178,7 @@ public:
       A different initialization scheme requires the classes involved to reimplement
       directly the op_init() method of this class.
    */
-   void setParent( Class* parent );
+   void setParent( const Class* parent );
 
    /** GCMark this class.
    */
@@ -1233,7 +1233,7 @@ protected:
 
    int32 m_clearPriority;
 
-   Class* m_parent;
+   const Class* m_parent;
 
 private:
 

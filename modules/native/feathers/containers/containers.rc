@@ -25,11 +25,11 @@ BEGIN
         BLOCK "041004b0"
         BEGIN
             VALUE "CompanyName", "Falcon Committee"
-            VALUE "FileDescription", "Containers feather module"
+            VALUE "FileDescription", "Virtual Machine interface feather module"
             VALUE "FileVersion", FALCON_MAKE_VERSION_STRING( FALCON_VERSION_MAJOR, FALCON_VERSION_MINOR, FALCON_VERSION_REVISION )
-            VALUE "InternalName", "containers"
+            VALUE "InternalName", "vm"
             VALUE "LegalCopyright", "The Falcon Programming Language License"
-            VALUE "OriginalFilename", "containers_fm.dll"
+            VALUE "OriginalFilename", "vm_fm.dll"
             VALUE "ProductName", "The Falcon Programming Language"
             VALUE "ProductVersion", FALCON_VERSION
         END

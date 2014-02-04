@@ -1,11 +1,11 @@
 ####################################################################
 # The Falcon Programming Language
 #
-# CMake configuration file for vm (Virtual Machine interface)
+# CMake configuration file for containers (List, Set &c)
 ####################################################################
 
 # Creates the proper module file name from the project name.
-falcon_define_module( CURRENT_MODULE vm )
+falcon_define_module( CURRENT_MODULE containers )
 
 # Inclusion settings
 include_directories(
@@ -13,13 +13,19 @@ include_directories(
 )
 
 if(WIN32 AND NOT MINGW)
-   set( SYS_RC vm.rc)
+   set( SYS_RC containers.rc)
 endif()
 
 # Sources files the module is built from.
 set(SRC_FILES 
-  vm.cpp
-  vm_ext.cpp
+  containers_fm.cpp
+  classcontainer.cpp
+  classiterator.cpp
+  classlist.cpp
+  container_mod.cpp
+  iterator_mod.cpp
+  list_mod.cpp
+  
   ${SYS_RC}
 )
 
@@ -27,7 +33,14 @@ set(SRC_FILES
 # listed in the virtual file tree of Visual Studio.
 set(HDR_FILES
   version.h
-  vm_ext.h
+  containers_fm.h
+  classcontainer.h
+  classiterator.h
+  classlist.h
+  container_mod.h
+  iterator_mod.h
+  list_mod.h
+  errors.h
 )
 
 # Builds and links from the source files

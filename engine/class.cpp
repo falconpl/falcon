@@ -193,7 +193,7 @@ Class* Class::handler() const
    return meta;
 }
 
-Class* Class::getParent( const String& name ) const
+const Class* Class::getParent( const String& name ) const
 {
    if( m_parent == 0 || m_parent->name() != name ) {
       return 0;
@@ -518,7 +518,7 @@ void Class::addConstant( const String& name, const Item& value )
 }
 
 
-void Class::setParent( Class* parent )
+void Class::setParent( const Class* parent )
 {
    m_parent = parent;
    // copy all the properties here.
@@ -536,7 +536,7 @@ void Class::setParent( Class* parent )
    }
 
    // save also the base class as property.
-   _p->m_props[parent->name()].set(0,0,true,true,true,0, Item(parent->handler(), parent));
+   _p->m_props[parent->name()].set(0,0,true,true,true,0, Item(parent->handler(), const_cast<Class*>(parent)));
 }
 
 void Class::gcMark( uint32 mark )
@@ -584,10 +584,21 @@ void Class::op_compare( VMContext* ctx, void* self ) const
       ctx->stackResult(2, (int64)  (bself - bop2) );
       return;
    }
+   else if( op2->type() == op1->type() )
+   {
+      switch(op2->type())
+      {
+      case FLC_ITEM_NIL: ctx->stackResult(2, (int64) 0 ); return;
+      case FLC_ITEM_BOOL: ctx->stackResult(2, (int64) (op2->asBoolean() == op1->asBoolean() ? 0 : (op2->asBoolean() ? 1: -1))); return;
+      case FLC_ITEM_INT: ctx->stackResult(2, (int64) op2->asInteger() - op1->asInteger()); return;
+      case FLC_ITEM_NUM: ctx->stackResult(2, op2->asNumeric() < op1->asNumeric() ? -1 : op2->asNumeric() > op1->asNumeric() ? 1 : 0); return;
+      case FLC_ITEM_METHOD: ctx->stackResult(2, (int64)(op2->asMethodFunction() - op2->asMethodFunction())); return;
+      }
+   }
 
    // we have no information about what an item might be here, but we can
    // order the items by type
-   ctx->stackResult(2, (int64) op1->type() - op2->type() );
+   ctx->stackResult(2, (int64) op2->type() - op1->type() );
 }
 
 
