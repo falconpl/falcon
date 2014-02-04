@@ -247,7 +247,7 @@ void FalconApp::launch( const String& script, int argc, char* argv[], int pos )
 
 
 
-void FalconApp::evaluate( const String& script, bool stdin )
+void FalconApp::evaluate( const String& script, bool useStdin )
 {
    Log* log = Engine::instance()->log();
 
@@ -258,7 +258,7 @@ void FalconApp::evaluate( const String& script, bool stdin )
 
    IntCompiler ic;
    Stream* input;
-   if( stdin )
+   if( useStdin )
    {
       input = new StdInStream;
       ic.sp().interactive(false);
