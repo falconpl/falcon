@@ -1,0 +1,59 @@
+/*
+@name SIter class (2)
+@category Core-module
+
+@output
+Iterator With current/next
+Before the loop: false
+a
+Repeat: a
+b
+Repeat: b
+c
+Repeat: c
+d
+Repeat: d
+After the loop: true
+====================
+Reset and repeat
+Before the loop: false
+a
+Repeat: a
+b
+Repeat: b
+c
+Repeat: c
+d
+Repeat: d
+After the loop: true
+====================
+Done
+@endoutput
+*/
+
+> "Iterator With current/next"
+
+x = SIter( .['a' 'b' 'c' 'd'] )
+
+> "Before the loop: ", x.hasCurrent
+while x.hasNext
+   > x.next()
+   > "Repeat: ", x.current()
+end
+> "After the loop: ", x.hasCurrent
+
+> "="*20
+> "Reset and repeat"
+
+x.reset()
+
+> "Before the loop: ", x.hasCurrent
+while x.hasNext
+   > x.next()
+   > "Repeat: ", x.current()
+end
+> "After the loop: ", x.hasCurrent
+
+> "="*20
+
+> "Done"

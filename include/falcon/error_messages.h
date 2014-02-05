@@ -274,7 +274,7 @@ FAL_ERRORDECL( e_wait_in_atomic, 508, "VM received a suspension request in an at
 FAL_ERRORDECL( e_table_aconf, 509, "Table already configured" );
 FAL_ERRORDECL( e_non_callable, 510, "Non callable symbol called" );
 FAL_ERRORDECL( e_prop_invalid, 511, "Invalid or inconsistent property value" );
-FAL_ERRORDECL( e_invalid_iter, 512, "Invalid iterator applied to sequence method" );
+FAL_ERRORDECL( e_invalid_iter, 512, "Invaild iterator status" );
 FAL_ERRORDECL( e_iter_outrange, 513, "Iterator out of range" );
 FAL_ERRORDECL( e_non_dict_seq, 514, "Given sequence is not a dictionary sequence");
 FAL_ERRORDECL( e_miss_iface, 515, "Missing interface: needed method not found");

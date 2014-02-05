@@ -1,0 +1,51 @@
+/*
+@name SIter class
+@category Core-module
+
+@output
+Iterator Empty
+====================
+Iterator with 1 item
+a
+====================
+Iterator with 2 items
+a
+b
+====================
+Iterator with 3 items
+a
+b
+c
+====================
+Iterator with 4 items
+a
+b
+c
+d
+====================
+Done
+@endoutput
+*/
+
+tests = .[ 
+   .["Iterator Empty" .[]] 
+   .["Iterator with 1 item" .['a']] 
+   .["Iterator with 2 items" .['a' 'b']] 
+   .["Iterator with 3 items" .['a' 'b' 'c']] 
+   .["Iterator with 4 items" .['a' 'b' 'c' 'd']] 
+   ]
+
+for name, test in tests
+   iterate(name, test )
+   > "="*20
+end 
+
+function iterate(name, data)
+   > name
+   x = SIter( data )
+   while x.hasNext
+      > x.next()
+   end
+end
+
+> "Done"

@@ -26,7 +26,7 @@
 #include <falcon/vmcontext.h>
 #include <falcon/sys.h>
 
-#include <falcon/cm/iterator.h>
+#include <falcon/cm/siter.h>
 #include <falcon/itemarray.h>
 
 #include <falcon/error.h>
@@ -168,14 +168,14 @@ FALCON_DEFINE_FUNCTION_P(advance)
       throw paramError();
    }
 
-   IteratorCarrier* ic;
+   SIterCarrier* ic;
    Class* iterClass=0;
 
    if( ctx->readInit().isNil() )
    {
       iterClass = module()->getClass("Iterator");
       fassert( iterClass != 0 );
-      ic = new IteratorCarrier( *ctx->param(0) );
+      ic = new SIterCarrier( *ctx->param(0) );
 
       ctx->writeInit(FALCON_GC_STORE(iterClass, ic));
    }
@@ -184,12 +184,12 @@ FALCON_DEFINE_FUNCTION_P(advance)
       void* data = 0;
       initItem.asClassInst( iterClass, data );
       fassert( iterClass == module()->getClass("Iterator") );
-      ic = static_cast<IteratorCarrier*>(data);
+      ic = static_cast<SIterCarrier*>(data);
    }
 
    // change into the class method, and use its return frames.
    ctx->param(0)->setBoolean(false);
-   static_cast<ClassIterator*>(iterClass)->invokeDirectNextMethod(ctx, ic, pCount);
+   static_cast<ClassSIter*>(iterClass)->invokeDirectNextMethod(ctx, ic, pCount);
 }
 
 /*#

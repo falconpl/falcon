@@ -1,4 +1,5 @@
-/* FALCON - The Falcon Programming Language.
+/* -------------------------------------------------------------------
+ * FALCON - The Falcon Programming Language.
  * FILE: classiterator.cpp
  *
  * -------------------------------------------------------------------
