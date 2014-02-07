@@ -39,13 +39,12 @@ Changing timezones:
 
 */
 
-load timestamp
 ts = TimeStamp()
 
 ts.year, ts.month, ts.day, ts.hour, ts.minute, ts.second = 2001, 12, 31, 23, 59, 59
 > "2002 eve as RFC-2822: ", ts.toRFC2822()
 > "Changing timezones:"
 for i = 2 to 31
-   ts.changeZone(i)
-   > TimeZone.getName( i ), ": ", ts
+   ts.timezone = i
+   > TimeStamp.getTZName( i ), ": ", ts
 end

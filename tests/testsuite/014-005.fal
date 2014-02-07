@@ -8,7 +8,8 @@ this test prints their className.
 @output
 Import from/as directive
 open() class name: Function
-TimeStamp class name: $MetaClass
+List class name: Class List
+List handler class name: $MetaClass
 Done
 @endoutput
 
@@ -16,11 +17,12 @@ Done
 
 import VFS from vfs as myopen
 namespace test
-import TimeStamp from timestamp as test.tss
+import List from containers as test.tss
 
 > "Import from/as directive"
 > "open() class name: ", myopen.open.className
-> "TimeStamp class name: ", test.tss.className
+> "List class name: ", test.tss.toString()
+> "List handler class name: ", test.tss.className
 > "Done"
 
 return "Pippo"

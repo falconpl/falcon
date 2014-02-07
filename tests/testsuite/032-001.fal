@@ -16,7 +16,6 @@ Epoch -1: -1
 
 */
 
-load timestamp
 ts = TimeStamp()
 > "Timestamp base:"
 > ts

@@ -5,25 +5,24 @@
 @output
 2002 eve as RFC-2822: Mon, 31 Dec 2001 23:59:59 +0000
 Back to date: 2001-12-31 23:59:59.000
-2002 eve as RFC-2822 in other timezone: Mon, 31 Dec 2001 23:59:59 -0800
+2002 eve as RFC-2822 in other timezone: Mon, 31 Dec 2001 15:59:59 -0800
 Back to date: 2001-12-31 15:59:59.000
 Timezone: 21
 @endoutput
 
 */
 
-load timestamp
 ts = TimeStamp()
 
 ts.year, ts.month, ts.day, ts.hour, ts.minute, ts.second = 2001, 12, 31, 23, 59, 59
 > "2002 eve as RFC-2822: ", ts.toRFC2822()
 
-x = parseRFC2822( ts.toRFC2822() )
+x = TimeStamp.parseRFC2822( ts.toRFC2822() )
 > "Back to date: ", x
 
-ts.timezone = TimeZone.PST
+ts.timezone = TimeStamp.PST
 > "2002 eve as RFC-2822 in other timezone: ", ts.toRFC2822()
-x = parseRFC2822( ts.toRFC2822() )
+x = TimeStamp.parseRFC2822( ts.toRFC2822() )
 > "Back to date: ", x
 > "Timezone: ", x.timezone
 
