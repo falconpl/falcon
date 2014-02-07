@@ -1369,6 +1369,7 @@ void TimeStamp::msSinceEpoch( int64 v )
    int64 disp = m_displacement;
    disp *= 60000;
    m_date.fromMilliseconds(v - disp);
+   m_bChanged = true;
 }
 
 
