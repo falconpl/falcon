@@ -1039,7 +1039,7 @@ void Class::op_getClassProperty( VMContext* ctx, const String& prop) const
    {
       // all bom methods do not modify their object
       // we can safely use a const cast
-      handler( ctx, this, const_cast<Class*>(this) );
+      handler( ctx, this->handler(), const_cast<Class*>(this) );
    }
    else
    {
