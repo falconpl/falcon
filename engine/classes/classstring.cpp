@@ -2978,7 +2978,7 @@ void ClassString::op_compare( VMContext* ctx, void* self ) const
 {
    Item* op1, *op2;
 
-   OpToken token( ctx, op1, op2 );
+   OpToken token( ctx, op2, op1 );
 
    String* string = static_cast<String*>( self );
 

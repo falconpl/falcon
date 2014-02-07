@@ -649,10 +649,10 @@ public:
    bool isBreak() const { return (content.base.bits.flags & flagBreak ) != 0; }
    bool isContinue() const { return (content.base.bits.flags & flagContinue ) != 0; }
 
-   void setDoubt() { content.base.bits.flags |= flagDoubt; }
-   void clearDoubt() { content.base.bits.flags &= ~flagDoubt; }
-   void setBreak() { content.base.bits.flags |= flagBreak; }
-   void setContinue() { content.base.bits.flags |= flagContinue; }
+   Item& setDoubt() { content.base.bits.flags |= flagDoubt; return *this;}
+   Item& clearDoubt() { content.base.bits.flags &= ~flagDoubt; return *this;}
+   Item& setBreak() { content.base.bits.flags |= flagBreak; return *this;}
+   Item& setContinue() { content.base.bits.flags |= flagContinue; return *this;}
 
    /** GC Mark the item -- if necessary. 
     Provided this is an item in need of GC marking, this method asks the

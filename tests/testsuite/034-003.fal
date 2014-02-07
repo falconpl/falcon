@@ -1,0 +1,46 @@
+/*
+@name List for/in
+@category Feathers-containers
+
+@output
+Empty
+====================
+One element
+Contents: A.
+====================
+Two elements
+Contents: A,B.
+====================
+Three elements
+Contents: A,B,C.
+====================
+Done
+@endoutput
+
+*/
+
+load containers
+
+tests = .[
+   .[ "Empty" List() ]
+   .[ "One element" List('A') ]
+   .[ "Two elements" List('A' 'B') ]
+   .[ "Three elements" List('A' 'B' 'C') ]
+]
+
+function doTest(descr, list )
+   > descr
+   for elem in list
+      forfirst: >> "Contents: "
+      >> elem
+      formiddle: >> ","
+      forlast: >"."
+   end
+end
+
+for n, x in tests
+   doTest(n,x)
+   > "="*20
+end
+
+> "Done"

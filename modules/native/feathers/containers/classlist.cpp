@@ -103,7 +103,7 @@ FALCON_DEFINE_FUNCTION_P1( pop )
 {
    List* cnt = ctx->tself<List*>();
    Item last;
-   if( cnt->back(last) )
+   if( ! cnt->back(last) )
    {
       throw FALCON_SIGN_ERROR(ContainerError, FALCON_ERROR_CONTAINERS_EMPTY );
    }
@@ -124,7 +124,7 @@ FALCON_DEFINE_FUNCTION_P1( shift )
 {
    List* cnt = ctx->tself<List*>();
    Item last;
-   if( cnt->front(last) )
+   if( ! cnt->front(last) )
    {
       throw FALCON_SIGN_ERROR(ContainerError, FALCON_ERROR_CONTAINERS_EMPTY );
    }
@@ -135,7 +135,7 @@ FALCON_DEFINE_FUNCTION_P1( shift )
 
 
 /*#
- @method shift List
+ @method front List
  @brief Removes an element from the beginning of the list, and returns it.
  @return The removed element.
  @raise ContainerError if the container is empty.
@@ -155,7 +155,7 @@ FALCON_DEFINE_FUNCTION_P1( front )
 }
 
 /*#
- @method shift List
+ @method back List
  @brief Removes an element from the beginning of the list, and returns it.
  @return The removed element.
  @raise ContainerError if the container is empty.

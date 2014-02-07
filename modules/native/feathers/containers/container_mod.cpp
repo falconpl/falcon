@@ -56,7 +56,7 @@ void Container::gcMark( uint32 m )
    lock();
    int32 v = version();
    Item current;
-   while( iter->next(current) )
+   while( iter->next(current, false) )
    {
       fassert( current != 0 );
       unlock();

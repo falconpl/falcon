@@ -1,0 +1,55 @@
+/*
+@name List push test
+@category Feathers-containers
+
+@output
+Empty list: List{}
+Size: 0
+Empty: true
+====================
+Adding 'a' at back: List{"a"}
+Size: 1
+Empty: false
+====================
+Adding 'b' at back: List{"a", "b"}
+Size: 2
+Empty: false
+====================
+Adding '0' at front: List{"0", "a", "b"}
+Size: 3
+Empty: false
+====================
+Adding '1' at front: List{"1", "0", "a", "b"}
+Size: 4
+Empty: false
+====================
+Done
+@endoutput
+
+*/
+
+load containers
+
+tests = .[
+   .[ "Empty list" {=>} ]
+   .[ "Adding 'a' at back" {l=>l.push('a')} ]
+   .[ "Adding 'b' at back" {l=>l.push('b')} ]
+   .[ "Adding '0' at front" {l=>l.unshift('0')} ]
+   .[ "Adding '1' at front" {l=>l.unshift('1')} ]
+]
+
+function doTest(descr, func, list )
+   func(list)
+   > descr, ": ", list.describe()
+   > "Size: ", list.size
+   > "Empty: ", list.empty
+end
+
+l = List()
+
+for n, x in tests
+   doTest(n,x,l)
+   > "="*20
+end
+
+> "Done"

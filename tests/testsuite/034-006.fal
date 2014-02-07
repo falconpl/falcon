@@ -1,0 +1,60 @@
+/*
+@name List R-iterator
+@category Feathers-containers
+
+@output
+List{}
+Has current after next? false
+====================
+List{"a"}
+Next: a
+Current (true): a
+Has current after next? true
+====================
+List{"a", "b"}
+Next: b
+Current (true): b
+Next: a
+Current (true): a
+Has current after next? true
+====================
+List{"a", "b", "c"}
+Next: c
+Current (true): c
+Next: b
+Current (true): b
+Next: a
+Current (true): a
+Has current after next? true
+====================
+Done
+@endoutput
+
+*/
+
+load containers
+
+tests = .[
+   List()
+   List('a')
+   List('a' 'b')
+   List('a' 'b' 'c')
+]
+
+function doTest( list )
+   > list.describe()
+   iter = list.riterator()
+   
+   while iter.hasNext
+      > "Next: ", iter.next()
+      > "Current (", iter.hasCurrent, "): ", iter.current()
+   end
+   > "Has current after next? ", iter.hasCurrent
+end
+
+for l in tests
+   doTest(l)
+   > "="*20
+end
+
+> "Done"

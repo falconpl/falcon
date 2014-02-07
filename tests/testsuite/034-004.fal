@@ -1,0 +1,36 @@
+/*
+@name List in operator
+@category Feathers-containers
+
+@output
+a in List{}: false
+a in List{"a"}: true
+a in List{"b"}: false
+x in List{"x", "a"}: true
+x in List{"a", "x"}: true
+b in List{"a", "x"}: false
+Done
+@endoutput
+
+*/
+
+load containers
+
+tests = .[
+   .[ List() 'a' ]
+   .[ List('a') 'a' ]
+   .[ List('b') 'a' ]
+   .[ List('x' 'a') 'x' ]
+   .[ List('a' 'x') 'x' ]
+   .[ List('a' 'x') 'b' ]
+]
+
+function doTest( list, value )
+   > value, " in ", list.describe(), ": ", (value in list)
+end
+
+for n, x in tests
+   doTest(n,x)
+end
+
+> "Done"

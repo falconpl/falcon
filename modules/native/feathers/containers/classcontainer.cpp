@@ -56,6 +56,8 @@ public:
          ctx->popCode();
          return;
       }
+      // remove the previous result
+      // -- we still have 1 extra data not removed by op_in
       ctx->popData(1);
 
       const Item& item = ctx->opcodeParam(1);
@@ -69,13 +71,13 @@ public:
       container->lock();
       int32 version = container->version();
       Item current;
-      while( iter->next(current) )
+      while( iter->next(current, false) )
       {
          fassert( current != 0 );
          container->unlock();
 
-         ctx->pushData(current);
          ctx->pushData(item);
+         ctx->pushData(current);
          cls->op_compare(ctx, inst);
          if( ctx->codeDepth() != depth )
          {
@@ -90,7 +92,7 @@ public:
             return;
          }
 
-         ctx->popData(1);
+         ctx->popData();
          container->lock();
          if(version != container->version() )
          {
@@ -99,7 +101,8 @@ public:
          }
       }
       container->unlock();
-      ctx->popData(1);
+      ctx->popData();
+      // add the result
       ctx->topData().setBoolean(false);
       ctx->popCode();
    }
@@ -380,8 +383,8 @@ void ClassContainerBase::op_isTrue( VMContext* ctx, void* instance ) const
 void ClassContainerBase::op_in( VMContext* ctx, void* instance ) const
 {
    Container* cont = static_cast<Container*>(instance);
-   Item value = ctx->opcodeParam(1);
-   ctx->popCode(2);
+   Item value = ctx->topData();
+   ctx->popData(2);
    long depth = ctx->codeDepth();
    if( cont->contains(ctx, value ) )
    {
@@ -408,11 +411,11 @@ void ClassContainerBase::op_next( VMContext* ctx, void* ) const
    Iterator* iter = static_cast<Iterator*>(ctx->topData().asInst());
    Item value;
    if( ! iter->next(value) ) {
-      ctx->pushBreak();
+      ctx->pushData(Item().setBreak());
    }
    else {
       ctx->pushData(value);
-      if( ! iter->hasNext() )
+      if( iter->hasNext() )
       {
          ctx->topData().setDoubt();
       }

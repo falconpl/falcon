@@ -167,10 +167,10 @@ public:
 
    virtual ~ListFIterator(){}
 
-   virtual bool next( Item& v )
+   virtual bool next( Item& v, bool bLock = true )
    {
       List* list = static_cast<List*>(container());
-      list->lock();
+      if( bLock ){ list->lock(); }
       if ( m_current == 0 )
       {
          m_current = list->prv()->m_head;
@@ -180,7 +180,7 @@ public:
       else {
          if( list->version() != m_version )
          {
-            list->unlock();
+            if( bLock ){ list->unlock(); }
             throw FALCON_SIGN_XERROR( ContainerError, FALCON_ERROR_CONTAINERS_OUTSYNC, .extra("during next") );
          }
          m_current = m_current->m_next;
@@ -188,11 +188,11 @@ public:
 
       if( m_current == 0 )
       {
-         list->unlock();
+         if( bLock ){ list->unlock(); }
          return false;
       }
       v = m_current->m_data;
-      list->unlock();
+      if( bLock ){ list->unlock(); }
       return true;
    }
 
@@ -243,10 +243,10 @@ public:
 
    virtual ~ListRIterator(){}
 
-   virtual bool next(Item& value)
+   virtual bool next(Item& value, bool bLock = true)
    {
       List* list = static_cast<List*>(container());
-      list->lock();
+      if( bLock ){ list->lock(); }
       if ( m_current == 0 )
       {
          m_current = list->prv()->m_tail;
@@ -255,7 +255,7 @@ public:
       else {
          if( list->version() != m_version )
          {
-            list->unlock();
+            if( bLock ){ list->unlock(); }
             throw FALCON_SIGN_XERROR( ContainerError, FALCON_ERROR_CONTAINERS_OUTSYNC, .extra("during next") );
          }
          m_current = m_current->m_prev;
@@ -263,12 +263,12 @@ public:
 
       if( m_current == 0 )
       {
-         list->unlock();
+         if( bLock ){ list->unlock(); }
          return false;
       }
 
       value = m_current->m_data;
-      list->unlock();
+      if( bLock ){ list->unlock(); }
       return true;
    }
 

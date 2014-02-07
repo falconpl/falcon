@@ -1,0 +1,86 @@
+/*
+@name List iterator erease
+@category Feathers-containers
+
+@output
+Remove a from List{}
+Traversing: .
+Result: List{}
+====================
+Remove a from List{"a"}
+Traversing: a.
+Result: List{}
+====================
+Remove a from List{"a", "b"}
+Traversing: a,b.
+Result: List{"b"}
+====================
+Remove b from List{"a", "b"}
+Traversing: a,b.
+Result: List{"a"}
+====================
+Remove x from List{"a", "b"}
+Traversing: a,b.
+Result: List{"a", "b"}
+====================
+Remove a from List{"a", "b", "c"}
+Traversing: a,b,c.
+Result: List{"b", "c"}
+====================
+Remove b from List{"a", "b", "c"}
+Traversing: a,b,c.
+Result: List{"a", "c"}
+====================
+Remove c from List{"a", "b", "c"}
+Traversing: a,b,c.
+Result: List{"a", "b"}
+====================
+Remove x from List{"a", "b", "c"}
+Traversing: a,b,c.
+Result: List{"a", "b", "c"}
+====================
+Done
+@endoutput
+
+*/
+
+load containers
+
+tests = .[
+   .[List() 'a']
+   .[List('a') 'a']
+   .[List('a' 'b') 'a']
+   .[List('a' 'b') 'b']
+   .[List('a' 'b') 'x']
+   .[List('a' 'b' 'c') 'a']
+   .[List('a' 'b' 'c') 'b']
+   .[List('a' 'b' 'c') 'c']
+   .[List('a' 'b' 'c') 'x']
+]
+
+function doTest( list, elem )
+   > "Remove ", elem, " from ", list.describe()
+   
+   iter = list.iterator()
+   
+   >> "Traversing: "
+   while iter.hasNext
+      e1 = iter.next()
+      >> e1
+      if e1 == elem      
+         iter.erase()
+      end
+      if iter.hasNext
+         >> ","
+      end
+   end
+   > "."
+   > "Result: ", list.describe()
+end
+
+for l, v in tests
+   doTest(l,v)
+   > "="*20
+end
+
+> "Done"

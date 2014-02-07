@@ -32,7 +32,7 @@ public:
    Iterator( const  Iterator& c ): m_bReverse(c.m_bReverse), m_container(c.m_container), m_mark(0) {}
    virtual ~Iterator();
 
-   virtual bool next(Item& value) = 0;
+   virtual bool next(Item& value, bool bLock=true) = 0;
    virtual bool hasNext() = 0;
    virtual bool current(Item& value) = 0;
    virtual void reset() = 0;

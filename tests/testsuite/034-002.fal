@@ -1,0 +1,56 @@
+/*
+@name List pop test
+@category Feathers-containers
+
+@output
+Removing from back: List{"A", "B", "C", "D"}
+Removing: D
+Size: 3
+Empty: false
+====================
+Removing from back: List{"A", "B", "C"}
+Removing: C
+Size: 2
+Empty: false
+====================
+Removing from front: List{"A", "B"}
+Removing: A
+Size: 1
+Empty: false
+====================
+Removing from front: List{"B"}
+Removing: B
+Size: 0
+Empty: true
+====================
+Final list: List{}
+Done
+@endoutput
+
+*/
+
+load containers
+
+tests = .[
+   .[ "Removing from back" {l=>l.pop()} ]
+   .[ "Removing from back" {l=>l.pop()} ]
+   .[ "Removing from front" {l=>l.shift()} ]
+   .[ "Removing from front" {l=>l.shift()} ]
+]
+
+function doTest(descr, func, list )
+   > descr, ": ", list.describe()
+   > "Removing: ", func(list)
+   > "Size: ", list.size
+   > "Empty: ", list.empty
+end
+
+l = List( "A" "B" "C" "D" )
+for n, x in tests
+   doTest(n,x,l)
+   > "="*20
+end
+
+> "Final list: ", l.describe()
+
+> "Done"

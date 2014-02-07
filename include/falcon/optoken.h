@@ -71,7 +71,7 @@ namespace Falcon {
 
     ...
     // we're done
-    token.exit( "The returned value" );
+    token.exit( FALCON_GC_HANDLE(new String("The returned value")) );
  }
  @endcode
 
@@ -107,8 +107,8 @@ public:
 
    /** Open an operator contet with a single operand.
     \param vmc The context of the virtual machine.
-    \param op1 Where to store the first operand.
-    \param op2 Where to store the second operand.
+    \param op1 Where to store the first operand (top-data).
+    \param op2 Where to store the second operand (second-last).
 
     */
    inline OpToken( VMContext* vmc, Item*& op1, Item*& op2 ):
@@ -118,15 +118,15 @@ public:
       , m_bExited(false)
 #endif
    {
-      op2 = &vmc->topData();
-      op1 = op2 - 1;
+      op1 = &vmc->topData();
+      op2 = op1 - 1;
    }
 
    /** Open an operator contet with a single operand.
     \param vmc The context of the virtual machine.
-    \param op1 Where to store the first operand.
-    \param op2 Where to store the second operand.
-    \param op3 Where to store the third operand.
+    \param op1 Where to store the first operand (top data).
+    \param op2 Where to store the second operand (second-last).
+    \param op3 Where to store the third operand (third-last).
     */
    inline OpToken( VMContext* vmc, Item*& op1, Item*& op2, Item*& op3 ):
       m_vmc( vmc ),
@@ -135,9 +135,9 @@ public:
       , m_bExited(false)
 #endif
    {
-      op3 = &vmc->topData();
-      op2 = op3 - 1;
-      op1 = op3 - 2;
+      op1 = &vmc->topData();
+      op2 = op1 - 1;
+      op3 = op1 - 2;
    }
 
 
