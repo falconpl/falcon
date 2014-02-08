@@ -14,7 +14,7 @@
    See LICENSE file for licensing details.
 */
 
-import from confparser
+import from confparser in confparser
 
 class Config
    title = nil
@@ -167,7 +167,7 @@ class Config
       value = self.cfile.getOne( key )
       if not value: return dflt
       
-      v = strLower( value )
+      v = value.lower()
       if v == "on" or v == "true": return true
       if v == "off" or v == "false": return false
       faldoc.fatal( i"Invalid value for configuration key " + key )
