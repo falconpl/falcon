@@ -15,15 +15,13 @@
    See LICENSE file for licensing details.
 */
 
-load compiler
 load self.version
 load self.config
 load self.document
 
 import from parser.faldoc.txt
 
-resources: "resources/*"
-
+:resources => "resources/*"
 
 //================================================
 // Application class
