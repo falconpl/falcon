@@ -1,0 +1,27 @@
+/*
+@name firstOf
+@category Core-module
+
+@result ok
+*/
+
+tests = .[
+   .[nil .[] ]
+   .[ nil .[nil] ]
+   .[ 100 .[nil 100] ]
+   .[ 100 .[100 200] ]
+   .[ 100 .[nil 100 200] ]
+   .[ 100 .[nil 100 200] ]
+]
+
+result = "ok"
+for expected, params in tests
+   r = call(firstOf, params)
+   > "firstOf(", params.describe(), "): ", r
+   if expected != r
+      result = "fail"
+   end
+end
+
+> "Result: ", result
+return result

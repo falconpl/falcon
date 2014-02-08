@@ -1,0 +1,34 @@
+/*
+@name ffirstOf
+@category Core-module
+
+@result ok
+*/
+
+function retVal( value )
+   return value
+end
+
+function fail()
+   raise "Fail because invoked past first non-nil"
+end
+
+tests = .[
+   .[nil {=> ffirstOf() } ]
+   .[ nil {=> ffirstOf(nil) } ]
+   .[ 100 {=> ffirstOf(nil, retVal(100), fail() ) } ]
+   .[ 100 {=> ffirstOf(nil, retVal(100), 200, fail() ) } ]
+   .[ 200 {=> ffirstOf(nil, 200, retVal(100), fail() ) } ]
+]
+
+result = "ok"
+for expected, params in tests
+   r = params()
+   > expected, "==", r
+   if expected != r
+      result = "fail"
+   end
+end
+
+> "Result: ", result
+return result

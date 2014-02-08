@@ -1126,59 +1126,88 @@ FALCON_DEFINE_FUNCTION_P1(perform)
 
 
 /*#
-  @function firstOf
-  @brief (ETA) Invokes the parameters till one is evaluated as non-nil
-  @param ... ETA expressions to be invoked.
-  @return The result of the evaluation of the first non-nil expression
+  @function ffirstOf
+  @brief (ETA) Evaluates the parameters and return the first non-nil result.
+  @param ... Expressions to be evaluated.
+  @return The result of the evaluation of the first non-nil expression, or nil.
 
   This function invokes all the expressions passed as ETA parameters
-  one after another.
+  one after another. Once the evaluated expression yields a non-nil value,
+  that one is returned.
 
-  If one expression yields a return break value, the computation is
-  interrupted and the previous evaluation result is returned.
+  If none of the expressions passed as paremters evaluates to a non-nil value,
+  nil is returned.
+
+  @notice As the expressions in the parameters are evaluated, this function
+  is not well suited to return the generic first non-nil value. Use the
+  non-eta function @a firstOf for that.
  */
 
-FALCON_DEFINE_FUNCTION_P1(firstOf)
+FALCON_DEFINE_FUNCTION_P1(ffirstOf)
 {
    // This is called after op_next generates the next item.
    class PStepGetNext: public PStep {
    public:
       PStepGetNext(){ apply = apply_;}
       virtual ~PStepGetNext() {}
-      virtual void describeTo(String& tgt) { tgt = "Function_perform::PStepGetNext"; }
+      virtual void describeTo(String& tgt) { tgt = "Function_firstOf::PStepGetNext"; }
 
       static void apply_(const PStep*, VMContext* ctx )
       {
          // are we done?
-         if( ctx->topData().isBreak() )
+         if( ! ctx->topData().isNil() )
          {
-            ctx->returnFrame(*ctx->local(0));
-            return;
+            ctx->returnFrame(ctx->topData());
          }
-
-         *ctx->local(0) = ctx->topData();
-         ctx->popData();
-         // remove this code, PStepFuncResult is now in charge.
-         CodeFrame& cf = ctx->currentCode();
-         if( cf.m_seqId >= ctx->paramCount() )
-         {
-            ctx->returnFrame(*ctx->local(0));
-            return;
+         else {
+            // remove this code, PStepFuncResult is now in charge.
+            CodeFrame& cf = ctx->currentCode();
+            if( cf.m_seqId >= ctx->paramCount() )
+            {
+               ctx->returnFrame();
+            }
+            else {
+               Item* expr = ctx->param(cf.m_seqId++);
+               TreeStep* ts = static_cast<TreeStep*>(expr->asInst());
+               ctx->pushCode( ts );
+            }
          }
-
-         Item* expr = ctx->param(cf.m_seqId++);
-         TreeStep* ts = static_cast<TreeStep*>(expr->asInst());
-         ctx->pushCode( ts );
       }
    };
    static PStepGetNext s_stepNext;
 
    // prepare the code that will interpret op_iter result
-   ctx->addLocals(1);
    ctx->pushData(Item());
    ctx->stepIn( &s_stepNext );
 }
 
+/*#
+  @function firstOf
+  @brief Returns the first non-nil parameter.
+  @param ... Values to be verified.
+  @return The first non-nil paramter, or nil.
+
+  This function returns the first non-nil parameter among the given ones.
+  If the function is called without parameters, or if all the parameters
+  are nil values, it returns nil.
+*/
+
+FALCON_DEFINE_FUNCTION_P(firstOf)
+{
+   for( int i = 0; i < pCount; ++i )
+   {
+      fassert( ctx->param(i) != 0 );
+      const Item& value = *ctx->param(i);
+      if( ! value.isNil() )
+      {
+         ctx->returnFrame(value);
+         return;
+      }
+   }
+
+   // couldn't find it.
+   ctx->returnFrame();
+}
 
 // NOTICE: for 1.0 alpha
 // left currently undocumented.

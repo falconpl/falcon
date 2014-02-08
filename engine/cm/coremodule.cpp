@@ -81,12 +81,14 @@ CoreModule::CoreModule():
       << new Ext::Function_numeric
       << new Ext::Function_passvp
       << new Ext::Function_call
+      << new Ext::Function_firstOf
       
       << new Ext::Function_map
       << new Ext::Function_filter
       << new Ext::Function_reduce
       << new Ext::Function_cascade
       << new Ext::Function_perform
+      << new Ext::Function_ffirstOf
       << ffor
 
       // Standard classes
