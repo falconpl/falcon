@@ -148,7 +148,7 @@ Module::~Module()
          Class* sclass = *iter;
          String singName = sclass->name().subString(1);
          Item* singleton = globals().getValue(singName);
-         if( singleton != 0 && (singleton->flags() & Item::flagIsGarbage) == 0 )
+         if( singleton != 0 && singleton->isUser() && (singleton->flags() & Item::flagIsGarbage) == 0 )
          {
             sclass->dispose(singleton->asInst());
          }
