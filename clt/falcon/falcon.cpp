@@ -200,7 +200,7 @@ void FalconApp::launch( const String& script, int argc, char* argv[], int pos )
       e->decref();
    }
 
-   Process* loadProc = ms->loadModule( script, true, false, true );
+   Process* loadProc = ms->loadModule( script, true, true, true );
 
    log->log(Log::fac_app, Log::lvl_info, String("Starting loader process on: ") + script );
    loadProc->start();
