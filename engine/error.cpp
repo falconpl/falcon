@@ -162,7 +162,7 @@ void Error::describeTo( String &target, bool addSignature ) const
    if (! _p->m_subErrors.empty() )
    {
       target += "\n   Because of:\n";
-      describeSubErrors( target, addSignature );
+      describeSubErrors( target, false );
    }
 }
 
@@ -170,14 +170,21 @@ void Error::describeTo( String &target, bool addSignature ) const
 String& Error::describeSubErrors( String& target, bool addSignature ) const
 {
    std::deque<Error*>::const_iterator iter = _p->m_subErrors.begin();
-   while( iter != _p->m_subErrors.end() )
+   while( true )
    {
-      target += "\n    ";
-      target += (*iter)->describe(addSignature);
+      target += "     ";
+      String temp = (*iter)->describe(addSignature);
+      String temp2;
+      temp.replace("\n","\n     ", temp2);
+      target += temp2;
       ++iter;
       if(iter != _p->m_subErrors.end() )
       {
          target +="\n";
+      }
+      else
+      {
+         break;
       }
    }
 
