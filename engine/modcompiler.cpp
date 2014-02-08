@@ -179,7 +179,7 @@ bool ModCompiler::Context::onOpenClass( Class* cls, bool isObject )
    if ( isObject )
    {
       // add a global as a placeholder for the object
-      status = mod->addInitClass(cls);
+      status = mod->addInitClass(cls, false);
    }
    else {
       if( cls->name().size() == 0 ) {
