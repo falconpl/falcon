@@ -10,7 +10,7 @@ Result is: 200
 
 */
 
-function* myEta( expression )  
+function& myEta( expression )  
   a = 10
   b = 20
   > "Result is: ", expression()

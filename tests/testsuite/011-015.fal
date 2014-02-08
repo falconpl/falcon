@@ -20,9 +20,9 @@ import Syn.*
 
 
 expr = ForIn( 
-   &var,
+   $var,
    .[1 "a" 2 "b" 3 "c"],
-   FastPrintNL(&var)
+   FastPrintNL($var)
    )
    
 expr()

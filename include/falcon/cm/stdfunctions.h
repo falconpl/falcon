@@ -43,6 +43,7 @@ FALCON_DECLARE_FUNCTION(reduce, "reducer:C, data:X, initial:[X]")
 
 FALCON_DECLARE_FUNCTION(cascade, "callList:A,...")
 FALCON_DECLARE_FUNCTION(perform, "&...")
+FALCON_DECLARE_FUNCTION(firstOf, "&...")
 FALCON_DECLARE_FUNCTION(ffor, "initialize:Expression, check:Expression, increment:Expression, code:Syntree")
 }
 }

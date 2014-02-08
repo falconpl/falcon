@@ -47,7 +47,7 @@ ClassSymbol::~ClassSymbol()
 void ClassSymbol::describe( void* instance, String& target, int, int ) const
 {
    Symbol* sym = static_cast<Symbol*>(instance);
-   target = "&";
+   target = "$";
    target += sym->name();
 }
 

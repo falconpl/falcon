@@ -9,7 +9,7 @@ import Syn.*
 
 > "Homoiconic While (without children) Test"
 a = 0
-expr = While( LT(PreInc(&a),5) )
+expr = While( LT(PreInc($a),5) )
 > "Executing: ", expr
 expr()
 

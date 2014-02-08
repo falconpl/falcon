@@ -4,14 +4,14 @@
 @name Wiki sample - Symbol evaluation
 
 @output
-&var
+$var
 Value
 @endoutput
 
 */
 
 var = "Value"    // variable "var" has value "Value"
-sym = &var       // variable "sym" has "var symbol" as value
+sym = $var       // variable "sym" has "var symbol" as value
 > sym            // &var
 > sym()          // "Value"
 

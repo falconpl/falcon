@@ -24,7 +24,7 @@ end
 
 inst = test()
 
-x = Provides( &inst, "a")
+x = Provides( $inst, "a")
 
 > "Simple provides test with dynamic property value"
 for prop in ["hello", "world", "sayHello"]

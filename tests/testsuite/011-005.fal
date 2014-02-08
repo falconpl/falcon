@@ -20,7 +20,7 @@ import Syn.*
 > "Composing a = 0; loop; > \"A: \", ++a; end a == 5"
 
 a = 0
-expr = Loop( EQ(&a,5), FastPrintNL( "A: ", PreInc(&a) ) )
+expr = Loop( EQ($a,5), FastPrintNL( "A: ", PreInc($a) ) )
 expr()
 
 > "Done."

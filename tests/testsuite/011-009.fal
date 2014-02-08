@@ -13,7 +13,7 @@ import Syn.*
 
 > "Homoiconic If simple"
 
-expr = If( SynTree( EQ(&a,0), FastPrintNL("A is 0")) )
+expr = If( SynTree( EQ($a,0), FastPrintNL("A is 0")) )
 a = 0
 expr()
 a = 1

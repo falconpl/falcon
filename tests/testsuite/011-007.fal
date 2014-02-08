@@ -38,7 +38,7 @@ expr = SynTree( LT(0,1),
    )
    
 expr = SynTree( LT(0,1), 
-   &a,
+   $a,
    FastPrintNL( "First multiple statement with selector and symbol OK" ),
    FastPrintNL( "Second multiple statement with selector and symbol OK" )
    )

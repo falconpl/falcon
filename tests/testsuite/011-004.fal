@@ -9,7 +9,7 @@ namespace Syn
 
 > "Homoiconic Loop (without children) Test"
 a = 0
-expr = Syn.Loop( Syn.EQ(Syn.PreInc(&a),5) )
+expr = Syn.Loop( Syn.EQ(Syn.PreInc($a),5) )
 > "Executing: ", expr
 expr()
 

@@ -1407,7 +1407,6 @@ Parsing::TokenInstance* SourceLexer::checkOperator()
          if( m_text == "^." ) return parser->T_COMPOSE.makeInstance(m_sline, m_schr);
          
          if( m_text == "^=" ) return parser->T_EVALRET.makeInstance(m_sline, m_schr);
-         if( m_text == "^*" ) return parser->T_EVALRET_EXEC.makeInstance(m_sline, m_schr);
          if( m_text == "^?" ) return parser->T_EVALRET_DOUBT.makeInstance(m_sline, m_schr);
 
          if( m_text == "::" ) return parser->T_DoubleColon.makeInstance(m_sline, m_schr);
@@ -1421,11 +1420,12 @@ Parsing::TokenInstance* SourceLexer::checkOperator()
          break;
 
       case 3:
+         if( m_text == "^=&" ) return parser->T_EVALRET_EXEC.makeInstance(m_sline, m_schr);
          if( m_text == "**=" ) return parser->T_AutoPow.makeInstance(m_sline, m_schr);
          if( m_text == "===" ) return parser->T_EEQ.makeInstance(m_sline, m_schr);
          if( m_text == ">>=" ) return parser->T_AutoRShift.makeInstance(m_sline, m_schr);
          if( m_text == "<<=" ) return parser->T_AutoLShift.makeInstance(m_sline, m_schr);
-         if( m_text == "*=>" ) return parser->T_STARARROW.makeInstance(m_sline, m_schr);
+         if( m_text == "&=>" ) return parser->T_ETAARROW.makeInstance(m_sline, m_schr);
          break;
    }
 

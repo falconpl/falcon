@@ -22,9 +22,9 @@ end
 > "Homoiconic For/to simple"
 
 expr = ForTo( 
-   &var,
+   $var,
    10, Call(gen,7), nil,
-   FastPrintNL(&var)
+   FastPrintNL($var)
    )
    
 expr()

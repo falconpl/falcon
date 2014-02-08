@@ -20,7 +20,7 @@ import Syn.*
 > "Composing a = 0; while a < 5; > \"A: \", a; ++a; end"
 
 a = 0
-expr = While( LT(&a,5), FastPrint( "A: ", &a, "\n" ), PreInc(&a))
+expr = While( LT($a,5), FastPrint( "A: ", $a, "\n" ), PreInc($a))
 expr()
 
 > "Done."

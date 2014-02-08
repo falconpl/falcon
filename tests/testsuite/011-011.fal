@@ -16,8 +16,8 @@ import Syn.*
 > "Homoiconic If complex"
 
 expr = If( 
-   SynTree( EQ(&a,0), FastPrintNL("A is 0")), 
-   SynTree( Or(EQ(&a,1), EQ(2,&a)), FastPrintNL("A is 1 or 2")),
+   SynTree( EQ($a,0), FastPrintNL("A is 0")), 
+   SynTree( Or(EQ($a,1), EQ(2,$a)), FastPrintNL("A is 1 or 2")),
    SynTree( nil, FastPrintNL("A is something else"))  
    )
 a = 0

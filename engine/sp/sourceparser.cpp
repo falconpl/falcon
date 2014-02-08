@@ -113,7 +113,7 @@ SourceParser::SourceParser():
    T_EVALRET( "^=", 150),
    T_EVALRET_EXEC( "^*", 150),
    T_EVALRET_DOUBT( "^?", 150),
-   T_STARARROW( "*=>", 170),
+   T_ETAARROW( "*=>", 170),
 
    T_Comma( "," , 180 ),
    T_QMark( "?" , 175, true ),
@@ -481,7 +481,7 @@ SourceParser::SourceParser():
    Expr<< (r_Expr_array_decl2 << "Expr_array_decl2" << apply_expr_array_decl2 << T_DotSquare );
    Expr<< (r_Expr_accumulator << "Expr_accumulator" << apply_expr_accumulator << T_CapSquare << AccumulatorBody );
    
-   Expr<< (r_Expr_amper << "Expr_dyns" << apply_expr_amper << T_Amper << T_Name );
+   Expr<< (r_Expr_amper << "Expr_dyns" << apply_expr_amper << T_Dollar << T_Name );
    
    Expr<< (r_Expr_dot << "Expr_dot" << apply_expr_dot << Expr << T_Dot << T_Name);
    Expr<< (r_Expr_plus << "Expr_plus" << apply_expr_plus << Expr << T_Plus << Expr);
@@ -528,7 +528,7 @@ SourceParser::SourceParser():
    
    Expr<< (r_Expr_Atom << "Expr_atom" << apply_expr_atom << Atom);
    Expr<< (r_Expr_function << "Expr_func" << apply_expr_func << T_function << T_Openpar << ListSymbol << T_Closepar << T_EOL);
-   Expr<< (r_Expr_functionEta << "Expr_funcEta" << apply_expr_funcEta << T_function << T_Times << T_Openpar << ListSymbol << T_Closepar << T_EOL);
+   Expr<< (r_Expr_functionEta << "Expr_funcEta" << apply_expr_funcEta << T_function << T_Amper << T_Openpar << ListSymbol << T_Closepar << T_EOL);
    // Start of lambda expressions.
    Expr<< (r_Expr_lambda << "Expr_lambda" << apply_expr_lambda << T_OpenGraph );
    Expr<< (r_Expr_ep << "Expr_ep" << apply_expr_ep << T_CapPar );
@@ -546,12 +546,12 @@ SourceParser::SourceParser():
       << (r_function << "Function decl" << apply_function
              << T_function << T_Name << T_Openpar << ListSymbol << T_Closepar << T_EOL )
       << (r_function_eta << "Function ETA decl" << apply_function_eta
-             << T_function << T_Times << T_Name << T_Openpar << ListSymbol << T_Closepar << T_EOL )
+             << T_function << T_Amper << T_Name << T_Openpar << ListSymbol << T_Closepar << T_EOL )
       ;
       
    S_Return << "Return"
       << (r_return_doubt << "return doubt" << apply_return_doubt << T_return << T_QMark << Expr << T_EOL)
-      << (r_return_eval << "return eval" << apply_return_eval << T_return << T_Times << Expr << T_EOL)
+      << (r_return_eval << "return eval" << apply_return_eval << T_return << T_Amper << Expr << T_EOL)
       << (r_return_break << "return break" << apply_return_break << T_return << T_break << T_EOL)
       << (r_return_expr << "return expr" << apply_return_expr << T_return << Expr << T_EOL)
       << (r_return << "return" << apply_return << T_return << T_EOL)
@@ -667,7 +667,7 @@ SourceParser::SourceParser():
                         << T_OpenSquare << ListSymbol << T_CloseSquare );
    
    LambdaParams << ( r_lambda_params_eta << "Params in lambda ETA" << apply_lambda_params_eta
-                        << ListSymbol << T_STARARROW );
+                        << ListSymbol << T_ETAARROW );
    LambdaParams << ( r_lambda_params << "Params in lambda" << apply_lambda_params 
                         << ListSymbol << T_Arrow );
 

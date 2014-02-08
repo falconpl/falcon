@@ -55,7 +55,7 @@ void ExprEvalRetExec::apply_( const PStep* ps, VMContext* ctx )
 
 const String& ExprEvalRetExec::exprName() const
 {
-   static String name("^*");
+   static String name("^=&");
    return name;
 }
 

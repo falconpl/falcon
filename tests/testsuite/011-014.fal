@@ -18,9 +18,9 @@ end
 > "Homoiconic For/to complex"
 
 expr = ForTo( 
-   &var,
+   $var,
    10, Call(gen,10), Call(gen, 1),
-   FastPrint(&var),
+   FastPrint($var),
    FastPrint("Values: "),
    FastPrint(","),
    FastPrintNL(".")

@@ -170,11 +170,13 @@ void Function::render( TextWriter* tgt, int32 depth ) const
       tgt->write( String(" ").replicate(depth*PStep::depthIndent) );
    }
 
-   if( name() == "" || name().startsWith("_anon#") ) {
+   bool isAnon = name() == "" || name().startsWith("_anon#");
+
+   if( isAnon ) {
       tgt->write( "{" );
    }
    else {
-      tgt->write( "function " );
+      tgt->write( isEta() ? "function& " : "function " );
       tgt->write( name() );
       tgt->write( "(" );
    }
@@ -190,8 +192,8 @@ void Function::render( TextWriter* tgt, int32 depth ) const
       tgt->write(param);
    }
 
-   if( name() == "" || name().startsWith("_anon#") ) {
-      tgt->write( " => \n" );
+   if( isAnon ) {
+      tgt->write( isEta() ? " &=> \n" : " => \n" );
    }
    else {
       tgt->write( ")\n" );
@@ -203,7 +205,7 @@ void Function::render( TextWriter* tgt, int32 depth ) const
       tgt->write( String(" ").replicate(depth*PStep::depthIndent) );
    }
 
-   if( name() == "" || name().startsWith("_anon#") ) {
+   if( isAnon ) {
       tgt->write( "}" );
    }
    else {

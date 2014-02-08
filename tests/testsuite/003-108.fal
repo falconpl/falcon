@@ -13,7 +13,7 @@ dd0 = VMContext.dataDepth
 a = "Hello"
 b = "World"
 
-block =  {() ^*(a+" "+b) }
+block =  {() ^=&(a+" "+b) }
 
 result = block()
 >> "Block = ", block.render()

@@ -9,12 +9,12 @@
 @endoutput
 */
 
-function* sumMacro( p0, p1 )
-   return* {[] ^~p0 + ^~p1 }
+function& sumMacro( p0, p1 )
+   return& {[] ^~p0 + ^~p1 }
 end
 
-function* multMacro( p0, p1 )
-   return* {[] ^~p0 * ^~p1 }
+function& multMacro( p0, p1 )
+   return& {[] ^~p0 * ^~p1 }
 end
 
 a = 10

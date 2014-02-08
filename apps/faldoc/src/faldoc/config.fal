@@ -67,7 +67,7 @@ class Config
          conf.read()
          self.cfile = conf
          
-      catch IoError in error
+      catch IOError in error
          faldoc.fatal( i"Invalid input file $(fdfile)" )
          return false
       catch in error

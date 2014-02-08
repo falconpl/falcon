@@ -162,7 +162,7 @@ void StmtReturn::render( TextWriter* tw, int32 depth ) const
 
    if( m_bHasEval )
    {
-      tw->write( "*" );
+      tw->write( "&" );
    }
 
    if( m_bHasDoubt )

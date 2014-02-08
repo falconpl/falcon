@@ -1081,8 +1081,6 @@ FALCON_DEFINE_FUNCTION_P1(cascade)
 
   If one expression yields a return break value, the computation is
   interrupted and the previous evaluation result is returned.
-
-
  */
 
 FALCON_DEFINE_FUNCTION_P1(perform)
@@ -1125,6 +1123,66 @@ FALCON_DEFINE_FUNCTION_P1(perform)
    ctx->pushData(Item());
    ctx->stepIn( &s_stepNext );
 }
+
+
+/*#
+  @function firstOf
+  @brief (ETA) Invokes the parameters till one is evaluated as non-nil
+  @param ... ETA expressions to be invoked.
+  @return The result of the evaluation of the first non-nil expression
+
+  This function invokes all the expressions passed as ETA parameters
+  one after another.
+
+  If one expression yields a return break value, the computation is
+  interrupted and the previous evaluation result is returned.
+ */
+
+FALCON_DEFINE_FUNCTION_P1(firstOf)
+{
+   // This is called after op_next generates the next item.
+   class PStepGetNext: public PStep {
+   public:
+      PStepGetNext(){ apply = apply_;}
+      virtual ~PStepGetNext() {}
+      virtual void describeTo(String& tgt) { tgt = "Function_perform::PStepGetNext"; }
+
+      static void apply_(const PStep*, VMContext* ctx )
+      {
+         // are we done?
+         if( ctx->topData().isBreak() )
+         {
+            ctx->returnFrame(*ctx->local(0));
+            return;
+         }
+
+         *ctx->local(0) = ctx->topData();
+         ctx->popData();
+         // remove this code, PStepFuncResult is now in charge.
+         CodeFrame& cf = ctx->currentCode();
+         if( cf.m_seqId >= ctx->paramCount() )
+         {
+            ctx->returnFrame(*ctx->local(0));
+            return;
+         }
+
+         Item* expr = ctx->param(cf.m_seqId++);
+         TreeStep* ts = static_cast<TreeStep*>(expr->asInst());
+         ctx->pushCode( ts );
+      }
+   };
+   static PStepGetNext s_stepNext;
+
+   // prepare the code that will interpret op_iter result
+   ctx->addLocals(1);
+   ctx->pushData(Item());
+   ctx->stepIn( &s_stepNext );
+}
+
+
+// NOTICE: for 1.0 alpha
+// left currently undocumented.
+// TODO: Check this out and document it if useful.
 
 FALCON_DEFINE_FUNCTION_P(ffor)
 {

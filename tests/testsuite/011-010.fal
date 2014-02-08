@@ -14,7 +14,7 @@ import Syn.*
 
 > "Homoiconic If double"
 
-expr = If( SynTree( EQ(&a,0), FastPrintNL("A is 0")), SynTree( EQ(&a,1), FastPrintNL("A is 1")) )
+expr = If( SynTree( EQ($a,0), FastPrintNL("A is 0")), SynTree( EQ($a,1), FastPrintNL("A is 1")) )
 a = 0
 expr()
 a = 1

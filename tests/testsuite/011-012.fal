@@ -16,7 +16,7 @@ import Syn.*
 
 expr = Rule( 
    RuleSynTree(
-      EQ(&a,0), 
+      EQ($a,0), 
       FastPrintNL("A is 0")
       )
    )
@@ -26,7 +26,7 @@ expr()
 expr = Rule( 
    // first alternative
    RuleSynTree(
-      EQ(&a,0), 
+      EQ($a,0), 
       FastPrintNL("A is 0")
       ),
    // Second alternative

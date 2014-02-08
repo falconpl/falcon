@@ -80,7 +80,7 @@ public:
    Parsing::Terminal T_EVALRET;
    Parsing::Terminal T_EVALRET_EXEC;
    Parsing::Terminal T_EVALRET_DOUBT;
-   Parsing::Terminal T_STARARROW;
+   Parsing::Terminal T_ETAARROW;
    
    Parsing::Terminal T_Comma;
    Parsing::Terminal T_QMark;
