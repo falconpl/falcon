@@ -116,9 +116,10 @@ void apply_modspec_first_dot( const Rule&, Parser& p)
    // T_Dot
    SourceParser* sp = static_cast<SourceParser*>(&p);
    TokenInstance* tfirst = p.getNextToken();
+   TokenInstance* tname = p.getNextToken();
    TokenInstance* tspec = TokenInstance::alloc( tfirst->line(), tfirst->chr(), sp->ModSpec );
-   tspec->setValue( String(".") );
-   p.simplify(1, tspec);
+   tspec->setValue( String("." + *tname->asString()) );
+   p.simplify(2, tspec);
 }
 
 }

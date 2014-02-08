@@ -342,9 +342,9 @@ SourceParser::SourceParser():
 
    ModSpec << "ModSpec" << load_modspec_errhand;
    ModSpec << (r_modspec_next << "modspec_next" << apply_modspec_next << ModSpec << T_Dot << T_Name );
-   ModSpec << (r_modspec_first << "modspec_first" << apply_modspec_first << T_Name );
+   ModSpec << (r_modspec_first_dot << "modspec_first_dot" << apply_modspec_first_dot << T_Dot << T_Name );
    ModSpec << (r_modspec_first_self << "modspec_first_self" << apply_modspec_first_self << T_self );
-   ModSpec << (r_modspec_first_dot << "modspec_first_dot" << apply_modspec_first_dot << T_Dot );
+   ModSpec << (r_modspec_first << "modspec_first" << apply_modspec_first << T_Name );
 
    S_Export << "export" << export_errhand;
    S_Export << ( r_export_rule << "export_rule" << apply_export_rule << T_export << ListSymbol << T_EOL );
