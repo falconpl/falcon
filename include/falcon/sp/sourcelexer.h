@@ -137,6 +137,7 @@ private:
             || isParenthesis(chr)
             || isTokenStarter(chr)
             || isNameCharacter( chr )
+            || chr == '\\'
             ;
    }
 
