@@ -37,12 +37,12 @@
 #include <falcon/textwriter.h>
 #include <falcon/symbol.h>
 #include <falcon/module.h>
+#include <falcon/stderrors.h>
 
 #include <falcon/psteps/stmtreturn.h>
 #include <falcon/psteps/exprself.h>
 #include <falcon/psteps/exprparentship.h>
 #include <falcon/psteps/exprinherit.h>
-#include <falcon/stderrors.h>
 
 #include "falconinstance_private.h"
 
@@ -154,9 +154,9 @@ FalconClass::Property::Property( ExprInherit* value ):
 }
 
 
-FalconClass::Property::Property( Function* value ):
+FalconClass::Property::Property( Function* value, bool bStatic ):
    m_name( value->name() ),
-   m_type(t_func),
+   m_type( bStatic ? t_static_func : t_func),
    m_expr(0)
 {
    m_value.func = value;
@@ -254,7 +254,7 @@ bool FalconClass::registerAttributes( VMContext* ctx )
    return bDone;
 }
 
-bool FalconClass::addProperty( const String& name, const Item& initValue )
+bool FalconClass::addProperty( const String& name, const Item& initValue, bool bIsStatic )
 {
    TRACE1( "Addong a property \"%s\" to class %s with value.", name.c_ize(), m_name.c_ize() );
    
@@ -274,7 +274,9 @@ bool FalconClass::addProperty( const String& name, const Item& initValue )
    }
 
    // insert a new property with the required default value
-   members[name] = new  Property( name, initValue );
+   Property* prop = new Property( name, bIsStatic ? Property::t_static_prop : Property::t_prop );
+   prop->m_dflt = initValue;
+   members[name] = prop;
 
    // is this thing deep? -- if it is so, we should mark it
    if( initValue.type() >= FLC_ITEM_METHOD )
@@ -286,7 +288,7 @@ bool FalconClass::addProperty( const String& name, const Item& initValue )
 }
 
 
-bool FalconClass::addProperty( const String& name, Expression* initExpr )
+bool FalconClass::addProperty( const String& name, Expression* initExpr, bool bIsStatic )
 {
    TRACE1( "Adding a property \"%s\" to class %s with expression.", name.c_ize(), m_name.c_ize() );
    
@@ -306,7 +308,8 @@ bool FalconClass::addProperty( const String& name, Expression* initExpr )
    }
 
    // insert a new property -- and record its insertion
-   Property* prop = new Property( name, Item(), initExpr );
+   Property* prop = new Property( name, bIsStatic ? Property::t_func : Property::t_static_func );
+   prop->expression(initExpr);
    members[name] = prop;
 
    // declare that we need this expression to be initialized.
@@ -348,12 +351,12 @@ bool FalconClass::addProperty( const String& name )
 }
 
 
-bool FalconClass::addMethod( Function* mth )
+bool FalconClass::addMethod( Function* mth, bool bStatic )
 {
-   return addMethod( mth->name(), mth );
+   return addMethod( mth->name(), mth, bStatic );
 }
 
-bool FalconClass::addMethod( const String& name, Function* mth )
+bool FalconClass::addMethod( const String& name, Function* mth, bool bStatic )
 {
    TRACE1( "Adding method \"%s\" to class %s.", name.c_ize(), m_name.c_ize() );
    
@@ -375,7 +378,7 @@ bool FalconClass::addMethod( const String& name, Function* mth )
    // insert a new property with the required ID
    mth->methodOf( this );
    mth->module(this->module());
-   members[name] = new Property( mth );
+   members[name] = new Property( mth, bStatic );
    overrideAddMethod( mth->name(), mth );
    return true;
 }
@@ -491,10 +494,12 @@ bool FalconClass::getProperty( const String& name, Item& target ) const
    switch( prop.m_type )
    {
       case Property::t_prop:
+      case Property::t_static_prop:
          target = prop.m_dflt;
          break;
 
       case Property::t_func:
+      case Property::t_static_func:
          target = prop.m_value.func;
          break;
 
@@ -744,6 +749,7 @@ bool FalconClass::construct( VMContext* ctx )
    return true;
 }
 
+
 HyperClass* FalconClass::hyperConstruct()
 {
    TRACE( "Creating an hyperclass from %s", name().c_ize() );
@@ -865,7 +871,9 @@ void FalconClass::describe( void* instance, String& target, int depth, int maxle
       virtual bool operator()( const String& name )
       {
          Item theItem;
-         if( m_class->getProperty( name )->m_type == Property::t_prop )
+         String temp;
+         const Property* p = m_class->getProperty( name );
+         if( p->m_type == Property::t_prop )
          {
             #ifndef NDEBUG
             bool found = m_inst->getProperty( name, theItem );
@@ -873,13 +881,18 @@ void FalconClass::describe( void* instance, String& target, int depth, int maxle
             #else
             m_inst->getProperty( name, theItem );
             #endif
-            String temp;
             if( theItem.isMethod() )
             {
                theItem = theItem.asMethodFunction();
             }
             theItem.describe( temp, m_depth-1, m_maxlen );
+         }
+         else if( p->m_type == Property::t_static_prop ) {
+            p->m_dflt.describe( temp, m_depth-1, m_maxlen );
+         }
 
+         if( ! temp.empty() )
+         {
             if( m_target != "" )
             {
                m_target += ", ";
@@ -1004,6 +1017,7 @@ void FalconClass::flattenSelf( ItemArray& flatArray ) const
       switch( prop->m_type )
       {
          case Property::t_prop:
+         case Property::t_static_prop:
             flatArray.append( prop->m_dflt );
             if( prop->expression() != 0 )
             {
@@ -1015,6 +1029,7 @@ void FalconClass::flattenSelf( ItemArray& flatArray ) const
             break;
             
          case Property::t_func:
+         case Property::t_static_func:
             flatArray.append( Item( prop->m_value.func->handler(), prop->m_value.func ) );
             break;
             
@@ -1069,6 +1084,7 @@ void FalconClass::unflattenSelf( ItemArray& flatArray )
       switch( prop->m_type )
       {
          case Property::t_prop:
+         case Property::t_static_prop:
             prop->m_dflt = flatArray[count++];
             if( flatArray[count].isUser() ) {
                prop->expression( static_cast<Expression*>( flatArray[count].asInst() ));
@@ -1078,6 +1094,7 @@ void FalconClass::unflattenSelf( ItemArray& flatArray )
             break;
             
          case Property::t_func:
+         case Property::t_static_func:
             prop->m_value.func = static_cast<Function*>(flatArray[count].asInst());
             overrideAddMethod( prop->m_name, prop->m_value.func );
             prop->m_value.func->methodOf(this);
@@ -1235,6 +1252,23 @@ void FalconClass::op_getProperty( VMContext* ctx, void* self, const String& prop
          }
       }
       else {
+         Private::MemberMap::const_iterator iter = _p->m_members->find(propName);
+         if( iter != _p->m_members->end() )
+         {
+            Property* prop = iter->second;
+            if( prop->m_type == Property::t_static_prop )
+            {
+               ctx->topData().copyFromRemote(prop->m_dflt);
+               return;
+            }
+            else if( prop->m_type == Property::t_static_func ) {
+               // use the instance as self, as we have a static function accessed via instance.
+               // when accesses via class, the class will be the self.
+               ctx->topData().setUser(const_cast<FalconClass*>(this), inst);
+               ctx->topData().methodize(prop->m_value.func);
+               return;
+            }
+         }
          // Default to base class
          Class::op_getProperty( ctx, self, propName );
       }
@@ -1266,9 +1300,71 @@ void FalconClass::op_setProperty( VMContext* ctx, void* self, const String& prop
          ctx->popData();
       }
       else {
+         Private::MemberMap::const_iterator iter = _p->m_members->find(propName);
+         if( iter != _p->m_members->end() )
+         {
+            ctx->popData();
+            Property* prop = iter->second;
+            if( prop->m_type == Property::t_static_prop )
+            {
+               prop->m_dflt.copyFromLocal(ctx->topData());
+               return;
+            }
+            // we don't allow to override static methods.
+         }
          // Default to base class
          Class::op_setProperty( ctx, self, propName );
       }
+   }
+}
+
+
+void FalconClass::op_getClassProperty( VMContext* ctx, const String& propName) const
+{
+   Private::MemberMap::const_iterator iter = _p->m_members->find(propName);
+   if( iter != _p->m_members->end() )
+   {
+      Property* prop = iter->second;
+      if( prop->m_type == Property::t_static_prop )
+      {
+         ctx->topData().copyFromRemote(prop->m_dflt);
+      }
+      else if( prop->m_type == Property::t_static_func ) {
+         // use this class as self.
+         ctx->topData().setUser( this->handler(), const_cast<FalconClass*>(this));
+         ctx->topData().methodize(prop->m_value.func);
+      }
+      else {
+         throw FALCON_SIGN_XERROR(AccessError, e_static_access, .extra(propName) );
+      }
+   }
+   else{
+      // Default to base class
+      Class::op_getClassProperty( ctx, propName );
+   }
+}
+
+
+void FalconClass::op_setClassProperty( VMContext* ctx, const String& propName ) const
+{
+   Private::MemberMap::const_iterator iter = _p->m_members->find(propName);
+   if( iter != _p->m_members->end() )
+   {
+      Property* prop = iter->second;
+      // we don't allow to override static methods
+      // -- so, just check for static properties.
+      if( prop->m_type == Property::t_static_prop )
+      {
+         ctx->popData();
+         prop->m_dflt.copyFromLocal(ctx->topData());
+      }
+      else {
+         throw FALCON_SIGN_XERROR(AccessError, e_static_access, .extra(propName) );
+      }
+   }
+   else{
+      // Default to base class
+      Class::op_setClassProperty( ctx, propName );
    }
 }
 
@@ -1323,6 +1419,10 @@ void FalconClass::render( TextWriter* tw, int32 depth )  const
    {
       Property* prop = *pl_iter;
       tw->write( PStep::renderPrefix(dp) );
+      if( prop->isStatic() )
+      {
+         tw->write( "static " );
+      }
       tw->write( prop->m_name );
       tw->write( " = " );
       prop->expression()->render( tw, PStep::relativeDepth(dp) );
@@ -1348,8 +1448,13 @@ void FalconClass::render( TextWriter* tw, int32 depth )  const
    while( mi_iter != _p->m_members->end() )
    {
       const Property* prop = mi_iter->second;
-      if( prop->m_type == Property::t_func )
+      if ( prop->m_type == Property::t_func || prop->m_type == Property::t_func )
       {
+         if( prop->m_type == Property::t_static_func )
+         {
+            tw->write( "static ");
+         }
+
          prop->m_value.func->render(tw, dp );
          // add an extra \n for elegance.
          tw->write( "\n" );
@@ -1451,25 +1556,39 @@ void FalconClass::initInstance( FalconInstance* inst ) const
    {
       const Property* prop = iter->second;
       // create the property value
-      Item& tgt = inst->_p->m_data[&prop->m_name];
 
       switch( prop->m_type )
       {
          case FalconClass::Property::t_prop:
-            tgt = prop->m_dflt;
+            {
+               Item& tgt = inst->_p->m_data[&prop->m_name];
+               tgt = prop->m_dflt;
+            }
             break;
 
          case FalconClass::Property::t_func:
-            tgt.setUser( this, inst );
-            tgt.methodize( prop->m_value.func );
+            {
+               Item& tgt = inst->_p->m_data[&prop->m_name];
+               tgt.setUser( this, inst );
+               tgt.methodize( prop->m_value.func );
+            }
             break;
 
          case FalconClass::Property::t_inh:
-            tgt.setUser( prop->m_value.inh->base(), inst );
+            {
+               Item& tgt = inst->_p->m_data[&prop->m_name];
+               tgt.setUser( prop->m_value.inh->base(), inst );
+            }
             break;
 
          case FalconClass::Property::t_state:
             //TODO
+            break;
+
+         // no initialization for statics
+         case FalconClass::Property::t_static_prop:
+         case FalconClass::Property::t_static_func:
+            // Test
             break;
       }
 

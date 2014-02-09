@@ -33,6 +33,7 @@ void apply_class_statement( const Rule&, Parser& p );
 void apply_object_statement( const Rule&, Parser& p );
 
 void apply_pdecl_expr( const Rule&, Parser& p );
+void apply_static_pdecl_expr( const Rule&, Parser& p );
 void apply_init_expr( const Rule&, Parser& p );
 
 void apply_FromClause_next( const Rule&, Parser& p );

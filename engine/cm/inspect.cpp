@@ -206,6 +206,9 @@ static void internal_inspect( TextWriter* tw, const Item& itm, int32 depth, int3
                const FalconClass::Property* prop = m_fcls->getProperty(propName);
                switch( prop->m_type )
                {
+               case FalconClass::Property::t_static_prop:
+                  m_tw->write( "static " );
+                  /* no break */
                case FalconClass::Property::t_prop:
                   m_fi->getProperty( propName, item );
                   m_tw->write( propName );
@@ -226,6 +229,9 @@ static void internal_inspect( TextWriter* tw, const Item& itm, int32 depth, int3
                   m_tw->write( "]\n" );
                   break;
 
+               case FalconClass::Property::t_static_func:
+                  m_tw->write( "static " );
+                  /* no break */
                case FalconClass::Property::t_func:
                   m_tw->write( propName );
                   m_tw->write( "()\n" );

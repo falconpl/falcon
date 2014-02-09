@@ -160,6 +160,7 @@ public:
    Parsing::Terminal T_default;
    Parsing::Terminal T_select;
    Parsing::Terminal T_loop;
+   Parsing::Terminal T_static;
    
    Parsing::Terminal T_RString;
    Parsing::Terminal T_IString;
@@ -491,6 +492,12 @@ public:
    Parsing::NonTerminal S_PropDecl;
    Parsing::Rule r_propdecl_expr;
    Parsing::Rule r_propdecl_simple;
+
+   Parsing::NonTerminal S_StaticPropDecl;
+   Parsing::Rule r_propdecl_static_expr;
+   Parsing::Rule r_static_function;
+   Parsing::Rule r_static_function_eta;
+
 
    //================================================
    // Atom

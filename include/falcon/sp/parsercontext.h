@@ -325,7 +325,7 @@ public:
     The symbol, if provided, is given back to onNewFunction callback
     in the compiler context when the function is closed.
     */
-   void openFunc( SynFunc *func );
+   void openFunc( SynFunc *func, bool bIsStatic = false );
 
    /** Opens a new Class statement context.
     \param cls The class being created.

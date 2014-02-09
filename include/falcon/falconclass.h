@@ -98,7 +98,9 @@ public:
          t_prop,
          t_func,
          t_inh,
-         t_state
+         t_state,
+         t_static_prop,
+         t_static_func
       } Type;
 
       String m_name;
@@ -126,11 +128,13 @@ public:
 
       Property( const String& name, const Item& value, Expression* expr );
 
-      Property( Function* value );
+      Property( Function* value, bool bIsStatic = false );
       Property( ExprInherit* value );
       Property( FalconState* value );
 
       ~Property();
+
+      bool isStatic() const { return m_type == t_static_func || m_type == t_static_prop; }
 
       /** Returns associated expression (if this property holds an expression).
        \return a valid PCode or 0 if this is not an expression.
@@ -171,7 +175,7 @@ public:
     \note In case this need arises, consider adding a UserData
     to a FalconClass subclass, and passing it as initValue here.
     */
-   bool addProperty( const String& name, const Item& initValue );
+   bool addProperty( const String& name, const Item& initValue, bool bIsStatic = false );
 
    /** Adds a property.
     \param name The name of the property to be added.
@@ -187,7 +191,7 @@ public:
     \note In case this need arises, consider adding a UserData
     to a FalconClass subclass, and passing it as initValue here.
     */
-   bool addProperty( const String& name, Expression* initExpr );
+   bool addProperty( const String& name, Expression* initExpr, bool bIsStatic = false );
 
     /** Adds a property.
     \param name The name of the property to be added.
@@ -207,9 +211,9 @@ public:
     the garbage collector, or the caller must be able to remove them when not
     needed anymore.
     */
-   bool addMethod( Function* mth );
+   bool addMethod( Function* mth, bool bIsStatic = false );
    
-   bool addMethod( const String& name, Function* mth );
+   bool addMethod( const String& name, Function* mth, bool bIsStatic = false );
 
    bool hasInit() const { return m_hasInit; }
    void hasInit( bool bMode ) { m_hasInit = bMode; }
@@ -405,6 +409,9 @@ public:
    virtual bool op_init( VMContext* ctx, void* instance, int32 pcount ) const;
    virtual void op_getProperty( VMContext* ctx, void* self, const String& prop) const;
    virtual void op_setProperty( VMContext* ctx, void* self, const String& prop ) const;
+   virtual void op_getClassProperty( VMContext* ctx, const String& prop) const;
+   virtual void op_setClassProperty( VMContext* ctx, const String& prop ) const;
+
 
    ExprParentship* getParentship();
 

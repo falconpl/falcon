@@ -1,0 +1,47 @@
+/*
+@name Static property
+@category Classes
+
+@output
+Properties for x (b=3): a=1 b=3
+Properties for y (b=4): a=2 b=4
+Class props in x (b=2): b=2
+Class props in y (b=3): b=3
+Class props in Test (b=1): b=1
+Done
+@endoutput
+*/
+
+class Test
+   a = 0
+   static b = 1
+   
+   function test( s )
+      > "Properties for ", s, ": a=", self.a, " b=", self.b
+   end
+   
+   static function static_test(s)
+      > "Class props in ", s, ": b=", self.b
+   end
+     
+end
+
+x = Test()
+y = Test()
+x.a = 1
+y.a = 2
+
+y.b = 3
+x.test("x (b=3)")
+x.b = 4
+y.test("y (b=4)")
+
+y.b = 2
+x.static_test("x (b=2)")
+Test.b = 3
+y.static_test("y (b=3)")
+x.b = 1
+Test.static_test("Test (b=1)")
+
+> "Done"
+

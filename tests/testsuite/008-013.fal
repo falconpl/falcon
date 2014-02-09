@@ -1,0 +1,48 @@
+/*
+@name Static property
+@category Classes
+
+@result ok
+*/
+
+class Test
+   a = 0
+   static b = 1
+end
+
+x = Test()
+y = Test()
+x.a = 1
+y.a = 2
+result = "ok"
+
+> "Check non-static property: ", x.a, " != ", y.a
+if x.a == y.a
+   result = "fail"
+end
+
+x.b = 1
+y.b = 2
+> "Check static property: ", x.b, " == ", y.b
+if x.b != 2
+   result = "fail"
+end
+
+Test.b = 3
+> "Check static access Test.b: ", Test.b , " == ", y.b
+if 3 != x.b
+   result = "fail"
+end
+
+>> "Check non-static access Test.a: "
+
+try
+   > Test.a
+   result = "fail"
+catch
+   > "ok"
+end
+
+> "Result: ", result
+
+return result

@@ -73,12 +73,13 @@ public:
 
 using namespace Parsing;
 
-static SynFunc* inner_apply_function( const Rule&, Parser& p, bool bHasExpr, bool isEta )
+static SynFunc* inner_apply_function( const Rule&, Parser& p, bool bHasExpr, bool isEta, bool isStatic )
 {
    //<< (r_Expr_function << "Expr_function" << apply_function << T_function << T_Name << T_Openpar << ListSymbol << T_Closepar << T_EOL )
    ParserContext* ctx = static_cast<ParserContext*>(p.context());
    //SourceParser& sp = *static_cast<SourceParser*>(&p);
    
+   if( isStatic ) p.getNextToken(); // 'static'
    p.getNextToken();//T_function
    if( isEta ) p.getNextToken();// '*'
    TokenInstance* tname = p.getNextToken();
@@ -87,6 +88,10 @@ static SynFunc* inner_apply_function( const Rule&, Parser& p, bool bHasExpr, boo
 
    TokenInstance* tstatement = 0;
    int tcount = bHasExpr ? 8 : 6;
+   if (isStatic)
+   {
+      tcount++;
+   }
 
    if( bHasExpr )
    {
@@ -125,7 +130,7 @@ static SynFunc* inner_apply_function( const Rule&, Parser& p, bool bHasExpr, boo
       if( ctx->currentClass() != 0 )
       {
          ctx->onOpenMethod( (Class*)ctx->currentClass(), func );
-         ctx->openFunc(func);
+         ctx->openFunc(func, isStatic );
          p.pushState( "Main" );
       }
       // try to create the function
@@ -141,14 +146,23 @@ static SynFunc* inner_apply_function( const Rule&, Parser& p, bool bHasExpr, boo
 
 void apply_function(const Rule& r,Parser& p)
 {
-   inner_apply_function( r, p, false, false );
+   inner_apply_function( r, p, false, false, false );
 }
 
 void apply_function_eta(const Rule& r,Parser& p)
 {
-   inner_apply_function( r, p, false, true );
+   inner_apply_function( r, p, false, true, false );
 }
 
+void apply_static_function(const Rule& r,Parser& p)
+{
+   inner_apply_function( r, p, false, false, true );
+}
+
+void apply_static_function_eta(const Rule& r,Parser& p)
+{
+   inner_apply_function( r, p, false, false, true );
+}
 
 void on_close_function( void* thing )
 {
@@ -156,17 +170,6 @@ void on_close_function( void* thing )
    SourceParser& sp = *static_cast<SourceParser*>(thing);
    ParserContext* ctx = static_cast<ParserContext*>(sp.context());
    SynFunc* func = ctx->currentFunc();
-
-   /*
-   ATM I don't want this
-   if ( func->syntree().size() == 1 )
-   {
-      if( func->syntree().at(0)->handler()->userFlags() == FALCON_SYNCLASS_ID_RULE )
-      {
-         func->setPredicate( true );
-      }
-   }
-   */
    
    // was this a closure?
    if( func->hasClosure() ) {

@@ -30,6 +30,8 @@ using namespace Parsing;
 
 void apply_function(const Rule& r,Parser& p);
 void apply_function_eta(const Rule& r,Parser& p);
+void apply_static_function(const Rule& r,Parser& p);
+void apply_static_function_eta(const Rule& r,Parser& p);
 void apply_expr_func(const Rule&, Parser& p);
 void apply_expr_funcEta(const Rule&, Parser& p);
 void apply_return_doubt(const Rule&, Parser& p);

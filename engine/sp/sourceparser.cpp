@@ -204,6 +204,7 @@ SourceParser::SourceParser():
    T_default("default"),
    T_select("select"),
    T_loop("loop"),
+   T_static("static"),
 
    T_RString("R-String"),
    T_IString("I-String"),
@@ -653,6 +654,15 @@ SourceParser::SourceParser():
    S_PropDecl << (r_propdecl_expr << "Expression Property" << apply_pdecl_expr
                                << T_Name << T_EqSign << Expr << T_EOL );
 
+   S_StaticPropDecl << (r_propdecl_static_expr << "Expression Property" << apply_static_pdecl_expr
+                             << T_static << T_Name << T_EqSign << Expr << T_EOL );
+   S_StaticPropDecl << (r_static_function << "Function decl" << apply_static_function
+                             << T_static << T_function << T_Name << T_Openpar << ListSymbol << T_Closepar << T_EOL );
+   S_StaticPropDecl << (r_static_function_eta << "Function ETA decl" << apply_static_function_eta
+                             << T_static << T_function << T_Amper << T_Name << T_Openpar << ListSymbol << T_Closepar << T_EOL );
+
+
+
    S_InitDecl << (r_init << "Init block" << apply_init_expr
                                << T_init << T_EOL );
 
@@ -794,6 +804,7 @@ SourceParser::SourceParser():
       << S_InitDecl
       << S_SmallEnd
       << S_EmptyLine
+      << S_StaticPropDecl
       ;
    
 

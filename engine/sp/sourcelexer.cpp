@@ -1273,17 +1273,14 @@ Parsing::TokenInstance* SourceLexer::checkWord()
          if ( m_text == "export" ) return parser->T_export.makeInstance(m_sline, m_schr);
          if ( m_text == "global" ) return parser->T_global.makeInstance(m_sline, m_schr);
          if ( m_text == "object" ) return parser->T_object.makeInstance(m_sline, m_schr);
+         if ( m_text == "static" ) return parser->T_static.makeInstance(m_sline, m_schr);
 
          if ( m_text == "import" ) 
          {
             m_hadImport = true;
             return parser->T_import.makeInstance(m_sline, m_schr);
          }
-         
-         /*
-         if ( m_text == "static" )
-            return STATIC;
-         */
+
       break;
 
       case 7:

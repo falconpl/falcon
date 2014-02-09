@@ -59,6 +59,7 @@ class ParserContext::CCFrame
       t_class_type,
       t_object_type,
       t_func_type,
+      t_static_func_type,
       t_stmt_type,
       t_temp_type,
       t_base_type
@@ -66,7 +67,7 @@ class ParserContext::CCFrame
 
    CCFrame();
    CCFrame( FalconClass* cls, bool bIsObject );
-   CCFrame( SynFunc* func );
+   CCFrame( SynFunc* func, bool isStatic = false );
    CCFrame( TreeStep* stmt, bool bAutoClose = false, bool bAutoAdd = true );
    CCFrame( SynTree* st );
 
@@ -124,8 +125,8 @@ ParserContext::CCFrame::CCFrame( FalconClass* cls, bool bIsObject ):
    setup();
 }
 
-ParserContext::CCFrame::CCFrame( SynFunc* func ):
-   m_type( t_func_type ),
+ParserContext::CCFrame::CCFrame( SynFunc* func, bool bIsStatic ):
+   m_type( bIsStatic ? t_static_func_type : t_func_type ),
    m_bStatePushed( false ),
    m_bAutoClose( false ),
    m_bAutoAdd( true )
@@ -554,7 +555,7 @@ void ParserContext::changeBranch( SynTree* st)
 }
 
 
-void ParserContext::openFunc( SynFunc *func )
+void ParserContext::openFunc( SynFunc *func, bool bIsStatic )
 {
    TRACE("ParserContext::openFunc -- %s", func->name().c_ize() );
 
@@ -563,7 +564,7 @@ void ParserContext::openFunc( SynFunc *func )
    m_cfunc = func;
    m_st = &func->syntree();
    m_cstatement = 0;
-   _p->m_frames.push_back(CCFrame(func));
+   _p->m_frames.push_back(CCFrame(func, bIsStatic));
 }
 
 
@@ -631,13 +632,14 @@ void ParserContext::closeContext()
          break;
 
       case CCFrame::t_func_type:
+      case CCFrame::t_static_func_type:
          // is this a method?
          if ( m_cclass != 0 && currentFunc() == 0 )
          {
             // unless it's the constructor -- in which case it's already added
             if ( bframe.m_elem.func->methodOf() != m_cclass )
             {
-               m_cclass->addMethod( bframe.m_elem.func );
+               m_cclass->addMethod( bframe.m_elem.func, bframe.m_type ==  CCFrame::t_static_func_type );
             }
          }
 

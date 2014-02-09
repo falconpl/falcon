@@ -220,6 +220,40 @@ void apply_object_statement( const Rule&, Parser& p )
 
 
 
+void apply_static_pdecl_expr( const Rule&, Parser& p )
+{
+   // << T_static << T_Name << T_EqSign << Expr << T_EOL;
+   SourceParser& sp = static_cast<SourceParser&>(p);
+   ParserContext* ctx = static_cast<ParserContext*>(p.context());
+
+   // we should be in class state.
+   FalconClass* cls = (FalconClass*) ctx->currentClass();
+   fassert( cls != 0 );
+
+   sp.getNextToken(); // T_Static
+   TokenInstance* tname = sp.getNextToken(); // T_Name
+   sp.getNextToken(); // =
+   TokenInstance* texpr = sp.getNextToken();
+   sp.getNextToken(); // 'EOL'
+
+   Expression* expr = (Expression*) texpr->detachValue();
+   if( expr->trait() == Expression::e_trait_value )
+   {
+      cls->addProperty( *tname->asString(), static_cast<ExprValue*>(expr)->item(), true );
+      // we don't need the expression anymore
+      delete expr;
+   }
+   else
+   {
+      delete expr;
+      p.addError( e_static_const, p.currentSource(), tname->line(), tname->chr() );
+   }
+
+   // remove this stuff from the stack
+   p.simplify( 5 );
+}
+
+
 void apply_pdecl_expr( const Rule&, Parser& p )
 {
    // << T_Name << T_EqSign << Expr << T_EOL;
