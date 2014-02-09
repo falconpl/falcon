@@ -288,7 +288,7 @@ bool FalconClass::addProperty( const String& name, const Item& initValue, bool b
 }
 
 
-bool FalconClass::addProperty( const String& name, Expression* initExpr, bool bIsStatic )
+bool FalconClass::addProperty( const String& name, Expression* initExpr )
 {
    TRACE1( "Adding a property \"%s\" to class %s with expression.", name.c_ize(), m_name.c_ize() );
    
@@ -308,7 +308,7 @@ bool FalconClass::addProperty( const String& name, Expression* initExpr, bool bI
    }
 
    // insert a new property -- and record its insertion
-   Property* prop = new Property( name, bIsStatic ? Property::t_func : Property::t_static_func );
+   Property* prop = new Property( name, Property::t_prop );
    prop->expression(initExpr);
    members[name] = prop;
 

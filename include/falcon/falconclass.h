@@ -191,7 +191,7 @@ public:
     \note In case this need arises, consider adding a UserData
     to a FalconClass subclass, and passing it as initValue here.
     */
-   bool addProperty( const String& name, Expression* initExpr, bool bIsStatic = false );
+   bool addProperty( const String& name, Expression* initExpr );
 
     /** Adds a property.
     \param name The name of the property to be added.
