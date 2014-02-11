@@ -89,6 +89,11 @@ public:
 
    TokenInstance* makeInstance( int line, int chr );
 
+   virtual int arity() const { return 0; }
+   virtual Token* term( int ) const { return 0; }
+   virtual void term( int, Token* ) {}
+   virtual void addTerm( Token* ) {}
+
 protected:
    bool m_bNonTerminal;
    bool m_bRightAssoc;

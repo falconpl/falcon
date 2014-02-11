@@ -59,161 +59,168 @@
 
 #include <falcon/error.h>
 
+#include <falcon/textwriter.h>
+#include <falcon/stdstreams.h>
+
 #include "private_types.h"
 
 namespace Falcon {
 
 using namespace Parsing;
 
-static void apply_dummy( const Rule&, Parser& p )
+
+static void apply_dummy( Parser& p, const NonTerminal& )
 {
    p.simplify(1);
 }
+
 
 //==========================================================
 // SourceParser
 //==========================================================
 
 SourceParser::SourceParser():
-   T_Openpar("(",20),
-   T_Closepar(")"),
-   T_OpenSquare("[", 20),
-   T_CapPar("^("),
-   T_CapSquare("^["),
-   T_DotPar(".("),
-   T_DotSquare(".["),
-   T_CloseSquare("]"),
-   T_OpenGraph("{",20),
-   T_OpenProto("p{"),
-   T_CloseGraph("}"),
+   T_Openpar("'('",20),
+   T_Closepar("')'"),
+   T_OpenSquare("'['", 20),
+   T_CapPar("'^('"),
+   T_CapSquare("'^['"),
+   T_DotPar("'.('"),
+   T_DotSquare("'.['"),
+   T_CloseSquare("']'"),
+   T_OpenGraph("'{'",20),
+   T_OpenProto("'p{'"),
+   T_CloseGraph("'}'"),
 
-   T_Dot(".",15),
-   T_Arrow("=>", 170 ),
-   T_AutoAdd( "+=", 70 ),
-   T_AutoSub( "-=", 70 ),
-   T_AutoTimes( "*=", 70 ),
-   T_AutoDiv( "/=", 70 ),
-   T_AutoMod( "%=", 70 ),
-   T_AutoPow( "**=", 70 ),
-   T_AutoRShift( ">>=", 70 ),
-   T_AutoLShift( "<<=", 70 ),
-   T_EEQ( "===", 70 ),
+   T_Dot("'.'",15),
+   T_Arrow("'=>'", 170 ),
+   T_AutoAdd( "'+='", 70 ),
+   T_AutoSub( "'-='", 70 ),
+   T_AutoTimes( "'*='", 70 ),
+   T_AutoDiv( "'/='", 70 ),
+   T_AutoMod( "'%='", 70 ),
+   T_AutoPow( "'**='", 70 ),
+   T_AutoRShift( "'>>='", 70 ),
+   T_AutoLShift( "'<<='", 70 ),
+   T_EEQ( "'==='", 70 ),
    
-   T_BAND("^&", 60),
-   T_BOR("^|", 65),
-   T_BXOR("^^", 65),
-   T_BNOT("^!", 23),
+   T_BAND("'^&'", 60),
+   T_BOR("'^|'", 65),
+   T_BXOR("'^^'", 65),
+   T_BNOT("'^!'", 23),
    
-   T_OOB("^+", 24),
-   T_DEOOB("^-", 24),
-   T_XOOB("^%", 24),
-   T_ISOOB("^$", 24),
-   T_UNQUOTE("^~", 10 ),
-   T_COMPOSE("^.", 60),
-   T_EVALRET( "^=", 150),
-   T_EVALRET_EXEC( "^*", 150),
-   T_EVALRET_DOUBT( "^?", 150),
-   T_ETAARROW( "*=>", 170),
+   T_OOB("'^+'", 24),
+   T_DEOOB("'^-'", 24),
+   T_XOOB("'^%'", 24),
+   T_ISOOB("'^$'", 24),
+   T_UNQUOTE("'^~'", 10 ),
+   T_COMPOSE("'^.'", 60),
+   T_EVALRET( "'^='", 150),
+   T_EVALRET_EXEC( "'^*'", 150),
+   T_EVALRET_DOUBT( "'^?'", 150),
+   T_ETAARROW( "'*=>'", 170),
 
-   T_Comma( "," , 180 ),
-   T_QMark( "?" , 175, true ),
-   T_Tilde( "~" , 5 ),
-   T_Bang("!"),
-   T_Disjunct( "|" , 130 ),
+   T_Comma( "','" , 180 ),
+   T_QMark( "'?'" , 175, true ),
+   T_Tilde( "'~'" , 5 ),
+   T_Bang("'!'"),
+   T_Disjunct( "'|'" , 130 ),
 
-   T_UnaryMinus("(neg)",23),
-   T_Dollar("$",23),
-   T_Amper("&",10),
-   T_NumberSign("#", 68),   /* between bit and & equality */
-   T_At("@", 10),           /* Must have a very high priority,
+   T_UnaryMinus("Unary-minus",23),
+   T_Dollar("'$'",23),
+   T_Amper("'&'",10),
+   T_NumberSign("'#'", 68),   /* between bit and & equality */
+   T_At("'@'", 10),           /* Must have a very high priority,
                                as @"abc".x should be interpreted as (@"abc").x */
 
-   T_Power("**", 25),
+   T_Power("'**'", 25),
 
-   T_Times("*",30),
-   T_Divide("/",30),
-   T_Modulo("%",30),
-   T_RShift(">>",30),
-   T_LShift("<<",30),
+   T_Times("'*'",30),
+   T_Divide("'/'",30),
+   T_Modulo("'%'",30),
+   T_RShift("'>>'",30),
+   T_LShift("'<<'",30),
 
-   T_Plus("+",50),
-   T_Minus("-",50),
-   T_PlusPlus("++",21, true),
-   T_MinusMinus("--",21, true),
+   T_Plus("'+'",50),
+   T_Minus("'-'",50),
+   T_PlusPlus("'++'",21, true),
+   T_MinusMinus("'--'",21, true),
 
-   T_DblEq("==", 70),
-   T_NotEq("!=", 70),
-   T_Less("<", 70),
-   T_Greater(">", 70),
-   T_LE("<=", 70),
-   T_GE(">=", 70),
-   T_Colon( ":", 170 ),
-   T_EqSign("=", 200, false),
-   T_EqSign2("=", 200 ),
+   T_DblEq("'=='", 70),
+   T_NotEq("'!='", 70),
+   T_Less("'<'", 70),
+   T_Greater("'>'", 70),
+   T_LE("'<='", 70),
+   T_GE("'>='", 70),
+   T_Colon( "':'", 170 ),
+   T_EqSign("'='", 200, true),
+   T_EqSign2("'='", 200 ),
 
 
-   T_as("as"),
-   T_if("if"),
-   T_in("in", 23),
-   T_or("or", 130),
-   T_to("to", 70),
+   T_as("'as'"),
+   T_if("'if'"),
+   T_in("'in'", 23),
+   T_or("'or'", 130),
+   T_to("'to'", 70),
 
-   T_and("and", 120),
-   T_def("def"),
-   T_end("end"),
-   T_for("for"),
-   T_not("not", 50),
-   T_nil("nil"),
-   T_try("try"),
-   T_catch("catch"),
-   T_notin("notin", 23),
-   T_finally("finally"),
-   T_raise("raise"),
-   T_fself("fself"),
+   T_and("'and'", 120),
+   T_def("'def'"),
+   T_end("'end'"),
+   T_for("'for'"),
+   T_not("'not'", 50),
+   T_nil("'nil'"),
+   T_try("'try'"),
+   T_catch("'catch'"),
+   T_notin("'notin'", 23),
+   T_finally("'finally'"),
+   T_raise("'raise'"),
+   T_fself("'fself'"),
 
-   T_elif("elif"),
-   T_else("else"),
-   T_rule("rule"),
+   T_elif("'elif'"),
+   T_else("'else'"),
+   T_rule("'rule'"),
 
-   T_while("while"),
+   T_while("'while'"),
 
-   T_function("function"),
-   T_return("return"),
-   T_class("class"),
-   T_object("object"),
-   T_init("init"),
+   T_function("'function'"),
+   T_return("'return'"),
+   T_class("'class'"),
+   T_object("'object'"),
+   T_init("'init'"),
 
-   T_true( "true" ),
-   T_false( "false" ),
-   T_self( "self" ),
-   T_from( "from" ),
-   T_load( "load" ),
-   T_export( "export" ),
-   T_import( "import" ),
-   T_namespace( "namespace" ),
-   T_global("global"),
+   T_true( "'true'" ),
+   T_false( "'false'" ),
+   T_self( "'self'" ),
+   T_from( "'from'" ),
+   T_load( "'load'" ),
+   T_export( "'export'" ),
+   T_import( "'import'" ),
+   T_namespace( "'namespace'" ),
+   T_global("'global'"),
    
-   T_forfirst( "forfirst" ),
-   T_formiddle( "formiddle" ),
-   T_forlast( "forlast" ),
-   T_break( "break" ),
-   T_continue( "continue" ),
+   T_forfirst( "'forfirst'" ),
+   T_formiddle( "'formiddle'" ),
+   T_forlast( "'forlast'" ),
+   T_break( "'break'" ),
+   T_continue( "'continue'" ),
    
-   T_switch("switch"),
-   T_case("case"),
-   T_default("default"),
-   T_select("select"),
-   T_loop("loop"),
-   T_static("static"),
+   T_switch("'switch'"),
+   T_case("'case'"),
+   T_default("'default'"),
+   T_select("'select'"),
+   T_loop("'loop'"),
+   T_static("'static'"),
 
    T_RString("R-String"),
    T_IString("I-String"),
    T_MString("M-String"),
-   T_provides("provides"),
+   T_provides("'provides'"),
    
-   T_DoubleColon("::",16),
-   T_ColonQMark(":?",16)
+   T_DoubleColon("'::'",16),
+   T_ColonQMark("':?'",16)
 {
+
+#if 0
    S_Attribute << "Attribute" << errhand_attribute;
    S_Attribute << (r_attribute << "Attribute" << apply_attribute << T_Colon << T_Name <<  T_Arrow << Expr << T_EOL);
 
@@ -876,7 +883,54 @@ SourceParser::SourceParser():
    addState( s_ClassStart );
    addState( s_ObjectStart );
    addState( s_EPState );
+#endif
 
+   MainProgram << "Main"
+           << NonTerminal::nr << S_Autoexpr
+           << NonTerminal::nr << S_EmptyLine
+           << NonTerminal::endr
+           ;
+
+   S_Autoexpr << "Auto-Expr"
+            << NonTerminal::sr << Expr << T_EOL << NonTerminal::endr;
+
+   Expr << "Expr" << expr_errhand;
+
+   // Unary operators
+   // the lexer may find a non-unary minus when parsing it not after an operator...;
+   Expr << NonTerminal::sr <<  /*apply_expr_neg <<*/ T_Minus << Expr << NonTerminal::endr;
+   Expr << NonTerminal::sr <<  /* apply_expr_assign <<*/ Expr << T_EqSign << Expr << NonTerminal::endr;
+   Expr << NonTerminal::sr << /*<< apply_expr_plus <<*/ Expr << T_Plus << Expr << NonTerminal::endr;
+   Expr << NonTerminal::sr << /*<< apply_expr_plus <<*/ Expr << T_Times << Expr << NonTerminal::endr;
+   Expr << NonTerminal::sr << /* apply_expr_atom <<*/ Atom << NonTerminal::endr;
+
+   Atom << "Atom"
+      << NonTerminal::sr
+      << "Atom_Int" << /* apply_Atom_Int << */ T_Int
+      << "Atom_Float" << /* apply_Atom_Float <<*/ T_Float
+      << "Atom_Name" << /* apply_Atom_Name << */ T_Name
+      << "Atom_Pure_Name" << /* apply_Atom_Pure_Name << */ T_Tilde << T_Name
+      << "Atom_String" << /* apply_Atom_String << */ T_String
+      << "Atom_RString" << /* apply_Atom_RString << */ T_RString
+      << "Atom_IString" << /* apply_Atom_IString << */ T_IString
+      << "Atom_MString" << /* apply_Atom_MString << */ T_MString
+      << "Atom_False" << /* apply_Atom_False << */ T_false
+      << "Atom_True" << /* apply_Atom_True << */ T_true
+      << "Atom_Self" << /* apply_Atom_Self << */ T_self
+      << "Atom_FSelf" << /* apply_Atom_FSelf << */ T_fself
+      << "Atom_Init" << /* apply_Atom_Init << */ T_init
+      << "Atom_Nil" << /* apply_Atom_Nil << */ T_nil
+      << NonTerminal::endr
+      ;
+
+   S_EmptyLine << "Empty-Line"
+         << NonTerminal::sr << apply_dummy << T_EOL << NonTerminal::endr;
+
+   StdOutStream sout;
+   TextWriter tw(&sout);
+   MainProgram.render(tw);
+
+   addState( MainProgram );
 }
 
 void SourceParser::onPushState( bool isPushedState )

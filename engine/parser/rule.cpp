@@ -71,7 +71,7 @@ Rule& Rule::t( Token& t )
    _p->m_vTokens.push_back( &t );
    if( t.isNT() )
    {
-
+      /*
       NonTerminal& nt = *static_cast<NonTerminal*>(&t);
       // check for greedness: the rule is greedy if it has ends with a recursive token.
       if( nt.isRecursive() )
@@ -82,6 +82,7 @@ Rule& Rule::t( Token& t )
       {
          m_bGreedy = false;
       }
+      */
    }
    else
    {
@@ -202,8 +203,8 @@ bool Rule::match( Parser& parser, bool bIncremental, bool bContinue ) const
             TRACE1( "Rule::match(%s) -- actually descending '%s' found at %d%s",
                m_name.c_ize(), descendable->name().c_ize(), dpos, dpos > (int) begin ? " (adding stack)": "" );
 
-            parser.addParseFrame( descendable, dpos );
-            return descendable->findPaths(parser);
+            parser.pushParseFrame( descendable, dpos );
+            return false; //descendable->findPaths(parser);
          }
 
          // match failed
@@ -213,7 +214,6 @@ bool Rule::match( Parser& parser, bool bIncremental, bool bContinue ) const
       else
       {
          // only terminal tokens can have priority, but we don't care.
-         parser.setFramePriority(*curTok);
       }
 
       ++ riter;

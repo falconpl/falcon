@@ -618,6 +618,8 @@ public:
    Parsing::Rule r_uk_while;
    Parsing::Rule r_uk_for;
    
+   Parsing::NonTerminal MainProgram;
+
    //================================================
    // States
    //

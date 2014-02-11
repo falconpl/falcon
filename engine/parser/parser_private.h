@@ -45,7 +45,7 @@ class Parser::Private
    size_t m_nextTokenPos;
 
    // Map of existing parsing states.
-   typedef std::map<String, State*> StateMap;
+   typedef std::map<String, NonTerminal*> StateMap;
    StateMap m_states;
 
    typedef std::vector<const Rule*> RulePath;
@@ -53,41 +53,57 @@ class Parser::Private
    class ParseFrame {
    public:
       const NonTerminal* m_owningToken;
+
       // depth of the stack at this frame.
       int m_nStackDepth;
-      // highest priority in this stack frame
-      int m_nPriority;
-      // is this stack frame right associative?        
-      bool m_bIsRightAssoc;
-      // And this is the position in the stack frame of the highest priority token
-      int m_prioFrame;
 
-      RulePath m_path;
-      //Alternatives m_candidates;
+      // Rule being tested in m_owningToken->term(...);
+      int m_hypotesis;
+      // Current token in rule being tested.
+      int m_hypToken;
+
+      // Lowest priority of the frame.
+      int m_prio;
+
+      // position in the frame (relative to stakcDepth) if the token NEXT to the lowest prio.
+      int m_prioPos;
+
+      // Token that limits the error recovery mode (if any)
+      const Token* m_limitToken;
+
+      // True if the frame has right-associativity
+      bool m_bRA;
+
+      // True when the frame is in error recovery mode.
+      bool m_bErrorMode;
       
+
       ParseFrame( const NonTerminal* nt=0, int nd=0 ):
          m_owningToken(nt),
          m_nStackDepth(nd),
-         m_nPriority(0),
-         m_bIsRightAssoc(false),
-         m_prioFrame(0)
+         m_hypotesis(0),
+         m_hypToken(0),
+         m_prio(0),
+         m_prioPos(0),
+         m_limitToken(0),
+         m_bRA(false),
+         m_bErrorMode(false)
       {}
          
       virtual ~ParseFrame();
-      
    };
 
     // stack of read tokens.
    typedef std::vector<TokenInstance*> TokenStack;
    TokenStack* m_tokenStack;
 
-   typedef std::list<ParseFrame> FrameStack;
+   typedef std::deque<ParseFrame> FrameStack;
    FrameStack* m_pframes;
    FrameStack* m_pErrorFrames;
 
    class StateFrame {
    public:
-      State* m_state;
+      NonTerminal* m_state;
       TokenStack m_tokenStack;
 
       FrameStack m_pframes;
@@ -98,7 +114,7 @@ class Parser::Private
       int m_id;
       int m_appliedRules;
 
-      StateFrame( State* s );      
+      StateFrame( NonTerminal* s );
       ~StateFrame();
    };
    

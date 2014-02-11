@@ -19,6 +19,7 @@
 #include <falcon/trace.h>
 
 #include <deque>
+#include <set>
 
 
 namespace Falcon {
@@ -30,12 +31,28 @@ namespace Parsing {
 
 class NonTerminal::Private
 {
-   friend class NonTerminal;
-   Private() {}
-   ~Private() {}
+public:
+   typedef std::deque<Token*> TokenList;
+   TokenList m_subTokens;
 
-   typedef std::deque<Rule*> RuleList;
-   RuleList m_rules;
+   Private() {}
+   ~Private() {
+      TokenList::iterator ti = m_subTokens.begin();
+      while( ti != m_subTokens.end() )
+      {
+         Token* ti;
+         if ( ti->isNT() )
+         {
+            NonTerminal* nt = static_cast<NonTerminal*>(ti);
+            if( nt->isDynamic() )
+            {
+               delete nt;
+            }
+         }
+         ++ti;
+      }
+   }
+
 };
 
 //=======================================================
@@ -43,95 +60,240 @@ class NonTerminal::Private
 //
 
 NonTerminal::NonTerminal(const String& name,  bool bRightAssoc ):
-   Token(name),
-   m_maxArity(0),
-   m_bRecursive(false),
-   m_bGreedy(false)
+   Token(name)
 {
    m_eh = 0;
+   m_handler = 0;
+   m_currentSubNT = 0;
+
    m_bRightAssoc = bRightAssoc;
+   m_isDynamic = false;
    m_bNonTerminal = true;
+   m_bIsRecursive = false;
    _p = new Private;
 }
 
 
 NonTerminal::NonTerminal():
-   Token("Unnamed NT"),
-   m_maxArity(0),
-   m_bRecursive(false),
-   m_bGreedy(false)
+   Token("")
 {
-   m_bNonTerminal = true;
    m_eh = 0;
+   m_handler = 0;
+   m_currentSubNT = 0;
+
+   m_isDynamic = false;
+   m_bNonTerminal = true;
+   m_bIsRecursive = false;
    _p = new Private;
 }
 
 
 NonTerminal::~NonTerminal()
 {
+   delete m_currentSubNT;
    delete _p;
 }
 
-NonTerminal& NonTerminal::r(Rule& rule)
-{
-   _p->m_rules.push_back( &rule );
 
-   // after setting parentship, we'll know if the rule is recursive.
-   rule.parent(*this);
-   if( rule.isRecursive() )
+int NonTerminal::arity() const
+{
+   return _p->m_subTokens.size();
+}
+
+
+Token* NonTerminal::term( int n ) const
+{
+   if( n < (int) _p->m_subTokens.size() )
    {
-      m_bRecursive = true;
+      return _p->m_subTokens[n];
+   }
+   return 0;
+}
+
+void NonTerminal::term( int n, Token* t )
+{
+   if( n < (int) _p->m_subTokens.size() )
+   {
+      _p->m_subTokens[n] = t;
+   }
+}
+
+
+void NonTerminal::addTerm( Token* t )
+{
+   _p->m_subTokens.push_back(t);
+}
+
+void NonTerminal::render( TextWriter& tw ) const
+{
+   std::set<NonTerminal*> emptySet;
+   subRender(tw, &emptySet);
+}
+
+
+void NonTerminal::subRender( TextWriter& tw, void* v ) const
+{
+   std::set<NonTerminal*>& parentSet = *static_cast< std::set<NonTerminal*>* >(v);
+
+   tw.write( name() );
+   tw.write( ":-\n" );
+
+   Private::TokenList::const_iterator ti = _p->m_subTokens.begin();
+   bool bFirst = true;
+   std::set<NonTerminal*> subtok;
+   while(ti != _p->m_subTokens.end())
+   {
+      Token* t = *ti;
+      tw.write("   ");
+      if( bFirst )
+      {
+         bFirst = false;
+         tw.write("  ");
+      }
+      else
+      {
+         tw.write("| ");
+      }
+
+      if (!t->name().empty())
+      {
+         String temp = "/* " +t->name() + " */ ";
+         tw.write( temp );
+         for( int i = (int) temp.length(); i < 20; ++i )
+         {
+            tw.write(" ");
+         }
+      }
+
+      for( int i = 0; i < t->arity(); ++i )
+      {
+         Token* subt = t->term(i);
+         if( i != 0 )
+         {
+            tw.write(", ");
+         }
+
+         tw.write(subt->name());
+         if( subt->isNT() )
+         {
+            NonTerminal* nt = static_cast<NonTerminal*>(subt);
+            if( parentSet.find(nt) == parentSet.end() && nt != this )
+            {
+               subtok.insert(nt);
+            }
+         }
+      }
+
+      tw.write("\n");
+
+      ++ti;
+   }
+   tw.write("   ;\n");
+
+   //now work on the sub parts.
+   std::set<NonTerminal*>::const_iterator subiter = subtok.begin();
+   while( subiter != subtok.end() )
+   {
+      NonTerminal* tok = *subiter;
+      tok->subRender( tw, &parentSet );
+      parentSet.insert(tok);
+      ++subiter;
+   }
+}
+
+NonTerminal& NonTerminal::sr(NonTerminal& nt)
+{
+   if( nt.m_currentSubNT != 0)
+   {
+      throw BuildError(nt, "Creating a sub-terminal, but the old one is still open");
    }
 
-   if ( m_maxArity < rule.arity() )
+   nt.m_currentSubNT = new NonTerminal;
+   nt.m_currentSubNT->setDynamic();
+   return nt;
+}
+
+NonTerminal& NonTerminal::nr(NonTerminal& nt)
+{
+   if( nt.m_currentSubNT != 0)
    {
-      m_maxArity = rule.arity();
+      nt._p->m_subTokens.push_back(nt.m_currentSubNT);
+   }
+
+   nt.m_currentSubNT = new NonTerminal;
+   nt.m_currentSubNT->setDynamic();
+   return nt;
+}
+
+NonTerminal& NonTerminal::endr(NonTerminal& nt)
+{
+   if( nt.m_currentSubNT == 0)
+   {
+      throw BuildError(nt, "Closing sub-terminal, but it was not opened");
+   }
+
+   nt._p->m_subTokens.push_back(nt.m_currentSubNT);
+   nt.m_currentSubNT = 0;
+   return nt;
+
+}
+
+
+NonTerminal& NonTerminal::addSubTerminal(Token& token)
+{
+   if( m_currentSubNT == 0)
+   {
+      throw BuildError(*this, "Adding sub-terminal but the subterminal is not open");
+   }
+
+   if( &token == this )
+   {
+      m_bIsRecursive = true;
+   }
+   m_currentSubNT->addTerm(&token);
+   return *this;
+}
+
+
+NonTerminal& NonTerminal::addSubHandler(Handler hr)
+{
+   if( m_currentSubNT == 0)
+   {
+      throw BuildError(*this, "Adding sub-terminal but the subterminal is not open");
+   }
+
+   m_currentSubNT->setHandler(hr);
+   return *this;
+}
+
+
+NonTerminal& NonTerminal::addSubName(const String& name)
+{
+   if( m_currentSubNT == 0)
+   {
+      this->name( name );
+   }
+   else
+   {
+      if( m_currentSubNT->name().empty() )
+      {
+         m_currentSubNT->name(name);
+      }
+      else
+      {
+         _p->m_subTokens.push_back(m_currentSubNT);
+         m_currentSubNT = new NonTerminal(name);
+         m_currentSubNT->setDynamic();
+      }
    }
 
    return *this;
 }
 
-
-bool NonTerminal::findPaths( Parser& p ) const
+NonTerminal::BuildError::BuildError(const NonTerminal& src, const String& descr)
 {
-   //TRACE1( "NonTerminal::findPaths -- scanning '%s'", name().c_ize() );
-
-   // initialize frame status
-   int nBaseFrames = p.frameDepth();
-   int nBaseRules = p.rulesDepth();
-
-   // loop through our rules.
-   Private::RuleList::iterator iter = _p->m_rules.begin();
-   Private::RuleList::iterator end = _p->m_rules.end();
-
-   while( iter != end )
-   {
-      const Rule* rule = *iter;
-
-      p.addRuleToPath(rule);
-      if( rule->match( p, false ) )
-      {
-         TRACE1( "NonTerminal::findPaths(%s) -- match '%s'", name().c_ize(), rule->name().c_ize() );
-         return true;
-      }
-      
-      p.unroll( nBaseFrames, nBaseRules ); // discard also the old winning rule
-   
-      // If it doesn't match, we don't care.
-      ++iter;
-   }
-
-   //TRACE1( "NonTerminal::findPaths(%s) -- no match", name().c_ize() );
-   return false;
-}
-
-void NonTerminal::addFirstRule( Parser& p ) const
-{
-   // loop through our rules.
-   Private::RuleList::iterator iter = _p->m_rules.begin();
-
-   TRACE1( "NonTerminal::addFirstRule -- adding '%s'", (*iter)->name().c_ize() );
-   p.addRuleToPath((*iter));
+   m_descr = descr;
+   m_descr.A(" in ").A(src.name()).A(":").N(src._p->m_subTokens.size()+1);
 }
 
 }

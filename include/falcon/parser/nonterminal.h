@@ -17,6 +17,7 @@
 #define _FALCON_PARSER_NONTERMINAL_H_
 
 #include <falcon/setup.h>
+#include <falcon/textwriter.h>
 #include <falcon/parser/token.h>
 #include <falcon/parser/matchtype.h>
 
@@ -52,21 +53,15 @@ public:
 
    virtual ~NonTerminal();
 
-   /** Adds a rule to this non-terminal symbol.
-    \return this symbol.
-    */
-   NonTerminal& r(Rule& rule);
-
-   inline NonTerminal& operator <<( Rule& rule ) { return r(rule); }
-   inline NonTerminal& operator <<( const String& n ) {
-      name(n);
-      return *this; 
-   }
-
    /** Callback for parsing error routine.
     \see setErrorHandler
     */
    typedef bool (*ErrorHandler)(const NonTerminal& nt, Parser& p);
+
+   /** Callback for parsing error routine.
+       \see setErrorHandler
+   */
+   typedef void (*Handler)(Parser& p, const NonTerminal& nt);
 
    /** Sets the error handler for this routine.
    \param hr An handler routine that is invoked on syntax error.
@@ -95,24 +90,108 @@ public:
 
    inline ErrorHandler errorHandler() const { return m_eh; }
    
-   /** Proxy to setErrorHandler. */
-   inline NonTerminal& operator << ( ErrorHandler hr ) { return setErrorHandler(hr); }
+   inline NonTerminal& setHandler( Handler hr )
+   {
+      m_handler = hr;
+      return *this;
+   }
 
-   bool findPaths( Parser& p ) const;
-   void addFirstRule( Parser& p ) const;
+   /** Proxy to setErrorHandler to THIS sub-terminal. */
+   inline NonTerminal& operator << ( ErrorHandler hr )
+   {
+      return setErrorHandler(hr);
+   }
+
+   /** Proxy to set a name to THIS terminal, or start a subterminal. */
+   inline NonTerminal& operator <<( const String& n ) {
+      return addSubName(n);
+   }
+
+   /** Proxy to operator functors */
+   inline NonTerminal& operator<<(NonTerminal& (*__pf)(NonTerminal&))
+   {
+      return __pf(*this);
+   }
+
+
+   /** Gets the count of sub-tokens. */
+   virtual int arity() const;
+   /** Gets the nth sub-token. */
+   virtual Token* term( int ) const;
+   /** Sets the nth sub-token. */
+   virtual void term( int, Token* );
+   /** Adds the next sub-token. */
+   virtual void addTerm( Token* );
    
-   int maxArity() const { return m_maxArity; }
-   bool isGreedy() const { return m_bGreedy; }
-   bool isRecursive() const { return m_bRecursive; }
+   void render( TextWriter& tw ) const;
+
+   NonTerminal& addSubTerminal(Token& token);
+   NonTerminal& addSubHandler(Handler hr);
+   NonTerminal& addSubName(const String& name);
+
+   /**
+    * Starts a sub-ndonterminal definition.
+    */
+   static NonTerminal& sr(NonTerminal& nt);
+
+   /**
+    * Starts the next sub-ndonterminal definition.
+    */
+   static NonTerminal& nr(NonTerminal& nt);
+
+   /**
+    * Terminates a sub-nonterminal definition.
+    */
+   static NonTerminal& endr(NonTerminal& nt);
+
+   /**
+    * proxy Adds to current sub-terminal.
+    */
+   inline NonTerminal& operator <<(Token& token)
+   {
+      return addSubTerminal(token);
+   }
+
+   /** Proxy to set handler for current sub-terminal. */
+   inline NonTerminal& operator << ( Handler hr )
+   {
+      return addSubHandler(hr);
+   }
+
+   class BuildError
+   {
+   public:
+      BuildError(const NonTerminal& src, const String& descr);
+      const String& descr() const { return m_descr; }
+   private:
+      String m_descr;
+   };
+
+   bool isDynamic() const { return m_isDynamic; }
+   void setDynamic() { m_isDynamic = true; }
+
+   Handler applyHandler() const { return m_handler; }
+
+   /** Automatically set to true when adding itself as sub-token.
+    *
+    * This adds a small optimization in the compiler. When the compiler
+    * matches a recursive token, instead of popping its context and
+    * give control to the parent rule frame, it first gives the control back
+    * to the same frame where the match was succesful.
+    */
+   bool isRecursive() const {return m_bIsRecursive; }
 
 private:
    ErrorHandler m_eh;
-   int m_maxArity;
-   bool m_bRecursive;
-   bool m_bGreedy;
-   
+   Handler m_handler;
+   NonTerminal* m_currentSubNT;
+   bool m_isDynamic;
+   bool m_bIsRecursive;
+
    class Private;
    Private* _p;
+
+   void subRender( TextWriter& tw, void* v ) const;
 };
 
 }

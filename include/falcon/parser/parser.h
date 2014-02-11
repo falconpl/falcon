@@ -78,7 +78,7 @@ public:
 
    /** Adds a state to the known parser states.
     */
-   void addState( State& state );
+   void addState( NonTerminal& state );
 
    /** Pushes a state.
     */
@@ -290,20 +290,6 @@ public:
     */
    virtual void addError( int code, const String& uri, int l, int c=0, int ctx=0  );
 
-   /** Returns true if the parser should terminate asap.
-      \return true on termination requested.
-    */
-   bool isDone() const { return m_bIsDone; }
-
-   /** Ask the parser to terminate.
-      A rule apply may invoke this routine to terminate the parsing process.
-      The parser main loop returns as soon as it gets back in control.
-
-    \note This call has not effect if called from code not invoked by rule
-          application.
-    */
-   void terminate() { m_bIsDone = true; }
-
 
    /** Gets the number of tokens currently laying in the stack.
     \return Number of total tokens read in the stack.
@@ -429,7 +415,7 @@ public:
    void syntaxError();
 
    /** Add a state to this parser. */
-   inline Parser& operator <<( State& s ) { addState(s); return *this; }
+   inline Parser& operator <<( NonTerminal& s ) { addState(s); return *this; }
 
    /** URI of the currently lexed source.
     \return A string representing the current source currently under parsing.
@@ -467,28 +453,10 @@ public:
 
    //=======================================
    // To be documented
-   typedef void* Path;
+   void pushParseFrame( const NonTerminal* token, int pos = -1);
+   void popParseFrame();
 
-   Path createPath() const;
-   Path copyPath( Path p ) const;
-   void discardPath( Path p ) const;
-   void confirmPath( Path p ) const;
-   void addRuleToPath( Path p, Rule* r ) const;
-
-     // -----
-
-   void addRuleToPath( const Rule* r ) const;
-   void addParseFrame( const NonTerminal* token, int pos = -1);
-
-   size_t rulesDepth() const;
-   size_t frameDepth() const;
-   void unroll( size_t fd, size_t rd );
-
-   bool findPaths( bool bIncremental );
-   bool applyPaths();
    void parseError();
-   void setFramePriority( const Token& token );
-
 
    TokenInstance* getCurrentToken( int& pos ) const;
 
@@ -528,22 +496,20 @@ public:
 
    const String& lastSource() const { return m_lastSource; }
 
+   /**
+    * Activate error recovery mode on current parsing frame.
+    */
+   void setErrorMode( const Token* limitToken );
+
 protected:
    void* m_ctx;
-   bool m_bIsDone;
    bool m_bInteractive;
 
    void parserLoop();
-   void followPaths();
-
-   // Checks performed after a new token arrived.
-   void onNewToken();
-
-   void explorePaths();
-
-   // simplifies the topmost rule.
+   bool readNextToken();
    void applyCurrentRule();
-   
+   void saveErrorFrame();
+
 private:
    friend class Rule;
    class Private;
@@ -552,8 +518,10 @@ private:
    Parser::Private* _p;
 
    const Token* m_consumeToken;
+
    int m_lastLine;
    String m_lastSource;
+   bool m_bEOLGiven;
 };
 
 }

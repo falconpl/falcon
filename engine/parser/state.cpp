@@ -70,17 +70,17 @@ bool State::findPaths( Parser& parser )
       NonTerminal* nt = *iter;
       //TRACE2("State::findPaths -- checking %s", nt->name().c_ize() );
 
-      parser.addParseFrame(nt,0);
+      parser.pushParseFrame(nt,0);
 
       // don't allow ambiguity
-      if ( nt->findPaths( parser ) )
+      /*if ( nt->findPaths( parser ) )
       {
          TRACE2("State::findPaths -- nt-token %s match",
                nt->name().c_ize() );
          return true;
       }
+      */
       
-      parser.unroll(0,0);
       
       ++iter;
    }
