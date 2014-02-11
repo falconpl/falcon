@@ -23,8 +23,6 @@
 #include <falcon/sp/parsercontext.h>
 #include <falcon/sp/parser_expr.h>
 #include <falcon/sp/parser_deletor.h>
-
-#include <falcon/parser/rule.h>
 #include <falcon/parser/parser.h>
 
 #include <falcon/psteps/exprincdec.h>
@@ -56,7 +54,7 @@ namespace Falcon {
 
 using namespace Parsing;
 
-bool expr_errhand(const NonTerminal&, Parser& p)
+bool expr_errhand(const NonTerminal&, Parser& p, int)
 {
    //SourceParser* sp = static_cast<SourceParser*>(p);
    TokenInstance* ti = p.getNextToken();
@@ -71,7 +69,7 @@ bool expr_errhand(const NonTerminal&, Parser& p)
 // Standard binary expressions
 //
 
-static void apply_expr_binary( const Rule&, Parser& p, BinaryExpression* bexpr )
+static void apply_expr_binary( const NonTerminal&, Parser& p, BinaryExpression* bexpr )
 {
    // << (r_Expr_equal << "Expr_equal" << apply_expr_equal << Expr << T_DblEq << Expr)
    SourceParser& sp = static_cast<SourceParser&>(p);
@@ -90,61 +88,61 @@ static void apply_expr_binary( const Rule&, Parser& p, BinaryExpression* bexpr )
 }
 
 
-void apply_expr_equal( const Rule& r, Parser& p )
+void apply_expr_equal( const NonTerminal& r, Parser& p )
 {
    // << (r_Expr_equal << "Expr_equal" << apply_expr_equal << Expr << T_DblEq << Expr)
    apply_expr_binary(r, p, new ExprEQ );
 }
 
- void apply_expr_diff( const Rule& r, Parser& p )
+ void apply_expr_diff( const NonTerminal& r, Parser& p )
 {
    // << (r_Expr_diff << "Expr_diff" << apply_expr_diff << Expr << T_NotEq << Expr)
    apply_expr_binary(r, p, new ExprNE );
 }
 
- void apply_expr_less( const Rule& r, Parser& p )
+ void apply_expr_less( const NonTerminal& r, Parser& p )
 {
    apply_expr_binary(r, p, new ExprLT );
 }
 
- void apply_expr_greater( const Rule& r, Parser& p )
+ void apply_expr_greater( const NonTerminal& r, Parser& p )
 {
    apply_expr_binary(r, p, new ExprGT );
 }
 
- void apply_expr_le( const Rule& r, Parser& p )
+ void apply_expr_le( const NonTerminal& r, Parser& p )
 {
    apply_expr_binary(r, p, new ExprLE );
 }
 
- void apply_expr_ge( const Rule& r, Parser& p )
+ void apply_expr_ge( const NonTerminal& r, Parser& p )
 {
    apply_expr_binary(r, p, new ExprGE );
 }
 
 
- void apply_expr_eeq( const Rule& r, Parser& p )
+ void apply_expr_eeq( const NonTerminal& r, Parser& p )
 {
   // << (r_Expr_eeq << "Expr_eeq" << apply_expr_eeq << Expr << T_eq << Expr)
   apply_expr_binary( r, p, new ExprEEQ );
 }
 
-void apply_expr_in( const Rule& r, Parser& p )
+void apply_expr_in( const NonTerminal& r, Parser& p )
 {
   apply_expr_binary( r, p, new ExprIn );
 }
 
-void apply_expr_notin( const Rule& r, Parser& p )
+void apply_expr_notin( const NonTerminal& r, Parser& p )
 {
   apply_expr_binary( r, p, new ExprNotin );
 }
 
-void apply_expr_plus( const Rule& r, Parser& p )
+void apply_expr_plus( const NonTerminal& r, Parser& p )
 {
    apply_expr_binary(r, p, new ExprPlus );
 }
 
-void apply_expr_preinc(const Rule&, Parser& p )
+void apply_expr_preinc( const NonTerminal&, Parser& p )
 {
    SourceParser& sp = static_cast<SourceParser&>(p);
 
@@ -157,7 +155,7 @@ void apply_expr_preinc(const Rule&, Parser& p )
    p.simplify(2,ti2);
 }
 
- void apply_expr_postinc(const Rule&, Parser& p )
+ void apply_expr_postinc( const NonTerminal&, Parser& p )
 {
    SourceParser& sp = static_cast<SourceParser&>(p);
 
@@ -170,7 +168,7 @@ void apply_expr_preinc(const Rule&, Parser& p )
    p.simplify(2,ti2);
 }
  
- void apply_expr_predec(const Rule&, Parser& p )
+ void apply_expr_predec( const NonTerminal&, Parser& p )
 {
    SourceParser& sp = static_cast<SourceParser&>(p);
 
@@ -183,7 +181,7 @@ void apply_expr_preinc(const Rule&, Parser& p )
    p.simplify(2,ti2);
 }
 
- void apply_expr_postdec(const Rule&, Parser& p )
+ void apply_expr_postdec( const NonTerminal&, Parser& p )
 {
    SourceParser& sp = static_cast<SourceParser&>(p);
 
@@ -196,72 +194,72 @@ void apply_expr_preinc(const Rule&, Parser& p )
    p.simplify(2,ti2);
 }
 
- void apply_expr_minus( const Rule& r, Parser& p )
+ void apply_expr_minus( const NonTerminal& r, Parser& p )
 {
    apply_expr_binary(r, p, new ExprMinus );
 }
 
- void apply_expr_times( const Rule& r, Parser& p )
+ void apply_expr_times( const NonTerminal& r, Parser& p )
 {
    apply_expr_binary(r, p, new ExprTimes );
 }
 
-void apply_expr_div( const Rule& r, Parser& p )
+void apply_expr_div( const NonTerminal& r, Parser& p )
 {
    apply_expr_binary(r, p, new ExprDiv );
 }
 
-void apply_expr_mod( const Rule& r, Parser& p )
+void apply_expr_mod( const NonTerminal& r, Parser& p )
 {
    apply_expr_binary(r, p, new ExprMod );
 }
 
-void apply_expr_pow( const Rule& r, Parser& p )
+void apply_expr_pow( const NonTerminal& r, Parser& p )
 {
    apply_expr_binary(r, p, new ExprPow );
 }
 
-void apply_expr_shr( const Rule& r, Parser& p )
+void apply_expr_shr( const NonTerminal& r, Parser& p )
 {
    apply_expr_binary(r, p, new ExprRShift );
 }
 
-void apply_expr_shl( const Rule& r, Parser& p )
+void apply_expr_shl( const NonTerminal& r, Parser& p )
 {
    apply_expr_binary(r, p, new ExprLShift );
 }
 
-void apply_expr_and( const Rule& r, Parser& p )
+void apply_expr_and( const NonTerminal& r, Parser& p )
 {
    apply_expr_binary(r, p, new ExprAnd );
 }
 
-void apply_expr_or( const Rule& r, Parser& p )
+void apply_expr_or( const NonTerminal& r, Parser& p )
 {
    apply_expr_binary(r, p, new ExprOr );
 }
 
-void apply_expr_band( const Rule& r, Parser& p )
+void apply_expr_band( const NonTerminal& r, Parser& p )
 {
    apply_expr_binary(r, p, new ExprBAND );
 }
 
-void apply_expr_bor( const Rule& r, Parser& p )
+void apply_expr_bor( const NonTerminal& r, Parser& p )
 {
    apply_expr_binary(r, p, new ExprBOR );
 }
 
-void apply_expr_bxor( const Rule& r, Parser& p )
+void apply_expr_bxor( const NonTerminal& r, Parser& p )
 {
    apply_expr_binary(r, p, new ExprBXOR );
 }
 
-void apply_expr_invoke( const Rule& r, Parser& p )
+void apply_expr_invoke( const NonTerminal& r, Parser& p )
 {
    apply_expr_binary(r, p, new ExprInvoke );
 }
 
-void apply_expr_compose( const Rule& r, Parser& p )
+void apply_expr_compose( const NonTerminal& r, Parser& p )
 {
    apply_expr_binary(r, p, new ExprCompose );
 }
@@ -270,7 +268,7 @@ void apply_expr_compose( const Rule& r, Parser& p )
 // Auto expressions
 //
 
-void apply_expr_auto( const Rule&, Parser& p, BinaryExpression* aexpr )
+void apply_expr_auto( const NonTerminal&, Parser& p, BinaryExpression* aexpr )
 {
    SourceParser& sp = static_cast<SourceParser&>(p);
    
@@ -297,50 +295,50 @@ void apply_expr_auto( const Rule&, Parser& p, BinaryExpression* aexpr )
 }
 
 
-void apply_expr_auto_add( const Rule&r, Parser& p )
+void apply_expr_auto_add( const NonTerminal&r, Parser& p )
 {
    BinaryExpression* aexpr = new ExprAutoPlus;
    apply_expr_auto( r, p, aexpr );
 }
 
 
-void apply_expr_auto_sub( const Rule&r, Parser& p )
+void apply_expr_auto_sub( const NonTerminal&r, Parser& p )
 {
    BinaryExpression* aexpr = new ExprAutoMinus;
    apply_expr_auto( r, p, aexpr );
 }
 
-void apply_expr_auto_times( const Rule&r, Parser& p )
+void apply_expr_auto_times( const NonTerminal&r, Parser& p )
 {
    BinaryExpression* aexpr = new ExprAutoTimes;
    apply_expr_auto( r, p, aexpr );
 }
 
-void apply_expr_auto_div( const Rule&r, Parser& p )
+void apply_expr_auto_div( const NonTerminal&r, Parser& p )
 {
    BinaryExpression* aexpr = new ExprAutoDiv;
    apply_expr_auto( r, p, aexpr );
 }
 
-void apply_expr_auto_mod( const Rule&r, Parser& p )
+void apply_expr_auto_mod( const NonTerminal&r, Parser& p )
 {
    BinaryExpression* aexpr = new ExprAutoMod;
    apply_expr_auto( r, p, aexpr );
 }
 
-void apply_expr_auto_pow( const Rule&r, Parser& p )
+void apply_expr_auto_pow( const NonTerminal&r, Parser& p )
 {
    BinaryExpression* aexpr = new ExprAutoPow;
    apply_expr_auto( r, p, aexpr );
 }
 
-void apply_expr_auto_shr( const Rule&r, Parser& p )
+void apply_expr_auto_shr( const NonTerminal&r, Parser& p )
 {
    BinaryExpression* aexpr = new ExprAutoRShift;
    apply_expr_auto( r, p, aexpr );
 }
 
-void apply_expr_auto_shl( const Rule&r, Parser& p )
+void apply_expr_auto_shl( const NonTerminal&r, Parser& p )
 {
    BinaryExpression* aexpr = new ExprAutoLShift;
    apply_expr_auto( r, p, aexpr );
@@ -351,7 +349,7 @@ void apply_expr_auto_shl( const Rule&r, Parser& p )
 // Unary expressions
 //
 
-static void apply_expr_unary( const Rule&, Parser& p, UnaryExpression* un )
+static void apply_expr_unary( const NonTerminal&, Parser& p, UnaryExpression* un )
 {
    SourceParser& sp = static_cast<SourceParser&>(p);
    
@@ -370,47 +368,47 @@ static void apply_expr_unary( const Rule&, Parser& p, UnaryExpression* un )
 }
 
 
-void apply_expr_neg( const Rule& r, Parser& p )
+void apply_expr_neg( const NonTerminal& r, Parser& p )
 {
    apply_expr_unary( r, p, new ExprNeg );
 }
 
-void apply_expr_not( const Rule& r, Parser& p )
+void apply_expr_not( const NonTerminal& r, Parser& p )
 {
    apply_expr_unary( r, p, new ExprNot );
 }
 
-void apply_expr_bnot( const Rule& r, Parser& p )
+void apply_expr_bnot( const NonTerminal& r, Parser& p )
 {
    apply_expr_unary( r, p, new ExprBNOT );
 }
 
-void apply_expr_oob( const Rule& r, Parser& p )
+void apply_expr_oob( const NonTerminal& r, Parser& p )
 {
    apply_expr_unary( r, p, new ExprOob );
 }
 
-void apply_expr_deoob( const Rule& r, Parser& p )
+void apply_expr_deoob( const NonTerminal& r, Parser& p )
 {
    apply_expr_unary( r, p, new ExprDeoob );
 }
 
-void apply_expr_xoob( const Rule& r, Parser& p )
+void apply_expr_xoob( const NonTerminal& r, Parser& p )
 {
    apply_expr_unary( r, p, new ExprXorOob );
 }
 
-void apply_expr_isoob( const Rule& r, Parser& p )
+void apply_expr_isoob( const NonTerminal& r, Parser& p )
 {
    apply_expr_unary( r, p, new ExprIsOob );
 }
 
-void apply_expr_str_ipol(const Rule& r, Parser& p )
+void apply_expr_str_ipol( const NonTerminal& r, Parser& p )
 {
    apply_expr_unary( r, p, new ExprStrIPol );
 }
 
-void apply_expr_unquote( const Rule&, Parser& p )
+void apply_expr_unquote( const NonTerminal&, Parser& p )
 {
    SourceParser& sp = static_cast<SourceParser&>(p);   
    TokenInstance* ti = p.getNextToken();
@@ -435,7 +433,7 @@ void apply_expr_unquote( const Rule&, Parser& p )
 
 }
 
-void apply_expr_evalret( const Rule&r, Parser& p )
+void apply_expr_evalret( const NonTerminal&r, Parser& p )
 {
    ParserContext* ctx = static_cast<ParserContext*>(p.context());
    if( ctx->currentLitContext() == 0 ) {
@@ -447,7 +445,7 @@ void apply_expr_evalret( const Rule&r, Parser& p )
    
 }
 
-void apply_expr_evalret_exec( const Rule&r, Parser& p )
+void apply_expr_evalret_exec( const NonTerminal&r, Parser& p )
 {
    ParserContext* ctx = static_cast<ParserContext*>(p.context());
    if( ctx->currentLitContext() == 0 ) {
@@ -459,7 +457,7 @@ void apply_expr_evalret_exec( const Rule&r, Parser& p )
 }
 
 
-void apply_expr_evalret_doubt( const Rule&r, Parser& p )
+void apply_expr_evalret_doubt( const NonTerminal&r, Parser& p )
 {
    ParserContext* ctx = static_cast<ParserContext*>(p.context());
    if( ctx->currentLitContext() == 0 ) {
@@ -474,7 +472,7 @@ void apply_expr_evalret_doubt( const Rule&r, Parser& p )
 // Other expressions.
 //
 
-void apply_expr_pars( const Rule&, Parser& p )
+void apply_expr_pars( const NonTerminal&, Parser& p )
 {
    SourceParser& sp = static_cast<SourceParser&>(p);
 
@@ -487,7 +485,7 @@ void apply_expr_pars( const Rule&, Parser& p )
    p.simplify(3,ti2);
 }
 
-void apply_expr_dot( const Rule&, Parser& p )
+void apply_expr_dot( const NonTerminal&, Parser& p )
 {
    // << (r_Expr_dot << "Expr_dot" << apply_expr_dot << Expr << T_Dot << T_Name )
    SourceParser& sp = static_cast<SourceParser&>(p);
@@ -506,7 +504,7 @@ void apply_expr_dot( const Rule&, Parser& p )
 }
 
 
-void apply_expr_provides( const Rule& , Parser& p )
+void apply_expr_provides( const NonTerminal& , Parser& p )
 {
    // << Expr << T_Provides << T_Name
    SourceParser& sp = static_cast<SourceParser&>(p);
@@ -527,7 +525,7 @@ void apply_expr_provides( const Rule& , Parser& p )
 }
 
 
-void apply_expr_named( const Rule& , Parser& p )
+void apply_expr_named( const NonTerminal& , Parser& p )
 {
    // << T_Name << T_Disjunct << T_Expr
    SourceParser& sp = static_cast<SourceParser&>(p);

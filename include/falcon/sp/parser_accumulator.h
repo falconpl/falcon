@@ -28,12 +28,12 @@ class Parser;
 
 using namespace Parsing;
 
-void apply_expr_accumulator(const Rule& r,Parser& p);
+void apply_expr_accumulator( const NonTerminal& r,Parser& p);
 
-void apply_accumulator_complete(const Rule& r,Parser& p);
-void apply_accumulator_w_target(const Rule& r,Parser& p);
-void apply_accumulator_w_filter(const Rule& r,Parser& p);
-void apply_accumulator_simple(const Rule& r,Parser& p);
+void apply_accumulator_complete( const NonTerminal& r,Parser& p);
+void apply_accumulator_w_target( const NonTerminal& r,Parser& p);
+void apply_accumulator_w_filter( const NonTerminal& r,Parser& p);
+void apply_accumulator_simple( const NonTerminal& r,Parser& p);
 
 }
 

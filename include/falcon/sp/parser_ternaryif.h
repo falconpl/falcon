@@ -28,7 +28,7 @@ class Parser;
 
 using namespace Parsing;
 
-void apply_expr_ternary_if( const Rule&, Parser& p );
+void apply_expr_ternary_if( const NonTerminal&, Parser& p );
 
 }
 

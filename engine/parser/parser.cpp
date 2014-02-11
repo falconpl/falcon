@@ -18,7 +18,6 @@
 #include <falcon/parser/parser.h>
 #include <falcon/parser/lexer.h>
 #include <falcon/parser/tokeninstance.h>
-#include <falcon/parser/state.h>
 #include <falcon/trace.h>
 
 #include <falcon/error.h>
@@ -124,7 +123,6 @@ Parser::Parser():
    m_lastLine(0)
 {
    _p = new Private;
-   T_DummyTerminal.id(0);
 }
 
 
@@ -293,9 +291,9 @@ bool Parser::isComplete() const
    }
 
    TRACE1( "Parser::isComplete? -- %s",
-         _p->m_tokenStack->front()->token().id() == T_EOF.id() ? "EOF" : "not eof" );
+         &_p->m_tokenStack->front()->token() == &T_EOF ? "EOF" : "not eof" );
 
-   return _p->m_tokenStack->front()->token().id() == T_EOF.id();
+   return &_p->m_tokenStack->front()->token() == &T_EOF;
 }
 
 
@@ -660,8 +658,13 @@ void Parser::popParseFrame()
    if( _p->m_pframes->size() > 1 )
    {
       _p->m_pframes->pop_back();
-      resetNextToken();
    }
+   else
+   {
+      _p->m_pframes->back().m_nStackDepth = 0;
+   }
+
+   resetNextToken();
 }
 
 TokenInstance* Parser::getCurrentToken( int& pos ) const
@@ -703,7 +706,7 @@ void Parser::parseError()
                curf.m_owningToken->name().c_ize(),
                curf.m_hypToken, curf.m_hypotesis );
       fassert( curf.m_owningToken->errorHandler() != 0 );
-      curf.m_owningToken->errorHandler()( *curf.m_owningToken, *this );
+      curf.m_owningToken->errorHandler()( *curf.m_owningToken, *this, 0 );
    }
 
 }
@@ -809,6 +812,10 @@ void Parser::parserLoop()
       int32& rulePos = currentFrame->m_hypToken;
       int32 stackPos = rulePos + currentFrame->m_nStackDepth;
       Token* rule = current->term(hyp);
+      if( rule == 0 )
+      {
+         throw FALCON_SIGN_XERROR(CodeError, e_internal, .extra("unprepared parser rule: " + current->name()) );
+      }
       int32 ruleArity = rule->arity();
       const Token* ruleTok;
       const Token* stackTok;
@@ -966,11 +973,12 @@ void Parser::applyCurrentRule()
    fassert( ! _p->m_pframes->empty() );
    Private::ParseFrame& pf = _p->m_pframes->back();
    NonTerminal* rule = static_cast<NonTerminal*>(pf.m_owningToken->term(pf.m_hypotesis));
-   TRACE("Parser::applyCurrentRule -- applying %s to stack %s",
+   TRACE("Parser::applyCurrentRule -- applying \"%s\" to: %s",
             rule->name().c_ize(), dumpStack().c_ize() );
    if( rule->applyHandler() != 0 )
    {
-      rule->applyHandler()(*this,*rule);
+      resetNextToken();
+      rule->applyHandler()(*rule, *this);
    }
    else
    {
@@ -1019,13 +1027,14 @@ bool Parser::readNextToken()
 {
    MESSAGE( "Parser::readNextToken -- Getting a new token." );
 
-   Lexer* lexer = _p->m_lLexers.back();
    // we're done ?
-   if( lexer == 0 )
+   if( _p->m_lLexers.empty() )
    {
      MESSAGE2( "Parser::readNextToken -- done on lexer pop" );
      return false;
    }
+
+   Lexer* lexer = _p->m_lLexers.back();
 
    if ( m_bEOLGiven && m_bInteractive )
    {
@@ -1071,8 +1080,16 @@ bool Parser::readNextToken()
 
    if( ti == 0 )
    {
-      MESSAGE2( "Parser::parserLoop -- Last loop with EOF as next" );
-      ti = TokenInstance::alloc(0, 0, T_EOF );
+      if( ! m_bEOLGiven )
+      {
+         MESSAGE2( "Parser::parserLoop -- Last loop with EOF as next" );
+         ti = TokenInstance::alloc(0, 0, T_EOL );
+      }
+      else
+      {
+         MESSAGE2( "Parser::parserLoop -- Already sent an EOL, returning false" );
+         return false;
+      }
    }
 
    if( (&ti->token() == &T_EOL) && ti->line() >= 0  )

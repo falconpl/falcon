@@ -28,23 +28,23 @@ class Parser;
 
 using namespace Parsing;
 
-bool try_errhand(const NonTerminal&, Parser& p);
-bool catch_errhand(const NonTerminal&, Parser& p);
-bool finally_errhand(const NonTerminal&, Parser& p);
-bool raise_errhand(const NonTerminal&, Parser& p);
+bool try_errhand(const NonTerminal&, Parser& p, int);
+bool catch_errhand(const NonTerminal&, Parser& p, int);
+bool finally_errhand(const NonTerminal&, Parser& p, int);
+bool raise_errhand(const NonTerminal&, Parser& p, int);
 
-void apply_try( const Rule&, Parser& p );
-void apply_catch( const Rule&, Parser& p );
-void apply_finally( const Rule&, Parser& p );
-void apply_raise( const Rule&, Parser& p );
+void apply_try( const NonTerminal&, Parser& p );
+void apply_catch( const NonTerminal&, Parser& p );
+void apply_finally( const NonTerminal&, Parser& p );
+void apply_raise( const NonTerminal&, Parser& p );
 
 
-void apply_catch_all( const Rule&, Parser& p );
-void apply_catch_in_var( const Rule&, Parser& p );
-void apply_catch_as_var( const Rule&, Parser& p );
-void apply_catch_thing( const Rule&, Parser& p );
-void apply_catch_thing_in_var( const Rule&, Parser& p );
-void apply_catch_thing_as_var( const Rule&, Parser& p );
+void apply_catch_all( const NonTerminal&, Parser& p );
+void apply_catch_in_var( const NonTerminal&, Parser& p );
+void apply_catch_as_var( const NonTerminal&, Parser& p );
+void apply_catch_thing( const NonTerminal&, Parser& p );
+void apply_catch_thing_in_var( const NonTerminal&, Parser& p );
+void apply_catch_thing_as_var( const NonTerminal&, Parser& p );
 
 }
 

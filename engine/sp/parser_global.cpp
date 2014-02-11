@@ -23,8 +23,6 @@
 #include <falcon/sp/parser_deletor.h>
 #include <falcon/sp/sourcelexer.h>
 #include <falcon/sp/parser_global.h>
-
-#include <falcon/parser/rule.h>
 #include <falcon/parser/parser.h>
 #include <falcon/psteps/stmtglobal.h>
 
@@ -47,7 +45,7 @@ bool global_errhand(const NonTerminal&, Parser& p)
 }
 
 
-void apply_global( const Rule&, Parser& p )
+void apply_global( const NonTerminal&, Parser& p )
 {
    // << T_global << ListSymbol << T_EOL
 

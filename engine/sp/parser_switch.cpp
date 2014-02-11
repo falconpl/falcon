@@ -22,8 +22,6 @@
 #include <falcon/sp/parsercontext.h>
 #include <falcon/sp/parser_atom.h>
 #include <falcon/sp/parser_deletor.h>
-
-#include <falcon/parser/rule.h>
 #include <falcon/parser/parser.h>
 
 #include <falcon/sp/sourcelexer.h>
@@ -78,7 +76,7 @@ static void on_switch_closed(void* parser_void)
 }
 
 
-void apply_switch( const Rule&, Parser& p )
+void apply_switch( const NonTerminal&, Parser& p )
 {
    // << T_switch << Expr << T_EOL
    TokenInstance* tswch = p.getNextToken();
@@ -99,7 +97,7 @@ void apply_switch( const Rule&, Parser& p )
 }
 
 
-void apply_select( const Rule&, Parser& p )
+void apply_select( const NonTerminal&, Parser& p )
 {
    // << T_select << Expr << T_EOL
    TokenInstance* tswch = p.getNextToken();
@@ -343,7 +341,7 @@ static bool make_default_branch( Parser& p, ParserContext* ctx, SynTree* st, boo
    return true;
 }
 
-void apply_case( const Rule&, Parser& p )
+void apply_case( const NonTerminal&, Parser& p )
 {   
    // the current statement is a switch.
    ParserContext* ctx = static_cast<ParserContext*>(p.context());
@@ -358,7 +356,7 @@ void apply_case( const Rule&, Parser& p )
 }
 
 
-void apply_case_short( const Rule&, Parser& p )
+void apply_case_short( const NonTerminal&, Parser& p )
 {
   
    // the current statement is a switch.
@@ -372,7 +370,7 @@ void apply_case_short( const Rule&, Parser& p )
 
 
 
-void apply_default( const Rule&, Parser& p )
+void apply_default( const NonTerminal&, Parser& p )
 {
    // << T_default << T_EOL   
    ParserContext* ctx = static_cast<ParserContext*>(p.context());
@@ -383,7 +381,7 @@ void apply_default( const Rule&, Parser& p )
 }
 
 
-void apply_default_short( const Rule&, Parser& p )
+void apply_default_short( const NonTerminal&, Parser& p )
 {
    // << T_default << T_COLON
    ParserContext* ctx = static_cast<ParserContext*>(p.context());
@@ -394,7 +392,7 @@ void apply_default_short( const Rule&, Parser& p )
    
 }
 
-void apply_CaseListRange_int( const Rule&, Parser& p )
+void apply_CaseListRange_int( const NonTerminal&, Parser& p )
 {
    // << T_Int << T_to << T_Int );
    TokenInstance* ti1 = p.getNextToken();
@@ -408,7 +406,7 @@ void apply_CaseListRange_int( const Rule&, Parser& p )
    p.simplify(3,tir);
 }
 
-void apply_CaseListRange_string( const Rule&, Parser& p )
+void apply_CaseListRange_string( const NonTerminal&, Parser& p )
 {
    // << T_String << T_to << T_String );
    TokenInstance* ti1 = p.getNextToken();
@@ -422,14 +420,14 @@ void apply_CaseListRange_string( const Rule&, Parser& p )
    p.simplify(3,tir);
 }
 
-void apply_CaseListToken_range( const Rule&, Parser& p )
+void apply_CaseListToken_range( const NonTerminal&, Parser& p )
 {
    TokenInstance* ti = p.getNextToken();
    // we just have to change the token type.
    ti->token( static_cast<SourceParser*>(&p)->CaseListToken );
 }
 
-void apply_CaseListToken_nil( const Rule&, Parser& p )
+void apply_CaseListToken_nil( const NonTerminal&, Parser& p )
 {
    //<< T_nil 
    TokenInstance* ti = p.getNextToken();
@@ -437,7 +435,7 @@ void apply_CaseListToken_nil( const Rule&, Parser& p )
    ti->setValue( new CaseItem(), CaseItem::deletor );   
 }
 
-void apply_CaseListToken_true( const Rule&, Parser& p )
+void apply_CaseListToken_true( const NonTerminal&, Parser& p )
 {
    //<< T_true
    TokenInstance* ti = p.getNextToken();
@@ -445,7 +443,7 @@ void apply_CaseListToken_true( const Rule&, Parser& p )
    ti->setValue( new CaseItem( true ), CaseItem::deletor );   
 }
 
-void apply_CaseListToken_false( const Rule&, Parser& p )
+void apply_CaseListToken_false( const NonTerminal&, Parser& p )
 {
    //<< T_false
    TokenInstance* ti = p.getNextToken();
@@ -453,7 +451,7 @@ void apply_CaseListToken_false( const Rule&, Parser& p )
    ti->setValue( new CaseItem( false ), CaseItem::deletor );   
 }
 
-void apply_CaseListToken_int( const Rule&, Parser& p )
+void apply_CaseListToken_int( const NonTerminal&, Parser& p )
 {
    //<< T_true
    TokenInstance* ti = p.getNextToken();
@@ -461,7 +459,7 @@ void apply_CaseListToken_int( const Rule&, Parser& p )
    ti->setValue( new CaseItem( ti->asInteger() ), CaseItem::deletor );   
 }
 
-void apply_CaseListToken_string( const Rule&, Parser& p )
+void apply_CaseListToken_string( const NonTerminal&, Parser& p )
 {
    //<< T_true
    TokenInstance* ti = p.getNextToken();
@@ -470,7 +468,7 @@ void apply_CaseListToken_string( const Rule&, Parser& p )
 }
 
 
-void apply_CaseListToken_rstring( const Rule&, Parser& p )
+void apply_CaseListToken_rstring( const NonTerminal&, Parser& p )
 {
    //<< T_rstring
    TokenInstance* ti = p.getNextToken();
@@ -487,7 +485,7 @@ void apply_CaseListToken_rstring( const Rule&, Parser& p )
 }
 
 
-void apply_CaseListToken_sym( const Rule&, Parser& p )
+void apply_CaseListToken_sym( const NonTerminal&, Parser& p )
 {
    TokenInstance* ti = p.getNextToken();
    SourceParser* sp = static_cast<SourceParser*>(&p);
@@ -509,7 +507,7 @@ void apply_CaseListToken_sym( const Rule&, Parser& p )
 }
 
 
-void apply_CaseList_next( const Rule&, Parser& p )
+void apply_CaseList_next( const NonTerminal&, Parser& p )
 {
    // << CaseList << T_Comma << CaseListToken
    TokenInstance* til = p.getNextToken();
@@ -523,7 +521,7 @@ void apply_CaseList_next( const Rule&, Parser& p )
 }
 
 
-void apply_CaseList_first( const Rule&, Parser& p )
+void apply_CaseList_first( const NonTerminal&, Parser& p )
 {
    // << CaseListToken
    TokenInstance* tit = p.getNextToken();

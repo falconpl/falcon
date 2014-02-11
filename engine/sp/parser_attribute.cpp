@@ -21,8 +21,6 @@
 
 #include <falcon/error.h>
 #include <falcon/statement.h>
-
-#include <falcon/parser/rule.h>
 #include <falcon/parser/parser.h>
 
 #include <falcon/sp/sourceparser.h>
@@ -38,7 +36,7 @@ namespace Falcon {
 
 using namespace Parsing;
 
-bool errhand_attribute(const NonTerminal&, Parser& p)
+bool errhand_attribute(const NonTerminal&, Parser& p, int)
 {
    TokenInstance* ti = p.getNextToken();
 
@@ -49,7 +47,7 @@ bool errhand_attribute(const NonTerminal&, Parser& p)
 }
 
 
-void apply_attribute( const Rule&, Parser& p )
+void apply_attribute( const NonTerminal&, Parser& p )
 {
    // T_Colon << T_Name << T_Arrow << Expr << T_EOL
    ParserContext* ctx = static_cast<ParserContext*>(p.context());

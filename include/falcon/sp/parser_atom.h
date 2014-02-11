@@ -28,22 +28,22 @@ class Parser;
 
 using namespace Parsing;
 
-void apply_Atom_Int ( const Rule&, Parser& p );
-void apply_Atom_Float ( const Rule&, Parser& p );
-void apply_Atom_Name ( const Rule&, Parser& p );
-void apply_Atom_Pure_Name ( const Rule&, Parser& p );
-void apply_Atom_String ( const Rule&, Parser& p );
-void apply_Atom_RString ( const Rule&, Parser& p );
-void apply_Atom_IString ( const Rule&, Parser& p );
-void apply_Atom_MString ( const Rule&, Parser& p );
-void apply_Atom_False ( const Rule&, Parser& p );
-void apply_Atom_True ( const Rule&, Parser& p );
-void apply_Atom_Self ( const Rule&, Parser& p );
-void apply_Atom_FSelf ( const Rule&, Parser& p );
-void apply_Atom_Init ( const Rule&, Parser& p );
-void apply_Atom_Nil ( const Rule&, Parser& p );
+void apply_Atom_Int ( const NonTerminal&, Parser& p );
+void apply_Atom_Float ( const NonTerminal&, Parser& p );
+void apply_Atom_Name ( const NonTerminal&, Parser& p );
+void apply_Atom_Pure_Name ( const NonTerminal&, Parser& p );
+void apply_Atom_String ( const NonTerminal&, Parser& p );
+void apply_Atom_RString ( const NonTerminal&, Parser& p );
+void apply_Atom_IString ( const NonTerminal&, Parser& p );
+void apply_Atom_MString ( const NonTerminal&, Parser& p );
+void apply_Atom_False ( const NonTerminal&, Parser& p );
+void apply_Atom_True ( const NonTerminal&, Parser& p );
+void apply_Atom_Self ( const NonTerminal&, Parser& p );
+void apply_Atom_FSelf ( const NonTerminal&, Parser& p );
+void apply_Atom_Init ( const NonTerminal&, Parser& p );
+void apply_Atom_Nil ( const NonTerminal&, Parser& p );
 
-void apply_expr_atom( const Rule&, Parser& p );
+void apply_expr_atom( const NonTerminal&, Parser& p );
 }
 
 #endif

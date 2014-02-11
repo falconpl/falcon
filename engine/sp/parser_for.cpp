@@ -21,8 +21,6 @@
 #include <falcon/error.h>
 #include <falcon/expression.h>
 #include <falcon/statement.h>
-
-#include <falcon/parser/rule.h>
 #include <falcon/parser/parser.h>
 
 #include <falcon/sp/sourceparser.h>
@@ -40,7 +38,7 @@ namespace Falcon {
 
 using namespace Parsing;
 
-bool for_errhand(const NonTerminal&, Parser& p)
+bool for_errhand(const NonTerminal&, Parser& p, int)
 {
    TokenInstance* ti = p.getNextToken();
    TokenInstance* ti2 = p.getLastToken();
@@ -66,7 +64,7 @@ bool for_errhand(const NonTerminal&, Parser& p)
    }
    // on interactive parsers, let the whole instruction to be destroyed.
 
-   p.clearFrames();
+   p.setErrorMode(&p.T_EOF);
    return true;
 }
 
@@ -131,7 +129,7 @@ static StmtForTo* internal_for_to( Parser& p, TokenInstance* tfor,
 }
 
 
-void apply_for_to_step( const Rule&, Parser& p )
+void apply_for_to_step( const NonTerminal&, Parser& p )
 {
    // << T_for << Symbol << T_EqSign << Expr << T_to << Expr << T_comma << Expr << T_EOL )
    ParserContext* st = static_cast<ParserContext*>(p.context());
@@ -160,7 +158,7 @@ void apply_for_to_step( const Rule&, Parser& p )
 }
 
 
-void apply_for_to_step_short( const Rule&, Parser& p )
+void apply_for_to_step_short( const NonTerminal&, Parser& p )
 {
    // << T_for << Symbol << T_EqSign << Expr << T_to << Expr << T_comma << Expr << T_COLON )
    ParserContext* st = static_cast<ParserContext*>(p.context());
@@ -188,7 +186,7 @@ void apply_for_to_step_short( const Rule&, Parser& p )
    p.simplify(9);
 }
 
-void apply_for_to( const Rule&, Parser& p )
+void apply_for_to( const NonTerminal&, Parser& p )
 {
    // << T_for << Symbol << T_EqSign << Expr << T_to << Expr << T_EOL )
    ParserContext* st = static_cast<ParserContext*>(p.context());
@@ -214,7 +212,7 @@ void apply_for_to( const Rule&, Parser& p )
 }
 
 
-void apply_for_to_short( const Rule&, Parser& p )
+void apply_for_to_short( const NonTerminal&, Parser& p )
 {
    // << T_for << Symbol << T_EqSign << Expr << T_to << Expr << T_EOL )
    ParserContext* st = static_cast<ParserContext*>(p.context());
@@ -240,7 +238,7 @@ void apply_for_to_short( const Rule&, Parser& p )
 }
 
 
-void apply_for_in( const Rule&, Parser& p )
+void apply_for_in( const NonTerminal&, Parser& p )
 {
    // << T_for << NeListSymbol << T_in << Expr << T_EOL )
    ParserContext* ctx = static_cast<ParserContext*>(p.context());
@@ -272,7 +270,7 @@ void apply_for_in( const Rule&, Parser& p )
    p.simplify(5);
 }
 
-void apply_for_in_short( const Rule&, Parser& p )
+void apply_for_in_short( const NonTerminal&, Parser& p )
 {
    // << T_for << NeListSymbol << T_in << Expr << T_EOL )
    ParserContext* ctx = static_cast<ParserContext*>(p.context());
@@ -305,7 +303,7 @@ void apply_for_in_short( const Rule&, Parser& p )
 }
 
 
-static void apply_forfirst_internal( const Rule&, Parser& p, bool bShort )
+static void apply_forfirst_internal( const NonTerminal&, Parser& p, bool bShort )
 {
    // << T_forfirst << T_EOL )
    ParserContext* ctx = static_cast<ParserContext*>(p.context());
@@ -336,19 +334,19 @@ static void apply_forfirst_internal( const Rule&, Parser& p, bool bShort )
 }
 
 
-void apply_forfirst( const Rule& r, Parser& p )
+void apply_forfirst( const NonTerminal& r, Parser& p )
 {
    apply_forfirst_internal( r, p, false );
 }
 
 
-void apply_forfirst_short( const Rule& r, Parser& p )
+void apply_forfirst_short( const NonTerminal& r, Parser& p )
 {
    apply_forfirst_internal( r, p, true );
 }
 
 
-static void apply_formiddle_internal( const Rule&, Parser& p, bool isShort )
+static void apply_formiddle_internal( const NonTerminal&, Parser& p, bool isShort )
 {
    // << T_formiddle << T_EOL )
    ParserContext* ctx = static_cast<ParserContext*>(p.context());
@@ -378,18 +376,18 @@ static void apply_formiddle_internal( const Rule&, Parser& p, bool isShort )
 }
 
 
-void apply_formiddle( const Rule& r, Parser& p )
+void apply_formiddle( const NonTerminal& r, Parser& p )
 {
    apply_formiddle_internal( r, p, false );
 }
 
 
-void apply_formiddle_short( const Rule& r, Parser& p )
+void apply_formiddle_short( const NonTerminal& r, Parser& p )
 {
    apply_formiddle_internal( r, p, true );
 }
 
-static void apply_forlast_internal( const Rule&, Parser& p, bool isShort )
+static void apply_forlast_internal( const NonTerminal&, Parser& p, bool isShort )
 {
    // << T_forlast << T_EOL )
    ParserContext* ctx = static_cast<ParserContext*>(p.context());   
@@ -418,12 +416,12 @@ static void apply_forlast_internal( const Rule&, Parser& p, bool isShort )
 }
 
 
-void apply_forlast( const Rule& r, Parser& p )
+void apply_forlast( const NonTerminal& r, Parser& p )
 {
    apply_forlast_internal( r, p, false );
 }
 
-void apply_forlast_short( const Rule& r, Parser& p )
+void apply_forlast_short( const NonTerminal& r, Parser& p )
 {
    apply_forlast_internal( r, p, true );
 }

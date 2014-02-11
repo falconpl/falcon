@@ -56,12 +56,12 @@ public:
    /** Callback for parsing error routine.
     \see setErrorHandler
     */
-   typedef bool (*ErrorHandler)(const NonTerminal& nt, Parser& p);
+   typedef bool (*ErrorHandler)(const NonTerminal& nt, Parser& p, int e);
 
    /** Callback for parsing error routine.
        \see setErrorHandler
    */
-   typedef void (*Handler)(Parser& p, const NonTerminal& nt);
+   typedef void (*Handler)(const NonTerminal& nt, Parser& p);
 
    /** Sets the error handler for this routine.
    \param hr An handler routine that is invoked on syntax error.

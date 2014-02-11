@@ -28,17 +28,17 @@ class Parser;
 
 using namespace Parsing;
 
-bool load_errhand(const NonTerminal&, Parser& p);
+bool load_errhand(const NonTerminal&, Parser& p, int);
 
-void apply_load_string( const Rule&, Parser& p );
-void apply_load_mod_spec( const Rule&, Parser& p );
+void apply_load_string( const NonTerminal&, Parser& p );
+void apply_load_mod_spec( const NonTerminal&, Parser& p );
 
-bool load_modspec_errhand(const NonTerminal&, Parser& p);
+bool load_modspec_errhand(const NonTerminal&, Parser& p, int);
 
-void apply_modspec_next( const Rule&, Parser& p );
-void apply_modspec_first( const Rule&, Parser& p );
-void apply_modspec_first_self( const Rule&, Parser& p );
-void apply_modspec_first_dot( const Rule&, Parser& p );
+void apply_modspec_next( const NonTerminal&, Parser& p );
+void apply_modspec_first( const NonTerminal&, Parser& p );
+void apply_modspec_first_self( const NonTerminal&, Parser& p );
+void apply_modspec_first_dot( const NonTerminal&, Parser& p );
 
 }
 

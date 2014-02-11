@@ -29,7 +29,7 @@ class Parser;
 
 using namespace Parsing;
 
-void apply_expr_amper( const Rule&, Parser& p );
+void apply_expr_amper( const NonTerminal&, Parser& p );
 
 }
 

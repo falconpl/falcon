@@ -21,8 +21,6 @@
 #include <falcon/sp/parsercontext.h>
 #include <falcon/sp/parser_index.h>
 #include <falcon/sp/parser_deletor.h>
-
-#include <falcon/parser/rule.h>
 #include <falcon/parser/parser.h>
 
 #include <falcon/psteps/exprindex.h>
@@ -34,7 +32,7 @@ namespace Falcon {
 using namespace Parsing;
 
 
-void apply_expr_index( const Rule&, Parser& p )
+void apply_expr_index( const NonTerminal&, Parser& p )
 {
    // << (r_Expr_index << "Expr_index" << apply_expr_index << Expr << T_OpenSquare << Expr << T_CloseSquare )
    SourceParser& sp = static_cast<SourceParser&>(p);
@@ -56,7 +54,7 @@ void apply_expr_index( const Rule&, Parser& p )
 }
 
 
-void apply_expr_star_index( const Rule&, Parser& p )
+void apply_expr_star_index( const NonTerminal&, Parser& p )
 {
    // << (r_Expr_star_index << "Expr_star_index" << apply_expr_star_index << Expr << T_OpenSquare << T_Times << Expr << T_CloseSquare )
    SourceParser& sp = static_cast<SourceParser&>( p );
@@ -80,7 +78,7 @@ void apply_expr_star_index( const Rule&, Parser& p )
 }
 
 
-void apply_expr_range_index3( const Rule&, Parser& p )
+void apply_expr_range_index3( const NonTerminal&, Parser& p )
 {
    // << Expr << T_OpenSquare << Expr << T_Colon << Expr << T_Colon << Expr << T_CloseSquare
    // Example array[n1:n2:n3]
@@ -113,7 +111,7 @@ void apply_expr_range_index3( const Rule&, Parser& p )
 }
 
 
-void apply_expr_range_index3open( const Rule&, Parser& p )
+void apply_expr_range_index3open( const NonTerminal&, Parser& p )
 {
    // << Expr << T_OpenSquare << Expr << T_Colon << T_Colon << Expr << T_CloseSquare
    // Example: array[n1::n2]
@@ -143,7 +141,7 @@ void apply_expr_range_index3open( const Rule&, Parser& p )
 }
 
 
-void apply_expr_range_index2( const Rule&, Parser& p )
+void apply_expr_range_index2( const NonTerminal&, Parser& p )
 {
    // << Expr << T_OpenSquare << Expr << T_Colon << Expr << T_CloseSquare
    // Example array[n1:n2]
@@ -173,7 +171,7 @@ void apply_expr_range_index2( const Rule&, Parser& p )
 }
 
 
-void apply_expr_range_index1( const Rule&, Parser& p )
+void apply_expr_range_index1( const NonTerminal&, Parser& p )
 {
    // << Expr << T_OpenSquare << Expr << T_Colon << T_CloseSquare
    // Example: array[n1:]
@@ -201,7 +199,7 @@ void apply_expr_range_index1( const Rule&, Parser& p )
 }
 
 
-void apply_expr_range_index0( const Rule&, Parser& p )
+void apply_expr_range_index0( const NonTerminal&, Parser& p )
 {
    // << Expr << T_OpenSquare << T_Colon << T_CloseSquare
    // Example: array[:]

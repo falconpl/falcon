@@ -24,8 +24,6 @@
 #include <falcon/parser/tokeninstance.h>
 #include <falcon/parser/terminal.h>
 #include <falcon/parser/nonterminal.h>
-#include <falcon/parser/rule.h>
-#include <falcon/parser/state.h>
 
 namespace Falcon {
 

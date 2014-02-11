@@ -21,8 +21,6 @@
 #include <falcon/error.h>
 
 #include <falcon/psteps/stmtloop.h>
-
-#include <falcon/parser/rule.h>
 #include <falcon/parser/parser.h>
 
 #include <falcon/sp/sourceparser.h>
@@ -34,7 +32,7 @@ namespace Falcon {
 
 using namespace Parsing;
 
-bool loop_errhand(const NonTerminal&, Parser& p)
+bool loop_errhand(const NonTerminal&, Parser& p, int)
 {
    TokenInstance* ti = p.getNextToken();
    TokenInstance* ti2 = p.getLastToken();
@@ -59,7 +57,7 @@ bool loop_errhand(const NonTerminal&, Parser& p)
    }
    // on interactive parsers, let the whole instruction to be destroyed.
 
-   p.clearFrames();
+   p.setErrorMode(&p.T_EOF);
    return true;
 }
 
@@ -78,14 +76,14 @@ static void apply_loop_internal( Parser& p, bool autoClose )
    p.simplify(2);
 }
 
-void apply_loop_short( const Rule&, Parser& p )
+void apply_loop_short( const NonTerminal&, Parser& p )
 {
    // << T_loop << T_Colon
    apply_loop_internal(p, true);
 }
 
 
-void apply_loop( const Rule&, Parser& p )
+void apply_loop( const NonTerminal&, Parser& p )
 {
    // << apply_loop << T_loop << T_EOL
    apply_loop_internal(p, false);

@@ -27,27 +27,27 @@ class Parser;
 
 using namespace Parsing;
 
-bool classdecl_errhand(const NonTerminal&, Parser& p);
+bool classdecl_errhand(const NonTerminal&, Parser& p, int);
 
-void apply_class_statement( const Rule&, Parser& p );
-void apply_object_statement( const Rule&, Parser& p );
+void apply_class_statement( const NonTerminal&, Parser& p );
+void apply_object_statement( const NonTerminal&, Parser& p );
 
-void apply_pdecl_expr( const Rule&, Parser& p );
-void apply_static_pdecl_expr( const Rule&, Parser& p );
-void apply_init_expr( const Rule&, Parser& p );
+void apply_pdecl_expr( const NonTerminal&, Parser& p );
+void apply_static_pdecl_expr( const NonTerminal&, Parser& p );
+void apply_init_expr( const NonTerminal&, Parser& p );
 
-void apply_FromClause_next( const Rule&, Parser& p );
-void apply_FromClause_first( const Rule&, Parser& p );
+void apply_FromClause_next( const NonTerminal&, Parser& p );
+void apply_FromClause_first( const NonTerminal&, Parser& p );
 
-void apply_FromClause_entry_with_expr( const Rule&, Parser& p );
-void apply_FromClause_entry( const Rule&, Parser& p );
+void apply_FromClause_entry_with_expr( const NonTerminal&, Parser& p );
+void apply_FromClause_entry( const NonTerminal&, Parser& p );
 
 
-void apply_expr_class( const Rule&, Parser& p );
-void apply_class_from( const Rule&, Parser& p );
-void apply_class( const Rule&, Parser& p );
-void apply_class_p_from( const Rule&, Parser& p );
-void apply_class_p( const Rule&, Parser& p );
+void apply_expr_class( const NonTerminal&, Parser& p );
+void apply_class_from( const NonTerminal&, Parser& p );
+void apply_class( const NonTerminal&, Parser& p );
+void apply_class_p_from( const NonTerminal&, Parser& p );
+void apply_class_p( const NonTerminal&, Parser& p );
 
 }
 

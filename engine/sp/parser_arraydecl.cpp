@@ -22,8 +22,6 @@
 #include <falcon/psteps/exprarray.h>
 #include <falcon/psteps/exprdict.h>
 #include <falcon/psteps/exprrange.h>
-
-#include <falcon/parser/rule.h>
 #include <falcon/parser/parser.h>
 
 #include <falcon/sp/sourceparser.h>
@@ -38,8 +36,9 @@ namespace Falcon {
 using namespace Parsing;
 
 
-bool ArrayEntry_errHand( const NonTerminal&, Parser& )
+bool ArrayEntry_errHand( const NonTerminal&, Parser&p, int )
 {
+   p.setErrorMode(&p.T_EOL);
    return false;
 }
 
@@ -182,7 +181,7 @@ public:
 };
 
 
-static StmtTempArrayDecl* internal_apply_expr_array_decl( const Rule&, Parser& p )
+static StmtTempArrayDecl* internal_apply_expr_array_decl( const NonTerminal&, Parser& p )
 {
    // << T_OpenSquare
    SourceParser& sp = *static_cast<SourceParser*>(&p);
@@ -200,19 +199,19 @@ static StmtTempArrayDecl* internal_apply_expr_array_decl( const Rule&, Parser& p
 }
 
 
-void apply_expr_array_decl( const Rule& r, Parser& p )
+void apply_expr_array_decl( const NonTerminal& r, Parser& p )
 {
    internal_apply_expr_array_decl( r, p )->bHasSep = true;
 }
 
 
-void apply_expr_array_decl2( const Rule& r, Parser& p )
+void apply_expr_array_decl2( const NonTerminal& r, Parser& p )
 {
    internal_apply_expr_array_decl( r, p )->bHasSep = false;
 }
 
 
-void apply_array_entry_expr( const Rule&, Parser&p )
+void apply_array_entry_expr( const NonTerminal&, Parser&p )
 {
    // Expr
    SourceParser& sp = *static_cast<SourceParser*>(&p);
@@ -255,7 +254,7 @@ void apply_array_entry_expr( const Rule&, Parser&p )
 }
 
 
-void apply_array_entry_comma( const Rule&, Parser& p )
+void apply_array_entry_comma( const NonTerminal&, Parser& p )
 {
    SourceParser& sp = *static_cast<SourceParser*>(&p);
    ParserContext* ctx = static_cast<ParserContext*>(sp.context());
@@ -282,14 +281,14 @@ void apply_array_entry_comma( const Rule&, Parser& p )
 }
 
 
-void apply_array_entry_eol( const Rule&, Parser& p )
+void apply_array_entry_eol( const NonTerminal&, Parser& p )
 {
    // ignored.
    p.simplify(1);
 }
 
 
-void apply_array_entry_arrow( const Rule&, Parser& p )
+void apply_array_entry_arrow( const NonTerminal&, Parser& p )
 {
    SourceParser& sp = *static_cast<SourceParser*>(&p);
    ParserContext* ctx = static_cast<ParserContext*>(sp.context());
@@ -334,7 +333,7 @@ void apply_array_entry_arrow( const Rule&, Parser& p )
 }
 
 
-void apply_array_entry_close( const Rule&, Parser& p )
+void apply_array_entry_close( const NonTerminal&, Parser& p )
 {
    SourceParser& sp = *static_cast<SourceParser*>(&p);
    ParserContext* ctx = static_cast<ParserContext*>(sp.context());
@@ -406,7 +405,7 @@ static void makeRange( Parser& p, int count, Expression* expr1, Expression* expr
 }
 
 
-void apply_array_entry_range3( const Rule&, Parser& p )
+void apply_array_entry_range3( const NonTerminal&, Parser& p )
 {
    // << Expr << T_Colon << Expr << T_Colon << Expr << T_CloseSquare
 
@@ -424,7 +423,7 @@ void apply_array_entry_range3( const Rule&, Parser& p )
 }
 
 
-void apply_array_entry_range3bis( const Rule&, Parser& p )
+void apply_array_entry_range3bis( const NonTerminal&, Parser& p )
 {
    // << Expr << T_Colon << T_Colon << Expr << T_CloseSquare
    TokenInstance* texpr1 = p.getNextToken();
@@ -440,7 +439,7 @@ void apply_array_entry_range3bis( const Rule&, Parser& p )
 }
 
 
-void apply_array_entry_range2( const Rule&, Parser& p )
+void apply_array_entry_range2( const NonTerminal&, Parser& p )
 {
    // << Expr << T_Colon << Expr << T_CloseSquare
    TokenInstance* texpr1 = p.getNextToken();
@@ -455,7 +454,7 @@ void apply_array_entry_range2( const Rule&, Parser& p )
 }
 
 
-void apply_array_entry_range1( const Rule&, Parser& p )
+void apply_array_entry_range1( const NonTerminal&, Parser& p )
 {
    // << Expr << T_Colon << T_CloseSquare
    TokenInstance* texpr1 = p.getNextToken();
@@ -467,7 +466,7 @@ void apply_array_entry_range1( const Rule&, Parser& p )
 }
 
 
-void apply_array_entry_runaway( const Rule&, Parser& )
+void apply_array_entry_runaway( const NonTerminal&, Parser& )
 {
 
 }

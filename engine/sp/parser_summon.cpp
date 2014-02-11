@@ -26,9 +26,7 @@
 #include <falcon/sp/parser_deletor.h>
 
 #include <falcon/parser/nonterminal.h>
-#include <falcon/parser/rule.h>
 #include <falcon/parser/parser.h>
-#include <falcon/parser/state.h>
 
 #include <falcon/psteps/exprsummon.h>
 
@@ -72,7 +70,7 @@ static void internal_summon(Parser& p, bool isOptional)
    p.trim(5);
 }
 
-void apply_expr_summon( const Rule&, Parser& p )
+void apply_expr_summon( const NonTerminal&, Parser& p )
 {
    MESSAGE("Found SUMMON");
 
@@ -82,7 +80,7 @@ void apply_expr_summon( const Rule&, Parser& p )
 
 
 
-void apply_expr_opt_summon( const Rule&, Parser& p )
+void apply_expr_opt_summon( const NonTerminal&, Parser& p )
 {
    //  << Expr << T_ColonDoubt << T_Name << T_Openpar << ListExpr << T_Closepar
    internal_summon(p,true);

@@ -25,8 +25,8 @@ class Rule;
 class Parser;
 }
 
-void apply_expr_summon( const Parsing::Rule&, Parsing::Parser& p );
-void apply_expr_opt_summon( const Parsing::Rule&, Parsing::Parser& p );
+void apply_expr_summon( const Parsing::NonTerminal&, Parsing::Parser& p );
+void apply_expr_opt_summon( const Parsing::NonTerminal&, Parsing::Parser& p );
 
 }
 

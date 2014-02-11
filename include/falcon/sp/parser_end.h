@@ -27,9 +27,9 @@ class Parser;
 
 using namespace Parsing;
 
-void apply_end( const Rule&, Parser& p );
-void apply_end_small( const Rule&, Parser& p );
-void apply_end_rich( const Rule&, Parser& p );
+void apply_end( const NonTerminal&, Parser& p );
+void apply_end_small( const NonTerminal&, Parser& p );
+void apply_end_rich( const NonTerminal&, Parser& p );
 
 }
 

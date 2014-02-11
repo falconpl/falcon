@@ -20,7 +20,6 @@
 #include <falcon/symbol.h>
 #include <falcon/error.h>
 
-#include <falcon/parser/rule.h>
 #include <falcon/parser/parser.h>
 #include <falcon/psteps/exprtree.h>
 
@@ -73,7 +72,7 @@ public:
 
 using namespace Parsing;
 
-static SynFunc* inner_apply_function( const Rule&, Parser& p, bool bHasExpr, bool isEta, bool isStatic )
+static SynFunc* inner_apply_function( const NonTerminal&, Parser& p, bool bHasExpr, bool isEta, bool isStatic )
 {
    //<< (r_Expr_function << "Expr_function" << apply_function << T_function << T_Name << T_Openpar << ListSymbol << T_Closepar << T_EOL )
    ParserContext* ctx = static_cast<ParserContext*>(p.context());
@@ -144,22 +143,22 @@ static SynFunc* inner_apply_function( const Rule&, Parser& p, bool bHasExpr, boo
    return func;
 }
 
-void apply_function(const Rule& r,Parser& p)
+void apply_function( const NonTerminal& r,Parser& p)
 {
    inner_apply_function( r, p, false, false, false );
 }
 
-void apply_function_eta(const Rule& r,Parser& p)
+void apply_function_eta( const NonTerminal& r,Parser& p)
 {
    inner_apply_function( r, p, false, true, false );
 }
 
-void apply_static_function(const Rule& r,Parser& p)
+void apply_static_function( const NonTerminal& r,Parser& p)
 {
    inner_apply_function( r, p, false, false, true );
 }
 
-void apply_static_function_eta(const Rule& r,Parser& p)
+void apply_static_function_eta( const NonTerminal& r,Parser& p)
 {
    inner_apply_function( r, p, false, false, true );
 }
@@ -233,7 +232,7 @@ void on_close_lit( void* thing )
 }
 
 
-static void internal_expr_func(const Rule&, Parser& p, bool isEta )
+static void internal_expr_func( const NonTerminal&, Parser& p, bool isEta )
 {
    SourceParser& sp = *static_cast<SourceParser*>(&p);
    ParserContext* ctx = static_cast<ParserContext*>(p.context());
@@ -271,20 +270,20 @@ static void internal_expr_func(const Rule&, Parser& p, bool isEta )
 }
 
 
-void apply_expr_func(const Rule& r, Parser& p)
+void apply_expr_func( const NonTerminal& r, Parser& p)
 {
    //<< T_function << T_Openpar << ListSymbol << T_Closepar << T_EOL
    internal_expr_func( r, p, false );   
 }
 
-void apply_expr_funcEta(const Rule& r, Parser& p)
+void apply_expr_funcEta( const NonTerminal& r, Parser& p)
 {
    //<< T_function << T_Times << T_Openpar << ListSymbol << T_Closepar << T_EOL
    internal_expr_func( r, p, true );   
 }
 
 
-void apply_return_doubt(const Rule&, Parser& p)
+void apply_return_doubt( const NonTerminal&, Parser& p)
 {
    ParserContext* ctx = static_cast<ParserContext*>(p.context());
    p.getNextToken();//T_return
@@ -299,7 +298,7 @@ void apply_return_doubt(const Rule&, Parser& p)
    p.simplify(4);
 }
 
-void apply_return_eval(const Rule&, Parser& p)
+void apply_return_eval( const NonTerminal&, Parser& p)
 {
    ParserContext* ctx = static_cast<ParserContext*>(p.context());
    p.getNextToken();//T_return
@@ -315,7 +314,7 @@ void apply_return_eval(const Rule&, Parser& p)
 }
 
 
-void apply_return_break(const Rule&, Parser& p)
+void apply_return_break( const NonTerminal&, Parser& p)
 {
    ParserContext* ctx = static_cast<ParserContext*>(p.context());
    TokenInstance* texpr= p.getNextToken();//T_return
@@ -326,7 +325,7 @@ void apply_return_break(const Rule&, Parser& p)
    p.simplify(3);
 }
 
-void apply_return_expr(const Rule&, Parser& p)
+void apply_return_expr( const NonTerminal&, Parser& p)
 {
    ParserContext* ctx = static_cast<ParserContext*>(p.context());
    p.getNextToken();//T_return
@@ -340,7 +339,7 @@ void apply_return_expr(const Rule&, Parser& p)
 }
 
 
-void apply_return(const Rule&, Parser& p)
+void apply_return( const NonTerminal&, Parser& p)
 {
    TokenInstance* texpr = p.getNextToken();
    ParserContext* ctx = static_cast<ParserContext*>(p.context());
@@ -350,14 +349,14 @@ void apply_return(const Rule&, Parser& p)
 }
 
 
-void apply_expr_lambda(const Rule&, Parser& p)
+void apply_expr_lambda( const NonTerminal&, Parser& p)
 {
    // T_OpenGraph
    p.simplify(1);
    p.pushState( "LambdaStart", false );
 }
 
-void apply_expr_ep(const Rule&, Parser& p)
+void apply_expr_ep( const NonTerminal&, Parser& p)
 {
    // T_CapPar
    TokenInstance* ti = p.getNextToken();
@@ -369,7 +368,7 @@ void apply_expr_ep(const Rule&, Parser& p)
 }
 
 
-void apply_ep_body(const Rule&, Parser& p)
+void apply_ep_body( const NonTerminal&, Parser& p)
 {
    ParserContext* ctx = static_cast<ParserContext*>(p.context());
    SourceParser& sp = *static_cast<SourceParser*>(&p);
@@ -399,7 +398,7 @@ void apply_ep_body(const Rule&, Parser& p)
    p.popState();
 }
 
-static void internal_lambda_params(const Rule&, Parser& p, bool isEta )
+static void internal_lambda_params( const NonTerminal&, Parser& p, bool isEta )
 {
    // ListSymbol << T_Arrow
    SourceParser& sp = static_cast<SourceParser&>(p);
@@ -437,18 +436,18 @@ static void internal_lambda_params(const Rule&, Parser& p, bool isEta )
    p.pushState( "InlineFunc", on_close_lambda , &p );
 }
 
-void apply_lambda_params(const Rule& r, Parser& p)
+void apply_lambda_params( const NonTerminal& r, Parser& p)
 {
    internal_lambda_params( r, p, false );
 }
 
-void apply_lambda_params_eta(const Rule& r, Parser& p)
+void apply_lambda_params_eta( const NonTerminal& r, Parser& p)
 {
    internal_lambda_params( r, p, true );
 }
 
 
-void internal_lit_params(const Rule&, Parser& p, bool isEta )
+void internal_lit_params( const NonTerminal&, Parser& p, bool isEta )
 {
    // << T_Openpar << ListSymbol << T_Closepar
    SourceParser& sp = static_cast<SourceParser&>(p);
@@ -504,12 +503,12 @@ void internal_lit_params(const Rule&, Parser& p, bool isEta )
    p.pushState( "InlineFunc", on_close_lit , &p );
 }
 
-void apply_lit_params_eta(const Rule& r, Parser& p)
+void apply_lit_params_eta( const NonTerminal& r, Parser& p)
 {
    internal_lit_params( r, p, true );
 }
 
-void apply_lit_params(const Rule& r, Parser& p)
+void apply_lit_params( const NonTerminal& r, Parser& p)
 {
    internal_lit_params( r, p, false );
 }

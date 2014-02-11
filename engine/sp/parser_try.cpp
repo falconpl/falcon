@@ -21,8 +21,6 @@
 
 #include <falcon/error.h>
 #include <falcon/statement.h>
-
-#include <falcon/parser/rule.h>
 #include <falcon/parser/parser.h>
 
 #include <falcon/sp/sourceparser.h>
@@ -44,7 +42,7 @@ namespace Falcon {
 
 using namespace Parsing;
 
-bool try_errhand(const NonTerminal&, Parser& p)
+bool try_errhand(const NonTerminal&, Parser& p, int)
 {
    TokenInstance* ti = p.getNextToken();
    TokenInstance* ti2 = p.getLastToken();
@@ -67,13 +65,12 @@ bool try_errhand(const NonTerminal&, Parser& p)
       // on interactive parsers, let the whole instruction to be destroyed.
       MESSAGE2( "errhand_try -- Ignoring TRY in interactive mode." );
    }
-   p.consumeUpTo( p.T_EOL );
-   p.clearFrames();
+   p.setErrorMode( &p.T_EOL );
    return true;
 }
 
 
-bool catch_errhand(const NonTerminal&, Parser& p)
+bool catch_errhand(const NonTerminal&, Parser& p, int)
 {
    TokenInstance* ti = p.getNextToken();
    //TokenInstance* ti2 = p.getLastToken();
@@ -88,13 +85,12 @@ bool catch_errhand(const NonTerminal&, Parser& p)
       MESSAGE2( "catch_errhand -- Ignoring CATCH." );
    }
    
-   p.consumeUpTo( p.T_EOL );
-   p.clearFrames();
+   p.setErrorMode( &p.T_EOL );
    return true;
 }
 
 
-bool finally_errhand(const NonTerminal&, Parser& p)
+bool finally_errhand(const NonTerminal&, Parser& p, int)
 {
    TokenInstance* ti = p.getNextToken();
    TokenInstance* ti2 = p.getLastToken();
@@ -109,12 +105,11 @@ bool finally_errhand(const NonTerminal&, Parser& p)
       MESSAGE2( "finally_errhand -- Ignoring FINALLY." );
    }
    
-   p.consumeUpTo( p.T_EOL );
-   p.clearFrames();
+   p.setErrorMode( &p.T_EOL );
    return true;
 }
 
-bool raise_errhand(const NonTerminal&, Parser& p)
+bool raise_errhand(const NonTerminal&, Parser& p, int)
 {
    TokenInstance* ti = p.getNextToken();
    TokenInstance* ti2 = p.getLastToken();
@@ -129,13 +124,12 @@ bool raise_errhand(const NonTerminal&, Parser& p)
       MESSAGE2( "raise_errhand -- Ignoring RAISE." );
    }
    
-   p.consumeUpTo( p.T_EOL );
-   p.clearFrames();
+   p.setErrorMode( &p.T_EOL );
    return true;
 }
 
 
-void apply_try( const Rule&, Parser& p )
+void apply_try( const NonTerminal&, Parser& p )
 {
    // T_try << T_EOL   
    TokenInstance* ti = p.getNextToken();   
@@ -146,14 +140,14 @@ void apply_try( const Rule&, Parser& p )
 }
 
 
-void apply_catch( const Rule&, Parser& p )
+void apply_catch( const NonTerminal&, Parser& p )
 {
    // T_catch << CatchSpec
    // all the work is down below.
    p.simplify(2);
 }
 
-void apply_finally( const Rule&, Parser& p )
+void apply_finally( const NonTerminal&, Parser& p )
 {
    // T_finally << T_EOL
    TokenInstance* ti = p.getNextToken();
@@ -180,7 +174,7 @@ void apply_finally( const Rule&, Parser& p )
    p.simplify(2);
 }
 
-void apply_raise( const Rule&, Parser& p )
+void apply_raise( const NonTerminal&, Parser& p )
 {
    //<< T_raise << Expr << T_EOL );
    ParserContext* ctx = static_cast<ParserContext*>(p.context());
@@ -337,7 +331,7 @@ static void internal_apply_catch_case( int toks, Parser& p, int line, int chr,
    p.simplify(toks-1);
 }
 
-void apply_catch_all( const Rule&, Parser& p )
+void apply_catch_all( const NonTerminal&, Parser& p )
 {
    // << T_EOL
    TokenInstance* ti = p.getNextToken();
@@ -367,7 +361,7 @@ void apply_catch_all( const Rule&, Parser& p )
 }
 
 
-void apply_catch_in_var( const Rule&, Parser& p )
+void apply_catch_in_var( const NonTerminal&, Parser& p )
 {
    // << T_in << T_Name << T_EOL
    p.getNextToken();
@@ -375,7 +369,7 @@ void apply_catch_in_var( const Rule&, Parser& p )
    internal_apply_catch( 3, p, ti->line(), ti->chr(), -1, 0, 0, ti->asString() );
 }
 
-void apply_catch_as_var( const Rule&, Parser& p )
+void apply_catch_as_var( const NonTerminal&, Parser& p )
 {
    // << T_as << T_Name << T_EOL
    p.getNextToken();
@@ -385,7 +379,7 @@ void apply_catch_as_var( const Rule&, Parser& p )
 
 
 
-void apply_catch_thing( const Rule&, Parser& p )
+void apply_catch_thing( const NonTerminal&, Parser& p )
 {
    //<<  CaseList << T_EOL
    TokenInstance* tname = p.getNextToken();   
@@ -393,7 +387,7 @@ void apply_catch_thing( const Rule&, Parser& p )
 }
 
 
-void apply_catch_thing_in_var( const Rule&, Parser& p )
+void apply_catch_thing_in_var( const NonTerminal&, Parser& p )
 {
    // << CaseList << T_in << T_Name << T_EOL
    TokenInstance* tname = p.getNextToken();
@@ -402,7 +396,7 @@ void apply_catch_thing_in_var( const Rule&, Parser& p )
    internal_apply_catch_case( 4, p, tname->line(), tname->chr(), static_cast<CaseList*>(tname->asData()), tgt->asString() );
 }
 
-void apply_catch_thing_as_var( const Rule&, Parser& p )
+void apply_catch_thing_as_var( const NonTerminal&, Parser& p )
 {
    // << CaseList << T_as << T_Name << T_EOL
    TokenInstance* tname = p.getNextToken();

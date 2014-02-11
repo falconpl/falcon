@@ -21,59 +21,23 @@
 namespace Falcon {
 namespace Parsing {
 
-#define HASH_SEED 0xF3DE3EA3
-
-Token::Token(uint32 nID, const String& name, int prio, bool bRightAssoc ):
-   m_bNonTerminal( false ),
-   m_bRightAssoc( bRightAssoc ),
-   m_prio(prio),
-   m_nID( nID ),
-   m_name( name )
-{}
-
 Token::Token(const String& name, int prio, bool bRightAssoc):
    m_bNonTerminal(false),
    m_bRightAssoc( bRightAssoc ),
    m_prio(prio),
    m_name(name)
 {
-   m_nID = simpleHash( name );
 }
 
 Token::Token()
 {
-   m_nID = 0;
 }
 
 void Token::name( const String& n )
 {
-    m_nID = simpleHash( n );
     m_name = n;
 }
 
-uint32 Token::simpleHash( const String& v )
-{
-   uint32 h = HASH_SEED;
-   
-   for( length_t i = 0; i < v.length(); ++i )
-   {
-      char_t chr = v.getCharAt(i);
-      if( chr > 0xFFFF )
-      {
-         h += chr;
-      }
-      else if( chr > 0xFF )
-      {
-         h += chr << (16*(i%2));
-      }
-      else
-      {
-         h += chr << (8*(i%3));
-      }
-   }
-
-   return h;
-}
 
 Token::~Token()
 {

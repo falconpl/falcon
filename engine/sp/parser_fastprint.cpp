@@ -21,8 +21,6 @@
 #include <falcon/error.h>
 
 #include <falcon/expression.h>
-
-#include <falcon/parser/rule.h>
 #include <falcon/parser/parser.h>
 
 #include <falcon/sp/sourceparser.h>
@@ -40,7 +38,7 @@ namespace Falcon {
 using namespace Parsing;
 
 
-static void apply_fastprint_internal( const Rule&, Parser& p, bool hasNl )
+static void apply_fastprint_internal( const NonTerminal&, Parser& p, bool hasNl )
 {
    // << T_Greater << ListExpr << T_EOL
    ParserContext* ctx = static_cast<ParserContext*>(p.context());
@@ -79,18 +77,18 @@ static void apply_fastprint_internal( const Rule&, Parser& p, bool hasNl )
 }
 
 
-void apply_fastprint( const Rule& r, Parser& p )
+void apply_fastprint( const NonTerminal& r, Parser& p )
 {
    apply_fastprint_internal(r, p, false);
 }
 
 
-void apply_fastprint_nl( const Rule& r, Parser& p )
+void apply_fastprint_nl( const NonTerminal& r, Parser& p )
 {
    apply_fastprint_internal(r, p, true);
 }
 
-void apply_fastprint_alone( const Rule&, Parser& p )
+void apply_fastprint_alone( const NonTerminal&, Parser& p )
 {
    // << T_RShift << T_EOL
    ParserContext* ctx = static_cast<ParserContext*>(p.context());
@@ -104,7 +102,7 @@ void apply_fastprint_alone( const Rule&, Parser& p )
 }
 
 
-void apply_fastprint_nl_alone( const Rule&, Parser& p )
+void apply_fastprint_nl_alone( const NonTerminal&, Parser& p )
 {
    // << T_Greater << T_EOL
    ParserContext* ctx = static_cast<ParserContext*>(p.context());

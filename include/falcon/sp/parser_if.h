@@ -28,12 +28,12 @@ class Parser;
 
 using namespace Parsing;
 
-bool errhand_if(const NonTerminal&, Parser& p);
+bool errhand_if(const NonTerminal&, Parser& p, int);
 
-void apply_if_short( const Rule&, Parser& p );
-void apply_if( const Rule&, Parser& p );
-void apply_elif( const Rule&, Parser& p );
-void apply_else( const Rule&, Parser& p );
+void apply_if_short( const NonTerminal&, Parser& p );
+void apply_if( const NonTerminal&, Parser& p );
+void apply_elif( const NonTerminal&, Parser& p );
+void apply_else( const NonTerminal&, Parser& p );
 
 }
 

@@ -28,9 +28,9 @@ class Parser;
 
 using namespace Parsing;
 
-void apply_line_expr( const Rule&, Parser& p );
-void apply_autoexpr_list( const Rule&, Parser& p );
-void apply_stmt_assign_list( const Rule&, Parser& p );
+void apply_line_expr( const NonTerminal&, Parser& p );
+void apply_autoexpr_list( const NonTerminal&, Parser& p );
+void apply_stmt_assign_list( const NonTerminal&, Parser& p );
 
 }
 

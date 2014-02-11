@@ -25,7 +25,6 @@
 #include <falcon/falconclass.h>
 #include <falcon/synfunc.h>
 
-#include <falcon/parser/rule.h>
 #include <falcon/parser/parser.h>
 
 #include <falcon/sp/sourceparser.h>
@@ -46,7 +45,7 @@
 namespace Falcon {
 
 
-bool classdecl_errhand(const NonTerminal&, Parser& p)
+bool classdecl_errhand(const NonTerminal&, Parser& p, int )
 {
    ParserContext* ctx = static_cast<ParserContext*>(p.context());
    TokenInstance* ti = p.getNextToken();
@@ -58,8 +57,7 @@ bool classdecl_errhand(const NonTerminal&, Parser& p)
    }
    
    // remove the whole line
-   p.consumeUpTo( p.T_EOL );
-   p.clearFrames();
+   p.setErrorMode(&p.T_EOL);
    
    if( ! p.interactive() )
    {
@@ -78,7 +76,6 @@ bool classdecl_errhand(const NonTerminal&, Parser& p)
          delete cls;
       }
    }
-
       
    // we need to create a discardable anonymous class if we're a module.   
    return true;
@@ -208,19 +205,19 @@ static void internal_apply_class_statement( Parser& p, bool isObject )
    ctx->openClass(cls, isObject);
 }
 
-void apply_class_statement( const Rule&, Parser& p )
+void apply_class_statement( const NonTerminal&, Parser& p )
 {
    internal_apply_class_statement( p, false );
 }
 
-void apply_object_statement( const Rule&, Parser& p )
+void apply_object_statement( const NonTerminal&, Parser& p )
 {
    internal_apply_class_statement( p, true );
 }
 
 
 
-void apply_static_pdecl_expr( const Rule&, Parser& p )
+void apply_static_pdecl_expr( const NonTerminal&, Parser& p )
 {
    // << T_static << T_Name << T_EqSign << Expr << T_EOL;
    SourceParser& sp = static_cast<SourceParser&>(p);
@@ -254,7 +251,7 @@ void apply_static_pdecl_expr( const Rule&, Parser& p )
 }
 
 
-void apply_pdecl_expr( const Rule&, Parser& p )
+void apply_pdecl_expr( const NonTerminal&, Parser& p )
 {
    // << T_Name << T_EqSign << Expr << T_EOL;
    SourceParser& sp = static_cast<SourceParser&>(p);
@@ -290,7 +287,7 @@ void apply_pdecl_expr( const Rule&, Parser& p )
 // Init clause
 //
 
-void apply_init_expr( const Rule&, Parser& p )
+void apply_init_expr( const NonTerminal&, Parser& p )
 {
    // T_init << EOL;
    ParserContext* ctx = static_cast<ParserContext*>(p.context());
@@ -318,7 +315,7 @@ void apply_init_expr( const Rule&, Parser& p )
 // From clause
 //
 
-void apply_FromClause_next( const Rule&, Parser& p  )
+void apply_FromClause_next( const NonTerminal&, Parser& p  )
 {
    // << FromClause << T_Comma << FromEntry
    SourceParser& sp = static_cast<SourceParser&>(p);
@@ -336,7 +333,7 @@ void apply_FromClause_next( const Rule&, Parser& p  )
 }
 
 
-void apply_FromClause_first( const Rule&, Parser& p )
+void apply_FromClause_first( const NonTerminal&, Parser& p )
 {
    // << FromEntry
    SourceParser& sp = static_cast<SourceParser&>(p);
@@ -352,7 +349,7 @@ void apply_FromClause_first( const Rule&, Parser& p )
 }
 
 
-void apply_FromClause_entry_with_expr( const Rule&, Parser& p )
+void apply_FromClause_entry_with_expr( const NonTerminal&, Parser& p )
 {
    // << T_Name << T_Openpar << ListExpr << T_Closepar );
    SourceParser& sp = static_cast<SourceParser&>(p);
@@ -381,7 +378,7 @@ void apply_FromClause_entry_with_expr( const Rule&, Parser& p )
 }
 
 
-void apply_FromClause_entry( const Rule&, Parser& p )
+void apply_FromClause_entry( const NonTerminal&, Parser& p )
 {
    // << T_Name );
    SourceParser& sp = static_cast<SourceParser&>(p);
@@ -399,7 +396,7 @@ void apply_FromClause_entry( const Rule&, Parser& p )
 // Anon classes.
 //
 
-void apply_expr_class(const Rule&, Parser& p)
+void apply_expr_class( const NonTerminal&, Parser& p)
 {
    // T_class
    ParserContext* ctx = static_cast<ParserContext*>(p.context());
@@ -417,7 +414,7 @@ void apply_expr_class(const Rule&, Parser& p)
    ctx->openClass(cls, false);
 }
 
-void apply_class_from( const Rule&, Parser& p )
+void apply_class_from( const NonTerminal&, Parser& p )
 {
    //<< T_from << FromClause << T_EOL
    p.getNextToken(); // T_from
@@ -428,14 +425,14 @@ void apply_class_from( const Rule&, Parser& p )
 }
 
 
-void apply_class( const Rule&, Parser& p )
+void apply_class( const NonTerminal&, Parser& p )
 {
    // << T_EOL
    make_class(p, 1, 0, 0 );
 }
 
 
-void apply_class_p_from( const Rule&, Parser& p )
+void apply_class_p_from( const NonTerminal&, Parser& p )
 {
    // << T_Openpar << ListSymbol << T_Closepar << T_from << FromClause << T_EOL
    p.getNextToken(); // T_Openpar
@@ -448,7 +445,7 @@ void apply_class_p_from( const Rule&, Parser& p )
 }
 
 
-void apply_class_p( const Rule&, Parser& p )
+void apply_class_p( const NonTerminal&, Parser& p )
 {
    // << T_Openpar << ListSymbol << T_Closepar  << T_EOL
    p.getNextToken(); // T_Openpar

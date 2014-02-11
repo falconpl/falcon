@@ -22,8 +22,6 @@
 #include <falcon/sp/parsercontext.h>
 #include <falcon/sp/parser_atom.h>
 #include <falcon/sp/parser_deletor.h>
-
-#include <falcon/parser/rule.h>
 #include <falcon/parser/parser.h>
 
 #include <falcon/sp/parser_import.h>
@@ -37,7 +35,7 @@ namespace Falcon {
 
 using namespace Parsing;
 
-bool import_errhand(const NonTerminal&, Parser& p)
+bool import_errhand(const NonTerminal&, Parser& p, int)
 {
    //SourceParser& sp = *static_cast<SourceParser*>(p);
    TokenInstance* ti = p.getNextToken();
@@ -49,13 +47,12 @@ bool import_errhand(const NonTerminal&, Parser& p)
    }
    
    // remove the whole line
-   p.consumeUpTo( p.T_EOL );
-   p.clearFrames();
+   p.setErrorMode( &p.T_EOL );
    return true;
 }
 
 
-void apply_import( const Rule&, Parser& p )
+void apply_import( const NonTerminal&, Parser& p )
 {
    //<< T_import << ImportClause << T_EOL  );
    //we have already applied the import
@@ -213,7 +210,7 @@ static void apply_import_internal( Parser& p,
 }
 
 
-void apply_import_from_string_as( const Rule&, Parser& p )
+void apply_import_from_string_as( const NonTerminal&, Parser& p )
 {
    // << ListSymbol << T_from << T_String << T_as << T_Name << T_EOL
    TokenInstance* tnamelist = p.getNextToken();
@@ -227,7 +224,7 @@ void apply_import_from_string_as( const Rule&, Parser& p )
       tInOrAs, false );
 }
 
-void apply_import_from_string_in( const Rule&, Parser& p )
+void apply_import_from_string_in( const NonTerminal&, Parser& p )
 {
    // << ListSymbol << T_from << T_String << T_in << T_Name << T_EOL
    TokenInstance* tnamelist = p.getNextToken();
@@ -242,7 +239,7 @@ void apply_import_from_string_in( const Rule&, Parser& p )
 }
 
 
-void apply_import_star_from_string_in( const Rule&, Parser& p )
+void apply_import_star_from_string_in( const NonTerminal&, Parser& p )
 {
    // << T_Times << T_from << T_String << T_in << T_Name << T_EOL
    p.getNextToken();
@@ -254,7 +251,7 @@ void apply_import_star_from_string_in( const Rule&, Parser& p )
    apply_import_star( p, *tdepName->asString(), true, *tInOrAs->asString() );
 }
 
-void apply_import_star_from_string( const Rule&, Parser& p )
+void apply_import_star_from_string( const NonTerminal&, Parser& p )
 {
    // << T_Times << T_from << T_String << T_EOL
    p.getNextToken();
@@ -264,7 +261,7 @@ void apply_import_star_from_string( const Rule&, Parser& p )
    apply_import_star( p, *tdepName->asString(), true, "" );
 }
 
-void apply_import_string( const Rule&, Parser& p )
+void apply_import_string( const NonTerminal&, Parser& p )
 {
    // << ListSymbol << T_from << T_String << T_EOL
    TokenInstance* tnamelist = p.getNextToken();
@@ -277,7 +274,7 @@ void apply_import_string( const Rule&, Parser& p )
 }
 
 
-void apply_import_from_modspec_as( const Rule&, Parser& p )
+void apply_import_from_modspec_as( const NonTerminal&, Parser& p )
 {
    // << ListSymbol << T_from << T_String << T_as << T_Name << T_EOL
    TokenInstance* tnamelist = p.getNextToken();
@@ -291,7 +288,7 @@ void apply_import_from_modspec_as( const Rule&, Parser& p )
       tInOrAs, false );
 }
 
-void apply_import_from_modspec_in( const Rule&, Parser& p )
+void apply_import_from_modspec_in( const NonTerminal&, Parser& p )
 {
    // << ListSymbol << T_from << T_String << T_in << T_Name << T_EOL
    TokenInstance* tnamelist = p.getNextToken();
@@ -306,7 +303,7 @@ void apply_import_from_modspec_in( const Rule&, Parser& p )
 }
 
 
-void apply_import_star_from_modspec_in( const Rule&, Parser& p )
+void apply_import_star_from_modspec_in( const NonTerminal&, Parser& p )
 {
    // << T_Times << T_from << ModSpec << T_in << T_Name << T_EOL
    p.getNextToken();
@@ -319,7 +316,7 @@ void apply_import_star_from_modspec_in( const Rule&, Parser& p )
 }
 
 
-void apply_import_star_from_modspec( const Rule&, Parser& p )
+void apply_import_star_from_modspec( const NonTerminal&, Parser& p )
 {
    // << T_Times << T_from << T_String << T_EOL
    p.getNextToken();
@@ -330,7 +327,7 @@ void apply_import_star_from_modspec( const Rule&, Parser& p )
 }
 
 
-void apply_import_from_modspec( const Rule&, Parser& p )
+void apply_import_from_modspec( const NonTerminal&, Parser& p )
 {
    // << ListSymbol << T_from << T_String << T_EOL
    TokenInstance* tnamelist = p.getNextToken();
@@ -342,7 +339,7 @@ void apply_import_from_modspec( const Rule&, Parser& p )
       0, false );
 }
 
-void apply_import_syms( const Rule&, Parser& p )
+void apply_import_syms( const NonTerminal&, Parser& p )
 {
    // << ImportSpec << T_EOL
    
@@ -424,19 +421,17 @@ void apply_import_syms( const Rule&, Parser& p )
 //===================================================================
 //
 
-bool importspec_errhand(const NonTerminal&, Parser& p)
+bool importspec_errhand(const NonTerminal&, Parser& p, int)
 {
    //SourceParser& sp = *static_cast<SourceParser*>(p);
    TokenInstance* ti = p.getNextToken();
    p.addError( e_syn_import_spec, p.currentSource(), ti->line(), ti->chr() );
 
-   // remove the whole line
-   // TODO: Sync with EOL
-   p.clearFrames();
+   p.setErrorMode(&p.T_EOL);
    return true;
 }
 
-void apply_ImportSpec_next( const Rule&, Parser& p )
+void apply_ImportSpec_next( const NonTerminal&, Parser& p )
 {
    //  ImportSpec << T_Comma << NameSpaceSpec )
    SourceParser& sp = static_cast<SourceParser&>(p);
@@ -453,7 +448,7 @@ void apply_ImportSpec_next( const Rule&, Parser& p )
    p.simplify( 3, ti_list );   
 }
 
-void apply_ImportSpec_attach_last( const Rule&, Parser& p )
+void apply_ImportSpec_attach_last( const NonTerminal&, Parser& p )
 {
    //  ImportSpec << T_Dot << T_Times )
    SourceParser& sp = static_cast<SourceParser&>(p);
@@ -469,7 +464,7 @@ void apply_ImportSpec_attach_last( const Rule&, Parser& p )
 }
 
 
-void apply_ImportSpec_attach_next( const Rule&, Parser& p )
+void apply_ImportSpec_attach_next( const NonTerminal&, Parser& p )
 {
    //  ImportSpec << T_Dot << NameSpaceSpec )
    SourceParser& sp = static_cast<SourceParser&>(p);
@@ -487,7 +482,7 @@ void apply_ImportSpec_attach_next( const Rule&, Parser& p )
 }
 
 
-void apply_ImportSpec_first( const Rule&, Parser& p )
+void apply_ImportSpec_first( const NonTerminal&, Parser& p )
 {
    SourceParser& sp = static_cast<SourceParser&>(p);
    TokenInstance* tname = p.getNextToken();
@@ -502,7 +497,7 @@ void apply_ImportSpec_first( const Rule&, Parser& p )
 }
 
 
-void apply_ImportSpec_empty( const Rule&, Parser& p )
+void apply_ImportSpec_empty( const NonTerminal&, Parser& p )
 {
    SourceParser& sp = static_cast<SourceParser&>(p);
    //TODO: Get current lexer char/line
@@ -516,7 +511,7 @@ void apply_ImportSpec_empty( const Rule&, Parser& p )
 }
 
 
-void apply_nsspec_last( const Rule&, Parser& p )
+void apply_nsspec_last( const NonTerminal&, Parser& p )
 {
    //NameSpaceSpec << T_dot << T_Times
    SourceParser* sp = static_cast<SourceParser*>(&p);
@@ -529,7 +524,7 @@ void apply_nsspec_last( const Rule&, Parser& p )
 }
 
 
-void apply_nsspec_next( const Rule&, Parser& p )
+void apply_nsspec_next( const NonTerminal&, Parser& p )
 {
    //NameSpaceSpec << T_dot << T_Name
    SourceParser* sp = static_cast<SourceParser*>(&p);
@@ -545,7 +540,7 @@ void apply_nsspec_next( const Rule&, Parser& p )
 }
 
 
-void apply_nsspec_first( const Rule&, Parser& p )
+void apply_nsspec_first( const NonTerminal&, Parser& p )
 {
    // T_Name
    SourceParser* sp = static_cast<SourceParser*>(&p);

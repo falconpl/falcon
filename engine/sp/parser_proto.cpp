@@ -19,8 +19,6 @@
 #include <falcon/setup.h>
 #include <falcon/statement.h>
 #include <falcon/error.h>
-
-#include <falcon/parser/rule.h>
 #include <falcon/parser/parser.h>
 
 #include <falcon/sp/sourceparser.h>
@@ -68,7 +66,7 @@ static void on_close_proto( void *thing )
 }
 */
 
-void apply_expr_proto(const Rule&, Parser& p)
+void apply_expr_proto( const NonTerminal&, Parser& p)
 {
    // << T_OpenProto
    SourceParser& sp = *static_cast<SourceParser*>(&p);
@@ -87,7 +85,7 @@ void apply_expr_proto(const Rule&, Parser& p)
    p.pushState( "ProtoDecl" );
 }
 
-void apply_proto_prop(const Rule&, Parser& p)
+void apply_proto_prop( const NonTerminal&, Parser& p)
 {
     // << T_Name << T_EqSign << Expr << T_EOL
     SourceParser& sp = *static_cast<SourceParser*>(&p);

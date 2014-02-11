@@ -28,35 +28,35 @@ class Parser;
 
 using namespace Parsing;
 
-bool import_errhand(const NonTerminal&, Parser& p);
+bool import_errhand(const NonTerminal&, Parser& p, int);
 
-void apply_import( const Rule&, Parser& p );
+void apply_import( const NonTerminal&, Parser& p );
 
-void apply_import_from_string_as( const Rule&, Parser& p );
-void apply_import_from_string_in( const Rule&, Parser& p );
-void apply_import_star_from_string_in( const Rule&, Parser& p );
-void apply_import_star_from_string( const Rule&, Parser& p );
-void apply_import_string( const Rule&, Parser& p );
+void apply_import_from_string_as( const NonTerminal&, Parser& p );
+void apply_import_from_string_in( const NonTerminal&, Parser& p );
+void apply_import_star_from_string_in( const NonTerminal&, Parser& p );
+void apply_import_star_from_string( const NonTerminal&, Parser& p );
+void apply_import_string( const NonTerminal&, Parser& p );
 
-void apply_import_from_modspec_as( const Rule&, Parser& p );
-void apply_import_from_modspec_in( const Rule&, Parser& p );
-void apply_import_star_from_modspec_in( const Rule&, Parser& p );
-void apply_import_star_from_modspec( const Rule&, Parser& p );
-void apply_import_from_modspec( const Rule&, Parser& p );
+void apply_import_from_modspec_as( const NonTerminal&, Parser& p );
+void apply_import_from_modspec_in( const NonTerminal&, Parser& p );
+void apply_import_star_from_modspec_in( const NonTerminal&, Parser& p );
+void apply_import_star_from_modspec( const NonTerminal&, Parser& p );
+void apply_import_from_modspec( const NonTerminal&, Parser& p );
 
-void apply_import_syms( const Rule&, Parser& p );
+void apply_import_syms( const NonTerminal&, Parser& p );
 
-bool importspec_errhand(const NonTerminal&, Parser& p);
+bool importspec_errhand(const NonTerminal&, Parser& p, int);
 
-void apply_ImportSpec_next( const Rule&, Parser& p );
-void apply_ImportSpec_attach_last( const Rule&, Parser& p );
-void apply_ImportSpec_attach_next( const Rule&, Parser& p );
-void apply_ImportSpec_first( const Rule&, Parser& p );
-void apply_ImportSpec_empty( const Rule&, Parser& p );
+void apply_ImportSpec_next( const NonTerminal&, Parser& p );
+void apply_ImportSpec_attach_last( const NonTerminal&, Parser& p );
+void apply_ImportSpec_attach_next( const NonTerminal&, Parser& p );
+void apply_ImportSpec_first( const NonTerminal&, Parser& p );
+void apply_ImportSpec_empty( const NonTerminal&, Parser& p );
 
-void apply_nsspec_last( const Rule&, Parser& p );
-void apply_nsspec_next( const Rule&, Parser& p );
-void apply_nsspec_first( const Rule&, Parser& p );
+void apply_nsspec_last( const NonTerminal&, Parser& p );
+void apply_nsspec_next( const NonTerminal&, Parser& p );
+void apply_nsspec_first( const NonTerminal&, Parser& p );
 }
 
 #endif

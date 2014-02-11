@@ -28,8 +28,8 @@ class Parser;
 
 using namespace Parsing;
 
-void apply_expr_proto(const Rule&, Parser& p);
-void apply_proto_prop(const Rule&, Parser& p);
+void apply_expr_proto( const NonTerminal&, Parser& p);
+void apply_proto_prop( const NonTerminal&, Parser& p);
 
 }
 

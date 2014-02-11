@@ -24,8 +24,6 @@
 #include <falcon/sp/parsercontext.h>
 #include <falcon/sp/parser_index.h>
 #include <falcon/sp/parser_deletor.h>
-
-#include <falcon/parser/rule.h>
 #include <falcon/parser/parser.h>
 
 #include <falcon/expression.h>
@@ -37,29 +35,29 @@ namespace Falcon {
 
 using namespace Parsing;
 
-bool ListExpr_errhand(const NonTerminal&, Parser& p)
+bool ListExpr_errhand(const NonTerminal&, Parser& p, int)
 {
    TRACE2( "ListExpr_errhand -- removing %d tokens", p.tokenCount() );
    TokenInstance* t0 = p.getNextToken();
    TokenInstance* t1 = p.getLastToken();
 
    p.addError( e_syn_list_decl, p.currentSource(), t1->line(), t1->chr(), t0->line() );
-   p.trimFromCurrentToken();
+   p.setErrorMode(&p.T_EOL);
    return true;
 }
 
-bool PrintExpr_errhand(const NonTerminal&, Parser& p)
+bool PrintExpr_errhand(const NonTerminal&, Parser& p, int)
 {
    TRACE2( "PrintExpr_errhand -- removing %d tokens", p.tokenCount() );
    TokenInstance* t0 = p.getNextToken();
    TokenInstance* t1 = p.getLastToken();
 
    p.addError( e_syn_self_print, p.currentSource(), t1->line(), t1->chr(), t0->line() );
-   p.trimFromCurrentToken();
+   p.setErrorMode(&p.T_EOL);
    return true;
 }
 
-void apply_ListExpr_next( const Rule&, Parser& p )
+void apply_ListExpr_next( const NonTerminal&, Parser& p )
 {
    // << (r_ListExpr_next << "ListExpr_next" << apply_ListExpr_next << ListExpr << T_Comma << Expr )
    SourceParser& sp = static_cast<SourceParser&>(p);
@@ -76,7 +74,7 @@ void apply_ListExpr_next( const Rule&, Parser& p )
    p.trimFromBase(1,2);
 }
 
-void apply_ListExpr_next_no_comma( const Rule&, Parser& p )
+void apply_ListExpr_next_no_comma( const NonTerminal&, Parser& p )
 {
    // << (r_ListExpr_next << "ListExpr_next" << apply_ListExpr_next << ListExpr << Expr )
    SourceParser& sp = static_cast<SourceParser&>(p);
@@ -93,14 +91,14 @@ void apply_ListExpr_next_no_comma( const Rule&, Parser& p )
 }
 
 
-void apply_ListExpr_next2( const Rule&, Parser& p )
+void apply_ListExpr_next2( const NonTerminal&, Parser& p )
 {
    // << ListExpr << T_EOL
    // remove the trailing eol
    p.trim(1);
 }
 
-void apply_ListExpr_first( const Rule&, Parser& p )
+void apply_ListExpr_first( const NonTerminal&, Parser& p )
 {
    // << (r_ListExpr_next << "ListExpr_next" << apply_ListExpr_next << Expr )
    SourceParser& sp = static_cast<SourceParser&>(p);
@@ -117,7 +115,7 @@ void apply_ListExpr_first( const Rule&, Parser& p )
    texpr->setValue( list, list_deletor );
 }
 
-void apply_ListExpr_empty( const Rule&, Parser& p )
+void apply_ListExpr_empty( const NonTerminal&, Parser& p )
 {
    // << (r_ListExpr_next << "ListExpr_next" << apply_ListExpr_next )
    SourceParser& sp = static_cast<SourceParser&>(p);
@@ -131,7 +129,7 @@ void apply_ListExpr_empty( const Rule&, Parser& p )
    p.simplify( 0, ti_list );
 }
 
-void apply_NeListExpr_next( const Rule&, Parser& p )
+void apply_NeListExpr_next( const NonTerminal&, Parser& p )
 {
    // << (r_ListExpr_next << "ListExpr_next" << apply_ListExpr_next << ListExpr << T_Comma << Expr )
    SourceParser& sp = static_cast<SourceParser&>(p);
@@ -147,7 +145,7 @@ void apply_NeListExpr_next( const Rule&, Parser& p )
    p.trimFromBase(1,2);
 }
 
-void apply_NeListExpr_first( const Rule&, Parser& p )
+void apply_NeListExpr_first( const NonTerminal&, Parser& p )
 {
    // << (r_ListExpr_next << "ListExpr_next" << apply_ListExpr_next << Expr )
    SourceParser& sp = static_cast<SourceParser&>(p);
@@ -165,7 +163,7 @@ void apply_NeListExpr_first( const Rule&, Parser& p )
 }
 
 
-void apply_NeListExpr_ungreed_next( const Rule&, Parser& p )
+void apply_NeListExpr_ungreed_next( const NonTerminal&, Parser& p )
 {
    // << (r_ListExpr_next << "ListExpr_next" << apply_ListExpr_next << ListExpr << T_Comma << Expr )
    SourceParser& sp = static_cast<SourceParser&>(p);
@@ -183,7 +181,7 @@ void apply_NeListExpr_ungreed_next( const Rule&, Parser& p )
 }
 
 
-void apply_NeListExpr_ungreed_first( const Rule&, Parser& p )
+void apply_NeListExpr_ungreed_first( const NonTerminal&, Parser& p )
 {
    // << (r_ListExpr_next << "ListExpr_next" << apply_ListExpr_next << Expr )
    SourceParser& sp = static_cast<SourceParser&>(p);
@@ -201,7 +199,7 @@ void apply_NeListExpr_ungreed_first( const Rule&, Parser& p )
 }
 
 
-void apply_ListSymbol_first(const Rule&,Parser& p)
+void apply_ListSymbol_first( const NonTerminal&,Parser& p)
 {
    // << (r_ListSymbol_first << "ListSymbol_first" << apply_ListSymbol_first << T_Name )
    SourceParser& sp = static_cast<SourceParser&>(p);
@@ -215,7 +213,7 @@ void apply_ListSymbol_first(const Rule&,Parser& p)
 }
 
 
-void apply_ListSymbol_next(const Rule&,Parser& p)
+void apply_ListSymbol_next( const NonTerminal&,Parser& p)
 {
    // << (r_ListSymbol_next << "ListSymbol_next" << apply_ListSymbol_next << ListSymbol << T_Comma << T_Name )
    SourceParser& sp = static_cast<SourceParser&>(p);
@@ -230,7 +228,7 @@ void apply_ListSymbol_next(const Rule&,Parser& p)
    p.trimFromBase(1,2);
 }
 
-void apply_ListSymbol_next2(const Rule&,Parser& p)
+void apply_ListSymbol_next2( const NonTerminal&,Parser& p)
 {
    // << ListSymbol << T_EOL
    // Just remove the eol
@@ -238,7 +236,7 @@ void apply_ListSymbol_next2(const Rule&,Parser& p)
 }
 
 
-void apply_ListSymbol_empty(const Rule&,Parser& p)
+void apply_ListSymbol_empty( const NonTerminal&,Parser& p)
 {
    // << (r_ListSymbol_empty << "ListSymbol_empty" << apply_ListSymbol_empty )
 
@@ -254,7 +252,7 @@ void apply_ListSymbol_empty(const Rule&,Parser& p)
 }
 
 
-void apply_NeListSymbol_first(const Rule&, Parser& p)
+void apply_NeListSymbol_first( const NonTerminal&, Parser& p)
 {
    // << (r_ListSymbol_first << "ListSymbol_first" << apply_ListSymbol_first << T_Name )
    SourceParser& sp = static_cast<SourceParser&>(p);
@@ -267,7 +265,7 @@ void apply_NeListSymbol_first(const Rule&, Parser& p)
 }
 
 
-void apply_NeListSymbol_next(const Rule&, Parser& p)
+void apply_NeListSymbol_next( const NonTerminal&, Parser& p)
 {
    // << (r_ListSymbol_next << "ListSymbol_next" << apply_ListSymbol_next << ListSymbol << T_Comma << T_Name )
    SourceParser& sp = static_cast<SourceParser&>(p);

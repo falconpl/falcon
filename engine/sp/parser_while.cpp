@@ -24,8 +24,6 @@
 #include <falcon/psteps/stmtcontinue.h>
 #include <falcon/psteps/stmtbreak.h>
 #include <falcon/psteps/exprvalue.h>
-
-#include <falcon/parser/rule.h>
 #include <falcon/parser/parser.h>
 
 #include <falcon/sp/sourceparser.h>
@@ -37,7 +35,7 @@ namespace Falcon {
 
 using namespace Parsing;
 
-bool while_errhand(const NonTerminal&, Parser& p)
+bool while_errhand(const NonTerminal&, Parser& p, int)
 {
    TokenInstance* ti = p.getNextToken();
    TokenInstance* ti2 = p.getLastToken();
@@ -62,7 +60,7 @@ bool while_errhand(const NonTerminal&, Parser& p)
    }
    // on interactive parsers, let the whole instruction to be destroyed.
 
-   p.clearFrames();
+   p.setErrorMode(&p.T_EOF);
    return true;
 }
 
@@ -87,17 +85,17 @@ static void apply_while_internal( Parser& p, bool autoClose )
    p.simplify(3);
 }
 
-void apply_while_short( const Rule&, Parser& p )
+void apply_while_short( const NonTerminal&, Parser& p )
 {
    apply_while_internal(p, true);
 }
 
-void apply_while( const Rule&, Parser& p )
+void apply_while( const NonTerminal&, Parser& p )
 {
    apply_while_internal(p, false);
 }
 
-void apply_continue( const Rule&, Parser& p )
+void apply_continue( const NonTerminal&, Parser& p )
 {
    // << T_continue << T_EOL )
    ParserContext* ctx = static_cast<ParserContext*>(p.context());
@@ -109,7 +107,7 @@ void apply_continue( const Rule&, Parser& p )
    p.simplify(2);
 }
 
-void apply_break( const Rule&, Parser& p )
+void apply_break( const NonTerminal&, Parser& p )
 {
    // << T_break << T_EOL )
    ParserContext* ctx = static_cast<ParserContext*>(p.context());

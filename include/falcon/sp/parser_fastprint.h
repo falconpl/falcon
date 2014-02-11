@@ -28,10 +28,10 @@ class Parser;
 
 using namespace Parsing;
 
-void apply_fastprint( const Rule&, Parser& p );
-void apply_fastprint_nl( const Rule&, Parser& p );
-void apply_fastprint_alone( const Rule&, Parser& p );
-void apply_fastprint_nl_alone( const Rule&, Parser& p );
+void apply_fastprint( const NonTerminal&, Parser& p );
+void apply_fastprint_nl( const NonTerminal&, Parser& p );
+void apply_fastprint_alone( const NonTerminal&, Parser& p );
+void apply_fastprint_nl_alone( const NonTerminal&, Parser& p );
 
 }
 

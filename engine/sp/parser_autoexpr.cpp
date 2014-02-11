@@ -20,7 +20,6 @@
 #include <falcon/error.h>
 #include <falcon/symbol.h>
 
-#include <falcon/parser/rule.h>
 #include <falcon/parser/parser.h>
 
 #include <falcon/sp/sourceparser.h>
@@ -63,7 +62,7 @@ static bool check_type( Parser&p, Expression* expr, int line, int chr )
 }
 
 
-void apply_line_expr( const Rule&, Parser& p )
+void apply_line_expr( const NonTerminal&, Parser& p )
 {
    TokenInstance* ti = p.getNextToken();
 
@@ -80,13 +79,13 @@ void apply_line_expr( const Rule&, Parser& p )
    p.simplify(2);
 }
 
-void apply_autoexpr_list( const Rule&r, Parser& p )
+void apply_autoexpr_list( const NonTerminal&r, Parser& p )
 {
    apply_line_expr( r, p );
 }
 
 
-void apply_stmt_assign_list( const Rule&, Parser& p )
+void apply_stmt_assign_list( const NonTerminal&, Parser& p )
 {
    // << (r_Expr_assign << "Expr_assign" << apply_expr_assign << NeListExpr << T_EqSign << NeListExpr)
    SourceParser& sp = static_cast<SourceParser&>(p);

@@ -20,8 +20,6 @@
 #include <falcon/sp/parsercontext.h>
 #include <falcon/sp/parser_atom.h>
 #include <falcon/sp/parser_deletor.h>
-
-#include <falcon/parser/rule.h>
 #include <falcon/parser/parser.h>
 
 #include <falcon/psteps/exprself.h>
@@ -42,7 +40,7 @@ namespace Falcon {
 
 using namespace Parsing;
 
-void apply_Atom_Int ( const Rule&, Parser& p )
+void apply_Atom_Int ( const NonTerminal&, Parser& p )
 {
    // << (r_Atom_Int << "Atom_Int" << apply_Atom_Int << T_Int )
 
@@ -55,7 +53,7 @@ void apply_Atom_Int ( const Rule&, Parser& p )
 }
 
 
-void apply_Atom_Float ( const Rule&, Parser& p )
+void apply_Atom_Float ( const NonTerminal&, Parser& p )
 {
    // << (r_Atom_Float << "Atom_Float" << apply_Atom_Float << T_Float )
    SourceParser& sp = static_cast<SourceParser&>(p);
@@ -66,7 +64,7 @@ void apply_Atom_Float ( const Rule&, Parser& p )
 }
 
 
-void apply_Atom_Name ( const Rule&, Parser& p )
+void apply_Atom_Name ( const NonTerminal&, Parser& p )
 {
    static Engine* inst = Engine::instance();
    
@@ -96,7 +94,7 @@ void apply_Atom_Name ( const Rule&, Parser& p )
 
 
 
-void apply_Atom_Pure_Name ( const Rule&, Parser& p )
+void apply_Atom_Pure_Name ( const NonTerminal&, Parser& p )
 {
    // << "Atom_Pure_Name" << apply_Atom_Pure_Name << T_Tilde << T_Name )
    SourceParser& sp = static_cast<SourceParser&>(p);
@@ -115,7 +113,7 @@ void apply_Atom_Pure_Name ( const Rule&, Parser& p )
 }
 
 
-void apply_Atom_String ( const Rule&, Parser& p )
+void apply_Atom_String ( const NonTerminal&, Parser& p )
 {
    // << (r_Atom_String << "Atom_String" << apply_Atom_String << T_String )
    SourceParser& sp = static_cast<SourceParser&>(p);
@@ -132,7 +130,7 @@ void apply_Atom_String ( const Rule&, Parser& p )
 }
 
 
-void apply_Atom_RString ( const Rule&, Parser& p )
+void apply_Atom_RString ( const NonTerminal&, Parser& p )
 {
    static Class* sc = Engine::handlers()->reClass();
 
@@ -218,7 +216,7 @@ void apply_Atom_RString ( const Rule&, Parser& p )
 }
 
 
-void apply_Atom_MString ( const Rule&, Parser& p )
+void apply_Atom_MString ( const NonTerminal&, Parser& p )
 {
    // << (r_Atom_String << "Atom_String" << apply_Atom_String << T_String )
    SourceParser& sp = static_cast<SourceParser&>(p);
@@ -233,7 +231,7 @@ void apply_Atom_MString ( const Rule&, Parser& p )
    ti->setValue( res, treestep_deletor );
 }
 
-void apply_Atom_IString ( const Rule&, Parser& p )
+void apply_Atom_IString ( const NonTerminal&, Parser& p )
 {
    // << (r_Atom_String << "Atom_String" << apply_Atom_String << T_String )
    SourceParser& sp = static_cast<SourceParser&>(p);
@@ -252,7 +250,7 @@ void apply_Atom_IString ( const Rule&, Parser& p )
    ti->setValue( res, treestep_deletor );
 }
 
-void apply_Atom_False ( const Rule&, Parser& p )
+void apply_Atom_False ( const NonTerminal&, Parser& p )
 {
    // << (r_Atom_Nil << "Atom_Nil" << apply_Atom_Nil << T_Nil )
    SourceParser& sp = static_cast<SourceParser&>(p);
@@ -263,7 +261,7 @@ void apply_Atom_False ( const Rule&, Parser& p )
 }
 
 
-void apply_Atom_True ( const Rule&, Parser& p )
+void apply_Atom_True ( const NonTerminal&, Parser& p )
 {
    // << (r_Atom_Nil << "Atom_Nil" << apply_Atom_Nil << T_Nil )
    SourceParser& sp = static_cast<SourceParser&>(p);
@@ -275,7 +273,7 @@ void apply_Atom_True ( const Rule&, Parser& p )
    ti->setValue( new ExprValue(val, ti->line(), ti->chr()), treestep_deletor );
 }
 
-void apply_Atom_Self ( const Rule&, Parser& p )
+void apply_Atom_Self ( const NonTerminal&, Parser& p )
 {
    // << (r_Atom_Nil << "Atom_Self" << apply_Atom_Delf << T_self )
    SourceParser& sp = static_cast<SourceParser&>(p);
@@ -285,7 +283,7 @@ void apply_Atom_Self ( const Rule&, Parser& p )
    ti->setValue( new ExprSelf, treestep_deletor );
 }
 
-void apply_Atom_FSelf ( const Rule&, Parser& p )
+void apply_Atom_FSelf ( const NonTerminal&, Parser& p )
 {
    // << (r_Atom_Nil << "Atom_Self" << apply_Atom_Delf << T_fself )
    SourceParser& sp = static_cast<SourceParser&>(p);
@@ -295,7 +293,7 @@ void apply_Atom_FSelf ( const Rule&, Parser& p )
    ti->setValue( new ExprFSelf, treestep_deletor );
 }
 
-void apply_Atom_Init ( const Rule&, Parser& p )
+void apply_Atom_Init ( const NonTerminal&, Parser& p )
 {
    // << (r_Atom_Nil << "Atom_Self" << apply_Atom_Delf << T_init )
    SourceParser& sp = static_cast<SourceParser&>(p);
@@ -305,7 +303,7 @@ void apply_Atom_Init ( const Rule&, Parser& p )
    ti->setValue( new ExprInit, treestep_deletor );
 }
 
-void apply_Atom_Nil ( const Rule&, Parser& p )
+void apply_Atom_Nil ( const NonTerminal&, Parser& p )
 {
    // << (r_Atom_Nil << "Atom_Nil" << apply_Atom_Nil << T_Nil )
    SourceParser& sp = static_cast<SourceParser&>(p);
@@ -315,7 +313,7 @@ void apply_Atom_Nil ( const Rule&, Parser& p )
    ti->setValue( new ExprValue(Item(), ti->line(), ti->chr()), treestep_deletor );
 }
 
-void apply_expr_atom( const Rule&, Parser& p )
+void apply_expr_atom( const NonTerminal&, Parser& p )
 {
    SourceParser& sp = static_cast<SourceParser&>(p);
 

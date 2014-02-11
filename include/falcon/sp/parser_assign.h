@@ -25,7 +25,7 @@ class Rule;
 class Parser;
 }
 
-void apply_expr_assign( const Parsing::Rule&, Parsing::Parser& p );
+void apply_expr_assign( const Parsing::NonTerminal&, Parsing::Parser& p );
 
 }
 

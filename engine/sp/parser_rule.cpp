@@ -19,8 +19,6 @@
 #include <falcon/setup.h>
 #include <falcon/error.h>
 #include <falcon/statement.h>
-
-#include <falcon/parser/rule.h>
 #include <falcon/parser/parser.h>
 
 #include <falcon/sp/sourceparser.h>
@@ -39,7 +37,7 @@ namespace Falcon {
 using namespace Parsing;
 
 
-void apply_rule( const Rule&, Parser& p )
+void apply_rule( const NonTerminal&, Parser& p )
 {
    // << (r_rule << "rule" << apply_rule << T_rule << T_EOL )
    TokenInstance* trule = p.getNextToken();
@@ -60,7 +58,7 @@ void apply_rule( const Rule&, Parser& p )
    p.pushState( "InlineFunc" );
 }
 
-void apply_rule_branch( const Rule&, Parser& p )
+void apply_rule_branch( const NonTerminal&, Parser& p )
 {
    // << apply_rule_branch << T_or << T_EOL )
    TokenInstance* trule = p.getNextToken();
@@ -81,7 +79,7 @@ void apply_rule_branch( const Rule&, Parser& p )
    p.simplify(2);
 }
 
-static void apply_cut_internal( const Rule&, Parser& p, bool hasExpr )
+static void apply_cut_internal( const NonTerminal&, Parser& p, bool hasExpr )
 {
    TokenInstance* trule = p.getNextToken();
    Expression* expr = 0;
@@ -108,21 +106,21 @@ static void apply_cut_internal( const Rule&, Parser& p, bool hasExpr )
 }
 
 
-void apply_cut_expr( const Rule& r, Parser& p )
+void apply_cut_expr( const NonTerminal& r, Parser& p )
 {
    // << (r_cut << "cut" << apply_cut << T_cut << Expr << T_EOL )
    apply_cut_internal( r, p, true );
 }
 
 
-void apply_cut( const Rule& r, Parser& p )
+void apply_cut( const NonTerminal& r, Parser& p )
 {
    // << (r_cut << "cut" << apply_cut << T_cut << T_EOL )
    apply_cut_internal( r, p, false );
 }
 
 
-void apply_doubt( const Rule&, Parser& p )
+void apply_doubt( const NonTerminal&, Parser& p )
 {
    TokenInstance* trule = p.getNextToken();
    Expression* expr = static_cast<Expression*>(p.getNextToken()->detachValue());

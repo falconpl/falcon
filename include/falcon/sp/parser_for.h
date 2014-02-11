@@ -28,21 +28,21 @@ class Parser;
 
 using namespace Parsing;
 
-bool for_errhand(const NonTerminal&, Parser& p);
+bool for_errhand(const NonTerminal&, Parser& p, int);
 
-void apply_for_to_step( const Rule&, Parser& p );
-void apply_for_to_step_short( const Rule&, Parser& p );
-void apply_for_to( const Rule&, Parser& p );
-void apply_for_to_short( const Rule&, Parser& p );
-void apply_for_in( const Rule&, Parser& p );
-void apply_for_in_short( const Rule&, Parser& p );
+void apply_for_to_step( const NonTerminal&, Parser& p );
+void apply_for_to_step_short( const NonTerminal&, Parser& p );
+void apply_for_to( const NonTerminal&, Parser& p );
+void apply_for_to_short( const NonTerminal&, Parser& p );
+void apply_for_in( const NonTerminal&, Parser& p );
+void apply_for_in_short( const NonTerminal&, Parser& p );
       
-void apply_forfirst( const Rule&, Parser& p );
-void apply_forfirst_short( const Rule&, Parser& p );
-void apply_formiddle( const Rule&, Parser& p );
-void apply_formiddle_short( const Rule&, Parser& p );
-void apply_forlast( const Rule&, Parser& p );
-void apply_forlast_short( const Rule&, Parser& p );
+void apply_forfirst( const NonTerminal&, Parser& p );
+void apply_forfirst_short( const NonTerminal&, Parser& p );
+void apply_formiddle( const NonTerminal&, Parser& p );
+void apply_formiddle_short( const NonTerminal&, Parser& p );
+void apply_forlast( const NonTerminal&, Parser& p );
+void apply_forlast_short( const NonTerminal&, Parser& p );
 
 }
 

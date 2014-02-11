@@ -21,8 +21,6 @@
 
 #include <falcon/error.h>
 #include <falcon/statement.h>
-
-#include <falcon/parser/rule.h>
 #include <falcon/parser/parser.h>
 
 #include <falcon/sp/sourceparser.h>
@@ -40,7 +38,7 @@ namespace Falcon {
 
 using namespace Parsing;
 
-void apply_expr_ternary_if( const Rule&, Parser& p )
+void apply_expr_ternary_if( const NonTerminal&, Parser& p )
 {
    // << Expr << T_QMark << Expr << T_Colon << Expr
    SourceParser& sp = static_cast<SourceParser&>(p);

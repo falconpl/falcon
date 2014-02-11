@@ -26,9 +26,7 @@
 #include <falcon/sp/parser_deletor.h>
 
 #include <falcon/parser/nonterminal.h>
-#include <falcon/parser/rule.h>
 #include <falcon/parser/parser.h>
-#include <falcon/parser/state.h>
 
 #include <falcon/psteps/exprcall.h>
 #include <falcon/psteps/exprpseudocall.h>
@@ -40,7 +38,7 @@ namespace Falcon {
 
 using namespace Parsing;
 
-void apply_expr_call( const Rule&, Parser& p )
+void apply_expr_call( const NonTerminal&, Parser& p )
 {
    static Engine* einst = Engine::instance();
 

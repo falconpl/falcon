@@ -28,12 +28,12 @@ class Parser;
 
 using namespace Parsing;
 
-bool while_errhand(const NonTerminal&, Parser& p);
+bool while_errhand(const NonTerminal&, Parser& p, int i);
 
-void apply_while_short( const Rule&, Parser& p );
-void apply_while( const Rule&, Parser& p );
-void apply_continue( const Rule&, Parser& p );
-void apply_break( const Rule&, Parser& p );
+void apply_while_short( const NonTerminal&, Parser& p );
+void apply_while( const NonTerminal&, Parser& p );
+void apply_continue( const NonTerminal&, Parser& p );
+void apply_break( const NonTerminal&, Parser& p );
 
 }
 

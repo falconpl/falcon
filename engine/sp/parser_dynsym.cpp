@@ -19,7 +19,6 @@
 #include <falcon/setup.h>
 #include <falcon/symbol.h>
 
-#include <falcon/parser/rule.h>
 #include <falcon/parser/parser.h>
 
 #include <falcon/sp/sourceparser.h>
@@ -40,7 +39,7 @@ namespace Falcon {
 using namespace Parsing;
 
 
-void apply_expr_amper( const Rule&, Parser& p )
+void apply_expr_amper( const NonTerminal&, Parser& p )
 {
    static Class* clssym = Engine::handlers()->symbolClass();
    // << T_Amper << T_Name

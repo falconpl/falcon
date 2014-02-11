@@ -28,9 +28,9 @@ class Parser;
 
 using namespace Parsing;
 
-bool errhand_attribute(const NonTerminal&, Parser& p);
+bool errhand_attribute(const NonTerminal&, Parser& p, int);
 
-void apply_attribute( const Rule&, Parser& p );
+void apply_attribute( const NonTerminal&, Parser& p );
 
 }
 

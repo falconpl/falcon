@@ -21,8 +21,6 @@
 #include <falcon/sp/parsercontext.h>
 #include <falcon/sp/parser_atom.h>
 #include <falcon/sp/parser_deletor.h>
-
-#include <falcon/parser/rule.h>
 #include <falcon/parser/parser.h>
 
 #include <falcon/sp/parser_export.h>
@@ -33,20 +31,18 @@ namespace Falcon {
 
 using namespace Parsing;
 
-bool export_errhand(const NonTerminal&, Parser& p)
+bool export_errhand(const NonTerminal&, Parser& p, int)
 {
    //SourceParser* sp = static_cast<SourceParser*>(p);
    TokenInstance* ti = p.getNextToken();
    p.addError( e_syn_export, p.currentSource(), ti->line(), ti->chr() );
 
-   // remove the whole line
-   // TODO: Sync with EOL
-   p.clearFrames();
+   p.setErrorMode(&p.T_EOL);
    return true;
 }
 
 
-void apply_export_rule( const Rule&, Parser& p )
+void apply_export_rule( const NonTerminal&, Parser& p )
 {
    // << T_export << ListSymbol << T_EOL 
    

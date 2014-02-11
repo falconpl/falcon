@@ -43,8 +43,6 @@ public:
    typedef void(*deletor)(void*);
    virtual ~Token();
 
-   void id(uint32 i) {m_nID = i; }
-   uint32 id() const { return m_nID; }
    const String& name() const { return m_name; }
 
    int prio() const { return m_prio; }
@@ -99,7 +97,6 @@ protected:
    bool m_bRightAssoc;
    int m_prio;
    
-   Token(uint32 nID, const String& name, int prio = 0,  bool bRightAssoc = false);
    Token(const String& name, int prio = 0, bool bRightAssoc = false );
    Token();
    static uint32 simpleHash( const String& v );

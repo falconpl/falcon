@@ -28,8 +28,8 @@ class Parser;
 
 using namespace Parsing;
 
-bool export_errhand(const NonTerminal&, Parser& p);
-void apply_export_rule( const Rule&, Parser& p );
+bool export_errhand(const NonTerminal&, Parser& p, int);
+void apply_export_rule( const NonTerminal&, Parser& p );
 
 }
 

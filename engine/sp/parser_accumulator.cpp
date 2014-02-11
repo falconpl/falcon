@@ -20,7 +20,6 @@
 #include <falcon/symbol.h>
 #include <falcon/error.h>
 
-#include <falcon/parser/rule.h>
 #include <falcon/parser/parser.h>
 #include <falcon/psteps/exprep.h>
 
@@ -43,7 +42,7 @@ namespace Falcon {
 
 using namespace Parsing;
 
-void apply_expr_accumulator(const Rule&, Parser& p)
+void apply_expr_accumulator( const NonTerminal&, Parser& p)
 {
    // T_CapSquare << AccumulatorBody
 
@@ -93,7 +92,7 @@ static void internal_accumulator( int count, int line, int c, Parser& p, List* l
 }
 
 
-void apply_accumulator_complete(const Rule&, Parser& p)
+void apply_accumulator_complete( const NonTerminal&, Parser& p)
 {
    //<< ListExpr << T_CloseSquare << Expr <<  T_Arrow << Expr
    TokenInstance* ti_listexpr = p.getNextToken();
@@ -110,7 +109,7 @@ void apply_accumulator_complete(const Rule&, Parser& p)
 }
 
 
-void apply_accumulator_w_target(const Rule&, Parser& p)
+void apply_accumulator_w_target( const NonTerminal&, Parser& p)
 {
    //<< ListExpr << T_CloseSquare << T_Arrow << Expr
    TokenInstance* ti_listexpr = p.getNextToken();
@@ -126,7 +125,7 @@ void apply_accumulator_w_target(const Rule&, Parser& p)
 }
 
 
-void apply_accumulator_w_filter(const Rule&, Parser& p)
+void apply_accumulator_w_filter( const NonTerminal&, Parser& p)
 {
    //<< ListExpr << T_CloseSquare << Expr
    TokenInstance* ti_listexpr = p.getNextToken();
@@ -141,7 +140,7 @@ void apply_accumulator_w_filter(const Rule&, Parser& p)
 }
 
 
-void apply_accumulator_simple(const Rule&, Parser& p )
+void apply_accumulator_simple( const NonTerminal&, Parser& p )
 {
    //<< ListExpr << T_CloseSquare
    TokenInstance* ti_listexpr = p.getNextToken();

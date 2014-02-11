@@ -37,10 +37,10 @@ public:
 
    Private() {}
    ~Private() {
-      TokenList::iterator ti = m_subTokens.begin();
-      while( ti != m_subTokens.end() )
+      TokenList::iterator titer = m_subTokens.begin();
+      while( titer != m_subTokens.end() )
       {
-         Token* ti;
+         Token* ti = *titer;
          if ( ti->isNT() )
          {
             NonTerminal* nt = static_cast<NonTerminal*>(ti);
@@ -49,7 +49,7 @@ public:
                delete nt;
             }
          }
-         ++ti;
+         ++titer;
       }
    }
 
@@ -133,14 +133,15 @@ void NonTerminal::render( TextWriter& tw ) const
 
 void NonTerminal::subRender( TextWriter& tw, void* v ) const
 {
-   std::set<NonTerminal*>& parentSet = *static_cast< std::set<NonTerminal*>* >(v);
+   std::set<const NonTerminal*>& parentSet = *static_cast< std::set<const NonTerminal*>* >(v);
+   parentSet.insert(this);
 
    tw.write( name() );
    tw.write( ":-\n" );
 
    Private::TokenList::const_iterator ti = _p->m_subTokens.begin();
    bool bFirst = true;
-   std::set<NonTerminal*> subtok;
+   std::set<const NonTerminal*> subtok;
    while(ti != _p->m_subTokens.end())
    {
       Token* t = *ti;
@@ -191,10 +192,10 @@ void NonTerminal::subRender( TextWriter& tw, void* v ) const
    tw.write("   ;\n");
 
    //now work on the sub parts.
-   std::set<NonTerminal*>::const_iterator subiter = subtok.begin();
+   std::set<const NonTerminal*>::const_iterator subiter = subtok.begin();
    while( subiter != subtok.end() )
    {
-      NonTerminal* tok = *subiter;
+      const NonTerminal* tok = *subiter;
       tok->subRender( tw, &parentSet );
       parentSet.insert(tok);
       ++subiter;

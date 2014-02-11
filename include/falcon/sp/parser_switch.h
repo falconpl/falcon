@@ -30,26 +30,26 @@ using namespace Parsing;
 
 bool switch_errhand(const NonTerminal&, Parser& p);
 
-void apply_switch( const Rule&, Parser& p );
-void apply_select( const Rule&, Parser& p );
-void apply_case( const Rule&, Parser& p );
-void apply_case_short( const Rule&, Parser& p );
-void apply_default( const Rule&, Parser& p );
-void apply_default_short( const Rule&, Parser& p );
+void apply_switch( const NonTerminal&, Parser& p );
+void apply_select( const NonTerminal&, Parser& p );
+void apply_case( const NonTerminal&, Parser& p );
+void apply_case_short( const NonTerminal&, Parser& p );
+void apply_default( const NonTerminal&, Parser& p );
+void apply_default_short( const NonTerminal&, Parser& p );
 
-void apply_CaseListRange_int( const Rule&, Parser& p );
-void apply_CaseListRange_string( const Rule&, Parser& p );
-void apply_CaseListToken_range( const Rule&, Parser& p );
-void apply_CaseListToken_nil( const Rule&, Parser& p );
-void apply_CaseListToken_true( const Rule&, Parser& p );
-void apply_CaseListToken_false( const Rule&, Parser& p );
-void apply_CaseListToken_int( const Rule&, Parser& p );
-void apply_CaseListToken_string( const Rule&, Parser& p );
-void apply_CaseListToken_rstring( const Rule&, Parser& p );
-void apply_CaseListToken_sym( const Rule&, Parser& p );
+void apply_CaseListRange_int( const NonTerminal&, Parser& p );
+void apply_CaseListRange_string( const NonTerminal&, Parser& p );
+void apply_CaseListToken_range( const NonTerminal&, Parser& p );
+void apply_CaseListToken_nil( const NonTerminal&, Parser& p );
+void apply_CaseListToken_true( const NonTerminal&, Parser& p );
+void apply_CaseListToken_false( const NonTerminal&, Parser& p );
+void apply_CaseListToken_int( const NonTerminal&, Parser& p );
+void apply_CaseListToken_string( const NonTerminal&, Parser& p );
+void apply_CaseListToken_rstring( const NonTerminal&, Parser& p );
+void apply_CaseListToken_sym( const NonTerminal&, Parser& p );
 
-void apply_CaseList_next( const Rule&, Parser& p );
-void apply_CaseList_first( const Rule&, Parser& p );
+void apply_CaseList_next( const NonTerminal&, Parser& p );
+void apply_CaseList_first( const NonTerminal&, Parser& p );
 }
 
 #endif

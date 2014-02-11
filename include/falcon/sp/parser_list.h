@@ -28,50 +28,50 @@ class Parser;
 
 using namespace Parsing;
 
-bool ListExpr_errhand(const NonTerminal&, Parser& p);
-bool PrintExpr_errhand(const NonTerminal&, Parser& p);
+bool ListExpr_errhand(const NonTerminal&, Parser& p, int);
+bool PrintExpr_errhand(const NonTerminal&, Parser& p, int);
 
-void apply_ListExpr_next( const Rule&, Parser& p );
-void apply_ListExpr_next_no_comma( const Rule&, Parser& p );
-void apply_ListExpr_next2( const Rule&, Parser& p );
-void apply_ListExpr_first( const Rule&, Parser& p );
-void apply_ListExpr_empty( const Rule&, Parser& p );
+void apply_ListExpr_next( const NonTerminal&, Parser& p );
+void apply_ListExpr_next_no_comma( const NonTerminal&, Parser& p );
+void apply_ListExpr_next2( const NonTerminal&, Parser& p );
+void apply_ListExpr_first( const NonTerminal&, Parser& p );
+void apply_ListExpr_empty( const NonTerminal&, Parser& p );
 
-void apply_NeListExpr_next( const Rule&, Parser& p );
-void apply_NeListExpr_first( const Rule&, Parser& p );
+void apply_NeListExpr_next( const NonTerminal&, Parser& p );
+void apply_NeListExpr_first( const NonTerminal&, Parser& p );
 
-void apply_NeListExpr_ungreed_next( const Rule&, Parser& p );
-void apply_NeListExpr_ungreed_first( const Rule&, Parser& p );
+void apply_NeListExpr_ungreed_next( const NonTerminal&, Parser& p );
+void apply_NeListExpr_ungreed_first( const NonTerminal&, Parser& p );
 
 //==========================================================
 // PairLists
 //==========================================================
 
-void apply_ListExprOrPairs_next_pair( const Rule&, Parser& p );
-void apply_ListExprOrPairs_next( const Rule&, Parser& p );
-void apply_ListExprOrPairs_first_pair( const Rule&, Parser& p );
-void apply_ListExprOrPairs_first( const Rule&, Parser& p );
-void apply_ListExprOrPairs_empty( const Rule&, Parser& p );
+void apply_ListExprOrPairs_next_pair( const NonTerminal&, Parser& p );
+void apply_ListExprOrPairs_next( const NonTerminal&, Parser& p );
+void apply_ListExprOrPairs_first_pair( const NonTerminal&, Parser& p );
+void apply_ListExprOrPairs_first( const NonTerminal&, Parser& p );
+void apply_ListExprOrPairs_empty( const NonTerminal&, Parser& p );
 
 //==========================================================
 // SeqPairList
 //==========================================================
 
-void apply_SeqExprOrPairs_next_pair_cm( const Rule&, Parser& p );
-void apply_SeqExprOrPairs_next_pair( const Rule&, Parser& p );
-void apply_SeqExprOrPairs_next( const Rule&, Parser& p );
-void apply_SeqExprOrPairs_next_cm( const Rule&, Parser& p );
-void apply_SeqExprOrPairs_first_pair( const Rule&, Parser& p );
-void apply_SeqExprOrPairs_first( const Rule&, Parser& p );
-void apply_SeqExprOrPairs_empty( const Rule&, Parser& p );
+void apply_SeqExprOrPairs_next_pair_cm( const NonTerminal&, Parser& p );
+void apply_SeqExprOrPairs_next_pair( const NonTerminal&, Parser& p );
+void apply_SeqExprOrPairs_next( const NonTerminal&, Parser& p );
+void apply_SeqExprOrPairs_next_cm( const NonTerminal&, Parser& p );
+void apply_SeqExprOrPairs_first_pair( const NonTerminal&, Parser& p );
+void apply_SeqExprOrPairs_first( const NonTerminal&, Parser& p );
+void apply_SeqExprOrPairs_empty( const NonTerminal&, Parser& p );
 
-void apply_ListSymbol_first(const Rule&,Parser& p);
-void apply_ListSymbol_next(const Rule&,Parser& p);
-void apply_ListSymbol_next2(const Rule&,Parser& p);
-void apply_ListSymbol_empty(const Rule&,Parser& p);
+void apply_ListSymbol_first( const NonTerminal&,Parser& p);
+void apply_ListSymbol_next( const NonTerminal&,Parser& p);
+void apply_ListSymbol_next2( const NonTerminal&,Parser& p);
+void apply_ListSymbol_empty( const NonTerminal&,Parser& p);
 
-void apply_NeListSymbol_first(const Rule&, Parser& p);
-void apply_NeListSymbol_next(const Rule&, Parser& p);
+void apply_NeListSymbol_first( const NonTerminal&, Parser& p);
+void apply_NeListSymbol_next( const NonTerminal&, Parser& p);
 
 }
 

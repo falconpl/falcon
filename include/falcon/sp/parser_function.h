@@ -28,25 +28,25 @@ class Parser;
 
 using namespace Parsing;
 
-void apply_function(const Rule& r,Parser& p);
-void apply_function_eta(const Rule& r,Parser& p);
-void apply_static_function(const Rule& r,Parser& p);
-void apply_static_function_eta(const Rule& r,Parser& p);
-void apply_expr_func(const Rule&, Parser& p);
-void apply_expr_funcEta(const Rule&, Parser& p);
-void apply_return_doubt(const Rule&, Parser& p);
-void apply_return_eval(const Rule&, Parser& p);
-void apply_return_break(const Rule&, Parser& p);
-void apply_return_expr(const Rule&, Parser& p);
-void apply_return(const Rule&, Parser& p);
-void apply_expr_lambda(const Rule&, Parser& p);
-void apply_expr_ep(const Rule&, Parser& p);
-void apply_ep_body(const Rule&, Parser& p);
+void apply_function( const NonTerminal& r,Parser& p);
+void apply_function_eta( const NonTerminal& r,Parser& p);
+void apply_static_function( const NonTerminal& r,Parser& p);
+void apply_static_function_eta( const NonTerminal& r,Parser& p);
+void apply_expr_func( const NonTerminal&, Parser& p);
+void apply_expr_funcEta( const NonTerminal&, Parser& p);
+void apply_return_doubt( const NonTerminal&, Parser& p);
+void apply_return_eval( const NonTerminal&, Parser& p);
+void apply_return_break( const NonTerminal&, Parser& p);
+void apply_return_expr( const NonTerminal&, Parser& p);
+void apply_return( const NonTerminal&, Parser& p);
+void apply_expr_lambda( const NonTerminal&, Parser& p);
+void apply_expr_ep( const NonTerminal&, Parser& p);
+void apply_ep_body( const NonTerminal&, Parser& p);
 
-void apply_lit_params(const Rule&, Parser& p);
-void apply_lit_params_eta(const Rule&, Parser& p);
-void apply_lambda_params(const Rule&, Parser& p);
-void apply_lambda_params_eta(const Rule&, Parser& p);
+void apply_lit_params( const NonTerminal&, Parser& p);
+void apply_lit_params_eta( const NonTerminal&, Parser& p);
+void apply_lambda_params( const NonTerminal&, Parser& p);
+void apply_lambda_params_eta( const NonTerminal&, Parser& p);
 }
 
 #endif

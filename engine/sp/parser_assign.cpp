@@ -23,8 +23,6 @@
 #include <falcon/sp/parsercontext.h>
 #include <falcon/sp/parser_assign.h>
 #include <falcon/sp/parser_deletor.h>
-
-#include <falcon/parser/rule.h>
 #include <falcon/parser/parser.h>
 
 #include <falcon/psteps/exprarray.h>
@@ -38,7 +36,7 @@ using namespace Parsing;
 
 // error handler for expr_assing falls under the Expr token error handler
 
-void apply_expr_assign( const Rule&, Parser& p )
+void apply_expr_assign( const NonTerminal&, Parser& p )
 {
    // << (r_Expr_assign << "Expr_assign" << apply_expr_assign << Expr << T_EqSign << Expr)
    SourceParser& sp = static_cast<SourceParser&>(p);

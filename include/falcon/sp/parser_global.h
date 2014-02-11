@@ -29,7 +29,7 @@ class Parser;
 using namespace Parsing;
 
 bool global_errhand(const NonTerminal&, Parser& p);
-void apply_global( const Rule&, Parser& p );
+void apply_global( const NonTerminal&, Parser& p );
 
 }
 

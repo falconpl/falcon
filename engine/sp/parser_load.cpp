@@ -21,8 +21,6 @@
 #include <falcon/sp/parsercontext.h>
 #include <falcon/sp/parser_atom.h>
 #include <falcon/sp/parser_deletor.h>
-
-#include <falcon/parser/rule.h>
 #include <falcon/parser/parser.h>
 
 #include <falcon/sp/parser_load.h>
@@ -31,20 +29,18 @@ namespace Falcon {
 
 using namespace Parsing;
 
-bool load_errhand(const NonTerminal&, Parser& p)
+bool load_errhand(const NonTerminal&, Parser& p, int)
 {
    //SourceParser* sp = static_cast<SourceParser*>(p);
    TokenInstance* ti = p.getNextToken();
    p.addError( e_syn_load, p.currentSource(), ti->line(), ti->chr() );
 
-   // remove the whole line
-   // TODO: Sync with EOL
-   p.clearFrames();
+   p.setErrorMode(&p.T_EOL);
    return true;
 }
 
 
-void apply_load_string( const Rule&, Parser& p )
+void apply_load_string( const NonTerminal&, Parser& p )
 {
    //SourceParser& sp = *static_cast<SourceParser*>(&p);
    ParserContext* ctx = static_cast<ParserContext*>(p.context());
@@ -56,7 +52,7 @@ void apply_load_string( const Rule&, Parser& p )
    p.simplify(3);
 }
 
-void apply_load_mod_spec( const Rule&, Parser& p )
+void apply_load_mod_spec( const NonTerminal&, Parser& p )
 {
    // T_load << ModSpec << T_EOL
    ParserContext* ctx = static_cast<ParserContext*>(p.context());
@@ -67,13 +63,13 @@ void apply_load_mod_spec( const Rule&, Parser& p )
 }
 
 
-bool load_modspec_errhand(const NonTerminal& nt, Parser& p)
+bool load_modspec_errhand(const NonTerminal& nt, Parser& p, int n)
 {
    // for now, jsut the same.
-   return load_errhand( nt, p );
+   return load_errhand( nt, p, n );
 }
 
-void apply_modspec_next( const Rule&, Parser& p )
+void apply_modspec_next( const NonTerminal&, Parser& p )
 {
    //ModSpec << T_dot << T_Name
    SourceParser* sp = static_cast<SourceParser*>(&p);
@@ -89,7 +85,7 @@ void apply_modspec_next( const Rule&, Parser& p )
 }
 
 
-void apply_modspec_first( const Rule&, Parser& p )
+void apply_modspec_first( const NonTerminal&, Parser& p )
 {
    // T_Name
    SourceParser* sp = static_cast<SourceParser*>(&p);
@@ -100,7 +96,7 @@ void apply_modspec_first( const Rule&, Parser& p )
    p.simplify(1, tspec);
 }
 
-void apply_modspec_first_self( const Rule&, Parser& p)
+void apply_modspec_first_self( const NonTerminal&, Parser& p)
 {
    // T_Name
    SourceParser* sp = static_cast<SourceParser*>(&p);
@@ -111,7 +107,7 @@ void apply_modspec_first_self( const Rule&, Parser& p)
    p.simplify(1, tspec);
 }
 
-void apply_modspec_first_dot( const Rule&, Parser& p)
+void apply_modspec_first_dot( const NonTerminal&, Parser& p)
 {
    // T_Dot
    SourceParser* sp = static_cast<SourceParser*>(&p);

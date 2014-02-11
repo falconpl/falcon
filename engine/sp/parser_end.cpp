@@ -20,7 +20,6 @@
 #include <falcon/expression.h>
 #include <falcon/error.h>
 
-#include <falcon/parser/rule.h>
 #include <falcon/parser/parser.h>
 
 #include <falcon/sp/sourceparser.h>
@@ -35,7 +34,7 @@ namespace Falcon {
 
 using namespace Parsing;
 
-void apply_end( const Rule&, Parser& p )
+void apply_end( const NonTerminal&, Parser& p )
 {
    // << T_end  << T_EOL
 
@@ -55,7 +54,7 @@ void apply_end( const Rule&, Parser& p )
    st->closeContext();
 }
 
-void apply_end_small( const Rule&, Parser& p )
+void apply_end_small( const NonTerminal&, Parser& p )
 {
    // << apply_end << T_end  )
 
@@ -76,7 +75,7 @@ void apply_end_small( const Rule&, Parser& p )
 }
 
 
-void apply_end_rich( const Rule&, Parser& p )
+void apply_end_rich( const NonTerminal&, Parser& p )
 {
    // << apply_end_rich << T_end << Expr << T_EOL )
    TokenInstance* tend = p.getNextToken();

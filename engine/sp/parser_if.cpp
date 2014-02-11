@@ -21,8 +21,6 @@
 
 #include <falcon/error.h>
 #include <falcon/statement.h>
-
-#include <falcon/parser/rule.h>
 #include <falcon/parser/parser.h>
 
 #include <falcon/sp/sourceparser.h>
@@ -39,7 +37,7 @@ namespace Falcon {
 
 using namespace Parsing;
 
-bool errhand_if(const NonTerminal&, Parser& p)
+bool errhand_if(const NonTerminal&, Parser& p, int)
 {
    TokenInstance* ti = p.getNextToken();
    TokenInstance* ti2 = p.getLastToken();
@@ -69,7 +67,7 @@ bool errhand_if(const NonTerminal&, Parser& p)
 }
 
 
-void apply_if_short( const Rule&, Parser& p )
+void apply_if_short( const NonTerminal&, Parser& p )
 {
    // << (r_if_short << "if_short" << apply_if_short << T_if << Expr << T_Colon  )
    TokenInstance* tif = p.getNextToken();
@@ -97,7 +95,7 @@ void apply_if_short( const Rule&, Parser& p )
 }
 
 
-void apply_if( const Rule&, Parser& p )
+void apply_if( const NonTerminal&, Parser& p )
 {
    // << (r_if << "if" << apply_if << T_if << Expr << T_EOL )
    TokenInstance* tif = p.getNextToken();
@@ -128,7 +126,7 @@ void apply_if( const Rule&, Parser& p )
 }
 
 
-void apply_elif( const Rule&, Parser& p )
+void apply_elif( const NonTerminal&, Parser& p )
 {
    // << (r_elif << "elif" << apply_elif << T_elif << Expr << T_EOL )
    TokenInstance* tif = p.getNextToken();
@@ -173,7 +171,7 @@ void apply_elif( const Rule&, Parser& p )
 }
 
 
-void apply_else( const Rule&, Parser& p )
+void apply_else( const NonTerminal&, Parser& p )
 {
    // << (r_else << "else" << apply_else << T_else << T_EOL )
    TokenInstance* telse = p.getNextToken();

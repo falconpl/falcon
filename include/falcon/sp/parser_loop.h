@@ -28,10 +28,10 @@ class Parser;
 
 using namespace Parsing;
 
-bool loop_errhand(const NonTerminal&, Parser& p);
+bool loop_errhand(const NonTerminal&, Parser& p, int);
 
-void apply_loop_short( const Rule&, Parser& p );
-void apply_loop( const Rule&, Parser& p );
+void apply_loop_short( const NonTerminal&, Parser& p );
+void apply_loop( const NonTerminal&, Parser& p );
 
 }
 
