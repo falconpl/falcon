@@ -23,6 +23,10 @@
 using namespace std;
 using namespace Falcon;
 
+#include <falcon/textwriter.h>
+#include <falcon/stdstreams.h>
+#include <falcon/sp/sourceparser.h>
+
 
 FalconOptions::FalconOptions():
    input( "" ),
@@ -84,6 +88,7 @@ void FalconOptions::usage( bool deep )
       << "  -y           write string translation table for the module" << endl
       << "  -r <text>    Run (evaluate) given text and exit" << endl
       << "  --cgi        execute in GGI mode" << endl
+      << "  --grammar    Prints the language grammar definition and exits" << endl
       << "  --test <dir> Execute tests in the given directory" << endl
       << endl
       << "Compilation options (c_opts):" << endl
@@ -303,6 +308,16 @@ void FalconOptions::parse( int argc, char **argv, int &script_pos )
                else if( String( op+2 ) == "prc" )
                {
                   num_processors = atoi( argv[++i] );
+                  break;
+               }
+               else if( String( op+2 ) == "grammar" )
+               {
+                  StdOutStream sout;
+                  TextWriter tw(&sout);
+                  SourceParser p;
+                  p.MainProgram.render(tw);
+
+                  m_justinfo = true;
                   break;
                }
                /* no break */

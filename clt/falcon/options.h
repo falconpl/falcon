@@ -81,6 +81,7 @@ public:
    int log_level;
 
    int num_processors;
+   int print_grammar;
 
    bool m_bEval;
    String m_sEval;

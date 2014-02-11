@@ -744,14 +744,16 @@ void Parser::saveErrorFrame()
                   _p->m_pErrorFrames->back().m_owningToken->name().c_ize() );
       }
       else {
-         TRACE( "Parser::saveErrorFrame -- Shallow error frame of depth %d at rule %s(%d:%d) not saved. ",
+        /* TRACE2( "Parser::saveErrorFrame -- Shallow error frame of depth %d at rule %s(%d:%d) not saved. ",
                   _p->m_pframes->size(), pf.m_owningToken->name().c_ize(), pf.m_hypotesis, pf.m_hypToken );
+         */
       }
    }
    else
    {
-      TRACE( "Parser::saveErrorFrame -- Frame %d for rule %s(%d:%d) has no relevant error frame.",
+      /*TRACE2( "Parser::saveErrorFrame -- Frame %d for rule %s(%d:%d) has no relevant error frame.",
                _p->m_pframes->size(), pf.m_owningToken->name().c_ize(), pf.m_hypotesis, pf.m_hypToken );
+               */
    }
 }
 
@@ -820,8 +822,10 @@ void Parser::parserLoop()
       const Token* ruleTok;
       const Token* stackTok;
 
-      TRACE1( "Parser::parserLoop -- %s(%d:%s) with stack: %s",
+      /*
+        TRACE2( "Parser::parserLoop -- %s(%d:%s) with stack: %s",
                   currentFrame->m_owningToken->name().c_ize(), currentFrame->m_hypotesis, rule->name().c_ize(), dumpStack().c_ize() );
+       */
 
       while( rulePos < ruleArity
              && stackPos < (int) _p->m_tokenStack->size() )
@@ -896,7 +900,6 @@ void Parser::parserLoop()
       else if( stackPos >= (int) _p->m_tokenStack->size() )
       {
          // we need to pull more tokens
-         MESSAGE1( "Parser::parserLoop -- Pull more tokens");
          if( ! readNextToken() )
          {
             MESSAGE1( "Parser::parserLoop -- End on no more tokens" );
@@ -937,12 +940,11 @@ void Parser::parserLoop()
                   break;
                }
 
-               TRACE1( "Parser::parserLoop -- NonTerminal %s failed at %d, popping the stack",
+               TRACE2( "Parser::parserLoop -- NonTerminal %s failed at %d, popping the stack",
                         currentFrame->m_owningToken->name().c_ize(), currentFrame->m_hypToken );
 
                if( &_p->m_pframes->front() == &_p->m_pframes->back() )
                {
-                  MESSAGE2( "Parser::parserLoop -- Declaring failure.");
                   parseError();
                   break;
                }
@@ -973,16 +975,16 @@ void Parser::applyCurrentRule()
    fassert( ! _p->m_pframes->empty() );
    Private::ParseFrame& pf = _p->m_pframes->back();
    NonTerminal* rule = static_cast<NonTerminal*>(pf.m_owningToken->term(pf.m_hypotesis));
-   TRACE("Parser::applyCurrentRule -- applying \"%s\" to: %s",
-            rule->name().c_ize(), dumpStack().c_ize() );
    if( rule->applyHandler() != 0 )
    {
+      TRACE("Parser::applyCurrentRule -- applying \"%s\" to: %s",
+               rule->name().c_ize(), dumpStack().c_ize() );
       resetNextToken();
       rule->applyHandler()(*rule, *this);
    }
    else
    {
-      TRACE2("Parser::applyCurrentRule -- Synthezising a token \"%s\" simplifying %d",
+      TRACE("Parser::applyCurrentRule -- Synthezising a token \"%s\" simplifying %d",
                pf.m_owningToken->name().c_ize(), rule->arity()  );
       if( rule->arity() > 0 )
       {
@@ -1082,12 +1084,12 @@ bool Parser::readNextToken()
    {
       if( ! m_bEOLGiven )
       {
-         MESSAGE2( "Parser::parserLoop -- Last loop with EOF as next" );
+         MESSAGE2( "Parser::readNextToken -- Last loop with EOF as next" );
          ti = TokenInstance::alloc(0, 0, T_EOL );
       }
       else
       {
-         MESSAGE2( "Parser::parserLoop -- Already sent an EOL, returning false" );
+         MESSAGE2( "Parser::readNextToken -- Already sent an EOL, returning false" );
          return false;
       }
    }
@@ -1100,12 +1102,13 @@ bool Parser::readNextToken()
 
    if( _p->m_pframes->back().m_limitToken == &ti->token() )
    {
-      TRACE1( "Parser::parserLoop -- Exiting error mode because found limit token \"%s\"", ti->token().name().c_ize() )
+      TRACE1( "Parser::readNextToken -- Exiting error mode because found limit token \"%s\"", ti->token().name().c_ize() )
       _p->m_pframes->back().m_limitToken = 0;
       _p->m_pframes->back().m_bErrorMode = false;
    }
 
    _p->m_tokenStack->push_back(ti);
+   TRACE2( "Parser::readNextToken -- tack after reading \"%s\": %s", ti->token().name().c_ize(), dumpStack().c_ize() )
 
    return true;
 }

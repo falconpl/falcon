@@ -932,13 +932,14 @@ SourceParser::SourceParser():
       << "simple" << apply_class << T_EOL
       << NonTerminal::endr;
 
-
 //========================================================================================
 // Main
 //
+   /*
    StdOutStream sout;
    TextWriter tw(&sout);
    MainProgram.render(tw);
+   */
 
    addState( MainProgram );
    addState( ClassBody );
