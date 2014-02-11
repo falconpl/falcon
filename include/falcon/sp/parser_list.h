@@ -37,6 +37,7 @@ void apply_ListExpr_next2( const NonTerminal&, Parser& p );
 void apply_ListExpr_first( const NonTerminal&, Parser& p );
 void apply_ListExpr_empty( const NonTerminal&, Parser& p );
 
+void apply_NeListExpr_assign( const NonTerminal&, Parser& p );
 void apply_NeListExpr_next( const NonTerminal&, Parser& p );
 void apply_NeListExpr_first( const NonTerminal&, Parser& p );
 

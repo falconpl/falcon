@@ -66,6 +66,10 @@ namespace Falcon {
 
 using namespace Parsing;
 
+static void apply_dummy( const NonTerminal&, Parser&p )
+{
+   p.simplify(1);
+}
 
 //==========================================================
 // SourceParser
@@ -335,6 +339,7 @@ SourceParser::SourceParser():
 
    Expr << "Expr" << expr_errhand;
    Expr << NonTerminal::sr
+         << "atom" << apply_expr_atom << Atom
          << "neg"  << apply_expr_neg << T_Minus << Expr
          << "neg2" << apply_expr_neg << T_UnaryMinus << Expr
          << "not"  << apply_expr_not  << T_not << Expr
@@ -427,7 +432,6 @@ SourceParser::SourceParser():
 
          << "unquote"  << apply_expr_unquote << T_UNQUOTE << Expr
 
-         << "atom" << apply_expr_atom << Atom
          << "func" << apply_expr_func << T_function << T_Openpar << ListSymbol << T_Closepar << T_EOL
          << "funcEta" << apply_expr_funcEta << T_function << T_Amper << T_Openpar << ListSymbol << T_Closepar << T_EOL
 
@@ -465,7 +469,7 @@ SourceParser::SourceParser():
 //
    ListExpr << "ListExpr" << ListExpr_errhand
          << NonTerminal::sr
-         << "ListExpr_eol" << T_EOL
+         << "ListExpr_eol" << apply_dummy << T_EOL
          << "ListExpr_nextd" << apply_ListExpr_next2 << ListExpr << T_EOL
          << "ListExpr_next" << apply_ListExpr_next << ListExpr << T_Comma << Expr
          << "ListExpr_next_no_comma" << apply_ListExpr_next_no_comma << ListExpr << Expr
@@ -475,13 +479,18 @@ SourceParser::SourceParser():
 
    NeListExpr << "NeListExpr" << expr_errhand
          << NonTerminal::sr
+         // a little trick: this rule succeds, but doesn't remove the '='
+         << "next" << apply_NeListExpr_assign << NeListExpr << T_EqSign
+         // this will match, but reduce leaving the equal sign.
+         << "next" << apply_NeListExpr_next << NeListExpr << T_Comma << Expr << T_EqSign
          << "next" << apply_NeListExpr_next << NeListExpr << T_Comma << Expr
+         << "first" << apply_NeListExpr_first << Expr << T_EqSign
          << "first" << apply_NeListExpr_first << Expr
          << NonTerminal::endr;
 
    ListSymbol << "ListSymbol"
       << NonTerminal::sr
-      << "ls-eol" << T_EOL /* no apply */
+      << "ls-eol" << apply_dummy << T_EOL
       << "ls-nextd" << apply_ListSymbol_next2 << ListSymbol << T_EOL
       << "ls-next" << apply_ListSymbol_next << ListSymbol << T_Comma << T_Name
       << "ls-first" << apply_ListSymbol_first << T_Name

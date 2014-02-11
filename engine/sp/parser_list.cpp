@@ -129,6 +129,11 @@ void apply_ListExpr_empty( const NonTerminal&, Parser& p )
    p.simplify( 0, ti_list );
 }
 
+void apply_NeListExpr_assign( const NonTerminal&, Parser& )
+{
+   // does nothing
+}
+
 void apply_NeListExpr_next( const NonTerminal&, Parser& p )
 {
    // << (r_ListExpr_next << "ListExpr_next" << apply_ListExpr_next << ListExpr << T_Comma << Expr )

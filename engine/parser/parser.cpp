@@ -822,10 +822,8 @@ void Parser::parserLoop()
       const Token* ruleTok;
       const Token* stackTok;
 
-      /*
-        TRACE2( "Parser::parserLoop -- %s(%d:%s) with stack: %s",
+      TRACE2( "Parser::parserLoop -- %s(%d:%s) with stack: %s",
                   currentFrame->m_owningToken->name().c_ize(), currentFrame->m_hypotesis, rule->name().c_ize(), dumpStack().c_ize() );
-       */
 
       while( rulePos < ruleArity
              && stackPos < (int) _p->m_tokenStack->size() )
@@ -854,13 +852,17 @@ void Parser::parserLoop()
       // Is the rule complete?
       if( rulePos == ruleArity )
       {
-         // then, if the rule ends with a terminal, we match.
-         if( ! ruleTok->isNT() || (rulePos == 1 && ! static_cast<const NonTerminal*>(ruleTok)->isRecursive()) )
+         if(
+            // empty rules can match if and only if the next token in the stack is a terminal
+            (ruleArity == 0 && (!_p->m_tokenStack->empty() && ! _p->m_tokenStack->front()->token().isNT()))
+            // then, if the rule ends with a terminal, we match.
+            || ! ruleTok->isNT() || (rulePos == 1 && ! static_cast<const NonTerminal*>(ruleTok)->isRecursive())
+            )
          {
             MESSAGE1( "Parser::parserLoop -- Matched: same arity and last token is terminal." );
             applyCurrentRule();
          }
-         else {
+         else if( ruleArity != 0 ) {
             // if the stack is exausted, we need to ask for more.
             if( stackPos == (int) _p->m_tokenStack->size() )
             {
@@ -878,20 +880,23 @@ void Parser::parserLoop()
                         stackTok->prio(), stackTok->isRightAssoc() ? "(ra)": "",
                         currentFrame->m_prio, currentFrame->m_bRA ? "(ra)": "");
 
-               // if it has no priority, or lower priority, or same priority with left-assoc, we're done.
-               if( stackTok->prio() == 0
-                  || currentFrame->m_prio == 0
-                  || stackTok->prio() > currentFrame->m_prio
-                  || (!stackTok->isRightAssoc() && stackTok->prio() == currentFrame->m_prio))
+               if(
+                  ruleTok->isNT()
+                  || (stackTok->prio() > 0 && stackTok->prio() < currentFrame->m_prio)
+                  || (stackTok->prio() > 0 && stackTok->prio() < currentFrame->m_prio)
+                  || (!stackTok->isRightAssoc() && stackTok->prio() == currentFrame->m_prio)
+                  )
                {
-                  MESSAGE1( "Parser::parserLoop -- Matched: same arity and next token in stack is lower priority." );
-                  applyCurrentRule();
-               }
-               // otherwise, we have to try again with the next operator.
-               else {
                   MESSAGE1( "Parser::parserLoop -- Cheching higher priority operator." );
                   // don't abandon this hypotesis
-                  pushParseFrame(current, currentFrame->m_prioPos + currentFrame->m_nStackDepth);
+                  pushParseFrame(static_cast<const NonTerminal*>(ruleTok), currentFrame->m_prioPos + currentFrame->m_nStackDepth);
+               }
+               else
+               {
+                  TRACE1( "Parser::parserLoop -- Matched: same arity(%d) and next token in stack \"%s\" is lower priority (%d%s vs. %d).",
+                          ruleArity,
+                          stackTok->name().c_ize(), stackTok->prio(), stackTok->isRightAssoc()? "ra": "", currentFrame->m_prio );
+                  applyCurrentRule();
                }
             } // stack exausted
          } // nonterminal token
@@ -922,12 +927,16 @@ void Parser::parserLoop()
          // descend, unless we're in an endless loop
          if (ruleTok->isNT() && (ruleTok != current || subRule != 0) )
          {
+            TRACE2( "Parser::parserLoop -- %s(%d:%s) with stack: %s",
+                              currentFrame->m_owningToken->name().c_ize(), currentFrame->m_hypotesis, rule->name().c_ize(), dumpStack().c_ize() );
             TRACE1( "Parser::parserLoop -- Descending into current rule %s from pos %d", ruleTok->name().c_ize(), subRule );
             pushParseFrame(static_cast<const NonTerminal*>(ruleTok), subRule + currentFrame->m_nStackDepth );
          }
          else
          {
             currentFrame->m_hypotesis++;
+            currentFrame->m_hypToken = 0;
+            currentFrame->m_prio = 0;
 
             while(currentFrame->m_hypotesis == currentFrame->m_owningToken->arity())
             {
@@ -951,10 +960,25 @@ void Parser::parserLoop()
 
                _p->m_pframes->pop_back();
                currentFrame = &_p->m_pframes->back();
+
+               // check; can we accept the parent rule after the child failure?
+               NonTerminal* rule = static_cast<NonTerminal*>(currentFrame->m_owningToken->term(currentFrame->m_hypotesis));
+               fassert( rule->isNT() );
+               // was the rule fully matched?
+               if( rule->arity() == currentFrame->m_hypToken )
+               {
+                  TRACE1( "Parser::parserLoop -- accept parent rule after child failure \"%s\"(%d:%d)=\"%s\"",
+                           currentFrame->m_owningToken->name().c_ize(), currentFrame->m_hypotesis, currentFrame->m_hypToken,
+                           rule->name().c_ize());
+                  applyCurrentRule();
+                  break;
+               }
+               // try with next rule
                currentFrame->m_hypotesis++;
+               currentFrame->m_hypToken = 0;
+               currentFrame->m_prio = 0;
             }
 
-            currentFrame->m_hypToken = 0;
          }
 
       }
@@ -1011,14 +1035,21 @@ void Parser::applyCurrentRule()
       _p->m_pErrorFrames->clear();
    }
 
-   //Private::FrameStack::iterator iter = _p->m_pframes->begin();
-   //while( iter != _p->m_pframes->end() )
+   /*
+   Private::FrameStack::iterator iter = _p->m_pframes->begin();
+   while( iter != _p->m_pframes->end() )
    {
-      _p->m_pframes->back().m_hypotesis = 0;
-      _p->m_pframes->back().m_hypToken = 0;
-      _p->m_pframes->back().m_prio = 0;
-      //++iter;
+      Private::ParseFrame& frame = *iter;
+      frame.m_hypotesis = 0;
+      frame.m_hypToken = 0;
+      frame.m_prio = 0;
+      ++iter;
    }
+   */
+
+   _p->m_pframes->back().m_hypotesis = 0;
+   _p->m_pframes->back().m_hypToken = 0;
+   _p->m_pframes->back().m_prio = 0;
 
    TRACE2("Parser::applyCurrentRule -- After applying %s stack %s",
             rule->name().c_ize(), dumpStack().c_ize() );
