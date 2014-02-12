@@ -11,15 +11,7 @@ Cleanup test (with error)
 CL2: Data from main
 CL1: Changed from CL2
 CL0: Changed from CL1
-============================================================
-Caught error was:
-UncaughtError VM0024 at 029-004.__main__:35: Explicitly raised item is uncaught
-"Uncaught!"
-   Signed by: engine/vmcontext.cpp:1179
-   Raised item: "Uncaught!"
-   Traceback:
-    "./029-004.fam" 029-004.__main__:35
-============================================================
+Caught error was:24
 @endoutput
 */
 
@@ -42,10 +34,12 @@ function cl0()
    global data
    > "CL0: ", data
    data = "Changed from CL0"
+   > "Caught error was:", VMProcess.current.error.code
+   /*
    > "=" * 60
-   > "Caught error was:"
-   > VMProcess.current.error
+   
    > "=" * 60
+   */
    // force exit ignoring the error.
    VMProcess.current.clearError()
 end

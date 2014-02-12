@@ -740,6 +740,8 @@ bool BitBuf::read16_reverse( uint16& number )
    readBytes( ptemp, 2 );
 
    byte* pnumber = reinterpret_cast<byte*>(&number);
+   // readBytes might change ptemp
+   ptemp = reinterpret_cast<byte*>(&temp);
    pnumber[0] = ptemp[1];
    pnumber[1] = ptemp[0];
 
@@ -758,6 +760,7 @@ bool BitBuf::read32_reverse( uint32& number )
    readBytes( ptemp, 4 );
 
    byte* pnumber = reinterpret_cast<byte*>(&number);
+   ptemp = reinterpret_cast<byte*>(&temp);
    pnumber[0] = ptemp[3];
    pnumber[1] = ptemp[2];
    pnumber[2] = ptemp[1];
@@ -778,6 +781,8 @@ bool BitBuf::read64_reverse( uint64& number )
    readBytes( ptemp, 8 );
 
    byte* pnumber = reinterpret_cast<byte*>(&number);
+   // readBytes might change ptemp
+   ptemp = reinterpret_cast<byte*>(&temp);
    pnumber[0] = ptemp[7];
    pnumber[1] = ptemp[6];
    pnumber[2] = ptemp[5];
