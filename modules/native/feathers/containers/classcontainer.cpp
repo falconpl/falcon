@@ -330,11 +330,6 @@ void ClassContainerBase::store( VMContext*, DataWriter*, void* ) const
    // do nothing.
 }
 
-void ClassContainerBase::restore( VMContext*, DataReader* ) const
-{
-   // do nothing.
-}
-
 void ClassContainerBase::flatten( VMContext*, ItemArray& subItems, void* instance ) const
 {
    Container* cont = static_cast<Container*>(instance);

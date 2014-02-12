@@ -217,6 +217,14 @@ void* ClassList::createInstance() const
   return new List(this);
 }
 
+void ClassList::restore( VMContext* ctx, DataReader* ) const
+{
+   List* l = new List(this);
+   ctx->pushData( Item(this, l) );
+}
+
+
+
 
 bool ClassList::op_init( VMContext* ctx, void* instance, int32 pcount ) const
 {

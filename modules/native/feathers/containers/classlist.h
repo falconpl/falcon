@@ -25,6 +25,8 @@ public:
    virtual ~ClassList();
 
    virtual void* createInstance() const;
+   void restore( VMContext* ctx, DataReader* stream ) const;
+
    virtual bool op_init( VMContext* ctx, void* instance, int32 pcount ) const;
 };
 
