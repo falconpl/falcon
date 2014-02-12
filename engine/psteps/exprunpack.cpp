@@ -90,6 +90,7 @@ ExprUnpack::ExprUnpack( int line, int chr ):
    FALCON_DECLARE_SYN_CLASS( expr_unpack )
    apply = apply_;
    m_trait = Expression::e_trait_composite;
+   m_stepAssignAllValues = new PStepAssignAllValues( this );
 }
 
 ExprUnpack::ExprUnpack( const ExprUnpack& other ):
