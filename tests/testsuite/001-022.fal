@@ -1,0 +1,27 @@
+/*
+@name Cascade assignment (a=b=X)
+@category Math-expr
+
+@output
+Assigning 100 to a and b
+A: 100
+B: 100
+Assigning b+1 to c, d and e
+C: 101
+D: 101
+E: 101
+Done.
+@endoutput
+*/
+
+> "Assigning 100 to a and b"
+a=b=100
+> "A: ", a
+> "B: ", b
+> "Assigning b+1 to c, d and e"
+c = d = e = b + 1
+> "C: ", c
+> "D: ", d
+> "E: ", e
+
+> "Done."

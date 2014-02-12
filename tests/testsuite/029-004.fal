@@ -13,11 +13,12 @@ CL1: Changed from CL2
 CL0: Changed from CL1
 ============================================================
 Caught error was:
-UncaughtError VM0024 at 029-004.__main__:28: Explicitly raised item is uncaught
+UncaughtError VM0024 at 029-004.__main__:35: Explicitly raised item is uncaught
 "Uncaught!"
-   Signed by: engine/vmcontext.cpp:1173
+   Signed by: engine/vmcontext.cpp:1179
+   Raised item: "Uncaught!"
    Traceback:
-   "./029-004.fal" 029-004.__main__:28   Raised item: "Uncaught!"
+    "./029-004.fam" 029-004.__main__:35
 ============================================================
 @endoutput
 */

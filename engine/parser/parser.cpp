@@ -883,7 +883,7 @@ void Parser::parserLoop()
 
                if(
                   //stackTok->isNT()
-                  (ruleTok->isNT() && rule->prio() == 0)
+                  (ruleTok->isNT() && static_cast<const NonTerminal*>(ruleTok)->isRecursive() && rule->prio() == 0)
                   || (stackTok->prio() > 0 && stackTok->prio() < currentFrame->m_prio)
                   || (stackTok->isRightAssoc() && stackTok->prio() == currentFrame->m_prio)
                   )

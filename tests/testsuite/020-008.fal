@@ -27,7 +27,7 @@ Done
 >"."
 
 > "On an integer, reverse"
--3.foreach(print)
+(-3).foreach(print)
 >"."
 
 > "On a generator"

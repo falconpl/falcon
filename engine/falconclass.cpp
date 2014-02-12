@@ -1237,7 +1237,22 @@ void FalconClass::op_getProperty( VMContext* ctx, void* self, const String& prop
 
    //if( ! overrideGetProperty( ctx, self, propName ) )
    {
-      const Item* value = inst->_p->getProperty( &propName );
+      const Item* value = 0;
+      if( inst->origin() == this )
+      {
+         value = inst->_p->getProperty( &propName );
+      }
+      else {
+         const Property* p = getProperty(propName);
+         if( p != 0 && p->m_type == Property::t_func )
+         {
+            ctx->topData().methodize(p->m_value.func);
+            return;
+         }
+         else {
+            value = inst->_p->getProperty( &propName );
+         }
+      }
       
       if( value != 0 )
       {

@@ -1,0 +1,20 @@
+/*
+@name Equivalence 
+@category Math-expr
+
+@output
+Equivalence test
+2 % 2 == 0: true
+2 % 2 == 2 % 3: false
+Done.
+@endoutput
+*/
+
+> "Equivalence test"
+
+t = 2 % 2 == 0
+> "2 % 2 == 0: ", t 
+t = 2 % 2 == 2 % 3
+> "2 % 2 == 2 % 3: ", t
+
+> "Done."
