@@ -140,10 +140,13 @@ public:
         break;
 
      case e_t_class:
-        m_data.strings.string1 = new String( m_class->name() );
         if( m_class != 0 )
         {
+           m_data.strings.string1 = new String( m_class->name() );
            m_lock = Engine::GC_lock(Item(m_class->handler(), const_cast<Class*>(m_class)));
+        }
+        else {
+           m_data.strings.string1 = 0;
         }
         break;
      }
@@ -207,7 +210,8 @@ public:
    /** Warning: the symbol is not increffed here. */
    CaseEntry( Symbol* symbol ):
       m_type(e_t_symbol),
-      m_class(0)
+      m_class(0),
+      m_lock(0)
    {
       m_data.symbol = symbol;
    }
@@ -478,9 +482,10 @@ public:
          return;
 
       case e_t_class:
+         m_data.strings.string1 = 0;
+         m_class = 0; // class will be resolved later.
          dr->read(temp);
          m_data.strings.string1 = new String(temp);
-         m_class = 0; // class will be resolved later.
          m_type = e_t_class;
          return;
       }
@@ -934,7 +939,6 @@ void ExprCase::unflatten( ItemArray& subItems )
    static Collector* coll = Engine::collector();
    uint32 count = 0;
 
-
    for ( Private::EntryList::iterator iter = _p->m_entries.begin();
                  iter !=  _p->m_entries.end();
                  ++iter )
@@ -950,6 +954,7 @@ void ExprCase::unflatten( ItemArray& subItems )
          Class* cls = static_cast<Class*>(subItems[count].asInst());
          entry->m_class = cls;
          entry->m_lock = coll->lock(subItems[count]);
+         entry->m_data.strings.string1 = new String(cls->name());
          ++count;
       }
    }
@@ -1016,6 +1021,7 @@ bool ExprCase::verifyType( const Item& item, VMContext* ctx ) const
          {
             entry->m_type = CaseEntry::e_t_class;
             entry->m_class = static_cast<Class*>(value->asInst());
+            entry->m_data.strings.string1 = new String(entry->m_class->name());
             sym->decref();
          }
          else {

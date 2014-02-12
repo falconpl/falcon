@@ -64,7 +64,6 @@ Module::Private::~Private()
       ++rl_i;
    }
 
-   /*
    MantraMap::iterator mi = m_mantras.begin();
    while( mi != m_mantras.end() )
    {
@@ -72,7 +71,6 @@ Module::Private::~Private()
       delete mantra;
       ++mi;
    }
-   */
 }
 
 

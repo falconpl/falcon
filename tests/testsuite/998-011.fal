@@ -11,11 +11,11 @@
 
 
 function makeMeSum()
-   return* {[] a+b}
+   return& {[] a+b}
 end
 
 function makeMeMultiply()
-   return* {[] a*b}
+   return& {[] a*b}
 end
 
 a = 10

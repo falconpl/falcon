@@ -712,6 +712,10 @@ Class* Engine::getError( const String& name ) const
    }
    m_mtxEH.unlock();
 
+   if( err == 0 )
+   {
+      printf("YAY\n");
+   }
    return err;
 }
 
