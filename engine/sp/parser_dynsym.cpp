@@ -39,7 +39,7 @@ namespace Falcon {
 using namespace Parsing;
 
 
-void apply_expr_amper( const NonTerminal&, Parser& p )
+void apply_expr_symname( const NonTerminal&, Parser& p )
 {
    static Class* clssym = Engine::handlers()->symbolClass();
    // << T_Amper << T_Name

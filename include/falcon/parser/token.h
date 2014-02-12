@@ -92,9 +92,11 @@ public:
    virtual void term( int, Token* ) {}
    virtual void addTerm( Token* ) {}
 
+   bool isSimple() const { return m_bSimple; }
 protected:
    bool m_bNonTerminal;
    bool m_bRightAssoc;
+   bool m_bSimple;
    int m_prio;
    
    Token(const String& name, int prio = 0, bool bRightAssoc = false );
@@ -103,7 +105,6 @@ protected:
 
    void name( const String& n );
 private:
-   uint32 m_nID;
    String m_name;
 };
 

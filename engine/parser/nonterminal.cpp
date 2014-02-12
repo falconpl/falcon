@@ -87,7 +87,6 @@ NonTerminal::NonTerminal():
    _p = new Private;
 }
 
-
 NonTerminal::~NonTerminal()
 {
    delete m_currentSubNT;
@@ -114,6 +113,16 @@ void NonTerminal::term( int n, Token* t )
 {
    if( n < (int) _p->m_subTokens.size() )
    {
+      if( t->isNT() )
+      {
+         m_bSimple = false;
+      }
+      else {
+         if ( m_prio == 0 || t->prio() < m_prio )
+         {
+            m_prio = t->prio();
+         }
+      }
       _p->m_subTokens[n] = t;
    }
 }
@@ -121,6 +130,21 @@ void NonTerminal::term( int n, Token* t )
 
 void NonTerminal::addTerm( Token* t )
 {
+   if(! _p->m_subTokens.empty() )
+   {
+      m_bSimple = false;
+   }
+
+   if( t->isNT() )
+   {
+      m_bSimple = false;
+   }
+   else {
+      if ( m_prio == 0 || t->prio() < m_prio )
+      {
+         m_prio = t->prio();
+      }
+   }
    _p->m_subTokens.push_back(t);
 }
 

@@ -24,12 +24,17 @@ namespace Parsing {
 Token::Token(const String& name, int prio, bool bRightAssoc):
    m_bNonTerminal(false),
    m_bRightAssoc( bRightAssoc ),
+   m_bSimple(true),
    m_prio(prio),
    m_name(name)
 {
 }
 
-Token::Token()
+Token::Token():
+   m_bNonTerminal(false),
+   m_bRightAssoc( false ),
+   m_bSimple(true),
+   m_prio(0)
 {
 }
 

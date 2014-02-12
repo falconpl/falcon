@@ -794,7 +794,7 @@ void Parser::parserLoop()
       }
 
       // a special case. We have the toplevel state in the stack.
-      if( _p->m_tokenStack->size() == 1 && _p->m_lStates.front()->m_state == &_p->m_tokenStack->back()->token() )
+      if( _p->m_tokenStack->size() == 1 && _p->m_lStates.back()->m_state == &_p->m_tokenStack->back()->token() )
       {
          MESSAGE1( "Parser::parserLoop -- Top token recognized." );
          simplify(1);
@@ -850,19 +850,23 @@ void Parser::parserLoop()
 
 
       // Is the rule complete?
-      if( rulePos == ruleArity )
+      if( rulePos == ruleArity
+          // rule with 0 arity match only if the current token is terminal
+          && (ruleArity > 0 || (!_p->m_tokenStack->empty() && ! _p->m_tokenStack->at(stackPos)->token().isNT()) )
+               )
       {
          if(
             // empty rules can match if and only if the next token in the stack is a terminal
-            (ruleArity == 0 && (!_p->m_tokenStack->empty() && ! _p->m_tokenStack->front()->token().isNT()))
+            ruleArity == 0
             // then, if the rule ends with a terminal, we match.
-            || ! ruleTok->isNT() || (rulePos == 1 && ! static_cast<const NonTerminal*>(ruleTok)->isRecursive())
+            || (! ruleTok->isNT())
+            || (rulePos == 1 && ! static_cast<const NonTerminal*>(ruleTok)->isRecursive())
             )
          {
             MESSAGE1( "Parser::parserLoop -- Matched: same arity and last token is terminal." );
             applyCurrentRule();
          }
-         else if( ruleArity != 0 ) {
+         else  {
             // if the stack is exausted, we need to ask for more.
             if( stackPos == (int) _p->m_tokenStack->size() )
             {
@@ -876,18 +880,17 @@ void Parser::parserLoop()
             else {
                // we have at least 1 more token on the stack.
                stackTok = &(*_p->m_tokenStack)[stackPos]->token();
-               TRACE2( "Parser::parserLoop -- Priority check: rule %d%s vs. next token %d%s",
-                        stackTok->prio(), stackTok->isRightAssoc() ? "(ra)": "",
-                        currentFrame->m_prio, currentFrame->m_bRA ? "(ra)": "");
 
                if(
-                  ruleTok->isNT()
+                  //stackTok->isNT()
+                  (ruleTok->isNT() && rule->prio() == 0)
                   || (stackTok->prio() > 0 && stackTok->prio() < currentFrame->m_prio)
-                  || (stackTok->prio() > 0 && stackTok->prio() < currentFrame->m_prio)
-                  || (!stackTok->isRightAssoc() && stackTok->prio() == currentFrame->m_prio)
+                  || (stackTok->isRightAssoc() && stackTok->prio() == currentFrame->m_prio)
                   )
                {
-                  MESSAGE1( "Parser::parserLoop -- Cheching higher priority operator." );
+                  TRACE2( "Parser::parserLoop -- Need more tokens on lower priority: nextToken %d%s vs. currentFrame %d%s",
+                                          stackTok->prio(), stackTok->isRightAssoc() ? "(ra)": "",
+                                          currentFrame->m_prio, currentFrame->m_bRA ? "(ra)": "");
                   // don't abandon this hypotesis
                   pushParseFrame(static_cast<const NonTerminal*>(ruleTok), currentFrame->m_prioPos + currentFrame->m_nStackDepth);
                }

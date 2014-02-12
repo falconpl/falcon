@@ -57,9 +57,6 @@
 
 #include <falcon/error.h>
 
-#include <falcon/textwriter.h>
-#include <falcon/stdstreams.h>
-
 #include "private_types.h"
 
 namespace Falcon {
@@ -215,12 +212,17 @@ SourceParser::SourceParser():
    T_DoubleColon("'::'",16),
    T_ColonQMark("':?'",16)
 {
+   init();
+}
 
+void SourceParser::init()
+{
 //========================================================================
 // Topmost part
 //
    MainProgram << "Main"
            << NonTerminal::nr << S_EmptyLine
+           << NonTerminal::nr << S_Class
            << NonTerminal::nr << S_Autoexpr
            << NonTerminal::nr << S_FastPrint
            << NonTerminal::nr << S_End
@@ -238,6 +240,8 @@ SourceParser::SourceParser():
            << NonTerminal::nr << S_Forfirst
            << NonTerminal::nr << S_Formiddle
            << NonTerminal::nr << S_Forlast
+
+           << NonTerminal::nr << S_Object
 
            << NonTerminal::nr << S_Switch
            << NonTerminal::nr << S_Select
@@ -339,6 +343,9 @@ SourceParser::SourceParser():
 
    Expr << "Expr" << expr_errhand;
    Expr << NonTerminal::sr
+          // we need to have named parameters before atom, because it's the only expr
+          // that might start with an atom (a name)
+         << "named-param" << apply_expr_named << T_Name << T_Disjunct << Expr
          << "atom" << apply_expr_atom << Atom
          << "neg"  << apply_expr_neg << T_Minus << Expr
          << "neg2" << apply_expr_neg << T_UnaryMinus << Expr
@@ -354,7 +361,6 @@ SourceParser::SourceParser():
          << "evarlet_exec"  << apply_expr_evalret_exec << T_EVALRET_EXEC << Expr
          << "evarlet_doubt"  << apply_expr_evalret_doubt << T_EVALRET_DOUBT << Expr
 
-         << "Expr named" << apply_expr_named << T_Name << T_Disjunct << Expr
          << "provides" << apply_expr_provides << Expr << T_provides << T_Name
 
          << "assign" << apply_expr_assign << Expr << T_EqSign << Expr
@@ -366,8 +372,8 @@ SourceParser::SourceParser():
          << "le" << apply_expr_le << Expr << T_LE << Expr
          << "ge" << apply_expr_ge << Expr << T_GE << Expr
          << "eeq" << apply_expr_eeq << Expr << T_EEQ << Expr
-         << "Expr in" << apply_expr_in << Expr << T_in << Expr
-         << "Expr notin" << apply_expr_notin << Expr << T_notin << Expr
+         << "in" << apply_expr_in << Expr << T_in << Expr
+         << "notin" << apply_expr_notin << Expr << T_notin << Expr
 
          << "call" << apply_expr_call << Expr << T_Openpar << ListExpr << T_Closepar
          << "summon" << apply_expr_summon << Expr << T_DoubleColon << T_Name << T_OpenSquare << ListExpr << T_CloseSquare
@@ -390,7 +396,7 @@ SourceParser::SourceParser():
          << "array_decl2" << apply_expr_array_decl2 << T_DotSquare
          << "accumulator" << apply_expr_accumulator << T_CapSquare << AccumulatorBody
 
-         << "dyns" << apply_expr_amper << T_Dollar << T_Name
+         << "dyns" << apply_expr_symname << T_Dollar << T_Name
 
          << "dot" << apply_expr_dot << Expr << T_Dot << T_Name
          << "plus" << apply_expr_plus << Expr << T_Plus << Expr
@@ -961,6 +967,11 @@ SourceParser::SourceParser():
    addState( ArrayDecl );
 }
 
+SourceParser::~SourceParser()
+{
+   TRACE("Destroying SourceParser 0x%p",this);
+}
+
 void SourceParser::onPushState( bool isPushedState )
 {
    ParserContext* pc = static_cast<ParserContext*>(m_ctx);
@@ -1017,7 +1028,6 @@ void SourceParser::addError( Error* err )
 #endif
    Parser::addError( err );
 }
-
 
 
 void SourceParser::addError( int code, const String& uri, int l, int c, int ctx )

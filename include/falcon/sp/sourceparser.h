@@ -29,6 +29,7 @@ class FALCON_DYN_CLASS SourceParser: public Parsing::Parser
 {
 public:
    SourceParser();
+   virtual ~SourceParser();
    bool parse();
 
    virtual void onPushState( bool isPushedState );
@@ -276,7 +277,10 @@ public:
    Parsing::NonTerminal ProtoDecl;
    Parsing::NonTerminal ArrayDecl;
 
- };
+private:
+   void init();
+
+};
 
 }
 
