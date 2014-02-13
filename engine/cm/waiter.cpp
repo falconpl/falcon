@@ -98,7 +98,20 @@ void ClassWaiter::internal_wait( VMContext* ctx, int64 to )
    }
 
    // roll the loop
-   for( uint32 i = start; i < len; ++i )
+   uint32 i;
+   for( i = start; i < len; ++i )
+   {
+      Item& param = array->at(i);
+      Class* cls = 0;
+      void* inst = 0;
+      param.asClassInst(cls, inst);
+
+      Shared* sh = static_cast<Shared*>(cls->getParentData( clsShared, inst ));
+      ctx->addWait(sh);
+      sh->onWaiterWaiting(ctx, to);
+   }
+
+   for( i = 0; i < start; ++i )
    {
       Item& param = array->at(i);
       Class* cls = 0;
@@ -113,6 +126,7 @@ void ClassWaiter::internal_wait( VMContext* ctx, int64 to )
    Shared* sh = ctx->engageWait(to);
    if( sh != 0 )
    {
+      self->m_pos++;
       returnOrInvoke( ctx, sh );
    }
    else if( to  == 0 )

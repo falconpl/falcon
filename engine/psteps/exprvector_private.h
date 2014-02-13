@@ -60,7 +60,8 @@ public:
       ExprVector_i iter = m_exprs.begin();
       while( iter != m_exprs.end() )
       {
-         TreeStep::dispose(*iter);
+         TreeStep* child = *iter;
+         TreeStep::dispose( child );
          ++iter;
       }
       m_exprs.clear();

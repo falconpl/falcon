@@ -16,26 +16,34 @@ size10 = size/10
 size100 = size/100
 data = []
 data.reserve(size)
-pos = 1
+pos = 0
+globId = 0
 
 evtGo = Event()
 evtDone = Event()
 barrier = Barrier()
+mtx = Mutex()
 
-function process()
+function process() 
+   global pos
+   id = mtx.locked( {=> global globId; > "Processor starting: ", ++globId; return globId } )
    w = Waiter( evtGo, barrier )
+   
    loop
       res = w.wait()
       if res == barrier: break
-            
+      
       pos++
       data += pos
       evtDone.set()
    end
+   
+   mtx.locked( {[] > "Process ", id, " complete." } )
 end
 
 
 function control()
+   mtx.locked( {[] > "Control starting."})
    for i = 1 to size
       if random(0,0,1)
          rest( random(1,10) )
@@ -44,8 +52,10 @@ function control()
       evtGo.set()
       if i % size100 == 0: > "STEP"      
       evtDone.wait()
-   end   
+   end
+   
    barrier.open()
+   mtx.locked( {[]> "Control complete"} )
 end
 
 
@@ -54,10 +64,14 @@ p = Parallel( process, process, control )
 p.launch()
 
 > "Check loop"
+result = "OK"
+//> data.describe(-1)
 for i = 1 to data.len - 1
    if data[i] != data[i-1] + 1
-      return "Check failed"
+      result = "Check failed"
+      break
    end
    if i % size10 == 0: > "STEP"
 end
+> "Done: ", result
 return "OK"
