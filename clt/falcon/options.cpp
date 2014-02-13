@@ -17,17 +17,17 @@
    Falcon compiler and interpreter - options file
 */
 
-#include "options.h"
 #include <iostream>
 
+#include "options.h"
+
 using namespace std;
-using namespace Falcon;
 
 #include <falcon/textwriter.h>
 #include <falcon/stdstreams.h>
 #include <falcon/sp/sourceparser.h>
 
-
+namespace Falcon {
 FalconOptions::FalconOptions():
    input( "" ),
    output( "" ),
@@ -406,6 +406,7 @@ void FalconOptions::parseEqString( const String& str, String& key, String& value
    
    key.bufferize();
    value.bufferize();
+}
 }
 
 /* options.cpp */
