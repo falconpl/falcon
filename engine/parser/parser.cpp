@@ -812,6 +812,7 @@ void Parser::parserLoop()
 
       int32& hyp = currentFrame->m_hypotesis;
       int32& rulePos = currentFrame->m_hypToken;
+      rulePos = 0;
       int32 stackPos = rulePos + currentFrame->m_nStackDepth;
       Token* rule = current->term(hyp);
       if( rule == 0 )
@@ -819,8 +820,8 @@ void Parser::parserLoop()
          throw FALCON_SIGN_XERROR(CodeError, e_internal, .extra("unprepared parser rule: " + current->name()) );
       }
       int32 ruleArity = rule->arity();
-      const Token* ruleTok;
-      const Token* stackTok;
+      const Token* ruleTok = 0;
+      const Token* stackTok = 0;
 
       TRACE2( "Parser::parserLoop -- %s(%d:%s) with stack: %s",
                   currentFrame->m_owningToken->name().c_ize(), currentFrame->m_hypotesis, rule->name().c_ize(), dumpStack().c_ize() );
@@ -928,7 +929,7 @@ void Parser::parserLoop()
          }
 
          // descend, unless we're in an endless loop
-         if (ruleTok->isNT() && (ruleTok != current || subRule != 0) )
+         if (ruleTok != 0 && (ruleTok->isNT() && (ruleTok != current || subRule != 0)) )
          {
             TRACE2( "Parser::parserLoop -- %s(%d:%s) with stack: %s",
                               currentFrame->m_owningToken->name().c_ize(), currentFrame->m_hypotesis, rule->name().c_ize(), dumpStack().c_ize() );

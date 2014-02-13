@@ -318,10 +318,7 @@ void apply_expr_atom( const NonTerminal&, Parser& p )
    SourceParser& sp = static_cast<SourceParser&>(p);
 
    TokenInstance* ti = p.getNextToken();
-   Expression* expr = (Expression*) ti->detachValue();
-   
    ti->token( sp.Expr );
-   ti->setValue( expr, treestep_deletor );
 }
 
 }

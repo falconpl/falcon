@@ -147,6 +147,13 @@ public:
 
    static TokenInstance* alloc( int line, int chr, const Token& tok );
    
+   /**
+   * Non-virtual override; if we know we have a tokeninstance to be disposed,
+   * we can clear it immediately instead waiting for the next pool relocation.
+   * (Necessary on MS-Windows).
+   */
+   inline void dispose() { clear(); Poolable::dispose(); }
+
 private:
     /** Creates a new token instance.
     \param line The line where the token was detected by the parser.
