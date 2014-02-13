@@ -69,7 +69,7 @@ end
 > "Unfair queue w/o delay"
 pfunc = [Parallel, control]
 for i = 0 to agents-1
-   pfunc += [[process, i]]
+   pfunc += [process, i]
 end
 
 p = pfunc()

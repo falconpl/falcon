@@ -61,7 +61,7 @@ end
 > "Message queue w/o delay"
 pfunc = [Parallel, control]
 for i = 1 to agents
-   pfunc += [[process, i]]
+   pfunc += [process, i]
 end
 
 p = pfunc()

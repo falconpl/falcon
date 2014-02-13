@@ -66,9 +66,10 @@ end
 > "Fence with delay"
 pfunc = [Parallel, control]
 for i = 0 to agents-1
-   pfunc += [[process, i]]
+   pfunc += [process, i]
 end
 
+> pfunc.describe()
 p = pfunc()
 p.launch()
 
