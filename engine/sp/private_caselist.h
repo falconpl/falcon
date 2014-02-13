@@ -46,7 +46,7 @@ public:
    String* m_sLow;
    String* m_sHigh;
    re2::RE2* m_re;
-   Symbol* m_sym;
+   const Symbol* m_sym;
 
    CaseItem():
       m_type( e_nil ),
@@ -111,7 +111,7 @@ public:
       m_re(0)
    {}
 
-   explicit CaseItem( Symbol* sym ):
+   explicit CaseItem( const Symbol* sym ):
       m_type( e_sym ),
       m_sLow(0),
       m_sHigh(0),

@@ -375,7 +375,7 @@ void ModCompiler::Context::onIString(const String& string )
    m_owner->m_module->addIString( string );
 }
 
-Item* ModCompiler::Context::getValue( Symbol* sym )
+Item* ModCompiler::Context::getValue( const Symbol* sym )
 {
    return m_owner->m_module->resolve( sym );
 }

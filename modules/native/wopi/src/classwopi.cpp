@@ -449,13 +449,13 @@ FALCON_DEFINE_FUNCTION_P(session)
       if( item->isString() )
       {
          const String& symName = *item->asString();
-         Symbol* sym = Engine::getSymbol(symName);
+         const Symbol* sym = Engine::getSymbol(symName);
          ss->addSymbol(sym);
          sym->decref();
       }
       else if( item->isSymbol() )
       {
-         Symbol* sym = item->asSymbol();
+         const Symbol* sym = item->asSymbol();
          ss->addSymbol(sym);
       }
       else

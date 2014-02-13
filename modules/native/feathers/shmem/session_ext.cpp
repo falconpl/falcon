@@ -150,7 +150,7 @@ static void internal_add_remove( Function* func, VMContext* ctx, int32 pCount, b
       if( item->isString() )
       {
          const String& symName = *item->asString();
-         Symbol* sym = Engine::getSymbol(symName);
+         const Symbol* sym = Engine::getSymbol(symName);
          if( bAdd ) {
             session->addSymbol(sym);
          }
@@ -161,7 +161,7 @@ static void internal_add_remove( Function* func, VMContext* ctx, int32 pCount, b
       }
       else if( item->isSymbol() )
       {
-         Symbol* sym = item->asSymbol();
+         const Symbol* sym = item->asSymbol();
          if( bAdd ) {
             session->addSymbol(sym);
          }
@@ -434,7 +434,7 @@ FALCON_DECLARE_FUNCTION(get, "symbol:S|Symbol,dflt:[X]")
 FALCON_DEFINE_FUNCTION_P1(get)
 {
    MESSAGE("Session.get()" );
-   Symbol* sym;
+   const Symbol* sym;
 
    Item* i_symbol = ctx->param(0);
    Item* i_dflt = ctx->param(1);
@@ -494,7 +494,7 @@ FALCON_DECLARE_FUNCTION(set, "symbol:S|Symbol,value:X")
 FALCON_DEFINE_FUNCTION_P1(set)
 {
    MESSAGE("get.set()" );
-   Symbol* sym;
+   const Symbol* sym;
 
    Item* i_symbol = ctx->param(0);
    Item* i_value = ctx->param(1);
@@ -541,7 +541,7 @@ FALCON_DEFINE_FUNCTION_P1(getAll)
    public:
       Rator( ItemDict* dict ): m_dict(dict) {}
       virtual ~Rator() {}
-      virtual void operator()(Symbol* sym, Item& value)
+      virtual void operator()(const Symbol* sym, Item& value)
       {
          m_dict->insert(FALCON_GC_HANDLE(new String(sym->name()) ), value);
       }

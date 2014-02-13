@@ -51,7 +51,7 @@ public:
     */
    bool addSymbol( const String& name );
 
-   bool addSymbol( Symbol* var );
+   bool addSymbol( const Symbol* var );
 
    void store( DataWriter* dw ) const;
    void restore( DataReader* dw );

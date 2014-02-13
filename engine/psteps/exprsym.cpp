@@ -43,7 +43,7 @@ ExprSymbol::ExprSymbol( int line, int chr ):
 }
 
 
-ExprSymbol::ExprSymbol( Symbol* target, int line, int chr ):
+ExprSymbol::ExprSymbol( const Symbol* target, int line, int chr ):
    Expression( line, chr ),
    m_symbol( target ),
    m_pure(false),
@@ -114,7 +114,7 @@ const String& ExprSymbol::name() const
 }
 
 
-void ExprSymbol::symbol( Symbol* sym )
+void ExprSymbol::symbol( const Symbol* sym )
 {
    if( m_symbol != 0 )
    {

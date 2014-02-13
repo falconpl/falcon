@@ -59,7 +59,7 @@ ExprInherit::ExprInherit( const String& name, int line, int chr ):
    m_trait = Expression::e_trait_inheritance;
 }
 
-ExprInherit::ExprInherit( Symbol* symbol, int line, int chr ):
+ExprInherit::ExprInherit( const Symbol* symbol, int line, int chr ):
    ExprVector( line, chr ),
    m_base(0),
    m_symbol( symbol )

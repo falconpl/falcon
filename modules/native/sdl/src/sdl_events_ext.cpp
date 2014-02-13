@@ -93,7 +93,7 @@ void declare_events( Module *self )
    self->addClassProperty( c_evttype, "QUIT" ).setInteger( SDL_QUIT );
 
    #ifndef USE_SDL_EVENT_THREADS
-   Symbol* coropoll = self->addExtFunc( "_coroutinePoll", _coroutinePoll, false );
+   const Symbol* coropoll = self->addExtFunc( "_coroutinePoll", _coroutinePoll, false );
    coropoll->setWKS( true );
    #endif
 

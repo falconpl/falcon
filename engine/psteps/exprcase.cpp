@@ -74,7 +74,7 @@ public:
       }
       strings;
 
-      Symbol* symbol;
+      const Symbol* symbol;
 
       re2::RE2* regex;
    }
@@ -208,7 +208,7 @@ public:
    }
 
    /** Warning: the symbol is not increffed here. */
-   CaseEntry( Symbol* symbol ):
+   CaseEntry( const Symbol* symbol ):
       m_type(e_t_symbol),
       m_class(0),
       m_lock(0)
@@ -286,7 +286,7 @@ public:
    }
 
    /** Warning: the symbol is not increffed here. */
-   void setSymbol( Symbol* symbol )
+   void setSymbol( const Symbol* symbol )
    {
       clear();
       m_type = e_t_symbol;
@@ -774,7 +774,7 @@ static bool internal_setValue( CaseEntry* entry, const Item& value )
 
    case FLC_CLASS_ID_SYMBOL:
       {
-         Symbol* sym = value.asSymbol();
+         const Symbol* sym = value.asSymbol();
          entry->setSymbol(sym);
       }
       break;
@@ -822,7 +822,7 @@ void ExprCase::addEntry( re2::RE2* regex )
    _p->m_entries.push_back(new CaseEntry(regex));
 }
 
-void ExprCase::addEntry( Symbol* symbol )
+void ExprCase::addEntry( const Symbol* symbol )
 {
    _p->m_entries.push_back(new CaseEntry(symbol));
 }
@@ -863,7 +863,7 @@ bool ExprCase::verify( const Item& value ) const
 }
 
 
-bool ExprCase::verifySymbol( Symbol* value ) const
+bool ExprCase::verifySymbol( const Symbol* value ) const
 {
    for ( Private::EntryList::iterator iter = _p->m_entries.begin();
             iter !=  _p->m_entries.end();
@@ -1006,7 +1006,7 @@ bool ExprCase::verifyType( const Item& item, VMContext* ctx ) const
       if( entry->m_type == CaseEntry::e_t_symbol )
       {
          // Resolve NOW
-         Symbol* sym = entry->m_data.symbol;
+         const Symbol* sym = entry->m_data.symbol;
          Item* value = ctx->resolveSymbol( sym, false );
          if( value == 0 ) {
             throw FALCON_SIGN_XERROR(LinkError, e_undef_sym, .extra(sym->name()).line(line()) );

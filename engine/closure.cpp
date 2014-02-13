@@ -152,7 +152,7 @@ void Closure::close( VMContext* ctx )
 
    for( uint32 i = 0; i < closedCount; ++i )
    {
-      Symbol* sym = vars.getById(i);
+      const Symbol* sym = vars.getById(i);
       Item* data = ctx->resolveSymbol( sym, false );
 
       if( data != 0 )

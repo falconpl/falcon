@@ -47,13 +47,13 @@ public:
     */
    int32 insert( const String& name );
 
-   int32 insert( Symbol* sym );
+   int32 insert( const Symbol* sym );
 
    int32 find( const String& name ) const;
-   int32 find( Symbol* sym ) const;
+   int32 find( const Symbol* sym ) const;
 
    const String& getNameById( uint32 id ) const;
-   Symbol* getById( uint32 id ) const;
+   const Symbol* getById( uint32 id ) const;
 
    uint32 size() const;
 

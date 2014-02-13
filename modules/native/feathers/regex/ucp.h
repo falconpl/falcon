@@ -17,7 +17,7 @@ enum {
   ucp_M,     /* Mark */
   ucp_N,     /* Number */
   ucp_P,     /* Punctuation */
-  ucp_S,     /* Symbol */
+  ucp_S,     /* const Symbol*/
   ucp_Z      /* Separator */
 };
 

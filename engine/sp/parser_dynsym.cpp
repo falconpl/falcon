@@ -52,8 +52,8 @@ void apply_expr_symname( const NonTerminal&, Parser& p )
    // Create the symbol and the reference
    
    // this creates a dynsymbol.
-   Symbol* nsym = Engine::getSymbol(*tref->asString() );
-   ExprValue* esyn = new ExprValue( Item( clssym, nsym ), tref->line(), tref->chr() );
+   const Symbol* nsym = Engine::getSymbol(*tref->asString() );
+   ExprValue* esyn = new ExprValue( Item( clssym, (void*)nsym ), tref->line(), tref->chr() );
    
    // update the result token
    TokenInstance* ti = TokenInstance::alloc( tref->line(), tref->chr(), sp.Expr );

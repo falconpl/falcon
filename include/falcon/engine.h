@@ -307,7 +307,7 @@ public:
     at the head of each evaluation frame to save the corresponding
     data stack frame.
     */
-   Symbol* baseSymbol() const;
+   const Symbol* baseSymbol() const;
    
    /** Returns a pointer to the rule base dynsymbol.
 
@@ -315,7 +315,7 @@ public:
     at the head of each rule frame to save the corresponding
     data stack frame.
     */
-   Symbol* ruleBaseSymbol() const;
+   const Symbol* ruleBaseSymbol() const;
 
    /** Returns a pointer to a symbol.
     * \param name The name of the symbol
@@ -324,7 +324,7 @@ public:
      retrieved symbol.
      If the symbol doesn't exist, it's created.
     */
-   static Symbol* getSymbol( const String& name );
+   static const Symbol* getSymbol( const String& name );
 
    /** Returns a pointer to a symbol.
     \param name The name of the symbol
@@ -332,9 +332,9 @@ public:
        Invoking this function doesn't increase the reference count of the symbol;
        if the symbol doesn't exist, 0 is returned.
     */
-   static Symbol* getSymbolNoRef( const String& name );
-   static void refSymbol(Symbol* sym);
-   static void releaseSymbol( Symbol* sym );
+   static const Symbol* getSymbolNoRef( const String& name );
+   static void refSymbol(const Symbol* sym);
+   static void releaseSymbol( const Symbol* sym );
 
    /** Engine-level logging facility */
    Log* log() const;
@@ -412,8 +412,8 @@ protected:
    StdHandlers* m_stdHandlers;
    StdMpxFactories* m_stdStreamTraits;
 
-   Symbol* m_baseSymbol;
-   Symbol* m_ruleBaseSymbol;
+   const Symbol* m_baseSymbol;
+   const Symbol* m_ruleBaseSymbol;
 };
 
 

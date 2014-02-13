@@ -100,7 +100,7 @@ SynTree::~SynTree()
 }
 
 
-void SynTree::target( Symbol* s )
+void SynTree::target( const Symbol* s )
 {
    s->incref();
    if( m_head != 0 ) {

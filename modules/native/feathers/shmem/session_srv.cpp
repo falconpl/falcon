@@ -84,13 +84,13 @@ void SessionService::setOpenMode_shmem_bu() const
 }
 
 
-void SessionService::addSymbol(Symbol* sym, const Item& value) const
+void SessionService::addSymbol(const Symbol* sym, const Item& value) const
 {
    m_session->addSymbol(sym, value);
 }
 
 
-bool SessionService::removeSymbol(Symbol* sym) const
+bool SessionService::removeSymbol(const Symbol* sym) const
 {
    return m_session->removeSymbol(sym);
 }
@@ -126,7 +126,7 @@ void SessionService::close() const
 }
 
 
-bool SessionService::get(Symbol* sym, Item& value) const
+bool SessionService::get(const Symbol* sym, Item& value) const
 {
    return m_session->get(sym, value);
 }

@@ -72,7 +72,7 @@ public:
       referenceFromContainer method was called.
     
     */
-   ExprSymbol( Symbol* target, int line = 0, int chr = 0 );
+   ExprSymbol( const Symbol* target, int line = 0, int chr = 0 );
    ExprSymbol( const ExprSymbol& other );
    virtual ~ExprSymbol();
 
@@ -85,8 +85,8 @@ public:
    virtual bool fullDefining() { return true; }
 
    // Return the symbol pointed by this expression.
-   Symbol* symbol() const { return m_symbol; }
-   void symbol( Symbol* sym );
+   const Symbol* symbol() const { return m_symbol; }
+   void symbol( const Symbol* sym );
    
    /** Returns the symbol name associated with this expression.
     \return A symbol name.
@@ -103,7 +103,7 @@ public:
    void setPure( bool m ) { m_pure = m; }
 
 protected:
-   Symbol* m_symbol;
+   const Symbol* m_symbol;
    bool m_pure;
    
    static void apply_( const PStep* ps, VMContext* ctx );

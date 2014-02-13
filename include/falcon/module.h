@@ -138,7 +138,7 @@ public:
     * \return The data of the added global, or 0 if the global name is not available.
     *
     */
-   GlobalsMap::Data* addGlobal( Symbol* sym, const Item& value, bool bExport = true );
+   GlobalsMap::Data* addGlobal( const Symbol* sym, const Item& value, bool bExport = true );
 
 
    /** Adds a global mantra, possibly exportable.
@@ -372,7 +372,7 @@ public:
     * This is called back when an explicit static import definition is
     * resolved by the module space.
     */
-   virtual void onImportResolved( ImportDef* id, Symbol* sym, Item* value );
+   virtual void onImportResolved( ImportDef* id, const Symbol* sym, Item* value );
 
    /** Callback invoked by the engine after the link process is complete.
     *
@@ -480,7 +480,7 @@ public:
     \note If the method returns false, the caller should raise a LinkError for
     doubly defined symbol.
     */
-   bool addImplicitImport( Symbol* sym, int32 line = 0 );
+   bool addImplicitImport( const Symbol* sym, int32 line = 0 );
    
    /** Shortcut to create a load ImportDef only if load is valid.
     \param name The name or URI of the module.
@@ -621,7 +621,7 @@ public:
     * saved on a stream after being run via a Storer object.
     *
     */
-   Item* resolve( Symbol* sym );
+   Item* resolve( const Symbol* sym );
 
    /** Performs resolution of locally defined global symbols.
     * \param The symbol to be resolved.
@@ -633,7 +633,7 @@ public:
     * The default version of this method returns a symbol in the globals map. Subclasses
     * of the Module class might dynamically provide values as they are requested by importers.
     */
-   virtual Item* resolveLocally( Symbol* sym );
+   virtual Item* resolveLocally( const Symbol* sym );
    Item* resolveLocally( const String& symName );
 
    /** Performs resolution of non-locally defined global symbols.
@@ -648,7 +648,7 @@ public:
     * (i.e. as implicit import) and the actual value is to be found in one of the related
     * modules.
     */
-   Item* resolveGlobally( Symbol* sym );
+   Item* resolveGlobally( const Symbol* sym );
    Item* resolveGlobally( const String& name );
 
    /** Resolves a symbol in this module.
@@ -656,7 +656,7 @@ public:
     * \return  0 if the symbol is not found in the engine, otherwise a valid
     *    item known as the given symbol in this module.
     *
-    *  This version of resolve( Symbol* sym ) can be used if a symbol is to be searched
+    *  This version of resolve( const Symbol* sym ) can be used if a symbol is to be searched
     *  by name and the pointer to the globally known symbol entry in the engine is not
     *  readily available.
     */

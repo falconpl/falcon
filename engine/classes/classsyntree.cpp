@@ -105,7 +105,7 @@ void ClassSynTree::restore( VMContext* ctx, DataReader* stream ) const
       if( hasSym ) {
          String symname;
          stream->read( symname );
-         Symbol* sym = Engine::getSymbol( symname );
+         const Symbol* sym = Engine::getSymbol( symname );
          st->target(sym);
       }
 

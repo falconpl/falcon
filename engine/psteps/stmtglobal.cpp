@@ -43,7 +43,7 @@ namespace Falcon
 class StmtGlobal::Private
 {
 public:
-   typedef std::vector<Symbol*> SymbolVector;
+   typedef std::vector<const Symbol*> SymbolVector;
    SymbolVector m_symbols;
 
    Private() {}
@@ -103,7 +103,7 @@ void StmtGlobal::render( TextWriter* tw, int32 depth ) const
       bool bDone = false;
       while( viter != vend )
       {
-         Symbol* sym = *viter;
+         const Symbol* sym = *viter;
          if( ! bDone ) {
             bDone = true;
          }
@@ -128,12 +128,12 @@ bool StmtGlobal::addSymbol( const String& name )
    }
 
    // resolve as local
-   Symbol* sym = Engine::getSymbol(name);
+   const Symbol* sym = Engine::getSymbol(name);
    _p->m_symbols.push_back(sym);
    return true;
 }
 
-bool StmtGlobal::addSymbol( Symbol* var )
+bool StmtGlobal::addSymbol( const Symbol* var )
 {
    if( alreadyAdded(var->name()) ) {
       return false;
@@ -150,7 +150,7 @@ bool StmtGlobal::alreadyAdded( const String& name ) const
    Private::SymbolVector::iterator vend = _p->m_symbols.end();
    while( viter != vend )
    {
-     Symbol* sym = *viter;
+     const Symbol* sym = *viter;
      if( sym->name() == name ) {
         return true;
      }
@@ -170,7 +170,7 @@ void StmtGlobal::store( DataWriter* stream ) const
    Private::SymbolVector::iterator vend = _p->m_symbols.end();
    while( viter != vend )
    {
-     Symbol* sym = *viter;
+     const Symbol* sym = *viter;
      stream->write( sym->name() );
 
      ++viter;
@@ -189,7 +189,7 @@ void StmtGlobal::restore( DataReader* stream )
       name.size(0);
       stream->read(name);
       // resolve as local
-      Symbol* sym = Engine::getSymbol( name );
+      const Symbol* sym = Engine::getSymbol( name );
       _p->m_symbols.push_back( sym );
    }
 }
@@ -209,7 +209,7 @@ void StmtGlobal::apply_( const PStep* ps, VMContext* ctx )
    Private::SymbolVector::iterator vend = symbols.end();
    while( viter != vend )
    {
-      Symbol* sym = *viter;
+      const Symbol* sym = *viter;
       // Ignore the fact that the symbol is (probably) local and resolve it global.
       Item* data = ctx->resolveGlobal( sym, false );
 

@@ -56,46 +56,38 @@ class Item;
  * an abstract class.
  *
  */
-class FALCON_DYN_CLASS Symbol
+class FALCON_DYN_CLASS Symbol: public String
 {
 public:
    
    /** The default constructor creates a minimally configured undefined symbol
    */
-   Symbol();
+   Symbol():
+      m_counter(1)
+   {}
 
    /** Creates a dynamic symbol. */
-   Symbol( const String& name );
+   Symbol( const String& name ):
+      String(name),
+      m_counter(1)
+   {}
    
    /** Copies the other symbol */
-   Symbol( const Symbol& other );
+   Symbol( const Symbol& other ):
+      String(other)
+   {}
+   ~Symbol() {}
    
+   const String& name() const { return *static_cast<const String*>(this); }
 
-   const String& name() const { return m_name; }
-   void name( const String& n) { m_name = n; }
-   
-   Symbol* clone() const { return new Symbol(*this); }
-   
-   void gcMark( uint32 mark ) { m_name.gcMark( mark ); }
-
-   /** Gets the current mark of this symbol*/
-   uint32 gcMark() const { return m_name.currentMark(); }
-
-   void incref();
-   void decref();
+   void incref() const;
+   void decref() const;
 
    static Class* handler();
 
-protected:
-   // Notice: we're using the string GC mark to keep ours.
-   String m_name;
-   
-   friend class ExprSymbol;
-   friend class SymbolPool;
-
 private:
-   ~Symbol();
-   uint32 m_counter;
+   friend class SymbolPool;
+   mutable uint32 m_counter;
 };
 
 }

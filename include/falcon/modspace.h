@@ -230,7 +230,7 @@ public:
     * On success, the exporter should discard the item it was previously associated
     * with the symbol, and use the returned value instead.
     */
-   bool exportSymbol( Symbol* sym, Item* value );
+   bool exportSymbol( const Symbol* sym, Item* value );
 
    /** Finds a value that has been generally exported via the load/export constructs.
     \param symName the name of the global variable to be searched.
@@ -242,7 +242,7 @@ public:
     \param sym the name of the global variable to be searched.
     \return A pointer to the exported value, or 0 if not found.
     */
-   Item* findExportedValue( Symbol* sym );
+   Item* findExportedValue( const Symbol* sym );
    
    /** Gets the module loader associated with this virtual machine. */
    ModLoader* modLoader() const { return m_loader; }

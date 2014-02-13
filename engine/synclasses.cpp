@@ -685,7 +685,7 @@ bool SynClasses::ClassGenSym::op_init( VMContext* ctx, void* instance, int pcoun
       }
       else if( params->asClassInst(cls, data) && cls->isDerivedFrom(symClass) )
       {
-         Symbol* sym = static_cast<Symbol*>(symClass->getParentData( cls, data ));
+         const Symbol* sym = static_cast<Symbol*>(symClass->getParentData( cls, data ));
          expr->symbol( sym );
          return false;
       }
@@ -699,7 +699,7 @@ bool SynClasses::ClassGenSym::op_init( VMContext* ctx, void* instance, int pcoun
 void SynClasses::ClassGenSym::op_call(VMContext* ctx, int pcount, void* instance) const
 {
    ExprSymbol* esym = static_cast<ExprSymbol*>(instance);
-   Symbol* sym = esym->symbol();
+   const Symbol* sym = esym->symbol();
 
    Item* res = ctx->resolveSymbol(sym, false);
    if( res == 0 )
@@ -730,7 +730,7 @@ void SynClasses::ClassGenSym::restore( VMContext* ctx, DataReader*dr ) const
    ctx->pushData( Item( this, es ) );
    es->decl( line, chr );
    es->setPure( bIsPure );
-   Symbol* sym = Engine::getSymbol( name );
+   const Symbol* sym = Engine::getSymbol( name );
    es->symbol( sym );
    sym->decref();
 }
@@ -1056,7 +1056,7 @@ bool SynClasses::ClassGlobal::op_init( VMContext* ctx, void* instance, int pCoun
          current->asClassInst(cls, data);
          if( cls->typeID() == FLC_CLASS_ID_SYMBOL )
          {
-            Symbol* sym = static_cast<Symbol*>(data);
+            const Symbol* sym = static_cast<Symbol*>(data);
             // do not use the symbol directly.
             ok = stmt->addSymbol( sym->name() );
             done = true;
@@ -1646,7 +1646,7 @@ void SynClasses::ClassForIn::store( VMContext* ctx, DataWriter*wr, void* instanc
    wr->write(count);
    for( uint32 i = 0; i < count; ++i )
    {
-      Symbol* tgt = forin->param(i);
+      const Symbol* tgt = forin->param(i);
       wr->write( tgt->name() );
    }
    m_parent->store( ctx, wr, forin );
@@ -1665,7 +1665,7 @@ void SynClasses::ClassForIn::restore( VMContext* ctx, DataReader*dr ) const
 
          dr->read( name );
 
-         Symbol* sym = Engine::getSymbol(name);
+         const Symbol* sym = Engine::getSymbol(name);
          expr->addParameter(sym);
       }
 

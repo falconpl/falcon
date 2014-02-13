@@ -200,14 +200,14 @@ void ClassModule::store( VMContext*, DataWriter* stream, void* instance ) const
       Module::Private::Externals::iterator depi = exts.begin();
       progID = 0;
       while( depi != exts.end() ) {
-         Symbol* sym = depi->first;
+         const Symbol* sym = depi->first;
 
          stream->write( sym->name() );
          // line
          stream->write( depi->second.m_line );
          ImportDef* def = depi->second.m_def;
          stream->write( def == 0 ? -1 : def->id() );
-         Symbol* srcSym = depi->second.m_srcSym;
+         const Symbol* srcSym = depi->second.m_srcSym;
          stream->write( srcSym == 0 ? "" : srcSym->name() );
 
          ++depi;
@@ -718,7 +718,7 @@ void ClassModule::op_getProperty( VMContext* ctx, void* instance, const String& 
       public:
          Rator(ItemDict* g): m_globs(g) {}
          virtual ~Rator() {};
-         virtual void operator() ( Symbol* sym, Item*& value )
+         virtual void operator() ( const Symbol* sym, Item*& value )
          {
             m_globs->insert( FALCON_GC_HANDLE(
                      new String(sym->name())), *value );

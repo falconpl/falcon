@@ -43,7 +43,7 @@ DriverDBIModule::~DriverDBIModule()
 }
 
 
-void DriverDBIModule::onImportResolved( ImportDef*, Symbol* sym, Item* value )
+void DriverDBIModule::onImportResolved( ImportDef*, const Symbol* sym, Item* value )
 {
    if( sym->name() == FALCON_DBI_HANDLE_CLASS_NAME )
    {

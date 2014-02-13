@@ -278,7 +278,7 @@ public:
 class SymbolVerifier
 {
 public:
-   bool check( ExprCase* cs, Symbol* value ) const
+   bool check( ExprCase* cs, const Symbol* value ) const
    {
       return cs->verifySymbol(value);
    }
@@ -328,7 +328,7 @@ SynTree* SwitchlikeStatement::findBlockForItem( const Item& value ) const
 }
 
 
-SynTree* SwitchlikeStatement::findBlockForSymbol( Symbol* value ) const
+SynTree* SwitchlikeStatement::findBlockForSymbol( const Symbol* value ) const
 {
    SymbolVerifier vv;
    return findBlock(value, vv);

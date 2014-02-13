@@ -41,9 +41,9 @@ public:
    uint32 gcMark() const { return m_mark; }
 
    void add( const String& name, const Item& value );
-   void add( Symbol* sym, const Item& value );
+   void add( const Symbol* sym, const Item& value );
    Item* get( const String& name ) const;
-   Item* get( Symbol* sym ) const;
+   Item* get( const Symbol* sym ) const;
    ClosedData* clone() const { return new ClosedData(*this); }
    uint32 size() const;
 

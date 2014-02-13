@@ -40,7 +40,7 @@ public:
    DriverDBIModule( const String& name );
    virtual ~DriverDBIModule();
 
-   virtual void onImportResolved( ImportDef* id, Symbol* sym, Item* value );
+   virtual void onImportResolved( ImportDef* id, const Symbol* sym, Item* value );
    virtual void onLinkComplete( VMContext* ctx );
    Class* driverDBIHandle() const { return m_driverDBIHandle; }
 

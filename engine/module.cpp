@@ -186,7 +186,7 @@ ImportDef* Module::getImport( uint32 n ) const
 
 Item* Module::resolve( const String& symName )
 {
-   Symbol* sym = Engine::getSymbol(symName);
+   const Symbol* sym = Engine::getSymbol(symName);
    try
    {
       Item* item = this->resolve(sym);
@@ -212,7 +212,7 @@ bool Module::resolveImports( Error*& error )
    {
       Item* value = 0;
 
-      Symbol* sym = iter->first;
+      const Symbol* sym = iter->first;
       // get them directly from import.
       Private::ExtDef& def = iter->second;
       ImportDef* idef = def.m_def;
@@ -252,7 +252,7 @@ bool Module::resolveImports( Error*& error )
    return error == 0;
 }
 
-Item* Module::resolve( Symbol* sym )
+Item* Module::resolve( const Symbol* sym )
 {
    Item* value = resolveLocally(sym);
 
@@ -268,14 +268,14 @@ Item* Module::resolve( Symbol* sym )
 
 Item* Module::resolveGlobally( const String& name )
 {
-   Symbol* sym = Engine::getSymbol(name);
+   const Symbol* sym = Engine::getSymbol(name);
    Item* value = resolveGlobally(sym);
    sym->decref();
    return value;
 }
 
 
-Item* Module::resolveGlobally( Symbol* sym )
+Item* Module::resolveGlobally( const Symbol* sym )
 {
    static Engine* engine = Engine::instance();
 
@@ -323,7 +323,7 @@ Item* Module::resolveGlobally( Symbol* sym )
          const String& prefix = id->sourceSymbol(0);
          if( prefix.getCharAt(prefix.length()-1) == '*' )
          {
-            Symbol* symWithNs = Engine::getSymbol(prefix.subString(0, prefix.length()-1) + sym->name());
+            const Symbol* symWithNs = Engine::getSymbol(prefix.subString(0, prefix.length()-1) + sym->name());
 
             if( m_modSpace != 0 )
             {
@@ -378,13 +378,13 @@ Item* Module::resolveGlobally( Symbol* sym )
 
 Item* Module::resolveLocally(const String& name)
 {
-   Symbol* sym = Engine::getSymbol(name);
+   const Symbol* sym = Engine::getSymbol(name);
    Item* value = m_globals.getValue( sym );
    sym->decref();
    return value;
 }
 
-Item* Module::resolveLocally(Symbol* sym)
+Item* Module::resolveLocally(const Symbol* sym)
 {
    return m_globals.getValue( sym );
 }
@@ -454,7 +454,7 @@ bool Module::addMantra(Mantra* f, bool bExport)
 
    // then add the required global.
    TRACE1(" Module::addMantra -- %s(%p) adding as new global", f->name().c_ize(), f );
-   Symbol* sym = Engine::getSymbol(f->name());
+   const Symbol* sym = Engine::getSymbol(f->name());
    m_globals.promote( sym, Item( f->handler(), f ), bExport );
    _p->m_externals.erase( sym );
    sym->decref();
@@ -465,7 +465,7 @@ bool Module::addMantra(Mantra* f, bool bExport)
 
 GlobalsMap::Data* Module::addGlobal( const String& name, const Item& value, bool bExport )
 {
-   Symbol* sym = Engine::getSymbol(name);
+   const Symbol* sym = Engine::getSymbol(name);
    GlobalsMap::Data* vd = m_globals.get( sym );
    bool decRef = vd == 0 || ! vd->m_bExtern;
 
@@ -476,7 +476,7 @@ GlobalsMap::Data* Module::addGlobal( const String& name, const Item& value, bool
 }
 
 
-GlobalsMap::Data* Module::addGlobal( Symbol* sym, const Item& value, bool bExport )
+GlobalsMap::Data* Module::addGlobal( const Symbol* sym, const Item& value, bool bExport )
 {
    GlobalsMap::Data* vd = m_globals.get( sym );
    if( vd != 0 )
@@ -621,7 +621,7 @@ bool Module::addImplicitImport( const String& name, int32 line )
       return false;
    }
 
-   Symbol* sym = Engine::getSymbol(name);
+   const Symbol* sym = Engine::getSymbol(name);
    GlobalsMap::Data* data = m_globals.add( sym, Item(), false );
    data->m_bExtern = true;
    _p->m_externals.insert( std::make_pair(sym, Private::ExtDef(line)) );
@@ -630,7 +630,7 @@ bool Module::addImplicitImport( const String& name, int32 line )
 }
 
 
-bool Module::addImplicitImport( Symbol* sym, int32 line )
+bool Module::addImplicitImport( const Symbol* sym, int32 line )
 {
    if( m_globals.get(sym) != 0 )
    {
@@ -703,7 +703,7 @@ bool Module::addImport( ImportDef* def, Error*& error, int32 line )
 
       if( name.getCharAt( name.length() -1 ) !=  '*' )
       {
-         Symbol* imported = Engine::getSymbol(name);
+         const Symbol* imported = Engine::getSymbol(name);
 
          // it's a real symbol.
          if ( m_globals.get( imported ) != 0 )
@@ -844,7 +844,7 @@ void Module::onModuleResolved( ModRequest* )
 {
 }
 
-void Module::onImportResolved( ImportDef*, Symbol*, Item* )
+void Module::onImportResolved( ImportDef*, const Symbol*, Item* )
 {
 }
 

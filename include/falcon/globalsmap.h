@@ -80,10 +80,10 @@ public:
 
       */
    Data* add( const String& name, const Item& value, bool bExport = false );
-   Data* add( Symbol* sym, const Item& value, bool bExport = false );
+   Data* add( const Symbol* sym, const Item& value, bool bExport = false );
 
    Data* promote( const String& name, const Item& value, bool bExport = false );
-   Data* promote( Symbol* sym, const Item& value, bool bExport = false );
+   Data* promote( const Symbol* sym, const Item& value, bool bExport = false );
 
    /** Imports a variable in as external.
     * \param sym The symbol indicating the variable that is to be imported.
@@ -97,11 +97,11 @@ public:
     * come from the engine, from an embedding application or from a module in the
     * same module space of the owner module.
     */
-   Data* addExtern( Symbol* sym, Item* value );
+   Data* addExtern( const Symbol* sym, Item* value );
    Data* addExtern( const String& symName, Item* value );
 
    bool remove( const String& name );
-   bool remove( Symbol* sym );
+   bool remove( const Symbol* sym );
 
   /** Export a previously declared symbol.
    \param name The name of the symbol to be exported.
@@ -117,8 +117,8 @@ public:
       return exportGlobal(name, dummy);
    }
 
-   Data* exportGlobal( Symbol* sym, bool &bAlready );
-   Data* exportGlobal( Symbol* sym )
+   Data* exportGlobal( const Symbol* sym, bool &bAlready );
+   Data* exportGlobal( const Symbol* sym )
    {
       bool dummy;
       return exportGlobal(sym, dummy);
@@ -135,7 +135,7 @@ public:
    \note Still unimported extern variables return 0.
    */
    Item* getValue( const String& name ) const;
-   Item* getValue( Symbol* sym ) const;
+   Item* getValue( const Symbol* sym ) const;
 
    /** Gets the global data associated with the given variable name.
     * \param name The name of the global variable to be searched.
@@ -146,12 +146,12 @@ public:
     * in the module space where a module is stored).
     */
    Data* get(const String& name ) const;
-   Data* get( Symbol* sym ) const;
+   Data* get( const Symbol* sym ) const;
 
    /** Checks if a variable is exported given its name.
    */
    bool isExported( const String& name ) const;
-   bool isExported( Symbol* sym ) const;
+   bool isExported( const Symbol* sym ) const;
 
    /** Mark (dynamic) modules for Garbage Collecting.
     \param mark the current GC mark.
@@ -173,7 +173,7 @@ public:
    class VariableEnumerator
    {
    public:
-      virtual void operator() ( Symbol* sym, Item*& value ) = 0;
+      virtual void operator() ( const Symbol* sym, Item*& value ) = 0;
    };
 
    /** Enumerate all the variables exported by this module.

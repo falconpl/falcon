@@ -46,22 +46,22 @@ ClassSymbol::~ClassSymbol()
 
 void ClassSymbol::describe( void* instance, String& target, int, int ) const
 {
-   Symbol* sym = static_cast<Symbol*>(instance);
+   const Symbol* sym = static_cast<Symbol*>(instance);
    target = "$";
    target += sym->name();
 }
 
 void ClassSymbol::dispose( void* instance ) const
 {   
-   Symbol* sym = static_cast<Symbol*>(instance);
+   const Symbol* sym = static_cast<const Symbol*>(instance);
    Engine::releaseSymbol(sym);
 }
 
 void* ClassSymbol::clone( void* instance ) const
 {
-   Symbol* sym = static_cast<Symbol*>(instance);
+   const Symbol* sym = static_cast<Symbol*>(instance);
    Engine::refSymbol(sym);
-   return sym;
+   return (void*)sym;
 }
 
 void* ClassSymbol::createInstance() const
@@ -75,7 +75,7 @@ bool ClassSymbol::op_init( VMContext* ctx, void*, int32 pcount ) const
    if( pcount > 0 || item->isString() )
    {
       String& name = *item->asString();
-      Symbol* sym = Engine::getSymbol( name );
+      const Symbol* sym = Engine::getSymbol( name );
       FALCON_GC_STORE( this, sym );
       ctx->opcodeParam(pcount).setUser( this, sym );
    }
@@ -98,7 +98,7 @@ void ClassSymbol::enumeratePV( void* instance, PVEnumerator& cb ) const
 {
    static Class* strClass = Engine::handlers()->stringClass();
 
-   Symbol* sym = static_cast<Symbol*>( instance );
+   const Symbol* sym = static_cast<Symbol*>( instance );
    Item temp( strClass, sym );
    cb("name", temp );
    //cb("value", *sym->defaultValue() );
@@ -113,7 +113,7 @@ bool ClassSymbol::hasProperty( void*, const String& prop ) const
 
 void ClassSymbol::op_getProperty( VMContext* ctx, void* instance, const String& prop) const
 {
-   Symbol* sym = static_cast<Symbol*>( instance );
+   const Symbol* sym = static_cast<Symbol*>( instance );
 
    if( prop == "name" )
    {
@@ -131,7 +131,7 @@ void ClassSymbol::op_getProperty( VMContext* ctx, void* instance, const String& 
 
 void ClassSymbol::op_setProperty( VMContext* ctx, void* instance, const String& prop) const
 {
-   Symbol* sym = static_cast<Symbol*>( instance );
+   const Symbol* sym = static_cast<Symbol*>( instance );
 
    if( prop == "name" )
    {
@@ -148,7 +148,7 @@ void ClassSymbol::op_setProperty( VMContext* ctx, void* instance, const String& 
 
 void ClassSymbol::op_call( VMContext* ctx, int pcount, void* instance ) const
 {
-   Symbol* sym = static_cast<Symbol*>( instance );
+   const Symbol* sym = static_cast<Symbol*>( instance );
    if( pcount > 0 )
    {
       ctx->opcodeParam(pcount) = ctx->opcodeParam(pcount-1);
@@ -164,7 +164,7 @@ void ClassSymbol::op_call( VMContext* ctx, int pcount, void* instance ) const
 
 void ClassSymbol::store( VMContext*, DataWriter* stream, void* instance ) const
 {
-   Symbol* symbol = static_cast<Symbol*>(instance);
+   const Symbol* symbol = static_cast<Symbol*>(instance);
    stream->write( symbol->name() );
 }
 
@@ -175,7 +175,7 @@ void ClassSymbol::restore( VMContext* ctx, DataReader* stream ) const
    
    stream->read( name );
    
-   Symbol* sym = Engine::getSymbol( name );
+   const Symbol* sym = Engine::getSymbol( name );
    ctx->pushData( Item( this, sym ) );
 }
 

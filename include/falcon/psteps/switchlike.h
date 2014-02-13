@@ -45,7 +45,7 @@ public:
 
    //virtual void gcMark( uint32 mark );
    SynTree* findBlockForItem( const Item& value ) const;
-   SynTree* findBlockForSymbol( Symbol* value ) const;
+   SynTree* findBlockForSymbol( const Symbol* value ) const;
    SynTree* findBlockForItem( const Item& value, VMContext* ctx ) const;
    SynTree* findBlockForType( const Item& value, VMContext* ctx ) const;
    SynTree* getDefault() const;

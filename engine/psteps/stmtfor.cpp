@@ -321,7 +321,7 @@ bool StmtForBase::setForLastFromParam(Item* param)
 class StmtForIn::Private
 {
 public:
-   typedef std::vector<Symbol*> SymVector;
+   typedef std::vector<const Symbol*> SymVector;
    SymVector m_params;
    
    Private() {}
@@ -339,7 +339,7 @@ public:
       SymVector::iterator iter = m_params.begin();
       while( iter != m_params.end() )
       {
-         Symbol* sym = *iter;
+         const Symbol* sym = *iter;
          sym->decref();
          ++iter;
       }
@@ -431,7 +431,7 @@ void StmtForIn::renderHeading( TextWriter* tw, int32 depth ) const
 }
 
 
-void StmtForIn::addParameter( Symbol* sym )
+void StmtForIn::addParameter( const Symbol* sym )
 {
    _p->m_params.push_back( sym );
 }
@@ -458,7 +458,7 @@ length_t StmtForIn::paramCount() const
    return (length_t) _p->m_params.size();
 }
 
-Symbol* StmtForIn::param( length_t p ) const
+const Symbol* StmtForIn::param( length_t p ) const
 {
    return _p->m_params[p];
 }
@@ -468,7 +468,7 @@ bool StmtForIn::setTargetFromParam(Item* param)
 {
    if( param->type() == FLC_CLASS_ID_SYMBOL )
    {
-      Symbol* sym = static_cast<Symbol*>(param->asInst());
+      const Symbol* sym = static_cast<Symbol*>(param->asInst());
       _p->clearParams();
       _p->m_params.push_back(sym);
       sym->incref();
@@ -483,7 +483,7 @@ bool StmtForIn::setTargetFromParam(Item* param)
          Item& value = array->at(i);
          if( value.type() == FLC_CLASS_ID_SYMBOL )
          {
-            Symbol* sym = static_cast<Symbol*>(value.asInst());
+            const Symbol* sym = static_cast<Symbol*>(value.asInst());
             sym->incref();
             _p->m_params.push_back(sym);
          }
@@ -742,7 +742,7 @@ void StmtForIn::PStepNext::apply_( const PStep* ps, VMContext* ctx )
 // For - to
 //
 
-StmtForTo::StmtForTo( Symbol* tgt, Expression* start, Expression* end, Expression* step, int32 line, int32 chr ):
+StmtForTo::StmtForTo( const Symbol* tgt, Expression* start, Expression* end, Expression* step, int32 line, int32 chr ):
    StmtForBase( line, chr ),
    m_target( tgt ),
    m_start(start),
@@ -825,7 +825,7 @@ bool StmtForTo::setTargetFromParam(Item* param)
 
    if( param->type() == FLC_CLASS_ID_SYMBOL )
    {
-      Symbol* sym = static_cast<Symbol*>(param->asInst());
+      const Symbol* sym = static_cast<Symbol*>(param->asInst());
 
       sym->incref();
       if( m_target != 0 )
@@ -855,7 +855,7 @@ bool StmtForTo::setStartExprFromParam(Item* param)
 
    if( param->type() == FLC_CLASS_ID_SYMBOL )
    {
-      Symbol* sym = static_cast<Symbol*>(param->asInst());
+      const Symbol* sym = static_cast<Symbol*>(param->asInst());
       startExpr(new ExprSymbol(sym ));
       return true;
    }
@@ -887,7 +887,7 @@ bool StmtForTo::setEndExprFromParam(Item* param)
 
    if( param->type() == FLC_CLASS_ID_SYMBOL )
    {
-      Symbol* sym = static_cast<Symbol*>(param->asInst());
+      const Symbol* sym = static_cast<Symbol*>(param->asInst());
       endExpr(new ExprSymbol(sym ));
       return true;
    }
@@ -922,7 +922,7 @@ bool StmtForTo::setStepExprFromParam(Item* param)
 
    if( param->type() == FLC_CLASS_ID_SYMBOL )
    {
-      Symbol* sym = static_cast<Symbol*>(param->asInst());
+      const Symbol* sym = static_cast<Symbol*>(param->asInst());
       stepExpr(new ExprSymbol(sym ));
       return true;
    }
@@ -1077,7 +1077,7 @@ void StmtForTo::apply_( const PStep* ps, VMContext* ctx )
    ctx->pushCodeWithUnrollPoint( &self->m_stepNext );
    
    // Prepare the start value   
-   Symbol* target = self->m_target;
+   const Symbol* target = self->m_target;
    ctx->resolveSymbol(target, true)->copyFromLocal(Item(start));
    
    // eventually, push the first opode in top of all.
@@ -1101,7 +1101,7 @@ void StmtForTo::PStepNext::apply_( const PStep* ps, VMContext* ctx )
    int64 step = ctx->topData().asInteger();
    
    // the start, at minimum, will be done.
-   Symbol* target = self->m_target;
+   const Symbol* target = self->m_target;
    ctx->resolveSymbol(target, true)->setInteger(start);
    start += step;
 

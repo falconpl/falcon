@@ -214,7 +214,7 @@ class ClosedData::Private
 public:
    mutable Mutex m_mtx;
 
-   typedef std::map<Symbol*, ItemRef*> EntryMap;
+   typedef std::map<const Symbol*, ItemRef*> EntryMap;
    EntryMap m_data;
 
    Private() {}
@@ -228,7 +228,7 @@ public:
       EntryMap::const_iterator end = m_data.end();
       while( iter != end )
       {
-         Symbol* sym = iter->first;
+         const Symbol* sym = iter->first;
          sym->decref();
          ItemRef* ir = iter->second;
          ir->decref();
@@ -242,7 +242,7 @@ public:
       EntryMap::const_iterator end = other.m_data.end();
       while( iter != end )
       {
-         Symbol* sym = iter->first;
+         const Symbol* sym = iter->first;
          ItemRef* oi = iter->second;
          sym->incref();
          oi->incref();
@@ -329,12 +329,12 @@ uint32 ClosedData::size() const
 
 void ClosedData::add( const String& name, const Item& value )
 {
-   Symbol* sym = Engine::getSymbol(name);
+   const Symbol* sym = Engine::getSymbol(name);
    add(sym, value);
    sym->decref();
 }
 
-void ClosedData::add( Symbol* sym, const Item& value )
+void ClosedData::add( const Symbol* sym, const Item& value )
 {
    _p->m_mtx.lock();
    Private::EntryMap::iterator pos = _p->m_data.find( sym );
@@ -354,7 +354,7 @@ void ClosedData::add( Symbol* sym, const Item& value )
 
 Item* ClosedData::get( const String& name ) const
 {
-   Symbol* sym = Engine::getSymbol(name);
+   const Symbol* sym = Engine::getSymbol(name);
    Item* value = get(sym);
    sym->decref();
 
@@ -362,7 +362,7 @@ Item* ClosedData::get( const String& name ) const
 }
 
 
-Item* ClosedData::get( Symbol* sym ) const
+Item* ClosedData::get( const Symbol* sym ) const
 {
    Item* value = 0;
    _p->m_mtx.lock();
@@ -392,7 +392,7 @@ void ClosedData::flatten( VMContext*, ItemArray& subItems ) const
    Private::EntryMap::iterator end = _p->m_data.end();
    while( pos != end )
    {
-      Symbol* sym = pos->first;
+      const Symbol* sym = pos->first;
       const Item& value = *pos->second;
       subItems.append(Item(sym));
       subItems.append(value);
@@ -420,7 +420,7 @@ void ClosedData::unflatten( VMContext*, ItemArray& subItems, uint32 pos )
       if( ! nameItem.isSymbol() ) {
          return;
       }
-      Symbol* sym = nameItem.asSymbol();
+      const Symbol* sym = nameItem.asSymbol();
 
       ItemRef* ir = new ItemRef;
       ir->copy(valueItem);
@@ -437,7 +437,7 @@ void ClosedData::defineSymbols( VMContext* ctx )
    Private::EntryMap::iterator end = _p->m_data.end();
    while( pos != end )
    {
-      Symbol* sym = pos->first;
+      const Symbol* sym = pos->first;
       Item* value = pos->second;
       ctx->defineSymbol( sym , value );
       ++pos;

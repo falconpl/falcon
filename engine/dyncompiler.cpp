@@ -1402,7 +1402,7 @@ public:
       return false;
    }
 
-   virtual Item* getValue( Symbol* sym ) {
+   virtual Item* getValue( const Symbol* sym ) {
       Item* value = m_ctx->resolveSymbol( sym, false);
       return value;
    }

@@ -63,11 +63,11 @@ public:
    public:
       int32 m_line;
       ImportDef* m_def;
-      Symbol* m_srcSym;
+      const Symbol* m_srcSym;
 
       ExtDef() {}
 
-      ExtDef(int32 line, ImportDef* idef = 0, Symbol* srcSym = 0 ):
+      ExtDef(int32 line, ImportDef* idef = 0, const Symbol* srcSym = 0 ):
          m_line(line),
          m_def(idef),
          m_srcSym(srcSym)
@@ -98,7 +98,7 @@ public:
       }
    };
 
-   typedef std::map<Symbol*, ExtDef> Externals;
+   typedef std::map<const Symbol*, ExtDef> Externals;
    /* Explicit external requirements.
 
       List of symbols that have been explicitly imported but not found in the

@@ -37,7 +37,7 @@ namespace Falcon {
 class GlobalsMap::Private
 {
 public:
-   typedef std::map<Symbol*, Data*> VariableMap;
+   typedef std::map<const Symbol*, Data*> VariableMap;
 
    VariableMap m_variables;
    VariableMap m_exports;
@@ -102,7 +102,7 @@ uint32 GlobalsMap::lastGCMark() const
 
 GlobalsMap::Data* GlobalsMap::add( const String& name, const Item& value, bool bExport )
 {
-   Symbol* sym = Engine::getSymbol(name);
+   const Symbol* sym = Engine::getSymbol(name);
    Private::VariableMap::iterator pos = _p->m_variables.find( sym );
    if( pos != _p->m_variables.end() ) {
       // we don't have to keep the allocated symbol
@@ -122,7 +122,7 @@ GlobalsMap::Data* GlobalsMap::add( const String& name, const Item& value, bool b
 }
 
 
-GlobalsMap::Data* GlobalsMap::add( Symbol* sym, const Item& value, bool bExport )
+GlobalsMap::Data* GlobalsMap::add( const Symbol* sym, const Item& value, bool bExport )
 {
    Private::VariableMap::iterator pos = _p->m_variables.find( sym );
    if( pos != _p->m_variables.end() ) {
@@ -145,14 +145,14 @@ GlobalsMap::Data* GlobalsMap::add( Symbol* sym, const Item& value, bool bExport 
 
 GlobalsMap::Data* GlobalsMap::promote( const String& name, const Item& value, bool bExport )
 {
-   Symbol* sym = Engine::getSymbol(name);
+   const Symbol* sym = Engine::getSymbol(name);
    Data* dt = promote( sym, value, bExport );
    sym->decref();
    return dt;
 }
 
 
-GlobalsMap::Data* GlobalsMap::promote( Symbol* sym, const Item& value, bool bExport )
+GlobalsMap::Data* GlobalsMap::promote( const Symbol* sym, const Item& value, bool bExport )
 {
    Private::VariableMap::iterator pos = _p->m_variables.find( sym );
    Data* dt = 0;
@@ -177,7 +177,7 @@ GlobalsMap::Data* GlobalsMap::promote( Symbol* sym, const Item& value, bool bExp
 }
 
 
-GlobalsMap::Data* GlobalsMap::addExtern( Symbol* sym, Item* value )
+GlobalsMap::Data* GlobalsMap::addExtern( const Symbol* sym, Item* value )
 {
    Data* varData;
 
@@ -202,7 +202,7 @@ GlobalsMap::Data* GlobalsMap::addExtern( Symbol* sym, Item* value )
 
 GlobalsMap::Data* GlobalsMap::addExtern( const String& symName, Item* value )
 {
-   Symbol* sym = Engine::getSymbol(symName);
+   const Symbol* sym = Engine::getSymbol(symName);
    Data* dt = addExtern( sym, value );
    sym->decref();
    return dt;
@@ -211,7 +211,7 @@ GlobalsMap::Data* GlobalsMap::addExtern( const String& symName, Item* value )
 
 bool GlobalsMap::remove( const String& name )
 {
-   Symbol* sym = Engine::getSymbol(name);
+   const Symbol* sym = Engine::getSymbol(name);
    bool result = remove(sym);
    sym->decref();
    return result;
@@ -219,13 +219,13 @@ bool GlobalsMap::remove( const String& name )
 
 GlobalsMap::Data* GlobalsMap::exportGlobal( const String& name, bool &bAlready )
 {
-   Symbol* sym = Engine::getSymbol(name);
+   const Symbol* sym = Engine::getSymbol(name);
    Data* result = exportGlobal(sym, bAlready );
    sym->decref();
    return result;
 }
 
-GlobalsMap::Data* GlobalsMap::exportGlobal( Symbol* sym, bool &bAlready )
+GlobalsMap::Data* GlobalsMap::exportGlobal( const Symbol* sym, bool &bAlready )
 {
    Private::VariableMap::iterator pos = _p->m_variables.find( sym );
    if( pos == _p->m_variables.end() ) {
@@ -242,7 +242,7 @@ GlobalsMap::Data* GlobalsMap::exportGlobal( Symbol* sym, bool &bAlready )
    return vd;
 }
 
-bool GlobalsMap::remove( Symbol* sym )
+bool GlobalsMap::remove( const Symbol* sym )
 {
    Private::VariableMap::iterator pos = _p->m_variables.find( sym );
    if( pos == _p->m_variables.end() ) {
@@ -261,7 +261,7 @@ bool GlobalsMap::remove( Symbol* sym )
 
 Item* GlobalsMap::getValue( const String& name ) const
 {
-   Symbol* sym = Engine::getSymbol(name);
+   const Symbol* sym = Engine::getSymbol(name);
    Private::VariableMap::iterator pos = _p->m_variables.find(sym);
    sym->decref();
    if( pos == _p->m_variables.end() ) {
@@ -272,7 +272,7 @@ Item* GlobalsMap::getValue( const String& name ) const
    return vd->m_data;
 }
 
-Item* GlobalsMap::getValue( Symbol* sym ) const
+Item* GlobalsMap::getValue( const Symbol* sym ) const
 {
    Private::VariableMap::iterator pos = _p->m_variables.find(sym);
    if( pos == _p->m_variables.end() ) {
@@ -286,7 +286,7 @@ Item* GlobalsMap::getValue( Symbol* sym ) const
 
 GlobalsMap::Data* GlobalsMap::get( const String& name ) const
 {
-   Symbol* sym = Engine::getSymbol(name);
+   const Symbol* sym = Engine::getSymbol(name);
    Private::VariableMap::iterator pos = _p->m_variables.find(sym);
    sym->decref();
    if( pos == _p->m_variables.end() ) {
@@ -297,7 +297,7 @@ GlobalsMap::Data* GlobalsMap::get( const String& name ) const
 }
 
 
-GlobalsMap::Data* GlobalsMap::get( Symbol* sym ) const
+GlobalsMap::Data* GlobalsMap::get( const Symbol* sym ) const
 {
    Private::VariableMap::iterator pos = _p->m_variables.find(sym);
    if( pos == _p->m_variables.end() ) {
@@ -310,14 +310,14 @@ GlobalsMap::Data* GlobalsMap::get( Symbol* sym ) const
 
 bool GlobalsMap::isExported( const String& name ) const
 {
-   Symbol* sym = Engine::getSymbol(name);
+   const Symbol* sym = Engine::getSymbol(name);
    bool result = _p->m_exports.find( sym ) != _p->m_exports.end();
    sym->decref();
    return result;
 }
 
 
-bool GlobalsMap::isExported( Symbol* sym ) const
+bool GlobalsMap::isExported( const Symbol* sym ) const
 {
    bool result = _p->m_exports.find( sym ) != _p->m_exports.end();
    return result;
@@ -338,7 +338,7 @@ void GlobalsMap::enumerateExports( VariableEnumerator& rator ) const
    }
 
    while( iter != end ) {
-      Symbol* sym = iter->first;
+      const Symbol* sym = iter->first;
       if( ! sym->name().empty() && sym->name().getCharAt(0) != '_' )
       {
          Data* vd = iter->second;
@@ -358,7 +358,7 @@ void GlobalsMap::enumerate( VariableEnumerator& rator ) const
    end = _p->m_variables.end();
 
    while( iter != end ) {
-      Symbol* sym = iter->first;
+      const Symbol* sym = iter->first;
       if( ! sym->name().empty() )
       {
          Data* vd = iter->second;
@@ -384,7 +384,7 @@ void GlobalsMap::flatten( VMContext*, ItemArray& subItems ) const
    subItems.reserve(_p->m_variables.size() * 3);
    while( iter != end )
    {
-      Symbol* sym = iter->first;
+      const Symbol* sym = iter->first;
       Data* vd = iter->second;
       subItems.append( sym );
       // ignore the data where the global points; store externals as nil
@@ -404,7 +404,7 @@ void GlobalsMap::unflatten( VMContext*, ItemArray& subItems, uint32 start, uint3
    uint32 c = start;
    while( c+3 <= subItems.length() && ! subItems[c].isNil() )
    {
-      Symbol* sym = static_cast<Symbol*>(subItems[c++].asInst());
+      const Symbol* sym = static_cast<Symbol*>(subItems[c++].asInst());
       Data* vd = new Data;
       vd->m_storage = subItems[c++];
       vd->m_data = &vd->m_storage;

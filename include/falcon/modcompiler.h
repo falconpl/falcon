@@ -109,7 +109,7 @@ protected:
       virtual Item* getVariableValue( const String& name );
       virtual void onIString(const String& string );
 
-      virtual Item* getValue( Symbol* name );
+      virtual Item* getValue( const Symbol* name );
 
 
    protected:

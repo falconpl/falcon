@@ -26,7 +26,7 @@ namespace Falcon {
 # ifdef __GNUC__
 #  define const __const__
 # else
-#  define const const
+#  define const
 # endif
 #endif
 

@@ -1404,7 +1404,7 @@ void FalconClass::render( TextWriter* tw, int32 depth )  const
       const SymbolMap& params = ctor->parameters();
       for( uint32 pc = 0; pc < params.size(); ++pc )
       {
-         Symbol* sym = params.getById(pc);
+         const Symbol* sym = params.getById(pc);
          if( pc > 0 )
          {
             tw->write( "," );

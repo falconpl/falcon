@@ -6,7 +6,7 @@ namespace Gtk {
 
 void DrawingArea::modInit( Module* mod )
 {
-    Symbol* c_DrawingArea = mod->addClass( "GtkDrawingArea", &DrawingArea::init );
+    const Symbol* c_DrawingArea = mod->addClass( "GtkDrawingArea", &DrawingArea::init );
     InheritDef* in = new InheritDef( mod->findGlobalSymbol( "GtkWidget") );
 
     c_DrawingArea->getClassDef()->addInheritance( in );

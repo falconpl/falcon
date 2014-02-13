@@ -5,7 +5,7 @@ namespace Gtk {
 
 void Spinner::modInit( Module* mod )
 {
-    Symbol* c_Spinner = mod->addClass( "GtkSpinner", &Spinner::init );
+    const Symbol* c_Spinner = mod->addClass( "GtkSpinner", &Spinner::init );
     Falcon::InheritDef *def = new Falcon::InheritDef( mod->findGlobalSymbol( "GtkDrawingArea" ));
 
     c_Spinner->getClassDef()->addInheritance( def );

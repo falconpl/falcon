@@ -116,7 +116,7 @@ public:
     
     This is an extra space in the syntree where this information can be stored.
     */
-   Symbol* target() const { return m_head; }
+   const Symbol* target() const { return m_head; }
    
    /** Gets the head symbol for this syntree.
     \param s The symbol to be set.
@@ -129,14 +129,14 @@ public:
     
     \note The ownership of the symbol stays on the caller.
     */
-   void target( Symbol* s );
+   void target( const Symbol* s );
       
 
 protected:   
    class Private;
    Private* _p;
    
-   Symbol* m_head;
+   const Symbol* m_head;
    TreeStep* m_selector;
 
    friend class ClassSynTree;

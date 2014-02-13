@@ -38,7 +38,7 @@ public:
    typedef std::map<Class*, uint32> ClassMap;
    
    /** Map connecting each each object with its own serialization ID. */
-   typedef std::map<void*, uint32> ObjectMap;
+   typedef std::map<const void*, uint32> ObjectMap;
    
    /** Vector of numeric IDs on which an object depends. */
    typedef std::vector<uint32> IDVector;
@@ -52,7 +52,7 @@ public:
    /** Data relative to a signle serialized item. */
    class ObjectData {
    public:
-      void* m_data;
+      const void* m_data;
       uint32 m_id;
       uint32 m_clsId;
       bool m_bIsGarbaged;
@@ -69,7 +69,7 @@ public:
          m_clsId(0)
       {}
       
-      ObjectData( void* data, uint32 id,  uint32 cls, bool IsGarbaged ):
+      ObjectData( const void* data, uint32 id,  uint32 cls, bool IsGarbaged ):
          m_data(data),
          m_id(id),
          m_clsId(cls),
@@ -120,12 +120,12 @@ public:
    }
    
    
-   ObjectData* addObject( Class* cls, void* obj, bool& bIsNew, bool isGarbage = false )
+   ObjectData* addObject( Class* cls, const void* obj, bool& bIsNew, bool isGarbage = false )
    {
       // if the object is flat, it's never there.
       if( cls->isFlatInstance() )
       {
-         Item* data = static_cast<Item*>(obj);
+         const Item* data = static_cast<const Item*>(obj);
          m_flatInstances.push_back(*data);
          obj = &m_flatInstances.back();
       }
@@ -203,7 +203,7 @@ Storer::~Storer()
 }
 
    
-bool Storer::store( VMContext* ctx, Class* handler, void* data, bool bInGarbage )
+bool Storer::store( VMContext* ctx, Class* handler, const void* data, bool bInGarbage )
 {
    if( _p == 0 )
    {
@@ -259,7 +259,7 @@ bool Storer::commit( VMContext* ctx, Stream* dataStream )
 }
 
 
-bool Storer::traverse( VMContext* ctx, Class* handler, void* data, bool isGarbage, bool isTopLevel, void** obj )
+bool Storer::traverse( VMContext* ctx, Class* handler, const void* data, bool isGarbage, bool isTopLevel, void** obj )
 {
    TRACE( "Entering traverse on handler %s ", handler->name().c_ize() );
    
@@ -292,7 +292,7 @@ bool Storer::traverse( VMContext* ctx, Class* handler, void* data, bool isGarbag
    // if the item is new, traverse its dependencies.
    ctx->pushCode( &m_traverseNext );
    int32 myDepth = ctx->codeDepth();
-   handler->flatten( ctx, objd->m_theArray, data );
+   handler->flatten( ctx, objd->m_theArray, (void*) data );
    if ( ctx->codeDepth() != myDepth )
    {
       // going deep? -- suspend processing and save current work object
@@ -500,7 +500,7 @@ bool Storer::writeObject( VMContext* ctx, uint32 pos, DataWriter* wr )
    
    // then serialize us.
    wr->write( obd.m_bIsGarbaged );
-   cls->store( ctx, wr, obd.m_data );
+   cls->store( ctx, wr, (void*) obd.m_data );
    // Return ture if we didn't go deep.
    return ctx->currentCode().m_step == ps;
 }   

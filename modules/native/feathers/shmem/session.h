@@ -89,10 +89,10 @@ public:
    void setOpenMode(t_openmode mode) { m_open_mode = mode; }
 
    /** Adds a symbol (with its value) to the session recording. */
-   void addSymbol(Symbol* sym, const Item& value=Item());
+   void addSymbol(const Symbol* sym, const Item& value=Item());
 
    /** Removes a symbol from the session recording */
-   bool removeSymbol(Symbol* sym);
+   bool removeSymbol(const Symbol* sym);
 
    /** Records the required symbols from the given context. */
    void record(VMContext* ctx);
@@ -131,7 +131,7 @@ public:
    void close();
 
    /** Gets the value stored in the session for a symbol. */
-   bool get(Symbol* sym, Item& value) const;
+   bool get(const Symbol* sym, Item& value) const;
    /** Gets the value stored in the session for a symbol. */
    bool get(const String& symName, Item& value) const;
 
@@ -181,7 +181,7 @@ public:
    class Enumerator {
    public:
       virtual ~Enumerator () {}
-      virtual void operator()( Symbol* sym, Item& value ) = 0;
+      virtual void operator()( const Symbol* sym, Item& value ) = 0;
    };
 
    /** Enumerate the items in the session.

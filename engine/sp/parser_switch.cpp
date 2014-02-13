@@ -182,7 +182,7 @@ static bool make_case_branch(  Parser& p, ParserContext* ctx, SynTree* st, bool 
                break;
 
             case CaseItem::e_sym:
-               noClash = swc->findBlockForItem(Item(symClass,itm->m_sym)) == 0;
+               noClash = swc->findBlockForItem(Item(symClass,(void*)itm->m_sym)) == 0;
                ecase->addEntry(itm->m_sym);
                break;
 

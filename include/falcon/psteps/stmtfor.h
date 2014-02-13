@@ -131,13 +131,13 @@ public:
    TreeStep* generator() const { return m_expr; }
 
    /** Adds an item expansion parameter. */
-   void addParameter( Symbol* sym );
+   void addParameter( const Symbol* sym );
 
    /** Arity of the for/in targets. */
    length_t paramCount() const;
 
    /** Gets the nth parameter. */
-   Symbol* param( length_t p ) const;
+   const Symbol* param( length_t p ) const;
 
    void expandItem( Item& itm, VMContext* ctx ) const;
 
@@ -231,12 +231,12 @@ private:
 class FALCON_DYN_CLASS StmtForTo: public StmtForBase
 {
 public:
-   StmtForTo( Symbol* tgt=0, Expression* start=0, Expression* end=0, Expression* step=0, int32 line=0, int32 chr = 0 );
+   StmtForTo( const Symbol* tgt=0, Expression* start=0, Expression* end=0, Expression* step=0, int32 line=0, int32 chr = 0 );
    StmtForTo( const StmtForTo& other );
    virtual ~StmtForTo();
 
-   Symbol* target() const { return m_target; }
-   void target( Symbol* t ) { m_target = t; }
+   const Symbol* target() const { return m_target; }
+   void target( const Symbol* t ) { m_target = t; }
 
    Expression* startExpr() const { return m_start; }
    void startExpr( Expression* s );
@@ -263,7 +263,7 @@ private:
    // apply is the same as PCODE, but it also checks ND requests.
    static void apply_( const PStep* self, VMContext* ctx );
 
-   Symbol* m_target;
+   const Symbol* m_target;
 
    Expression* m_start;
    Expression* m_end;

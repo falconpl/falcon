@@ -1420,9 +1420,9 @@ public:
 
     \note Symbols marked as constant are returned by value; they aren't referenced.
     */
-   Item* resolveSymbol( Symbol* dyns, bool forAssign );
+   Item* resolveSymbol( const Symbol* dyns, bool forAssign );
    Item* resolveSymbol( const String& symname, bool forAssign );
-   Item* resolveGlobal( Symbol* name, bool forAssign );
+   Item* resolveGlobal( const Symbol* name, bool forAssign );
    Item* resolveGlobal( const String& symname, bool forAssign );
 
    /** Force the symbol to be defined as required.
@@ -1435,12 +1435,12 @@ public:
     * the global variable space of the module of the current frame function).
     *
     */
-   void defineSymbol( Symbol* sym, Item* data );
+   void defineSymbol( const Symbol* sym, Item* data );
 
    /** Force the symbol to be defined as nil.
     * \param sym The symbol to be defined.
     */
-   void defineSymbol( Symbol* sym );
+   void defineSymbol( const Symbol* sym );
 
    /** Copies pcount parameters from the frame parameters area to the top of the stack. */
    void forwardParams( int pcount );

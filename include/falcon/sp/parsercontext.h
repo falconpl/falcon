@@ -239,7 +239,7 @@ public:
    virtual bool onGlobalAccessed( const String& name ) = 0;
    
    virtual Item* getValue( const String& name );
-   virtual Item* getValue( Symbol* name ) = 0;
+   virtual Item* getValue( const Symbol* name ) = 0;
 
    /** Called back when an international string is found in the code.
     *

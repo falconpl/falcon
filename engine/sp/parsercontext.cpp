@@ -325,7 +325,7 @@ void ParserContext::defineSymbols( Expression* expr )
    if( expr->trait() == Expression::e_trait_symbol )
    {
       ExprSymbol* exprsym = static_cast<ExprSymbol*>( expr );
-      Symbol* sym = exprsym->symbol();
+      const Symbol* sym = exprsym->symbol();
       defineSymbol( sym->name() );
    }
    else {
@@ -361,7 +361,7 @@ void ParserContext::accessSymbols( Expression* expr )
       ExprSymbol* exprsym = static_cast<ExprSymbol*>( expr );
       if( !exprsym->isPure() )
       {
-         Symbol* sym = exprsym->symbol();
+         const Symbol* sym = exprsym->symbol();
          accessSymbol( sym->name() );
       }
    }
@@ -721,7 +721,7 @@ void ParserContext::reset()
 
 Item* ParserContext::getValue( const String& name )
 {
-   Symbol* sym = Engine::getSymbol(name);
+   const Symbol* sym = Engine::getSymbol(name);
    try
    {
       Item* item = getValue( sym );

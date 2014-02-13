@@ -647,7 +647,7 @@ void VMContext::startRuleFrame()
    TRACE1( "VMContext::startRuleFrame -- dataDepth: %ld; dynsDepth: %ld; codeDepth: %ld",
             dataSize(), m_dynsStack.depth(), m_codeStack.depth());
 
-   static Symbol* base = Engine::instance()->baseSymbol();
+   static const Symbol* base = Engine::instance()->baseSymbol();
    DynsData* slot = m_dynsStack.addSlot();
 
    register Item& frame = *m_itemStack->push(m_dynsStack.depth());
@@ -670,7 +670,7 @@ void VMContext::startRuleNDFrame( uint32 tbPoint )
    TRACE1( "VMContext::startRuleNDFrame -- dataDepth: %ld; dynsDepth: %ld; codeDepth: %ld",
             dataSize(), m_dynsStack.depth(), m_codeStack.depth());
 
-   static Symbol* base = Engine::instance()->baseSymbol();
+   static const Symbol* base = Engine::instance()->baseSymbol();
    DynsData* slot = m_dynsStack.addSlot();
 
    register Item& frame = *m_itemStack->push(m_dynsStack.depth());
@@ -688,7 +688,7 @@ uint32 VMContext::unrollRuleNDFrame()
    TRACE2( "VMContext::unrollRuleNDFrame -- dataDepth: %ld; dynsDepth: %ld; codeDepth: %ld",
             dataSize(), m_dynsStack.depth(), m_codeStack.depth());
 
-   static Symbol* base = Engine::instance()->baseSymbol();
+   static const Symbol* base = Engine::instance()->baseSymbol();
 
    DynsData* dbase = m_dynsStack.m_base + currentFrame().m_dynsBase;
    DynsData* top = m_dynsStack.m_top;
@@ -731,8 +731,8 @@ void VMContext::dropRuleNDFrames()
    TRACE2( "VMContext::dropRuleNDFrames -- dataDepth: %ld; dynsDepth: %ld; codeDepth: %ld",
             dataSize(), m_dynsStack.depth(), m_codeStack.depth());
 
-   static Symbol* base = Engine::instance()->baseSymbol();
-   static Symbol* baseIgnore = Engine::instance()->ruleBaseSymbol();
+   static const Symbol* base = Engine::instance()->baseSymbol();
+   static const Symbol* baseIgnore = Engine::instance()->ruleBaseSymbol();
 
    DynsData* dbase = m_dynsStack.m_base + currentFrame().m_dynsBase;
    DynsData* top = m_dynsStack.m_top;
@@ -761,7 +761,7 @@ void VMContext::unrollRule()
    TRACE1( "VMContext::unrollRule -- dataDepth: %ld; dynsDepth: %ld; codeDepth: %ld",
                   dataSize(), m_dynsStack.depth(), m_codeStack.depth());
 
-   static Symbol* base = Engine::instance()->baseSymbol();
+   static const Symbol* base = Engine::instance()->baseSymbol();
 
    DynsData* dbase = m_dynsStack.m_base + currentFrame().m_dynsBase;
    DynsData* top = m_dynsStack.m_top;
@@ -797,7 +797,7 @@ void VMContext::commitRule()
    TRACE1( "VMContext::commitRule -- dataDepth: %ld; dynsDepth: %ld; codeDepth: %ld",
                dataSize(), m_dynsStack.depth(), m_codeStack.depth());
 
-   static Symbol* base = Engine::instance()->baseSymbol();
+   static const Symbol* base = Engine::instance()->baseSymbol();
 
    DynsData* dbase = m_dynsStack.m_base + currentFrame().m_dynsBase;
    DynsData* top = m_dynsStack.m_top;
@@ -1156,7 +1156,7 @@ void VMContext::raiseItem( const Item& item )
       {
          // change the try with the catch
          resetCode( m_catchBlock );
-         Symbol* sym = m_catchBlock->target();
+         const Symbol* sym = m_catchBlock->target();
          if( sym != 0 )
          {
             *resolveSymbol(sym, true) = m_raised;
@@ -1484,7 +1484,7 @@ void VMContext::call( Closure* cls, int pcount, Item const* params )
 void VMContext::addLocalFrame( SymbolMap* st, int pcount )
 {
    static StdSteps* stdSteps = Engine::instance()->stdSteps();
-   static Symbol* base = Engine::instance()->baseSymbol();
+   static const Symbol* base = Engine::instance()->baseSymbol();
 
    if( st != 0 ) {
       TRACE("Add local frame PCOUNT: %d/%d", pcount, st->size() );
@@ -1754,7 +1754,7 @@ void VMContext::forwardParams( int pcount )
 }
 
 
-void VMContext::defineSymbol( Symbol* sym, Item* data )
+void VMContext::defineSymbol( const Symbol* sym, Item* data )
 {
    DynsData* newData = m_dynsStack.addSlot();
    newData->m_sym = sym;
@@ -1762,7 +1762,7 @@ void VMContext::defineSymbol( Symbol* sym, Item* data )
 }
 
 
-void VMContext::defineSymbol(Symbol* sym)
+void VMContext::defineSymbol(const Symbol* sym)
 {
    DynsData* newData = m_dynsStack.addSlot();
    newData->m_sym = sym;
@@ -1772,7 +1772,7 @@ void VMContext::defineSymbol(Symbol* sym)
 
 Item* VMContext::resolveSymbol( const String& symname, bool forAssign )
 {
-   Symbol* sym = Engine::getSymbol(symname);
+   const Symbol* sym = Engine::getSymbol(symname);
    try
    {
       Item* res = resolveSymbol( sym, forAssign );
@@ -1790,7 +1790,7 @@ Item* VMContext::resolveSymbol( const String& symname, bool forAssign )
 
 Item* VMContext::resolveGlobal( const String& symname, bool forAssign )
 {
-   Symbol* sym = Engine::getSymbol(symname);
+   const Symbol* sym = Engine::getSymbol(symname);
    try
    {
       Item* res = resolveGlobal( sym, forAssign );
@@ -1806,13 +1806,13 @@ Item* VMContext::resolveGlobal( const String& symname, bool forAssign )
 }
 
 
-Item* VMContext::resolveSymbol( Symbol* dyns, bool forAssign )
+Item* VMContext::resolveSymbol( const Symbol* dyns, bool forAssign )
 {
    TRACE1( "VMContext::resolveSymbol -- resolving symbol \"%s\"%s",
             dyns->name().c_ize(),
             (forAssign ? " (for assign)": " (for access)") );
 
-   static Symbol* baseSym = Engine::instance()->baseSymbol();
+   static const Symbol* baseSym = Engine::instance()->baseSymbol();
 
    bool isRule = false;
 
@@ -1953,7 +1953,7 @@ Item* VMContext::resolveSymbol( Symbol* dyns, bool forAssign )
 }
 
 
-Item* VMContext::resolveGlobal( Symbol* sym, bool forAssign )
+Item* VMContext::resolveGlobal( const Symbol* sym, bool forAssign )
 {
    TRACE1( "VMContext::resolveGlobal -- resolving %s%s", sym->name().c_ize(), (forAssign? " (for assign)": "" ) )
 

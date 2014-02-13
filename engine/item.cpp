@@ -60,7 +60,7 @@ Item& Item::setString( const String& str )
 }
 
 
-Item& Item::setSymbol( Symbol* sym )
+Item& Item::setSymbol( const Symbol* sym )
 {
    sym->incref();
    setUser( FALCON_GC_HANDLE(sym) );

@@ -83,7 +83,7 @@ void apply_Atom_Name ( const NonTerminal&, Parser& p )
    {
       //TODO: check for globalized variables instead of using isGlobalContext
       const String& name = *ti->asString();
-      Symbol* s = Engine::getSymbol( name );
+      const Symbol* s = Engine::getSymbol( name );
       sym = new ExprSymbol( s, ti->line(), ti->chr() );
       // exprsymbol doesn't incref s.
    }
@@ -102,7 +102,7 @@ void apply_Atom_Pure_Name ( const NonTerminal&, Parser& p )
    TokenInstance* ti = p.getNextToken();
 
    const String& name = *ti->asString();
-   Symbol* sym = Engine::getSymbol( name );
+   const Symbol* sym = Engine::getSymbol( name );
    ExprSymbol* esym = new ExprSymbol( sym, ti->line(), ti->chr() );
    esym->setPure(true);
    // exprsymbol doesn't incref s.

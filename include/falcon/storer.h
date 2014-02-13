@@ -186,7 +186,7 @@ public:
     VM processing.
     
     */
-   virtual bool store( VMContext* ctx, Class* handler, void* data, bool bIsGarbage = false );
+   virtual bool store( VMContext* ctx, Class* handler, const void* data, bool bIsGarbage = false );
 
    void setStream( Stream* dataStream );
    
@@ -197,7 +197,7 @@ public:
     VM processing. 
     */
    virtual bool commit( VMContext* ctx, Stream* dataStream =0 );
-   void* topData() const { return m_topData; }
+   const void* topData() const { return m_topData; }
    Class* topHandler() const { return m_topHandler; }
    
    /** Ask the storer not to serialize this mantra. 
@@ -269,11 +269,11 @@ private:
    Private* _p;
    DataWriter* m_writer;
    
-   void* m_topData;
+   const void* m_topData;
    Class* m_topHandler;
       
    // Using void* because we'll be using private data for that.
-   bool traverse( VMContext* ctx, Class* handler, void* data, bool isGarbage, bool isTopLevel = false, void** objd = 0 );
+   bool traverse( VMContext* ctx, Class* handler, const void* data, bool isGarbage, bool isTopLevel = false, void** objd = 0 );
    void writeClassTable( DataWriter* wr );
    void writeInstanceTable( DataWriter* wr );
    bool writeObjectTable( VMContext* ctx, DataWriter* wr );

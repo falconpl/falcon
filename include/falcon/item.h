@@ -157,21 +157,21 @@ public:
       setString(str);
    }
 
-   Item( const char* name, void* opaque )
+   Item( const char* name, const void* opaque )
    {
       lockId = 0;
       setOpaque(name, opaque);
    }
 
-   Item( Symbol* sym )
+   Item( const Symbol* sym )
    {
       setSymbol( sym );
    }
 
-   void setOpaque( const char* name, void* opaque ) {
+   void setOpaque( const char* name, const void* opaque ) {
       type( FLC_ITEM_OPAQUE );
       content.data.opaque.pOpaqueName = name;
-      content.data.opaque.pOpaque = opaque;
+      content.data.opaque.pOpaque = (void*) opaque;
    }
 
    /** Creates a String item.
@@ -230,7 +230,7 @@ public:
     */
    Item& setString( const String& str );
 
-   Item& setSymbol( Symbol* sym );
+   Item& setSymbol( const Symbol* sym );
 
    /** Creates a boolean item. */
    explicit inline Item( bool b ) {
@@ -294,16 +294,16 @@ public:
       return *this;
    }
 
-   inline Item( const Class* cls, void* inst ) {
+   inline Item( const Class* cls, const void* inst ) {
       lockId = 0;
        setUser( cls, inst );
    }
 
 
-   inline Item& setUser( const Class* cls, void* inst )
+   inline Item& setUser( const Class* cls, const void* inst )
    {
        type( (byte) cls->typeID() );
-       content.data.ptr.pInst = inst;
+       content.data.ptr.pInst = (void*) inst;
        content.data.ptr.pClass = (Class*) cls;
        content.base.bits.flags &= ~flagIsGarbage;
        return *this;
@@ -718,7 +718,7 @@ public:
       return static_cast<String*>(asInst());
    }
    
-   Symbol* asSymbol() const
+   const Symbol* asSymbol() const
    {
       return static_cast<Symbol*>(asInst());
    }

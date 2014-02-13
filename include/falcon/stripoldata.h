@@ -86,7 +86,7 @@ public:
       Format* m_format;
 
       TreeStep *m_compiled;
-      Symbol* m_symbol;
+      const Symbol* m_symbol;
 
       Slice( t_type t, const String& def, Format* format = 0, TreeStep* comp = 0 );
       Slice( const Slice& other );

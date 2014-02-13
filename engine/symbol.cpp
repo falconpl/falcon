@@ -29,40 +29,12 @@
 
 namespace Falcon {
 
-Symbol::Symbol():
-         m_counter(1)
-{
-   // leave all unconfigured.
-}
-
-Symbol::Symbol( const String& name ):
-   m_name(name),
-   m_counter(1)
-{
-   m_name.bufferize();
-}
-   
-
-   
-Symbol::Symbol( const Symbol& other ):
-   m_name(other.m_name),
-   m_counter(1)
-{
-   m_name.bufferize();
-}
-
-
-Symbol::~Symbol()
-{
-}
-
-
-void Symbol::incref()
+void Symbol::incref() const
 {
    Engine::refSymbol( this );
 }
 
-void Symbol::decref()
+void Symbol::decref() const
 {
    Engine::releaseSymbol( this );
 }

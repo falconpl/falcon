@@ -32,8 +32,8 @@ class SymbolMap::Private
 {
 public:
 
-   typedef std::map<Symbol*, int32> Map;
-   typedef std::vector<Symbol*> List;
+   typedef std::map<const Symbol*, int32> Map;
+   typedef std::vector<const Symbol*> List;
 
    Map m_map;
    List m_list;
@@ -47,7 +47,7 @@ public:
       const List& source = other.m_list;
       for( uint32 pos = 0; pos < source.size(); ++pos )
       {
-         Symbol* sym = source[pos];
+         const Symbol* sym = source[pos];
          m_map.insert( std::make_pair(sym, pos) );
          m_list.push_back(sym);
          sym->incref();
@@ -61,7 +61,7 @@ public:
       List::iterator end = source.end();
       while( iter != end )
       {
-         Symbol* sym = *iter;
+         const Symbol* sym = *iter;
          sym->decref();
          ++iter;
       }
@@ -89,7 +89,7 @@ SymbolMap::~SymbolMap()
 
 int32 SymbolMap::insert( const String& name )
 {
-   Symbol* sym = Engine::getSymbol(name);
+   const Symbol* sym = Engine::getSymbol(name);
 
    Private::Map::iterator pos = _p->m_map.find( sym );
    if( pos != _p->m_map.end() ) {
@@ -104,7 +104,7 @@ int32 SymbolMap::insert( const String& name )
 }
 
 
-int32 SymbolMap::insert( Symbol* sym )
+int32 SymbolMap::insert( const Symbol* sym )
 {
    Private::Map::iterator pos = _p->m_map.find( sym );
    if( pos != _p->m_map.end() ) {
@@ -121,7 +121,7 @@ int32 SymbolMap::insert( Symbol* sym )
 
 int32 SymbolMap::find( const String& name ) const
 {
-   Symbol* sym = Engine::getSymbol(name);
+   const Symbol* sym = Engine::getSymbol(name);
 
    Private::Map::iterator pos = _p->m_map.find( sym );
    if( pos == _p->m_map.end() ) {
@@ -133,7 +133,7 @@ int32 SymbolMap::find( const String& name ) const
 }
 
 
-int32 SymbolMap::find( Symbol *sym ) const
+int32 SymbolMap::find( const Symbol*sym ) const
 {
    Private::Map::iterator pos = _p->m_map.find( sym );
    if( pos == _p->m_map.end() ) {
@@ -153,7 +153,7 @@ const String& SymbolMap::getNameById( uint32 id ) const
 }
 
 
-Symbol* SymbolMap::getById( uint32 id ) const
+const Symbol* SymbolMap::getById( uint32 id ) const
 {
    if( id >= _p->m_list.size() ) {
       return 0;
@@ -189,7 +189,7 @@ void SymbolMap::store( DataWriter* dw ) const
    Private::List::const_iterator vmi = _p->m_list.begin();
    while( vmi != _p->m_list.end() )
    {
-      const Symbol *sym = *vmi;
+      const Symbol*sym = *vmi;
       dw->write( sym->name() );
       ++vmi;
    }
@@ -206,7 +206,7 @@ void SymbolMap::restore( DataReader* dr )
       String name;
 
       dr->read(name);
-      Symbol* sym = Engine::getSymbol(name);
+      const Symbol* sym = Engine::getSymbol(name);
       _p->m_list.push_back( sym );
       _p->m_map[sym] = i;
    }

@@ -120,7 +120,7 @@ void SynFunc::invoke( VMContext* ctx, int32 nparams )
    // fill the named parameters if not enough
    int32 filledParams = paramCount < nparams ? paramCount : nparams;
    int32 i = 0;
-   Symbol* paramSym;
+   const Symbol* paramSym;
 
    while( i < filledParams )
    {

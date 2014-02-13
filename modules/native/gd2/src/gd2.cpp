@@ -2173,19 +2173,19 @@ FALCON_MODULE_DECL
    self->language( "en_US" );
    self->engineVersion( FALCON_VERSION_NUM );
    self->version( 1, 0, 0 );
-   Symbol *sym_GdPoint = self->addClass("GdPoint");
+   const Symbol*sym_GdPoint = self->addClass("GdPoint");
    sym_GdPoint->setWKS( true );
    sym_GdPoint->getClassDef()->factory( &_falbind_GdPoint_factory );
 
-   Symbol *sym_GdFont = self->addClass("GdFont");
+   const Symbol*sym_GdFont = self->addClass("GdFont");
    sym_GdFont->setWKS( true );
    sym_GdFont->getClassDef()->factory( &_falbind_GdFont_factory );
 
-   Symbol *sym_gdFTStringExtra = self->addClass("gdFTStringExtra");
+   const Symbol*sym_gdFTStringExtra = self->addClass("gdFTStringExtra");
    sym_gdFTStringExtra->setWKS( true );
    sym_gdFTStringExtra->getClassDef()->factory( &_falbind_gdFTStringExtra_factory );
 
-   Symbol *sym_GdImage = self->addClass("GdImage");
+   const Symbol*sym_GdImage = self->addClass("GdImage");
    sym_GdImage->setWKS( true );
    sym_GdImage->getClassDef()->factory( &_falbind_GdImage_factory );
 
@@ -2263,7 +2263,7 @@ FALCON_MODULE_DECL
       ->addParam( "src" )->addParam( "dstX" )->addParam( "dstY" )->addParam( "srcX" )->addParam( "srcY" )->addParam( "w" )->addParam( "h" );
    self->addClassMethod( sym_GdImage, "SetAntiAliasedDontBlend", &_falbind_GdImage_SetAntiAliasedDontBlend ).asSymbol()
       ->addParam( "c" )->addParam( "dont_blend" );
-   Symbol* sym_GdImage_init = self->addExtFunc( "init", &_falbind_GdImage_init, false )
+   const Symbol* sym_GdImage_init = self->addExtFunc( "init", &_falbind_GdImage_init, false )
       ->addParam( "sx" )->addParam( "sy" );
    sym_GdImage->getClassDef()->constructor( sym_GdImage_init );
    self->addClassMethod( sym_GdImage, "CopyMergeGray", &_falbind_GdImage_CopyMergeGray ).asSymbol()

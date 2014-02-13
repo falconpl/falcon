@@ -44,7 +44,7 @@ namespace Falcon {
 class Session::Private
 {
 public:
-   typedef std::map<Symbol*, Item> SymbolSet;
+   typedef std::map<const Symbol*, Item> SymbolSet;
 
    Mutex m_mtxSym;
    SymbolSet m_symbols;
@@ -461,7 +461,7 @@ void Session::close()
 
 
 
-void Session::addSymbol(Symbol* sym, const Item& value)
+void Session::addSymbol(const Symbol* sym, const Item& value)
 {
    _p->inUseCheckIn(__LINE__ );
 
@@ -480,7 +480,7 @@ void Session::addSymbol(Symbol* sym, const Item& value)
 }
 
 
-bool Session::removeSymbol(Symbol* sym)
+bool Session::removeSymbol(const Symbol* sym)
 {
    _p->inUseCheckIn(__LINE__ );
 
@@ -509,7 +509,7 @@ void Session::record( VMContext* ctx )
    Private::SymbolSet::iterator iter = _p->m_symbols.begin();
    while( iter != _p->m_symbols.end() )
    {
-      Symbol* sym = iter->first;
+      const Symbol* sym = iter->first;
       try {
          Item* item = ctx->resolveSymbol(sym, false);
          if( item != 0 )
@@ -539,7 +539,7 @@ void Session::apply( VMContext* ctx ) const
    Private::SymbolSet::iterator iter = _p->m_symbols.begin();
    while( iter != _p->m_symbols.end() )
    {
-      Symbol* sym = iter->first;
+      const Symbol* sym = iter->first;
       Item* item = ctx->resolveSymbol(sym, true);
       fassert( *item != 0 );
       item->copyFromLocal(iter->second);
@@ -560,7 +560,7 @@ void Session::store(VMContext* ctx, Storer* storer) const
    Private::SymbolSet::iterator iter = _p->m_symbols.begin();
    while( iter != _p->m_symbols.end() )
    {
-      Symbol* sym = iter->first;
+      const Symbol* sym = iter->first;
       storer->store(ctx, sym->handler(), sym, false);
       iter->second.forceClassInst(cls,data);
       // the data is in GC, as we know we have locked it.
@@ -619,7 +619,7 @@ void Session::restore(Restorer* restorer)
       {
          throw FALCON_SIGN_XERROR(IOError, e_deser, .extra("Missing leading symbol in session restore") );
       }
-      Symbol* sym = static_cast<Symbol*>(data);
+      const Symbol* sym = static_cast<Symbol*>(data);
 
       // and the second is our item.
       if( ! restorer->next(handler, data, first) )
@@ -642,7 +642,7 @@ void Session::restore(Restorer* restorer)
 }
 
 
-bool Session::get(Symbol* sym, Item& item) const
+bool Session::get(const Symbol* sym, Item& item) const
 {
    bool res = false;
    _p->m_mtxSym.lock();
@@ -660,7 +660,7 @@ bool Session::get(Symbol* sym, Item& item) const
 
 bool Session::get(const String& symName, Item& item) const
 {
-   Symbol* sym = Engine::getSymbol(symName);
+   const Symbol* sym = Engine::getSymbol(symName);
    bool res = get(sym, item);
    sym->decref();
    return res;
@@ -803,7 +803,7 @@ void Session::enumerate( Enumerator& r ) const
    Private::SymbolSet::iterator iter = _p->m_symbols.begin();
    while( iter != _p->m_symbols.end() )
    {
-      Symbol* sym = iter->first;
+      const Symbol* sym = iter->first;
       Item& value = iter->second;
       r(sym,value);
       ++iter;

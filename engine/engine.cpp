@@ -16,6 +16,7 @@
 #define SRC "engine/engine.cpp"
 
 #include <map>
+#include <set>
 #include <stdio.h>
 
 #include <falcon/trace.h>
@@ -123,78 +124,66 @@ class SymbolPool
 {
 public:
 
-   inline Symbol* get(const String& name)
+   inline const Symbol* get(const String& name)
    {
-      Symbol *s;
+      const Symbol*s;
       m_mtx.lock();
-      SymbolSet::iterator iter = m_symbols.find(&name);
+      SymbolSet::iterator iter = m_symbols.find(name);
       if( iter == m_symbols.end() ) {
-         s = new Symbol( name );
-         m_symbols[&s->name()] = s;
+         s = &(*m_symbols.insert(name).first);
+         const_cast<Symbol*>(s)->bufferize();
       }
       else {
-         s = iter->second;
-         s->m_counter++;
+         s = &(*iter);
+         //s->m_counter++;
       }
       m_mtx.unlock();
 
       return s;
    }
 
-   inline Symbol* getNoRef(const String& name)
+   inline const Symbol* getNoRef(const String& name)
    {
-      Symbol *s = 0;
+      const Symbol*s = 0;
       m_mtx.lock();
-      SymbolSet::iterator iter = m_symbols.find(&name);
+      SymbolSet::iterator iter = m_symbols.find(name);
       if( iter != m_symbols.end() ) {
-         s = iter->second;
+         s = &(*iter);
       }
       m_mtx.unlock();
 
       return s;
    }
 
-   inline void release( Symbol* s ) {
+   inline void release( const Symbol* /*s*/ ) {
+    /*
      m_mtx.lock();
      if( --s->m_counter == 0 ) {
-        m_symbols.erase(&s->name());
+        m_symbols.erase(*s);
         m_mtx.unlock();
-
-        delete s;
      }
      else {
         m_mtx.unlock();
      }
-
+     */
    }
 
-   inline void ref( Symbol* s ) {
+   inline void ref( const Symbol* s ) {
      m_mtx.lock();
      s->m_counter++;
      m_mtx.unlock();
    }
 
    ~ SymbolPool() {
-      SymbolSet::iterator iter = m_symbols.begin();
-      SymbolSet::iterator end = m_symbols.end();
-
-      while( iter != end ) {
-         Symbol *sym = iter->second;
-         if( --sym->m_counter == 0 )
-         {
-            delete sym;
-         }
-         ++iter;
-      }
    }
 
 private:
-   class StringPtrCheck {
+   class SymbolCheck {
    public:
-      inline bool operator ()( const String *s1, const String *s2 ) const { return *s1 < *s2; }
+      inline bool operator ()( const Symbol& s1, const Symbol& s2 ) const { return static_cast<const String&>(s1) < static_cast<const String&>(s2); }
    };
 
-   typedef std::map<const String*, Symbol*, StringPtrCheck> SymbolSet;
+   typedef std::set<Symbol, SymbolCheck> SymbolSet;
 
    SymbolSet m_symbols;
    Mutex m_mtx;
@@ -767,35 +756,35 @@ SynClasses* Engine::synclasses() const
 }
 
 
-Symbol* Engine::baseSymbol() const 
+const Symbol* Engine::baseSymbol() const
 {
    return m_baseSymbol;
 }
 
-Symbol* Engine::ruleBaseSymbol() const
+const Symbol* Engine::ruleBaseSymbol() const
 {
    return m_ruleBaseSymbol;
 }
 
-Symbol* Engine::getSymbol( const String& name )
+const Symbol* Engine::getSymbol( const String& name )
 {
    fassert( m_instance != 0 );
    return m_instance->m_symbols->get(name);
 }
 
-Symbol* Engine::getSymbolNoRef( const String& name )
+const Symbol* Engine::getSymbolNoRef( const String& name )
 {
    fassert( m_instance != 0 );
    return m_instance->m_symbols->getNoRef(name);
 }
 
-void Engine::refSymbol( Symbol* sym )
+void Engine::refSymbol( const Symbol* sym )
 {
    fassert( m_instance != 0 );
    m_instance->m_symbols->ref(sym );
 }
 
-void Engine::releaseSymbol( Symbol* sym )
+void Engine::releaseSymbol( const Symbol* sym )
 {
    fassert( m_instance != 0 );
    m_instance->m_symbols->release(sym);

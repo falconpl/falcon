@@ -103,7 +103,7 @@ void write_symbol( Stream *output, const char *prefix, int32 id )
          MapIterator iter = current_symtab->map().begin();
          while( iter.hasCurrent() )
          {
-            const Symbol *sym = *(const Symbol **) iter.currentValue();
+            const Symbol*sym = *(const Symbol**) iter.currentValue();
             if ( (sym->isLocal() && *prefix == 'L' && sym->itemId() == id) ||
                (sym->isParam() && *prefix == 'P' && sym->itemId() == id) )
             {
@@ -119,7 +119,7 @@ void write_symbol( Stream *output, const char *prefix, int32 id )
          MapIterator iter = global_symtab->map().begin();
          while( iter.hasCurrent() )
          {
-            const Symbol *sym = *(const Symbol **) iter.currentValue();
+            const Symbol*sym = *(const Symbol**) iter.currentValue();
             if ( sym->itemId() == id )
             {
                output->writeString( "$" );
@@ -269,7 +269,7 @@ uint32 calc_next( byte *instruction )
    Isomorphic symbol generators.
 */
 
-void gen_function( Module *module, const Symbol *func, Stream *m_out, t_labelMap labels )
+void gen_function( Module *module, const Symbol*func, Stream *m_out, t_labelMap labels )
 {
    m_out->writeString( "; ---------------------------------------------\n" );
    m_out->writeString( "; Function " + func->name() + "\n" );
@@ -289,7 +289,7 @@ void gen_function( Module *module, const Symbol *func, Stream *m_out, t_labelMap
    params.resize( fd->symtab().size() );
    while( iter.hasCurrent() )
    {
-      Symbol *sym = *(Symbol **) iter.currentValue();
+      const Symbol*sym = *(const Symbol**) iter.currentValue();
       switch( sym->type() ) {
          case Symbol::tparam:
             // paramters must be outputted with their original order.
@@ -308,7 +308,7 @@ void gen_function( Module *module, const Symbol *func, Stream *m_out, t_labelMap
 
    for ( uint32 parId = 0; parId < params.size(); parId++ )
    {
-      Symbol *sym = params[parId];
+      const Symbol*sym = params[parId];
       if (sym != 0 )
          m_out->writeString( ".param " + sym->name() + "\n" );
    }
@@ -350,7 +350,7 @@ void gen_propdef( Stream *m_out, const VarDef &def )
 }
 
 
-void gen_class( Stream *m_out, const Symbol *sym )
+void gen_class( Stream *m_out, const Symbol*sym )
 {
    m_out->writeString( "; ---------------------------------------------\n" );
    m_out->writeString( "; Class " + sym->name() + "\n" );
@@ -377,7 +377,7 @@ void gen_class( Stream *m_out, const Symbol *sym )
    while( it_iter != 0 )
    {
       const InheritDef *id = (const InheritDef *) it_iter->data();
-      const Symbol *parent = id->base();
+      const Symbol*parent = id->base();
       m_out->writeString( ".inherit $" + parent->name() );
       m_out->writeString( "\n" );
       it_iter = it_iter->next();
@@ -709,7 +709,7 @@ void gen_code( Module *module, const FuncDef *fd, Stream *out, const t_labelMap 
 
             out->writeString( ".case " );
             int32 symId =  *reinterpret_cast<int32 *>(code);
-            Symbol *sym = module->getSymbol( symId );
+            const Symbol*sym = module->getSymbol( symId );
             if( sym == 0 )
             {
                String temp;
@@ -887,7 +887,7 @@ void write_strtable( e_tabmode mode , Stream *out, Module *mod )
 
 void write_symtable( e_tabmode mode , Stream *out, Module *mod )
 {
-   const Symbol *sym;
+   const Symbol*sym;
    const SymbolTable *st = &mod->symbolTable();
 
    out->writeString( ";--------------------------------------------\n" );
@@ -897,7 +897,7 @@ void write_symtable( e_tabmode mode , Stream *out, Module *mod )
 
    while( iter.hasCurrent() )
    {
-      sym = *(const Symbol **) iter.currentValue();
+      sym = *(const Symbol**) iter.currentValue();
       if ( sym->name() == "__main__" )
       {
          iter.next();
@@ -1210,7 +1210,7 @@ int main( int argc, char *argv[] )
    }
 
    // now write MAIN, if it exists
-   Symbol *main = module->findGlobalSymbol( "__main__" );
+   const Symbol*main = module->findGlobalSymbol( "__main__" );
    if ( main != 0 )
    {
       current_symtab = global_symtab;
@@ -1227,7 +1227,7 @@ int main( int argc, char *argv[] )
 
    while( iter.hasCurrent() )
    {
-      const Symbol *sym = *(const Symbol **) iter.currentValue();
+      const Symbol*sym = *(const Symbol**) iter.currentValue();
       if ( sym->name() == "__main__" )
       {
          // already managed

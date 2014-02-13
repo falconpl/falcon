@@ -65,7 +65,7 @@ public:
 extern Options options;
 
 typedef std::map< int32, int32 > t_labelMap;
-typedef std::map< int32, const Symbol * > t_funcMap;
+typedef std::map< int32, const Symbol* > t_funcMap;
 }
 
 #endif

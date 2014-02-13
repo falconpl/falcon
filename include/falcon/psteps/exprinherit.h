@@ -51,13 +51,13 @@ class FALCON_DYN_CLASS ExprInherit: public ExprVector
 public:
    ExprInherit( int line=0, int chr=0 );
    ExprInherit( const String& name, int line=0, int chr=0 );
-   ExprInherit( Symbol* sym, int line=0, int chr=0 );
+   ExprInherit( const Symbol* sym, int line=0, int chr=0 );
    ExprInherit( Class* base, int line=0, int chr=0 );
    ExprInherit( const ExprInherit& other );
    
    virtual ~ExprInherit();
 
-   Symbol* symbol() const { return m_symbol; }
+   const Symbol* symbol() const { return m_symbol; }
    
    /** The parent class.
     \return the Parent class, when resolved, or 0 if still not available.
@@ -77,7 +77,7 @@ public:
    
 private:
    Class* m_base;
-   Symbol* m_symbol;
+   const Symbol* m_symbol;
    
    static void apply_( const PStep*, VMContext* ctx );
 };

@@ -492,7 +492,7 @@ Class* ModSpace::handler()
 class ModSpace::Private
 {
 public:
-   typedef std::map<Symbol*, Item*> ExportSymMap;
+   typedef std::map<const Symbol*, Item*> ExportSymMap;
    ExportSymMap m_symMap;
    
    typedef std::map<String, Module*> ModMap;
@@ -773,7 +773,7 @@ bool ModSpace::exportFromModule( Module* mod, Error*& link_errors )
       {}
       virtual ~Rator(){};
 
-      virtual void operator() ( Symbol* sym, Item*& value )
+      virtual void operator() ( const Symbol* sym, Item*& value )
       {
          bool status =  m_owner->exportSymbol( sym, value );
          if( ! status )
@@ -800,7 +800,7 @@ bool ModSpace::exportFromModule( Module* mod, Error*& link_errors )
 }
 
 
-bool ModSpace::exportSymbol( Symbol* sym, Item* value )
+bool ModSpace::exportSymbol( const Symbol* sym, Item* value )
 {
    TRACE1( "ModSpace::exportSymbol %s", sym->name().c_ize());
 
@@ -856,7 +856,7 @@ void ModSpace::gcMark( uint32 mark )
 }
 
 
-Item* ModSpace::findExportedValue( Symbol* sym )
+Item* ModSpace::findExportedValue( const Symbol* sym )
 {
    Private::ExportSymMap::iterator iter = _p->m_symMap.find( sym );
    
@@ -877,7 +877,7 @@ Item* ModSpace::findExportedValue( Symbol* sym )
 
 Item* ModSpace::findExportedValue( const String& symName )
 {
-   Symbol* sym = Engine::getSymbol(symName);
+   const Symbol* sym = Engine::getSymbol(symName);
    Item* value = findExportedValue(sym);
    sym->decref();
    return value;

@@ -54,7 +54,7 @@ public:
    void addEntry( const String& str1 );
    void addEntry( const String& str1, const String& str2 );
    void addEntry( re2::RE2* regex );
-   void addEntry( Symbol* symbol );
+   void addEntry( const Symbol* symbol );
    void addEntry( Class* cls );
    bool addEntry( const Item& value );
 
@@ -85,7 +85,7 @@ public:
     *
     * Symbols are checked literally, ignoring the value they refer to.
     */
-   bool verifySymbol( Symbol* value ) const;
+   bool verifySymbol( const Symbol* value ) const;
 
    /** Verifies a live item.
     *

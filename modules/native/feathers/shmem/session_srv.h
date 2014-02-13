@@ -48,14 +48,14 @@ public:
    virtual void setOpenMode_shmem() const;
    virtual void setOpenMode_shmem_bu() const;
 
-   virtual void addSymbol(Symbol* sym, const Item& value=Item()) const;
-   virtual bool removeSymbol(Symbol* sym) const;
+   virtual void addSymbol(const Symbol* sym, const Item& value=Item()) const;
+   virtual bool removeSymbol(const Symbol* sym) const;
    virtual void record(VMContext* ctx) const;
    virtual void apply(VMContext* ctx) const;
    virtual void save( VMContext* ctx ) const;
    virtual void load( VMContext* ctx, bool bApply = false ) const;
    virtual void close() const;
-   virtual bool get(Symbol* sym, Item& value) const;
+   virtual bool get(const Symbol* sym, Item& value) const;
    virtual bool get(const String& symName, Item& value) const;
    virtual int64 createdAt() const;
    virtual int64 expiresAt() const;

@@ -193,7 +193,7 @@ void apply_raise( const NonTerminal&, Parser& p )
 
 
 static void internal_apply_catch( int toks, Parser& p, int line, int chr,
-      int64 tid, const String* errName, Symbol* errSym, String* tgt, bool genTrace = false, bool bNew = true )
+      int64 tid, const String* errName, const Symbol* errSym, String* tgt, bool genTrace = false, bool bNew = true )
 {   
    ParserContext* ctx = static_cast<ParserContext*>(p.context());
    TreeStep* stmt = ctx->currentStmt();
