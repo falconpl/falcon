@@ -14,14 +14,16 @@
    See LICENSE file for licensing details.
 */
 
+
 import InfoNode from parser.genparser.node as InfoNode
 
 import TagRule from parser.genparser.rules as TagRule
 import ReRule from parser.genparser.rules as ReRule
 import DummyRule from parser.genparser.rules as DummyRule
 
-import Parser from parser.genparser
+import Parser from parser.genparser in parser.genparser
 import PState from parser.genparser as PState
+
 
 class Parser from parser.genparser.Parser
    states = [

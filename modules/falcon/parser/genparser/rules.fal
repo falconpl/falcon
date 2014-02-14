@@ -14,7 +14,7 @@
    See LICENSE file for licensing details.
 */
 
-import Regex from regex 
+import Regex from regex in regex
 
 /*# Base rule.
 

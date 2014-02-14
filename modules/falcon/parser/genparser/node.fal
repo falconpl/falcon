@@ -16,7 +16,7 @@
    See LICENSE file for licensing details.
 */
 
-import from struct.tree
+import from struct.tree in struct.tree
 
 node_text_type = "text"
 node_top_type = "top"
