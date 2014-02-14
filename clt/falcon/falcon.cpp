@@ -127,7 +127,17 @@ void FalconApp::guardAndGo( int argc, char* argv[] )
    catch( Error* e )
    {
       log->log( Log::fac_app, Log::lvl_critical, String("Terminating with error: ") + e->describe() );
-      out.write( "falcon: Terminating with error\n" + e->describe() +"\n");
+      // unpacking errors
+      if( e->errorCode() == e_compile || e->errorCode() == e_link_error )
+      {
+         String temp;
+         e->describeSubErrors(temp,false);
+         out.write( "falcon: Terminating with error\n" + temp + "\n");
+      }
+      else
+      {
+         out.write( "falcon: Terminating with error\n" + e->describe() +"\n");
+      }
       e->decref();
    }
 
