@@ -1,0 +1,25 @@
+/*
+@name Import complex
+@category modules
+
+To check that the functions are correctly imported, 
+this test prints their className.
+
+@output
+Import from/as directive
+open() class name: Function
+List class name: Class List
+List handler class name: $MetaClass
+Done
+Import from/as directive with double alias
+List class name: $MetaClass
+Done
+@endoutput
+
+*/
+
+import test.tss from "./014-005" in retest.sub
+
+> "Import from/as directive with double alias"
+> "List class name: ", retest.sub.tss.className
+> "Done"

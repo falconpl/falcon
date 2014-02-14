@@ -1435,6 +1435,13 @@ Parsing::TokenInstance* SourceLexer::checkOperator()
 
 void SourceLexer::addNameSpace(const String& ns)
 {
+   // insert also all the namespace components.
+   uint32 pos = ns.find('.');
+   while( pos != String::npos )
+   {
+      _p->m_nsSet.insert( ns.subString(0,pos) );
+      pos = ns.find('.', pos+1);
+   }
    _p->m_nsSet.insert( ns ); 
 }
 
