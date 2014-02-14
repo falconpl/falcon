@@ -1,0 +1,31 @@
+/*
+@name Auto-increment in loops 
+@category Math-expr
+
+@output
+Self-increment
+V is 0
+V is 1
+V is: c
+V is: d
+Done.
+@endoutput
+*/
+
+> "Self-increment"
+
+rlist = .[ 'a' 'b' 'c' 'd' ]
+index = 0
+l = rlist.len
+while index < l
+   v = rlist[index++]
+   if v == 'a'
+      > "V is 0"
+   elif v == 'b'
+      > "V is 1"
+   else
+      > "V is: ", v
+   end
+end
+
+> "Done."

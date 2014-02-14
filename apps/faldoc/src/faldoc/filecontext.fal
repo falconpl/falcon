@@ -15,7 +15,7 @@
    See LICENSE file for licensing details.
 */
 
-import from .docentity
+import from .docentity in docentity
 
 /*#
    Documentation data relative to a single input file.

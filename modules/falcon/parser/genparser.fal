@@ -14,8 +14,6 @@
    See LICENSE file for licensing details.
 */
 
-directive version = 0x010001
-
 import Context from self.context as Context
 import Node from self.node as Node
 import DummyRule from self.rules
@@ -174,13 +172,13 @@ class Parser()
       @raise ParseError if the state backlist is empty.
    */
    function popState()
-      len = self._stack.len()
-      if len <= 1
+      len1 = self._stack.len()
+      if len1 <= 1
          raise ParseError( 10001, i"Cannot pop topmost state" )
       end
 
-      arrayResize( self._stack, len - 1 )
-      arrayResize( self._stateNames, len - 1 )
+      arrayResize( self._stack, len1 - 1 )
+      arrayResize( self._stateNames, len1 - 1 )
       if self.trace
          self.traceStates()
       end
@@ -266,29 +264,31 @@ class Parser()
 
          state = self._stack[-1]
          sr = state.rules
-
          ruleId = 0
          srlen = sr.len()
+
          while ruleId < srlen
-            rule =  sr[ruleId++]
-            rulePos = rule.match( line, col )
+            xrule = sr[ruleId++]
+            rulePos = xrule.match( line, col )
+            
             if rulePos == 0
                // we found the rule
-               winner = rule
+               winner = xrule
                hadWinner = true
                matchAt = 0
                break
             elif rulePos > 0
                if rulePos < matchAt
-                  winner = rule
+                  winner = xrule
                   matchAt = rulePos
                   hadWinner = true
                elif rulePos == matchAt and not winner
                   // match at end
-                  winner = rule
+                  winner = xrule
                   hadWinner = true
                end
             end
+            
          end
 
          //we found it -- do we have a prefix?

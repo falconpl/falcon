@@ -14,7 +14,7 @@
    See LICENSE file for licensing details.
 */
 
-import from struct.tree
+import from struct.tree in struct.tree
 
 /*# Entity class.
 
@@ -58,7 +58,7 @@ class Entity( content, file, line )
    /*# Line at which the entity is defined at language level (if any). */
    dline = nil
 
-   props = bless([=>])
+   props = [=>].pseudo()
 
    //# Parent of this entity
    parent = nil
@@ -332,10 +332,10 @@ class Entity( content, file, line )
    function addParam( type, name, content, line )
 
       // First, a special control for parameters and optional parameters which relate to each other
-      if type == "param" and "optparam" in self.props and arrayScan( self.props["optparam"], {elem => elem[0] == name} ) >= 0
+      if type == "param" and "optparam" in self.props and self.props["optparam"].scan( {elem => elem[0] == name} ) >= 0
          faldoc.error( @i"Parameter \"$name\" of type already declared as optparam", line )
          return
-      elif type == "optparam" and "param" in self.props and arrayScan( self.props["param"], {elem => elem[0] == name} ) >= 0
+      elif type == "optparam" and "param" in self.props and self.props["param"].scan( {elem => elem[0] == name} ) >= 0
          faldoc.error( @i"Optional parameter \"$name\" of type already declared as parameter", line )
          return
       end
@@ -344,7 +344,7 @@ class Entity( content, file, line )
       if type in self.props
          vt = self.props[type]
 
-         if arrayScan( vt, {elem => elem[0] == name} ) >= 0
+         if vt.scan( {elem => elem[0] == name} ) >= 0
             faldoc.error( @i"Property \"$name\" of type \"$type\" already declared", line )
          else
             vt.add( [name, content] )
@@ -360,8 +360,8 @@ class Entity( content, file, line )
       vtp = "param" in self.props ? self.props["param"] : nil
       vto = "optparam" in self.props ? self.props["optparam"] : nil
 
-      foundParam = vtp and arrayScan( vtp, {elem => elem[0] == name} ) != -1
-      foundOpt = vto and arrayScan( vto, {elem => elem[0] == name} ) != -1
+      foundParam = vtp and  vtp.scan( {elem => elem[0] == name} ) != -1
+      foundOpt = vto and vto.scan( {elem => elem[0] == name} ) != -1
 
       if not foundParam and not foundOpt
          faldoc.warn( @i"Formal parameter \"$name\" not referenced in text block", line )
@@ -538,3 +538,4 @@ function _flatten( textNode )
    return str
 end
 
+export
