@@ -607,10 +607,11 @@ void Parser::syntaxError()
       chr = _p->m_tokenStack->front()->chr();
    }
 
-   addError( e_syntax, uri, line, chr );
-
-   clearFrames();
-   consumeUpTo(T_EOL);
+   if( lastErrorLine() != line )
+   {
+      addError( e_syntax, uri, line, chr );
+   }
+   setErrorMode(&T_EOL);
 }
 
 
@@ -1140,6 +1141,7 @@ bool Parser::readNextToken()
       TRACE1( "Parser::readNextToken -- Exiting error mode because found limit token \"%s\"", ti->token().name().c_ize() )
       _p->m_pframes->back().m_limitToken = 0;
       _p->m_pframes->back().m_bErrorMode = false;
+      clearFrames();
    }
 
    _p->m_tokenStack->push_back(ti);

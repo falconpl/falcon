@@ -59,7 +59,10 @@ bool expr_errhand(const NonTerminal&, Parser& p, int)
    //SourceParser* sp = static_cast<SourceParser*>(p);
    TokenInstance* ti = p.getNextToken();
    TokenInstance* ti2 = p.getLastToken();
-   p.addError( e_syn_expr, p.currentSource(), ti2->line(), ti2->chr(), ti->line() );
+   if( ti2->line() != p.lastErrorLine() )
+   {
+      p.addError( e_syn_expr, p.currentSource(), ti2->line(), ti2->chr(), ti->line() );
+   }
    
    p.setErrorMode(&p.T_EOL);
    return true;
