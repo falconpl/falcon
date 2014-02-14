@@ -289,11 +289,12 @@ bool ParserContext::accessSymbol( const String& variable )
          TRACE1("ParserContext::accessSymbol(: %s :) ignoring access in literal contexts", variable.c_ize() );
       }
    }
-   else if( m_cclass != 0 && m_cfunc == 0 )
+   else if( m_cclass != 0 )
    {
       // it's a property.
-      if( m_cclass->constructor() == 0 ||
-               m_cclass->constructor()->parameters().find(variable))
+      if( m_cclass->constructor() != 0
+          && m_cclass->constructor()->parameters().find(variable) >= 0
+        )
       {
          TRACE1("ParserContext::accessSymbol(: %s :) access in class property is a class parameter", variable.c_ize() );
       }
