@@ -824,7 +824,13 @@ void Parser::parserLoop()
       Token* rule = current->term(hyp);
       if( rule == 0 )
       {
-         throw FALCON_SIGN_XERROR(CodeError, e_internal, .extra("unprepared parser rule: " + current->name()) );
+         hyp = 0;
+         TRACE2( "Parser::parserLoop -- Resetting rule %s", rule->name().c_ize() );
+         rule = current->term(hyp);
+         if( rule == 0 )
+         {
+            throw FALCON_SIGN_XERROR(CodeError, e_internal, .extra("Empty rule: " + current->name()) );
+         }
       }
       int32 ruleArity = rule->arity();
       const Token* ruleTok = 0;

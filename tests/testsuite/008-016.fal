@@ -1,0 +1,34 @@
+/*
+@name Externals in properties
+@category Classes
+
+@output
+Externals in properties
+A: Hi World
+B: Content World
+Done.
+@endoutput
+*/
+
+class Base
+   function test()
+      return "Content"
+   end
+end
+
+class Child(str, l) 
+   a = str + " World"
+   b = l.test() + " World"
+   c = args   // let's use a well known global variable.
+   
+   function test()
+      > "A: ", self.a
+      > "B: ", self.b
+   end
+end
+
+> "Externals in properties"
+x = Base("Hello")
+child = Child( "Hi", x )
+child.test()
+> "Done."

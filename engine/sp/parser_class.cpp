@@ -267,6 +267,7 @@ void apply_pdecl_expr( const NonTerminal&, Parser& p )
    sp.getNextToken(); // 'EOL'
 
    Expression* expr = (Expression*) texpr->detachValue();
+   ctx->accessSymbols(expr);
    if( expr->trait() == Expression::e_trait_value )
    {
       cls->addProperty( *tname->asString(), static_cast<ExprValue*>(expr)->item() );

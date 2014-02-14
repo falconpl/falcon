@@ -276,7 +276,8 @@ void ParserContext::defineSymbol( const String& variable )
 bool ParserContext::accessSymbol( const String& variable )
 {
    TRACE("ParserContext::accessSymbol(: %s :)", variable.c_ize() );
-   if( m_cfunc == 0 )
+
+   if( m_cfunc == 0 && m_cclass == 0 )
    {
       // we're in the global context.
       if( _p->m_litContexts.empty() )
@@ -286,6 +287,26 @@ bool ParserContext::accessSymbol( const String& variable )
       else {
          // don't need to add any local.
          TRACE1("ParserContext::accessSymbol(: %s :) ignoring access in literal contexts", variable.c_ize() );
+      }
+   }
+   else if( m_cclass != 0 && m_cfunc == 0 )
+   {
+      // it's a property.
+      if( m_cclass->constructor() == 0 ||
+               m_cclass->constructor()->parameters().find(variable))
+      {
+         TRACE1("ParserContext::accessSymbol(: %s :) access in class property is a class parameter", variable.c_ize() );
+      }
+      else {
+         bool isLocal = isLocalSymbol( variable );
+         if( isLocal )
+         {
+            TRACE1("ParserContext::accessSymbol(: %s :) unknown property found in a local context", variable.c_ize() );
+         }
+         else {
+            TRACE1("ParserContext::accessSymbol(: %s :) unknown property, importing.", variable.c_ize() );
+            return onGlobalAccessed(variable);
+         }
       }
    }
    else

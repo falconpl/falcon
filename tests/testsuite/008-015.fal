@@ -1,0 +1,32 @@
+/*
+@name Base from namespace
+@category Classes
+
+@output
+Class/from namespace test
+Child
+Base prop: Hello
+Done.
+@endoutput
+*/
+
+namespace ns
+
+class ns.Base(l)
+   a = l
+   function test()
+      > "Base prop: ", self.a
+   end
+end
+
+class Child(l) from ns.Base(l)
+   function test()
+      > "Child"
+      self.ns.Base.test()
+   end
+end
+
+> "Class/from namespace test"
+x = Child("Hello")
+x.test()
+> "Done."

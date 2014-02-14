@@ -157,6 +157,17 @@ namespace Falcon
     */
    FALCON_DECLARE_ENGINE_ERROR( OperandError )
 
+   /** Class handler for ParseError exceptions.
+    *
+    * This error is used historically by legacy Falcon source files.
+    *
+    * In some cases, i.e. when the a object has addition overrides for
+    * various types, but not for the one at stake, this might generate
+    * a TypeError instead.
+    */
+   FALCON_DECLARE_ENGINE_ERROR( ParseError )
+
+
 
    /** Class handler for MathError exceptions.
     *
