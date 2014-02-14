@@ -891,7 +891,7 @@ void Function_scan::invoke(VMContext* ctx, int32 )
    }
 
    ctx->addLocals(1);
-   ctx->local(0)->setInteger(1); // we'll start from 1
+   ctx->local(0)->setInteger(0); // we'll start from 1
    ClassArray* carr = static_cast<ClassArray*>(methodOf());
    ctx->pushCode(carr->m_stepScanInvoke);
    ctx->callItem(*i_code, 1, &array->at(0));
@@ -916,7 +916,7 @@ public:
 
       // no, better luck next time.
       ctx->popData();
-      int64 id = ctx->local(0)->asInteger();
+      int64 id = ctx->local(0)->asInteger()+1;
       Item *i_array, *i_code;
       ctx->getMethodicParams(i_array, i_code);
       ItemArray *array = i_array->asArray();
@@ -931,7 +931,7 @@ public:
       }
 
       // trying with next
-      ctx->local(0)->setInteger(id+1);
+      ctx->local(0)->setInteger(id);
       ctx->callItem( *i_code, 1, &array->at(id) );
    }
 };
