@@ -1,0 +1,27 @@
+/*
+@name Export (implicit)
+@category modules
+
+Just try to see if we can export.
+Another module will try to load.
+
+@result OK
+
+*/
+
+function S1()
+   > "S1"
+end
+
+function S3()
+   > "S2"
+end
+
+function S2()
+   > "S3"
+end
+
+export
+
+> "Export implicit test OK"
+return "OK"

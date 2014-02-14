@@ -537,7 +537,4 @@ function _flatten( textNode )
    end
    return str
 end
-   
 
-
-export

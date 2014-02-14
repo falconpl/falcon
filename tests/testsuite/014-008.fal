@@ -1,0 +1,27 @@
+/*
+@name Export
+@category modules
+
+Just try to see if we can export.
+Another module will try to load.
+
+@result OK
+
+*/
+
+function S1()
+   > "S1"
+end
+
+function S3()
+   > "S2"
+end
+
+function S2()
+   > "S3"
+end
+
+export S1, S2, S3
+
+> "Export test OK"
+return "OK"

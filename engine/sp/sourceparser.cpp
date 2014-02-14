@@ -496,7 +496,7 @@ void SourceParser::init()
 
    ListSymbol << "ListSymbol"
       << NonTerminal::sr
-      << "ls-eol" << apply_dummy << T_EOL
+      << "ls-eol" << apply_ListSymbol_empty << T_EOL
       << "ls-nextd" << apply_ListSymbol_next2 << ListSymbol << T_EOL
       << "ls-next" << apply_ListSymbol_next << ListSymbol << T_Comma << T_Name
       << "ls-first" << apply_ListSymbol_first << T_Name

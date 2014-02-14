@@ -1,0 +1,26 @@
+/*
+@name Export - check
+@category modules
+
+This test loads module 014-008 and checks if
+the exported variables are ok.
+
+@output
+Export test OK
+Loading explicitly exported symbols.
+S1
+S3
+S2
+Done
+@endoutput
+
+*/
+
+load "014-008.fal"
+
+> "Loading explicitly exported symbols."
+S1()
+S2()
+S3()
+> "Done"
+

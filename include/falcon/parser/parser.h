@@ -405,12 +405,13 @@ public:
    String dumpStack()  const;
 
    /** Generate a syntax error at current stack position.
+    \param defUri Default URI to be used if left without lexers at end of compilation.
 
     This generates a generic syntax error which is marked at the position of
     the first token in the stack, and then clear the stack contents.
 
     */
-   void syntaxError();
+   void syntaxError( const String& defUri = "");
 
    /** Add a state to this parser. */
    inline Parser& operator <<( NonTerminal& s ) { addState(s); return *this; }

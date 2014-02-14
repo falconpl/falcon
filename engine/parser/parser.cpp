@@ -245,6 +245,8 @@ bool Parser::parse( const String& mainState )
       throw new CodeError( ErrorParam( e_setup, __LINE__, __FILE__ ).extra("Parser::parse - pushLexer") );
    }
 
+   String topUri = _p->m_lLexers.front()->uri();
+
    // Check if we have a lexer
    Private::StateMap::const_iterator iter = _p->m_states.find( mainState );
    if( iter != _p->m_states.end() )
@@ -268,7 +270,7 @@ bool Parser::parse( const String& mainState )
    // -- exception: the EOF token may or may not be parsed.
    if( ! isComplete() )
    {
-      syntaxError();
+      syntaxError(topUri);
    }
    // If we have no error we succeeded.
    return _p->m_lErrors.empty();
@@ -588,7 +590,7 @@ bool Parser::step()
 
 
 
-void Parser::syntaxError()
+void Parser::syntaxError( const String& defaultUri )
 {
    TRACE1( "Parser::syntaxError -- with current stack: %s ", dumpStack().c_ize() );
 
@@ -599,6 +601,10 @@ void Parser::syntaxError()
    if( ! _p->m_lLexers.empty() )
    {
       uri = _p->m_lLexers.back()->uri();
+   }
+   else
+   {
+      uri = defaultUri;
    }
 
    if( ! _p->m_tokenStack->empty() )

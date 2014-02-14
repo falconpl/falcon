@@ -1,0 +1,26 @@
+/*
+@name Export implicit - check
+@category modules
+
+This test loads module 014-010 and checks if
+the exported variables are ok.
+
+@output
+Export implicit test OK
+Loading implicitly exported symbols.
+S1
+S3
+S2
+Done
+@endoutput
+
+*/
+
+load "014-010.fal"
+
+> "Loading implicitly exported symbols."
+S1()
+S2()
+S3()
+> "Done"
+
