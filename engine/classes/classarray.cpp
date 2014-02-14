@@ -948,7 +948,7 @@ public:
    memory held by the array to store its elements.
 
    This method grants that the memory used by the array is strictly the
-   memory needed to store its data.
+   memory needed to store the data that it currently contains.
 
    @note This will also reset the growth factor to the default minimum
    (usually 16).
