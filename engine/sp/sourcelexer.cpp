@@ -37,8 +37,17 @@ public:
    typedef std::set<String> StringSet;
    typedef std::deque<Parsing::TokenInstance*> NextTokens;
    NextTokens m_nextTokens;
-
    StringSet m_nsSet;
+
+   typedef enum {
+      e_pt_round,
+      e_pt_square,
+      e_pt_graph
+   }
+   t_parenthesisType;
+
+   typedef std::deque<t_parenthesisType> ParenthesisStack;
+   ParenthesisStack m_pars;
 };
 
 SourceLexer::SourceLexer( const String& uri, Parsing::Parser* p, TextReader* reader ):
@@ -46,8 +55,6 @@ SourceLexer::SourceLexer( const String& uri, Parsing::Parser* p, TextReader* rea
    _p( new Private ),
    m_sline( 0 ),
    m_schr( 0 ),
-   m_parCount(0),
-   m_squareCount(0),
    m_hadOperator( false ),
    m_hadImport(false),
    m_stringStart( false ),
@@ -409,43 +416,53 @@ Parsing::TokenInstance* SourceLexer::nextToken()
                case '"':  m_string_type = e_st_normal; m_stringML = false; m_stringStart = true; m_state = state_double_string; break;
                case '\'': m_string_type = e_st_normal; m_stringML = false; m_stringStart = true; m_state = state_single_string; break;
                case '0': m_state = state_zero_prefix; break;
-               // set had operator to be able to do a + ( NL ... rest
-               case '(': m_chr++; m_parCount ++; m_hadOperator = true; return parser->T_Openpar.makeInstance(m_line,m_chr); break;
+               case '(': m_chr++; _p->m_pars.push_back(Private::e_pt_round);
+                                   return parser->T_Openpar.makeInstance(m_line,m_chr);
+                                   break;
                case ')': m_chr++;
                   resetState();
-                  if( m_parCount == 0 )
+                  if( _p->m_pars.empty() || _p->m_pars.back() != Private::e_pt_round )
                   {
                      addError(e_par_close_unbal);
                   }
                   else {
-                     m_parCount--;
+                     _p->m_pars.pop_back();
                      return parser->T_Closepar.makeInstance(m_line,m_chr);
                   }
                   break;
-               case '[': m_chr++; m_squareCount++; return parser->T_OpenSquare.makeInstance(m_line,m_chr); break;
+               case '[': m_chr++; _p->m_pars.push_back(Private::e_pt_square); return parser->T_OpenSquare.makeInstance(m_line,m_chr); break;
                case ']': m_chr++;
                  resetState();
-                 if( m_squareCount == 0 )
+                 if( _p->m_pars.empty() || _p->m_pars.back() != Private::e_pt_square )
                  {
                     addError(e_square_close_unbal);
                  }
                  else {
-                    m_squareCount--;
+                    _p->m_pars.pop_back();
                     return parser->T_CloseSquare.makeInstance(m_line,m_chr);
                  }
                  break;
 
-               case '{': m_chr++; return parser->T_OpenGraph.makeInstance(m_line,m_chr); break;
+               case '{': m_chr++; _p->m_pars.push_back(Private::e_pt_graph); return parser->T_OpenGraph.makeInstance(m_line,m_chr); break;
                case '}':
                {
                   m_chr++;
-                  resetState();
-                  _p->m_nextTokens.push_back( parser->T_end.makeInstance(m_line,m_chr) );
-                  m_hadImport = false;
-                  // it's a fake.
-                  Parsing::TokenInstance* ti = parser->T_EOL.makeInstance(m_line,-1);
-                  return ti;
+                  if( _p->m_pars.empty() || _p->m_pars.back() != Private::e_pt_graph )
+                  {
+                     addError(e_graph_close_unbal);
+                  }
+                  else
+                  {
+                     _p->m_pars.pop_back();
+                     resetState();
+                     _p->m_nextTokens.push_back( parser->T_end.makeInstance(m_line,m_chr) );
+                     m_hadImport = false;
+                     // it's a fake.
+                     Parsing::TokenInstance* ti = parser->T_EOL.makeInstance(m_line,-1);
+                     return ti;
+                  }
                }
+               break;
 
                case '/': previousState = m_state; m_state = state_enterComment; break;
 
@@ -1002,6 +1019,7 @@ Parsing::TokenInstance* SourceLexer::nextToken()
                if( m_text == "p" && chr == '{' )
                {
                   m_chr++;
+                  _p->m_pars.push_back(Private::e_pt_graph);
                   resetState();
                   m_text.clear();
                   return parser->T_OpenProto.makeInstance( m_sline, m_schr );
@@ -1009,6 +1027,7 @@ Parsing::TokenInstance* SourceLexer::nextToken()
                else if( m_text == "m" && chr == '{' )
                {
                   m_chr++;
+                  _p->m_pars.push_back(Private::e_pt_graph);
                   m_state = state_membuf;
                   m_text.clear();
                   break;
@@ -1079,14 +1098,14 @@ Parsing::TokenInstance* SourceLexer::nextToken()
                   if( chr == '[' )
                   {
                      m_chr++;
-                     m_squareCount++;
+                     _p->m_pars.push_back(Private::e_pt_square);
                      resetState();
                      return parser->T_DotSquare.makeInstance(m_sline, m_schr );
                   }
                   else if ( chr == '(' )
                   {
                      m_chr++;
-                     m_parCount++;
+                     _p->m_pars.push_back(Private::e_pt_round);
                      resetState();
                      return parser->T_DotPar.makeInstance(m_sline, m_schr );
                   }
@@ -1095,7 +1114,7 @@ Parsing::TokenInstance* SourceLexer::nextToken()
                   if ( chr == '(' )
                   {
                      m_chr++;
-                     m_parCount++;
+                     _p->m_pars.push_back(Private::e_pt_round);
                      resetState();
 
                      return parser->T_CapPar.makeInstance(m_sline, m_schr );
@@ -1103,7 +1122,7 @@ Parsing::TokenInstance* SourceLexer::nextToken()
                   else if( chr == '[' )
                   {
                      m_chr++;
-                     m_squareCount++;
+                     _p->m_pars.push_back(Private::e_pt_square);
                      resetState();
 
                      return parser->T_CapSquare.makeInstance(m_sline, m_schr );
@@ -1130,6 +1149,16 @@ Parsing::TokenInstance* SourceLexer::nextToken()
                m_text.clear();
                // generate a fake EOL to exit cleanly from parsing
                return parser->T_EOL.makeInstance(m_sline, -1 );
+            }
+            else if( m_text != "^" && chr == '.' )
+            {
+               unget(chr);
+               resetState();
+               Parsing::TokenInstance* ti = checkOperator();
+               if( ti != 0 )
+               {
+                  return ti;
+               }
             }
 
             m_text.append( chr );
@@ -1160,13 +1189,14 @@ Parsing::TokenInstance* SourceLexer::nextToken()
    // End of file control
    //=================================
 
-   if( m_parCount != 0 )
+   if( ! _p->m_pars.empty() )
    {
-      addError(e_par_unbal);
-   }
-   if( m_squareCount !=0 )
-   {
-      addError(e_square_unbal);
+      switch( _p->m_pars.back() )
+      {
+      case Private::e_pt_round: addError(e_par_unbal); break;
+      case Private::e_pt_square: addError(e_square_unbal); break;
+      case Private::e_pt_graph: addError(e_graph_unbal); break;
+      }
    }
 
    if ( m_state == state_line )
@@ -1189,7 +1219,8 @@ Parsing::TokenInstance* SourceLexer::nextToken()
 
 bool SourceLexer::eatingEOL()
 {
-   return m_stringML || (m_hadOperator && ! m_hadImport) ;
+   return m_stringML || (m_hadOperator && ! m_hadImport) ||
+            (!_p->m_pars.empty() && _p->m_pars.back() == Private::e_pt_round);
 }
 
 void SourceLexer::resetState()

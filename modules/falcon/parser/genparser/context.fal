@@ -14,7 +14,7 @@
    See LICENSE file for licensing details.
 */
 
-import from .node
+import from .node in node
 
 /*# Syntree context.
 

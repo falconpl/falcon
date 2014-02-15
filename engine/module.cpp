@@ -1037,6 +1037,44 @@ Service* Module::createService( const String& )
    return 0;
 }
 
+String& Module::computeLogicalName( const String& name, String& logicalName, const String& loaderName )
+{
+
+   if( name.startsWith("self.") )
+   {
+      if (! loaderName.empty())
+      {
+         logicalName = loaderName + "." + name.subString(5);
+      }
+      else {
+         logicalName = name.subString(5);
+      }
+   }
+   else if( name.startsWith(".") )
+   {
+      if( !loaderName.empty() )
+      {
+         uint32 posDot = loaderName.rfind('.');
+         if( posDot != String::npos )
+         {
+            logicalName = loaderName.subString(0,posDot+1) + name.subString(1) ;
+         }
+         else {
+            logicalName = name.subString(1);
+         }
+      }
+      else {
+         logicalName = name.subString(1);
+      }
+   }
+   else {
+      logicalName = name;
+   }
+
+   logicalName.bufferize(); // well, you can never know...
+   return logicalName;
+}
+
 //=====================================================================
 // render
 //=====================================================================

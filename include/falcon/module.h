@@ -730,6 +730,35 @@ public:
     */
    virtual Service* createService( const String& name );
 
+   /** Compute the logical name of a module trimming 'self' and initial '.' in module specification.
+    * \param Name the name of the module as required by a loader.
+    * \param logicalName where to place the final name that should be assigned to the module once loaded.
+    * \param loaderName If there is a module loading the one which name is to be computed,
+    *        this is the name of the loader module. Else, it can be an empty string.
+    * \return A reference to logicalName.
+    *
+    * A module specification can be absolute or relative with respect to the loader module.
+    * The 'self' keyword is used to let the loaded module to inherit the loader module full name,
+    * while an initial '.' is used to declare that the module is to be named as sibling of the
+    * loader module.
+    *
+    * For instance, if the following code is found in the module "top.middle:"
+    * @code
+    * //In module "top.middle"
+    *
+    * load another       // 1
+    * load .sister       // 2
+    * load self.child    // 3
+    * @endcode
+    *
+    * Then, the final name of the modules shall be the following:
+    * # "another": and it will be searched in in any topmost directory in the search path
+    * # "top.sister": and it will be searched in the "top/" subdirectory below the topmost search path entries.
+    * # "top.middle.child": and it will be searched in "top/middle/" subdirectory below paths.
+    *
+    */
+   static String& computeLogicalName( const String& name, String& logicalName, const String& loaderName = "" );
+
 protected:
    /** Invoked when refcount hits 0.
     *  This will invoke the unload() method if not previously invoked.

@@ -1,0 +1,24 @@
+/*
+@name Parenthesis context 
+@category Expressions
+
+@result OK
+*/
+
+> "Cheching for parenthesis context"
+
+expr = (
+   1 
+   + 2
+   *
+   3
+   +.[ 1 2 3].
+      len
+)
+
+> "If you see this result, then it's all ok: 10==", expr
+
+res = expr == 10 ? "OK" : "fail"
+> "Result: ",res
+> "Done"
+return res

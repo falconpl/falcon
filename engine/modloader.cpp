@@ -122,20 +122,11 @@ bool ModLoader::sourceEncoding( const String& encName )
 
 bool ModLoader::loadName(VMContext* tgtctx, const String& name, t_modtype type, Module* loader )
 {
-   String modName = name;
-
-   if( modName.startsWith("self.") )
-   {
-      if (loader != 0 )
-      {
-         modName = loader->name() + modName.subString(4);
-      }
-      else {
-         modName = modName.subString(4);
-      }
-   }
+   String logicalName, modName;
+   Module::computeLogicalName(name, logicalName, loader != 0 ? loader->name() : "");
 
    // change "." into "/"
+   modName = logicalName;  // we know it's a buffer.
    length_t pos1 = modName.find( '.' );
    while( pos1 != String::npos )
    {
@@ -148,18 +139,18 @@ bool ModLoader::loadName(VMContext* tgtctx, const String& name, t_modtype type, 
       pos1 = modName.find( '.', pos1+1 );
    }
 
-   return loadFile( tgtctx, modName, type, true, loader );
+   return loadFile( tgtctx, logicalName, modName, type, true, loader );
 }
 
 
-bool ModLoader::loadFile( VMContext* tgtctx, const String& path, t_modtype type, bool bScan, Module* loader )
+bool ModLoader::loadFile( VMContext* tgtctx, const String& name, const String& path, t_modtype type, bool bScan, Module* loader )
 {
    String uriPath = path;
    #ifdef FALCON_SYSTEM_WIN
    Path::winToUri(uriPath);
    #endif // FALCON_SYSTEM_WIN
    URI uri(uriPath);
-   return loadFile( tgtctx, uri, type, bScan, loader );
+   return loadFile( tgtctx, name, uri, type, bScan, loader );
 }
 
 // -- copy parameters, we don't want the original to be modified.
@@ -171,7 +162,7 @@ static bool s_checkModuleName( URI first, URI second )
 }
 
 
-bool ModLoader::loadFile( VMContext* tgtctx, const URI& uri, t_modtype type, bool bScan, Module* loader )
+bool ModLoader::loadFile( VMContext* tgtctx, const String& name, const URI& uri, t_modtype type, bool bScan, Module* loader )
 {
    URI srcUri;
    URI tgtUri;
@@ -181,6 +172,7 @@ bool ModLoader::loadFile( VMContext* tgtctx, const URI& uri, t_modtype type, boo
    srcUri = uri;
    URI loaderURI;
    bool bRelativeToLoader = false;
+
    if( loader != 0 )
    {
       loaderURI.parse(loader->uri());
@@ -208,11 +200,11 @@ bool ModLoader::loadFile( VMContext* tgtctx, const URI& uri, t_modtype type, boo
       if( etype != e_mt_none )
       {
          if( loader == 0 ) {
-            load_internal( tgtctx, tgtUri.encode(), tgtUri, etype );
+            load_internal( tgtctx, name, tgtUri.encode(), tgtUri, etype );
          }
          // try to use a loader-relative path
          else {
-            load_internal( tgtctx, loaderURI.encode(), tgtUri, etype );
+            load_internal( tgtctx, name, loaderURI.encode(), tgtUri, etype );
          }
          return true;
       }
@@ -246,15 +238,15 @@ bool ModLoader::loadFile( VMContext* tgtctx, const URI& uri, t_modtype type, boo
                   TRACE( "Module %s found with type %d ", location.encode().c_ize(), type );
                   // if we don't have a loader, the name of the module is the name without path.
                   if( loader == 0 ) {
-                     load_internal( tgtctx, tgtUri.encode(), tgtUri, etype );
+                     load_internal( tgtctx, name, tgtUri.encode(), tgtUri, etype );
                   }
                   // if it's relative to loader, use the loader path to calculate the name
                   else if( bRelativeToLoader ) {
-                     load_internal( tgtctx, loaderURI.encode(), tgtUri, etype );
+                     load_internal( tgtctx, name, loaderURI.encode(), tgtUri, etype );
                   }
                   else {
                      // otherwise, calculate a name relative from the current item in the load path.
-                     load_internal( tgtctx, *iter, tgtUri, etype );
+                     load_internal( tgtctx, name, *iter, tgtUri, etype );
                   }
                   return true;
                }
@@ -502,7 +494,7 @@ ModLoader::t_modtype ModLoader::checkFile_internal(
 
 
 void ModLoader::load_internal(
-      VMContext* ctx, const String& prefixPath, const URI& uri, ModLoader::t_modtype type )
+      VMContext* ctx, const String& name, const String& prefixPath, const URI& uri, ModLoader::t_modtype type )
 {
    static Class* modClass = Engine::handlers()->moduleClass();
    static VFSIface* vfs = &Engine::instance()->vfs();
@@ -510,7 +502,14 @@ void ModLoader::load_internal(
    String modName;
    // The module name depends on the prefix path.
    // if the scheme is not in the prefix, then we should just use the path.
-   pathToName( prefixPath, uri, modName );
+   if( name.empty() )
+   {
+      pathToName( prefixPath, uri, modName );
+   }
+   else
+   {
+      modName = name;
+   }
 
    TRACE1("ModLoader::load_internal translated module %s => %s",
             uri.encode().c_ize(), modName.c_ize() );

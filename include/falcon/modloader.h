@@ -152,6 +152,7 @@ public:
    
    /** Loads a module through its physical path. 
     \param path The path of the module.
+    \param name Logical name to be assigned to the module.
     \param type Detect the type of the resource to be loaded or provide a
     specific type.
     \param bScan if true and the path is relative, the module will be searched
@@ -160,13 +161,18 @@ public:
     \param loader The module that originated the request, if any. Used to relativize file names.
     \return 0 If the module could not be found
     \throw Error* or appropriate error subclass in case of other errors.
-     
+
+    If @b name is not given (is an empty string), the name will be automatically calculated using
+    the module path. If it is given, the name will be assigned to the loaded module, ingoring
+    its actual path. The name will be eventually adapted using the loader name if it starts with a dot
+    or it contains the self keyword.
     */
-   bool loadFile( VMContext* tgtctx, const String& path, t_modtype type=e_mt_none, bool bScan = true, Module* loader = 0 );
+   bool loadFile( VMContext* tgtctx, const String& name, const String& path, t_modtype type=e_mt_none, bool bScan = true, Module* loader = 0 );
    
    /** Loads a module through its physical path. 
     \param uri The uri of the module.
     \param type Detect the type of the resource to be loaded or provide a
+    \param name Logical name to be assigned to the module.
     specific type.
     \param bScan if true and the path is relative, the module will be searched
     \param loader The module that originated the request, if any. Used to relativize file names.
@@ -175,7 +181,7 @@ public:
     
     This version uses an URI instead of a String.
     */
-   bool loadFile( VMContext* tgtctx, const URI& uri, t_modtype type=e_mt_none, bool bScan = false, Module* loader = 0 );
+   bool loadFile( VMContext* tgtctx,  const String& name, const URI& uri, t_modtype type=e_mt_none, bool bScan = false, Module* loader = 0 );
    //============================================================
    // Compilation process setting
    //
@@ -381,7 +387,7 @@ private:
    void init ( const String &path, ModSpace* ms, ModCompiler* mc, FAMLoader* faml, DynLoader* dld );
    
    t_modtype checkFile_internal( const URI& uri, t_modtype type, URI& foundUri );
-   void load_internal( VMContext* tgtctx, const String& prefixPath, const URI& uri, t_modtype type );
+   void load_internal( VMContext* tgtctx, const String& name, const String& prefixPath, const URI& uri, t_modtype type );
    void saveModule_internal( VMContext* tgtctx, Module* module, const URI& uri, const String& modName );
    Error* makeError( int code, int line, const String &expl="", int fsError=0 );
 

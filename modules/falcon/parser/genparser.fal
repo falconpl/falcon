@@ -177,8 +177,8 @@ class Parser()
          raise ParseError( 10001, i"Cannot pop topmost state" )
       end
 
-      arrayResize( self._stack, len1 - 1 )
-      arrayResize( self._stateNames, len1 - 1 )
+      self._stack.resize( len1 - 1 )
+      self._stateNames.resize( len1 - 1 )
       if self.trace
          self.traceStates()
       end

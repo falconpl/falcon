@@ -42,8 +42,6 @@ private:
    
    int32 m_sline;
    int32 m_schr;
-   int32 m_parCount;
-   int32 m_squareCount;
 
    // Used to decide if minus is unary or not.
    bool m_hadOperator;

@@ -671,7 +671,8 @@ void ModSpace::loadModuleInContext( const String& name, bool isUri, bool isLoad,
    bool loading;
    if( isUri )
    {
-      loading = m_loader->loadFile( tgtContext, name, ModLoader::e_mt_none, true, loader );
+      // let loadFile to compute the module  name.
+      loading = m_loader->loadFile( tgtContext, "", name, ModLoader::e_mt_none, true, loader );
    }
    else
    {
@@ -680,6 +681,7 @@ void ModSpace::loadModuleInContext( const String& name, bool isUri, bool isLoad,
 
    if( ! loading ) {
       throw new IOError( ErrorParam( e_mod_notfound, __LINE__, SRC )
+               .module( loader->name() )
                .extra( name + " in " + m_loader->getSearchPath() ));
    }
 
@@ -962,7 +964,7 @@ void ModSpace::retreiveDynamicModule(
 
       // start the loading process.
       bool loading;
-      loading = m_loader->loadFile( ctx, moduleUri, ModLoader::e_mt_none, true );
+      loading = m_loader->loadFile( ctx, moduleName, moduleUri, ModLoader::e_mt_none, true );
       if( ! loading )
       {
          ctx->popData();
