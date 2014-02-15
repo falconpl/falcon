@@ -224,7 +224,7 @@ bool FStream::truncate( off_t pos )
    HANDLE hFile = data->hFile;
    LONG savePosHI = 0;
    LONG savePosLow = 0;
-   off_t oldPos;
+   off_t oldPos = 0;
 
    if ( pos >= 0 )
    {
