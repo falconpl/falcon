@@ -1734,7 +1734,10 @@ bool String::parseDouble( double &target, length_t pos ) const
    char* endbuf;
    errno = 0;
    if ( (target = strtod__( buffer, &endbuf )) != 0.0 || (errno == 0 && buffer[0] == '0') )
+   {
       return true;
+   }
+   
    return false;
 }
 

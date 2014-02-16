@@ -19,15 +19,18 @@
 #include <stdlib.h>
 #include <ctype.h>
 #include <errno.h>
+#include <falcon/strtod.h>
 
 namespace Falcon {
 
+#ifndef __cplusplus
 #ifndef __STDC__
 # ifdef __GNUC__
 #  define const __const__
 # else
 #  define const
 # endif
+#endif
 #endif
 
 #ifndef TRUE
