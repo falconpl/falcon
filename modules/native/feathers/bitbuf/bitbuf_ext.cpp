@@ -280,7 +280,7 @@ static void set_wpos( const Class*, const String&, void* instance, const Item& v
       throw FALCON_SIGN_ERROR( RangeError, e_param_type );
    }
 
-   buf->wpos( pos );
+   buf->wpos( (uint32) pos );
 }
 
 

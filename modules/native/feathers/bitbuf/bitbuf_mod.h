@@ -225,6 +225,9 @@ private:
     void writeNumberBits_big( uint64 number, int32 bits );
     bool readNumberBits_big( uint64& number, int32 bits );
 
+    uint32 readBytes_internal( byte* memory, uint32 count );
+    uint32 readBits_internal( byte* memory, uint32 count );
+
     // allocates an empty chunk of a given byte size.
     Chunk* allocChunk( uint32 byteSize );
 

@@ -57,7 +57,7 @@ void BitBuf::init()
 BitBuf::t_endianity BitBuf::sysEndianity()
 {
    // Check the system endianity
-   int16 test = 0xFFFE;
+   uint16 test = 0xFFFE;
    byte* btest = (byte*) &test;
    return  btest[0] == 0xFF ? e_endian_little : e_endian_big;
 }
@@ -315,7 +315,7 @@ void BitBuf::writeBits( const byte* memory, uint32 count, uint32 start )
 
       while( count > 0 )
       {
-         bool bitOn = (*memory & (0x80 >> rest) );
+         bool bitOn = (*memory & (0x80 >> rest) ) != 0;
          writeBit(bitOn);
 
          if( rest == 7 )
@@ -525,6 +525,15 @@ void BitBuf::write( const BitBuf& other )
 uint32 BitBuf::readBytes( byte* memory, uint32 count )
 {
    lock();
+   count = readBytes_internal( memory, count );
+   unlock();
+
+   return count;
+}
+
+
+uint32 BitBuf::readBytes_internal( byte* memory, uint32 count )
+{
    if( count * 8  > readable() )
    {
       count = readable() / 8;
@@ -532,20 +541,18 @@ uint32 BitBuf::readBytes( byte* memory, uint32 count )
 
    if (count == 0 )
    {
-      unlock();
       return 0;
    }
 
    if( m_readpos % 8 != 0 )
    {
-      unlock();
-      return readBits( memory, count *8 ) / 8 ;
+      uint32 ncount = readBits_internal( memory, count *8 ) / 8 ;
+      return ncount;
    }
 
    byte* src = consolidate();
    memcpy( memory, src + m_readpos/8, count );
    m_readpos += count*8;
-   unlock();
 
    return count;
 }
@@ -553,6 +560,15 @@ uint32 BitBuf::readBytes( byte* memory, uint32 count )
 uint32 BitBuf::readBits( byte* memory, uint32 count )
 {
    lock();
+   count = readBits_internal( memory, count );
+   unlock();
+
+   return count;
+}
+
+
+uint32 BitBuf::readBits_internal( byte* memory, uint32 count )
+{   
    if( count > readable() )
    {
       count = readable();
@@ -560,14 +576,12 @@ uint32 BitBuf::readBits( byte* memory, uint32 count )
 
    if( count == 0 )
    {
-      unlock();
       return 0;
    }
 
    if( count % 8 == 0 && m_readpos % 8 == 0)
    {
-      unlock();
-      return readBytes(memory, count/8) * 8;
+      return readBytes_internal(memory, count/8) * 8;
    }
 
    byte* src = consolidate();
@@ -587,12 +601,14 @@ uint32 BitBuf::readBits( byte* memory, uint32 count )
 
    uint32 srcBitPos = rest;
    rest = 0;
-   if ( tbr != 0 )
-   {
-      *memory = 0;
-   }
+
    while(tbr > 0)
    {
+      if( rest == 0 )
+      {
+         *memory = 0;
+      }
+
       byte mask = *src & (0x1 << (7-srcBitPos));
       if( mask != 0 )
       {
@@ -612,8 +628,7 @@ uint32 BitBuf::readBits( byte* memory, uint32 count )
       rest++;
       if( rest == 8 )
       {
-         memory++;
-         *memory = 0;
+         memory++;         
          rest = 0;
       }
       --tbr;
@@ -621,11 +636,8 @@ uint32 BitBuf::readBits( byte* memory, uint32 count )
 
    m_readpos += count;
 
-   unlock();
-
    return count;
 }
-
 
 bool BitBuf::read16( uint16& number )
 {
@@ -675,7 +687,7 @@ bool BitBuf::readBit( bool& bit )
    byte* memory = consolidate();
    uint32 pos = m_readpos/8;
    uint32 rest = m_readpos - (pos*8);
-   bit = (memory[pos] & (0x1 << (7-rest)));
+   bit = (memory[pos] & (0x1 << (7-rest))) != 0;
    m_readpos++;
    unlock();
 
@@ -893,9 +905,9 @@ void BitBuf::restore( DataReader* source )
    {
       uint64 byteCount = bitCount/8;
       if( byteCount*8 != bitCount ) byteCount++;
-      chunk = allocChunk(byteCount);
+      chunk = allocChunk((uint32)byteCount);
       try {
-         source->read( chunk->m_memory, byteCount );
+         source->read( chunk->m_memory, (uint32) byteCount );
       }
       catch( ... )
       {
@@ -903,8 +915,8 @@ void BitBuf::restore( DataReader* source )
          throw;
       }
 
-      chunk->m_sizeBytes = byteCount;
-      chunk->m_usedBits = bitCount;
+      chunk->m_sizeBytes = (uint32) byteCount;
+      chunk->m_usedBits = (uint32) bitCount;
       chunk->m_basePos = 0;
       chunk->m_next = 0;
    }
@@ -913,7 +925,7 @@ void BitBuf::restore( DataReader* source )
    m_read_endianity = (t_endianity) rend;
    m_write_endianity = (t_endianity) wend;
    m_first = m_last = chunk;
-   m_size = bitCount;
+   m_size = (uint32) bitCount;
    unlock();
 }
 
