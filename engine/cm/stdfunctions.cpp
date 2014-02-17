@@ -1330,12 +1330,12 @@ FALCON_DEFINE_FUNCTION_P1(IOStream)
 
    if( i_uri->isString() )
    {
-      stream = Engine::instance()->vfs().create( *i_uri->asString(), VFSIface::CParams().wrOnly().truncate().shNone() );
+      stream = Engine::instance()->vfs().create( *i_uri->asString(), VFSIface::CParams().rdwr().append().shNone() );
    }
    else {
       URI* uri = i_uri->castInst<URI>(clsURI);
       fassert(uri != 0);
-      stream = Engine::instance()->vfs().create( *uri, VFSIface::CParams().wrOnly().truncate().shNone() );
+      stream = Engine::instance()->vfs().create( *uri, VFSIface::CParams().rdwr().append().shNone() );
    }
 
    // couldn't find it.
