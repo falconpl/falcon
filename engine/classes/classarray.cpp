@@ -1627,6 +1627,12 @@ void ClassArray::describe( void* instance, String& target, int maxDepth, int max
 {
    ItemArray* arr = static_cast<ItemArray*>( instance );
 
+   if(maxDepth == 0)
+   {
+      target.append("[...]");
+      return;
+   }
+
    target.append( "[" );
 
    String temp;
