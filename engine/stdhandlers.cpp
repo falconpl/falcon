@@ -47,6 +47,9 @@
 #include <falcon/classes/classre.h>
 #include <falcon/classes/classtimestamp.h>
 
+#include <falcon/classes/classuri.h>
+#include <falcon/classes/classpath.h>
+
 #include <falcon/classes/classmodule.h>
 #include <falcon/classes/classmodspace.h>
 
@@ -114,6 +117,9 @@ void StdHandlers::subscribe(Engine* engine)
 
    m_timestampClass = new ClassTimeStamp;
 
+   m_uriClass = new ClassURI;
+   m_pathClass = new ClassPath;
+
    engine->addMantra( m_functionClass );
    engine->addMantra( m_stringClass );
    engine->addMantra( m_arrayClass );
@@ -145,6 +151,9 @@ void StdHandlers::subscribe(Engine* engine)
    engine->addMantra(m_streamClass);
    engine->addMantra(m_stringStreamClass);
    engine->addMantra(m_timestampClass);
+
+   engine->addMantra(m_uriClass);
+   engine->addMantra(m_pathClass);
 
    engine->addMantra( new ClassComposition );
 }

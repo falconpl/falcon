@@ -16,7 +16,7 @@
 #undef SRC
 #define SRC "falcon/cm/path.cpp"
 
-#include <falcon/cm/path.h>
+#include <falcon/classes/classpath.h>
 #include <falcon/itemid.h>
 
 #include <falcon/vm.h>
@@ -27,10 +27,9 @@
 #include <falcon/datawriter.h>
 #include <falcon/datareader.h>
 
-#include <falcon/cm/uri.h>
+#include <falcon/classes/classuri.h>
 
 namespace Falcon {
-namespace Ext {
 
    
 FALCON_DECLARE_FUNCTION( absolutize, "parent:[S]" );
@@ -460,7 +459,6 @@ void ClassPath::op_toString( VMContext* ctx, void* self ) const
 }
 
 
-}
 }
 
 /* end of path.cpp */

@@ -405,7 +405,40 @@ public:
     */
    Class* modSpaceClass() const { return m_modSpaceClass; }
 
+   /** Returns the global instance of the ClassTimespace class.
+   \return the Engine instance of the ClassTimespace handler.
+
+    Method init() must have been called before.
+
+    @note This method will assert and terminate the program if compiled in debug mode
+    in case the engine has not been initialized. In release, it will just
+    return a null pointer.
+    */
    Class* timestampClass() const { return m_timestampClass; }
+
+   /** Returns the global instance of the ClassURI class.
+   \return the Engine instance of the ClassURI handler.
+
+    Method init() must have been called before.
+
+    @note This method will assert and terminate the program if compiled in debug mode
+    in case the engine has not been initialized. In release, it will just
+    return a null pointer.
+    */
+   Class* uriClass() const { return m_uriClass; }
+
+   /** Returns the global instance of the ClassPath class.
+   \return the Engine instance of the ClassPath handler.
+
+    Method init() must have been called before.
+
+    @note This method will assert and terminate the program if compiled in debug mode
+    in case the engine has not been initialized. In release, it will just
+    return a null pointer.
+    */
+   Class* pathClass() const { return m_pathClass; }
+
+
 private:
    //===============================================
    // Global type handlers
@@ -448,6 +481,9 @@ private:
    Class* m_modSpaceClass;
    Class* m_messageQueueClass;
    Class* m_timestampClass;
+
+   Class* m_uriClass;
+   Class* m_pathClass;
 };
 
 }

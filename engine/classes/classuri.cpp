@@ -16,7 +16,7 @@
 #undef SRC
 #define SRC "falcon/cm/uri.cpp"
 
-#include <falcon/cm/uri.h>
+#include <falcon/classes/classuri.h>
 #include <falcon/itemid.h>
 
 #include <falcon/vm.h>
@@ -30,7 +30,6 @@
 #include <falcon/stderrors.h>
 
 namespace Falcon {
-namespace Ext {
 
 
 //====================================================
@@ -466,8 +465,7 @@ void MethodGetq::invoke( VMContext* ctx, int32 )
       }
    }
 }
-  
-}
+
 }
 
 /* end of uri.cpp */

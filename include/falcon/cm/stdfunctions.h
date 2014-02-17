@@ -46,6 +46,11 @@ FALCON_DECLARE_FUNCTION(perform, "&...")
 FALCON_DECLARE_FUNCTION(firstOf, "...")
 FALCON_DECLARE_FUNCTION(ffirstOf, "&...")
 FALCON_DECLARE_FUNCTION(ffor, "initialize:Expression, check:Expression, increment:Expression, code:Syntree")
+
+FALCON_DECLARE_FUNCTION(InputStream, "uri:S|URI")
+FALCON_DECLARE_FUNCTION(OutputStream, "uri:S|URI")
+FALCON_DECLARE_FUNCTION(IOStream, "uri:S|URI")
+
 }
 }
 

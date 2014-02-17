@@ -20,7 +20,7 @@
 #include <falcon/vmcontext.h>
 #include <falcon/stderrors.h>
 #include <falcon/uri.h>
-#include <falcon/cm/uri.h>
+#include <falcon/classes/classuri.h>
 #include <falcon/vfsprovider.h>
 #include <falcon/stream.h>
 

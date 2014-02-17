@@ -19,7 +19,7 @@
 #include <falcon/function.h>
 #include <falcon/vmcontext.h>
 #include <falcon/uri.h>
-#include <falcon/cm/uri.h>
+#include <falcon/classes/classuri.h>
 #include <falcon/filestat.h>
 #include <falcon/stream.h>
 #include <falcon/path.h>

@@ -23,7 +23,6 @@
 #include <falcon/path.h>
 
 namespace Falcon {
-namespace Ext {
 
 class FALCON_DYN_CLASS ClassURI: public Class
 {
@@ -48,7 +47,6 @@ public:
    
 };
 
-}
 }
 
 #endif	/* FALCON_CORE_TOSTRING_H */

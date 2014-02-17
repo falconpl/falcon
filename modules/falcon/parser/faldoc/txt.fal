@@ -30,7 +30,7 @@ import DummyRule from parser.genparser.rules as DummyRule
 import CharRule from parser.genparser.rules as CharRule
 import ProxyRule from parser.genparser.rules as ProxyRule
 
-import Parser from parser.genparser
+import Parser from parser.genparser in parser.genparser
 
 ParaCommands =  .[
    ReRule( '^\s*@after\s+(.*)$', "#stay",
@@ -248,7 +248,7 @@ class Parser from parser.genparser.Parser
             EmptyLineRule( "#pop", {ctx=> ctx.popNode()})
             ReRule( '^\s*$', "#pop", {ctx=> ctx.popNode()})
             // a "@" not recognized here means we need to pop the paragraph, and handle the recognition to upper level
-            ProxyRule( ParaStartCommands, "#pop;*", {ctx, rule=>ctx.popNode(); } )
+            ProxyRule( ParaStartCommands, "#pop;*" , {ctx, rule => ctx.popNode() } )
          ]
          + TableStart
          + ListStart
