@@ -31,10 +31,43 @@
 
 namespace Falcon {
 
+/*# @class URI
+ @brief Generic URL parser entity.
+ @param uri A string representing an URI.
+
+ This class parses and then holds a parsed Universal Resource Identifier
+ as per RFC3986. Most of the functions dealing with abstract I/O
+ accept this class instances as a valid parameters, and the class has
+ methods and property accessors to synthetize valid URI representation
+ out of its components.
+
+   @prop scheme Gets or sets the URI scheme part (without the :// separator).
+   @prop path Gets or sets the path part (as "/a/b/c/file.ext").
+   @prop query Gets or sets the query part ("var=value&var=value..." that goes after "?").
+   @prop host Gets or sets the host from the auth element.
+   @prop port Gets or sets the port from the auth element.
+   @prop user Gets or sets the user from the auth element.
+   @prop pwd Gets or sets the password from the auth element.
+   @prop fragment Gets or sets the fragment part (the element going after "#").
+
+ @note This class has type dignity and a numeric type id.
+*/
 
 //====================================================
 // Methods
 //
+
+/*# @method setq URI
+ @brief Sets a query element
+ @param key The key in the query part to be set
+ @param value The value in the query part to be set
+
+ This method sets a query variable @b key to the given @b value.
+ If the parameters are not string, they are converted to strings prior
+ being set in the query part.
+
+ Necessary escaping is perfomred by the method.
+ */
 class MethodSetq: public Function
 {
 public:
@@ -50,7 +83,14 @@ public:
    virtual void invoke( VMContext* ctx, int32 pCount = 0 );
 };
 
-   
+/*# @method setq URI
+ @brief Retrieves a query element
+ @param key The key in the query part to be retrieved
+ @optparam dflt An optional default value to be returned if the key is not found
+ @raise AccessError if the @b key is not set and @b dflt is not given.
+
+ Necessary escaping is perfomred by the method.
+ */
 class MethodGetq: public Function
 {
 public:
@@ -71,6 +111,19 @@ public:
 // Properties
 //
 
+/*# @property encoded URI
+ @brief Gets or sets the full URI representation.
+ @raise ParseError if setting a malformed URI.
+
+ Accessing this property returns the full URI as synthesized using
+ the various components that are currently set.
+
+ Setting this property changes the whole contents of the URI, parsing
+ the source string as a new full URI.
+
+ In case the URI is malformed, a ParseError is raised.
+
+*/
 static void set_encoded( const Class*, const String&, void* instance, const Item& value )
 {
    if( ! value.isString() )
@@ -82,7 +135,7 @@ static void set_encoded( const Class*, const String&, void* instance, const Item
    URI* uri = static_cast<URI*>(instance);
    if( ! uri->parse( *value.asString() ) )
    {
-      throw new ParamError( ErrorParam( e_malformed_uri, __LINE__, SRC ) );
+      throw new ParseError( ErrorParam( e_malformed_uri, __LINE__, SRC ) );
    }   
 }
 
@@ -113,6 +166,35 @@ static void get_scheme( const Class*, const String&, void* instance, Item& value
    value = FALCON_GC_HANDLE( new String( uric->scheme() ) );
 }
 
+/*#
+ @property auth URI
+ @brief Gets or sets the authorization part as a whole.
+
+ The authorization part is the combination of user, password, host and port components.
+
+ The authorization part is formatted as here indicated:
+ @code
+    user:password@host:port
+ @endcode
+
+ Each component is optional. If some parts only are present,the authorization is
+ represented as
+
+ @code
+    host             // host only
+    :port            // port only
+    host:port        // host and port
+    user@            // user only
+    user@host        // host and user
+    :pwd@            // password only
+    user@:port       // user and port
+    :pwd@:port       // password and port
+ @endcode
+
+ and so on.
+
+ It is valid to set the auth element to an empty string to clear all its components.
+ */
 
 static void set_auth( const Class*, const String&, void* instance, const Item& value )
 {
