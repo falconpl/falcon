@@ -48,13 +48,14 @@ namespace Falcon {
 @prop pcount (static) Count of parameters through which the current function has been called.
 @prop params (static) Array of actual parameter values sent to the current function
 @prop pdict (static) Dictionary of actual parameter values sent to the current function.
+@prop vp (static) Array of extra variable parameters sent to the current function.
 
 @prop name Name of the given function
 @prop fullname Name of the given function, including method prefixes.
 @prop module Module where this function is declared (can be nil)
 @prop location Standardized description of source code location where this function is declared.
 @prop methodOf Parent class of this function, if it's a statically defined class method.
-@prop paramlist parameters explicitly declared by this function.
+@prop plist Array containing the names of the parameters explicitly declared by this function.
 @prop signature Explicitly declared prototype for this function.
 
 @see passvp
@@ -88,6 +89,29 @@ static void get_params( const Class*, const String&, void*, Item& value )
 
    value = FALCON_GC_HANDLE(array);
 }
+
+static void get_vp( const Class*, const String&, void*, Item& value )
+{
+   VMContext* ctx = Processor::currentProcessor()->currentContext();
+   CallFrame& frame = ctx->currentFrame();
+   uint32 pdef = frame.m_function->paramCount();
+   uint32 pcount = (uint32) frame.m_paramCount;
+
+   ItemArray* array;
+   if( pdef >= pcount ) {
+      array = new ItemArray;
+   }
+   else {
+      array = new ItemArray(pcount - pdef);
+      for( uint32 i = pdef; i < pcount; ++i )
+      {
+         array->append(*ctx->param(i));
+      }
+   }
+
+   value = FALCON_GC_HANDLE(array);
+}
+
 
 
 static void get_pdict( const Class*, const String&, void*, Item& value )
@@ -165,7 +189,7 @@ static void get_signature( const Class*, const String&, void* instance, Item& va
 }
 
 
-static void get_paramlist( const Class*, const String&, void* instance, Item& value )
+static void get_plist( const Class*, const String&, void* instance, Item& value )
 {
    Function* func = static_cast<Function*>(instance);
 
@@ -334,6 +358,7 @@ ClassFunction::ClassFunction(ClassMantra* parent):
    addProperty("current", &get_current, 0, true );
    addProperty("pcount", &get_pcount, 0, true );
    addProperty("params", &get_params, 0, true );
+   addProperty("vp", &get_vp, 0, true );
    addProperty("pdict", &get_pdict, 0, true );
 
    addProperty("name", &get_name );
@@ -342,7 +367,7 @@ ClassFunction::ClassFunction(ClassMantra* parent):
    addProperty("module", &get_module );
    addProperty("methodOf", &get_methodOf );
    addProperty("signature", &get_signature );
-   addProperty("paramlist", &get_paramlist );
+   addProperty("plist", &get_plist );
 
    addMethod(new CFunction::Function_parameter, true);
    addMethod(new CFunction::Function_call );
