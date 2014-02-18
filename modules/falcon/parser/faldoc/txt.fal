@@ -248,7 +248,7 @@ class Parser from parser.genparser.Parser
             EmptyLineRule( "#pop", {ctx=> ctx.popNode()})
             ReRule( '^\s*$', "#pop", {ctx=> ctx.popNode()})
             // a "@" not recognized here means we need to pop the paragraph, and handle the recognition to upper level
-            ProxyRule( ParaStartCommands, "#pop;*" , {ctx, rule => ctx.popNode() } )
+            ProxyRule( ParaStartCommands, "#pop;*" , {ctx, rulex => ctx.popNode() } )
          ]
          + TableStart
          + ListStart
@@ -317,7 +317,7 @@ class Parser from parser.genparser.Parser
             ReRule( '^\s*--\s*', "#stay", {ctx=> ctx.setListDepth(2, "ul" )})
             ReRule( '^\s*-\s*', "#stay", {ctx=> ctx.setListDepth(1, "ul" )})
          ]
-         + ProxyRule( ParaStartCommands, "#pop;#pop;*", {ctx, rule=>ctx.setListDepth( 0 );ctx.popNode(); } )
+         + ProxyRule( ParaStartCommands, "#pop;#pop;*", {ctx, rulex=>ctx.setListDepth( 0 );ctx.popNode(); } )
          + InlineCommands
          + FormatElements
          + .[
