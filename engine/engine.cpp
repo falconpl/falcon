@@ -321,6 +321,10 @@ Engine::Engine()
    addBuiltin( "RangeType", (int64) FLC_CLASS_ID_RANGE );
    addBuiltin( "ClassType", (int64) FLC_CLASS_ID_CLASS );
    addBuiltin( "ProtoType", (int64) FLC_CLASS_ID_PROTO );
+   addBuiltin( "TimestampType", (int64) FLC_CLASS_ID_TIMESTAMP );
+   addBuiltin( "TreeStep", (int64) FLC_CLASS_ID_TREESTEP );
+   addBuiltin( "URIType", (int64) FLC_CLASS_ID_URI );
+   addBuiltin( "PathType", (int64) FLC_CLASS_ID_PATH );
 
    //=====================================
    // Syntax Reflection

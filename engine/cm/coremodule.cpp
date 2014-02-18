@@ -88,9 +88,6 @@ CoreModule::CoreModule():
       << new Ext::Function_perform
       << new Ext::Function_ffirstOf
 
-      << new Ext::Function_InputStream
-      << new Ext::Function_OutputStream
-      << new Ext::Function_IOStream
       << ffor
 
       // Standard classes

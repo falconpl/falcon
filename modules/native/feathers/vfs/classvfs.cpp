@@ -19,6 +19,7 @@
 #include <falcon/function.h>
 #include <falcon/vmcontext.h>
 #include <falcon/stderrors.h>
+#include <falcon/stdhandlers.h>
 #include <falcon/uri.h>
 #include <falcon/classes/classuri.h>
 #include <falcon/vfsprovider.h>
@@ -30,9 +31,9 @@
 namespace Falcon {
 namespace Ext {
 
-URI* ClassVFS::internal_get_uri( Item* i_uri, URI& tempURI, Module* mod )
+URI* ClassVFS::internal_get_uri( Item* i_uri, URI& tempURI, Module* )
 {
-   VFSModule* vfsMod = static_cast<VFSModule*>(mod);
+   static Class* uriClass = Engine::instance()->stdHandlers()->uriClass();
 
    if( i_uri == 0 )
    {
@@ -51,13 +52,13 @@ URI* ClassVFS::internal_get_uri( Item* i_uri, URI& tempURI, Module* mod )
 
    Class* cls; void* data;
    if( ! i_uri->asClassInst( cls, data )
-     || ! cls->isDerivedFrom(vfsMod->uriClass() )
+     || ! cls->isDerivedFrom(uriClass)
      )
    {
       return 0;
    }
 
-   URI* uricar = static_cast<URI*>(cls->getParentData( vfsMod->uriClass(), data ));
+   URI* uricar = static_cast<URI*>(cls->getParentData( uriClass, data ));
    return uricar;
 }
 

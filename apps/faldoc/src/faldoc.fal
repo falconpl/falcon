@@ -15,6 +15,7 @@
    See LICENSE file for licensing details.
 */
 
+load vfs
 load self.version
 load self.config
 load self.document
@@ -97,7 +98,7 @@ class Application
          // open the directory
          drel = self.relativize( basedir, dir )
          try
-            hdir = Directory( drel ).descend( {=>}, {fname =>
+            hdir = readDir( drel ).descend( {=>}, {fname =>
                for wildcard in cfg.inputWild
                   if strWildcardMatch( fname, wildcard )
                      doc.addFile( fname )

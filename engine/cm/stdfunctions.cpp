@@ -136,8 +136,9 @@ FALCON_DEFINE_FUNCTION_P1(seconds)
    @brief Terminates the current process.
    @optparam value The process termination value.
 
-   This function terminates the current process as soon
-   as possible.
+   This function terminates the current virtual machine process as soon
+   as possible. This doesn't force the underlying O/S into terminating
+   the host process.
 */
 
 FALCON_DEFINE_FUNCTION_P(quit)
@@ -1208,138 +1209,6 @@ FALCON_DEFINE_FUNCTION_P(firstOf)
 
    // couldn't find it.
    ctx->returnFrame();
-}
-
-
-/*#
-  @function InputStream
-  @brief Opens an input stream
-  @param uri The URI to be opened (can be a string or an instance of @a URI).
-  @return An open input straem
-  @raise IOError on error.
-
-  This function opens a logical input stream using an URI that is sent to the
-  virtual file system resolver. If the protocol is not specified, "file://"
-  (meaning: local file system) is assumed.
-
-  For a finer control, use system-specific extension or the @a vfs module.
-*/
-
-FALCON_DEFINE_FUNCTION_P1(InputStream)
-{
-   static Class* clsStream = Engine::instance()->stdHandlers()->streamClass();
-   static Class* clsURI = Engine::instance()->stdHandlers()->uriClass();
-
-   Item* i_uri = ctx->param(0);
-   if( i_uri == 0 || ! i_uri->isString() || ! i_uri->isInstanceOf(clsURI) )
-   {
-      throw paramError(__LINE__);
-   }
-
-   Stream* stream;
-
-   if( i_uri->isString() )
-   {
-      stream = Engine::instance()->vfs().openRO(*i_uri->asString());
-   }
-   else {
-      URI* uri = i_uri->castInst<URI>(clsURI);
-      fassert(uri != 0);
-      stream = Engine::instance()->vfs().openRO( *uri );
-   }
-
-   // couldn't find it.
-   ctx->returnFrame(FALCON_GC_STORE(clsStream,stream));
-}
-
-
-/*#
-  @function OutputStream
-  @brief Opens an output stream
-  @param uri The URI to be opened (can be a string or an instance of @a URI).
-  @return An open input straem
-  @raise IOError on error.
-
-  This function opens a logical output stream using an URI that is sent to the
-  virtual file system resolver. If the protocol is not specified, "file://"
-  (meaning: local file system) is assumed.
-
-  Generally, this resolves in creating a new file, or truncating to zero
-  an existing one.
-
-  For a finer control, use system-specific extension or the @a vfs module.
-*/
-
-FALCON_DEFINE_FUNCTION_P1(OutputStream)
-{
-   static Class* clsStream = Engine::instance()->stdHandlers()->streamClass();
-   static Class* clsURI = Engine::instance()->stdHandlers()->uriClass();
-
-   Item* i_uri = ctx->param(0);
-   if( i_uri == 0 || ! i_uri->isString() || ! i_uri->isInstanceOf(clsURI) )
-   {
-      throw paramError(__LINE__);
-   }
-
-   Stream* stream;
-
-   if( i_uri->isString() )
-   {
-      stream = Engine::instance()->vfs().create( *i_uri->asString(), VFSIface::CParams().wrOnly().truncate().shNone() );
-   }
-   else {
-      URI* uri = i_uri->castInst<URI>(clsURI);
-      fassert(uri != 0);
-      stream = Engine::instance()->vfs().create( *uri, VFSIface::CParams().wrOnly().truncate().shNone() );
-   }
-
-   // couldn't find it.
-   ctx->returnFrame(FALCON_GC_STORE(clsStream,stream));
-}
-
-
-/*#
-  @function IOStream
-  @brief Creates a stream opened for input and output
-  @param uri The URI to be opened (can be a string or an instance of @a URI).
-  @return An open input straem
-  @raise IOError on error.
-
-  This function opens a logical input/output stream using an URI that is sent to the
-  virtual file system resolver. If the protocol is not specified, "file://"
-  (meaning: local file system) is assumed.
-
-  Generally, this resolves in opening a file for append, if it exist, or creating
-  a new file if it doesn't exist.
-
-  For a finer control, use system-specific extension or the @a vfs module.
-*/
-
-FALCON_DEFINE_FUNCTION_P1(IOStream)
-{
-   static Class* clsStream = Engine::instance()->stdHandlers()->streamClass();
-   static Class* clsURI = Engine::instance()->stdHandlers()->uriClass();
-
-   Item* i_uri = ctx->param(0);
-   if( i_uri == 0 || ! i_uri->isString() || ! i_uri->isInstanceOf(clsURI) )
-   {
-      throw paramError(__LINE__);
-   }
-
-   Stream* stream;
-
-   if( i_uri->isString() )
-   {
-      stream = Engine::instance()->vfs().create( *i_uri->asString(), VFSIface::CParams().rdwr().append().shNone() );
-   }
-   else {
-      URI* uri = i_uri->castInst<URI>(clsURI);
-      fassert(uri != 0);
-      stream = Engine::instance()->vfs().create( *uri, VFSIface::CParams().rdwr().append().shNone() );
-   }
-
-   // couldn't find it.
-   ctx->returnFrame(FALCON_GC_STORE(clsStream,stream));
 }
 
 
