@@ -1,8 +1,8 @@
 /*
    FALCON - The Falcon Programming Language.
-   FILE: iterator.h
+   FILE: log.h
 
-   Falcon core module -- Iterator
+   Falcon core module -- Log
    -------------------------------------------------------------------
    Author: Giancarlo Niccolai
    Begin: Wed, 21 Aug 2013 14:15:02 +0200

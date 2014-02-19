@@ -39,6 +39,28 @@
 namespace Falcon
 {
 
+   /*#
+    @class Module
+
+    @prop attributes List of attributes declared in the module.
+    @prop name The logical name of the module
+    @prop uri The logical URI location of the module.
+    @prop globals A dictionary containing all the global values in the module.
+
+    */
+
+   /*#
+    @method getAttribute Module
+    */
+   /*#
+    @method setAttribute Module
+    */
+
+   /*#
+    @method add Module
+    */
+
+
 ClassModule::ClassModule():
    Class("Module", FLC_CLASS_ID_MODULE)
 {
