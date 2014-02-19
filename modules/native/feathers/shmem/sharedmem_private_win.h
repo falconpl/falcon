@@ -29,7 +29,7 @@
 
 namespace Falcon {
 
-   
+
 // data in the initial part of the buffer
 typedef struct tag_BufferData
 {
@@ -70,11 +70,11 @@ public:
          currentSize = bd->size;
 
          if( ! UnmapViewOfFile( bd ) )
-         {         
+         {
             s_unlockf();
             throw new IOError( ErrorParam( e_io_error, __LINE__, SRC )
                   .extra("UnmapViewOfFile "+ sMemName )
-                  .sysError( GetLastError() ) ); 
+                  .sysError( GetLastError() ) );
          }
 
          if( ! CloseHandle( hMemory ) )
@@ -115,12 +115,12 @@ public:
             s_unlockf();
             throw new IOError( ErrorParam( e_io_error, __LINE__, SRC )
                   .extra("MapViewOfFile "+ sMemName )
-                  .sysError( GetLastError() ) ); 
+                  .sysError( GetLastError() ) );
          }
       }
 
       // DO NOT release the lock
-      return currentSize; 
+      return currentSize;
    }
 
 
@@ -131,19 +131,19 @@ public:
 
       if( newSize == bd->size )
       {
-         // nothing needs to be done -- keep the lock         
+         // nothing needs to be done -- keep the lock
          return;
       }
-      
+
       enlarge( newSize );
 
-      // DO NOT release the lock      
+      // DO NOT release the lock
    }
 
    void enlarge( int64 newSize )
    {
       int64 size = bd->size;
-      
+
       // fix the expected size now, to avoid problems if we have to drop the process in the middle
       if( newSize < size )
       {
@@ -155,27 +155,27 @@ public:
          s_unlockf();
          throw new IOError( ErrorParam( e_io_error, __LINE__, SRC )
                .extra("FlushViewOfFile "+ sMemName )
-               .sysError( GetLastError() ) ); 
+               .sysError( GetLastError() ) );
       }
 
       // we'll need to remap with the new size.
       if( ! UnmapViewOfFile( bd ) )
-      {         
+      {
          s_unlockf();
          throw new IOError( ErrorParam( e_io_error, __LINE__, SRC )
                .extra("UnmapViewOfFile "+ sMemName )
-               .sysError( GetLastError() ) ); 
-      }      
-   
+               .sysError( GetLastError() ) );
+      }
+
       // do we have a background file
       if( hFile != INVALID_HANDLE_VALUE )
       {
          if( ! CloseHandle( hMemory ) )
-         {         
+         {
             s_unlockf();
             throw new IOError( ErrorParam( e_io_error, __LINE__, SRC )
                   .extra("CloseHandle (mem) "+ sMemName )
-                  .sysError( GetLastError() ) ); 
+                  .sysError( GetLastError() ) );
          }
 
          // don't leave the pointer dangling.
@@ -189,7 +189,7 @@ public:
             s_unlockf();
             throw new IOError( ErrorParam( e_io_error, __LINE__, SRC )
                   .extra("SetFilePointer "+ sMemName )
-                  .sysError( GetLastError() ) ); 
+                  .sysError( GetLastError() ) );
          }
 
          if( ! SetEndOfFile(hFile) )
@@ -201,9 +201,9 @@ public:
                 s_unlockf();
                 throw new IOError( ErrorParam( e_io_error, __LINE__, SRC )
                   .extra("SetEndOfFile "+ sMemName )
-                  .sysError( le ) ); 
+                  .sysError( le ) );
             }
-            // otherwise, plainly ignore the error 
+            // otherwise, plainly ignore the error
             // -- some process will eventually truncate the file.
          }
 
@@ -224,8 +224,8 @@ public:
                               .extra("CreateFileMapping "+ sMemName )
                               .sysError( GetLastError() ) );
          }
-      }      
-      
+      }
+
       bd = (BufferData*) MapViewOfFile(
          hMemory,
          FILE_MAP_WRITE,
@@ -238,8 +238,8 @@ public:
          s_unlockf();
          throw new IOError( ErrorParam( e_io_error, __LINE__, SRC )
                .extra("MapViewOfFile "+ sMemName )
-               .sysError( GetLastError() ) ); 
-      }      
+               .sysError( GetLastError() ) );
+      }
 
       // fix the expected size now, to avoid problems if we have to drop the process in the middle
       if( newSize > size )
@@ -256,10 +256,10 @@ public:
       if( WaitForSingleObject( hMtx, INFINITE ) != WAIT_OBJECT_0 )
       {
          DWORD le = GetLastError();
-         TRACE( "SharedMem::Private -- s_lockf ERROR %d", le );
+         TRACE( "SharedMem::Private -- s_lockf ERROR %d", (int)le );
          throw new IOError( ErrorParam( e_io_error, __LINE__, SRC )
                .extra("WaitForSingleObject "+ sMemName )
-               .sysError( le ) ); 
+               .sysError( le ) );
       }
    }
 
@@ -268,15 +268,15 @@ public:
       if( ! ReleaseMutex( hMtx ) )
       {
          DWORD le = GetLastError();
-         TRACE( "SharedMem::Private -- s_unlockf ERROR %d", le );
+         TRACE( "SharedMem::Private -- s_unlockf ERROR %d", (int)le );
          throw new IOError( ErrorParam( e_io_error, __LINE__, SRC )
                .extra("WaitForSingleObject "+ sMemName )
-               .sysError( le ) ); 
+               .sysError( le ) );
       }
-      
+
    }
 
-   void close() 
+   void close()
    {
       if ( bd != NULL )
       {
