@@ -76,6 +76,7 @@ bool Item::isCallable() const
             || (isArray() && (!asArray()->at(0).isArray() && asArray()->at(0).isCallable()))
             || isMethod()
             || isClass()
+            || isTreeStep()
             || (isUser() && asClass()->typeID() == FLC_CLASS_ID_CLOSURE);
 }
 
