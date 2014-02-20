@@ -94,10 +94,14 @@ void ModLoader::init ( const String &path, ModSpace* ms,  ModCompiler* mc, FAMLo
    m_compiler = mc;
    m_famLoader = faml;
    m_dynLoader = dld;
-   m_useSources = e_us_newer;
 
    m_famExt = "fam";
    m_ftdExt = "ftd";
+
+   m_useSources = e_us_newer;
+   m_checkFTD = e_ftd_check;
+   m_savePC = e_save_try;
+   m_saveRemote = false;
 
    m_encName = "C";
    m_tcoder = engine->getTranscoder( m_encName );

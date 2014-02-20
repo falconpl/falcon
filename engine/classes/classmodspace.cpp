@@ -127,6 +127,34 @@ static void set_savePC( const Class*, const String&, void* instance, const Item&
 
 
 /*#
+ @prop parent ModSpace
+ @brief The parent module space.
+
+ If this module space hasn't any parent, this will be nil.
+
+ @note Modules loaded by a modulespace without any parent can
+ access pre-defined symbols and native engine types, but they cannot
+ access symbols defined in the core module (as printl), as the core
+ module is stored in the process-wide topmost module space.
+*/
+
+static void get_parent( const Class* cls, const String&, void* instance, Item& value )
+{
+   ModSpace* ms = static_cast<ModSpace*>(instance);
+   ModSpace* parent = ms->parent();
+   if( parent == 0 )
+   {
+      value.setNil();
+   }
+   else {
+      // for sure, it's already in GC.
+      value.setUser(cls,parent);
+   }
+}
+
+
+
+/*#
  @prop checkFTD ModSpace
  @brief Determines how Falcon Template Documents are checked and interpreted.
 
@@ -476,6 +504,30 @@ static Module* getParentModule( VMContext* ctx )
 }
 
 
+
+static ModSpace* getParentModSpace( VMContext* ctx )
+{
+   // else, search it in our context
+   ModSpace* ms = 0;
+
+   // try to get the module space of the calling context.
+   if( ctx->callDepth() > 1 )
+   {
+      const CallFrame& frame = ctx->callerFrame(1);
+      if( frame.m_function != 0 && frame.m_function->module() != 0)
+      {
+         ms = frame.m_function->module()->modSpace();
+      }
+   }
+
+   if( ms == 0 )
+   {
+      ms = ctx->process()->modSpace();
+   }
+   return ms;
+}
+
+
 static void load_internal( Function* caller, VMContext* ctx, bool isUri )
 {
    static PStep* step = &Engine::instance()->stdSteps()->m_returnFrameWithTop;
@@ -550,7 +602,7 @@ FALCON_DEFINE_FUNCTION_P1( loadByName )
 }
 
 
-static ModSpace* configure_ms(Function* caller, VMContext* ctx )
+static ModSpace* configure_ms(Function* caller, VMContext* ctx, ModSpace* model )
 {
    Item* i_path = ctx->param(0);
    Item* i_srcenc = ctx->param(1);
@@ -573,11 +625,17 @@ static ModSpace* configure_ms(Function* caller, VMContext* ctx )
    {
       ms->modLoader()->savePC( (ModLoader::t_save_pc) checkEnumParam(*i_saveFAM, (int) ModLoader::e_save_mandatory ) );
    }
+   else if( model != 0 ){
+      ms->modLoader()->savePC( model->modLoader()->savePC() );
+   }
 
 
    if( i_prefer != 0 && ! i_prefer->isNil() )
    {
       ms->modLoader()->useSources( (ModLoader::t_use_sources) checkEnumParam(*i_prefer, (int) ModLoader::e_save_mandatory ) );
+   }
+   else if( model != 0 ){
+      ms->modLoader()->useSources( model->modLoader()->useSources() );
    }
 
    if( i_srcenc != 0 && ! i_srcenc->isNil() )
@@ -590,11 +648,26 @@ static ModSpace* configure_ms(Function* caller, VMContext* ctx )
       }
       ms->modLoader()->sourceEncoding(srcenc);
    }
+   else if( model != 0 ){
+      ms->modLoader()->sourceEncoding( model->modLoader()->sourceEncoding() );
+   }
+
 
    if( i_path != 0 && ! i_path->isNil() )
    {
       const String& path = *i_path->asString();
       ms->modLoader()->setSearchPath(path);
+   }
+   else if( model != 0 ){
+      ms->modLoader()->setSearchPath( model->modLoader()->getSearchPath() );
+   }
+
+   if( model != 0 )
+   {
+      ms->modLoader()->checkFTD(model->modLoader()->checkFTD());
+      ms->modLoader()->ftdExt(model->modLoader()->ftdExt());
+      ms->modLoader()->famExt(model->modLoader()->famExt());
+      ms->modLoader()->saveRemote(model->modLoader()->saveRemote());
    }
 
    return ms;
@@ -604,7 +677,9 @@ static ModSpace* configure_ms(Function* caller, VMContext* ctx )
 FALCON_DECLARE_FUNCTION(init, "path:[S],srcenc:[S],savePC:[N],useSources:[N]")
 FALCON_DEFINE_FUNCTION_P1(init)
 {
-   ModSpace* ms = configure_ms(this, ctx);
+   // the model MS is the MS of the calling module
+   ModSpace* modelMS = getParentModSpace(ctx);
+   ModSpace* ms = configure_ms(this, ctx, modelMS);
    ctx->self() = FALCON_GC_STORE(this->methodOf(),ms);
    ctx->returnFrame(ctx->self());
 }
@@ -634,8 +709,10 @@ FALCON_DEFINE_FUNCTION_P1(init)
 FALCON_DECLARE_FUNCTION(makeChild, "path:[S],srcenc:[S],savePC:[N],useSources:[N]")
 FALCON_DEFINE_FUNCTION_P1(makeChild)
 {
-   ModSpace* ms = configure_ms(this, ctx);
-   ms->setParent( ctx->tself<ModSpace*>() );
+
+   ModSpace* self = ctx->tself<ModSpace*>();
+   ModSpace* ms = configure_ms(this, ctx, self);
+   ms->setParent( self );
    ctx->returnFrame(FALCON_GC_STORE(this->methodOf(),ms));
 }
 
@@ -657,8 +734,8 @@ FALCON_DEFINE_FUNCTION_P1(getExport)
       throw paramError(__LINE__, SRC);
    }
 
-   ModSpace* ms = configure_ms(this, ctx);
    const String& varname = *i_varname->asString();
+   ModSpace* ms = ctx->tself<ModSpace*>();
    Item* val = ms->findExportedValue(varname);
 
    if( val != 0 )
@@ -691,7 +768,7 @@ FALCON_DEFINE_FUNCTION_P1(setExport)
       throw paramError(__LINE__, SRC);
    }
 
-   ModSpace* ms = configure_ms(this, ctx);
+   ModSpace* ms = ctx->tself<ModSpace*>();
    const String& varname = *i_varname->asString();
    ms->setExportValue(varname, *i_value);
    ctx->returnFrame();
@@ -711,6 +788,8 @@ ClassModSpace::ClassModSpace():
    addProperty( "famExt", &get_famExt, &set_famExt );
    addProperty( "ftdExt", &get_ftdExt, &set_ftdExt );
    addProperty( "path", &get_path, &set_path );
+   // don't show the parent property in standard description.
+   addProperty( "parent", &get_parent, 0,false, true );
 
    addConstant( "savePC_NEVER", static_cast<int64>(ModLoader::e_save_no) );
    addConstant( "savePC_TRY", static_cast<int64>(ModLoader::e_save_try) );

@@ -39,6 +39,8 @@ class Application
 
    document = nil
 
+   modSpace = ModSpace()
+   
    //# file currently parsed
    currentFile = ""
 
@@ -133,12 +135,13 @@ class Application
       
       conf = self.config.cfile
       self.info( "Start processing output" )
+      modSpace = self.modSpace
 
       for mod in self.config.outMods
          try
-            modData = compiler.loadByName( "self.output." + mod )
+            modData = modSpace.loadByName( "self.output." + mod )
             faldoc_output = modData.get( "faldoc_output" )
-            if not isCallable( faldoc_output )
+            if not faldoc_output
                raise "module '"+ mod + "' doesn't define 'falcon_output' entry point"
             end
 
@@ -148,7 +151,7 @@ class Application
             // unload the module
             modData.unload()
 
-         catch IoError in error
+         catch IOError in error
             // signal an abnormal exit
             raise "Cannot find or load module (faldoc_output_)"+mod
          end
@@ -175,7 +178,7 @@ class Application
    //# function to generate a fatal error
    function fatal( error, line, file )      
       self.display( 0, "FATAL - " + error, line, file )
-      exit(0)
+      quit(0)
    end
 
    //# function to generate an error
@@ -275,7 +278,7 @@ class Application
    end
 
    function copyResource( resName, dest )
-      p = Path( vmModulePath() )
+      p = Path( scriptPath )
       loc = p.fulloc +"/resources/" + resName
       fileCopy( loc, dest + "/" + resName )
    end

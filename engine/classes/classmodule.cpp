@@ -50,24 +50,336 @@ namespace Falcon
     */
 
    /*#
-    @method getAttribute Module
-    */
-   /*#
-    @method setAttribute Module
-    */
+      * @method getAttribute Module
+      * @brief Gets the desired attribute, if it exists.
+      * @param name The name of the required attribute
+      * @return value of the require attribute
+      * @raise Access error if the attribute is not found
+      *
+      */
+
+
+     /*#
+      * @method setAttribute Module
+      * @brief Sets or deletes the desired attribute if it exists
+      * @param name The name of the required attribute
+      * @optparam value The new value for the required attribute
+      *
+      * If @b value is not given, then the attribute is removed, if it exists.
+      *
+      * If @b value is given, the value is changed or created as required.
+      * In this case, if the attribute doesn't exists, it is created.
+      */
+
+        /*#
+      * @method add Module
+      * @brief Adds a mantra to the module.
+      * @param mantra The mantra to add to the module.
+      * @optparam export Whether or not to export the mantra from the module.
+      *
+      * If @b export is not given, then the mantra is exported by default.
+      *
+      * If @b export is given, the mantra is exported if export is true.
+      */
 
    /*#
-    @method add Module
-    */
+ * @method addGlobal Module
+ */
+   /*#
+ * @method setGlobal Module
+ */
+   /*#
+ * @method getGlobal Module
+ */
 
+namespace {
+
+//========================================================================
+// Methods
+//
+
+FALCON_DECLARE_FUNCTION(init, "name:S,uri:[S]")
+FALCON_DEFINE_FUNCTION_P(init)
+{
+   Item* i_name = ctx->param(0);
+   Item* i_uri = ctx->param(1);
+
+   if( pCount < 1
+      || ! i_name->isString()
+      || (pCount > 1 && ! i_uri->isString())
+      )
+   {
+      throw paramError(__LINE__,SRC);
+   }
+
+   Module* module;
+   if( pCount > 1 )
+   {
+      module = new Module(*i_name->asString(), *i_uri->asString());
+   }
+   else
+   {
+      module = new Module(*i_name->asString());
+   }
+
+   ctx->returnFrame(FALCON_GC_STORE(this->methodOf(), module));
+}
+
+FALCON_DECLARE_FUNCTION(getAttribute, "name:S")
+FALCON_DEFINE_FUNCTION_P1(getAttribute)
+{
+   Item& self = ctx->self();
+   fassert( self.isUser() );
+
+   Item* i_name = ctx->param(0);
+   if( ! i_name->isString() )
+   {
+      ctx->raiseError(paramError(__LINE__,SRC));
+      return;
+   }
+
+   const String& attName = *i_name->asString();
+   Module* mantra = static_cast<Module*>(self.asInst());
+   Attribute* attr = mantra->attributes().find(attName);
+   if( attr == 0 )
+   {
+      ctx->raiseError( new AccessError( ErrorParam(e_dict_acc, __LINE__, SRC )
+            .symbol("Module.getAttribute")
+            .module("[core]")
+            .extra(attName) ) );
+      return;
+   }
+
+   ctx->returnFrame(attr->value());
+}
+
+
+FALCON_DECLARE_FUNCTION(setAttribute, "name:S,value:X")
+FALCON_DEFINE_FUNCTION_P1(setAttribute)
+{
+   Item& self = ctx->self();
+   fassert( self.isUser() );
+
+   Item* i_name = ctx->param(0);
+   Item* i_value = ctx->param(1);
+   if( i_name == NULL || ! i_name->isString() )
+   {
+      ctx->raiseError(paramError());
+      return;
+   }
+
+   const String& attName = *i_name->asString();
+   Module* mantra = static_cast<Module*>(self.asInst());
+
+   if( i_value == 0 )
+   {
+      mantra->attributes().remove(attName);
+   }
+   else {
+      Attribute* attr = mantra->attributes().find(attName);
+      if( attr == 0 )
+      {
+         attr = mantra->attributes().add(attName);
+      }
+
+      attr->value().copyInterlocked( *i_value );
+   }
+
+   ctx->returnFrame();
+}
+
+
+FALCON_DECLARE_FUNCTION(addMantra, "mantra:Mantra,exp:[B]")
+FALCON_DEFINE_FUNCTION_P1(addMantra)
+{
+   Item& self = ctx->self();
+   fassert( self.isUser() );
+
+   static Class* clsMantra = Engine::instance()->handlers()->mantraClass();
+
+   Item* i_mantra = ctx->param(0);
+   Item* i_export = ctx->param(1);
+   if( i_mantra == NULL || ! i_mantra->asClass()->isDerivedFrom(clsMantra) )
+   {
+      ctx->raiseError(paramError());
+      return;
+   }
+
+   bool bExport = true;
+   if ( i_export != NULL )
+   {
+      if ( ! i_export->isBoolean() )
+      {
+         ctx->raiseError(paramError());
+         return;
+      }
+      bExport = i_export->asBoolean();
+   }
+
+   void* inst;
+   Class* cls;
+   i_mantra->forceClassInst(cls, inst);
+
+   Mantra* mantra = static_cast<Mantra*>(inst);
+   Module* module = static_cast<Module*>(self.asInst());
+
+   module->addMantra(mantra, bExport);
+
+   ctx->returnFrame();
+}
+
+
+FALCON_DECLARE_FUNCTION(addGlobal, "name:S,value:X,exp:[B]")
+FALCON_DEFINE_FUNCTION_P1(addGlobal)
+{
+   Item* i_name = ctx->param(0);
+   Item* i_value = ctx->param(1);
+   Item* i_export = ctx->param(2);
+
+   if(   i_name == 0 || ! i_name->isString()
+      || i_value == 0
+      )
+   {
+      throw paramError(__LINE__, SRC);
+   }
+
+   Module* module = ctx->tself<Module*>();
+   const String& name = *i_name->asString();
+   bool bExport = i_export == 0 ? false : i_export->isTrue();
+   bool bOk = module->addGlobal(name, *i_value, bExport ) != 0;
+
+   ctx->returnFrame(Item().setBoolean(bOk));
+}
+
+
+FALCON_DECLARE_FUNCTION(setGlobal, "name:S,value:X")
+FALCON_DEFINE_FUNCTION_P1(setGlobal)
+{
+   Item* i_name = ctx->param(0);
+   Item* i_value = ctx->param(1);
+
+   if(   i_name == 0 || ! i_name->isString()
+      || i_value == 0
+      )
+   {
+      throw paramError(__LINE__, SRC);
+   }
+
+   Module* module = ctx->tself<Module*>();
+   const String& name = *i_name->asString();
+   Item* value = module->resolve(name);
+   if( value != 0 )
+   {
+      value->copyFromLocal(*i_value);
+   }
+   else {
+      throw FALCON_SIGN_XERROR(AccessError, e_undef_sym, .extra(name));
+   }
+
+   ctx->returnFrame();
+}
+
+
+FALCON_DECLARE_FUNCTION(getGlobal, "name:S,dflt:[X]")
+FALCON_DEFINE_FUNCTION_P1(getGlobal)
+{
+   Item* i_name = ctx->param(0);
+   Item* i_dflt = ctx->param(1);
+
+   if( i_name == 0 || ! i_name->isString() )
+   {
+      throw paramError(__LINE__, SRC);
+   }
+
+   Module* module = ctx->tself<Module*>();
+   const String& name = *i_name->asString();
+   Item* value = module->resolve(name);
+   Item result;
+   if( value != 0 )
+   {
+      result.copyFromRemote(*value);
+   }
+   else if(i_dflt != 0)
+   {
+      result = *i_dflt;
+   }
+   else {
+      throw FALCON_SIGN_XERROR(AccessError, e_undef_sym, .extra(name));
+   }
+
+   ctx->returnFrame(result);
+}
+
+
+static void get_attributes( const Class*, const String&, void* instance, Item& value )
+{
+   ItemDict* dict = new ItemDict;
+   Module* mod = static_cast<Module*>(instance);
+   uint32 size = mod->attributes().size();
+   for( uint32 i = 0; i < size; ++i ) {
+      Attribute* attr = mod->attributes().get(i);
+      dict->insert( FALCON_GC_HANDLE( new String(attr->name())), attr->value() );
+   }
+   value = FALCON_GC_HANDLE(dict);
+}
+
+static void get_globals( const Class*, const String&, void* instance, Item& value )
+{
+   ItemDict *globs = new ItemDict;
+
+  class Rator: public GlobalsMap::VariableEnumerator  {
+  public:
+     Rator(ItemDict* g): m_globs(g) {}
+     virtual ~Rator() {};
+     virtual void operator() ( const Symbol* sym, Item*& value )
+     {
+        m_globs->insert( FALCON_GC_HANDLE(
+                 new String(sym->name())), *value );
+     }
+
+  private:
+     ItemDict* m_globs;
+  }
+  rator(globs);
+
+  Module* mod = static_cast<Module*>(instance);
+  mod->globals().enumerate(rator);
+  value = FALCON_GC_HANDLE(globs);
+}
+
+
+static void get_uri( const Class*, const String&, void* instance, Item& value )
+{
+   Module* mod = static_cast<Module*>(instance);
+   value = FALCON_GC_HANDLE(new String(mod->uri()));
+}
+
+static void get_name( const Class*, const String&, void* instance, Item& value )
+{
+   Module* mod = static_cast<Module*>(instance);
+   value = FALCON_GC_HANDLE(new String(mod->name()));
+}
+
+}
 
 ClassModule::ClassModule():
    Class("Module", FLC_CLASS_ID_MODULE)
 {
-   m_getAttributeMethod.methodOf(this);
-   m_setAttributeMethod.methodOf(this);
-   m_addMethod.methodOf(this);
    m_clearPriority = 3;
+
+   setConstuctor( new FALCON_FUNCTION_NAME(init) );
+   addMethod( new FALCON_FUNCTION_NAME(getAttribute) );
+   addMethod( new FALCON_FUNCTION_NAME(setAttribute) );
+   addMethod( new FALCON_FUNCTION_NAME(addMantra) );
+   addMethod( new FALCON_FUNCTION_NAME(getGlobal) );
+   addMethod( new FALCON_FUNCTION_NAME(setGlobal) );
+   addMethod( new FALCON_FUNCTION_NAME(addGlobal) );
+
+   addProperty("attributes", &get_attributes);
+   addProperty("name", &get_name);
+   addProperty("uri", &get_uri );
+   addProperty("globals",&get_globals);
+
 }
 
 ClassModule::~ClassModule()
@@ -94,41 +406,7 @@ void* ClassModule::clone( void* source ) const
 
 void* ClassModule::createInstance() const
 {
-   return new Module;
-}
-
-
-void ClassModule::enumerateProperties( void*, Class::PropertyEnumerator& cb ) const
-{
-   cb("attributes" );
-   cb("name" );
-   cb("uri");
-}
-
-
-void ClassModule::enumeratePV( void* instance, Class::PVEnumerator& cb ) const
-{
-   Module* mod = static_cast<Module*>(instance);
-
-   Item i_name = mod->name();
-   Item i_uri = mod->uri();
-
-   cb("name", i_name );
-   cb("uri", i_uri );
-}
-
-
-bool ClassModule::hasProperty( void*, const String& prop ) const
-{
-   return
-         prop == "attributes"
-         || prop == "getAttribute"
-         || prop == "name"
-         || prop == "setAttribute"
-         || prop == "uri"
-         || prop == "add"
-         || prop == "globals"
-         ;
+   return FALCON_CLASS_CREATE_AT_INIT;
 }
 
 
@@ -658,7 +936,7 @@ void ClassModule::unflatten( VMContext* ctx, ItemArray& subItems, void* instance
 void ClassModule::describe( void* instance, String& target, int , int ) const
 {
    Module* mod = static_cast<Module*>(instance);
-   target = "Module " + mod->name();
+   target = "Module " + mod->name() +  " (" + mod->uri() + ")";
 }
 
 void ClassModule::gcMarkInstance( void* instance, uint32 mark ) const
@@ -670,232 +948,6 @@ bool ClassModule::gcCheckInstance( void* instance, uint32 mark ) const
 {
    return static_cast<Module*>(instance)->currentMark() >= mark;
 }
-
-bool ClassModule::op_init( VMContext* ctx, void* instance, int32 pcount ) const
-{
-   // NAME - URI
-   Item& i_name = ctx->opcodeParam(0);
-   Item& i_uri = ctx->opcodeParam(1);
-
-   if( pcount < 1
-      || ! i_name.isString()
-      || (pcount > 1 && ! i_uri.isString())
-      )
-   {
-      throw new ParamError( ErrorParam(e_inv_params, __LINE__, SRC )
-         .origin(ErrorParam::e_orig_vm)
-         .extra( "S,[S]") );
-   }
-
-   Module* module =  static_cast<Module*>(instance);
-   module->name( *i_name.asString() );
-   if( pcount > 1 )
-   {
-      module->uri( *i_uri.asString() );
-   }
-
-   return false;
-}
-
-
-void ClassModule::op_getProperty( VMContext* ctx, void* instance, const String& prop) const
-{
-   Module* mod = static_cast<Module*>(instance);
-
-   if( prop == "attributes" )
-   {
-      ItemDict* dict = new ItemDict;
-      uint32 size = mod->attributes().size();
-      for( uint32 i = 0; i < size; ++i ) {
-         Attribute* attr = mod->attributes().get(i);
-         dict->insert( FALCON_GC_HANDLE( new String(attr->name())), attr->value() );
-      }
-      ctx->stackResult(1, FALCON_GC_HANDLE(dict) );
-   }
-   else if( prop == "getAttribute" )
-   {
-      ctx->topData().methodize(&m_getAttributeMethod);
-   }
-   else if( prop == "name" )
-   {
-      ctx->stackResult(1, FALCON_GC_HANDLE( new String(mod->name())) );
-   }
-   else if( prop == "setAttribute" )
-   {
-      ctx->topData().methodize(&m_setAttributeMethod);
-   }
-   else if( prop == "uri" )
-   {
-      ctx->stackResult(1, FALCON_GC_HANDLE( new String(mod->uri())) );
-   }
-   else if( prop == "add" )
-   {
-      ctx->topData().methodize(&m_addMethod);
-   }
-   else if( prop == "globals")
-   {
-      ItemDict *globs = new ItemDict;
-
-      class Rator: public GlobalsMap::VariableEnumerator  {
-      public:
-         Rator(ItemDict* g): m_globs(g) {}
-         virtual ~Rator() {};
-         virtual void operator() ( const Symbol* sym, Item*& value )
-         {
-            m_globs->insert( FALCON_GC_HANDLE(
-                     new String(sym->name())), *value );
-         }
-
-      private:
-         ItemDict* m_globs;
-      }
-      rator(globs);
-
-      mod->globals().enumerate(rator);
-      ctx->topData() = FALCON_GC_HANDLE(globs);
-   }
-   else {
-      Class::op_getProperty(ctx, instance, prop );
-   }
-}
-
-//========================================================================
-// Methods
-//
-
-ClassModule::GetAttributeMethod::GetAttributeMethod():
-   Function("getAttribute")
-{
-   signature("S");
-   addParam("name");
-}
-
-ClassModule::GetAttributeMethod::~GetAttributeMethod()
-{}
-
-
-void ClassModule::GetAttributeMethod::invoke( VMContext* ctx, int32 )
-{
-   Item& self = ctx->self();
-   fassert( self.isUser() );
-
-   Item* i_name = ctx->param(0);
-   if( ! i_name->isString() )
-   {
-      ctx->raiseError(paramError());
-      return;
-   }
-
-   const String& attName = *i_name->asString();
-   Module* mantra = static_cast<Module*>(self.asInst());
-   Attribute* attr = mantra->attributes().find(attName);
-   if( attr == 0 )
-   {
-      ctx->raiseError( new AccessError( ErrorParam(e_dict_acc, __LINE__, SRC )
-            .symbol("Module.getAttribute")
-            .module("[core]")
-            .extra(attName) ) );
-      return;
-   }
-
-   ctx->returnFrame(attr->value());
-}
-
-ClassModule::SetAttributeMethod::SetAttributeMethod():
-   Function("setAttribute")
-{
-   signature("S,[X]");
-   addParam("name");
-   addParam("value");
-}
-
-ClassModule::SetAttributeMethod::~SetAttributeMethod()
-{}
-
-
-void ClassModule::SetAttributeMethod::invoke( VMContext* ctx, int32 )
-{
-   Item& self = ctx->self();
-   fassert( self.isUser() );
-
-   Item* i_name = ctx->param(0);
-   Item* i_value = ctx->param(1);
-   if( i_name == NULL || ! i_name->isString() )
-   {
-      ctx->raiseError(paramError());
-      return;
-   }
-
-   const String& attName = *i_name->asString();
-   Module* mantra = static_cast<Module*>(self.asInst());
-
-   if( i_value == 0 )
-   {
-      mantra->attributes().remove(attName);
-   }
-   else {
-      Attribute* attr = mantra->attributes().find(attName);
-      if( attr == 0 )
-      {
-         attr = mantra->attributes().add(attName);
-      }
-
-      attr->value().copyInterlocked( *i_value );
-   }
-
-   ctx->returnFrame();
-}
-
-ClassModule::AddMethod::AddMethod():
-   Function("add")
-{
-   signature("Mantra,[B]");
-   addParam("mantra");
-   addParam("export");
-}
-
-ClassModule::AddMethod::~AddMethod()
-{}
-
-
-void ClassModule::AddMethod::invoke( VMContext* ctx, int32 )
-{
-   Item& self = ctx->self();
-   fassert( self.isUser() );
-
-   static Class* clsMantra = Engine::instance()->handlers()->mantraClass();
-
-   Item* i_mantra = ctx->param(0);
-   Item* i_export = ctx->param(1);
-   if( i_mantra == NULL || ! i_mantra->asClass()->isDerivedFrom(clsMantra) )
-   {
-      ctx->raiseError(paramError());
-      return;
-   }
-
-   bool bExport = true;
-   if ( i_export != NULL )
-   {
-      if ( ! i_export->isBoolean() )
-      {
-         ctx->raiseError(paramError());
-         return;
-      }
-      bExport = i_export->asBoolean();
-   }
-
-   void* inst;
-   Class* cls;
-   i_mantra->forceClassInst(cls, inst);
-
-   Mantra* mantra = static_cast<Mantra*>(inst);
-   Module* module = static_cast<Module*>(self.asInst());
-
-   module->addMantra(mantra, bExport);
-
-   ctx->returnFrame();
-}
-
 
 }
 
