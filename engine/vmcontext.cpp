@@ -2142,7 +2142,9 @@ void VMContext::contextualize( Error* error, bool force )
 
    if( error->line() == 0 || force )
    {
-      error->line(currentCode().m_step->sr().line());
+      CodeFrame* top = m_codeStack.m_top;
+      int l = top->m_step->sr().line();
+      error->line(l);
    }
 
    if( error->mantra().empty() || force)

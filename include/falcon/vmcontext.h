@@ -1901,6 +1901,16 @@ private:
 
 }
 
+#define FALCON_POPCODE_CONDITIONAL_WITH_SEQID( __ctx__, __pstep__, __testcode__ ) \
+   {int __seqID__= __ctx__->currentCode().m_seqId;\
+   try { __ctx__->popCode(); __testcode__; }\
+   catch(...) { ctx->pushCode(__pstep__); __ctx__->currentCode().m_seqId = __seqID__; throw; }}
+
+#define FALCON_POPCODE_CONDITIONAL( __ctx__, __pstep__, __testcode__ )\
+   try {__ctx__->popCode(); __testcode__; }\
+   catch(...) { ctx->pushCode(__pstep__); throw; }
+
+
 #endif /* FALCON_VMCONTEXT_H_ */
 
 /* end of vmcontext.h */

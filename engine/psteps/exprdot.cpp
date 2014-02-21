@@ -89,8 +89,6 @@ void ExprDot::apply_( const PStep* ps, VMContext* ctx )
       }
    }
    
-   // anyhow we're done.
-   ctx->popCode();
    
    Class* cls;
    void* self;
@@ -98,7 +96,18 @@ void ExprDot::apply_( const PStep* ps, VMContext* ctx )
    const String& prop = dot_expr->m_prop;
    //acquire the class
    ctx->topData().forceClassInst(cls, self);
-   cls->op_getProperty(ctx, self, prop );
+   // anyhow we're done.
+   //FALCON_POPCODE_CONDITIONAL( ctx, ps, cls->op_getProperty(ctx, self, prop ));
+
+   try {
+      ctx->popCode();
+      cls->op_getProperty(ctx, self, prop );
+   }
+   catch(...)
+   {
+      ctx->pushCode(ps);
+      throw;
+   }
 }
 
 
@@ -117,8 +126,6 @@ void ExprDot::PstepLValue::apply_( const PStep* ps, VMContext* ctx )
       }
    }
    
-   // anyhow we're done.
-   ctx->popCode();
    
    Class* cls;
    void* self;
@@ -126,7 +133,10 @@ void ExprDot::PstepLValue::apply_( const PStep* ps, VMContext* ctx )
    const String& prop = dot_lv_expr->m_owner->m_prop;
    //acquire the class
    ctx->topData().forceClassInst(cls, self);
-   cls->op_setProperty(ctx, self, prop );
+
+   // anyhow we're done.
+   FALCON_POPCODE_CONDITIONAL( ctx, ps, cls->op_setProperty(ctx, self, prop ) );
+
    // it's not our duty to remove the tompost value from the stack.
 }
 

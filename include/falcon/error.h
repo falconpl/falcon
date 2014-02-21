@@ -620,8 +620,10 @@ private:
  * method and dereferences the returned error immediately
  */
 #define FALCON_RESIGN_XERROR( Error_Class__, error_code__, VMContext__, Extra__ ) \
-         (VMContext__->raiseError(new Error_Class__(ErrorParam(error_code__, __LINE__, SRC ) Extra__ ))->decref())
+         VMContext__ = VMContext__;\
+         throw new Error_Class__(ErrorParam(error_code__, __LINE__, SRC ) Extra__ );
 
+         //(VMContext__->raiseError(new Error_Class__(ErrorParam(error_code__, __LINE__, SRC ) Extra__ ))->decref())
 /**
  * Prepare a read-only-property error on the given property
  */
