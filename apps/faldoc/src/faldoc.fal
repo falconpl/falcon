@@ -95,14 +95,15 @@ class Application
       cfg = self.config
       doc = self.document
       basedir = cfg.basedir
-      
+      test = 0
+
       for dir in cfg.inputDirs
          // open the directory
          drel = self.relativize( basedir, dir )
          try
-            hdir = VFS.readDir( drel ).descend( {=>}, {fname =>
+            hdir = VFS.readDir( drel ).descend( {=>}, {fname =>     
                for wildcard in cfg.inputWild
-                  if fname.wildcardMatch( , wildcard )
+                  if fname.wildcardMatch( wildcard )
                      doc.addFile( fname )
                   end
                end
@@ -278,9 +279,10 @@ class Application
    end
 
    function copyResource( resName, dest )
-      p = Path( scriptPath )
+      puri = URI(VMProcess.uri)
+      p = Path( puri.path )
       loc = p.fulloc +"/resources/" + resName
-      fileCopy( loc, dest + "/" + resName )
+      VFS.copy( loc, dest + "/" + resName )
    end
    
 end
