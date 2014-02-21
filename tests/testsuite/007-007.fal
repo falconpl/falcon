@@ -1,0 +1,35 @@
+/*
+@name Closure basic
+@category Functions
+
+@output
+Closure basic test
+Closed value: 1
+Result: 3
+3
+Closed value: 2
+Result: 4
+4
+Closed value: 3
+Result: 5
+5
+Done.
+@endoutput
+*/
+
+function makeClo()
+   a = 0
+   return function( myparam )
+      > "Closed value: ", ++a
+      > "Result: ", myparam + a
+      return myparam + a
+   end
+end
+
+> "Closure basic test"
+
+x = makeClo()
+> x(2)
+> x(2)
+> x(2)
+> "Done."

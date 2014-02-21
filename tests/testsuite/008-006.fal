@@ -1,0 +1,45 @@
+/*
+@name Closures from methods
+@category Classes
+
+@output
+Closures in classes
+Closed self.prop: 1
+Closed value: 1
+Result: 4
+4
+Closed self.prop: 2
+Closed value: 2
+Result: 6
+6
+Closed self.prop: 3
+Closed value: 3
+Result: 8
+8
+Done.
+@endoutput
+*/
+
+class test()
+   prop = 0
+   
+   function makeClo()
+      a = 0
+      b = self
+      return function( myparam )
+         > "Closed self.prop: ", ++b.prop
+         > "Closed value: ", ++a
+         r = myparam + a + b.prop
+         > "Result: ", r
+         return r
+      end
+   end
+end
+
+> "Closures in classes"
+obj = test()
+x = obj.makeClo()
+> x(2)
+> x(2)
+> x(2)
+> "Done."
