@@ -41,9 +41,9 @@ void ExprNot::apply_( const PStep* ps, VMContext* ctx )
 {
    const ExprNot* self = static_cast<const ExprNot*>(ps);
    TRACE2( "Apply \"%s\"", self->describe().c_ize() );
-   
+
    fassert( self->first() != 0 );
-   
+
    CodeFrame& cf = ctx->currentCode();
    if( cf.m_seqId == 0 )
    {
@@ -53,7 +53,7 @@ void ExprNot::apply_( const PStep* ps, VMContext* ctx )
          return;
       }
    }
-   
+
    ctx->topData().setBoolean( ! ctx->boolTopData() );
    ctx->popCode();
 }
@@ -86,7 +86,7 @@ void ExprAnd::apply_( const PStep* ps, VMContext* ctx )
 {
    const ExprAnd* self = static_cast<const ExprAnd*>(ps);
    TRACE2( "Apply \"%s\"", self->describe().c_ize() );
-   
+
    fassert( self->first() != 0 );
    fassert( self->second() != 0 );
 
@@ -110,6 +110,7 @@ void ExprAnd::apply_( const PStep* ps, VMContext* ctx )
          ctx->popCode();
          return;
       }
+      ctx->popData();
       // it was true, we need to test the second expression
       cf.m_seqId = 2;
       if( ctx->stepInYield( self->m_second, cf ) )
@@ -118,7 +119,7 @@ void ExprAnd::apply_( const PStep* ps, VMContext* ctx )
       }
       break;
    }
-   
+
    // reuse the operand left by the other expression
    Item& operand = ctx->topData();
    operand.setBoolean( operand.isTrue() );
@@ -153,10 +154,10 @@ void ExprOr::apply_( const PStep* ps, VMContext* ctx )
 {
    const ExprOr* self = static_cast<const ExprOr*>(ps);
    TRACE2( "Apply \"%s\"", self->describe().c_ize() );
-   
+
    fassert( self->first() != 0 );
    fassert( self->second() != 0 );
-   
+
    CodeFrame& cf = ctx->currentCode();
    switch( cf.m_seqId )
    {
@@ -186,7 +187,7 @@ void ExprOr::apply_( const PStep* ps, VMContext* ctx )
       }
       break;
    }
-   
+
    // reuse the operand left by the other expression
    Item& operand = ctx->topData();
    operand.setBoolean( operand.isTrue() );
