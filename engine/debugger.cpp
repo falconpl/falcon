@@ -24,6 +24,7 @@
 #include <falcon/vm.h>
 #include <falcon/treestep.h>
 #include <falcon/function.h>
+#include <falcon/symbol.h>
 
 #include <falcon/stream.h>
 #include <falcon/textreader.h>
@@ -139,6 +140,11 @@ bool Debugger::parseCommand( TextWriter& wr, const String& line, VMContext* ctx 
                "*: eval <expr>: Evaluate given expression -- can change variables.\n"
                "*: src: Locate current code in module and function.\n"
 
+               "*: stack [N]: Display the data in the stack (top N positions, 0 for all).\n"
+               "*: dyns [N]: Display the data in the dynamic stack (top N positions, 0 for all).\n"
+               "*: code [N]: Display the data in the code stack (top N positions, 0 for all).\n"
+               "*: call [N]: Display the data in the call stack (top N positions, 0 for all).\n"
+
                "*: Entering an empty line repeats the previous command.\n"
                );
       cont = true;
@@ -164,6 +170,72 @@ bool Debugger::parseCommand( TextWriter& wr, const String& line, VMContext* ctx 
    else if( line == "cont" )
    {
       wr.writeLine( "*: Continuing." );
+   }
+   else if( line == "stack" )
+   {
+      displayStack( wr, ctx, 1 );
+      cont = true;
+   }
+   else if( line.startsWith("stack ") )
+   {
+      int64 depth;
+      if( ! line.parseInt(depth,6) || depth < 0 )
+      {
+         wr.write( "*: invalid depth \n" );
+      }
+      else {
+         displayStack( wr, ctx, depth );
+      }
+      cont = true;
+   }
+   else if( line == "dyns" )
+   {
+      displayDyns( wr, ctx, 1 );
+      cont = true;
+   }
+   else if( line.startsWith("dyns ") )
+   {
+     int64 depth;
+     if( ! line.parseInt(depth,5) || depth < 0 )
+     {
+        wr.write( "*: invalid depth \n" );
+     }
+     else {
+        displayDyns( wr, ctx, depth );
+     }
+     cont = true;
+   }
+   else if( line == "call" )
+   {
+      displayCall( wr, ctx, 1 );
+   }
+   else if( line.startsWith("call ") )
+   {
+     int64 depth;
+     if( ! line.parseInt(depth,5) || depth < 0 )
+     {
+        wr.write( "*: invalid depth \n" );
+     }
+     else {
+        displayCall( wr, ctx, depth );
+     }
+     cont = true;
+   }
+   else if( line == "code" )
+   {
+     displayCode( wr, ctx, 1 );
+   }
+   else if( line.startsWith("code ") )
+   {
+     int64 depth;
+     if( ! line.parseInt(depth,5) || depth < 0 )
+     {
+        wr.write( "*: invalid depth \n" );
+     }
+     else {
+        displayCode( wr, ctx, depth );
+     }
+     cont = true;
    }
    else if( line.startsWith("eval ") )
    {
@@ -246,6 +318,74 @@ void Debugger::printLoc(TextWriter& wr, VMContext* ctx)
       wr.writeLine("*: in " + func->locate());
    }
 }
+
+
+void Debugger::displayStack( TextWriter& wr, VMContext* ctx, int64 depth )
+{
+   wr.write( String("*: Data stack size ").N((int64)ctx->dataSize()).A("\n") );
+   int64 top = 0;
+   while( (depth == 0 && top < ctx->dataSize()) || (depth > 0 && top < depth ) )
+   {
+      Item* item = &ctx->opcodeParam(top);
+      Class* cls = 0;
+      void* data = 0;
+      item->forceClassInst(cls, data);
+
+      String temp;
+      cls->describe(data, temp, 3, 128);
+
+      wr.write( String("*: ").N(top).A(": ").A(temp).A("\n") );
+      ++top;
+   }
+}
+
+void Debugger::displayDyns( TextWriter& wr, VMContext* ctx, int64 depth )
+{
+   wr.write( String("*: Dyns stack size ").N((int64)ctx->dynsDepth()).A("\n") );
+   int64 top = 0;
+   while( (depth == 0 && top < ctx->dynsDepth()) || (depth > 0 && top < depth ) )
+   {
+      VMContext::DynsData* dd = ctx->dynsAt(top);
+      Item* item = dd->m_value;
+      Class* cls = 0;
+      void* data = 0;
+      item->forceClassInst(cls, data);
+
+      String temp;
+      cls->describe(data, temp, 3, 128);
+
+      wr.write( String("*: ").N(top).A(": ").A(dd->m_sym->name()).A("=(").H((int64)item,true).A(") ").A(temp).A("\n") );
+      ++top;
+   }
+}
+
+
+void Debugger::displayCode( TextWriter& wr, VMContext* ctx, int64 depth )
+{
+   wr.write( String("*: Code stack size ").N((int64)ctx->codeDepth()).A("\n") );
+   int64 top = 0;
+   while( (depth == 0 && top < ctx->codeDepth()) || (depth > 0 && top < depth ) )
+   {
+      CodeFrame* cf = ctx->codeAt(top);
+      String temp;
+      cf->m_step->describeTo(temp);
+      wr.write( String("*: ").N(top).A(": ").A(temp).A("(").N(cf->m_seqId).A(")\n") );
+      ++top;
+   }
+}
+
+void Debugger::displayCall( TextWriter& wr, VMContext* ctx, int64 depth )
+{
+   wr.write( String("*: Call stack size ").N((int64)ctx->callDepth()).A("\n") );
+   int64 top = 0;
+   while( (depth == 0 && top < ctx->callDepth()) || (depth > 0 && top < depth ) )
+   {
+      CallFrame* cf = &ctx->callerFrame(top);
+      wr.write( String("*: ").N(top).A(": ").A(cf->m_function->fullName()).A("(").A(cf->m_function->locate()).A(")\n") );
+      ++top;
+   }
+}
+
 
 }
 

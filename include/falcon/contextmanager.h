@@ -81,6 +81,9 @@ public:
    /** Main loop of the context manager agent. */
    virtual void* run();
 
+   /** Called when a context has been registered with the collector and is ready to go */
+   void onContextReady(VMContext* ctx);
+
    /** Launches the manager thread. */
    bool start();
 

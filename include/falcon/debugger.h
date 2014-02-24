@@ -44,6 +44,11 @@ public:
    void printCode( TextWriter& wr, VMContext* ctx );
    void printLoc( TextWriter& wr, VMContext* ctx );
 
+   void displayStack( TextWriter& wr, VMContext* ctx, int64 depth );
+   void displayDyns( TextWriter& wr, VMContext* ctx, int64 depth );
+   void displayCode( TextWriter& wr, VMContext* ctx, int64 depth );
+   void displayCall( TextWriter& wr, VMContext* ctx, int64 depth );
+
 private:
    PStep* m_stepPostEval;
    class PStepPostEval;

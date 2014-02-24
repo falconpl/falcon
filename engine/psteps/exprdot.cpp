@@ -97,17 +97,7 @@ void ExprDot::apply_( const PStep* ps, VMContext* ctx )
    //acquire the class
    ctx->topData().forceClassInst(cls, self);
    // anyhow we're done.
-   //FALCON_POPCODE_CONDITIONAL( ctx, ps, cls->op_getProperty(ctx, self, prop ));
-
-   try {
-      ctx->popCode();
-      cls->op_getProperty(ctx, self, prop );
-   }
-   catch(...)
-   {
-      ctx->pushCode(ps);
-      throw;
-   }
+   FALCON_POPCODE_CONDITIONAL( ctx, ps, cls->op_getProperty(ctx, self, prop ));
 }
 
 

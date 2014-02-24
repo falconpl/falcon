@@ -55,29 +55,29 @@ inline void trace_dummyfunc( const char*, const void* )
 #define SRC __FILE__
 #endif
 
-#define TRACE_ON()  _falcon_trace_fp = fopen( "falcon.trace", "w" ); _falcon_trace_level = 3;
-#define TRACE_ON_FILE( _fname )  _falcon_trace_fp = fopen( _fname, "w" ); _falcon_trace_level = 3;
-#define TRACE_ON_LEVEL( _LVL )  _falcon_trace_fp = fopen( "falcon.trace", "w" ); _falcon_trace_level = _LVL;
-#define TRACE_ON_FILE_LEVEL( _fname, _LVL )  _falcon_trace_fp = fopen( _fname, "w" ); _falcon_trace_level = _LVL;
-#define TRACE_OFF  fclose(_falcon_trace_fp);  _falcon_trace_fp = 0;
-#define TRACE_SET_LEVEL( _LVL ) _falcon_trace_level = _LVL;
+#define TRACE_ON()  {_falcon_trace_fp = fopen( "falcon.trace", "w" ); _falcon_trace_level = 3;}
+#define TRACE_ON_FILE( _fname )  {_falcon_trace_fp = fopen( _fname, "w" ); _falcon_trace_level = 3;}
+#define TRACE_ON_LEVEL( _LVL )  {_falcon_trace_fp = fopen( "falcon.trace", "w" ); _falcon_trace_level = _LVL;}
+#define TRACE_ON_FILE_LEVEL( _fname, _LVL ) { _falcon_trace_fp = fopen( _fname, "w" ); _falcon_trace_level = _LVL;}
+#define TRACE_OFF  fclose(_falcon_trace_fp);  {_falcon_trace_fp = 0;}
+#define TRACE_SET_LEVEL( _LVL ) {_falcon_trace_level = _LVL;}
 #define TRACE_GET_LEVEL() (_falcon_trace_level)
 
 
-#define MESSAGE( fmt ) if( _falcon_trace_fp != 0 ) fprintf( _falcon_trace_fp, "%s:%d: " fmt "\n", SRC, __LINE__ ); fflush(_falcon_trace_fp);
-#define MESSAGE1( fmt ) if( _falcon_trace_level >= 1 && _falcon_trace_fp != 0 ) fprintf( _falcon_trace_fp, "%s:%d: " fmt "\n", SRC, __LINE__ ); fflush(_falcon_trace_fp);
-#define MESSAGE2( fmt ) if( _falcon_trace_level >= 2 && _falcon_trace_fp != 0 ) fprintf( _falcon_trace_fp, "%s:%d: " fmt "\n", SRC, __LINE__ ); fflush(_falcon_trace_fp);
-#define MESSAGE3( fmt ) if( _falcon_trace_level >= 3 && _falcon_trace_fp != 0 ) fprintf( _falcon_trace_fp, "%s:%d: " fmt "\n", SRC, __LINE__ ); fflush(_falcon_trace_fp);
+#define MESSAGE( fmt ) {if( _falcon_trace_fp != 0 ) fprintf( _falcon_trace_fp, "%s:%d: " fmt "\n", SRC, __LINE__ ); fflush(_falcon_trace_fp);}
+#define MESSAGE1( fmt ) {if( _falcon_trace_level >= 1 && _falcon_trace_fp != 0 ) fprintf( _falcon_trace_fp, "%s:%d: " fmt "\n", SRC, __LINE__ ); fflush(_falcon_trace_fp);}
+#define MESSAGE2( fmt ) {if( _falcon_trace_level >= 2 && _falcon_trace_fp != 0 ) fprintf( _falcon_trace_fp, "%s:%d: " fmt "\n", SRC, __LINE__ ); fflush(_falcon_trace_fp);}
+#define MESSAGE3( fmt ) {if( _falcon_trace_level >= 3 && _falcon_trace_fp != 0 ) fprintf( _falcon_trace_fp, "%s:%d: " fmt "\n", SRC, __LINE__ ); fflush(_falcon_trace_fp);}
 
-#define TRACE( fmt, ... ) if( _falcon_trace_fp != 0 ) fprintf( _falcon_trace_fp, "%s:%d: " fmt "\n", SRC, __LINE__, __VA_ARGS__ ); fflush(_falcon_trace_fp); fflush(_falcon_trace_fp);
-#define TRACE1( fmt, ... ) if( _falcon_trace_level >= 1 && _falcon_trace_fp != 0 ) fprintf( _falcon_trace_fp, "%s:%d: " fmt "\n", SRC, __LINE__, __VA_ARGS__ ); fflush(_falcon_trace_fp);
-#define TRACE2( fmt, ... ) if( _falcon_trace_level >= 2 && _falcon_trace_fp != 0 ) fprintf( _falcon_trace_fp, "%s:%d: " fmt "\n", SRC, __LINE__, __VA_ARGS__ ); fflush(_falcon_trace_fp);
-#define TRACE3( fmt, ... ) if( _falcon_trace_level >= 3 && _falcon_trace_fp != 0 ) fprintf( _falcon_trace_fp, "%s:%d: " fmt "\n", SRC, __LINE__, __VA_ARGS__ ); fflush(_falcon_trace_fp);
+#define TRACE( fmt, ... ) {if( _falcon_trace_fp != 0 ) fprintf( _falcon_trace_fp, "%s:%d: " fmt "\n", SRC, __LINE__, __VA_ARGS__ ); fflush(_falcon_trace_fp); fflush(_falcon_trace_fp);}
+#define TRACE1( fmt, ... ) {if( _falcon_trace_level >= 1 && _falcon_trace_fp != 0 ) fprintf( _falcon_trace_fp, "%s:%d: " fmt "\n", SRC, __LINE__, __VA_ARGS__ ); fflush(_falcon_trace_fp);}
+#define TRACE2( fmt, ... ) {if( _falcon_trace_level >= 2 && _falcon_trace_fp != 0 ) fprintf( _falcon_trace_fp, "%s:%d: " fmt "\n", SRC, __LINE__, __VA_ARGS__ ); fflush(_falcon_trace_fp);}
+#define TRACE3( fmt, ... ) {if( _falcon_trace_level >= 3 && _falcon_trace_fp != 0 ) fprintf( _falcon_trace_fp, "%s:%d: " fmt "\n", SRC, __LINE__, __VA_ARGS__ ); fflush(_falcon_trace_fp);}
 
-#define TRACEVAR( type, var ) if( _falcon_trace_fp != 0 ) fprintf( _falcon_trace_fp, "%s:%d: %s=%" type "\n", SRC, __LINE__, #var, var ); fflush(_falcon_trace_fp);
-#define TRACEVAR1( type, var ) if( _falcon_trace_level >= 1 && _falcon_trace_fp != 0 ) fprintf( _falcon_trace_fp, "%s:%d: %s=%" type "\n", SRC, __LINE__, #var, var ); fflush(_falcon_trace_fp);
-#define TRACEVAR2( type, var ) if( _falcon_trace_level >= 2 && _falcon_trace_fp != 0 ) fprintf( _falcon_trace_fp, "%s:%d: %s=%" type "\n", SRC, __LINE__, #var, var ); fflush(_falcon_trace_fp);
-#define TRACEVAR3( type, var ) if( _falcon_trace_level >= 3 &&_falcon_trace_fp != 0 ) fprintf( _falcon_trace_fp, "%s:%d: %s=%" type "\n", SRC, __LINE__, #var, var ); fflush(_falcon_trace_fp);
+#define TRACEVAR( type, var ) {if( _falcon_trace_fp != 0 ) fprintf( _falcon_trace_fp, "%s:%d: %s=%" type "\n", SRC, __LINE__, #var, var ); fflush(_falcon_trace_fp);}
+#define TRACEVAR1( type, var ) {if( _falcon_trace_level >= 1 && _falcon_trace_fp != 0 ) fprintf( _falcon_trace_fp, "%s:%d: %s=%" type "\n", SRC, __LINE__, #var, var ); fflush(_falcon_trace_fp);}
+#define TRACEVAR2( type, var ) {if( _falcon_trace_level >= 2 && _falcon_trace_fp != 0 ) fprintf( _falcon_trace_fp, "%s:%d: %s=%" type "\n", SRC, __LINE__, #var, var ); fflush(_falcon_trace_fp);}
+#define TRACEVAR3( type, var ) {if( _falcon_trace_level >= 3 &&_falcon_trace_fp != 0 ) fprintf( _falcon_trace_fp, "%s:%d: %s=%" type "\n", SRC, __LINE__, #var, var ); fflush(_falcon_trace_fp);}
 
 #define DEBUG_ONLY(x) x
 

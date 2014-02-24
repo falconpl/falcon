@@ -543,6 +543,7 @@ public:
     *
     */
    inline long codeDepth() const { return (long)m_codeStack.depth(); }
+   CodeFrame* codeAt( long pos ) const { return m_codeStack.m_top - pos; }
 
    /** Push some code to be run in the execution stack.
     *
@@ -1664,9 +1665,6 @@ public:
 
    void caller( const PStep* ps ) { m_caller = ps; }
 
-   GCToken* addNewToken( GCToken* token );
-   void getNewTokens( GCToken* &first, GCToken* &last );
-
    /** Stack events during critical sections for later honoring.
     *
     * When a processor is asked to swap or timeslice out a context,
@@ -1695,7 +1693,10 @@ public:
     */
    void setStatus( int status );
 
-protected:
+   /**
+    * Depth of the dynamic symbol stack
+    */
+   inline long dynsDepth() const { return m_dynsStack.depth(); }
 
    /** Class holding the dynamic symbol information on a stack. */
    class DynsData {
@@ -1722,6 +1723,10 @@ protected:
 
       ~DynsData() {}
    };
+
+   inline DynsData* dynsAt(long pos) const { return m_dynsStack.m_top - pos; }
+
+protected:
 
    /** Class holding registered finally points */
    class FinallyData {
@@ -1887,7 +1892,6 @@ protected:
 
    virtual ~VMContext();
 private:
-   GCToken* m_newTokens;
    ItemStack *m_itemStack;
 
    FALCON_REFERENCECOUNT_DECLARE_INCDEC(VMContext)

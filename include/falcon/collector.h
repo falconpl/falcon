@@ -270,27 +270,27 @@ public:
       This sets the current generation of the VM so that it is unique
       among the currently living VMs.
    */
-   void registerContext( VMContext *vm );
+   void registerContext( VMContext *ctx, Event* signalWhenDone = 0 );
 
    /** Called before destruction of a VM.
       Takes also care to disengage the VM from idle VM list.
    */
-   void unregisterContext( VMContext *vm );
+   void unregisterContext( VMContext *ctx );
 
-   void onContextMarked( VMContext* vm );
 
+   /*
    class ContextEnumerator {
    public:
       virtual ~ContextEnumerator(){}
       virtual void operator()(VMContext* ctx) = 0;
    };
    void enumerateContexts( ContextEnumerator& ectx );
-
+*/
 
    /** Offers a context for inspection.
-      \return true if the context is accepted and going to be inspected, false otherwise.
+      \param ctx The context to be inspected.
    */
-   bool offerContext( VMContext* vm );
+   void offerContext( VMContext* ctx );
 
    /** Starts the parallel garbage collector. */
    void start();
@@ -345,11 +345,6 @@ public:
     */
    void performGCOnShared( Shared *shared );
 
-   /**
-    * Used internally
-    */
-   void signalSharedOnSweep(  Shared *shared );
-
    /** Stores an entity in the garbage collector.
 
     \note Use the macro FALCON_GC_STORE to transparently allow selecting
@@ -371,7 +366,6 @@ public:
      @return the token associated with this storage.
     */
    GCToken* store( const Class* cls, void* data );
-   GCToken* store_in( VMContext* ctx, const Class* cls, void* data );
 
    /** Stores an entity in the garbage collector and immediately locks it.
 
@@ -416,9 +410,23 @@ public:
     * Use a negative number to remove allocated memory.
     */
    void accountMemory( int64 memory );
+   /**
+    * Current count of memory stored in the GC.
+    *
+    * This is estimated using the Class memory size information callback
+    * to determine the size of instance as they're put in the GC, or
+    * as the mark loops proceed.
+    */
    int64 storedMemory() const;
+   /**
+    * Current count of items stored in the GC.
+    */
    int64 storedItems() const;
    void stored( int64& memory, int64& items ) const;
+
+   int64 activeMemory() const;
+   int64 activeItems() const;
+   void active( int64& memory, int64& items ) const;
 
    int64 sweepLoops( bool clear ) const;
    int64 markLoops( bool clear ) const;
@@ -450,25 +458,13 @@ public:
     */
    void status( t_status s ) { m_status = s; }
 
-   /** Ask the contexts to present themselves ASAP for inspection.
-    * \param all if true send the request to all the active contexts.
-    *
-    * This method sends a request to the oldest context, or eventually
-    * to all the contexts, to relinquish execution as soon as possible and
-    * present themselves for inspection.
-    *
-    * For any context to be actually inspected, it's necessary that the
-    * garbage collector is enabled and at least in yellow state.
-    *
-    * When the oldest context (the one that was marked since more time)
-    * presents itself for inspection, a sweep (collection) cycle is
-    * started as well.
+   /** Check now if there is the need for a collection.
     *
     * Contrarily to performGC, mark/sweep is not forced and it is not
     * granted that the action, even in yellow or red state, collects
     * all the available memory.
     */
-   void suggestGC( bool all = false );
+   void suggestGC();
 
    /** Callback the onTimeout method of the active algorithm after given time.
     * \param 0 to be called back after the given timeout, or 0 to disable.
@@ -494,7 +490,6 @@ public:
 
     */
    GCToken* H_store( const Class* cls, void* data, const String& file, int line );
-   GCToken* H_store_in( VMContext* ctx, const Class* cls, void* data, const String& file, int line );
 
   /** DebugVersion of storeLocked().
 
@@ -648,19 +643,67 @@ public:
 #endif
 
 protected:
+   class Cmd;
+
    /** Marker thread. */
    class FALCON_DYN_CLASS Marker: public Runnable {
    public:
+      typedef enum {
+         e_state_idle,
+         e_state_disable,
+         e_state_inspecting,
+         e_state_marking,
+         e_state_sweeping,
+         e_state_terminated
+      }
+      t_state;
+
+      typedef enum {
+         e_mark_justmark,
+         e_mark_check,
+         e_mark_full
+      }
+      t_mark_mode;
+
       Marker( Collector* master ):
-         m_master(master)
+         m_master(master),
+         m_state( e_state_idle ),
+         m_mark_mode( e_mark_justmark ),
+         m_bPendingDisable(false)
       {}
       virtual ~Marker(){}
 
       virtual void* run();
-      void onMarked( VMContext* ctx );
+
+      t_state state() const { return m_state; }
 
    private:
       Collector* m_master;
+      t_state m_state;
+      t_mark_mode m_mark_mode;
+      bool m_bPendingDisable;
+
+      void performRegister(VMContext* m_ctx);
+      void performUnregister(VMContext* m_ctx);
+      void performOffer( VMContext* ctx);
+      bool performMark( Cmd* cmd );
+      bool performFull( Cmd* cmd );
+      bool performCheck( Cmd* cmd );
+      void performTerminate();
+
+      bool performStartMark(Cmd* cmd);
+      void performSweepComplete();
+
+      void performEnable();
+      void performDisable();
+
+      void goToIdle();
+
+      void rollover();
+      void releaseContexts();
+
+      void markLoop();
+      void askMark();
    };
 
    /** Timer thread.
@@ -684,7 +727,8 @@ protected:
    class FALCON_DYN_CLASS Sweeper: public Runnable {
    public:
       Sweeper( Collector* master ):
-         m_master(master)
+         m_master(master),
+         m_lastSweepMark(0)
       {}
       virtual ~Sweeper(){}
 
@@ -692,7 +736,11 @@ protected:
 
    private:
       void sweep( uint32 lastGen );
+
+      void performFull();
+      void performTerminate();
       Collector* m_master;
+      uint32 m_lastSweepMark;
    };
 
    friend class Marker;
@@ -717,7 +765,6 @@ protected:
    /** The marker is in charge of marking incoming contexts */
    SysThread *m_thMarker;
    Marker m_marker;
-   Event m_markerWork;
 
    /** Timer thread, used for periodic memory checks by algorithms. */
    SysThread *m_thTimer;
@@ -729,9 +776,6 @@ protected:
    /** The sweeper thread is in charge of killing unused memory */
    SysThread *m_thSweeper;
    Sweeper m_sweeper;
-   Event m_sweeperWork;
-   /** Managed by m_mtxRequest */
-   bool m_sweepPerformed;
 
    /** The threads are stopped by turning this to off. */
    atomic_int m_aLive;
@@ -743,9 +787,6 @@ protected:
    CollectorAlgorithm* m_curAlgoMode;
    int m_curAlgoID;
 
-   Mutex m_mtxRequest;
-   Event m_eGCPerformed;
-   bool m_bRequestSweep;
 
    /** Mutex for locked items ring. */
    Mutex m_mtx_lockitem;
@@ -764,7 +805,6 @@ protected:
    void onSweepComplete( int64 freedMem, int64 freedItems );
 
    void clearRing( GCToken *ringRoot );
-   void rollover();
 
    void markLocked( uint32 mark );
    void disposeLock( GCLock* lock );
@@ -787,9 +827,8 @@ protected:
    // so they are locked with _p->m_mtx_context
 
    // mark currently used in mark loop, topmost mark
+   Mutex m_mtx_currentMark;
    uint32 m_currentMark;
-   // oldest mark known to be used
-   uint32 m_oldestMark;
 
 private:
 
@@ -799,9 +838,13 @@ private:
    void onMark( void* data );
    void onDestroy( void* data );
 
+   void store_internal( const Class* cls, void* data, GCToken* token );
+
    mutable Mutex m_mtx_accountmem;
    int64 m_storedMem;
    int64 m_storedItems;
+   int64 m_aliveItems;
+   int64 m_aliveMem;
 
    bool m_bEnabled;
    t_status m_status;

@@ -84,7 +84,65 @@ void Pool::release( Poolable* data )
       delete data;
    }   
 }
-   
+
+
+PoolFIFO::PoolFIFO():
+         m_head(0),
+         m_tail(0)
+{}
+
+
+void PoolFIFO::enqueue(Poolable* element)
+{
+   m_mtx.lock();
+   if ( m_head == 0 )
+   {
+      m_head = element;
+   }
+   else {
+      m_tail->m_next = element;
+   }
+   m_tail = element;
+   m_mtx.unlock();
+
+   element->m_next = 0;
+}
+
+Poolable* PoolFIFO::dequeue()
+{
+   Poolable* ret;
+
+   m_mtx.lock();
+   if ( m_head != 0 )
+   {
+      ret = m_head;
+      m_head = m_head->m_next;
+      // leave tail dangling, we ignore it.
+   }
+   else {
+      ret = 0;
+   }
+   m_mtx.unlock();
+
+   return ret;
+}
+
+void PoolFIFO::clear()
+{
+   m_mtx.lock();
+   Poolable* p = m_head;
+   m_head = m_tail = 0;
+   m_mtx.unlock();
+
+   while( p != 0 )
+   {
+      Poolable* element = p;
+      p = p->m_next;
+      element->vdispose();
+   }
+
+}
+
 }
 
 /* end of pool.cpp */
