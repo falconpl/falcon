@@ -25,6 +25,7 @@
 #include <falcon/vm.h>
 #include <falcon/vmcontext.h>
 #include <falcon/sys.h>
+#include <falcon/stdhandlers.h>
 
 #include <falcon/cm/siter.h>
 #include <falcon/itemarray.h>
@@ -135,8 +136,9 @@ FALCON_DEFINE_FUNCTION_P1(seconds)
    @brief Terminates the current process.
    @optparam value The process termination value.
 
-   This function terminates the current process as soon
-   as possible.
+   This function terminates the current virtual machine process as soon
+   as possible. This doesn't force the underlying O/S into terminating
+   the host process.
 */
 
 FALCON_DEFINE_FUNCTION_P(quit)
@@ -1208,6 +1210,7 @@ FALCON_DEFINE_FUNCTION_P(firstOf)
    // couldn't find it.
    ctx->returnFrame();
 }
+
 
 // NOTICE: for 1.0 alpha
 // left currently undocumented.

@@ -797,6 +797,17 @@ public:
       atomicSet(lockId, 0);
    }
 
+   template< class T_ >
+   T_* castInst(Class* baseClass)
+   {
+      fassert(isUser());
+
+      Class* cls = 0;
+      void* data = 0;
+      this->asClassInst(cls,data);
+      T_* item = static_cast<T_*>(cls->getParentData(baseClass, data));
+      return item;
+   }
 };
 
 }

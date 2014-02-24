@@ -57,26 +57,14 @@ namespace CGC {
 /*#
  @method perform GC
  @brief Suggests or forces a full garbage collecting.
- @optparam force True to ask for a total garbage collection.
  @optparam wait True to wait until the collection is complete.
 
- If @b force is false, then the current context only is scheduled for
- inspection as soon as possible. This can cause a delay in the
- execution of subsequent instructions. However, the calling context
- might not see the memory immediately freed, as reclaim happens
- at a later stage.
-
- If @b force is true, then all the existing contexts are marked
- for inspection, and inspected as soon as possible. If @b wait
- is also true, then the calling context stays blocked until all
+ If @b wait, then the calling context stays blocked until all
  the currently existing contexts are checked, and all the garbage
  memory is actually reclaimed.
 
- @note If @b force is false, @b wait is ignored. To see memory
- effectively reclaimed in a single agent application after this
- call, set both parameters to true nevertheless.
  */
-FALCON_DECLARE_FUNCTION( perform, "force:[B], wait:[B]" );
+FALCON_DECLARE_FUNCTION( perform, " wait:[B]" );
 
 /*#
  @method suggest GC
@@ -102,31 +90,22 @@ void Function_perform::invoke( VMContext* ctx, int32 )
 {
    static Collector* coll = Engine::instance()->collector();
 
-   Item* i_full = ctx->param(0);
-   Item* i_wait = ctx->param(1);
+   Item* i_wait = ctx->param(0);
 
-   bool full = i_full != 0 ? i_full->isTrue() : false;
    bool wait = i_wait != 0 ? i_wait->isTrue() : false;
 
-   TRACE( "ClassGC::Method_perform %s, %s", (full? "Full" : "partial"), (wait?"wait": "no wait") );
+   TRACE( "ClassGC::Method_perform %s", (wait?"wait": "no wait") );
 
-   if( full )
+   if( wait )
    {
-      if( wait != 0 )
-      {
-         Shared* sh = new Shared(&ctx->vm()->contextManager());
-         coll->performGCOnShared( sh );
-         ctx->addWait(sh);
-         ctx->engageWait(-1);
-      }
-      else
-      {
-         coll->performGC(false);
-      }
+      Shared* sh = new Shared(&ctx->vm()->contextManager());
+      coll->performGCOnShared( sh );
+      ctx->addWait(sh);
+      ctx->engageWait(-1);
    }
    else
    {
-      ctx->setInspectEvent();
+      coll->performGC(false);
    }
 
    ctx->returnFrame();
@@ -137,14 +116,13 @@ void Function_perform::invoke( VMContext* ctx, int32 )
 void Function_suggest::invoke( VMContext* ctx, int32 )
 {
    static Collector* coll = Engine::instance()->collector();
-
+/*
    Item* i_all = ctx->param(0);
-
    bool all = i_all != 0 ? i_all->isTrue() : false;
-
    TRACE( "ClassGC::Method_suggest %s", (all? "Full" : "partial") );
-
-   coll->suggestGC(all);
+*/
+   MESSAGE( "ClassGC::Method_suggest");
+   coll->suggestGC();
    ctx->returnFrame();
 }
 
@@ -164,39 +142,6 @@ void Function_reset::invoke( VMContext* ctx, int32 )
 //====================================================
 // Properties.
 //
-
-static void get_contexts( const Class* owner, const String&, void*, Item& value )
-{
-   // get the simple representation of the contexts.
-   static Class* cls = owner->module()->getClass("#VMContext");
-   fassert( cls != 0 );
-   static Collector* coll = Engine::instance()->collector();
-
-   ItemArray* res = new ItemArray;
-
-   class Rator: public Collector::ContextEnumerator
-   {
-   public:
-      Rator( ItemArray* array ):
-         m_array(array)
-      {}
-
-      virtual ~Rator(){}
-
-      virtual void operator()(VMContext* ctx)
-      {
-         ctx->incref();
-         m_array->append( FALCON_GC_STORE( cls, ctx ) );
-      }
-
-   private:
-      ItemArray* m_array;
-   }
-   rator(res);
-
-   coll->enumerateContexts(rator);
-   value = FALCON_GC_HANDLE(res);
-}
 
 
 static void get_memory( const Class*, const String&, void*, Item& value )
@@ -332,7 +277,6 @@ ClassGC::ClassGC():
    // we don't need an object
    m_bIsFlatInstance = true;
 
-   addProperty( "contexts", &get_contexts );
    addProperty( "memory", &get_memory );
    addProperty( "items", &get_items );
    addProperty( "status", &get_status, &set_status );

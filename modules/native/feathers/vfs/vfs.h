@@ -25,17 +25,6 @@ class VFSModule: public Module
 public:
    VFSModule();
    virtual ~VFSModule();
-   
-   static Falcon::Error* onURIResolved( const Module* sourceModule, const String& sourceName, Module* targetModule, const Item& value, const Variable* targetVar );
-   static Falcon::Error* onStreamResolved( const Module* sourceModule, const String& sourceName, Module* targetModule, const Item& value, const Variable* targetVar );
-  
-   Class* uriClass() const { return m_uriClass; }
-   Class* streamClass() const { return m_streamClass; }
-   
-   virtual void onLinkComplete( VMContext* ctx );
-private:
-   Class* m_uriClass;
-   Class* m_streamClass;
 };
 
 }

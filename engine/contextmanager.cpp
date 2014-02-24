@@ -197,6 +197,11 @@ bool ContextManager::start()
    return true;
 }
 
+void ContextManager::onContextReady( VMContext* ctx )
+{
+   TRACE( "ContextManager::onContextReady -- ready context %p(%d:%d)", ctx, ctx->process()->id(), ctx->id() );
+   readyContexts().add( ctx );
+}
 
 void ContextManager::onContextDescheduled( VMContext* ctx )
 {
@@ -425,16 +430,16 @@ void ContextManager::manageAwakenContext( VMContext* ctx )
    // but if it's non-zero, it might somewhere being in bring of getting asleep.
    if( ctx->nextSchedule() != 0 && removeSleepingContext( ctx ) )
    {
-      if( ctx->isTerminated() )
+      if( ctx->markedForInspection() ) {
+         Engine::collector()->offerContext(ctx);
+         // the collector took it.
+         MESSAGE( "ContextManager::manageAwakenContext - accepted by the collector"  );
+      }
+      else if( ctx->isTerminated() )
       {
          TRACE( "manageAwakenContext - Context %p(%d) terminated.", ctx, ctx->id() );
          ctx->onTerminated();
          ctx->decref();
-      }
-      else if( ! Engine::collector()->offerContext(ctx) )
-      {
-         TRACE( "manageAwakenContext - Collector didn't accept %p(%d), putting back to sleep.", ctx, ctx->id() );
-         manageDesceduledContext(ctx);
       }
    }
    else {
@@ -481,12 +486,11 @@ void ContextManager::manageDesceduledContext( VMContext* ctx )
    }
 
    // a new context is de-scheduled.
-   if( ctx->isInspectible() ) {
-      if( Engine::collector()->offerContext(ctx) ) {
-         // the collector took it.
-         MESSAGE( "ContextManager::manageDesceduledContext - accepted by the collector"  );
-         return;
-      }
+   if( ctx->markedForInspection() ) {
+      Engine::collector()->offerContext(ctx);
+      // the collector took it.
+      MESSAGE( "ContextManager::manageDesceduledContext - accepted by the collector"  );
+      return;
    }
 
    // Check if a shared resource was readied during the idle time.

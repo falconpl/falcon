@@ -24,8 +24,6 @@
 #include <falcon/modspace.h>
 #include <falcon/stdhandlers.h>
 
-#include <falcon/module.h>
-#include <falcon/closure.h>
 
 namespace Falcon {
 

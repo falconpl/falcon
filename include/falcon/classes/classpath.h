@@ -25,8 +25,6 @@ namespace Falcon {
 class DataWriter;
 class VMContext;
 
-namespace Ext {
-
 
 class ClassPath: public Class
 {
@@ -51,7 +49,6 @@ public:
    
 };
 
-}
 }
 
 #endif	/* FALCON_CORE_TOSTRING_H */

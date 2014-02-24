@@ -27,8 +27,6 @@
 #include <falcon/cm/include.h>
 #include <falcon/cm/inspect.h>
 #include <falcon/cm/print.h>
-#include <falcon/cm/uri.h>
-#include <falcon/cm/path.h>
 #include <falcon/cm/gc.h>
 #include <falcon/cm/generator.h>
 #include <falcon/cm/log.h>
@@ -89,14 +87,13 @@ CoreModule::CoreModule():
       << new Ext::Function_cascade
       << new Ext::Function_perform
       << new Ext::Function_ffirstOf
+
       << ffor
 
       // Standard classes
       << new Ext::ClassBarrier
       << new Ext::ClassEvent
       << new Ext::ClassFence
-      << new Ext::ClassURI
-      << new Ext::ClassPath
       << new Ext::ClassParallel
       << new Ext::ClassSIter
       << new Ext::ClassMutex

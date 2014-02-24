@@ -80,7 +80,6 @@ VMContext::VMContext( Process* prc, ContextGroup* grp ):
    m_catchBlock(0),
    m_id(0),
    m_next_schedule(0),
-   m_inspectible(true),
    m_bInspectMark(false),
    m_bSleeping(false),
    m_events(0),
@@ -89,10 +88,6 @@ VMContext::VMContext( Process* prc, ContextGroup* grp ):
    m_process(prc),
    m_caller(0)
 {
-   m_newTokens = new GCToken(0,0);
-   m_newTokens->m_next = m_newTokens;
-   m_newTokens->m_prev = m_newTokens;
-
    m_dynsStack.init();
    m_codeStack.init();
    m_callStack.init();
@@ -109,8 +104,19 @@ VMContext::VMContext( Process* prc, ContextGroup* grp ):
 
    pushBaseElements();
 
-   // ready to go
-   Engine::collector()->registerContext(this);
+   // Declare there's a new kid on the block -- and tell the GC to wait for us to be ready.
+   // At the moment, we'll wait for the context to be registered by the garbage collector;
+   // This prevents the GC to kick in while the context is being prepared, and the code
+   // creating the context to create new GC-sensible data while the GC doesn't know
+   // that the context is being created.
+
+   // An ideal solution would be that of having a separate garbage collection ring where to
+   // store gc-sensible data prior the context starts, and to relinquish that data to the
+   // GC at start.
+   Event cb;
+   Engine::collector()->registerContext(this, &cb);
+   cb.wait(-1);
+
 }
 
 
@@ -120,15 +126,6 @@ VMContext::~VMContext()
    abortWaits();
    releaseAcquired();
    clearSignaledResource();
-
-   m_newTokens->m_prev->m_next = 0;
-   GCToken* token = m_newTokens;
-   while (token != 0 )
-   {
-      GCToken* old = token;
-      token = token->m_next;
-      delete old;
-   }
 
    if( m_lastRaised != 0 ) m_lastRaised->decref();
 }
@@ -150,7 +147,6 @@ void VMContext::reset()
    clearSignaledResource();
 
    m_catchBlock = 0;
-   m_inspectible = true;
    m_bInspectMark = false;
    m_bSleeping = false;
 
@@ -1350,6 +1346,7 @@ void VMContext::callInternal( const Item& item, int nparams )
    cls->op_call(this, nparams, data );
 }
 
+
 void VMContext::callInternal( Function* function, int nparams, const Item& self )
 {
    TRACE( "Calling method %s.%s -- call frame code:%p, data:%p, call:%p",
@@ -2142,7 +2139,9 @@ void VMContext::contextualize( Error* error, bool force )
 
    if( error->line() == 0 || force )
    {
-      error->line(currentCode().m_step->sr().line());
+      CodeFrame* top = m_codeStack.m_top;
+      int l = top->m_step->sr().line();
+      error->line(l);
    }
 
    if( error->mantra().empty() || force)
@@ -2278,8 +2277,6 @@ void VMContext::swapOut()
 
 void VMContext::setInspectEvent()
 {
-   m_inspectible = true;  // not really necessary
-
    m_mtx_sleep.lock();
    m_bInspectMark = true;
    if( m_bSleeping ) {
@@ -2331,38 +2328,6 @@ void VMContext::onStackRebased( Item* oldBase )
       ++dt;
    }
 }
-
-GCToken* VMContext::addNewToken( GCToken* token )
-{
-   token->m_next = m_newTokens->m_next;
-   token->m_prev = m_newTokens;
-
-   m_newTokens->m_next->m_prev = token;
-   m_newTokens->m_next = token;
-   return token;
-}
-
-
-void VMContext::getNewTokens( GCToken* &first, GCToken* &last )
-{
-   if( m_newTokens->m_next == m_newTokens )
-   {
-      first = 0;
-      last = 0;
-      return;
-   }
-
-   first = m_newTokens->m_next;
-   last = m_newTokens->m_prev;
-
-   m_newTokens->m_next = m_newTokens;
-   m_newTokens->m_prev = m_newTokens;
-
-   // Not necessary
-   first->m_prev = 0;
-   last->m_next = 0;
-}
-
 
 int VMContext::getStatus()
 {

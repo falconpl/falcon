@@ -1219,8 +1219,8 @@ Parsing::TokenInstance* SourceLexer::nextToken()
 
 bool SourceLexer::eatingEOL()
 {
-   return m_stringML || (m_hadOperator && ! m_hadImport) ||
-            (!_p->m_pars.empty() && _p->m_pars.back() == Private::e_pt_round);
+   return m_stringML || (m_hadOperator && ! m_hadImport)
+            || (!_p->m_pars.empty() && _p->m_pars.back() == Private::e_pt_round);
 }
 
 void SourceLexer::resetState()

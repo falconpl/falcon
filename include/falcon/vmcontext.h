@@ -543,6 +543,7 @@ public:
     *
     */
    inline long codeDepth() const { return (long)m_codeStack.depth(); }
+   CodeFrame* codeAt( long pos ) const { return m_codeStack.m_top - pos; }
 
    /** Push some code to be run in the execution stack.
     *
@@ -1331,19 +1332,6 @@ public:
     */
    void awake();
 
-   /** True when this context should be offered to the GC for inspection.
-    * When a context is inspected, this is turned to false until the
-    * context reenters a processor (and so, becomes alive for a while again).
-    *
-    * This avoids re-inspecting a context soon after is inspection if it is
-    * just put to sleep and doesn't become active prior being requested for
-    * re-inspection.
-    */
-   bool isInspectible() const { return m_inspectible; }
-
-   void setInspectible( bool mode ) { m_inspectible = mode; }
-
-
    Error* thrownError() const { return m_lastRaised; }
    Error* detachThrownError() { Error* e = m_lastRaised; m_lastRaised =0; return e; }
 
@@ -1664,9 +1652,6 @@ public:
 
    void caller( const PStep* ps ) { m_caller = ps; }
 
-   GCToken* addNewToken( GCToken* token );
-   void getNewTokens( GCToken* &first, GCToken* &last );
-
    /** Stack events during critical sections for later honoring.
     *
     * When a processor is asked to swap or timeslice out a context,
@@ -1695,7 +1680,10 @@ public:
     */
    void setStatus( int status );
 
-protected:
+   /**
+    * Depth of the dynamic symbol stack
+    */
+   inline long dynsDepth() const { return m_dynsStack.depth(); }
 
    /** Class holding the dynamic symbol information on a stack. */
    class DynsData {
@@ -1722,6 +1710,10 @@ protected:
 
       ~DynsData() {}
    };
+
+   inline DynsData* dynsAt(long pos) const { return m_dynsStack.m_top - pos; }
+
+protected:
 
    /** Class holding registered finally points */
    class FinallyData {
@@ -1860,7 +1852,6 @@ protected:
    uint32 m_id;
    uint32 m_currentMark;
    int64 m_next_schedule;
-   bool m_inspectible;
    bool m_bInspectMark;
    bool m_bSleeping;
    mutable Mutex m_mtx_sleep;
@@ -1887,7 +1878,6 @@ protected:
 
    virtual ~VMContext();
 private:
-   GCToken* m_newTokens;
    ItemStack *m_itemStack;
 
    FALCON_REFERENCECOUNT_DECLARE_INCDEC(VMContext)
@@ -1900,6 +1890,16 @@ private:
 };
 
 }
+
+#define FALCON_POPCODE_CONDITIONAL_WITH_SEQID( __ctx__, __pstep__, __testcode__ ) \
+   {int __seqID__= __ctx__->currentCode().m_seqId;\
+   try { __ctx__->popCode(); __testcode__; }\
+   catch(...) { ctx->pushCode(__pstep__); __ctx__->currentCode().m_seqId = __seqID__; throw; }}
+
+#define FALCON_POPCODE_CONDITIONAL( __ctx__, __pstep__, __testcode__ )\
+   try {__ctx__->popCode(); __testcode__; }\
+   catch(...) { ctx->pushCode(__pstep__); throw; }
+
 
 #endif /* FALCON_VMCONTEXT_H_ */
 

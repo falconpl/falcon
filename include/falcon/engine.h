@@ -459,9 +459,6 @@ protected:
 template<typename _T>
 GCToken* FALCON_GC_HANDLE( _T data ) { return FALCON_GC_STORE(data->handler(), data); }
 
-template<typename _T>
-GCToken* FALCON_GC_HANDLE_IN( ::Falcon::VMContext *ctx, _T data ) { return FALCON_GC_STORE_IN(ctx, data->handler(), data); }
-
 
 }
 

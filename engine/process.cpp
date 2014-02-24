@@ -483,7 +483,9 @@ void Process::startContext( VMContext* ctx ) {
    // also, send the context to the manager for immediate execution.
    ctx->incref();
    ctx->setStatus(VMContext::statusReady);
-   m_vm->contextManager().readyContexts().add( ctx );
+
+   // prepare the GC to handle it. As soon as the GC is done, the context will be handled to the manager.
+   vm()->contextManager().onContextReady(ctx);
 }
 
 void Process::onContextTerminated( VMContext* ctx )

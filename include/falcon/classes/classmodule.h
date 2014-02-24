@@ -44,10 +44,6 @@ public:
    virtual void* clone( void* source ) const;
    virtual void* createInstance() const;
 
-   virtual void enumerateProperties( void*, Class::PropertyEnumerator& cb ) const;
-   virtual void enumeratePV( void* instance, Class::PVEnumerator& cb ) const;
-   virtual bool hasProperty( void*, const String& prop ) const;
-
    virtual void store( VMContext* ctx, DataWriter* stream, void* instance ) const;
    virtual void restore( VMContext* ctx, DataReader* stream ) const;
    virtual void flatten( VMContext* ctx, ItemArray& subItems, void* instance ) const;
@@ -57,67 +53,9 @@ public:
 
    virtual void gcMarkInstance( void* instance, uint32 mark ) const;
    virtual bool gcCheckInstance( void* instance, uint32 mark ) const;
-   //=============================================================
-
-   virtual bool op_init( VMContext* ctx, void* instance, int32 pcount ) const;
-   virtual void op_getProperty( VMContext* ctx, void* instance, const String& prop) const;
 
 private:
    void restoreModule( Module* mod, DataReader* stream ) const;
-
-   /*#
-    * @method getAttribute Module
-    * @brief Gets the desired attribute, if it exists.
-    * @param name The name of the required attribute
-    * @return value of the require attribute
-    * @raise Access error if the attribute is not found
-    *
-    */
-   class FALCON_DYN_CLASS GetAttributeMethod: public Function {
-   public:
-      GetAttributeMethod();
-      virtual ~GetAttributeMethod();
-      void invoke( VMContext* ctx, int32 pCount = 0 );
-   };
-
-   /*#
-    * @method setAttribute Mantra
-    * @brief Sets or deletes the desired attribute if it exists
-    * @param name The name of the required attribute
-    * @optparam value The new value for the required attribute
-    *
-    * If @b value is not given, then the attribute is removed, if it exists.
-    *
-    * If @b value is given, the value is changed or created as required.
-    * In this case, if the attribute doesn't exists, it is created.
-    */
-   class FALCON_DYN_CLASS SetAttributeMethod: public Function {
-   public:
-      SetAttributeMethod();
-      virtual ~SetAttributeMethod();
-      void invoke( VMContext* ctx, int32 pCount = 0 );
-   };
-
-      /*#
-    * @method add Mantra
-    * @brief Adds a mantra to the module.
-    * @param mantra The mantra to add to the module.
-    * @optparam export Whether or not to export the mantra from the module.
-    *
-    * If @b export is not given, then the mantra is exported by default.
-    *
-    * If @b export is given, the mantra is exported if export is true.
-    */
-   class FALCON_DYN_CLASS AddMethod: public Function {
-   public:
-      AddMethod();
-      virtual ~AddMethod();
-      void invoke( VMContext* ctx, int32 pCount = 0 );
-   };
-
-   mutable GetAttributeMethod m_getAttributeMethod;
-   mutable SetAttributeMethod m_setAttributeMethod;
-   mutable AddMethod m_addMethod;
 };
 
 }

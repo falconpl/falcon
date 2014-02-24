@@ -36,6 +36,7 @@
 
 #include <map>
 #include <deque>
+#include <list>
 
 #include "module_private.h"
 
@@ -494,6 +495,7 @@ class ModSpace::Private
 public:
    typedef std::map<const Symbol*, Item*> ExportSymMap;
    ExportSymMap m_symMap;
+   std::list<Item> m_privateItems;
    
    typedef std::map<String, Module*> ModMap;
    ModMap m_modmap;
@@ -814,16 +816,6 @@ bool ModSpace::exportSymbol( const Symbol* sym, Item* value )
       return false;
    }
 
-   // check name clashes in parent.
-   if( m_parent != 0 )
-   {
-      if( m_parent->findExportedValue( sym ) != 0 )
-      {
-         TRACE1( "ModSpace::exportSymbol %s defined in parent space, failing.", sym->name().c_ize());
-         return false;
-      }
-   }
-
    // link the symbol
    TRACE1( "ModSpace::exportSymbol exporting %s", sym->name().c_ize() );
 
@@ -832,6 +824,44 @@ bool ModSpace::exportSymbol( const Symbol* sym, Item* value )
    return true;
 }
 
+
+void ModSpace::setExportValue( const String& symName, const Item& value )
+{
+   const Symbol* sym = Engine::getSymbol(symName);
+   setExportValue(sym, value);
+   sym->decref();
+}
+
+
+
+void ModSpace::setExportValue( const Symbol* sym, const Item& value )
+{
+   TRACE1( "ModSpace::setExportValue %s", sym->name().c_ize());
+
+   Private::ExportSymMap::iterator iter = _p->m_symMap.find( sym );
+   if( iter != _p->m_symMap.end() )
+   {
+      // name clash!
+      TRACE1( "ModSpace::exportSymbol %s defined in this space.", sym->name().c_ize());
+      iter->second->copyFromLocal(value);
+   }
+   else {
+      // link the symbol
+      TRACE1( "ModSpace::exportSymbol exporting %s", sym->name().c_ize() );
+
+      sym->incref();
+      Item* slot = getNewGlobalSlot(value);
+      _p->m_symMap.insert( std::make_pair(sym, slot) );
+   }
+}
+
+
+Item* ModSpace::getNewGlobalSlot(const Item& value)
+{
+   _p->m_privateItems.push_back(value);
+   Item& back = _p->m_privateItems.back();
+   return &back;
+}
 
 void ModSpace::gcMark( uint32 mark )
 {

@@ -55,6 +55,8 @@ public:
    virtual void onApply(Collector* coll) = 0;
    virtual void onRemove(Collector* coll) = 0;
 
+   virtual bool onCheckComplete( Collector* coll ) = 0;
+
    virtual void onMemoryThreshold( Collector* coll, int64 threshold ) = 0;
    virtual void onItemThreshold( Collector* coll, int64 threshold ) = 0;
 
@@ -87,6 +89,7 @@ public:
 
    virtual void onMemoryThreshold( Collector* , int64 ) {}
    virtual void onItemThreshold( Collector* , int64 ) {}
+   virtual bool onCheckComplete( Collector* ) { return false; }
 
    virtual void onSweepBegin( Collector* ) {}
    virtual void onSweepComplete( Collector*, int64, int64 ) {}
@@ -120,6 +123,7 @@ public:
 
    virtual void onMemoryThreshold( Collector* coll, int64 threshold );
    virtual void onItemThreshold( Collector* , int64  ) {}
+   virtual bool onCheckComplete( Collector* coll );
 
    virtual void onSweepBegin( Collector* ) {}
    virtual void onSweepComplete( Collector* coll, int64 freedMemory, int64 freedItems );
@@ -152,6 +156,7 @@ public:
 
    virtual void onMemoryThreshold( Collector* coll, int64 threshold );
    virtual void onItemThreshold( Collector* , int64  ) {}
+   virtual bool onCheckComplete( Collector* coll );
 
    virtual void onSweepBegin( Collector* ) {}
    virtual void onSweepComplete( Collector* coll, int64 freedMemory, int64 freedItems );

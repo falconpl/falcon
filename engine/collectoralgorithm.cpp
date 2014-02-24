@@ -51,13 +51,13 @@ void CollectorAlgorithmFixed::onMemoryThreshold( Collector* coll, int64 memory )
    if( memory >= m_limit * 2 )
    {
       coll->status( Collector::e_status_red );
-      coll->suggestGC(true);
+      coll->performGC(false);
       coll->memoryThreshold(memory + m_limit*2 );
       coll->algoTimeout(RED_RETRY_TIMEOUT);
    }
    else if( memory >= m_limit ) {
       coll->status( Collector::e_status_yellow );
-      coll->suggestGC(false);
+      coll->suggestGC();
       coll->memoryThreshold(memory+m_limit);
       coll->algoTimeout(YELLOW_RETRY_TIMEOUT);
    }
@@ -66,6 +66,13 @@ void CollectorAlgorithmFixed::onMemoryThreshold( Collector* coll, int64 memory )
       coll->memoryThreshold(m_limit);
       coll->algoTimeout(0);
    }
+}
+
+
+bool CollectorAlgorithmFixed::onCheckComplete( Collector* coll )
+{
+   int64 amem = coll->storedMemory();
+   return amem > m_limit;
 }
 
 
@@ -164,13 +171,13 @@ void CollectorAlgorithmRamp::onMemoryThreshold( Collector* coll, int64 threshold
 {
    if( threshold >= m_redLimit ) {
       coll->status( Collector::e_status_red );
-      coll->suggestGC(true);
+      coll->suggestGC();
       coll->memoryThreshold( (int64)(m_redLimit*m_redFactor) );
       m_lastTimeout = ( (uint32)(RED_RETRY_TIMEOUT * m_yellowFactor) );
    }
    else if( threshold >= m_yellowLimit ) {
       coll->status( Collector::e_status_yellow );
-      coll->suggestGC(false);
+      coll->suggestGC();
       coll->memoryThreshold( m_redLimit );
       m_lastTimeout = ( (uint32)(YELLOW_RETRY_TIMEOUT * m_yellowFactor) );
    }
@@ -213,12 +220,19 @@ void CollectorAlgorithmRamp::onSweepComplete( Collector* coll, int64 freed, int6
 }
 
 
+bool CollectorAlgorithmRamp::onCheckComplete( Collector* coll )
+{
+   int64 amem = coll->storedMemory();
+   return amem > m_redLimit;
+}
+
+
 void CollectorAlgorithmRamp::onTimeout( Collector* coll )
 {
    int64 memory = coll->storedMemory();
    Collector::t_status status;
    bool suggestGC = false;
-   bool suggestMode = false;
+   //bool suggestMode = false;
    int64 yl = 0;
 
    m_mtx.lock();
@@ -226,13 +240,13 @@ void CollectorAlgorithmRamp::onTimeout( Collector* coll )
    {
      status = Collector::e_status_red;
      suggestGC = true;
-     suggestMode = true;
+     //suggestMode = true;
      m_lastTimeout += (uint32)(RED_RETRY_TIMEOUT * m_redFactor);
    }
    else if( memory >= m_yellowLimit ) {
      status = Collector::e_status_yellow;
      suggestGC = true;
-     suggestMode = false;
+     //suggestMode = false;
      m_lastTimeout += (uint32)(YELLOW_RETRY_TIMEOUT * m_redFactor);
    }
    else if( memory >= m_base )
@@ -282,7 +296,7 @@ void CollectorAlgorithmRamp::onTimeout( Collector* coll )
 
    if( suggestGC )
    {
-      coll->suggestGC( suggestMode );
+      coll->suggestGC( );
    }
 
    coll->status( status );

@@ -1,0 +1,19 @@
+/*
+@name Defs in parenthesis
+@category Parser
+
+This test verifies that the parser is able to
+recognize definition of lambdas and similar
+inside function calls.
+
+@result OK
+*/
+
+printl( {abc => abc.len } )
+printl( {ctx, abc => abc.len() } )
+printl( {[abc] abc.len } )
+printl( {[ctx,abc] abc.len() } )
+printl( {(abc) abc.len() } )
+printl( { (ctx , abc) abc.len() } )
+
+return "OK"

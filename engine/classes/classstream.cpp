@@ -20,7 +20,6 @@
 #include <falcon/vm.h>
 #include <falcon/vmcontext.h>
 #include <falcon/stderrors.h>
-#include <falcon/cm/uri.h>
 
 #include <falcon/classes/classstream.h>
 #include <falcon/stream.h>

@@ -18,8 +18,8 @@ load .filecontext
 load .docmodule
 load .link
 
-import from parser.faldoc.generic
-import from parser.faldoc.falsrc
+import from parser.faldoc.generic in parser.faldoc.generic
+import from parser.faldoc.falsrc in parser.faldoc.falsrc
 
 class Document from DocModule
    title = nil

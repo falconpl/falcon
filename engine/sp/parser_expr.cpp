@@ -500,7 +500,8 @@ void apply_expr_dot( const NonTerminal&, Parser& p )
    TokenInstance* ti = TokenInstance::alloc(v1->line(), v1->chr(), sp.Expr);
    ti->setValue( new ExprDot(
          *v2->asString(),
-         static_cast<Expression*>(v1->detachValue())
+         static_cast<Expression*>(v1->detachValue()),
+         v1->line(), v1->chr()
       ), treestep_deletor );
 
    p.simplify(3,ti);

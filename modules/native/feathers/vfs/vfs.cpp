@@ -59,29 +59,6 @@ VFSModule::VFSModule():
    //this->addConstant( "C_RAW", (int64)FALCON_VFS_MODE_FLAG_RAW );
 }
 
-void VFSModule::onLinkComplete( VMContext* )
-{
-   Item* i_uriClass = resolveGlobally("URI");
-   Item* i_streamClass = resolveGlobally("Stream");
-
-   if( i_uriClass == 0 || ! i_uriClass->isClass() )
-   {
-      throw new Falcon::LinkError( Falcon::ErrorParam( Falcon::e_link_error, __LINE__, SRC )
-          .module(this->name())
-         .extra( "Class URI not found" ) );
-   }
-
-   if( i_streamClass == 0 || ! i_streamClass->isClass() )
-   {
-      throw new Falcon::LinkError( Falcon::ErrorParam( Falcon::e_link_error, __LINE__, name() )
-         .module(this->name())
-         .extra( "Class Stream not found" ) );
-   }
-
-  m_uriClass = static_cast<Class*>(i_uriClass->asInst());
-  m_streamClass = static_cast<Class*>(i_streamClass->asInst());
-}
-
 VFSModule::~VFSModule()
 {}
 

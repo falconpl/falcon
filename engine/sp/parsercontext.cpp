@@ -289,7 +289,7 @@ bool ParserContext::accessSymbol( const String& variable )
          TRACE1("ParserContext::accessSymbol(: %s :) ignoring access in literal contexts", variable.c_ize() );
       }
    }
-   else if( m_cclass != 0 )
+   else if( _p->m_frames.back().m_type == CCFrame::t_class_type )
    {
       // it's a property.
       if( m_cclass->constructor() != 0

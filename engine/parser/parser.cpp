@@ -825,8 +825,8 @@ void Parser::parserLoop()
       if( rule == 0 )
       {
          hyp = 0;
-         TRACE2( "Parser::parserLoop -- Resetting rule %s", rule->name().c_ize() );
          rule = current->term(hyp);
+         TRACE2( "Parser::parserLoop -- Resetting rule %s", current->name().c_ize() );
          if( rule == 0 )
          {
             throw FALCON_SIGN_XERROR(CodeError, e_internal, .extra("Empty rule: " + current->name()) );

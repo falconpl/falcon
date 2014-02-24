@@ -19,8 +19,9 @@
 #include <falcon/function.h>
 #include <falcon/vmcontext.h>
 #include <falcon/stderrors.h>
+#include <falcon/stdhandlers.h>
 #include <falcon/uri.h>
-#include <falcon/cm/uri.h>
+#include <falcon/classes/classuri.h>
 #include <falcon/vfsprovider.h>
 #include <falcon/stream.h>
 
@@ -30,9 +31,9 @@
 namespace Falcon {
 namespace Ext {
 
-URI* ClassVFS::internal_get_uri( Item* i_uri, URI& tempURI, Module* mod )
+URI* ClassVFS::internal_get_uri( Item* i_uri, URI& tempURI, Module* )
 {
-   VFSModule* vfsMod = static_cast<VFSModule*>(mod);
+   static Class* uriClass = Engine::instance()->stdHandlers()->uriClass();
 
    if( i_uri == 0 )
    {
@@ -51,13 +52,13 @@ URI* ClassVFS::internal_get_uri( Item* i_uri, URI& tempURI, Module* mod )
 
    Class* cls; void* data;
    if( ! i_uri->asClassInst( cls, data )
-     || ! cls->isDerivedFrom(vfsMod->uriClass() )
+     || ! cls->isDerivedFrom(uriClass)
      )
    {
       return 0;
    }
 
-   URI* uricar = static_cast<URI*>(cls->getParentData( vfsMod->uriClass(), data ));
+   URI* uricar = static_cast<URI*>(cls->getParentData( uriClass, data ));
    return uricar;
 }
 
@@ -138,7 +139,7 @@ void Function_construct::invoke( Falcon::VMContext* ctx, int )
  @optparam mode Open mode.
  @optparam shmode Share mode.
  @return On success a new stream.
- @raise IoError on error.
+ @raise IOError on error.
 
  The open mode could be an (bitwise-or) combination of the following:
  - @b O_RD: Read only
@@ -210,7 +211,7 @@ void Function_open::invoke( Falcon::VMContext* ctx, int )
  @param uri The VFS uri (string or URI entity) to be opened.
  @optparam mode Create mode.
  @return On success a new stream.
- @raise IoError on error.
+ @raise IOError on error.
 
  - @b O_RD: Read only
  - @b O_WR: Write only
@@ -265,11 +266,206 @@ void Function_create::invoke( Falcon::VMContext* ctx, int )
 
 
 /*#
+ @method copy VFS
+ @brief (static) Creates a copy of the file across virtual file systems.
+ @param uriSource The uri from which the source file is read.
+ @param uriDest The uri at which the destination file is to be written.
+ @optparam cb A function to be called back as the copy process progresses.
+ @optparam chunkSize An optional argument specifuing the size of each chunk that is transferred.
+ @raise IOError on error.
+
+ This method copies a file from the source virtual file system to the destination.
+
+ The destination file is created for write-only, and eventually truncated if
+ it previously existed.
+
+ The source file is opened exclusively and for read-only.
+
+ If a @b cb parameter is given, the entity is evaluated with two parameters: the amount
+ of data currently transferred and the size of the source file. If the size of the source
+ file is not available on the source file system, that parameter will be set to -1.
+
+ For example:
+ @code
+ load vfs
+ VFS.copy( "http://.../file1.txt", "ftp://.../file2.txt", {(cur,size) >> @"$({cur/size*100}:.2)%   \r"} ) )
+ >
+ @endcode
+
+
+ If @b chunkSize is not given, the method will notify the virtual machine and eventually
+ the @cb callback every 4096 octects. During each chunk transfer, the method exclusively
+ holds the processor in the virtual machine where it resides, but the control can be given
+ back for the processor to schedule different work across each chunk.
+
+ @note The maximum chunk size is 8096. The minimum is 1, but that setting will make the
+ copying very slow.
+ */
+
+FALCON_DECLARE_FUNCTION_EX( copy ,"uriSource:S|URI,uriDest:S|URI,cb:[C],chunkSize:[N]",
+
+   static const int MAX_CHUNK_SIZE = 8192;
+   static const int LOCAL_CHUNKSIZE = 0;
+   static const int LOCAL_CURRENT = 1;
+   static const int LOCAL_SIZE = 2;
+   static const int LOCAL_ISTREAM = 3;
+   static const int LOCAL_OSTREAM = 4;
+
+   class PStepCopyChunk: public PStep
+   {
+   public:
+      PStepCopyChunk() {apply = apply_; }
+      virtual ~PStepCopyChunk() {}
+      virtual void describeTo(String& target) const { target = "VFS::copy::PStepCopyChunk;"; }
+
+      static void apply_( const PStep*, VMContext* ctx )
+      {
+         char staticBuffer[MAX_CHUNK_SIZE];
+         Item* i_cb = ctx->param(2);
+         int32 chunkSize = (int32) ctx->local(LOCAL_CHUNKSIZE)->asInteger();
+         int64 currentSize = ctx->local(LOCAL_CURRENT)->asInteger();
+
+         do
+         {
+            Stream* istream = static_cast<Stream*>(ctx->local(LOCAL_ISTREAM)->asInst());
+            Stream* ostream = static_cast<Stream*>(ctx->local(LOCAL_OSTREAM)->asInst());
+            try
+            {
+               size_t readSize = istream->read(staticBuffer, chunkSize);
+
+               // are we done?
+               if( readSize == 0 )
+               {
+                  istream->close();
+                  ostream->close();
+                  // real return
+                  ctx->returnFrame();
+                  return;
+               }
+
+               // ensure to fully write to output.
+               // yeah, we could use another step.
+               size_t writeSize = 0;
+               while( writeSize < readSize )
+               {
+                  writeSize += ostream->write(staticBuffer,readSize-writeSize);
+               }
+
+               // update the current size.
+               currentSize += readSize;
+               ctx->local(LOCAL_CURRENT)->setInteger(currentSize);
+            }
+            catch(Error* e)
+            {
+               istream->close();
+               ostream->close();
+               throw;
+            }
+
+            // eventually inform the callback
+            if( i_cb != 0 && ! i_cb->isNil() )
+            {
+               int64 maxSize = ctx->local(LOCAL_SIZE)->asInteger();
+               Item params[2];
+               params[0] = currentSize;
+               params[1] = maxSize;
+               ctx->callItem( *i_cb, 2, params);
+               // we'll be called back.
+               return;
+            }
+         }
+         while(ctx->events() == 0);
+         // let the context handle us and call us back
+      }
+   }
+   m_stepCopyChunk;
+
+)
+
+void Function_copy::invoke( Falcon::VMContext* ctx, int )
+{
+   Item* i_uriSrc = ctx->param(0);
+   Item* i_uriDest = ctx->param(1);
+   Item* i_cb = ctx->param(2);
+   Item* i_chunkSize = ctx->param(3);
+
+   URI tmpUriSrc, tmpUriDest;
+   URI* uriSrc, *uriDest;
+   if ( (uriSrc = ClassVFS::internal_get_uri( i_uriSrc, tmpUriSrc, m_module )) == 0
+        || (uriDest = ClassVFS::internal_get_uri( i_uriDest, tmpUriDest, m_module )) == 0
+        || (i_cb != 0 && ! (i_cb->isCallable() || i_cb->isNil()) )
+        || (i_chunkSize != 0 && ! (i_chunkSize->isOrdinal() || i_chunkSize->isNil()) )
+      )
+   {
+      ctx->raiseError(paramError( __LINE__, SRC ) );
+      return;
+   }
+
+   int32 chunkSize = (i_chunkSize != 0 && i_chunkSize->isOrdinal()) ? ((int32)i_chunkSize->forceInteger()) : 4096;
+   if( chunkSize <= 0 )
+   {
+      ctx->raiseError(paramError( __LINE__, SRC, "Chunk size must be > 0" ) );
+      return;
+   }
+
+   if( chunkSize > MAX_CHUNK_SIZE )
+   {
+      chunkSize = MAX_CHUNK_SIZE;
+   }
+
+   Stream* istream = 0;
+   Stream* ostream = 0;
+
+   // try to open the input -- can throw
+   VFSProvider* iface = internal_get_provider( ctx->self(), uriSrc->scheme() );
+
+   int64 sourceSize = -1;
+   // try to read the source statistics.
+   FileStat stats;
+   if( iface->readStats(*uriSrc, stats, true) )
+   {
+      sourceSize = stats.size();
+   }
+
+   istream = iface->open( *uriSrc, VFSIface::OParams().rdOnly() );
+
+   // try to create the output -- can throw
+   try
+   {
+      VFSProvider* iface = internal_get_provider( ctx->self(), uriSrc->scheme() );
+      ostream = iface->create( *uriDest, VFSIface::CParams().wrOnly().truncate() );
+   }
+   catch( Error* e )
+   {
+      istream->close();
+      istream->decref();
+      throw;
+   }
+
+   // Local variables:
+   // 0: chunk size
+   // 1: transferred data
+   // 2: source file size
+   // 3: input stream
+   // 4: output stream.
+   ctx->addLocals(5);
+   ctx->local(LOCAL_CHUNKSIZE)->setInteger(chunkSize);
+   ctx->local(LOCAL_CURRENT)->setInteger(0);
+   ctx->local(LOCAL_SIZE)->setInteger(sourceSize);
+   *ctx->local(LOCAL_ISTREAM) = FALCON_GC_HANDLE(istream);
+   *ctx->local(LOCAL_OSTREAM) = FALCON_GC_HANDLE(ostream);
+
+   ctx->stepIn(&m_stepCopyChunk);
+}
+
+
+
+/*#
    @method mkdir VFS
    @brief Creates a directory on a virtual file system.
    @param dirname The name of the directory to be created.
    @optparam withParents Create also the full pat to the given directory.
-   @raise IoError on system error.
+   @raise IOError on system error.
 
    On success, this function creates the given directory with normal
    attributes.
@@ -313,9 +509,9 @@ void Function_mkdir::invoke( Falcon::VMContext* ctx, int )
    @method erase VFS
    @brief Removes a file from the target virtual file system.
    @param uri The URI of the file to be removed (string or URI instance).
-   @raise IoError on system error.
+   @raise IOError on system error.
 
-   On failure, an IoError is raised.
+   On failure, an IOError is raised.
 */
 
 FALCON_DECLARE_FUNCTION( erase ,"uri:S|URI" )
@@ -342,12 +538,12 @@ void Function_erase::invoke( Falcon::VMContext* ctx, int )
    @brief Moves a file in the same virtual file system.
    @param source The URI of the file to be moved (string or URI instance).
    @param dest The URI of the destination (string or URI instance).
-   @raise IoError on system error.
+   @raise IOError on system error.
 
    This function actually renames a file. It will typically fail if
    the source and the destination are on two different VFS.
 
-   On failure, an IoError is raised.
+   On failure, an IOError is raised.
 */
 
 FALCON_DECLARE_FUNCTION( move ,"soruce:S|URI,dest:S|URI" )
@@ -461,7 +657,7 @@ void Function_readStats::invoke( Falcon::VMContext* ctx, int )
  @brief Open a virtual directory handle to read the contents of a directory.
  @param uri The directory to be opened.
  @return A @a Directory instance.
- @raise IoError if the directory cannot be accessed (or is not a directory).
+ @raise IOError if the directory cannot be accessed (or is not a directory).
 */
 
 FALCON_DECLARE_FUNCTION( openDir ,"uri:S|URI" )
@@ -523,6 +719,7 @@ ClassVFS::ClassVFS():
    addMethod( new _classVFS::Function_readStats, true);
    addMethod( new _classVFS::Function_fileType, true);
    addMethod( new _classVFS::Function_openDir, true);
+   addMethod( new _classVFS::Function_copy, true);
 
    addProperty( "protocol", &get_protocol );
 

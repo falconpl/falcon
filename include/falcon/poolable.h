@@ -24,6 +24,7 @@ namespace Falcon {
 class FALCON_DYN_CLASS Poolable
 {
 public:
+   inline virtual void vdispose() { dispose(); }
    inline void dispose() { m_pool->release( this ); }
    inline void assignToPool( Pool* p ) { m_pool = p; }
    
@@ -35,6 +36,7 @@ private:
    Poolable* m_next;
    
    friend class Pool;
+   friend class PoolFIFO;
 };
 
 }

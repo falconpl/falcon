@@ -19,7 +19,8 @@
 #include <falcon/function.h>
 #include <falcon/vmcontext.h>
 #include <falcon/uri.h>
-#include <falcon/cm/uri.h>
+#include <falcon/stdhandlers.h>
+#include <falcon/classes/classuri.h>
 #include <falcon/filestat.h>
 #include <falcon/stream.h>
 #include <falcon/path.h>
@@ -195,6 +196,8 @@ FALCON_DECLARE_FUNCTION_EX( descend ,"func:C",
 
 void Function_descend::invoke( Falcon::VMContext* ctx, int )
 {
+   static Class* uriClass = Engine::instance()->stdHandlers()->uriClass();
+
    Item* i_callable = ctx->param(0);
 
    if( i_callable == 0 || ! i_callable->isCallable() )
@@ -216,10 +219,9 @@ void Function_descend::invoke( Falcon::VMContext* ctx, int )
 
    ctx->addLocals(3);
    // the first var is our (varying) uri.
-   VFSModule* vfs = static_cast<VFSModule*>( ctx->self().asClass()->module() );
    URI* uric = new URI;
    *uric = dir->uri();
-   *ctx->local(0) = FALCON_GC_STORE( vfs->uriClass(), uric );
+   *ctx->local(0) = FALCON_GC_STORE( uriClass, uric );
 
    // we'll use local 1 as a marker that we're done, leaving it nil
    ctx->local(2)->copyInterlocked(ctx->self()); // here we have the topmost entity
@@ -230,20 +232,21 @@ void Function_descend::invoke( Falcon::VMContext* ctx, int )
    // call the method with the first entry
    uric->path().file(dir->next());
 
-   Item ci( vfs->uriClass(), uric );
+   Item ci( uriClass, uric );
    ctx->callItem( *i_callable, 1, &ci );
 }
 
 }
 
 
-static void get_uri( const Class* cls, const String&, void *instance, Item& value )
+static void get_uri( const Class*, const String&, void *instance, Item& value )
 {
-   VFSModule* vfs = static_cast<VFSModule*>(cls->module());
+   static Class* uriClass = Engine::instance()->stdHandlers()->uriClass();
+
    Directory* dir = static_cast<Directory*>(instance);
    URI* uric = new URI();
    *uric = dir->uri();
-   value = FALCON_GC_STORE(vfs->uriClass(), uric );
+   value = FALCON_GC_STORE(uriClass, uric );
 }
 
 //=========================================================

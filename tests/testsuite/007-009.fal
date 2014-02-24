@@ -1,0 +1,69 @@
+/*
+@name Global keyword
+@category Functions
+
+@output
+Test for 'global' keyword.
+Parameter A: 1
+Parameter B: Nil
+Parameter C: Nil
+Global: 1000
+Partially variant global: 0
+Partially variant changed: 1
+Partially variant globalized: 0
+Partially variant re-changed: 1
+====================
+Parameter A: 1
+Parameter B: 2
+Parameter C: Nil
+Global: 1001
+Partially variant global: 1
+Partially variant changed: 2
+Partially variant globalized: 1
+Partially variant re-changed: 2
+====================
+Parameter A: 1
+Parameter B: 2
+Parameter C: 3
+Global: 1002
+Partially variant global: 2
+Partially variant changed: 3
+Partially variant globalized: 2
+Partially variant re-changed: 3
+====================
+Done.
+@endoutput
+*/
+
+
+> "Test for 'global' keyword."
+
+globvar = 1000
+globvar1 = 0
+
+function test(a,b,c)
+   global globvar
+   
+   > "Parameter A: ", a
+   > "Parameter B: ", b
+   > "Parameter C: ", c
+   
+   > "Global: ", globvar
+   ++globvar
+   
+   > "Partially variant global: ", globvar1
+   ++globvar1
+   > "Partially variant changed: ", globvar1
+   global globvar1
+   > "Partially variant globalized: ", globvar1
+   ++globvar1
+   > "Partially variant re-changed: ", globvar1
+   
+   > "="*20
+end
+
+test(1)
+test(1,2)
+test(1,2,3)
+
+> "Done."

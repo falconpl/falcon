@@ -232,6 +232,9 @@ public:
     */
    bool exportSymbol( const Symbol* sym, Item* value );
 
+   void setExportValue( const String& symName, const Item& value );
+   void setExportValue( const Symbol* sym, const Item& value );
+
    /** Finds a value that has been generally exported via the load/export constructs.
     \param symName the name of the global variable to be searched.
     \return A pointer to the exported value, or 0 if not found.
@@ -293,6 +296,8 @@ private:
    
    ModLoader* m_loader;
    
+   Item* getNewGlobalSlot(const Item& value);
+
    virtual ~ModSpace();
    bool exportFromModule( Module* mod, Error*& link_errors );
    
@@ -445,101 +450,6 @@ private:
    class PStepCallMain;
 
 
-
-#if 0
-
-   class FALCON_DYN_CLASS PStepLoader: public PStep
-   {
-   public:
-      PStepLoader( ModSpace* owner ): m_owner( owner ) {
-         apply = apply_;
-      }
-      virtual ~PStepLoader() {};
-      virtual void describeTo( String& str, int ) const { str = "PStepLoader"; }
-
-   private:
-      static void apply_( const PStep* self, VMContext* ctx );
-      ModSpace* m_owner;
-   };
-   PStepLoader m_stepLoader;
-
-
-   class FALCON_DYN_CLASS PStepResolver: public PStep
-   {
-   public:
-      PStepResolver( ModSpace* owner ): m_owner( owner ) {
-         apply = apply_;
-      }
-      virtual ~PStepResolver() {};
-      virtual void describeTo( String& str, int ) const { str = "PStepResolver"; }
-
-   private:
-      static void apply_( const PStep* self, VMContext* ctx );
-      ModSpace* m_owner;
-   };
-   PStepResolver m_stepResolver;
-
-
-   class FALCON_DYN_CLASS PStepDynModule: public PStep
-   {
-   public:
-      PStepDynModule( ModSpace* owner ): m_owner( owner ) {
-         apply = apply_;
-      }
-      virtual ~PStepDynModule() {};
-      virtual void describeTo( String& str, int ) const { str = "PStepDynModule"; }
-
-   private:
-      static void apply_( const PStep* self, VMContext* ctx );
-      ModSpace* m_owner;
-   };
-   PStepDynModule m_stepDynModule;
-
-   class FALCON_DYN_CLASS PStepDynMantra: public PStep
-   {
-   public:
-   PStepDynMantra( ModSpace* owner ): m_owner( owner ) {
-         apply = apply_;
-      }
-      virtual ~PStepDynMantra() {};
-      virtual void describeTo( String& str, int ) const { str = "PStepDynMantra"; }
-
-   private:
-      static void apply_( const PStep* self, VMContext* ctx );
-      ModSpace* m_owner;
-   };
-   PStepDynMantra m_stepDynMantra;
-
-   class FALCON_DYN_CLASS PStepExecMain: public PStep
-   {
-   public:
-      PStepExecMain( ModSpace* owner ): m_owner( owner ) {
-         apply = apply_;
-      }
-      virtual ~PStepExecMain() {};
-      virtual void describeTo( String& str, int ) const { str = "PStepExecMain"; }
-
-   private:
-      static void apply_( const PStep* self, VMContext* ctx );
-      ModSpace* m_owner;
-   };
-   PStepExecMain m_stepExecMain;
-
-   class FALCON_DYN_CLASS PStepStartLoad: public PStep
-   {
-   public:
-      PStepStartLoad( ModSpace* owner ): m_owner( owner ) {
-         apply = apply_;
-      }
-      virtual ~PStepStartLoad() {};
-      virtual void describeTo( String& str, int ) const { str = "PStepStartLoad"; }
-
-   private:
-      static void apply_( const PStep* self, VMContext* ctx );
-      ModSpace* m_owner;
-   };
-   PStepStartLoad m_startLoadStep;
-#endif
 
    FALCON_REFERENCECOUNT_DECLARE_INCDEC(ModSpace);
 };

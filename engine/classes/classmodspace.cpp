@@ -25,6 +25,7 @@
 #include <falcon/module.h>
 #include <falcon/uri.h>
 #include <falcon/stdsteps.h>
+#include <falcon/stdhandlers.h>
 #include <falcon/modloader.h>
 
 #include <falcon/classes/classmodspace.h>
@@ -34,6 +35,10 @@ namespace Falcon {
 
 /*#
 @class ModSpace
+ @optparam path The search path used by the loader functions.
+ @optparam srcenc The source encoding used to read textual source files.
+ @optparam savePC An entry of @a ModSpace.savePC
+ @optparam useSources An entry of @a ModSpace.useSources
 @brief Interface for loading modules in a sandbox.
 
 Falcon organizes modules in groups called @i{module spaces}.
@@ -69,6 +74,7 @@ or loading pre-compiled .fam modules can be done through its compiler interface.
 
 */
 
+namespace {
 
 static int checkEnumParam( const Item& value, int max )
 {
@@ -118,6 +124,34 @@ static void set_savePC( const Class*, const String&, void* instance, const Item&
    int v = checkEnumParam( value, static_cast<int>(ModLoader::e_save_mandatory) );
    ms->modLoader()->savePC( static_cast<ModLoader::t_save_pc>(v) );
 }
+
+
+/*#
+ @prop parent ModSpace
+ @brief The parent module space.
+
+ If this module space hasn't any parent, this will be nil.
+
+ @note Modules loaded by a modulespace without any parent can
+ access pre-defined symbols and native engine types, but they cannot
+ access symbols defined in the core module (as printl), as the core
+ module is stored in the process-wide topmost module space.
+*/
+
+static void get_parent( const Class* cls, const String&, void* instance, Item& value )
+{
+   ModSpace* ms = static_cast<ModSpace*>(instance);
+   ModSpace* parent = ms->parent();
+   if( parent == 0 )
+   {
+      value.setNil();
+   }
+   else {
+      // for sure, it's already in GC.
+      value.setUser(cls,parent);
+   }
+}
+
 
 
 /*#
@@ -312,8 +346,6 @@ static void set_path( const Class*, const String&, void* instance, const Item& v
 }
 
 
-namespace CModSpace {
-
 static void internal_find_by( VMContext* ctx, bool byName, const String& name )
 {
    static Class* clsModule = static_cast<Class*>(Engine::instance()->getMantra("Module"));
@@ -452,49 +484,294 @@ FALCON_DEFINE_FUNCTION_P1( prependPath )
    internal_append_prepend( this, ctx, false );
 }
 
-/*#
- @method load ModSpace
- @brief Loads a module.
- @param uri An URI or a string indicating a single VFS path entry.
- */
-FALCON_DECLARE_FUNCTION( load, "uri:S|URI,isUri:[B],asLoad:[B],asMain:[B]");
-FALCON_DEFINE_FUNCTION_P1( load )
+
+static Module* getParentModule( VMContext* ctx )
+{
+   // else, search it in our context
+   Module* ms = 0;
+
+   // try to get the module space of the calling context.
+   if( ctx->callDepth() > 1 )
+   {
+      const CallFrame& frame = ctx->callerFrame(1);
+      if( frame.m_function != 0 )
+      {
+         ms = frame.m_function->module();
+      }
+   }
+
+   return ms;
+}
+
+
+
+static ModSpace* getParentModSpace( VMContext* ctx )
+{
+   // else, search it in our context
+   ModSpace* ms = 0;
+
+   // try to get the module space of the calling context.
+   if( ctx->callDepth() > 1 )
+   {
+      const CallFrame& frame = ctx->callerFrame(1);
+      if( frame.m_function != 0 && frame.m_function->module() != 0)
+      {
+         ms = frame.m_function->module()->modSpace();
+      }
+   }
+
+   if( ms == 0 )
+   {
+      ms = ctx->process()->modSpace();
+   }
+   return ms;
+}
+
+
+static void load_internal( Function* caller, VMContext* ctx, bool isUri )
 {
    static PStep* step = &Engine::instance()->stdSteps()->m_returnFrameWithTop;
-   static Class* clsUri = static_cast<Class*>(Engine::instance()->getMantra("URI"));
-   fassert( clsUri != 0 );
-
+   static Class* clsUri = Engine::instance()->stdHandlers()->uriClass();
 
    Item* i_name = ctx->param(0);
-   Item* i_isUri = ctx->param(1);
-   Item* i_asLoad = ctx->param(2);
-   Item* i_asMain = ctx->param(3);
+   Item* i_runMain = ctx->param(2);
+   Item* i_asLoad = ctx->param(1);
 
-   bool isUri = i_isUri != 0 ? i_isUri->isTrue() : false;
    bool asLoad = i_asLoad != 0 ? i_asLoad->isTrue() : false;
-   bool asMain = i_asMain != 0 ? i_asMain->isTrue() : true;
+   bool runMain = i_runMain != 0 ? i_runMain->isTrue() : true;
 
    Class* cls = 0;
    void* data = 0;
    ModSpace* self = static_cast<ModSpace*>(ctx->self().asInst());
+   Module* pmod = getParentModule(ctx);
 
    if( i_name == 0 )
    {
-      throw paramError( __LINE__, SRC );
+      throw caller->paramError( __LINE__, SRC );
    }
    else if( i_name->isString() )
    {
       ctx->pushCode( step );
-      self->loadModuleInContext(*i_name->asString(), isUri, asLoad, asMain, ctx, module(), true );
+      self->loadModuleInContext(*i_name->asString(), isUri, asLoad, !runMain, ctx, pmod, true );
    }
    else if( i_name->asClassInst(cls,data) && cls->isDerivedFrom(clsUri) )
    {
       ctx->pushCode( step );
       URI* uri = static_cast<URI*>(data);
-      self->loadModuleInContext(uri->encode(), isUri, asLoad, asMain, ctx, module(), true );
+      self->loadModuleInContext(uri->encode(), isUri, asLoad, !runMain, ctx, pmod, true );
+   }
+   else
+   {
+      throw caller->paramError( __LINE__, SRC );
    }
 
    // don't return the frame, the return step will do.
+}
+
+/*#
+ @method loadByURI ModSpace
+ @brief Loads a module given its phisical name (as an URI).
+ @param uri An URI or a string indicating a single VFS path entry.
+ @optparam runMain if set to false, the main context will not be run.
+ @optparam asLoad if true, exports requests are fulfilled.
+ */
+FALCON_DECLARE_FUNCTION( loadByURI, "uri:S|URI,runMain:[B],asLoad:[B]");
+FALCON_DEFINE_FUNCTION_P1( loadByURI )
+{
+   load_internal( this, ctx, true );
+}
+
+/*#
+ @method loadByName ModSpace
+ @brief Loads a module given its logical name.
+ @param uri An URI or a string indicating a single VFS path entry.
+ @optparam runMain if set to false, the main context will not be run.
+ @optparam asLoad if true, exports requests are fulfilled.
+
+ The logical name is relative to the module from which loadByName
+ is called.
+
+ For example, if the module calling this method is "my.mod",
+ loadByName("self.child") will result in searching the module named
+ "my.mod.child".
+ */
+FALCON_DECLARE_FUNCTION( loadByName, "uri:S|URI,runMain:[B],asLoad:[B]");
+FALCON_DEFINE_FUNCTION_P1( loadByName )
+{
+   load_internal( this, ctx, false );
+}
+
+
+static ModSpace* configure_ms(Function* caller, VMContext* ctx, ModSpace* model )
+{
+   Item* i_path = ctx->param(0);
+   Item* i_srcenc = ctx->param(1);
+   Item* i_saveFAM = ctx->param(3);
+   Item* i_prefer = ctx->param(4);
+
+   if(
+        (i_saveFAM != 0 && ! (i_saveFAM->isNil() || i_saveFAM->isOrdinal()) )
+        || (i_prefer != 0 && ! (i_prefer->isNil() || i_prefer->isOrdinal()) )
+        || (i_srcenc != 0 && ! (i_srcenc->isNil() || i_srcenc->isString()) )
+        || (i_path != 0 && ! (i_path->isNil() || i_path->isString()) )
+     )
+   {
+      throw caller->paramError(__LINE__, SRC);
+   }
+
+   ModSpace* ms = new ModSpace(ctx->process());
+
+   if( i_saveFAM != 0 && ! i_saveFAM->isNil() )
+   {
+      ms->modLoader()->savePC( (ModLoader::t_save_pc) checkEnumParam(*i_saveFAM, (int) ModLoader::e_save_mandatory ) );
+   }
+   else if( model != 0 ){
+      ms->modLoader()->savePC( model->modLoader()->savePC() );
+   }
+
+
+   if( i_prefer != 0 && ! i_prefer->isNil() )
+   {
+      ms->modLoader()->useSources( (ModLoader::t_use_sources) checkEnumParam(*i_prefer, (int) ModLoader::e_save_mandatory ) );
+   }
+   else if( model != 0 ){
+      ms->modLoader()->useSources( model->modLoader()->useSources() );
+   }
+
+   if( i_srcenc != 0 && ! i_srcenc->isNil() )
+   {
+      const String& srcenc = *i_srcenc->asString();
+      if( Engine::instance()->getTranscoder(srcenc) == 0 )
+      {
+         throw FALCON_SIGN_XERROR(ParamError, e_param_range,
+               .extra(String("Unknown encoding ").A(srcenc) ) );
+      }
+      ms->modLoader()->sourceEncoding(srcenc);
+   }
+   else if( model != 0 ){
+      ms->modLoader()->sourceEncoding( model->modLoader()->sourceEncoding() );
+   }
+
+
+   if( i_path != 0 && ! i_path->isNil() )
+   {
+      const String& path = *i_path->asString();
+      ms->modLoader()->setSearchPath(path);
+   }
+   else if( model != 0 ){
+      ms->modLoader()->setSearchPath( model->modLoader()->getSearchPath() );
+   }
+
+   if( model != 0 )
+   {
+      ms->modLoader()->checkFTD(model->modLoader()->checkFTD());
+      ms->modLoader()->ftdExt(model->modLoader()->ftdExt());
+      ms->modLoader()->famExt(model->modLoader()->famExt());
+      ms->modLoader()->saveRemote(model->modLoader()->saveRemote());
+   }
+
+   return ms;
+}
+
+
+FALCON_DECLARE_FUNCTION(init, "path:[S],srcenc:[S],savePC:[N],useSources:[N]")
+FALCON_DEFINE_FUNCTION_P1(init)
+{
+   // the model MS is the MS of the calling module
+   ModSpace* modelMS = getParentModSpace(ctx);
+   ModSpace* ms = configure_ms(this, ctx, modelMS);
+   ctx->self() = FALCON_GC_STORE(this->methodOf(),ms);
+   ctx->returnFrame(ctx->self());
+}
+
+/*#
+ @method makeChild ModSpace
+ @brief Create a child module space.
+ @optparam path The search path used by the loader functions.
+ @optparam srcenc The source encoding used to read textual source files.
+ @optparam savePC An entry of @a ModSpace.savePC
+ @optparam useSources An entry of @a ModSpace.useSources
+ @return A new module space, child of this one.
+
+ This method creates a new module space that has this module space as parent.
+ The child module space can independently load modules, and symbols exported there
+ are visible to the locally loaded module only. However, every module loaded in the
+ child space has full access to the modules and global symbols available in the
+ parent space.
+
+ Modules in the child space can override exports and unique module IDs defined in the
+ parent, making their own version the one visible to all the other modules loaded
+ in the same space, but leaving the parent space untainted.
+
+ The child module space inherits all the settings of the parent, unless otherwise specified
+ in the parameters.
+*/
+FALCON_DECLARE_FUNCTION(makeChild, "path:[S],srcenc:[S],savePC:[N],useSources:[N]")
+FALCON_DEFINE_FUNCTION_P1(makeChild)
+{
+
+   ModSpace* self = ctx->tself<ModSpace*>();
+   ModSpace* ms = configure_ms(this, ctx, self);
+   ms->setParent( self );
+   ctx->returnFrame(FALCON_GC_STORE(this->methodOf(),ms));
+}
+
+/*#
+ @method getExport ModSpace
+ @brief Searches for values globally exported by the module(s) in the module space.
+ @param varname The name under which the variable was exported
+ @optparam dflt A default value to be returned if the variable is not found.
+ @raise AccessError if the variable is not found and @b dflt is not given.
+
+ */
+FALCON_DECLARE_FUNCTION(getExport, "varname:S,dflt:[X]")
+FALCON_DEFINE_FUNCTION_P1(getExport)
+{
+   Item* i_varname = ctx->param(0);
+   Item* i_dflt = ctx->param(1);
+   if (i_varname == 0 || ! i_varname->isString() )
+   {
+      throw paramError(__LINE__, SRC);
+   }
+
+   const String& varname = *i_varname->asString();
+   ModSpace* ms = ctx->tself<ModSpace*>();
+   Item* val = ms->findExportedValue(varname);
+
+   if( val != 0 )
+   {
+      ctx->returnFrame(*val);
+   }
+   else if( i_dflt != 0 )
+   {
+      ctx->returnFrame(*i_dflt);
+   }
+   else {
+      throw FALCON_SIGN_XERROR( AccessError, e_undef_sym, .extra(varname) );
+   }
+}
+
+/*#
+ @method setExport ModSpace
+ @brief Adds or modifies an exported value.
+ @param varname The name under which the variable was exported
+ @param value The value to be set.
+ @raise AccessError if the variable is not found and @b dflt is not given.
+ */
+FALCON_DECLARE_FUNCTION(setExport, "varname:S,value:X")
+FALCON_DEFINE_FUNCTION_P1(setExport)
+{
+   Item* i_varname = ctx->param(0);
+   Item* i_value= ctx->param(1);
+   if (i_varname == 0 || ! i_varname->isString() || i_value == 0)
+   {
+      throw paramError(__LINE__, SRC);
+   }
+
+   ModSpace* ms = ctx->tself<ModSpace*>();
+   const String& varname = *i_varname->asString();
+   ms->setExportValue(varname, *i_value);
+   ctx->returnFrame();
 }
 
 }
@@ -511,6 +788,8 @@ ClassModSpace::ClassModSpace():
    addProperty( "famExt", &get_famExt, &set_famExt );
    addProperty( "ftdExt", &get_ftdExt, &set_ftdExt );
    addProperty( "path", &get_path, &set_path );
+   // don't show the parent property in standard description.
+   addProperty( "parent", &get_parent, 0,false, true );
 
    addConstant( "savePC_NEVER", static_cast<int64>(ModLoader::e_save_no) );
    addConstant( "savePC_TRY", static_cast<int64>(ModLoader::e_save_try) );
@@ -521,15 +800,22 @@ ClassModSpace::ClassModSpace():
    addConstant( "checkFTD_ALWAYS", static_cast<int64>(ModLoader::e_ftd_force) );
 
    addConstant( "useSources_NEWER", static_cast<int64>(ModLoader::e_us_newer) );
-   addConstant( "useSource_ALWAYS", static_cast<int64>(ModLoader::e_us_always) );
-   addConstant( "checkFTD_NEVER", static_cast<int64>(ModLoader::e_us_never) );
+   addConstant( "useSources_ALWAYS", static_cast<int64>(ModLoader::e_us_always) );
+   addConstant( "useSources_NEVER", static_cast<int64>(ModLoader::e_us_never) );
 
-   addMethod( new CModSpace::Function_findByName );
-   addMethod( new CModSpace::Function_findByURI );
-   addMethod( new CModSpace::Function_appendPath );
-   addMethod( new CModSpace::Function_prependPath );
+   setConstuctor( new Function_init );
 
-   addMethod( new CModSpace::Function_load );
+   addMethod( new Function_findByName );
+   addMethod( new Function_findByURI );
+   addMethod( new Function_appendPath );
+   addMethod( new Function_prependPath );
+   addMethod( new Function_makeChild );
+
+   addMethod( new Function_getExport );
+   addMethod( new Function_setExport );
+
+   addMethod( new Function_loadByName );
+   addMethod( new Function_loadByURI );
 }
 
 ClassModSpace::~ClassModSpace()
@@ -538,7 +824,7 @@ ClassModSpace::~ClassModSpace()
 
 void* ClassModSpace::createInstance() const
 {
-   return 0;
+   return FALCON_CLASS_CREATE_AT_INIT;
 }
 
 void ClassModSpace::dispose( void* instance ) const

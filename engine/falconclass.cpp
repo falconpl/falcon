@@ -914,7 +914,13 @@ void FalconClass::describe( void* instance, String& target, int depth, int maxle
    Descriptor rator( this, inst, temp, depth, maxlen );
 
    target = name() +"{" ;
-   enumerateProperties( instance, rator );
+   if( depth == 0 )
+   {
+      target += "...";
+   }
+   else {
+      enumerateProperties( instance, rator );
+   }
    target += temp + "}";
 }
 

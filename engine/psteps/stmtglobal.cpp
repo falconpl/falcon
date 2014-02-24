@@ -201,9 +201,6 @@ void StmtGlobal::apply_( const PStep* ps, VMContext* ctx )
    TRACE( "StmtGlobal::apply -- %s", self->describe().c_ize() );
    Private::SymbolVector& symbols = self->_p->m_symbols;
    fassert( ! symbols.empty() );
-
-   // we're out of businss...
-   ctx->popCode();
    
    Private::SymbolVector::iterator viter = symbols.begin();
    Private::SymbolVector::iterator vend = symbols.end();
@@ -232,7 +229,10 @@ void StmtGlobal::apply_( const PStep* ps, VMContext* ctx )
       ++viter;
    }
 
-
+   // we're out of businss...
+   ctx->popCode();
+   // add the result of the expression.
+   ctx->pushData(Item());
 }
 
 }

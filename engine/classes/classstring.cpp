@@ -2648,7 +2648,7 @@ void ClassString::op_add( VMContext* ctx, void* self ) const
 
       copy->append( op2->describe() );
 
-      ctx->stackResult( 2, FALCON_GC_HANDLE_IN(ctx,copy) );
+      ctx->stackResult( 2, FALCON_GC_HANDLE(copy) );
 
       return;
    }
@@ -2664,7 +2664,7 @@ void ClassString::op_add( VMContext* ctx, void* self ) const
       copy->append( *static_cast<String*>( inst ) );
       m_lock.unlock(tk);
 
-      ctx->stackResult( 2, FALCON_GC_HANDLE_IN(ctx, copy) );
+      ctx->stackResult( 2, FALCON_GC_HANDLE(copy) );
 
       return;
    }
@@ -2875,7 +2875,7 @@ void ClassString::op_getIndex( VMContext* ctx, void* self ) const
       if( str.isText() ) {
          String *s = new String();
          s->append( chr );
-         ctx->stackResult( 2, FALCON_GC_HANDLE_IN(ctx,s) );
+         ctx->stackResult( 2, FALCON_GC_HANDLE(s) );
       }
       else {
          ctx->stackResult(2, Item((int64) chr) );
@@ -2961,7 +2961,7 @@ void ClassString::op_getIndex( VMContext* ctx, void* self ) const
          }
       }
 
-      ctx->stackResult( 2, FALCON_GC_HANDLE_IN(ctx,s) );
+      ctx->stackResult( 2, FALCON_GC_HANDLE(s) );
    }
    else
    {

@@ -155,7 +155,6 @@ add_library(falcon_engine SHARED
   cm/log.cpp
   cm/mutex.cpp
   cm/parallel.cpp
-  cm/path.cpp
   cm/print.cpp
   cm/semaphore.cpp
   cm/stdfunctions.cpp
@@ -164,7 +163,6 @@ add_library(falcon_engine SHARED
   cm/textreader.cpp
   cm/textstream.cpp
   cm/textwriter.cpp
-  cm/uri.cpp
   cm/vmcontext.cpp
   cm/vmcontextbase.cpp
   cm/vmprocess.cpp
@@ -295,6 +293,7 @@ add_library(falcon_engine SHARED
   classes/classmulti.cpp
   classes/classnumber.cpp
   classes/classnumeric.cpp
+  classes/classpath.cpp
   classes/classnil.cpp
   classes/classpseudodict.cpp
   classes/classrange.cpp
@@ -310,6 +309,7 @@ add_library(falcon_engine SHARED
   classes/classsynfunc.cpp
   classes/classtimestamp.cpp
   classes/classtreestep.cpp
+  classes/classuri.cpp
   classes/metaclass.cpp
   classes/metafalconclass.cpp
   classes/metahyperclass.cpp

@@ -81,6 +81,8 @@ namespace  {
     @prop msInHours (static) Constant keeping the number of milliseconds in hours (3,600,000)
     @prop msInDays (static) Constant keeping the number of milliseconds in days (3,600,000*24)
 
+@note This class has type dignity and a numeric type id.
+
 @section timestamp_timezone Time zones
    Timezone are a symbolic representation of a fixed amount of displacement times.
 
