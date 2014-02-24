@@ -1346,6 +1346,7 @@ void VMContext::callInternal( const Item& item, int nparams )
    cls->op_call(this, nparams, data );
 }
 
+
 void VMContext::callInternal( Function* function, int nparams, const Item& self )
 {
    TRACE( "Calling method %s.%s -- call frame code:%p, data:%p, call:%p",

@@ -51,7 +51,7 @@ private:
       TextWriter tw( ctx->vm()->stdErr() );
       tw.write("**: ");
       tw.writeLine( ctx->topData().describe() );
-      ctx->popData(2);
+      ctx->popData(1);
    }
 };
 
@@ -70,6 +70,9 @@ Debugger::~Debugger()
 void Debugger::onBreak( Process* p, Processor*, VMContext* ctx )
 {
    MESSAGE("Debugger::onBreak -- Debugger invoked.");
+
+   // the result of the function that called us
+   ctx->popData();
 
    // get the standard input stream.
    Stream* input = p->vm()->stdIn();
@@ -100,6 +103,8 @@ void Debugger::onBreak( Process* p, Processor*, VMContext* ctx )
    }
    while( more );
 
+   // the result of the function.
+   ctx->pushData(Item());
    MESSAGE("Debugger::onBreak -- Exiting.");
 }
 
@@ -140,7 +145,7 @@ bool Debugger::parseCommand( TextWriter& wr, const String& line, VMContext* ctx 
                "*: eval <expr>: Evaluate given expression -- can change variables.\n"
                "*: src: Locate current code in module and function.\n"
 
-               "*: stack [N]: Display the data in the stack (top N positions, 0 for all).\n"
+               "*: data [N]: Display the data in the stack (top N positions, 0 for all).\n"
                "*: dyns [N]: Display the data in the dynamic stack (top N positions, 0 for all).\n"
                "*: code [N]: Display the data in the code stack (top N positions, 0 for all).\n"
                "*: call [N]: Display the data in the call stack (top N positions, 0 for all).\n"
@@ -171,15 +176,15 @@ bool Debugger::parseCommand( TextWriter& wr, const String& line, VMContext* ctx 
    {
       wr.writeLine( "*: Continuing." );
    }
-   else if( line == "stack" )
+   else if( line == "data" )
    {
       displayStack( wr, ctx, 1 );
       cont = true;
    }
-   else if( line.startsWith("stack ") )
+   else if( line.startsWith("data ") )
    {
       int64 depth;
-      if( ! line.parseInt(depth,6) || depth < 0 )
+      if( ! line.parseInt(depth,5) || depth < 0 )
       {
          wr.write( "*: invalid depth \n" );
       }
