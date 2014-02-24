@@ -430,7 +430,7 @@ void ContextManager::manageAwakenContext( VMContext* ctx )
    // but if it's non-zero, it might somewhere being in bring of getting asleep.
    if( ctx->nextSchedule() != 0 && removeSleepingContext( ctx ) )
    {
-      if( ctx->isInspectible() ) {
+      if( ctx->markedForInspection() ) {
          Engine::collector()->offerContext(ctx);
          // the collector took it.
          MESSAGE( "ContextManager::manageAwakenContext - accepted by the collector"  );
@@ -486,7 +486,7 @@ void ContextManager::manageDesceduledContext( VMContext* ctx )
    }
 
    // a new context is de-scheduled.
-   if( ctx->isInspectible() ) {
+   if( ctx->markedForInspection() ) {
       Engine::collector()->offerContext(ctx);
       // the collector took it.
       MESSAGE( "ContextManager::manageDesceduledContext - accepted by the collector"  );

@@ -203,7 +203,7 @@ public:
       if( m_sharedToBeSignaled != 0 )
       {
          TRACE1("Cmd::signal -- signaling resource %p", m_toBeSignaled );
-         m_sharedToBeSignaled->broadcast();
+         m_sharedToBeSignaled->signal();
      }
    }
 
@@ -1312,8 +1312,8 @@ void Collector::Marker::performOffer(VMContext* ctx)
    }
    else {
       TRACE("Collector::Marker::performOffer(%p) ignored context id = (%d:%d)", ctx, ctx->process()->id(), ctx->id() );
-      ctx->setInspectible(false);
-      ctx->process()->vm()->contextManager().onContextReady(ctx);
+      ctx->resetInspectEvent();
+      ctx->process()->vm()->contextManager().onContextDescheduled(ctx);
    }
 }
 
@@ -1630,11 +1630,12 @@ void Collector::Marker::releaseContexts()
    Private::ContextSet& set = m_master->_p->m_contexts;
    Private::ContextSet::const_iterator iter = set.begin();
    Private::ContextSet::const_iterator end = set.end();
+
    while( iter != end )
    {
       VMContext* ctx = *iter;
-      ctx->setInspectible(false);
-      ctx->process()->vm()->contextManager().onContextReady(ctx);
+      ctx->resetInspectEvent();
+      ctx->process()->vm()->contextManager().onContextDescheduled(ctx);
       ++iter;
    }
 }

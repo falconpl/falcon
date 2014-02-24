@@ -1332,19 +1332,6 @@ public:
     */
    void awake();
 
-   /** True when this context should be offered to the GC for inspection.
-    * When a context is inspected, this is turned to false until the
-    * context reenters a processor (and so, becomes alive for a while again).
-    *
-    * This avoids re-inspecting a context soon after is inspection if it is
-    * just put to sleep and doesn't become active prior being requested for
-    * re-inspection.
-    */
-   bool isInspectible() const { return m_inspectible; }
-
-   void setInspectible( bool mode ) { m_inspectible = mode; }
-
-
    Error* thrownError() const { return m_lastRaised; }
    Error* detachThrownError() { Error* e = m_lastRaised; m_lastRaised =0; return e; }
 
@@ -1865,7 +1852,6 @@ protected:
    uint32 m_id;
    uint32 m_currentMark;
    int64 m_next_schedule;
-   bool m_inspectible;
    bool m_bInspectMark;
    bool m_bSleeping;
    mutable Mutex m_mtx_sleep;

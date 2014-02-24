@@ -80,7 +80,6 @@ VMContext::VMContext( Process* prc, ContextGroup* grp ):
    m_catchBlock(0),
    m_id(0),
    m_next_schedule(0),
-   m_inspectible(true),
    m_bInspectMark(false),
    m_bSleeping(false),
    m_events(0),
@@ -148,7 +147,6 @@ void VMContext::reset()
    clearSignaledResource();
 
    m_catchBlock = 0;
-   m_inspectible = true;
    m_bInspectMark = false;
    m_bSleeping = false;
 
@@ -2278,8 +2276,6 @@ void VMContext::swapOut()
 
 void VMContext::setInspectEvent()
 {
-   m_inspectible = true;  // not really necessary
-
    m_mtx_sleep.lock();
    m_bInspectMark = true;
    if( m_bSleeping ) {
