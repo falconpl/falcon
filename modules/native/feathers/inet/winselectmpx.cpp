@@ -43,9 +43,9 @@ WinSelectMPX::WinSelectMPX( const Multiplex::Factory* fact, Selector* master ):
 {
    if( ! makeCtrlFD() )
    {
-      throw FALCON_SIGN_XERROR( Ext::NetError, FALSOCK_ERR_GENERIC, 
+      throw FALCON_SIGN_XERROR( Ext::NetError, FALSOCK_ERR_GENERIC,
          .desc( FALSOCK_ERR_GENERIC_MSG )
-         .extra( "Creating multiplex socket pipe" ) 
+         .extra( "Creating multiplex socket pipe" )
          .sysError(WSAGetLastError()) );
    }
 }
@@ -81,68 +81,68 @@ WinSelectMPX::FILE_DESCRIPTOR WinSelectMPX::getSelectableControlFD() const
    return m_ctrlRecv;
 }
 
-bool WinSelectMPX::makeCtrlFD() 
-{ 
-   SOCKET s; 
- 	struct sockaddr_in serv_addr; 
+bool WinSelectMPX::makeCtrlFD()
+{
+   SOCKET s;
+ 	struct sockaddr_in serv_addr;
  	int len = sizeof(serv_addr);
 
-   m_ctrlRecv = m_ctrlSend = INVALID_SOCKET; 
+   m_ctrlRecv = m_ctrlSend = (FILE_DESCRIPTOR)INVALID_SOCKET;
 
- 	if ((s = socket(AF_INET, SOCK_STREAM, 0)) == INVALID_SOCKET) 
-   { 
- 	   return false; 
- 	} 
- 	
- 	memset((void *) &serv_addr, 0, sizeof(serv_addr)); 
- 	serv_addr.sin_family = AF_INET; 
- 	serv_addr.sin_port = htons(0); 
- 	serv_addr.sin_addr.s_addr = htonl(INADDR_LOOPBACK); 
+ 	if ((s = socket(AF_INET, SOCK_STREAM, 0)) == INVALID_SOCKET)
+   {
+ 	   return false;
+ 	}
 
- 	if (bind(s, (SOCKADDR *) & serv_addr, len) == SOCKET_ERROR) 
- 	{ 
-      ::closesocket(s); 
- 	   return false; 
- 	} 
- 	
-   if (listen(s, 1) == SOCKET_ERROR) 
- 	{ 
-      ::closesocket(s); 
- 	   return false; 
- 	} 
- 	
-   if (getsockname(s, (SOCKADDR *) & serv_addr, &len) == SOCKET_ERROR) 
- 	{ 
-      ::closesocket(s); 
- 	   return false; 
- 	} 
- 	
-   if ((m_ctrlSend = socket(PF_INET, SOCK_STREAM, 0)) == INVALID_SOCKET) 
- 	{ 
- 	   closesocket(s); 
- 	   return false; 
- 	} 
- 	
- 	if (connect(m_ctrlSend, (SOCKADDR *) & serv_addr, len) == SOCKET_ERROR) 
- 	{ 
-      ::closesocket(m_ctrlSend);
-      m_ctrlSend = INVALID_SOCKET; 
+ 	memset((void *) &serv_addr, 0, sizeof(serv_addr));
+ 	serv_addr.sin_family = AF_INET;
+ 	serv_addr.sin_port = htons(0);
+ 	serv_addr.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
+
+ 	if (bind(s, (SOCKADDR *) & serv_addr, len) == SOCKET_ERROR)
+ 	{
       ::closesocket(s);
- 	   return false; 
- 	} 
- 	
-   if ((m_ctrlRecv = accept(s, (SOCKADDR *) & serv_addr, &len)) == INVALID_SOCKET) 
- 	{ 
-      ::closesocket(m_ctrlSend); 
- 	   m_ctrlSend = INVALID_SOCKET; 
-      ::closesocket(s); 
- 	   return false; 
- 	} 
- 	
-   ::closesocket(s); 
- 	return true; 
-} 
- 
+ 	   return false;
+ 	}
+
+   if (listen(s, 1) == SOCKET_ERROR)
+ 	{
+      ::closesocket(s);
+ 	   return false;
+ 	}
+
+   if (getsockname(s, (SOCKADDR *) & serv_addr, &len) == SOCKET_ERROR)
+ 	{
+      ::closesocket(s);
+ 	   return false;
+ 	}
+
+   if ((m_ctrlSend = socket(PF_INET, SOCK_STREAM, 0)) == INVALID_SOCKET)
+ 	{
+ 	   closesocket(s);
+ 	   return false;
+ 	}
+
+ 	if (connect(m_ctrlSend, (SOCKADDR *) & serv_addr, len) == SOCKET_ERROR)
+ 	{
+      ::closesocket(m_ctrlSend);
+      m_ctrlSend = (FILE_DESCRIPTOR)INVALID_SOCKET;
+      ::closesocket(s);
+ 	   return false;
+ 	}
+
+   if ((m_ctrlRecv = accept(s, (SOCKADDR *) & serv_addr, &len)) == INVALID_SOCKET)
+ 	{
+      ::closesocket(m_ctrlSend);
+ 	   m_ctrlSend = (FILE_DESCRIPTOR)INVALID_SOCKET;
+      ::closesocket(s);
+ 	   return false;
+ 	}
+
+   ::closesocket(s);
+ 	return true;
+}
+
 
 }
 }

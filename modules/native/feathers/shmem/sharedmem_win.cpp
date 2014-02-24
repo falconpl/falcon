@@ -46,9 +46,9 @@ SharedMem::SharedMem( const String &name, bool bFileBackup ):
 void SharedMem::init( const String &name, bool bOpen, bool bFileBackup )
 {
    if( bFileBackup )
-   {     
+   {
       // try to map the file
-      Path winName(name);         
+      Path winName(name);
       AutoWString wfname( winName.getWinFormat() );
       d->hFile = CreateFileW( wfname.w_str(),
           GENERIC_READ | GENERIC_WRITE,
@@ -64,12 +64,12 @@ void SharedMem::init( const String &name, bool bOpen, bool bFileBackup )
                      .extra("CreateFile "+ name )
                      .sysError( GetLastError() ) );
       }
-   
+
       // if we have open semantic, ensure there is enough space.
       LONG result = 0;
       LONG pl = 0;
       if( bOpen )
-      {         
+      {
          result = SetFilePointer( d->hFile, 0, &pl, FILE_END );
       }
 
@@ -96,26 +96,26 @@ void SharedMem::init( const String &name, bool bOpen, bool bFileBackup )
    AutoWString wMemName( d->sMemName );
    AutoWString wMtxMemName( "MTX_" + d->sMemName );
    d->hMtx = CreateMutexW( NULL, FALSE, wMtxMemName.w_str() );
-   
+
    if( d->hMtx == NULL || d->hMtx == INVALID_HANDLE_VALUE )
    {
       DWORD le = GetLastError();
-      TRACE("SharedMem::init -- CreateMutexW failed because %d", le );
+      TRACE("SharedMem::init -- CreateMutexW failed because %d", (int)le );
       if( le == ERROR_ALREADY_EXISTS )
       {
-         TRACE("SharedMem::init -- Trying to open", le );
+         TRACE("SharedMem::init -- Trying to open %d", (int)le );
          d->hMtx = OpenMutexW( SYNCHRONIZE|MUTEX_MODIFY_STATE, FALSE, wMtxMemName.w_str() );
       }
-      
+
       if( d->hMtx == NULL || d->hMtx == INVALID_HANDLE_VALUE )
       {
-         TRACE("SharedMem::init -- definitive failure %d", le );
+         TRACE("SharedMem::init -- definitive failure %d", (int)le );
          throw new IOError( ErrorParam( e_io_error, __LINE__ )
                         .extra("CreateFileMapping "+ d->sMemName )
                         .sysError( le ) );
       }
    }
-   
+
    // try to open the mapping
    // with create semantic, we must rewrite the header, if present.
    d->hMemory = CreateFileMappingW(
@@ -125,17 +125,17 @@ void SharedMem::init( const String &name, bool bOpen, bool bFileBackup )
          0,
          sizeof( BufferData ),
          wMemName.w_str() );
-      
+
    if( d->hMemory == NULL || d->hMemory == INVALID_HANDLE_VALUE )
    {
       DWORD le = GetLastError();
-      TRACE("SharedMem::init -- CreateFileMappingW failed because %d", le );
+      TRACE("SharedMem::init -- CreateFileMappingW failed because %d", (int)le );
       throw new IOError( ErrorParam( e_io_error, __LINE__ )
                         .extra("CreateFileMapping "+ d->sMemName )
                         .sysError( le ) );
    }
-    
-   DWORD alreadyCreated = GetLastError();
+
+   //DWORD alreadyCreated = GetLastError();
 
    // correctly opened -- or created. Let's map it.
    d->bd = (BufferData*) MapViewOfFile(
@@ -144,11 +144,11 @@ void SharedMem::init( const String &name, bool bOpen, bool bFileBackup )
       0,
       0,
       sizeof( BufferData ) );
-   
+
    if( d->bd == NULL )
    {
       DWORD le = GetLastError();
-      TRACE("SharedMem::init -- MapViewOfFile failed because %d", le );
+      TRACE("SharedMem::init -- MapViewOfFile failed because %d", (int)le );
       throw new IOError( ErrorParam( e_io_error, __LINE__ )
                            .extra("MapViewOfFile "+ d->sMemName )
                            .sysError( le ) );
@@ -160,7 +160,7 @@ void SharedMem::init( const String &name, bool bOpen, bool bFileBackup )
 
 void SharedMem::close( bool bRemove )
 {
-   bool rem = bRemove && d->hFile != INVALID_HANDLE_VALUE;
+   //bool rem = bRemove && d->hFile != INVALID_HANDLE_VALUE;
 
    d->close();
    if( bRemove )
@@ -202,13 +202,13 @@ bool SharedMem::internal_write( const void* data, int64 size, int64 offset, bool
    }
    else {
       int64 curSize = d->lockAndAlign();
-      
+
       if( offset + size > curSize )
       {
          d->enlarge( offset + size );
       }
    }
-   
+
    memcpy( static_cast<char*>(d->bd->data) + offset, data, (size_t) size );
    if( bSync && d->hFile != INVALID_HANDLE_VALUE )
    {
@@ -216,7 +216,7 @@ bool SharedMem::internal_write( const void* data, int64 size, int64 offset, bool
    }
 
    d->s_unlockf();
-   
+
    return true;
 }
 
