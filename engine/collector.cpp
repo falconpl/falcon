@@ -26,6 +26,7 @@
 #include <falcon/shared.h>
 #include <falcon/sys.h>
 #include <falcon/poolable.h>
+#include <falcon/modspace.h>
 
 #include <falcon/log.h>
 
@@ -91,7 +92,9 @@ public:
       m_type(e_cmd_none),
       m_ctx(0),
       m_toBeSignaled(0),
-      m_sharedToBeSignaled(0)
+      m_sharedToBeSignaled(0),
+      m_cb(0),
+      m_cbData(0)
    {
    }
 
@@ -100,7 +103,9 @@ public:
       m_type(t),
       m_ctx(ctx),
       m_toBeSignaled(evt),
-      m_sharedToBeSignaled(sh)
+      m_sharedToBeSignaled(sh),
+      m_cb(0),
+      m_cbData(0)
    {
       if( sh != 0 )
       {
@@ -117,7 +122,9 @@ public:
       m_type( other.m_type ),
       m_ctx( other.m_ctx ),
       m_toBeSignaled( other.m_toBeSignaled ),
-      m_sharedToBeSignaled( other.m_sharedToBeSignaled )
+      m_sharedToBeSignaled( other.m_sharedToBeSignaled ),
+      m_cb(other.m_cb),
+      m_cbData(other.m_cbData)
    {
       if( m_sharedToBeSignaled != 0 )
       {
@@ -174,6 +181,7 @@ public:
       }
 
       m_cb = 0;
+      m_cbData = 0;
    }
 
    inline virtual void vdispose() { clear(); dispose(); }
@@ -1651,7 +1659,6 @@ void Collector::Marker::markLoop()
    m_master->markLocked(mark);
 
    GCToken* head = m_master->m_garbageRoot->m_next;
-   GCToken* tail = m_master->m_garbageRoot;
 
    // then, move the new ring.
    m_master->m_mtx_newRoot.lock();
@@ -1677,6 +1684,8 @@ void Collector::Marker::markLoop()
    {
       VMContext* ctx = *iter;
       ctx->gcStartMark( mark );
+      ctx->process()->modSpace()->gcMark(mark);
+      ctx->process()->gcMark(mark);
       ctx->gcPerformMark();
 
       ++iter;
@@ -1685,8 +1694,10 @@ void Collector::Marker::markLoop()
    // mark complete; update accounting and notify the listeners.
    m_master->m_mtx_accountmem.lock();
    m_master->m_markLoops++;
+   /*
    m_master->m_aliveItems = count;
    m_master->m_aliveMem = memory;
+   */
    m_master->m_mtx_accountmem.unlock();
 
    // signal the waiters
