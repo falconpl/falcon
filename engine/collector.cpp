@@ -1120,11 +1120,11 @@ void Collector::onSweepBegin()
   algo->onSweepBegin(this);
 }
 
-void Collector::onSweepComplete( int64 freedMem, int64 freedItems )
+void Collector::onSweepComplete( int64 storedMem, int64 storedCount, int64 freedMem, int64 freedItems )
 {
    m_mtx_accountmem.lock();
-   m_storedMem -= freedMem;
-   m_storedItems -= freedItems;
+   m_storedMem = storedMem;
+   m_storedItems = storedCount;
    m_aliveMem -= freedMem;
    m_aliveItems -= freedItems;
    m_sweepLoops ++;
@@ -1369,8 +1369,23 @@ bool Collector::Marker::performCheck( Cmd* cmd )
 
    if ( m_state != e_state_idle )
    {
-      MESSAGE("Collector::Marker::performFull -- not in idle state, saving the incoming CMD for later.");
-      m_master->_p->m_markDelayed.enqueue(cmd);
+      if( m_state == e_state_inspecting || m_state == e_state_marking )
+      {
+         MESSAGE("Collector::Marker::performCheck -- Already checking, ignoring a check request.");
+         if( cmd->isSignalable())
+         {
+            // but signal when done if necessary.
+            m_master->_p->m_markWaiters.enqueue(cmd);
+         }
+         else
+         {
+            return true;
+         }
+      }
+      else{
+         MESSAGE("Collector::Marker::performCheck -- not in idle state, saving the incoming CMD for later.");
+         m_master->_p->m_markDelayed.enqueue(cmd);
+      }
       return false; // don't dispose.
    }
 
@@ -1654,21 +1669,17 @@ void Collector::Marker::markLoop()
       first->m_prev = m_master->m_garbageRoot;
    }
 
-   int64 count = 0;
-   int64 memory = 0;
-   while (head != tail)
+   // Finally, ask for marking.
+   Private::ContextSet& set = m_master->_p->m_contexts;
+   Private::ContextSet::const_iterator iter = set.begin();
+   Private::ContextSet::const_iterator end = set.end();
+   while( iter != end )
    {
-#if FALCON_TRACE_GC
-      m_master->onMark( head->m_data );
-#endif
-      Class* cls = head->m_cls;
-      void* data = head->m_data;
+      VMContext* ctx = *iter;
+      ctx->gcStartMark( mark );
+      ctx->gcPerformMark();
 
-      count++;
-      memory += cls->occupiedMemory(data);
-      head->m_cls->gcMarkInstance( head->m_data, mark );
-
-      head = head->m_next;
+      ++iter;
    }
 
    // mark complete; update accounting and notify the listeners.
@@ -1751,7 +1762,7 @@ void Collector::Sweeper::performFull()
    }
    else
    {
-      sweep( m_lastSweepMark );
+      sweep( m_master->m_currentMark );
       m_lastSweepMark = m_master->m_currentMark;
    }
 
@@ -1803,6 +1814,10 @@ void Collector::Sweeper::sweep( uint32 lastGen )
 
    int64 freedMem = 0;
    int64 freedCount = 0;
+
+   int64 storedMem = 0;
+   int64 storedCount = 0;
+
    int32 priority = 0;
    int32 maxPriority = 0;
 
@@ -1880,6 +1895,13 @@ void Collector::Sweeper::sweep( uint32 lastGen )
          }
          // else, it's not time for collection.
          else {
+            // should contabilize now?
+            if( cls->clearPriority() == priority )
+            {
+               storedCount++;
+               storedMem += cls->occupiedMemory( data );
+            }
+
             ring = ring->m_next;
          }
       }
@@ -1903,7 +1925,7 @@ void Collector::Sweeper::sweep( uint32 lastGen )
    TRACE( "Collector::Sweeper::sweep -- reclaimed %d items, %d bytes",
             (int) freedCount, (int) freedMem );
 
-   m_master->onSweepComplete( freedMem, freedCount );
+   m_master->onSweepComplete( storedMem, storedCount, freedMem, freedCount );
 }
 
 

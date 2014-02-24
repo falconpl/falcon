@@ -71,9 +71,8 @@ void CollectorAlgorithmFixed::onMemoryThreshold( Collector* coll, int64 memory )
 
 bool CollectorAlgorithmFixed::onCheckComplete( Collector* coll )
 {
-   int64 amem = coll->activeMemory();
-   int64 smem = coll->storedMemory();
-   return (amem + m_limit) < smem;
+   int64 amem = coll->storedMemory();
+   return amem > m_limit;
 }
 
 
@@ -223,9 +222,8 @@ void CollectorAlgorithmRamp::onSweepComplete( Collector* coll, int64 freed, int6
 
 bool CollectorAlgorithmRamp::onCheckComplete( Collector* coll )
 {
-   int64 amem = coll->activeMemory();
-   int64 smem = coll->storedMemory();
-   return (amem + m_redLimit) < smem;
+   int64 amem = coll->storedMemory();
+   return amem > m_redLimit;
 }
 
 

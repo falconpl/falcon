@@ -802,7 +802,7 @@ protected:
    // Private functions
    //==================================================
    void onSweepBegin();
-   void onSweepComplete( int64 freedMem, int64 freedItems );
+   void onSweepComplete( int64 storedMem, int64 storedItems, int64 freedMem, int64 freedItems );
 
    void clearRing( GCToken *ringRoot );
 
