@@ -1,9 +1,8 @@
 /*
 @name Global keyword
-@category functions
+@category Functions
 
 @output
-Accumulator filter/target
 Test for 'global' keyword.
 Parameter A: 1
 Parameter B: Nil
