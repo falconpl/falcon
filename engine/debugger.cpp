@@ -33,16 +33,46 @@
 #include <falcon/stringstream.h>
 #include <falcon/dyncompiler.h>
 #include <falcon/syntree.h>
+#include <falcon/psteps/stmttry.h>
 
 namespace Falcon {
 
-
-class Debugger::PStepPostEval: public PStep
+class Debugger::PStepCatcher:public SynTree
 {
 public:
-   PStepPostEval() { apply = apply_; }
+   PStepCatcher() {apply=apply_;}
+   virtual ~PStepCatcher() {}
+   virtual void describeTo( String& target ) const { target = "Debugger::PStepCatcher"; }
+   virtual PStepCatcher* clone() const { return new PStepCatcher; }
+   virtual void render( TextWriter* tw, int32 ) const { tw->write("/*catcher*/\n"); }
+
+private:
+   static void apply_( const PStep*, VMContext* ctx )
+   {
+      ctx->popCode();
+      if( ctx->thrownError() != 0)
+      {
+         TextWriter tw( ctx->vm()->stdErr() );
+         tw.write( "**: Evaluation operation caused the following error\n" );
+         tw.write( ctx->thrownError()->describe(true) );
+         tw.write( "\n" );
+         ctx->setBreakpointEvent();
+      }
+   }
+};
+
+class Debugger::PStepPostEval: public StmtTry
+{
+public:
+   PStepPostEval()
+   {
+      apply = apply_;
+      PStepCatcher* catcher = new PStepCatcher;
+      catchSelect().append(catcher);
+   }
+
    virtual ~PStepPostEval() {}
-   virtual void describeTo( String& target ) const { target = "PStepPostEval"; }
+   virtual void describeTo( String& target ) const { target = "Debugger::PStepPostEval"; }
 
 private:
    static void apply_( const PStep*, VMContext* ctx )
@@ -52,19 +82,46 @@ private:
       tw.write("**: ");
       tw.writeLine( ctx->topData().describe() );
       ctx->popData(1);
+      ctx->setBreakpointEvent();
    }
 };
+
+
+class Debugger::PStepAfterNext: public StmtTry
+{
+public:
+   PStepAfterNext()
+   {
+      apply = apply_;
+      PStepCatcher* catcher = new PStepCatcher;
+      catchSelect().append(catcher);
+   }
+
+   virtual ~PStepAfterNext() {}
+   virtual void describeTo( String& target ) const { target = "Debugger::PStepAfterNext"; }
+
+private:
+   static void apply_( const PStep*, VMContext* ctx )
+   {
+      ctx->popCode();
+      ctx->setBreakpointEvent();
+   }
+};
+
 
 
 Debugger::Debugger() :
     m_hello(true)
 {
-   m_stepPostEval = new PStepPostEval;
+   StmtTry* t = new PStepPostEval;
+   m_stepPostEval = t;
+   m_stepAfterNext = new PStepAfterNext;
 }
 
 Debugger::~Debugger()
 {
    delete m_stepPostEval;
+   delete m_stepAfterNext;
 }
 
 void Debugger::onBreak( Process* p, Processor*, VMContext* ctx )
@@ -109,17 +166,17 @@ void Debugger::onBreak( Process* p, Processor*, VMContext* ctx )
 }
 
 
-bool Debugger::parseCommand( TextWriter& wr, const String& line, VMContext* ctx )
+bool Debugger::parseCommand( TextWriter& wr, const String& line1, VMContext* ctx )
 {
-   const PStep* stepBreak = &Engine::instance()->stdSteps()->m_breakpoint;
-
-   TRACE("Debugger::parseCommand -- parsing '%s'", line.c_ize() );
+   TRACE("Debugger::parseCommand -- parsing '%s'", line1.c_ize() );
 
    // by default, we don't want to loop immediately.
    bool cont = false;
    // whether to save this line or not
    bool save = true;
 
+   String line = line1;
+   line.trim();
    if( line == "quit" )
    {
       ctx->process()->terminate();
@@ -163,10 +220,12 @@ bool Debugger::parseCommand( TextWriter& wr, const String& line, VMContext* ctx 
    {
       wr.writeLine( "*: big step" );
       CodeFrame temp;
+      temp.m_step = ctx->currentCode().m_step;
       temp.m_seqId = ctx->currentCode().m_seqId;
       temp.m_dataDepth = ctx->currentCode().m_dataDepth;
       temp.m_dynsDepth = ctx->currentCode().m_dynsDepth;
-      ctx->resetCode( stepBreak );
+
+      ctx->resetCode( m_stepAfterNext );
       ctx->pushCode( temp.m_step );
       ctx->currentCode().m_seqId = temp.m_seqId;
       ctx->currentCode().m_dataDepth = temp.m_dataDepth;
@@ -251,9 +310,8 @@ bool Debugger::parseCommand( TextWriter& wr, const String& line, VMContext* ctx 
       try
       {
          SynTree* st = dynComp.compile( reader );
-         ctx->pushCode(stepBreak);
          ctx->pushData( FALCON_GC_HANDLE(st) );
-         ctx->pushCode(m_stepPostEval);
+         ctx->pushCodeWithUnrollPoint(m_stepPostEval);
          ctx->pushCode(st);
       }
       catch( Error* err )

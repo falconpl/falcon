@@ -53,6 +53,11 @@ private:
    PStep* m_stepPostEval;
    class PStepPostEval;
 
+   PStep* m_stepAfterNext;
+   class PStepAfterNext;
+
+   class PStepCatcher;
+
    String m_lastCommand;
    bool m_hello;
 };
