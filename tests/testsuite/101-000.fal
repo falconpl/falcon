@@ -1,0 +1,23 @@
+/*
+@name Smoke test for engine tests
+@category Engine tests
+
+This test checks if the basic functionalities that
+are needed to verify for engine health are present
+and working. 
+
+If this test doesn't work, it means the engine is even
+lacking the coherence to check for its own health.
+
+@result Ok
+*/
+
+load engine_depth_tester
+
+> "Engine tests - smoke test"
+
+result = engine_depth_tester( .[ {[] } ] )
+
+> "Final result: ", result
+
+return result
