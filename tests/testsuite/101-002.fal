@@ -1,0 +1,45 @@
+/*
+@name Stack coherence of statements
+@category Engine tests
+
+@result Ok
+*/
+load engine_depth_tester
+// Tests starting on line 10 -- notice that "variable" is defined by tester()
+tests = .[
+   {[] if 1 < 2; 1(); end; }
+   {[] if 1 < 2; 1(); else; 2(); end; }
+   {[] if 1 > 2; 1(); else; 2(); end; }
+   {[] if 1 > 2; 1(); elif 1==1; 3(); else; 2(); end; }
+   {[] if 1 > 2; 1(); elif 1==2; 3(); else; 2(); end; }
+   {[] variable = 0; while variable < 5; variable++; end }
+   {[] variable = 0; while variable < 5; if variable == 2; variable++; continue; end; variable++; end }
+   {[] variable = 0; while variable < 5; if variable == 2; break; end; variable++; end }
+   {[] for variable=0 to 5; 1(); end }
+   {[] for variable=5 to 1,-1; 1(); end }
+   {[] for variable=1 to 5,-1; 1(); end }
+   {[] for variable=5 to 1,1; 1(); end }
+   {[] for variable=1 to 5; forfirst: 1(); formiddle:1(); forlast:1(); 1(); end }
+   {[] for variable=1 to 5; forfirst: 1(); formiddle:1(); forlast:1(); if variable == 2; continue; end; 1(); end }
+   {[] for variable=1 to 5; forfirst: 1(); formiddle:1(); forlast:1(); if variable == 2; break; end; 1(); end }
+   {[] for variable in [1,2,3]; forfirst: 1(); formiddle:1(); forlast:1(); 1(); end }
+   {[] variable = 0; switch variable; case 0: 1(); case 1: 1(); default: 1(); end }
+   {[] variable = 1; switch variable; case 0: 1(); case 1: 1(); default: 1(); end }
+   {[] variable = 2; switch variable; case 0: 1(); case 1: 1(); default: 1(); end }
+   {[] variable = 2; select variable; case 0: 1(); case 1: 1(); default: 1(); end }
+   {[] try; 1(); catch; 1(); end }
+   {[] try; 1(); catch in variable; 1(); finally; 1(); end }
+   {[] try; raise "error"; catch in variable; 1(); end }
+   {[] try; raise "error"; catch in variable; 1(); finally; 1(); end }
+   {[] >> "fastprint" }
+   {[] > "fastprintnl" }
+]
+
+> "Engine tests - statements"
+
+result = engine_depth_tester( tests )
+
+> "Final result: ", result
+
+return result
+
