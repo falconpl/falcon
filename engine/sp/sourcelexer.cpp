@@ -1127,6 +1127,12 @@ Parsing::TokenInstance* SourceLexer::nextToken()
 
                      return parser->T_CapSquare.makeInstance(m_sline, m_schr );
                   }
+                  else if( chr == '^' )
+                  {
+                     m_chr++;
+                     resetState();
+                     return parser->T_BXOR.makeInstance(m_sline, m_schr );
+                  }
                }
 
                unget(chr);
