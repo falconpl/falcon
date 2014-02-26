@@ -1459,6 +1459,7 @@ void Collector::Marker::performTerminate()
       VMContext* ctx = *iter;
       TRACE("Collector::Marker::performTerminate unregistering context %p (%d:%d)", ctx, ctx->process()->id(), ctx->id());
       ctx->decref();
+      ++iter;
    }
    set.clear();
 
