@@ -111,7 +111,7 @@ SourceParser::SourceParser():
    T_EVALRET( "'^='", 150),
    T_EVALRET_EXEC( "'^=&'", 150),
    T_EVALRET_DOUBT( "'^?'", 150),
-   T_ETAARROW( "'*=>'", 170),
+   T_ETAARROW( "'&=>'", 170),
 
    T_Comma( "','" , 180 ),
    T_QMark( "'?'" , 175, true ),
