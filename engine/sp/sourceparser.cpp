@@ -109,7 +109,7 @@ SourceParser::SourceParser():
    T_UNQUOTE("'^~'", 10 ),
    T_COMPOSE("'^.'", 60),
    T_EVALRET( "'^='", 150),
-   T_EVALRET_EXEC( "'^*'", 150),
+   T_EVALRET_EXEC( "'^=&'", 150),
    T_EVALRET_DOUBT( "'^?'", 150),
    T_ETAARROW( "'*=>'", 170),
 
