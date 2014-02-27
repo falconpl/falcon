@@ -48,7 +48,6 @@ class Process;
 class SymbolMap;
 class TreeStep;
 class GCToken;
-class ItemStack;
 
 /**
  * Execution context for Falcon virtual machine.
@@ -340,7 +339,6 @@ public:
 
       memset( base+1, 0, count * sizeof(Item) );
    }
-
 
    /** Add more variables on top of the stack -- without initializing them to nil.
     \param count Number of variables to be added.
@@ -648,6 +646,7 @@ public:
       topCall->m_dataBase = dataSize()-nparams;
       // TODO: enable rule application with dynsymbols?
       topCall->m_dynsBase = m_dynsStack.depth();
+      topCall->m_dynDataBase = m_dynDataStack.depth();
       topCall->m_paramCount = nparams;
       topCall->m_self = self;
       topCall->m_bMethodic = bMethodic;
@@ -1715,6 +1714,24 @@ public:
 
 protected:
 
+   inline Item* addDynData( const Item& data = Item() ) {
+      ++m_dynDataStack.m_top;
+      if( m_dynDataStack.m_top >= m_dynDataStack.m_max )
+      {
+         Item temp;
+         temp.copy(data);
+         Item* base = m_dynDataStack.m_base;
+         m_dynDataStack.more();
+         *m_dynDataStack.m_top = temp;
+         onDynStackRebased( base );
+      }
+      else {
+         m_dynDataStack.m_top->copy(data);
+      }
+
+      return m_dynDataStack.m_top;
+   }
+
    /** Class holding registered finally points */
    class FinallyData {
    public:
@@ -1816,6 +1833,7 @@ protected:
    LinearStack<CodeFrame> m_codeStack;
    LinearStack<CallFrame> m_callStack;
    LinearStack<Item> m_dataStack;
+   LinearStack<Item> m_dynDataStack;
    LinearStack<DynsData> m_dynsStack;
    LinearStack<FinallyData> m_finallyStack;
 
@@ -1878,11 +1896,11 @@ protected:
 
    virtual ~VMContext();
 private:
-   ItemStack *m_itemStack;
 
    FALCON_REFERENCECOUNT_DECLARE_INCDEC(VMContext)
 
    void onStackRebased( Item* oldBase );
+   void onDynStackRebased( Item* oldBase );
    void pushBaseElements();
 
    template<class _returner>

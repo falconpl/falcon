@@ -268,6 +268,9 @@ void FalconOptions::parse( int argc, char **argv, int &script_pos )
             case 'y': modalGiven(); compile_tltable = true; break;
 
             case '-':
+            {
+               const char* nextword  = (i+1<argc) ? argv[++i] : "";
+
                if( String( op+2 ) == "cgi" )
                {
                   errOnStdout = true;
@@ -277,17 +280,17 @@ void FalconOptions::parse( int argc, char **argv, int &script_pos )
                else if( String( op+2 ) == "test" )
                {
                   testMode = true;
-                  test_dir = String( argv[++i] );
+                  test_dir = nextword;
                   break;
                }
                else if (String( op+2 ) == "cat" )
                {
-                  test_category = String( argv[++i] );
+                  test_category = nextword;
                   break;
                }
                else if (String( op+2 ) == "tpref" )
                {
-                  test_prefix = String( argv[++i] );
+                  test_prefix = nextword;
                   break;
                }
                else if (String( op+2 ) == "tlist" )
@@ -297,17 +300,17 @@ void FalconOptions::parse( int argc, char **argv, int &script_pos )
                }
                else if( String( op+2 ) == "ll" )
                {
-                  log_level = atoi( argv[++i] );
+                  log_level = atoi( nextword );
                   break;
                }
                else if( String( op+2 ) == "log" )
                {
-                  log_file = String( argv[++i] );
+                  log_file = nextword;
                   break;
                }
                else if( String( op+2 ) == "prc" )
                {
-                  num_processors = atoi( argv[++i] );
+                  num_processors = atoi( nextword );
                   break;
                }
                else if( String( op+2 ) == "grammar" )
@@ -320,6 +323,7 @@ void FalconOptions::parse( int argc, char **argv, int &script_pos )
                   m_justinfo = true;
                   break;
                }
+            }
                /* no break */
 
             default:

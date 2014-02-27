@@ -48,6 +48,7 @@ public:
    void displayDyns( TextWriter& wr, VMContext* ctx, int64 depth );
    void displayCode( TextWriter& wr, VMContext* ctx, int64 depth );
    void displayCall( TextWriter& wr, VMContext* ctx, int64 depth );
+   void displayGlobals( TextWriter& wr, VMContext* ctx );
 
 private:
    PStep* m_stepPostEval;
@@ -60,6 +61,8 @@ private:
 
    String m_lastCommand;
    bool m_hello;
+
+
 };
 
 }

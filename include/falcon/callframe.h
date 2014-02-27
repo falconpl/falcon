@@ -68,6 +68,8 @@ public:
     */
    uint32 m_dynsBase;
 
+   uint32 m_dynDataBase;
+
    /** Codebase for this frame.
     *
     * Code from this function is placed in this position; resizing the
@@ -89,7 +91,7 @@ public:
    CallFrame()
    {}
 
-   CallFrame( Function* f, uint32 pc, uint32 sb, uint32 cb, uint32 dynb, uint32 locb, const Item& self ):
+   CallFrame( Function* f, uint32 pc, uint32 sb, uint32 cb, uint32 dynb, uint32 locb, uint32 dynDataBase, const Item& self ):
       m_function(f),
       m_closure(0),
       m_closingData(0),
@@ -97,12 +99,13 @@ public:
       m_dataBase( sb ),
       m_locsBase( locb ),
       m_dynsBase( dynb ),
+      m_dynDataBase(dynDataBase),
       m_codeBase( cb ),
       m_self(self),
       m_bMethodic( true )
    {}
 
-   CallFrame( Function* f, uint32 pc, uint32 sb, uint32 cb, uint32 dynb, uint32 locb ):
+   CallFrame( Function* f, uint32 pc, uint32 sb, uint32 cb, uint32 dynb, uint32 locb, uint32 dynDataBase ):
       m_function(f),
       m_closure(0),
       m_closingData(0),
@@ -110,6 +113,7 @@ public:
       m_dataBase( sb ),
       m_locsBase( locb ),
       m_dynsBase( dynb ),
+      m_dynDataBase(dynDataBase),
       m_codeBase( cb ),
       m_bMethodic( false )
    {}

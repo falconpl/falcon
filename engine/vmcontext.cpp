@@ -29,7 +29,6 @@
 #include <falcon/sys.h>
 #include <falcon/contextgroup.h>
 #include <falcon/gctoken.h>
-#include <falcon/itemstack.h>
 
 #include <falcon/module.h>       // For getDynSymbolValue
 #include <falcon/modspace.h>
@@ -94,7 +93,6 @@ VMContext::VMContext( Process* prc, ContextGroup* grp ):
    m_dataStack.init(0, m_dataStack.INITIAL_STACK_ALLOC);
    m_finallyStack.init();
    m_waiting.init();
-   m_itemStack = new ItemStack(prc->itemPagePool());
 
    m_id = prc->getNextContextID();
    m_acquired = 0;
@@ -646,7 +644,7 @@ void VMContext::startRuleFrame()
    static const Symbol* base = Engine::instance()->baseSymbol();
    DynsData* slot = m_dynsStack.addSlot();
 
-   register Item& frame = *m_itemStack->push(m_dynsStack.depth());
+   register Item& frame = *addDynData();
    slot->m_sym = base;
    slot->m_value = &frame; // overkill
    frame.type(FLC_ITEM_FRAMING);
@@ -669,7 +667,7 @@ void VMContext::startRuleNDFrame( uint32 tbPoint )
    static const Symbol* base = Engine::instance()->baseSymbol();
    DynsData* slot = m_dynsStack.addSlot();
 
-   register Item& frame = *m_itemStack->push(m_dynsStack.depth());
+   register Item& frame = *addDynData();
    slot->m_sym = base;
    slot->m_value = &frame; // overkill
    frame.type(FLC_ITEM_FRAMING);
@@ -1527,8 +1525,7 @@ void VMContext::addLocalFrame( SymbolMap* st, int pcount )
    while( p < pcount ) {
       DynsData* dd = m_dynsStack.addSlot();
       dd->m_sym = st->getById(p);
-      dd->m_value = m_itemStack->push(m_dynsStack.depth());
-      dd->m_value->setNil();
+      dd->m_value = addDynData();
       ++p;
    }
 }
@@ -1649,7 +1646,7 @@ void VMContext::returnFrame_base( const Item& value )
    PARANOID( "Data stack underflow at return", (m_dataStack.m_top >= m_dataStack.m_base) );
 
    m_dynsStack.unroll( topCall->m_dynsBase );
-   m_itemStack->freeUpToDepth(topCall->m_dynsBase);
+   m_dynDataStack.unroll(topCall->m_dynDataBase);
    PARANOID( "Dynamic Symbols stack underflow at return", (m_dynsStack.m_top >= m_dynsStack.m_base-1) );
 
    // Forward the return value
@@ -1763,8 +1760,7 @@ void VMContext::defineSymbol(const Symbol* sym)
 {
    DynsData* newData = m_dynsStack.addSlot();
    newData->m_sym = sym;
-   newData->m_value = m_itemStack->push( m_dynsStack.depth() );
-   newData->m_value->setNil();
+   newData->m_value = addDynData();
 }
 
 Item* VMContext::resolveSymbol( const String& symname, bool forAssign )
@@ -1832,7 +1828,7 @@ Item* VMContext::resolveSymbol( const Symbol* dyns, bool forAssign )
             // -- in this case, we want a copy of the thing we found below.
             DynsData* newSlot = m_dynsStack.addSlot();
             newSlot->m_sym = dyns;
-            newSlot->m_value = m_itemStack->push(m_dynsStack.depth(),*dd->m_value);
+            newSlot->m_value = addDynData(*dd->m_value);
             return newSlot->m_value;
          }
 
@@ -1849,8 +1845,7 @@ Item* VMContext::resolveSymbol( const Symbol* dyns, bool forAssign )
             // notice that evaluation parameters are above the base symbol.
             DynsData* newSlot = m_dynsStack.addSlot();
             newSlot->m_sym = dyns;
-            newSlot->m_value = m_itemStack->push(m_dynsStack.depth());
-            newSlot->m_value->setNil();
+            newSlot->m_value = addDynData();
             TRACE2( "VMContext::resolveSymbol -- \"%s\" went down to a local base, creating new.", dyns->name().c_ize() );
             return newSlot->m_value;
          }
@@ -1877,14 +1872,12 @@ Item* VMContext::resolveSymbol( const Symbol* dyns, bool forAssign )
          if( newSlot->m_value == 0 )
          {
             TRACE2( "VMContext::resolveSymbol -- \"%s\" NOT found global.", dyns->name().c_ize() );
-            newSlot->m_value = m_itemStack->push(m_dynsStack.depth());
-            newSlot->m_value->setNil();
+            newSlot->m_value = addDynData();
          }
       }
       else {
          // in the end, we must create a new assignable slot.
-         newSlot->m_value = m_itemStack->push(m_dynsStack.depth());
-         newSlot->m_value->setNil();
+         newSlot->m_value = addDynData();
          TRACE2( "VMContext::resolveSymbol -- \"%s\" went down to function base, creating new.", dyns->name().c_ize() );
       }
       return newSlot->m_value;
@@ -1902,7 +1895,7 @@ Item* VMContext::resolveSymbol( const Symbol* dyns, bool forAssign )
             // -- in this case, we want a copy of the thing we found below.
             DynsData* newSlot = m_dynsStack.addSlot();
             newSlot->m_sym = dyns;
-            newSlot->m_value = m_itemStack->push(m_dynsStack.depth(),*dd->m_value);
+            newSlot->m_value = addDynData(*dd->m_value);
             return newSlot->m_value;
          }
 
@@ -1935,7 +1928,7 @@ Item* VMContext::resolveSymbol( const Symbol* dyns, bool forAssign )
 
    if( isRule )
    {
-      newSlot->m_value = m_itemStack->push(m_dynsStack.depth(),*var);
+      newSlot->m_value = addDynData(*var);
    }
    else
    {
@@ -2328,6 +2321,27 @@ void VMContext::onStackRebased( Item* oldBase )
       ++dt;
    }
 }
+
+void VMContext::onDynStackRebased( Item* oldBase )
+{
+   TRACE( "VMContext::onDynStackRebased %p -> %p", oldBase, m_dataStack.m_base );
+
+   // rebase the dynsym satack.
+   Item* newBase = m_dynDataStack.m_base;
+   Item* oldTop = oldBase + (m_dynDataStack.m_top - newBase);
+
+   DynsData* dt = m_dynsStack.m_base;
+   DynsData* endDt = m_dynsStack.m_top;
+
+   while( dt <= endDt )
+   {
+      if( dt->m_value >= oldBase && dt->m_value <= oldTop ) {
+         dt->m_value = newBase + (dt->m_value - oldBase);
+      }
+      ++dt;
+   }
+}
+
 
 int VMContext::getStatus()
 {

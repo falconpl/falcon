@@ -33,6 +33,10 @@
 #include <falcon/stringstream.h>
 #include <falcon/dyncompiler.h>
 #include <falcon/syntree.h>
+#include <falcon/module.h>
+#include <falcon/function.h>
+#include <falcon/globalsmap.h>
+
 #include <falcon/psteps/stmttry.h>
 
 namespace Falcon {
@@ -206,6 +210,7 @@ bool Debugger::parseCommand( TextWriter& wr, const String& line1, VMContext* ctx
                "*: dyns [N]: Display the data in the dynamic stack (top N positions, 0 for all).\n"
                "*: code [N]: Display the data in the code stack (top N positions, 0 for all).\n"
                "*: call [N]: Display the data in the call stack (top N positions, 0 for all).\n"
+               "*: glob: Dysplay the globals table for the current module (if any)."
 
                "*: Entering an empty line repeats the previous command.\n"
                );
@@ -272,6 +277,7 @@ bool Debugger::parseCommand( TextWriter& wr, const String& line1, VMContext* ctx
    else if( line == "call" )
    {
       displayCall( wr, ctx, 1 );
+      cont = true;
    }
    else if( line.startsWith("call ") )
    {
@@ -285,9 +291,15 @@ bool Debugger::parseCommand( TextWriter& wr, const String& line1, VMContext* ctx
      }
      cont = true;
    }
+   else if( line == "glob" )
+   {
+     displayGlobals( wr, ctx );
+     cont = true;
+   }
    else if( line == "code" )
    {
      displayCode( wr, ctx, 1 );
+     cont = true;
    }
    else if( line.startsWith("code ") )
    {
@@ -397,7 +409,7 @@ void Debugger::displayStack( TextWriter& wr, VMContext* ctx, int64 depth )
       String temp;
       cls->describe(data, temp, 3, 128);
 
-      wr.write( String("*: ").N(top).A(": ").A(temp).A("\n") );
+      wr.write( String("*: ").H((uint64)item,true).A(" - ").N(top).A(": ").A(temp).A("\n") );
       ++top;
    }
 }
@@ -417,7 +429,7 @@ void Debugger::displayDyns( TextWriter& wr, VMContext* ctx, int64 depth )
       String temp;
       cls->describe(data, temp, 3, 128);
 
-      wr.write( String("*: ").N(top).A(": ").A(dd->m_sym->name()).A("=(").H((int64)item,true).A(") ").A(temp).A("\n") );
+      wr.write( String("*: ").N(top).A(": ").A(dd->m_sym->name()).A("=(").H((uint64)item,true).A(") ").A(temp).A("\n") );
       ++top;
    }
 }
@@ -446,6 +458,37 @@ void Debugger::displayCall( TextWriter& wr, VMContext* ctx, int64 depth )
       CallFrame* cf = &ctx->callerFrame(top);
       wr.write( String("*: ").N(top).A(": ").A(cf->m_function->fullName()).A("(").A(cf->m_function->locate()).A(")\n") );
       ++top;
+   }
+}
+
+void Debugger::displayGlobals( TextWriter& wr, VMContext* ctx )
+{
+   Function* func = ctx->currentFrame().m_function;
+   if( func->module() != 0 )
+   {
+      GlobalsMap& gmap = func->module()->globals();
+      int64 size = gmap.size();
+      wr.write( String("*: Global variables for module \"").A(func->module()->name()).A("\": ").N((int64)size).A("\n") );
+      class Rator: public GlobalsMap::VariableEnumerator
+      {
+      public:
+         Rator(TextWriter& tw) :m_tw(tw) {}
+         virtual ~Rator() {}
+         virtual void operator() ( const Symbol* sym, Item*& value )
+         {
+            m_tw.write( String("*: ").A(sym->name()).A(" (").H((uint64)value,true).A(")=").A(value->describe()).A("\n") );
+         }
+
+      private:
+         TextWriter& m_tw;
+      }
+      rator(wr);
+
+      gmap.enumerate(rator);
+   }
+   else
+   {
+      wr.write( String("*: No current module\n") );
    }
 }
 
