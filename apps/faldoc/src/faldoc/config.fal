@@ -63,8 +63,8 @@ class Config
    function read( fdfile )
       // get config
       try
-         conf = confparser.ConfParser( fdfile )
-         conf.read()
+         conf = confparser.ConfParser()
+         conf.read(fdfile)
          self.cfile = conf
       catch IOError in error
          faldoc.fatal( @i"Invalid input file $fdfile" )
@@ -123,7 +123,7 @@ class Config
       end
 
       // get the properties.
-      self.properties = conf.getCategory( "Property.*" )
+      self.properties = conf.ecat( "Property.*" )
 
       // autobrief
       self.autobrief = self.checkBool( "AutoBrief", false )
