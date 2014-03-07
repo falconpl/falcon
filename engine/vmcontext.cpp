@@ -2138,7 +2138,7 @@ void VMContext::contextualize( Error* error, bool force )
    String noname;
    Function* curFunc = currentFrame().m_function;
 
-   if( error->line() < 0 && error->className() == "ParamError" )
+   if( error->line() <= 0 && error->className() == "ParamError" )
    {
       // a parameter error raised by a native function.
       curFunc = (m_callStack.m_top-1)->m_function;

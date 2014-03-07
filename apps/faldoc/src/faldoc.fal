@@ -57,8 +57,8 @@ class Application
          self.processInput()
          self.processOutput()
          
-      catch in e
-         self.fatal( e.toString() )
+      catch as e
+         self.fatal( e.describe() )
       end
    end
 
