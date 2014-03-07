@@ -47,9 +47,6 @@ public:
    /** Data closed in closures. */
    ClosedData* m_closingData;
 
-   /** The step calling this function. */
-   const PStep* m_caller;
-
    /** Number of parameters used for the effective call. */
    uint32 m_paramCount;
 
@@ -81,6 +78,11 @@ public:
     */
    uint32 m_codeBase;
    
+   /** Line where the source call was performed
+    *
+    */
+   int32 m_callerLine;
+
    /** Image of "self" in this frame. */
    Item m_self;
 
@@ -101,6 +103,7 @@ public:
       m_dynsBase( dynb ),
       m_dynDataBase(dynDataBase),
       m_codeBase( cb ),
+      m_callerLine(0),
       m_self(self),
       m_bMethodic( true )
    {}
@@ -115,6 +118,7 @@ public:
       m_dynsBase( dynb ),
       m_dynDataBase(dynDataBase),
       m_codeBase( cb ),
+      m_callerLine(0),
       m_bMethodic( false )
    {}
 };

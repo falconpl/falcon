@@ -338,12 +338,14 @@ void Function_call::invoke( VMContext* ctx, int32 )
 
    if( ir == 0 )
    {
+      ctx->callerLine(__LINE__+1);
       ctx->callItem(self);
    }
    else {
       ItemArray local;
       // mutlitasking wise...
       local.copyOnto( *ir );
+      ctx->callerLine(__LINE__+1);
       ctx->callItem( self, local.length(), local.elements() );
    }
 }

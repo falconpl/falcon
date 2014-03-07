@@ -209,7 +209,7 @@ bool Debugger::parseCommand( TextWriter& wr, const String& line1, VMContext* ctx
                "*: data [N]: Display the data in the stack (top N positions, 0 for all).\n"
                "*: dyns [N]: Display the data in the dynamic stack (top N positions, 0 for all).\n"
                "*: code [N]: Display the data in the code stack (top N positions, 0 for all).\n"
-               "*: call [N]: Display the data in the call stack (top N positions, 0 for all).\n"
+               "*: back [N]: Display the data in the call stack (top N positions, 0 for all).\n"
                "*: glob: Dysplay the globals table for the current module (if any)."
 
                "*: Entering an empty line repeats the previous command.\n"
@@ -452,14 +452,20 @@ void Debugger::displayCode( TextWriter& wr, VMContext* ctx, int64 depth )
 void Debugger::displayCall( TextWriter& wr, VMContext* ctx, int64 depth )
 {
    wr.write( String("*: Call stack size ").N((int64)ctx->callDepth()).A("\n") );
-   int64 top = 0;
-   while( (depth == 0 && top < ctx->callDepth()) || (depth > 0 && top < depth ) )
+   TraceBack tb;
+   ctx->fillTraceBack(&tb, depth);
+
+   length_t size = tb.size();
+
+   for ( length_t i = 0; i < size; ++i )
    {
-      CallFrame* cf = &ctx->callerFrame(top);
-      wr.write( String("*: ").N(top).A(": ").A(cf->m_function->fullName()).A("(").A(cf->m_function->locate()).A(")\n") );
-      ++top;
+      String str;
+      TraceStep* ts = tb.at(i);
+      ts->toString(str);
+      wr.write( String("*: ").N(i).A(": ").A(str).A("\n") );
    }
 }
+
 
 void Debugger::displayGlobals( TextWriter& wr, VMContext* ctx )
 {

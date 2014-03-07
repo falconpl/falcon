@@ -797,6 +797,11 @@ public:
       atomicSet(lockId, 0);
    }
 
+   /**  Typedefined instance retriever.
+    *
+    * This method works like asParentInst(), extracting the correct instance for the given class
+    * out of the instance in this item, and adding a useful typecast.
+    */
    template< class T_ >
    T_* castInst(Class* baseClass)
    {

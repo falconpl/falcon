@@ -222,7 +222,7 @@ static void get_trace( const Class*, const String&, void *instance, Item& value 
    if( error->hasTraceback() )
    {
       ItemArray* ret = new ItemArray;
-      class TB: public Error::StepEnumerator {
+      class TB: public TraceBack::StepEnumerator {
       public:
          TB( ItemArray* ret ): m_ret(ret)  {}
          virtual ~TB() {}
@@ -239,7 +239,7 @@ static void get_trace( const Class*, const String&, void *instance, Item& value 
       };
 
       TB rator(ret);
-      error->enumerateSteps(rator);
+      error->traceBack()->enumerateSteps(rator);
 
       value = FALCON_GC_HANDLE( ret );
    }
@@ -305,7 +305,9 @@ void Function_take::invoke( VMContext* ctx, int32 )
 {
    Error* error = static_cast<Error*>( ctx->self().asInst() );
    ctx->contextualize(error, true);
-   ctx->addTrace(error);
+   TraceBack* tb = new TraceBack;
+   ctx->fillTraceBack(tb);
+   error->setTraceBack(tb);
 }
 
 

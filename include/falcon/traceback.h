@@ -20,6 +20,7 @@
 #include <falcon/types.h>
 #include <falcon/string.h>
 #include <falcon/tracestep.h>
+#include <falcon/enumerator.h>
 
 namespace Falcon {
 

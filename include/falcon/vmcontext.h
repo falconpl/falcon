@@ -641,7 +641,6 @@ public:
       topCall->m_function = function;
       topCall->m_closingData = topCall->m_closure = 0;
       topCall->m_codeBase = codeDepth();
-      topCall->m_caller = m_caller;
       // initialize also initBase, as stackBase may move
       topCall->m_dataBase = dataSize()-nparams;
       // TODO: enable rule application with dynsymbols?
@@ -650,6 +649,8 @@ public:
       topCall->m_paramCount = nparams;
       topCall->m_self = self;
       topCall->m_bMethodic = bMethodic;
+      topCall->m_callerLine = m_callerLine;
+      m_callerLine = 0;
 
       return topCall;
    }
@@ -1645,11 +1646,9 @@ public:
    void contextualize(Error* error, bool force = false);
 
    /**
-    * Adds information about the currently executed context.
+    * Stores the trace-back information for the current context.
     */
-   void addTrace(Error* error);
-
-   void caller( const PStep* ps ) { m_caller = ps; }
+   void fillTraceBack(TraceBack* tb, long maxDepth=-1);
 
    /** Stack events during critical sections for later honoring.
     *
@@ -1711,6 +1710,8 @@ public:
    };
 
    inline DynsData* dynsAt(long pos) const { return m_dynsStack.m_top - pos; }
+
+   void callerLine( int32 l ) { m_callerLine = l; }
 
 protected:
 
@@ -1829,6 +1830,7 @@ protected:
    };
 
    atomic_int m_status;
+   int32 m_callerLine;
 
    LinearStack<CodeFrame> m_codeStack;
    LinearStack<CallFrame> m_callStack;
@@ -1880,9 +1882,6 @@ protected:
 
    ContextGroup* m_inGroup;
    Process* m_process;
-
-   // caller temporarily ready to fire
-   const PStep* m_caller;
 
    Mutex m_mtxWeakRef;
    WeakRef* m_firstWeakRef;

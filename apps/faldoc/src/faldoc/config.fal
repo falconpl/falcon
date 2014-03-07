@@ -47,7 +47,7 @@ class Config
    outMods = nil
 
    //# Log level
-   loglevel = nil
+   loglevel = 9
 
    //#configuration file
    cfile = nil
@@ -66,12 +66,11 @@ class Config
          conf = confparser.ConfParser( fdfile )
          conf.read()
          self.cfile = conf
-         
       catch IOError in error
-         faldoc.fatal( i"Invalid input file $(fdfile)" )
+         faldoc.fatal( @i"Invalid input file $fdfile" )
          return false
       catch in error
-         faldoc.fatal( i"Error in reading the configuration file:\n$(error)" )
+         faldoc.fatal( @i"Error in reading the configuration file:\n$error" )
          return false
       end
 

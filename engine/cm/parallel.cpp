@@ -185,6 +185,7 @@ static void internal_launch( VMContext* ctx, int pCount )
          nctx->pushData( *ctx->param(p) );
       }
 
+      ctx->callerLine(__LINE__+1);
       nctx->callItem( toBeCalled, pCount, 0 );
       //TODO: should we add the whole group?
       prc->startContext( nctx );

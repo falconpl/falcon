@@ -84,8 +84,7 @@ VMContext::VMContext( Process* prc, ContextGroup* grp ):
    m_events(0),
    m_suspendedEvents(0),
    m_inGroup(grp),
-   m_process(prc),
-   m_caller(0)
+   m_process(prc)
 {
    m_dynsStack.init();
    m_codeStack.init();
@@ -99,6 +98,7 @@ VMContext::VMContext( Process* prc, ContextGroup* grp ):
    m_signaledResource = 0;
 
    m_firstWeakRef = 0;
+   m_callerLine = 0;
 
    pushBaseElements();
 
@@ -133,7 +133,6 @@ void VMContext::reset()
 {
    if( m_lastRaised != 0 ) m_lastRaised->decref();
    m_lastRaised = 0;
-   m_caller = 0;
 
    atomicSet(m_events, 0);
    setStatus(statusBorn);
@@ -154,6 +153,8 @@ void VMContext::reset()
    m_dataStack.reset(0);
    m_finallyStack.reset();
    m_waiting.reset();
+
+   m_callerLine = 0;
 
    pushBaseElements();
    clearEvents();
@@ -364,7 +365,6 @@ const PStep* VMContext::nextStep( int frame ) const
    PARANOID( "Call stack empty", (this->callDepth() > 0) );
 
    const CodeFrame* cframe;
-
    if( frame == 0 )
    {
       cframe = m_codeStack.m_top;
@@ -1054,7 +1054,9 @@ public:
             // found, shall we add a traceback to the error?
             if( st->isTracedCatch() && ! m_error->hasTraceback() )
             {
-               ctx->addTrace(m_error);
+               TraceBack* tb = new TraceBack;
+               ctx->fillTraceBack(tb);
+               m_error->setTraceBack(tb);
             }
             ctx->setCatchBlock( st );
             return true;
@@ -1068,7 +1070,9 @@ public:
    {
       if( ! m_error->hasTraceback() )
       {
-         ctx->addTrace( m_error );
+         TraceBack* tb = new TraceBack;
+         ctx->fillTraceBack(tb);
+         m_error->setTraceBack(tb);
       }
    }
 
@@ -1228,7 +1232,9 @@ Error* VMContext::raiseError( Error* ce )
       // add a trace if not present
       if( ! ce->hasTraceback() )
       {
-         addTrace(ce);
+         TraceBack* tb = new TraceBack;
+         fillTraceBack(tb);
+         ce->setTraceBack(tb);
       }
    }
    // otherwise, the throw is suspended
@@ -1419,7 +1425,6 @@ void VMContext::callItem( const Item& item, int pcount, Item const* params )
       memcpy( m_dataStack.m_top-pcount+1, params, pcount * sizeof(item) );
    }
 
-   m_caller = currentCode().m_step;
    cls->op_call( this, pcount, data );
 }
 
@@ -1435,7 +1440,7 @@ void VMContext::call( Function* func, int pcount, Item const* params )
       addSpace(pcount);
       memcpy( m_dataStack.m_top-pcount+1, params, pcount * sizeof(Item) );
    }
-   m_caller = currentCode().m_step;
+
    makeCallFrame(func, pcount);
    func->invoke(this, pcount);
 }
@@ -1453,7 +1458,7 @@ void VMContext::call( Function* func, const Item& self, int pcount, Item const* 
       addSpace(pcount);
       memcpy( m_dataStack.m_top-pcount+1, params, pcount * sizeof(Item) );
    }
-   m_caller = currentCode().m_step;
+
    makeCallFrame(func, pcount, self);
    func->invoke(this, pcount);
 }
@@ -1470,7 +1475,7 @@ void VMContext::call( Closure* cls, int pcount, Item const* params )
       addSpace(pcount);
       memcpy( m_dataStack.m_top-pcount+1, params, pcount * sizeof(Item) );
    }
-   m_caller = currentCode().m_step;
+
    makeCallFrame(cls, pcount );
    cls->closed()->invoke(this, pcount);
 }
@@ -2130,7 +2135,13 @@ void VMContext::contextualize( Error* error, bool force )
    String noname;
    Function* curFunc = currentFrame().m_function;
 
-   if( error->line() == 0 || force )
+   if( error->line() < 0 && error->className() == "ParamError" )
+   {
+      // a parameter error raised by a native function.
+      curFunc = (m_callStack.m_top-1)->m_function;
+      error->line(currentFrame().m_callerLine);
+   }
+   else if( error->line() <= 0 || force )
    {
       CodeFrame* top = m_codeStack.m_top;
       int l = top->m_step->sr().line();
@@ -2143,14 +2154,14 @@ void VMContext::contextualize( Error* error, bool force )
    }
 
    Module* mod = curFunc->module();
-   if( mod != 0 || force )
+   if( mod != 0 )
    {
-      if( error->module().empty() )
+      if( error->module().empty() || force )
       {
          error->module(mod->name());
       }
 
-      if( error->path().empty() )
+      if( error->path().empty() || force )
       {
          error->path(mod->uri());
       }
@@ -2168,35 +2179,50 @@ void VMContext::contextualize( Error* error, bool force )
 
 }
 
-void VMContext::addTrace( Error *error )
+void VMContext::fillTraceBack( TraceBack* tb, long maxDepth )
 {
    VMContext* ctx = this;
-
    long depth = ctx->callDepth();
-   const PStep* caller = currentCode().m_step;
+   if( maxDepth > 0 && depth > maxDepth )
+   {
+      depth = maxDepth;
+   }
+
+   int32 line = ctx->currentCode().m_step->line();
 
    for( long i = 0; i < depth; ++i )
    {
       CallFrame& cf = ctx->callerFrame(i);
       Function* func = cf.m_function;
       Module* mod = func->module();
+      int pCount = cf.m_paramCount;
+      Item* paramBase = m_dataStack.m_base + cf.m_dataBase;
 
-      if( caller == 0 )
+      String params;
+      for ( int pc = 0; pc < pCount; ++ pc )
       {
-         caller = ctx->nextStep(i);
+         Class* cls;
+         void* data;
+         paramBase[pc].forceClassInst(cls, data);
+         String tempParam;
+         cls->describe(data,tempParam,2,20);
+         if( ! params.empty() )
+         {
+            params += ", ";
+         }
+         params += tempParam;
       }
 
-      int line = caller != 0 ? caller->line() : func->declaredAt();
       if( mod != 0 )
       {
-         error->addTrace( TraceStep(mod->name(), mod->uri(), func->fullName(), line ) );
+         tb->add( new TraceStep(mod->name(), mod->uri(), func->fullName(), line, params ) );
       }
       else
       {
-         error->addTrace( TraceStep("<internal>", func->fullName(), line ) );
+         tb->add( new TraceStep("<none>", func->fullName(), line, params ) );
       }
 
-      caller = cf.m_caller;
+      line = ctx->callerFrame(i).m_callerLine;
    }
 }
 

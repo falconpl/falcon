@@ -23,6 +23,7 @@
 #include <falcon/item.h>
 #include <falcon/enumerator.h>
 #include <falcon/tracestep.h>
+#include <falcon/traceback.h>
 #include <falcon/classes/classerror.h>
 
 namespace Falcon {
@@ -250,11 +251,6 @@ class FALCON_DYN_CLASS Error
 {
 public:
 
-   /** Enumerator for trace steps. 
-    @see enumerateSteps
-   */
-   typedef Enumerator<TraceStep> StepEnumerator;
-
    /** Enumerator for sub-errors.
     @see enumerateSuberrors
     */
@@ -277,8 +273,8 @@ public:
    void module( const String &moduleName ) { m_module = moduleName; }
    void path( const String &path ) { m_path = path; }
    void mantra( const String &symbolName )  { m_mantra = symbolName; }
-   void line( uint32 line ) { m_line = line; }
-   void chr( uint32 chr ) { m_chr = chr; }
+   void line( int32 line ) { m_line = line; }
+   void chr( int32 chr ) { m_chr = chr; }
    void origin( ErrorParam::t_origin o ) { m_origin = o; }
    void catchable( bool c ) { m_catchable = c; }
    void raised( const Item &itm ) { m_raised = itm; m_bHasRaised = true; }
@@ -291,8 +287,8 @@ public:
    const String &module() const { return m_module; }
    const String &path() const { return m_path; }
    const String &mantra() const { return m_mantra; }
-   uint32 line() const { return m_line; }
-   uint32 chr() const { return m_chr; }
+   int32 line() const { return m_line; }
+   int32 chr() const { return m_chr; }
    ErrorParam::t_origin origin() const { return m_origin; }
    bool catchable() const { return m_catchable; }
    const Item &raised() const { return m_raised; }
@@ -395,14 +391,6 @@ public:
    const Class* handler() const;
    void handler( const Class* ) const;
 
-   /** Adds a trace step to this error.
-    This method adds a tracestep that lead to the place where the error
-    was raised.
-
-    Errors raised outside a script execution may be without trace steps.
-    */
-   void addTrace( const TraceStep& step );
-
    /**
     * Returns a sub-class specific description of the error code.
     *
@@ -434,11 +422,6 @@ public:
       String temp; describeErrorCodeTo( errorCode, temp ); return temp;
    }
 
-   /** Enumerate the traceback steps.
-    \param rator A StepEnumerator that is called back with each step in turn.
-    */
-   void enumerateSteps( StepEnumerator &rator ) const;
-
    /** Enumerate the sub-errors.
     \param rator A ErrorEnumerator that is called back with each sub-error in turn.
     \see appendSubError
@@ -465,7 +448,7 @@ public:
    Error* getBoxedError() const;
 
    /** Return true if this error has been filled with a traceback.*/
-   bool hasTraceback() const;
+   bool hasTraceback() const { return m_tb != 0; }
 
    bool hasSubErrors() const;
 
@@ -480,6 +463,15 @@ public:
    /** Sets all de values in the error structure. */
    void set( const ErrorParam& params );
    
+   /** Gest the traceback associated with this error */
+   const TraceBack* traceBack() const { return m_tb; }
+
+   /** Sets the traceback associated with this error */
+   void setTraceBack( TraceBack* tb ){
+      delete m_tb;
+      m_tb = tb;
+   }
+
 protected:
 
    Error( const String& name, const ErrorParam &params );
@@ -503,8 +495,8 @@ protected:
    String m_path;
    String m_signature;
 
-   uint32 m_line;
-   uint32 m_chr;
+   int32 m_line;
+   int32 m_chr;
    uint32 m_sysError;
 
 
@@ -523,6 +515,7 @@ protected:
 
 private:
    Error_p* _p;
+   TraceBack* m_tb;
    mutable const Class* m_handler;
 };
 
@@ -573,7 +566,7 @@ private:
  * @note Remember to add the ';' after the macro.
  */
 #define FALCON_SIGN_ERROR( Error_Class__, error_code__ ) \
-         (new Error_Class__(ErrorParam(error_code__, __LINE__, SRC  ) ))
+         (new Error_Class__(ErrorParam(error_code__, __LINE__, SRC  ).line(-1) ))
 
 /**
  * More compact error macro.
@@ -582,7 +575,7 @@ private:
  * method and dereferences the returned error immediately.
  */
 #define FALCON_RESIGN_ERROR( Error_Class__, error_code__, VMContext__ ) \
-         (VMContext__->raiseError(new Error_Class__->(ErrorParam(error_code__, __LINE__, SRC ) ))->decref())
+         (VMContext__->raiseError(new Error_Class__->(ErrorParam(error_code__, __LINE__, SRC ).line(-1) ))->decref())
 
 /**
  * Creates a signed error with extra information.
@@ -610,7 +603,7 @@ private:
  *@note Remember to add the ';' after the macro.
  */
 #define FALCON_SIGN_XERROR( Error_Class__, error_code__, Extra__ ) \
-         (new Error_Class__(ErrorParam(error_code__, __LINE__, SRC ) Extra__ ))
+         (new Error_Class__(ErrorParam(error_code__, __LINE__, SRC ).line(-1) Extra__ ))
 
 
 /**
@@ -621,7 +614,7 @@ private:
  */
 #define FALCON_RESIGN_XERROR( Error_Class__, error_code__, VMContext__, Extra__ ) \
          VMContext__ = VMContext__;\
-         throw new Error_Class__(ErrorParam(error_code__, __LINE__, SRC ) Extra__ );
+         throw new Error_Class__(ErrorParam(error_code__, __LINE__, SRC ).line(-1) Extra__ );
 
          //(VMContext__->raiseError(new Error_Class__(ErrorParam(error_code__, __LINE__, SRC ) Extra__ ))->decref())
 /**

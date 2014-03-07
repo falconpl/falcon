@@ -509,10 +509,10 @@ void ExprCall::PStepInvoke::apply_( const PStep* ps, VMContext* ctx )
 
    // we're out of business
    ctx->popCode();
-   ctx->caller(self);
 
    // now, top points to our function value.
    int pcount = self->_p->m_exprs.size();
+   ctx->callerLine( self->sr().line() );
    invoke( ctx, pcount );
 }
 
