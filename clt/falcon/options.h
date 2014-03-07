@@ -68,7 +68,6 @@ public:
    bool wait_after;
    bool parse_ftd;
 
-   bool compile_tltable;
    bool interactive;
 
    bool ignore_syspath;
@@ -85,6 +84,7 @@ public:
 
    bool m_bEval;
    String m_sEval;
+   int m_errorReportLevel;
 
    FalconOptions();
 
@@ -95,6 +95,7 @@ public:
    /** Returns true if the parsed options required an immediate exit. */
    bool wasJustInfo() const { return m_justinfo; }
 
+   void getErrorReportMode( bool& bAddPath, bool& bAddParams, bool& bAddSign ) const;
 public:
    void modalGiven();
    void parseDirective( const String& str );

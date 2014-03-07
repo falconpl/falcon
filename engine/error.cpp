@@ -143,11 +143,11 @@ void Error::decref()
 }
 
 
-void Error::describeTo( String &target, bool addSignature ) const
+void Error::describeTo( String &target, bool bAddPath, bool bAddParams, bool bAddSign ) const
 {
    heading( target );
 
-   if ( addSignature && ! m_signature.empty() )
+   if ( bAddSign && ! m_signature.empty() )
    {
       target += "\n   Signed by: " + m_signature;
    }
@@ -160,24 +160,24 @@ void Error::describeTo( String &target, bool addSignature ) const
    if ( m_tb != 0 )
    {
       target += "\n   Traceback:\n";
-      describeTrace(target);
+      describeTrace(target, bAddPath, bAddSign);
    }
 
    if (! _p->m_subErrors.empty() )
    {
       target += "\n   Because of:\n";
-      describeSubErrors( target, false );
+      describeSubErrors( target, bAddPath, bAddParams, bAddSign );
    }
 }
 
 
-String& Error::describeSubErrors( String& target, bool addSignature ) const
+String& Error::describeSubErrors( String& target, bool bAddPath, bool bAddParams, bool bAddSign ) const
 {
    std::deque<Error*>::const_iterator iter = _p->m_subErrors.begin();
    while( true )
    {
       target += "     ";
-      String temp = (*iter)->describe(addSignature);
+      String temp = (*iter)->describe(bAddPath, bAddParams, bAddSign);
       String temp2;
       temp.replace("\n","\n     ", temp2);
       target += temp2;
@@ -196,11 +196,11 @@ String& Error::describeSubErrors( String& target, bool addSignature ) const
 }
 
 
-String& Error::describeTrace( String& target ) const
+String& Error::describeTrace( String& target, bool bAddPath, bool bAddParams ) const
 {
    if( m_tb != 0 )
    {
-      return m_tb->toString(target);
+      return m_tb->toString(target, bAddPath, bAddParams);
    }
 
    return target;

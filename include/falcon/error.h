@@ -295,12 +295,12 @@ public:
    bool hasRaised() const { return m_bHasRaised; }
    const String& signature() const { return m_signature; }
 
-   inline String describe( bool addSignature = true ) const {
-      String s; describeTo(s, addSignature); return s;
+   inline String describe( bool bAddPath=false, bool bAddParams=false, bool bAddSign=false ) const {
+      String s; describeTo(s, bAddPath, bAddParams, bAddSign ); return s;
    }
    /** Renders the error to a string.
     */
-   virtual void describeTo( String &target, bool addSignature = true ) const;
+   virtual void describeTo( String &target, bool bAddPath=false, bool bAddParams=false, bool bAddSign=false ) const;
 
    /** Writes only the heading of the error to the target string.
       The error heading is everything of the error without the traceback.
@@ -336,16 +336,17 @@ public:
     *
     * \note The \b target string is used additively (it is not cleared when the description is added).
     */
-   String& describeSubErrors( String& target, bool addSignature=true ) const;
+   String& describeSubErrors( String& target, bool bAddPath=false, bool bAddParams=false, bool bAddSign=false ) const;
 
    /** Render the trace.
     * \param target the string where to add the errors.
-    * \param addSignature If true, the signature field of the sub-errors is added to their description.
+    * \param bAddPath If true, add the source module URI specification to each line of the trace.
+    * \param bAddParams If true, add the parameters to the call list.
     * \return the target string
     *
     * \note The \b target string is used additively (it is not cleared when the description is added).
     */
-   String& describeTrace( String& target ) const;
+   String& describeTrace( String& target, bool bAddPath = false, bool bAddParams = false ) const;
 
    /** Renders the two-characters origin code for this error.
     *

@@ -49,7 +49,6 @@ FalconOptions::FalconOptions():
    wait_after( false ),
    parse_ftd( false ),
 
-   compile_tltable( false ),
    interactive( false ),
    ignore_syspath( false ),
    errOnStdout(false),
@@ -58,6 +57,7 @@ FalconOptions::FalconOptions():
    log_level(-1),
    num_processors(0),
    m_bEval( false ),
+   m_errorReportLevel(2),
 
    m_modal( false ),
    m_justinfo( false )
@@ -70,7 +70,6 @@ void FalconOptions::usage( bool deep )
       << "Usage:\n" << endl
       << "       falcon (-c|-S|-t) [c_opts] [-o<output>] module" << endl
       << "       falcon [-p <mod> -p <mod>...] -r \"program to be evaluated\"" << endl
-      << "       falcon -y [-o<output>] module" << endl
       << "       falcon -x [c_options] module" << endl
       << "       falcon --test <directory> [test_opts]" << endl
       << "       falcon [c_opts] [r_opts] module [script options]" << endl
@@ -109,12 +108,12 @@ void FalconOptions::usage( bool deep )
 #ifndef NDEBUG
       << "  -F <file>    Output TRACE debug statements to <file> (local platform file format)" << endl
 #endif
-      << "  -l <lang>    Set preferential language of loaded modules" << endl
       << "  -L <path>    Add path for 'load' and 'import' directives" << endl
       << "  -M           do NOT save the compiled modules in '.fam' files" << endl
       << "  -p <module>  preload (pump in) given module" << endl
       << "  -P           ignore system PATH (and FALCON_LOAD_PATH envvar)" << endl
       << "  -I           Ignore sources" << endl
+      << "  --el <lvl>   Error report traceback level: 0: none, 1: brief, [2]:long, 3: complete"  << endl
       << "  --ll <lvl>   Set system log level 0: critical, 7: debug, -1: off"  << endl
       << "  --log <file> Send System log to file (-:stdout, %:stderr)"  << endl
       << "  --prc <num>  Set number of VM processors (0 = match CPU count)" << endl
@@ -265,7 +264,6 @@ void FalconOptions::parse( int argc, char **argv, int &script_pos )
             case 'x': run_only = true; break;
             case 'v': version(); m_justinfo = true; break;
             case 'w': wait_after = true; break;
-            case 'y': modalGiven(); compile_tltable = true; break;
 
             case '-':
             {
@@ -296,6 +294,11 @@ void FalconOptions::parse( int argc, char **argv, int &script_pos )
                else if (String( op+2 ) == "tlist" )
                {
                   list_tests = true;
+                  break;
+               }
+               else if( String( op+2 ) == "el" )
+               {
+                  m_errorReportLevel = atoi( nextword );
                   break;
                }
                else if( String( op+2 ) == "ll" )
@@ -411,6 +414,19 @@ void FalconOptions::parseEqString( const String& str, String& key, String& value
    key.bufferize();
    value.bufferize();
 }
+
+
+void FalconOptions::getErrorReportMode( bool& bAddPath, bool& bAddParams, bool& bAddSign ) const
+{
+   switch( m_errorReportLevel )
+   {
+   case 0: bAddPath = false; bAddParams = false; bAddSign = false; break;
+   case 1: bAddPath = true; bAddParams = false; bAddSign = false; break;
+   case 2: bAddPath = true; bAddParams = false; bAddSign = true; break;
+   default: bAddPath = true; bAddParams = true; bAddSign = true; break;
+   }
+}
+
 }
 
 /* options.cpp */

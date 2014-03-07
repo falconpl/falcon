@@ -17,10 +17,10 @@
 
 namespace Falcon {
 
-String &TraceStep::toString( String &target ) const
+String &TraceStep::toString( String &target, bool bAddPath, bool bAddParams ) const
 {
    target += m_module;
-   if (! m_modpath.empty() )
+   if ( bAddPath && ! m_modpath.empty() )
    {
       target += "(" + m_modpath + ")";
    }
@@ -34,7 +34,7 @@ String &TraceStep::toString( String &target ) const
    target += " ";
    target += m_symbol;
 
-   if( ! m_rparams.empty() )
+   if( bAddParams && ! m_rparams.empty() )
    {
       target += "(";
       target += m_rparams;

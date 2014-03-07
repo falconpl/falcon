@@ -52,8 +52,8 @@ public:
    uint32 line() const { return m_line; }
    const String& rparams() const { return m_rparams; }
 
-   String toString() const { String temp; return toString( temp ); }
-   String &toString( String &target ) const;
+   String toString(bool bAddPath = false, bool bAddParams = false) const { String temp; return toString( temp, bAddPath, bAddParams ); }
+   String &toString( String &target, bool bAddPath = false, bool bAddParams = false ) const;
 };
 
 }

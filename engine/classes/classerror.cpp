@@ -306,7 +306,7 @@ void Function_take::invoke( VMContext* ctx, int32 )
    Error* error = static_cast<Error*>( ctx->self().asInst() );
    ctx->contextualize(error, true);
    TraceBack* tb = new TraceBack;
-   ctx->fillTraceBack(tb);
+   ctx->fillTraceBack(tb, true);
    error->setTraceBack(tb);
 }
 

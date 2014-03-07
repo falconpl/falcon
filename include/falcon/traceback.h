@@ -38,8 +38,8 @@ public:
 
    void add(TraceStep* ts);
 
-   String toString() const { String temp; return toString( temp ); }
-   String &toString( String &target ) const;
+   String toString( bool bAddPath = false, bool bAddParams = false) const { String temp; return toString( temp, bAddPath, bAddParams ); }
+   String &toString( String &target, bool bAddPath = false, bool bAddParams = false ) const;
 
    length_t size() const;
    TraceStep* at(length_t pos) const;

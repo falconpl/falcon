@@ -1055,7 +1055,8 @@ public:
             if( st->isTracedCatch() && ! m_error->hasTraceback() )
             {
                TraceBack* tb = new TraceBack;
-               ctx->fillTraceBack(tb);
+               // Todo: allow the user of the context to fill the parameters in the traceback or not.
+               ctx->fillTraceBack(tb, true);
                m_error->setTraceBack(tb);
             }
             ctx->setCatchBlock( st );
@@ -1071,7 +1072,8 @@ public:
       if( ! m_error->hasTraceback() )
       {
          TraceBack* tb = new TraceBack;
-         ctx->fillTraceBack(tb);
+         // Todo: allow the user of the context to fill the parameters in the traceback or not.
+         ctx->fillTraceBack(tb, true);
          m_error->setTraceBack(tb);
       }
    }
@@ -1233,7 +1235,8 @@ Error* VMContext::raiseError( Error* ce )
       if( ! ce->hasTraceback() )
       {
          TraceBack* tb = new TraceBack;
-         fillTraceBack(tb);
+         // Todo: allow the user of the context to fill the parameters in the traceback or not.
+         fillTraceBack(tb, true);
          ce->setTraceBack(tb);
       }
    }
@@ -2179,7 +2182,7 @@ void VMContext::contextualize( Error* error, bool force )
 
 }
 
-void VMContext::fillTraceBack( TraceBack* tb, long maxDepth )
+void VMContext::fillTraceBack( TraceBack* tb, bool bRenderParams, long maxDepth )
 {
    VMContext* ctx = this;
    long depth = ctx->callDepth();
@@ -2195,22 +2198,27 @@ void VMContext::fillTraceBack( TraceBack* tb, long maxDepth )
       CallFrame& cf = ctx->callerFrame(i);
       Function* func = cf.m_function;
       Module* mod = func->module();
-      int pCount = cf.m_paramCount;
-      Item* paramBase = m_dataStack.m_base + cf.m_dataBase;
 
       String params;
-      for ( int pc = 0; pc < pCount; ++ pc )
+
+      if( bRenderParams )
       {
-         Class* cls;
-         void* data;
-         paramBase[pc].forceClassInst(cls, data);
-         String tempParam;
-         cls->describe(data,tempParam,2,20);
-         if( ! params.empty() )
+         int pCount = cf.m_paramCount;
+         Item* paramBase = m_dataStack.m_base + cf.m_dataBase;
+
+         for ( int pc = 0; pc < pCount; ++ pc )
          {
-            params += ", ";
+            Class* cls;
+            void* data;
+            paramBase[pc].forceClassInst(cls, data);
+            String tempParam;
+            cls->describe(data,tempParam,2,20);
+            if( ! params.empty() )
+            {
+               params += ", ";
+            }
+            params += tempParam;
          }
-         params += tempParam;
       }
 
       if( mod != 0 )

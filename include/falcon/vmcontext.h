@@ -1648,7 +1648,7 @@ public:
    /**
     * Stores the trace-back information for the current context.
     */
-   void fillTraceBack(TraceBack* tb, long maxDepth=-1);
+   void fillTraceBack(TraceBack* tb, bool bRenderParams=true, long maxDepth=-1);
 
    /** Stack events during critical sections for later honoring.
     *

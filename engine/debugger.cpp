@@ -453,7 +453,7 @@ void Debugger::displayCall( TextWriter& wr, VMContext* ctx, int64 depth )
 {
    wr.write( String("*: Call stack size ").N((int64)ctx->callDepth()).A("\n") );
    TraceBack tb;
-   ctx->fillTraceBack(&tb, depth);
+   ctx->fillTraceBack(&tb, true, depth);
 
    length_t size = tb.size();
 
