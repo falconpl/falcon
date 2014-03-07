@@ -675,7 +675,7 @@ FALCON_FUNC  ConfParser_ecat( ::Falcon::VMContext *ctx, int32 )
 
    ConfigFile::locker locker( *cfile );
    ConfigSection* section;
-   if( i_section->isString() )
+   if( i_section != 0 && i_section->isString() )
    {
       const String& sectName = *i_section->asString();
       section = cfile->getSection( sectName );
