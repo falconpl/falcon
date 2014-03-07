@@ -174,6 +174,7 @@ static void descend_next_apply_(const PStep* , VMContext* ctx)
          // anyhow, call our callback with our uri
          Item ci = *ctx->local(0);
          Item* callee = ctx->param(0);
+         ctx->callerLine(__LINE__+1);
          ctx->callItem( *callee, 1, &ci );
          return;
       }
@@ -233,6 +234,7 @@ void Function_descend::invoke( Falcon::VMContext* ctx, int )
    uric->path().file(dir->next());
 
    Item ci( uriClass, uric );
+   ctx->callerLine(__LINE__+1);
    ctx->callItem( *i_callable, 1, &ci );
 }
 
