@@ -247,16 +247,16 @@ bool ClassConfParser::gcCheckInstance( void* instance, uint32 mark ) const
    containing all the values.
 */
 
-FALCON_FUNC  ConfParser_init( ::Falcon::VMContext *, int32 )
+FALCON_FUNC  ConfParser_init( ::Falcon::VMContext *ctx, int32 )
 {
-   // nothing to do
+   ctx->regA() = ctx->self();
 }
 
 
 /*#
    @method read ConfParser
    @brief Read the ini file.
-   @param stream The stream from which the data is read
+   @param file A file URI (as string or URI class) or an open stream from which the data is read
    @optparam encoding An optional encoding used to read the data from the stream.
    @raise IoError on read error.
    @raise SyntaxError on invalid file format
@@ -271,22 +271,38 @@ FALCON_FUNC  ConfParser_init( ::Falcon::VMContext *, int32 )
 FALCON_FUNC  ConfParser_read( ::Falcon::VMContext *ctx, int32 )
 {
    static Class* clsStream = Engine::instance()->stdHandlers()->streamClass();
+   static Class* clsURI = Engine::instance()->stdHandlers()->uriClass();
 
-   Item *i_stream = ctx->param(0);
+   Item *i_file = ctx->param(0);
    Item *i_tc = ctx->param(1);
 
-   Class* cls = 0;
-   void* vstream = 0;
-   if( i_stream == 0 || ! i_stream->asClassInst(cls,vstream) || ! cls->isDerivedFrom(clsStream)
-       || ( i_tc != 0 && ! i_tc->isString() )
-      )
+   Stream* stream;
+   if( i_file == 0 || ( i_tc != 0 && ! i_tc->isString() ) )
+   {
+      throw ctx->currentFrame().m_function->paramError(__LINE__, SRC );
+   }
+   else if( i_file->isString() )
+   {
+      const String& name = *i_file->asString();
+      stream = Engine::instance()->vfs().openRO(name);
+   }
+   else if( i_file->isInstanceOf(clsURI) )
+   {
+      const URI& uri = *i_file->castInst<URI>(clsURI);
+      stream = Engine::instance()->vfs().openRO(uri);
+   }
+   else if( i_file->isInstanceOf(clsStream) )
+   {
+      stream = i_file->castInst<Stream>(clsStream);
+   }
+   else
    {
       throw ctx->currentFrame().m_function->paramError(__LINE__, SRC );
    }
 
    ConfigFile *cfile = (ConfigFile *) ctx->self().asInst();
-   Stream* stream = static_cast<Stream*>(cls->getParentData( clsStream, vstream ));
    TextReader tr( stream );
+
    if( i_tc != 0 )
    {
       const String& tc = *i_tc->asString();
