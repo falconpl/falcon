@@ -147,7 +147,8 @@ class Application
             end
 
             // perform call
-            faldoc_output( self.document, firstOf(conf.ecat("Output."+mod+".*"),[=>]) )
+            dict = conf.ecat("Output."+mod)
+            faldoc_output( self.document, dict )
 
             // unload the module
             modData = nil 

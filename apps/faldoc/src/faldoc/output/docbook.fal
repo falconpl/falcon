@@ -651,5 +651,5 @@ end
 
 function fileName( f )
    p = Path(f)
-   return p.fileext
+   return p.filext
 end

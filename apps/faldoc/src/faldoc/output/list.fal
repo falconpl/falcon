@@ -41,6 +41,7 @@ function faldoc_output( doctree, conf )
 
    faldoc.info( "Writing to " + filename )
 
+   file = nil
    try
       file = OutputStream( filename )
       build_list( file, doctree, conf )
