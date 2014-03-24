@@ -22,6 +22,13 @@
 
 #include <httpd.h>
 #include <http_log.h>
+#include <http_config.h>
+
+#ifdef APLOG_USE_MODULE
+extern "C" {
+APLOG_USE_MODULE(falcon_mod);
+}
+#endif
 
 /** App Log Listener for WOPI.
  *

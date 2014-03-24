@@ -26,6 +26,7 @@
 #include "mod_falcon_config.h"
 #include "apache_request.h"
 #include "apache_reply.h"
+#include "apache_ll.h"
 
 ApacheErrorHandler::ApacheErrorHandler( bool bFancy ):
    ErrorHandler(bFancy)

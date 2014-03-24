@@ -18,6 +18,7 @@
 
 using namespace Falcon;
 
+
 ApacheLogListener::ApacheLogListener( apr_pool_t* pool ):
          m_pool(pool)
 {}
@@ -28,6 +29,7 @@ ApacheLogListener::~ApacheLogListener()
 
 void ApacheLogListener::onMessage( int fac, int lvl, const String& message )
 {
+
    int level;
    switch( lvl )
    {
