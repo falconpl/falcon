@@ -18,6 +18,8 @@ import from web.htmaker in ht
 import from parser.render.html in render
 import from struct.tree in tree
 
+load vfs
+
 // global location for our generator
 _generator = nil
 
@@ -351,7 +353,7 @@ end
 
 class MetaPage( title, file, entity_list ) from Page( title, file, nil )
    entlist = entity_list
-   content = bless(["props"=>[=>]])
+   content = ["props"=>[=>]].pseudo
 
    function makeBody( body )
       entlist = self.entlist
@@ -456,7 +458,7 @@ class FaldocHtmlRenderer() from render.Renderer()
    function renderSection( node )
       hl = self.level + 2
       title = _htmlEscape(node.infos["title"])
-      link = strEscape(node.infos["name"])
+      link = node.infos["name"].escape()
       
       prefix = @"<h$(hl)><a name=\"$(link)\">$(title)</a></h$(hl)>\n"
       ++self.level
@@ -495,7 +497,7 @@ end
 
 class HTMLGenerator( doctree, conf )
    doc = doctree
-   conf = bless(conf)
+   conf = conf.pseudo
    basedir = faldoc.config.basedir
    directory = "directory" in conf ? conf["directory"] : nil
    htmltitle = "title" in conf ? conf["title"] : doctree.title
@@ -536,7 +538,7 @@ class HTMLGenerator( doctree, conf )
 
       try
          // prepare the directory
-         dirMake( self.directory, true )
+         VFS.mkdir( self.directory, true )
 
          // copy resource files
          faldoc.copyResource( "faldoc.css", self.directory )
@@ -557,7 +559,7 @@ class HTMLGenerator( doctree, conf )
          // and make
          self.makePages( ip )
 
-      catch IoError in err
+      catch IOError in err
          faldoc.error( "html.fal: " + err )
          return
       end

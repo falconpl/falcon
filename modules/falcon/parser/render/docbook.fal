@@ -230,9 +230,9 @@ class Renderer( frame )
    end
 
    function _render_link( node )
-      i = bless(node.infos)
+      i = node.infos.pseudo
 
-      link = "<ulink url=\"" + strEscape(i.name) + "\">" +
+      link = "<ulink url=\"" + i.name.escape() + "\">" +
              Renderer.sgmlEscape(i.text ? i.text : i.name) + "</ulink>"
       return link
    end
@@ -359,7 +359,7 @@ class BookFrame( encoding, name, title, author, copyyear, copyholder )
    end
 
    function openSection( level, id )
-      ids = id ? " id=\"" + strEscape(id) +"\"" : ""
+      ids = id ? " id=\"" + id.escape() +"\"" : ""
       if level == 0
          return @"<chapter$(ids)>\n"
       else
@@ -418,7 +418,7 @@ class Book5Frame( encoding, name, title, author, copyyear, copyholder )
    end
 
    function openSection( level, id )
-      ids = id ? " id=\"" + strEscape(id) +"\"" : ""
+      ids = id ? " id=\"" + id.escape() +"\"" : ""
       if level == 0
          return @"<chapter$(ids)>\n"
       else
@@ -463,7 +463,7 @@ class ArticleFrame( encoding, lang )
    end
 
    function openSection( level, id )
-      return "<sect" + (level + 1) + (id? " id=\"" + strEscape(id) +"\"": "") + ">\n"
+      return "<sect" + (level + 1) + (id? " id=\"" + id.escape() +"\"": "") + ">\n"
    end
 
    function closeSection( level )
@@ -494,7 +494,7 @@ class Article5Frame( encoding, lang )
    end
 
    function openSection( level, id )
-      return "<section"+ (id? " id=\"" + strEscape(id) +"\"": "") + ">\n"
+      return "<section"+ (id? " id=\"" + id.escape() +"\"": "") + ">\n"
    end
 
    function closeSection( level )

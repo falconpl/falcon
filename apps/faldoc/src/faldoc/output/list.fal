@@ -14,6 +14,8 @@
    See LICENSE file for licensing details.
 */
 
+load vfs
+
 // The faldoc_output function must be provided by all output modules
 function faldoc_output( doctree, conf )
    faldoc.info( "=" * 60 )
@@ -43,7 +45,7 @@ function faldoc_output( doctree, conf )
       file = OutputStream( filename )
       build_list( file, doctree, conf )
       file.close()      
-   catch IoError in err
+   catch IOError in err
       if file: file.close()
       faldoc.error( "list.fal: ERROR while writing to " + conf["file"] + ": " + err )
       return
@@ -56,7 +58,7 @@ end
 
 function build_list( file, doctree, conf )
    // intestation
-   file.setEncoding( "utf-8", SYSTEM_DETECT )
+   file.setEncoding( "utf-8" )
    if "doctitle" in conf
       file.writeText( conf["doctitle"] +"\n" )
    else
@@ -78,9 +80,9 @@ function build_list( file, doctree, conf )
       
       // prefix the module name to the list
       strModName = i"Module" + " \"" + module.name +"\""
-      file.writeText( strReplicate( "#", strModName.len() + 4 ) + "\n" )
+      file.writeText( "#" * (strModName.len + 4 ) + "\n" )
       file.writeText( "# "+ strModName+ " #\n" )
-      file.writeText( strReplicate( "#", strModName.len() + 4 ) + "\n\n" )
+      file.writeText( "#" * ( strModName.len + 4 ) + "\n\n" )
    
       build_mod_list( file, module, doctree, conf )
       formiddle: file.writeText( "\n\n" )

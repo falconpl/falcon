@@ -39,7 +39,7 @@ class Application
 
    document = nil
 
-   modSpace = ModSpace().addCore()
+   modSpace = VMProcess.modSpace.makeChild()
    
    //# file currently parsed
    currentFile = ""
@@ -141,16 +141,16 @@ class Application
       for mod in self.config.outMods
          try
             modData = modSpace.loadByName( "self.output." + mod )
-            faldoc_output = modData.get( "faldoc_output" )
+            faldoc_output = modData.getGlobal( "faldoc_output" )
             if not faldoc_output
                raise "module '"+ mod + "' doesn't define 'falcon_output' entry point"
             end
 
             // perform call
-            faldoc_output( self.document, firstOf(conf.getCategory("Output."+mod+".*"),[=>]) )
+            faldoc_output( self.document, firstOf(conf.ecat("Output."+mod+".*"),[=>]) )
 
             // unload the module
-            modData.unload()
+            modData = nil 
 
          catch IOError in error
             // signal an abnormal exit

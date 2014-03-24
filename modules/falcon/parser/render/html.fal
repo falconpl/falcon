@@ -198,10 +198,10 @@ class Renderer( siteHelper, cls )
    end
 
    function _render_link( node )
-      i = bless(node.infos)
+      i = node.infos.pseudo
       link = "<a href=\""
       if i.ext
-         link += strEscape(i.name) + "\" target=\"_blank\""
+         link += i.name.escape() + "\" target=\"_blank\""
       else
          if "ilink" in i and i.ilink
             link +=  self.site.iLink( i.ilink, i.name ) + "\" target=\"_blank\""
@@ -220,16 +220,16 @@ class Renderer( siteHelper, cls )
 
 
     function _render_file( node )
-      i = bless(node.infos)
+      i = node.infos.pseudo
       link = "<a href=\"" + self.site.file( i.name ) + "\" target=\"_blank\">" +
          (i.text ? i.text : i.name) + "</a>"
       return link
    end
 
    function _render_quote( node )
-      i = bless(node.infos)
+      i = node.infos.pseudo
       if i.link
-         str = self._ct("blockquote cite=\"" + strEscape(i.link) + "\" ")
+         str = self._ct("blockquote cite=\"" + i.link.escape() + "\" ")
       else
          str = self._ct("blockquote")
       end
@@ -238,7 +238,7 @@ class Renderer( siteHelper, cls )
    end
 
    function _render_img( node )
-      i = bless(node.infos)
+      i = node.infos.pseudo
       link = ""
       style = ""
       
@@ -272,7 +272,7 @@ class Renderer( siteHelper, cls )
       text = ""
       for k,v in node.infos
          forfirst: text += " "
-         text += k +"=\"" + strEscape(v) + "\""
+         text += k +"=\"" + v.escape() + "\""
          formiddle: text += " "
       end
       return "<" + node.tag + text + ">" + self.rcont( node ) + "</" + node.tag +">\n"

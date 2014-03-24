@@ -59,7 +59,7 @@ end
 
 class DOCBOOKGenerator( doctree, conf )
    doc = doctree
-   conf = bless(conf)
+   conf = conf.pseudo
    basedir = faldoc.config.basedir
    frame = nil
    file = "file" in conf ? conf["file"] : nil
@@ -151,7 +151,7 @@ class DOCBOOKGenerator( doctree, conf )
          end
 
          self._outfile.writeText( self.frame.close() )
-      catch IoError in err
+      catch IOError in err
          faldoc.error( "docbook.fal: " + err )
          return
       end
@@ -649,3 +649,7 @@ class Tag( tag, content, attribs )
    end
 end
 
+function fileName( f )
+   p = Path(f)
+   return p.fileext
+end

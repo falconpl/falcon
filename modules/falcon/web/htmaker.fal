@@ -16,6 +16,7 @@
 */
 
 import HTMError from self.htmerror as HTMError
+load vfs
 
 /******************************************************************
 Options
@@ -339,8 +340,7 @@ class BaseDom( hname, childTypeList, attribClass )
 
    function add()
       if self.children
-         for i in [0:paramCount()]
-            item = parameter(i)
+         for item in fself.params()
             if item.typeId() == StringType
                item = (^$ item) ? Verbatim(item) : Text( item )
             elif not item.derivedFrom( BaseDom )
@@ -372,7 +372,7 @@ class BaseDom( hname, childTypeList, attribClass )
    function set( v )
       if v.isCallable()
          v( self.eattr, self )
-      elif v.typeId() == DictionaryType
+      elif v.typeId == DictType
          for key, val in v
             if key notin self.eattr
                raise HTMError( HTMError.noattrib, key )
@@ -487,8 +487,7 @@ class HTML(parent) from BaseDom( "html", nil, I18nAttribs )
    end
 
    function add()
-      for i in [0:paramCount()]
-         item = parameter(i)
+      for item in fself.params()
          select item
             case Head
                if self.head != nil
