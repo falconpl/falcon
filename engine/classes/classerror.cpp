@@ -399,7 +399,7 @@ void ClassError::describe( void* instance, String& target, int, int maxlen ) con
 {
    Error* err = static_cast<Error*>(instance);
    target.size(0);
-   err->describeTo(target);
+   err->heading(target);
    target = "inst. of " + target;
    if( maxlen > 3 && target.length() > (uint32) maxlen )
    {
