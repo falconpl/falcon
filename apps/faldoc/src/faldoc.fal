@@ -39,7 +39,7 @@ class Application
 
    document = nil
 
-   modSpace = ModSpace()
+   modSpace = ModSpace().addCore()
    
    //# file currently parsed
    currentFile = ""
@@ -49,7 +49,7 @@ class Application
 
 
    //# Application process
-   function go()
+   function go()      
       try
          self.processParams()
          self.banner()
@@ -58,7 +58,7 @@ class Application
          self.processOutput()
          
       catch as e
-         self.fatal( e.describe() )
+         self.fatal( e.toString() )
       end
    end
 
@@ -101,7 +101,7 @@ class Application
          // open the directory
          drel = self.relativize( basedir, dir )
          try
-            hdir = VFS.readDir( drel ).descend( {=>}, {fname =>     
+            hdir = VFS.openDir( drel ).descend( {=>}, {fname =>     
                for wildcard in cfg.inputWild
                   if fname.wildcardMatch( wildcard )
                      doc.addFile( fname )

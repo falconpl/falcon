@@ -21,7 +21,16 @@ import from struct.tree in tree
 // global location for our generator
 _generator = nil
 
-
+_fatness = [
+            "object" => true,
+            "class" => true,
+            "enum" => true,
+            "group" => true,
+            "page" => true,
+            "funset" => true,
+            "main" => true,
+            "module" => true ]
+            
 //# A page in our final documentation
 //# The content may be a single entity 
 class Page(title, file, master_entity ) from tree.Node
@@ -933,19 +942,7 @@ class HTMLGenerator( doctree, conf )
 
    //# Returns true if the entity is "massive", and should have its own page.
    function isFat( entity )
-      static
-         fatness = [
-            "object" => true,
-            "class" => true,
-            "enum" => true,
-            "group" => true,
-            "page" => true,
-            "funset" => true,
-            "main" => true,
-            "module" => true ]
-      end
-
-      return entity.type in fatness
+      return entity.type in _fatness
    end
 
    //# Creates a node to be directly added in a member list (OL of class "memberlist")

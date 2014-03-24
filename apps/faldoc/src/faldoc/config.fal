@@ -143,20 +143,20 @@ class Config
 
    function getInputSettings( conf )
       // Input directory -- defaults to "."
-      self.inputDirs = firstOf(conf.getMultiple( "Input.directory" ), ["."])
-      self.moduleRoots = firstOf(conf.getMultiple( "Input.moduleRoot" ), [])
+      self.inputDirs = firstOf(conf.getAll( "Input.directory" ), ["."])
+      self.moduleRoots = firstOf(conf.getAll( "Input.moduleRoot" ), [])
       
       // Input file wildcard; defaults to "*.fal"
-      self.inputWild = firstOf(conf.getMultiple( "Input.wildcard" ), ["*.fal"])
+      self.inputWild = firstOf(conf.getAll( "Input.wildcard" ), ["*.fal"])
       // input recursive -- defaults to true
       self.recursive = self.checkBool( "Input.recursive", true )
       // input extra files
-      self.inputExtra = conf.getMultiple( "Input.extra" )
+      self.inputExtra = conf.getAll( "Input.extra" )
    end
 
    function getOutputSettings( conf )
       // get the modules -- we know it's here, processConf checks it
-      self.outMods = conf.getMultiple("Output.module")
+      self.outMods = conf.getAll("Output.module")
    end
 
    //=========================================================

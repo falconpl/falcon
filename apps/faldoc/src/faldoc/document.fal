@@ -34,8 +34,9 @@ class Document from DocModule
 
    function addFile( file )
       p = Path( file )
-      faldoc.info( "Processing " + p.filename + " in " + p.fulloc )
+      faldoc.info( "Processing " + p.file + " in " + p.fulloc )
 
+      istream = nil
       try
          istream = InputStream( file )
          // for now, suppose utf-8 encoding
