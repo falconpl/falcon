@@ -290,9 +290,9 @@ Engine::Engine()
    addMantra(new Ext::Describe);
    addMantra(new Ext::ToString);
    addMantra(new Ext::Render);
-   addMantra(new Ext::Get);
-   addMantra(new Ext::Set);
-   addMantra(new Ext::Has);
+   addMantra(new Ext::GetP);
+   addMantra(new Ext::SetP);
+   addMantra(new Ext::HasP);
    addMantra(new Ext::Properties);
    addMantra(new Ext::Approp);
    addMantra(new Ext::Foreach);
