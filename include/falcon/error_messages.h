@@ -162,7 +162,7 @@ FAL_ERRORDECL( e_catch_outside, 155, "Statement 'catch' not in a 'try'" );
 FAL_ERRORDECL( e_finally_outside, 156, "Statement 'finally' not in a 'try'" );
 FAL_ERRORDECL( e_finally_adef, 157, "Statement 'finally' already declared in 'try'" );
 FAL_ERRORDECL( e_syn_rangedecl, 158, "Syntax error in range declaration" );
-FAL_ERRORDECL( e_syn_evalret_out, 159, "Eval-return (^* or ^=) out of literal context." );
+FAL_ERRORDECL( e_syn_evalret_out, 159, "Eval-return (^? or ^=) out of literal context." );
 
 FAL_ERRORDECL( e_not_iterable, 160, "Iterating on non-iterable item." );
 FAL_ERRORDECL( e_cmp_unprep, 161, "Compiler not prepared (still needs to be fed with a module)" );
