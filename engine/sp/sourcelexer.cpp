@@ -1013,6 +1013,7 @@ Parsing::TokenInstance* SourceLexer::nextToken()
          //---- language tokens or symbols
 
          case state_name:
+         case state_name_next:
             if (!isNameCharacter(chr))
             {
                // special cases
@@ -1085,7 +1086,7 @@ Parsing::TokenInstance* SourceLexer::nextToken()
                }
             }
             // go back to "name" acceptance, and add "." in place of ".."
-            m_state = state_name;
+            m_state = state_name_next;
             m_text.append( '.' );
             break;
 
@@ -1354,7 +1355,7 @@ Parsing::TokenInstance* SourceLexer::checkWord()
    }
 
    // As a fallback, create a "name" word
-   if( !m_hadImport && isNameSpace(m_text) )
+   if( !m_hadImport && isNameSpace(m_text) && m_state == state_name )
    {
       m_parser->addError( e_ns_clash, m_parser->currentSource(), m_sline, m_schr, 0, m_text );
    }
