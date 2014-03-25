@@ -231,6 +231,9 @@ bool Debugger::parseCommand( TextWriter& wr, const String& line1, VMContext* ctx
       temp.m_dynsDepth = ctx->currentCode().m_dynsDepth;
 
       ctx->resetCode( m_stepAfterNext );
+      ctx->currentCode().m_dataDepth = ctx->dataSize();
+      ctx->currentCode().m_dynsDepth = ctx->dynsDepth();
+
       ctx->pushCode( temp.m_step );
       ctx->currentCode().m_seqId = temp.m_seqId;
       ctx->currentCode().m_dataDepth = temp.m_dataDepth;

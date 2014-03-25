@@ -350,7 +350,11 @@ const PStep* VMContext::nextStep() const
    if( ps->isComposed() )
    {
       const SynTree* st = static_cast<const SynTree*>(ps);
-      return st->at(cframe.m_seqId);
+      // we might legitly have an empty syntree here.
+      if( st->arity() < cframe.m_seqId )
+      {
+         ps = st->at(cframe.m_seqId);
+      }
    }
    return ps;
 }
