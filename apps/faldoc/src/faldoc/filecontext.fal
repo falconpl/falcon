@@ -162,8 +162,7 @@ class FileContext( file, defmod, modName )
       end
    end
 
-
-
+   
    function parseParams( entity, node )
       // only functions, methods and classes and objects can have parameters
       if entity.type != "class" and entity.type != "function" and entity.type != "method"
@@ -184,6 +183,7 @@ class FileContext( file, defmod, modName )
       end
    end
 
+   
    function checkEntity( entity )
       if entity
          if entity.name

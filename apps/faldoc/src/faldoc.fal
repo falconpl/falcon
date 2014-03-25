@@ -75,7 +75,7 @@ class Application
       > i"faldoc - Falcon documentation tool."
       > i"Part of the Falcon Programming language."
       > i"Version ", version.name()
-      > "----------------------------------------"
+      > "-"*50
    end
 
    function readConfig()
@@ -97,13 +97,17 @@ class Application
       basedir = cfg.basedir
       test = 0
 
+      
       for dir in cfg.inputDirs
          // open the directory
          drel = self.relativize( basedir, dir )
          try
-            hdir = VFS.openDir( drel ).descend( {=>}, {fname =>     
-               for wildcard in cfg.inputWild
-                  if fname.wildcardMatch( wildcard )
+            self.info( @i"Input directory ${drel}" )
+
+            hdir = VFS.openDir( drel ).descend( {fpath =>                  
+               for wildcard in cfg.inputWild                  
+                  fname = fpath.toString()
+                  if fname.wmatch( wildcard )
                      doc.addFile( fname )
                   end
                end

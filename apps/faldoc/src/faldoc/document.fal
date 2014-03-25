@@ -34,14 +34,12 @@ class Document from DocModule
 
    function addFile( file )
       p = Path( file )
-      faldoc.info( "Processing " + p.file + " in " + p.fulloc )
+      faldoc.info( @"Processing ${p.filext}" )
 
       istream = nil
       try
-         istream = InputStream( file )
-         // for now, suppose utf-8 encoding
-         istream.setEncoding( "utf-8" )
-
+         istream = TextReader(InputStream( file ), "utf8" )
+         
          if file.endsWith( ".ftd" ) or file.endsWith( ".fal" )
             ctx = self._fdParser.parseStream( istream, "start" )
             modname = faldoc.calcModName( file )
@@ -49,6 +47,7 @@ class Document from DocModule
             if not module: return
             faldoc.verbose( @i"File $file has module name $modname" )
          else
+            
             ctx = self._gParser.parseStream( istream, "start" )
             module = self
          end
@@ -59,7 +58,7 @@ class Document from DocModule
          fc.parse( ctx )
 
       catch in e
-         faldoc.error( "While parsing " + file + ": " + e )
+         faldoc.error( @ i"Error while parsing ${file}: " + e.toString() )
       end
 
       faldoc.currentFile = nil
