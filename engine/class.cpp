@@ -425,7 +425,13 @@ void Class::enumeratePV( void* inst, Class::PVEnumerator& pve) const
    while( iter != _p->m_props.end() )
    {
       Property& prop = iter->second;
-      if( prop.bConst )
+      if( prop.method != 0 )
+      {
+         Item temp;
+         temp.setFunction(prop.method);
+         pve(iter->first, temp);
+      }
+      else if( prop.bConst )
       {
          pve( iter->first, prop.value );
       }

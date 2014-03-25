@@ -80,7 +80,7 @@ public:
     and this:
     \code
     Function f( "afunc" );
-    parseDescription( "param0:S,param1:[N]" );
+    f.parseDescription( "param0:S,param1:[N]" );
     \endcode
     
     are equivalent.
@@ -92,6 +92,16 @@ public:
     */
    bool parseDescription( const String& desc );
    
+   /** Return the parameter list and their signature in canonical format.
+    *
+    *  This method calculates the description of the function parameters
+    *  as accepted by parseDescription(). It's the list of the paramters
+    *  associated with their signature type.
+    *
+    *  @note Performance warning: the description is not stored, and calculated at each request.
+    *  Also, the string is returned by copy.
+    */
+   String getDescription() const;
    
    //void getParams( int pCount,  ... );
 

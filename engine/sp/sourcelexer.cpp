@@ -1075,6 +1075,7 @@ Parsing::TokenInstance* SourceLexer::nextToken()
             if( chr != '.' )
             {
                unget(chr);
+
                // if the current word is not a namespace...
                if( ! isNameSpace( m_text ) )
                {

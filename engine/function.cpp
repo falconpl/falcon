@@ -232,6 +232,60 @@ void Function::renderFunctionBody( TextWriter* tgt, int32 depth ) const
    }
 }
 
+
+String Function::getDescription() const
+{
+   const Function* func = this;
+
+   String temp;
+   // also include the signature in the parameter description
+   const String& sign = func->signature();
+   uint32 posComma = 0;
+   uint32 posNext = sign.find(',');
+
+   if( func->isEta() )
+   {
+      temp +="&";
+   }
+
+   for (uint32 i = 0; i < func->paramCount(); ++i)
+   {
+      if( i != 0 )
+      {
+         temp += ",";
+      }
+
+      temp += func->parameters().getNameById(i);
+      if( posComma != String::npos )
+      {
+         String paramSign = sign.subString(posComma, posNext);
+         if ( ! paramSign.empty() )
+         {
+            temp += ":";
+            temp += paramSign;
+         }
+
+         posComma = posNext;
+         if( posNext != String::npos )
+         {
+            posNext = sign.find(',', ++posComma);
+         }
+      }
+   }
+
+   // extra signature may happen in case of  "..."
+   if( posComma != String::npos )
+   {
+      if ( func->paramCount() != 0 )
+      {
+         temp += ",";
+      }
+      temp += sign.subString(posComma);
+   }
+
+   return temp;
+}
+
 }
 
 /* end of function.cpp */
