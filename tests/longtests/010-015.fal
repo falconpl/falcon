@@ -11,7 +11,7 @@
 load rnd
 
 randomSeed(1231)
-size = 10000
+size = 100000
 size10 = size/10
 size100 = size/100
 

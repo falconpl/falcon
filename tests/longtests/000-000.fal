@@ -27,60 +27,7 @@ The output text INCLUDES the checkpoint text; this is because, in tests
 with many checkpoints, removing the checkpoint text from a correct output
 run can be tedious.
 
-@output
-Long test system smoke test
-This is step 1
-STEP
-This is step 2
-STEP
-This is step 3
-STEP
-This is step 4
-STEP
-This is step 5
-STEP
-This is step 6
-STEP
-This is step 7
-STEP
-This is step 8
-STEP
-This is step 9
-STEP
-This is step 10
-STEP
-This is step 11
-STEP
-This is step 12
-STEP
-This is step 13
-STEP
-This is step 14
-STEP
-This is step 15
-STEP
-This is step 16
-STEP
-This is step 17
-STEP
-This is step 18
-STEP
-This is step 19
-STEP
-This is step 20
-STEP
-This is step 21
-STEP
-This is step 22
-STEP
-This is step 23
-STEP
-This is step 24
-STEP
-This is step 25
-STEP
-Test complete.
-@endoutput
+@return OK
 
 */
 
@@ -92,3 +39,5 @@ for i = 1 to 25
 end
 
 > "Test complete."
+
+return "OK"
