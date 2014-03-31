@@ -17,15 +17,30 @@
 
 namespace Falcon {
 
-String &TraceStep::toString( String &target ) const
+String &TraceStep::toString( String &target, bool bAddPath, bool bAddParams ) const
 {
-   if ( m_modpath.size() )
+   target += m_module;
+   if ( bAddPath && ! m_modpath.empty() )
    {
-      target += "\"" + m_modpath + "\" ";
+      target += "(" + m_modpath + ")";
    }
 
-   target += m_module + "." + m_symbol + ":";
-   target.writeNumber( (int64) m_line );
+   if( m_line > 0 )
+   {
+      target += ":";
+      target.writeNumber( (int64) m_line );
+   }
+
+   target += " ";
+   target += m_symbol;
+
+   if( bAddParams && ! m_rparams.empty() )
+   {
+      target += "(";
+      target += m_rparams;
+      target += ")";
+   }
+
    return target;
 }
 

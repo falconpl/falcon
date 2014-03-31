@@ -1,0 +1,94 @@
+/*
+@name Stack coherence of expressions
+@category Engine tests
+
+@result Ok
+*/
+load engine_depth_tester
+// Tests starting on line 10 for easier pinpointing of problems
+tests = .[
+   {[] 1 + 1 }
+   {[] 1 - 1 }
+   {[] 1 * 1 }
+   {[] 1 / 1 }
+   {[] 1 ** 1 }
+   {[] 1 % 1 }
+   {[] variable++ }
+   {[] variable-- }
+   {[] ++variable }
+   {[] --variable }
+   {[] 1 == 1 }
+   {[] 1 == 0 }
+   {[] 0 == 1 }
+   {[] 1 != 1 }
+   {[] 1 != 0 }
+   {[] 0 != 1 }
+   {[] 1 > 1 }
+   {[] 1 > 0 }
+   {[] 0 > 1 }
+   {[] 1 >= 1 }
+   {[] 1 >= 0 }
+   {[] 0 >= 1 }
+   {[] 1 < 1 }
+   {[] 1 < 0 }
+   {[] 0 < 1 }
+   {[] 1 <= 1 }
+   {[] 1 <= 0 }
+   {[] 0 <= 1 }
+   {[] 1 and 1 }
+   {[] 0 and 1 }
+   {[] 1 and 0 }
+   {[] 0 and 0 }
+   {[] 1 or 1 }
+   {[] 0 or 1 }
+   {[] 1 or 0 }
+   {[] 0 or 0 }
+   {[] not 0 }
+   {[] not 1 }
+   {[] [1,2,3].len }
+   {[] len([1,2,3]) } // len works because it's predef
+   {[] ['a'=>1, 'b'=>2, 'c'=>3].len }
+   {[] len(['a'=>1, 'b'=>2, 'c'=>3]) } // len works because it's predef
+   {[] ^+ 1 }
+   {[] ^- 1 }
+   {[] ^% 1 }
+   {[] ^$ 1 }
+   {[]1+1; ^= 1 }
+   {[]1+1; ^=& 1 }
+   {[]1+1; ^? 1 }
+   {[] 1 ^& 1 }
+   {[] 1 ^| 1 }
+   {[] 1 ^^ 1 }
+   {[] ^! 1 }
+   {[] 1 >> 1 }
+   {[] 1 << 1 }
+   {[] variable += 1 }
+   {[] variable -= 1 }
+   {[] variable *= 1 }
+   {[] variable /= 1 }
+   {[] variable **= 1 }
+   {[] variable %= 1 }
+   {[] variable >>= 1 }
+   {[] variable <<= 1 }
+   {[] [1,2,3][0] }
+   {[] [1,2,3][-1] }
+   {[] "abc"[0] }
+   {[] "abc"[-1] }
+   {[] "abc"[*1] }
+   {[] {[] 1} }
+   {[] {() 1} }
+   {[] {(a) a != nil} }
+   {[] ^(1,2,3) }
+   {[] {(a) a+1} # ^(10) }
+   {[] ^[ [1:5] ] => .[] }
+   {[] ^[ .[1 2 3] ] {(x) x > 0} => .[] }
+]
+
+> "Engine tests - expressions"
+
+result = engine_depth_tester( tests )
+
+> "Final result: ", result
+
+return result
+

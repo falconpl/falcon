@@ -33,16 +33,50 @@
 #include <falcon/stringstream.h>
 #include <falcon/dyncompiler.h>
 #include <falcon/syntree.h>
+#include <falcon/module.h>
+#include <falcon/function.h>
+#include <falcon/globalsmap.h>
+
+#include <falcon/psteps/stmttry.h>
 
 namespace Falcon {
 
-
-class Debugger::PStepPostEval: public PStep
+class Debugger::PStepCatcher:public SynTree
 {
 public:
-   PStepPostEval() { apply = apply_; }
+   PStepCatcher() {apply=apply_;}
+   virtual ~PStepCatcher() {}
+   virtual void describeTo( String& target ) const { target = "Debugger::PStepCatcher"; }
+   virtual PStepCatcher* clone() const { return new PStepCatcher; }
+   virtual void render( TextWriter* tw, int32 ) const { tw->write("/*catcher*/\n"); }
+
+private:
+   static void apply_( const PStep*, VMContext* ctx )
+   {
+      ctx->popCode();
+      if( ctx->thrownError() != 0)
+      {
+         TextWriter tw( ctx->vm()->stdErr() );
+         tw.write( "**: Evaluation operation caused the following error\n" );
+         tw.write( ctx->thrownError()->describe(true) );
+         tw.write( "\n" );
+         ctx->setBreakpointEvent();
+      }
+   }
+};
+
+class Debugger::PStepPostEval: public StmtTry
+{
+public:
+   PStepPostEval()
+   {
+      apply = apply_;
+      PStepCatcher* catcher = new PStepCatcher;
+      catchSelect().append(catcher);
+   }
+
    virtual ~PStepPostEval() {}
-   virtual void describeTo( String& target ) const { target = "PStepPostEval"; }
+   virtual void describeTo( String& target ) const { target = "Debugger::PStepPostEval"; }
 
 private:
    static void apply_( const PStep*, VMContext* ctx )
@@ -52,19 +86,46 @@ private:
       tw.write("**: ");
       tw.writeLine( ctx->topData().describe() );
       ctx->popData(1);
+      ctx->setBreakpointEvent();
    }
 };
+
+
+class Debugger::PStepAfterNext: public StmtTry
+{
+public:
+   PStepAfterNext()
+   {
+      apply = apply_;
+      PStepCatcher* catcher = new PStepCatcher;
+      catchSelect().append(catcher);
+   }
+
+   virtual ~PStepAfterNext() {}
+   virtual void describeTo( String& target ) const { target = "Debugger::PStepAfterNext"; }
+
+private:
+   static void apply_( const PStep*, VMContext* ctx )
+   {
+      ctx->popCode();
+      ctx->setBreakpointEvent();
+   }
+};
+
 
 
 Debugger::Debugger() :
     m_hello(true)
 {
-   m_stepPostEval = new PStepPostEval;
+   StmtTry* t = new PStepPostEval;
+   m_stepPostEval = t;
+   m_stepAfterNext = new PStepAfterNext;
 }
 
 Debugger::~Debugger()
 {
    delete m_stepPostEval;
+   delete m_stepAfterNext;
 }
 
 void Debugger::onBreak( Process* p, Processor*, VMContext* ctx )
@@ -109,17 +170,17 @@ void Debugger::onBreak( Process* p, Processor*, VMContext* ctx )
 }
 
 
-bool Debugger::parseCommand( TextWriter& wr, const String& line, VMContext* ctx )
+bool Debugger::parseCommand( TextWriter& wr, const String& line1, VMContext* ctx )
 {
-   const PStep* stepBreak = &Engine::instance()->stdSteps()->m_breakpoint;
-
-   TRACE("Debugger::parseCommand -- parsing '%s'", line.c_ize() );
+   TRACE("Debugger::parseCommand -- parsing '%s'", line1.c_ize() );
 
    // by default, we don't want to loop immediately.
    bool cont = false;
    // whether to save this line or not
    bool save = true;
 
+   String line = line1;
+   line.trim();
    if( line == "quit" )
    {
       ctx->process()->terminate();
@@ -148,7 +209,8 @@ bool Debugger::parseCommand( TextWriter& wr, const String& line, VMContext* ctx 
                "*: data [N]: Display the data in the stack (top N positions, 0 for all).\n"
                "*: dyns [N]: Display the data in the dynamic stack (top N positions, 0 for all).\n"
                "*: code [N]: Display the data in the code stack (top N positions, 0 for all).\n"
-               "*: call [N]: Display the data in the call stack (top N positions, 0 for all).\n"
+               "*: back [N]: Display the data in the call stack (top N positions, 0 for all).\n"
+               "*: glob: Dysplay the globals table for the current module (if any)."
 
                "*: Entering an empty line repeats the previous command.\n"
                );
@@ -163,10 +225,15 @@ bool Debugger::parseCommand( TextWriter& wr, const String& line, VMContext* ctx 
    {
       wr.writeLine( "*: big step" );
       CodeFrame temp;
+      temp.m_step = ctx->currentCode().m_step;
       temp.m_seqId = ctx->currentCode().m_seqId;
       temp.m_dataDepth = ctx->currentCode().m_dataDepth;
       temp.m_dynsDepth = ctx->currentCode().m_dynsDepth;
-      ctx->resetCode( stepBreak );
+
+      ctx->resetCode( m_stepAfterNext );
+      ctx->currentCode().m_dataDepth = ctx->dataSize();
+      ctx->currentCode().m_dynsDepth = ctx->dynsDepth();
+
       ctx->pushCode( temp.m_step );
       ctx->currentCode().m_seqId = temp.m_seqId;
       ctx->currentCode().m_dataDepth = temp.m_dataDepth;
@@ -213,6 +280,7 @@ bool Debugger::parseCommand( TextWriter& wr, const String& line, VMContext* ctx 
    else if( line == "call" )
    {
       displayCall( wr, ctx, 1 );
+      cont = true;
    }
    else if( line.startsWith("call ") )
    {
@@ -226,9 +294,15 @@ bool Debugger::parseCommand( TextWriter& wr, const String& line, VMContext* ctx 
      }
      cont = true;
    }
+   else if( line == "glob" )
+   {
+     displayGlobals( wr, ctx );
+     cont = true;
+   }
    else if( line == "code" )
    {
      displayCode( wr, ctx, 1 );
+     cont = true;
    }
    else if( line.startsWith("code ") )
    {
@@ -251,9 +325,8 @@ bool Debugger::parseCommand( TextWriter& wr, const String& line, VMContext* ctx 
       try
       {
          SynTree* st = dynComp.compile( reader );
-         ctx->pushCode(stepBreak);
          ctx->pushData( FALCON_GC_HANDLE(st) );
-         ctx->pushCode(m_stepPostEval);
+         ctx->pushCodeWithUnrollPoint(m_stepPostEval);
          ctx->pushCode(st);
       }
       catch( Error* err )
@@ -339,7 +412,7 @@ void Debugger::displayStack( TextWriter& wr, VMContext* ctx, int64 depth )
       String temp;
       cls->describe(data, temp, 3, 128);
 
-      wr.write( String("*: ").N(top).A(": ").A(temp).A("\n") );
+      wr.write( String("*: ").H((uint64)item,true).A(" - ").N(top).A(": ").A(temp).A("\n") );
       ++top;
    }
 }
@@ -359,7 +432,7 @@ void Debugger::displayDyns( TextWriter& wr, VMContext* ctx, int64 depth )
       String temp;
       cls->describe(data, temp, 3, 128);
 
-      wr.write( String("*: ").N(top).A(": ").A(dd->m_sym->name()).A("=(").H((int64)item,true).A(") ").A(temp).A("\n") );
+      wr.write( String("*: ").N(top).A(": ").A(dd->m_sym->name()).A("=(").H((uint64)item,true).A(") ").A(temp).A("\n") );
       ++top;
    }
 }
@@ -382,12 +455,49 @@ void Debugger::displayCode( TextWriter& wr, VMContext* ctx, int64 depth )
 void Debugger::displayCall( TextWriter& wr, VMContext* ctx, int64 depth )
 {
    wr.write( String("*: Call stack size ").N((int64)ctx->callDepth()).A("\n") );
-   int64 top = 0;
-   while( (depth == 0 && top < ctx->callDepth()) || (depth > 0 && top < depth ) )
+   TraceBack tb;
+   ctx->fillTraceBack(&tb, true, depth);
+
+   length_t size = tb.size();
+
+   for ( length_t i = 0; i < size; ++i )
    {
-      CallFrame* cf = &ctx->callerFrame(top);
-      wr.write( String("*: ").N(top).A(": ").A(cf->m_function->fullName()).A("(").A(cf->m_function->locate()).A(")\n") );
-      ++top;
+      String str;
+      TraceStep* ts = tb.at(i);
+      ts->toString(str);
+      wr.write( String("*: ").N(i).A(": ").A(str).A("\n") );
+   }
+}
+
+
+void Debugger::displayGlobals( TextWriter& wr, VMContext* ctx )
+{
+   Function* func = ctx->currentFrame().m_function;
+   if( func->module() != 0 )
+   {
+      GlobalsMap& gmap = func->module()->globals();
+      int64 size = gmap.size();
+      wr.write( String("*: Global variables for module \"").A(func->module()->name()).A("\": ").N((int64)size).A("\n") );
+      class Rator: public GlobalsMap::VariableEnumerator
+      {
+      public:
+         Rator(TextWriter& tw) :m_tw(tw) {}
+         virtual ~Rator() {}
+         virtual void operator() ( const Symbol* sym, Item*& value )
+         {
+            m_tw.write( String("*: ").A(sym->name()).A(" (").H((uint64)value,true).A(")=").A(value->describe()).A("\n") );
+         }
+
+      private:
+         TextWriter& m_tw;
+      }
+      rator(wr);
+
+      gmap.enumerate(rator);
+   }
+   else
+   {
+      wr.write( String("*: No current module\n") );
    }
 }
 

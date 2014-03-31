@@ -47,7 +47,7 @@ class Config
    outMods = nil
 
    //# Log level
-   loglevel = nil
+   loglevel = 9
 
    //#configuration file
    cfile = nil
@@ -63,15 +63,14 @@ class Config
    function read( fdfile )
       // get config
       try
-         conf = confparser.ConfParser( fdfile )
-         conf.read()
+         conf = confparser.ConfParser()
+         conf.read(fdfile)
          self.cfile = conf
-         
       catch IOError in error
-         faldoc.fatal( i"Invalid input file $(fdfile)" )
+         faldoc.fatal( @i"Invalid input file $fdfile" )
          return false
-      catch in error
-         faldoc.fatal( i"Error in reading the configuration file:\n$(error)" )
+      catch as error
+         faldoc.fatal( @i"Error in reading the configuration file:\n$error" )
          return false
       end
 
@@ -124,7 +123,7 @@ class Config
       end
 
       // get the properties.
-      self.properties = conf.getCategory( "Property.*" )
+      self.properties = conf.ecat( "Property.*" )
 
       // autobrief
       self.autobrief = self.checkBool( "AutoBrief", false )
@@ -144,20 +143,20 @@ class Config
 
    function getInputSettings( conf )
       // Input directory -- defaults to "."
-      self.inputDirs = firstOf(conf.getMultiple( "Input.directory" ), ["."])
-      self.moduleRoots = firstOf(conf.getMultiple( "Input.moduleRoot" ), [])
+      self.inputDirs = firstOf(conf.getAll( "Input.directory" ), ["."])
+      self.moduleRoots = firstOf(conf.getAll( "Input.moduleRoot" ), [])
       
       // Input file wildcard; defaults to "*.fal"
-      self.inputWild = firstOf(conf.getMultiple( "Input.wildcard" ), ["*.fal"])
+      self.inputWild = firstOf(conf.getAll( "Input.wildcard" ), ["*.fal"])
       // input recursive -- defaults to true
       self.recursive = self.checkBool( "Input.recursive", true )
       // input extra files
-      self.inputExtra = conf.getMultiple( "Input.extra" )
+      self.inputExtra = conf.getAll( "Input.extra" )
    end
 
    function getOutputSettings( conf )
       // get the modules -- we know it's here, processConf checks it
-      self.outMods = conf.getMultiple("Output.module")
+      self.outMods = conf.getAll("Output.module")
    end
 
    //=========================================================

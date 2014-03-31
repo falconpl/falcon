@@ -1,0 +1,62 @@
+/*
+Function used by various tests in the "Engine tests (101)" category
+*/
+
+function engine_depth_tester(tests)
+
+   dataDepth0 = nil
+   codeDepth0 = nil
+   dynsDepth0 = nil
+   dataDepth1 = nil
+   codeDepth1 = nil
+   dynsDepth1 = nil
+
+   variable = 1
+   
+   result = "Ok"
+
+   i = 0
+   tlen = tests.len
+
+   while i < tlen
+      test = tests[i]
+      >> i, ": Testing ", test.render().replace("\n", ";")
+      dataDepth0 = VMContext.dataDepth
+      codeDepth0 = VMContext.codeDepth
+      dynsDepth0 = VMContext.dynsDepth
+      test()
+      dataDepth1 = VMContext.dataDepth
+      codeDepth1 = VMContext.codeDepth
+      dynsDepth1 = VMContext.dynsDepth
+
+      curRes = true
+      if dataDepth1 != dataDepth1
+         result = "fail"
+         curRes = false
+         >> " - data fail"
+      end
+
+      if codeDepth0 != codeDepth1
+         result = "fail"
+         curRes = false
+         >> " - code fail"
+      end
+      
+      if dynsDepth0 != dynsDepth1
+         result = "fail"
+         curRes = false
+         >> " - dyns fail"
+      end
+      
+      if curRes
+         >> " - OK"
+      end
+      
+      >
+      i++
+   end
+
+   return result
+end
+
+export engine_depth_tester

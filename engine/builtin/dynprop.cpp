@@ -27,19 +27,19 @@
 namespace Falcon {
 namespace Ext {
 
-Get::Get():
-   PseudoFunction( "get", &m_invoke )
+GetP::GetP():
+   PseudoFunction( "getp", &m_invoke )
 {
    signature("X,S");
    addParam("item");
    addParam("property");
 }
 
-Get::~Get()
+GetP::~GetP()
 {
 }
 
-void Get::invoke( VMContext* ctx, int32 )
+void GetP::invoke( VMContext* ctx, int32 )
 {
    Item *elem;
    Item *i_propName;
@@ -71,7 +71,7 @@ void Get::invoke( VMContext* ctx, int32 )
 }
 
 
-void Get::Invoke::apply_( const PStep*, VMContext* ctx )
+void GetP::Invoke::apply_( const PStep*, VMContext* ctx )
 {
    register Item& elem = ctx->opcodeParam(1);
    register Item& i_propName = ctx->opcodeParam(0);
@@ -94,8 +94,8 @@ void Get::Invoke::apply_( const PStep*, VMContext* ctx )
 
 
 
-Set::Set():
-   PseudoFunction( "set", &m_invoke )
+SetP::SetP():
+   PseudoFunction( "setp", &m_invoke )
 {
    signature("X,S,X");
    addParam("item");
@@ -103,11 +103,11 @@ Set::Set():
    addParam("value");
 }
 
-Set::~Set()
+SetP::~SetP()
 {
 }
 
-void Set::invoke( VMContext* ctx, int32 )
+void SetP::invoke( VMContext* ctx, int32 )
 {
    Item *elem;
    Item *i_propName;
@@ -144,7 +144,7 @@ void Set::invoke( VMContext* ctx, int32 )
 }
 
 
-void Set::Invoke::apply_( const PStep*, VMContext* ctx )
+void SetP::Invoke::apply_( const PStep*, VMContext* ctx )
 {
    register Item& i_elem = ctx->opcodeParam(2);
    register Item& i_propName = ctx->opcodeParam(1);
@@ -173,19 +173,19 @@ void Set::Invoke::apply_( const PStep*, VMContext* ctx )
 
 
 
-Has::Has():
-   PseudoFunction( "has", &m_invoke )
+HasP::HasP():
+   PseudoFunction( "hasp", &m_invoke )
 {
    signature("X,S");
    addParam("item");
    addParam("property");
 }
 
-Has::~Has()
+HasP::~HasP()
 {
 }
 
-void Has::invoke( VMContext* ctx, int32 )
+void HasP::invoke( VMContext* ctx, int32 )
 {
    Item *elem;
    Item *i_propName;
@@ -215,7 +215,7 @@ void Has::invoke( VMContext* ctx, int32 )
 }
 
 
-void Has::Invoke::apply_( const PStep*, VMContext* ctx )
+void HasP::Invoke::apply_( const PStep*, VMContext* ctx )
 {
    register Item& i_elem = ctx->opcodeParam(1);
    register Item& i_propName = ctx->opcodeParam(0);
@@ -311,8 +311,9 @@ void Properties::Invoke::apply_( const PStep*, VMContext* ctx )
 Approp::Approp():
    Function( "approp" )
 {
-   signature("X");
+   signature("X,D");
    addParam("item");
+   addParam("props");
 }
 
 Approp::~Approp()

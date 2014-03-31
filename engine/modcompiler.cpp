@@ -136,6 +136,7 @@ bool ModCompiler::Context::onOpenFunc( Function* function )
 
          m_owner->m_sp.addError( new CodeError(
             ErrorParam(e_already_def, function->declaredAt(), m_owner->m_module->uri() )
+            .extra(function->name())
             // TODO add source reference of the imported def
             .symbol( function->name() )
             .origin(ErrorParam::e_orig_compiler)
@@ -199,6 +200,7 @@ bool ModCompiler::Context::onOpenClass( Class* cls, bool isObject )
 
       m_owner->m_sp.addError( new CodeError(
          ErrorParam(e_already_def, cls->declaredAt(), m_owner->m_module->uri() )
+         .extra(cls->name())
          // TODO add source reference of the imported def
          .origin(ErrorParam::e_orig_compiler)
          ));

@@ -171,7 +171,7 @@ bool ExprLit::setNth( int32 n, TreeStep* ts )
 
 void ExprLit::render( TextWriter* tw, int depth ) const
 {
-   if( m_child )
+   if( m_child == 0 )
    {
       tw->write(renderPrefix(depth));
       tw->write( "/* Blank ExprLit */" );

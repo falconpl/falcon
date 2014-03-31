@@ -1,0 +1,23 @@
+/*
+@name Stack coherence of functions
+@category Engine tests
+
+@result Ok
+*/
+load engine_depth_tester
+// Tests starting on line 10 -- notice that "variable" is defined by tester()
+tests = .[
+   {[] function(); global test; test = 1; end }
+   {[] {a,b=> a+b}(1,2) }
+   {[] {a,b=> c=a+b; return& c}(1,2) }
+   {[] {=> x = variable; variable++; return x}() } // closure of variable
+]
+
+> "Engine tests - functions"
+test = 0
+result = engine_depth_tester( tests )
+
+> "Final result: ", result
+
+return result
+

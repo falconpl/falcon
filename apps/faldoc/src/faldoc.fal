@@ -39,7 +39,7 @@ class Application
 
    document = nil
 
-   modSpace = ModSpace()
+   modSpace = VMProcess.modSpace.makeChild()
    
    //# file currently parsed
    currentFile = ""
@@ -49,7 +49,7 @@ class Application
 
 
    //# Application process
-   function go()
+   function go()      
       try
          self.processParams()
          self.banner()
@@ -57,7 +57,7 @@ class Application
          self.processInput()
          self.processOutput()
          
-      catch in e
+      catch as e
          self.fatal( e.toString() )
       end
    end
@@ -75,7 +75,7 @@ class Application
       > i"faldoc - Falcon documentation tool."
       > i"Part of the Falcon Programming language."
       > i"Version ", version.name()
-      > "----------------------------------------"
+      > "-"*50
    end
 
    function readConfig()
@@ -97,13 +97,17 @@ class Application
       basedir = cfg.basedir
       test = 0
 
+      
       for dir in cfg.inputDirs
          // open the directory
          drel = self.relativize( basedir, dir )
          try
-            hdir = VFS.readDir( drel ).descend( {=>}, {fname =>     
-               for wildcard in cfg.inputWild
-                  if fname.wildcardMatch( wildcard )
+            self.info( @i"Input directory ${drel}" )
+
+            hdir = VFS.openDir( drel ).descend( {fpath =>                  
+               for wildcard in cfg.inputWild                  
+                  fname = fpath.toString()
+                  if fname.wmatch( wildcard )
                      doc.addFile( fname )
                   end
                end
@@ -141,16 +145,17 @@ class Application
       for mod in self.config.outMods
          try
             modData = modSpace.loadByName( "self.output." + mod )
-            faldoc_output = modData.get( "faldoc_output" )
+            faldoc_output = modData.getGlobal( "faldoc_output" )
             if not faldoc_output
                raise "module '"+ mod + "' doesn't define 'falcon_output' entry point"
             end
 
             // perform call
-            faldoc_output( self.document, firstOf(conf.getCategory("Output."+mod+".*"),[=>]) )
+            dict = conf.ecat("Output."+mod)
+            faldoc_output( self.document, dict )
 
             // unload the module
-            modData.unload()
+            modData = nil 
 
          catch IOError in error
             // signal an abnormal exit

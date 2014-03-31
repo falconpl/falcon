@@ -130,6 +130,7 @@ void ExprDict::render( TextWriter* tw, int depth ) const
         expr->render( tw, relativeDepth(depth) );
         ++iter;
       }
+      tw->write( " ]" );
    }
 
    if( depth < 0 )

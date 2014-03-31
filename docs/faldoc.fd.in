@@ -21,7 +21,7 @@ Version = @FALCON_VERSION_ID@
 ################################################
 
 Input.basedir=@PROJECT_SOURCE_DIR@
-Input.directory=engine/core_module
+Input.directory=engine/cm
 Input.directory=modules/native
 Input.directory=modules/falcon
 

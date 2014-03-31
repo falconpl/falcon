@@ -158,16 +158,20 @@ class ReRule( re, nextState, action ) from Rule( nextState, action )
       if self.anchored and pos > 0: return -1
       re = self.re
       // We need our grabs
-      if (rng = re.find( text, pos ))
+      if re.find( text, pos )
          g = []
-         n = 0
-         recapcount = re.capturedCount()
-         while n < recapcount
-            g += text[re.captured(n)]
-            ++n
+         for n = 0 to re.capturedCount()-1,1
+            rng = re.captured(n)
+            if rng[0] != rng[1]   // only for non-empty matches
+               g +=  text[rng]
+            end
+         end
+         if g.empty
+            return -1
          end
          self.grabs = g
-         return rng[0]
+         
+         return re.captured(0)[1]
       end
 
       return -1

@@ -48,7 +48,6 @@ static const char* errorDesc( int code )
 class Error_p
 {
 public:
-   std::deque<TraceStep> m_steps;
    std::deque<Error*> m_subErrors;
 };
 
@@ -57,6 +56,7 @@ Error::Error( const String& name, const ErrorParam &params ):
    m_refCount( 1 ),
    m_bHasRaised(false),
    m_name( name ),
+   m_tb(0),
    m_handler(0)
 {
    _p = new Error_p;
@@ -68,6 +68,7 @@ Error::Error( const String& name ):
    m_refCount( 1 ),
    m_bHasRaised(false),
    m_name( name ),
+   m_tb(0),
    m_handler(0)
 {
    _p = new Error_p;
@@ -77,6 +78,7 @@ Error::Error( const Class* handler ):
    m_refCount( 1 ),
    m_bHasRaised(false),
    m_name( handler->name() ),
+   m_tb(0),
    m_handler( handler )
 {
    _p = new Error_p;
@@ -86,6 +88,7 @@ Error::Error( const Class* handler, const ErrorParam& params ):
    m_refCount( 1 ),
    m_bHasRaised(false),
    m_name( handler->name() ),
+   m_tb(0),
    m_handler( handler )
 {
    _p = new Error_p;
@@ -120,6 +123,7 @@ Error::~Error()
       ++iter;
    }
 
+   delete m_tb;
    delete _p;
 }
 
@@ -139,11 +143,11 @@ void Error::decref()
 }
 
 
-void Error::describeTo( String &target, bool addSignature ) const
+void Error::describeTo( String &target, bool bAddPath, bool bAddParams, bool bAddSign ) const
 {
    heading( target );
 
-   if ( addSignature && ! m_signature.empty() )
+   if ( bAddSign && ! m_signature.empty() )
    {
       target += "\n   Signed by: " + m_signature;
    }
@@ -153,27 +157,27 @@ void Error::describeTo( String &target, bool addSignature ) const
       target += "\n   Raised item: " + m_raised.describe();
    }
 
-   if ( ! _p->m_steps.empty() )
+   if ( m_tb != 0 )
    {
       target += "\n   Traceback:\n";
-      describeTrace(target);
+      describeTrace(target, bAddPath, bAddSign);
    }
 
    if (! _p->m_subErrors.empty() )
    {
       target += "\n   Because of:\n";
-      describeSubErrors( target, false );
+      describeSubErrors( target, bAddPath, bAddParams, bAddSign );
    }
 }
 
 
-String& Error::describeSubErrors( String& target, bool addSignature ) const
+String& Error::describeSubErrors( String& target, bool bAddPath, bool bAddParams, bool bAddSign ) const
 {
    std::deque<Error*>::const_iterator iter = _p->m_subErrors.begin();
    while( true )
    {
       target += "     ";
-      String temp = (*iter)->describe(addSignature);
+      String temp = (*iter)->describe(bAddPath, bAddParams, bAddSign);
       String temp2;
       temp.replace("\n","\n     ", temp2);
       target += temp2;
@@ -192,19 +196,11 @@ String& Error::describeSubErrors( String& target, bool addSignature ) const
 }
 
 
-String& Error::describeTrace( String& target ) const
+String& Error::describeTrace( String& target, bool bAddPath, bool bAddParams ) const
 {
-   std::deque<TraceStep>::const_iterator iter = _p->m_steps.begin();
-   while( iter != _p->m_steps.end() )
+   if( m_tb != 0 )
    {
-       target += "    ";
-       const TraceStep& step = *iter;
-       step.toString( target );
-       ++iter;
-       if(iter != _p->m_steps.end() )
-       {
-          target +="\n";
-       }
+      return m_tb->toString(target, bAddPath, bAddParams);
    }
 
    return target;
@@ -252,22 +248,30 @@ String& Error::location( String& target ) const
       target += m_module;
       if ( m_mantra.size() != 0 )
          target += "." + m_mantra;
-      target += ":";
    }
    else if (m_mantra.size() != 0 )
    {
       target += "." + m_mantra;
-      target += ":";
    }
 
-   if ( m_line != 0 )
-      target.writeNumber( (int64) m_line );
+   if ( m_line > 0 )
    {
+      target += ":";
+      target.writeNumber( (int64) m_line );
+
       if ( m_chr != 0 )
       {
          target += ",";
          target.writeNumber( (int64) m_chr );
       }
+   }
+   else if( m_line < 0)
+   {
+      target += " (nc)";
+   }
+   else
+   {
+      target += " (no line)";
    }
 
    return target;
@@ -325,12 +329,6 @@ void Error::describeErrorCodeTo( int errorCode, String& tgt ) const
 }
 
 
-void Error::addTrace( const TraceStep& tb )
-{
-   _p->m_steps.push_back( tb );
-}
-
-
 void Error::appendSubError( Error *error )
 {
    error->incref();
@@ -370,18 +368,6 @@ void Error::handler( const Class* cls ) const
 }
 
 
-void Error::enumerateSteps( Error::StepEnumerator &rator ) const
-{
-   std::deque<TraceStep>::const_iterator iter = _p->m_steps.begin();
-   while( iter != _p->m_steps.end() )
-   {
-      const TraceStep& ts = *iter;
-      ++iter;
-      if( ! rator( ts ) ) break;
-   }
-}
-
-
 void Error::enumerateErrors( Error::ErrorEnumerator &rator ) const
 {
    std::deque<Error*>::const_iterator iter = _p->m_subErrors.begin();
@@ -401,11 +387,6 @@ Error* Error::getBoxedError() const
    return _p->m_subErrors.front();
 }
 
-
-bool Error::hasTraceback() const
-{
-   return ! _p->m_steps.empty();
-}
 
 bool Error::hasSubErrors() const
 {

@@ -116,7 +116,7 @@ static void set_std_int(void* instance, const Item& value, int mode )
    Stream* stream = static_cast<Stream*>( cls->getParentData(strc,data) );
    if(stream != 0)
    {
-      Process* prc = static_cast<Process*>(instance);
+      Process* prc = static_cast<Process*>(instance == 0 ? Processor::currentProcessor()->currentContext()->process() : instance);
 
       switch(mode)
       {
@@ -138,7 +138,7 @@ static void set_std_int(void* instance, const Item& value, int mode )
 
 static void get_stdIn(const Class*, const String&, void* instance, Item& value )
 {
-   Process* prc = static_cast<Process*>(instance);
+   Process* prc = static_cast<Process*>( instance == 0 ? Processor::currentProcessor()->currentContext()->process() : instance );
    value.setUser( prc->stdIn()->handler(), prc->stdIn() );
 }
 
@@ -149,7 +149,7 @@ static void get_stdIn(const Class*, const String&, void* instance, Item& value )
  */
 static void get_stdOut(const Class*, const String&, void* instance, Item& value )
 {
-   Process* prc = static_cast<Process*>(instance);
+   Process* prc = static_cast<Process*>(instance == 0 ? Processor::currentProcessor()->currentContext()->process() : instance);
    value.setUser( prc->stdIn()->handler(), prc->stdOut() );
 }
 
@@ -159,7 +159,7 @@ static void get_stdOut(const Class*, const String&, void* instance, Item& value 
  */
 static void get_stdErr(const Class*, const String&, void* instance, Item& value )
 {
-   Process* prc = static_cast<Process*>(instance);
+   Process* prc = static_cast<Process*>(instance == 0 ? Processor::currentProcessor()->currentContext()->process() : instance);
    value.setUser( prc->stdIn()->handler(), prc->stdErr() );
 }
 
@@ -184,13 +184,16 @@ static void set_stdErr(const Class*, const String&, void* instance, const Item& 
  */
 static void get_id(const Class*, const String&, void* instance, Item& value )
 {
-   Process* prc = static_cast<Process*>(instance);
+   Process* prc = static_cast<Process*>(instance == 0 ? Processor::currentProcessor()->currentContext()->process() : instance);
    value = (int64) prc->id();
 }
 
 /*#
  @property current VMProcess
  @brief Returns an instance of the current VM process.
+
+ This property returns the current Virtual Machine process on which the
+ current script is running.
  */
 static void get_current(const Class* cls, const String&, void*, Item& value )
 {
@@ -266,6 +269,10 @@ static void get_uri(const Class*, const String&, void* instance, Item& value )
  The termination error can be accessed during cleanup
  routines; it will be nil (usually) during normal
  execution.
+
+  This property can be invoked statically on the VMProcess class to
+ access the exit error of the current process.
+
  */
 static void get_error(const Class*, const String&, void* instance, Item& value )
 {
@@ -284,6 +291,27 @@ static void get_error(const Class*, const String&, void* instance, Item& value )
       value.setNil();
    }
 }
+
+/*#
+ @property modSpace VMProcess
+ @brief Module space associated with this process.
+ @see ModSpace
+
+ This property can be invoked statically on the VMProcess class to
+ access the module space of the current process.
+*/
+static void get_modSpace(const Class*, const String&, void* instance, Item& value )
+{
+   Process* prc = static_cast<Process*>(instance);
+   if( prc == 0 )
+   {
+      // called statically
+      prc = Processor::currentProcessor()->currentContext()->process();
+   }
+
+   value.setUser( prc->modSpace()->handler(), prc->modSpace() );
+}
+
 
 /*
  @method quit VMProcess
@@ -647,14 +675,16 @@ ClassVMProcess::ClassVMProcess():
 
    addProperty( "current", &get_current, 0, true ); //static
 
-   addProperty( "stdIn", &get_stdIn, &set_stdIn );
-   addProperty( "stdOut", &get_stdOut, &set_stdOut );
-   addProperty( "stdErr", &get_stdErr, &set_stdErr );
-   addProperty( "id", &get_id );
-   addProperty( "error", &get_error );
+   addProperty( "stdIn", &get_stdIn, &set_stdIn, 0, true );
+   addProperty( "stdOut", &get_stdOut, &set_stdOut, 0, true );
+   addProperty( "stdErr", &get_stdErr, &set_stdErr, 0, true );
+   addProperty( "id", &get_id, 0, true, false );
 
-   addProperty( "name", &get_name, 0, true );
-   addProperty( "uri", &get_uri, 0, true );
+   addProperty( "error", &get_error, 0, true, false );
+   addProperty( "modSpace", &get_modSpace, 0, true );
+
+   addProperty( "name", &get_name, 0, true, false );
+   addProperty( "uri", &get_uri, 0, true, false );
 
    addMethod( new CVMProcess::Function_getIs );
    addMethod( new CVMProcess::Function_setTT );

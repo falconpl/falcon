@@ -48,13 +48,22 @@ public:
    void displayDyns( TextWriter& wr, VMContext* ctx, int64 depth );
    void displayCode( TextWriter& wr, VMContext* ctx, int64 depth );
    void displayCall( TextWriter& wr, VMContext* ctx, int64 depth );
+   void displayBack( TextWriter& wr, VMContext* ctx, int64 depth );
+   void displayGlobals( TextWriter& wr, VMContext* ctx );
 
 private:
    PStep* m_stepPostEval;
    class PStepPostEval;
 
+   PStep* m_stepAfterNext;
+   class PStepAfterNext;
+
+   class PStepCatcher;
+
    String m_lastCommand;
    bool m_hello;
+
+
 };
 
 }

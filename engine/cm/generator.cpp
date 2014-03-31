@@ -284,6 +284,7 @@ void ClassGenerator::op_next( VMContext* ctx, void* instance ) const
 {
    Generator* gen = static_cast<Generator*>(instance);
    Item params[] = {gen->m_data, Item(this, gen) };
+   ctx->callerLine(__LINE__+1);
    ctx->callItem(gen->m_function, 2, params );
 }
 

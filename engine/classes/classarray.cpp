@@ -894,6 +894,7 @@ void Function_scan::invoke(VMContext* ctx, int32 )
    ctx->local(0)->setInteger(0); // we'll start from 1
    ClassArray* carr = static_cast<ClassArray*>(methodOf());
    ctx->pushCode(carr->m_stepScanInvoke);
+   ctx->callerLine(__LINE__+1);
    ctx->callItem(*i_code, 1, &array->at(0));
 }
 
@@ -932,6 +933,7 @@ public:
 
       // trying with next
       ctx->local(0)->setInteger(id);
+      ctx->callerLine(__LINE__+1);
       ctx->callItem( *i_code, 1, &array->at(id) );
    }
 };
@@ -1163,6 +1165,7 @@ public:
          Item params[2];
          params[0] = array->at(i);
          params[1] = pivot;
+         ctx->callerLine(__LINE__+1);
          ctx->callItem(*i_less, 2, params );
          return;
       }
@@ -1251,6 +1254,7 @@ public:
          params[1] = array->at(j);
       }
 
+      ctx->callerLine(__LINE__+1);
       ctx->callItem(*i_less, 2, params );
    }
 };
@@ -1292,6 +1296,7 @@ public:
          params[0] = pivot;
          params[1] = array->at(j);
 
+         ctx->callerLine(__LINE__+1);
          ctx->callItem(*i_less, 2, params );
       }
       else

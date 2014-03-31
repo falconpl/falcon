@@ -1,0 +1,97 @@
+/*
+@name Simple For/to loops (nearly) empty 
+@category Loops
+
+@output   
+Testing basic for i = 1 to 1
+Looping: 1
+
+Testing basic for i = 1 to 1, 1
+Looping: 1
+
+Testing basic for i = 1 to 1, -1
+Looping: 1
+
+Testing basic for i = 1 to 0
+Looping: 1
+Looping: 0
+
+Testing basic for i = 1 to 0, 1
+
+Testing basic for i = 0 to 1, -1
+Done
+@endoutput
+*/
+
+x = VMContext
+dd = x.dataDepth
+> "Testing basic for i = 1 to 1"
+for i = 1 to 1
+   > "Looping: ", i
+end
+
+dd1 = x.dataDepth
+if dd != dd1
+   raise "Corrupted stack at loop 1: " + dd1 + "/" + dd 
+end
+
+>
+> "Testing basic for i = 1 to 1, 1"
+for i = 1 to 1,1
+   > "Looping: ", i
+end
+
+dd1 = x.dataDepth
+if dd != dd1
+   raise "Corrupted stack at loop 2"
+end
+
+>
+> "Testing basic for i = 1 to 1, -1"
+for i = 1 to 1,-1
+   > "Looping: ", i
+end
+
+dd1 = x.dataDepth
+if dd != dd1
+   raise "Corrupted stack at loop 3"
+end
+
+
+dd = x.dataDepth
+>
+> "Testing basic for i = 1 to 0"
+for i = 1 to 0
+   > "Looping: ", i
+end
+
+dd1 = x.dataDepth
+if dd != dd1
+   raise "Corrupted stack at loop 4: " + dd1 + "/" + dd 
+end
+
+>
+> "Testing basic for i = 1 to 0, 1"
+for i = 1 to 0,1
+   > "Looping: ", i
+end
+
+dd1 = x.dataDepth
+if dd != dd1
+   raise "Corrupted stack at loop 5"
+end
+
+>
+> "Testing basic for i = 0 to 1, -1"
+for i = 0 to 1,-1
+   > "Looping: ", i
+end
+
+dd1 = x.dataDepth
+if dd != dd1
+   raise "Corrupted stack at loop 3"
+end
+
+
+
+> "Done"

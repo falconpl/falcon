@@ -91,6 +91,7 @@ private:
       state_float_exp,
 
       state_name,
+      state_name_next,
       state_operator,
       state_membuf,
       state_membuf2,

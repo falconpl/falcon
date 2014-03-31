@@ -29,7 +29,6 @@
 #include <falcon/sys.h>
 #include <falcon/contextgroup.h>
 #include <falcon/gctoken.h>
-#include <falcon/itemstack.h>
 
 #include <falcon/module.h>       // For getDynSymbolValue
 #include <falcon/modspace.h>
@@ -85,8 +84,7 @@ VMContext::VMContext( Process* prc, ContextGroup* grp ):
    m_events(0),
    m_suspendedEvents(0),
    m_inGroup(grp),
-   m_process(prc),
-   m_caller(0)
+   m_process(prc)
 {
    m_dynsStack.init();
    m_codeStack.init();
@@ -94,13 +92,13 @@ VMContext::VMContext( Process* prc, ContextGroup* grp ):
    m_dataStack.init(0, m_dataStack.INITIAL_STACK_ALLOC);
    m_finallyStack.init();
    m_waiting.init();
-   m_itemStack = new ItemStack(prc->itemPagePool());
 
    m_id = prc->getNextContextID();
    m_acquired = 0;
    m_signaledResource = 0;
 
    m_firstWeakRef = 0;
+   m_callerLine = 0;
 
    pushBaseElements();
 
@@ -135,7 +133,6 @@ void VMContext::reset()
 {
    if( m_lastRaised != 0 ) m_lastRaised->decref();
    m_lastRaised = 0;
-   m_caller = 0;
 
    atomicSet(m_events, 0);
    setStatus(statusBorn);
@@ -156,6 +153,8 @@ void VMContext::reset()
    m_dataStack.reset(0);
    m_finallyStack.reset();
    m_waiting.reset();
+
+   m_callerLine = 0;
 
    pushBaseElements();
    clearEvents();
@@ -351,7 +350,11 @@ const PStep* VMContext::nextStep() const
    if( ps->isComposed() )
    {
       const SynTree* st = static_cast<const SynTree*>(ps);
-      return st->at(cframe.m_seqId);
+      // we might legitly have an empty syntree here.
+      if( st->arity() < cframe.m_seqId )
+      {
+         ps = st->at(cframe.m_seqId);
+      }
    }
    return ps;
 }
@@ -366,7 +369,6 @@ const PStep* VMContext::nextStep( int frame ) const
    PARANOID( "Call stack empty", (this->callDepth() > 0) );
 
    const CodeFrame* cframe;
-
    if( frame == 0 )
    {
       cframe = m_codeStack.m_top;
@@ -646,7 +648,7 @@ void VMContext::startRuleFrame()
    static const Symbol* base = Engine::instance()->baseSymbol();
    DynsData* slot = m_dynsStack.addSlot();
 
-   register Item& frame = *m_itemStack->push(m_dynsStack.depth());
+   register Item& frame = *addDynData();
    slot->m_sym = base;
    slot->m_value = &frame; // overkill
    frame.type(FLC_ITEM_FRAMING);
@@ -669,7 +671,7 @@ void VMContext::startRuleNDFrame( uint32 tbPoint )
    static const Symbol* base = Engine::instance()->baseSymbol();
    DynsData* slot = m_dynsStack.addSlot();
 
-   register Item& frame = *m_itemStack->push(m_dynsStack.depth());
+   register Item& frame = *addDynData();
    slot->m_sym = base;
    slot->m_value = &frame; // overkill
    frame.type(FLC_ITEM_FRAMING);
@@ -1056,7 +1058,10 @@ public:
             // found, shall we add a traceback to the error?
             if( st->isTracedCatch() && ! m_error->hasTraceback() )
             {
-               ctx->addTrace(m_error);
+               TraceBack* tb = new TraceBack;
+               // Todo: allow the user of the context to fill the parameters in the traceback or not.
+               ctx->fillTraceBack(tb, true);
+               m_error->setTraceBack(tb);
             }
             ctx->setCatchBlock( st );
             return true;
@@ -1070,7 +1075,10 @@ public:
    {
       if( ! m_error->hasTraceback() )
       {
-         ctx->addTrace( m_error );
+         TraceBack* tb = new TraceBack;
+         // Todo: allow the user of the context to fill the parameters in the traceback or not.
+         ctx->fillTraceBack(tb, true);
+         m_error->setTraceBack(tb);
       }
    }
 
@@ -1230,7 +1238,10 @@ Error* VMContext::raiseError( Error* ce )
       // add a trace if not present
       if( ! ce->hasTraceback() )
       {
-         addTrace(ce);
+         TraceBack* tb = new TraceBack;
+         // Todo: allow the user of the context to fill the parameters in the traceback or not.
+         fillTraceBack(tb, true);
+         ce->setTraceBack(tb);
       }
    }
    // otherwise, the throw is suspended
@@ -1421,7 +1432,6 @@ void VMContext::callItem( const Item& item, int pcount, Item const* params )
       memcpy( m_dataStack.m_top-pcount+1, params, pcount * sizeof(item) );
    }
 
-   m_caller = currentCode().m_step;
    cls->op_call( this, pcount, data );
 }
 
@@ -1437,7 +1447,7 @@ void VMContext::call( Function* func, int pcount, Item const* params )
       addSpace(pcount);
       memcpy( m_dataStack.m_top-pcount+1, params, pcount * sizeof(Item) );
    }
-   m_caller = currentCode().m_step;
+
    makeCallFrame(func, pcount);
    func->invoke(this, pcount);
 }
@@ -1455,7 +1465,7 @@ void VMContext::call( Function* func, const Item& self, int pcount, Item const* 
       addSpace(pcount);
       memcpy( m_dataStack.m_top-pcount+1, params, pcount * sizeof(Item) );
    }
-   m_caller = currentCode().m_step;
+
    makeCallFrame(func, pcount, self);
    func->invoke(this, pcount);
 }
@@ -1472,7 +1482,7 @@ void VMContext::call( Closure* cls, int pcount, Item const* params )
       addSpace(pcount);
       memcpy( m_dataStack.m_top-pcount+1, params, pcount * sizeof(Item) );
    }
-   m_caller = currentCode().m_step;
+
    makeCallFrame(cls, pcount );
    cls->closed()->invoke(this, pcount);
 }
@@ -1527,8 +1537,7 @@ void VMContext::addLocalFrame( SymbolMap* st, int pcount )
    while( p < pcount ) {
       DynsData* dd = m_dynsStack.addSlot();
       dd->m_sym = st->getById(p);
-      dd->m_value = m_itemStack->push(m_dynsStack.depth());
-      dd->m_value->setNil();
+      dd->m_value = addDynData();
       ++p;
    }
 }
@@ -1649,7 +1658,7 @@ void VMContext::returnFrame_base( const Item& value )
    PARANOID( "Data stack underflow at return", (m_dataStack.m_top >= m_dataStack.m_base) );
 
    m_dynsStack.unroll( topCall->m_dynsBase );
-   m_itemStack->freeUpToDepth(topCall->m_dynsBase);
+   m_dynDataStack.unroll(topCall->m_dynDataBase);
    PARANOID( "Dynamic Symbols stack underflow at return", (m_dynsStack.m_top >= m_dynsStack.m_base-1) );
 
    // Forward the return value
@@ -1763,8 +1772,7 @@ void VMContext::defineSymbol(const Symbol* sym)
 {
    DynsData* newData = m_dynsStack.addSlot();
    newData->m_sym = sym;
-   newData->m_value = m_itemStack->push( m_dynsStack.depth() );
-   newData->m_value->setNil();
+   newData->m_value = addDynData();
 }
 
 Item* VMContext::resolveSymbol( const String& symname, bool forAssign )
@@ -1832,7 +1840,7 @@ Item* VMContext::resolveSymbol( const Symbol* dyns, bool forAssign )
             // -- in this case, we want a copy of the thing we found below.
             DynsData* newSlot = m_dynsStack.addSlot();
             newSlot->m_sym = dyns;
-            newSlot->m_value = m_itemStack->push(m_dynsStack.depth(),*dd->m_value);
+            newSlot->m_value = addDynData(*dd->m_value);
             return newSlot->m_value;
          }
 
@@ -1849,8 +1857,7 @@ Item* VMContext::resolveSymbol( const Symbol* dyns, bool forAssign )
             // notice that evaluation parameters are above the base symbol.
             DynsData* newSlot = m_dynsStack.addSlot();
             newSlot->m_sym = dyns;
-            newSlot->m_value = m_itemStack->push(m_dynsStack.depth());
-            newSlot->m_value->setNil();
+            newSlot->m_value = addDynData();
             TRACE2( "VMContext::resolveSymbol -- \"%s\" went down to a local base, creating new.", dyns->name().c_ize() );
             return newSlot->m_value;
          }
@@ -1877,14 +1884,12 @@ Item* VMContext::resolveSymbol( const Symbol* dyns, bool forAssign )
          if( newSlot->m_value == 0 )
          {
             TRACE2( "VMContext::resolveSymbol -- \"%s\" NOT found global.", dyns->name().c_ize() );
-            newSlot->m_value = m_itemStack->push(m_dynsStack.depth());
-            newSlot->m_value->setNil();
+            newSlot->m_value = addDynData();
          }
       }
       else {
          // in the end, we must create a new assignable slot.
-         newSlot->m_value = m_itemStack->push(m_dynsStack.depth());
-         newSlot->m_value->setNil();
+         newSlot->m_value = addDynData();
          TRACE2( "VMContext::resolveSymbol -- \"%s\" went down to function base, creating new.", dyns->name().c_ize() );
       }
       return newSlot->m_value;
@@ -1902,7 +1907,7 @@ Item* VMContext::resolveSymbol( const Symbol* dyns, bool forAssign )
             // -- in this case, we want a copy of the thing we found below.
             DynsData* newSlot = m_dynsStack.addSlot();
             newSlot->m_sym = dyns;
-            newSlot->m_value = m_itemStack->push(m_dynsStack.depth(),*dd->m_value);
+            newSlot->m_value = addDynData(*dd->m_value);
             return newSlot->m_value;
          }
 
@@ -1935,7 +1940,7 @@ Item* VMContext::resolveSymbol( const Symbol* dyns, bool forAssign )
 
    if( isRule )
    {
-      newSlot->m_value = m_itemStack->push(m_dynsStack.depth(),*var);
+      newSlot->m_value = addDynData(*var);
    }
    else
    {
@@ -2137,7 +2142,13 @@ void VMContext::contextualize( Error* error, bool force )
    String noname;
    Function* curFunc = currentFrame().m_function;
 
-   if( error->line() == 0 || force )
+   if( error->line() <= 0 && error->className() == "ParamError" )
+   {
+      // a parameter error raised by a native function.
+      curFunc = (m_callStack.m_top-1)->m_function;
+      error->line(currentFrame().m_callerLine);
+   }
+   else if( error->line() <= 0 || force )
    {
       CodeFrame* top = m_codeStack.m_top;
       int l = top->m_step->sr().line();
@@ -2150,14 +2161,14 @@ void VMContext::contextualize( Error* error, bool force )
    }
 
    Module* mod = curFunc->module();
-   if( mod != 0 || force )
+   if( mod != 0 )
    {
-      if( error->module().empty() )
+      if( error->module().empty() || force )
       {
          error->module(mod->name());
       }
 
-      if( error->path().empty() )
+      if( error->path().empty() || force )
       {
          error->path(mod->uri());
       }
@@ -2175,12 +2186,16 @@ void VMContext::contextualize( Error* error, bool force )
 
 }
 
-void VMContext::addTrace( Error *error )
+void VMContext::fillTraceBack( TraceBack* tb, bool bRenderParams, long maxDepth )
 {
    VMContext* ctx = this;
-
    long depth = ctx->callDepth();
-   const PStep* caller = currentCode().m_step;
+   if( maxDepth > 0 && depth > maxDepth )
+   {
+      depth = maxDepth;
+   }
+
+   int32 line = ctx->currentCode().m_step->line();
 
    for( long i = 0; i < depth; ++i )
    {
@@ -2188,22 +2203,38 @@ void VMContext::addTrace( Error *error )
       Function* func = cf.m_function;
       Module* mod = func->module();
 
-      if( caller == 0 )
+      String params;
+
+      if( bRenderParams )
       {
-         caller = ctx->nextStep(i);
+         int pCount = cf.m_paramCount;
+         Item* paramBase = m_dataStack.m_base + cf.m_dataBase;
+
+         for ( int pc = 0; pc < pCount; ++ pc )
+         {
+            Class* cls;
+            void* data;
+            paramBase[pc].forceClassInst(cls, data);
+            String tempParam;
+            cls->describe(data,tempParam,2,20);
+            if( ! params.empty() )
+            {
+               params += ", ";
+            }
+            params += tempParam;
+         }
       }
 
-      int line = caller != 0 ? caller->line() : func->declaredAt();
       if( mod != 0 )
       {
-         error->addTrace( TraceStep(mod->name(), mod->uri(), func->fullName(), line ) );
+         tb->add( new TraceStep(mod->name(), mod->uri(), func->fullName(), line, params ) );
       }
       else
       {
-         error->addTrace( TraceStep("<internal>", func->fullName(), line ) );
+         tb->add( new TraceStep("<none>", func->fullName(), line, params ) );
       }
 
-      caller = cf.m_caller;
+      line = ctx->callerFrame(i).m_callerLine;
    }
 }
 
@@ -2328,6 +2359,27 @@ void VMContext::onStackRebased( Item* oldBase )
       ++dt;
    }
 }
+
+void VMContext::onDynStackRebased( Item* oldBase )
+{
+   TRACE( "VMContext::onDynStackRebased %p -> %p", oldBase, m_dataStack.m_base );
+
+   // rebase the dynsym satack.
+   Item* newBase = m_dynDataStack.m_base;
+   Item* oldTop = oldBase + (m_dynDataStack.m_top - newBase);
+
+   DynsData* dt = m_dynsStack.m_base;
+   DynsData* endDt = m_dynsStack.m_top;
+
+   while( dt <= endDt )
+   {
+      if( dt->m_value >= oldBase && dt->m_value <= oldTop ) {
+         dt->m_value = newBase + (dt->m_value - oldBase);
+      }
+      ++dt;
+   }
+}
+
 
 int VMContext::getStatus()
 {

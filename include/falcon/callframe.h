@@ -47,9 +47,6 @@ public:
    /** Data closed in closures. */
    ClosedData* m_closingData;
 
-   /** The step calling this function. */
-   const PStep* m_caller;
-
    /** Number of parameters used for the effective call. */
    uint32 m_paramCount;
 
@@ -68,6 +65,8 @@ public:
     */
    uint32 m_dynsBase;
 
+   uint32 m_dynDataBase;
+
    /** Codebase for this frame.
     *
     * Code from this function is placed in this position; resizing the
@@ -79,6 +78,11 @@ public:
     */
    uint32 m_codeBase;
    
+   /** Line where the source call was performed
+    *
+    */
+   int32 m_callerLine;
+
    /** Image of "self" in this frame. */
    Item m_self;
 
@@ -89,7 +93,7 @@ public:
    CallFrame()
    {}
 
-   CallFrame( Function* f, uint32 pc, uint32 sb, uint32 cb, uint32 dynb, uint32 locb, const Item& self ):
+   CallFrame( Function* f, uint32 pc, uint32 sb, uint32 cb, uint32 dynb, uint32 locb, uint32 dynDataBase, const Item& self ):
       m_function(f),
       m_closure(0),
       m_closingData(0),
@@ -97,12 +101,14 @@ public:
       m_dataBase( sb ),
       m_locsBase( locb ),
       m_dynsBase( dynb ),
+      m_dynDataBase(dynDataBase),
       m_codeBase( cb ),
+      m_callerLine(0),
       m_self(self),
       m_bMethodic( true )
    {}
 
-   CallFrame( Function* f, uint32 pc, uint32 sb, uint32 cb, uint32 dynb, uint32 locb ):
+   CallFrame( Function* f, uint32 pc, uint32 sb, uint32 cb, uint32 dynb, uint32 locb, uint32 dynDataBase ):
       m_function(f),
       m_closure(0),
       m_closingData(0),
@@ -110,7 +116,9 @@ public:
       m_dataBase( sb ),
       m_locsBase( locb ),
       m_dynsBase( dynb ),
+      m_dynDataBase(dynDataBase),
       m_codeBase( cb ),
+      m_callerLine(0),
       m_bMethodic( false )
    {}
 };

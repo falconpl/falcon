@@ -124,6 +124,20 @@ static void get_codeDepth( const Class*, const String&, void* instance, Item& va
    value.setInteger(ctx->codeDepth());
 }
 
+static void get_dynsDepth( const Class*, const String&, void* instance, Item& value )
+{
+   VMContext* ctx;
+   if( instance == 0 )
+   {
+      ctx = Processor::currentProcessor()->currentContext();
+   }
+   else {
+      ctx = static_cast<VMContext*>(instance);
+   }
+
+   value.setInteger(ctx->dynsDepth());
+}
+
 
 static void get_selfItem( const Class*, const String&, void* instance, Item& value )
 {
@@ -167,6 +181,7 @@ void ClassVMContextBase::init()
    addProperty( "callDepth", &get_callDepth );
    addProperty( "dataDepth", &get_dataDepth );
    addProperty( "codeDepth", &get_codeDepth );
+   addProperty( "dynsDepth", &get_dynsDepth );
    addProperty( "selfItem", &get_selfItem );
    addProperty( "status", &get_status );
 }

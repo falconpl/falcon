@@ -229,7 +229,7 @@ class Parser()
    function parseStream( stream, initState )
       self.initParser( initState )
       ctx = Context()
-      line = ""
+      line = " " * 4096
       while stream.readLine( line, 4096 )
          self.parseLine( line, ctx )
       end
@@ -257,6 +257,7 @@ class Parser()
       hadWinner = false
       if self.trace: self.traceText( line )
       atEnd = false
+      state = nil
 
       loop
          matchAt = linelen
@@ -326,7 +327,7 @@ class Parser()
          end
       end
 
-      if state.eolRule and (not winner or winner.nextState == "#stay")
+      if state and state.eolRule and (not winner or winner.nextState == "#stay")
          // is this a conditional rule?
          if state.eolRule[0] == "*"
             if not hadWinner

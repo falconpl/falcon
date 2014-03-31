@@ -82,7 +82,7 @@ public:
  */
 
 /*#
- @method get BOM
+ @method getp BOM
  @brief gets a property value by name.
  @param prop The property name.
  @return The value of the given property.
@@ -91,7 +91,7 @@ public:
  */
 
 /*#
- @method set BOM
+ @method setp BOM
  @brief sets a property value by name.
  @param prop The property name.
  @param value The value to be set
@@ -99,10 +99,28 @@ public:
  */
 
 /*#
- @method has BOM
+ @method hasp BOM
  @brief checks if a given property exists.
  @param prop The property name.
  @return true if the property exists, false if not.
+ */
+
+/*#
+ @method approp BOM
+ @brief Applies a set of values to the properties of an item.
+ @brief item Item on which the properties are to be applied.
+ @param props Properties to be applied, in a dictionary of [property_name => value].
+ @return The @b item itself.
+
+ This function/method applies the values in the dictionary passed as @props to the
+ properties that are found in the target item.
+
+ For instance, the following:
+ @code
+   something.approp( ["a"=> 1, "b" => 2] )
+ @endcode
+
+ sets the value 1 in the property @b a of the item @b something, and 2 in the @b b property.
  */
 
 /*#
@@ -195,9 +213,9 @@ BOM::BOM():
    hm["compare"] = &BOMH::compare;
    hm["derivedFrom"] = &BOMH::derivedFrom;
 
-   hm["get"] = &BOMH::get;
-   hm["set"] = &BOMH::set;
-   hm["has"] = &BOMH::has;
+   hm["getp"] = &BOMH::getp;
+   hm["setp"] = &BOMH::setp;
+   hm["hasp"] = &BOMH::hasp;
    hm["properties"] = &BOMH::properties;
    hm["approp"] = &BOMH::approp;
 
@@ -333,27 +351,27 @@ void derivedFrom(VMContext* ctx, const Class*, void*)
   value.methodize(func);
 }
 
-void get(VMContext* ctx, const Class*, void*)
+void getp(VMContext* ctx, const Class*, void*)
 {
-  static Function* func = static_cast<Function*>(Engine::instance()->getMantra("get"));
+  static Function* func = static_cast<Function*>(Engine::instance()->getMantra("getp"));
   fassert( func != 0 );
 
   Item &value = ctx->topData();
   value.methodize(func);
 }
 
-void set(VMContext* ctx, const Class*, void*)
+void setp(VMContext* ctx, const Class*, void*)
 {
-  static Function* func = static_cast<Function*>(Engine::instance()->getMantra("set"));
+  static Function* func = static_cast<Function*>(Engine::instance()->getMantra("setp"));
   fassert( func != 0 );
 
   Item &value = ctx->topData();
   value.methodize(func);
 }
 
-void has(VMContext* ctx, const Class*, void*)
+void hasp(VMContext* ctx, const Class*, void*)
 {
-  static Function* func = static_cast<Function*>(Engine::instance()->getMantra("has"));
+  static Function* func = static_cast<Function*>(Engine::instance()->getMantra("hasp"));
   fassert( func != 0 );
 
   Item &value = ctx->topData();

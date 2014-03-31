@@ -84,9 +84,9 @@ void foreach(VMContext* ctx, const Class* cls, void* data);
 void approp(VMContext* ctx, const Class* cls, void* data);
 void exprop(VMContext* ctx, const Class* cls, void* data);
 
-void get(VMContext* ctx, const Class* cls, void* data);
-void set(VMContext* ctx, const Class* cls, void* data);
-void has(VMContext* ctx, const Class* cls, void* data);
+void getp(VMContext* ctx, const Class* cls, void* data);
+void setp(VMContext* ctx, const Class* cls, void* data);
+void hasp(VMContext* ctx, const Class* cls, void* data);
 void properties(VMContext* ctx, const Class* cls, void* data);
 
 void respondsTo(VMContext* ctx, const Class* cls, void* data);

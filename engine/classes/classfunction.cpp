@@ -338,12 +338,14 @@ void Function_call::invoke( VMContext* ctx, int32 )
 
    if( ir == 0 )
    {
+      ctx->callerLine(__LINE__+1);
       ctx->callItem(self);
    }
    else {
       ItemArray local;
       // mutlitasking wise...
       local.copyOnto( *ir );
+      ctx->callerLine(__LINE__+1);
       ctx->callItem( self, local.length(), local.elements() );
    }
 }
@@ -390,7 +392,7 @@ void* ClassFunction::createInstance() const
 void ClassFunction::describe( void* instance, String& target, int, int ) const
 {
    Function* func = static_cast<Function*>(instance);
-   target = func->name() + "(" + func->signature() +")";
+   target = func->name() + "(" + func->getDescription() +")";
 }
 
 

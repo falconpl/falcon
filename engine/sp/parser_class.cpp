@@ -107,7 +107,7 @@ static void make_class( Parser& p, int tCount,
       bool ok = ctx->onOpenClass( cls, isObject );
       if( ! ok )
       {
-          p.addError( e_already_def,  p.currentSource(), cls->sr().line(), cls->sr().chr() );
+          p.addError( e_already_def,  p.currentSource(), cls->sr().line(), cls->sr().chr(), 0, cls->name() );
            // however, go on with class creation
           if ( sp.interactive() )
           {

@@ -425,6 +425,7 @@ add_library(falcon_engine SHARED
   timestamp.cpp  
   transcoder.cpp
   trace.cpp
+  traceback.cpp
   tracestep.cpp
   treestep.cpp
   uri.cpp

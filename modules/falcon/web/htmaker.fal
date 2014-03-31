@@ -16,6 +16,7 @@
 */
 
 import HTMError from self.htmerror as HTMError
+load vfs
 
 /******************************************************************
 Options
@@ -133,7 +134,9 @@ class DomList( parent )
    parent = parent
    items = []
 
-   function empty(): return self.children.len() == 0
+   function empty()
+      return self.children.len == 0
+   end
 
    function add( item )
       if HTMaker.checkTree and item.hname and item.hname != "verbatim"
@@ -207,7 +210,7 @@ class XHTMLFrame( encoding, version )
    html = HTML(self)
 
    function render(stream)
-      if stream == nil: stream = stdOut()
+      if stream == nil: stream = VMProcess.stdOut()
       stream.writeText( @'
 <?xml version="$(self.version)" encoding="$(self.encoding)"?>
 <!DOCTYPE html
@@ -226,7 +229,7 @@ class TransitionalFrame
    html = HTML(self)
 
    function render(stream)
-      if stream == nil: stream = stdOut()
+      if stream == nil: stream = VMProcess.stdOut()
       stream.writeText( '
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
             "http://www.w3.org/TR/html4/loose.dtd">
@@ -244,7 +247,7 @@ class StrictFrame
    html = HTML(self)
 
    function render(stream)
-      if stream == nil: stream = stdOut()
+      if stream == nil: stream = VMProcess.stdOut()
       stream.writeText( @'
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN"
       "http://www.w3.org/TR/html4/strict.dtd">
@@ -261,7 +264,7 @@ class FramesetFrame
    html = HTML(self)
 
    function render(stream)
-      if stream == nil: stream = stdOut()
+      if stream == nil: stream = VMProcess.stdOut()
       stream.writeText( @'
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Frameset//EN"
       "http://www.w3.org/TR/html4/frameset.dtd">
@@ -296,7 +299,7 @@ class BaseDom( hname, childTypeList, attribClass )
 
    function render( level, stream )
       if not level: level = 1
-      if not stream: stream = stdOut()
+      if not stream: stream = VMProcess.stdOut()
 
       sep = self.st_makesep( level )
       stream.writeText( "<" + self.hname )
@@ -318,7 +321,7 @@ class BaseDom( hname, childTypeList, attribClass )
 
       if self.text.typeId() == StringType
          // normally does not escapes, but oob text can be passed to escape automatically
-         if ^? self.text
+         if ^$ self.text
             stream.writeText( _htmlEscape( self.text ) )
          else
             stream.writeText( self.text )
@@ -337,10 +340,9 @@ class BaseDom( hname, childTypeList, attribClass )
 
    function add()
       if self.children
-         for i in [0:paramCount()]
-            item = parameter(i)
+         for item in fself.params()
             if item.typeId() == StringType
-               item = ^? item ? Verbatim(item) : Text( item )
+               item = (^$ item) ? Verbatim(item) : Text( item )
             elif not item.derivedFrom( BaseDom )
                raise HTMError( HTMError.addnodom, self.hname, item.describe(1) )
             end
@@ -370,7 +372,7 @@ class BaseDom( hname, childTypeList, attribClass )
    function set( v )
       if v.isCallable()
          v( self.eattr, self )
-      elif v.typeId() == DictionaryType
+      elif v.typeId == DictType
          for key, val in v
             if key notin self.eattr
                raise HTMError( HTMError.noattrib, key )
@@ -460,7 +462,7 @@ class HTML(parent) from BaseDom( "html", nil, I18nAttribs )
    body = nil
 
    function render( stream )
-      if not stream: stream = stdOut()
+      if not stream: stream = VMProcess.stdOut()
       if not self.head
          self.head = Head().add( Title("") )
       end
@@ -485,8 +487,7 @@ class HTML(parent) from BaseDom( "html", nil, I18nAttribs )
    end
 
    function add()
-      for i in [0:paramCount()]
-         item = parameter(i)
+      for item in fself.params()
          select item
             case Head
                if self.head != nil
@@ -1732,7 +1733,7 @@ class InputAttribs from AllAttribs
    accept = nil
 end
 
-enum InputType
+object InputType
    text = "text"
    password = "password"
    checkbox = "checkbox"
@@ -2278,14 +2279,14 @@ end
 class IncludeFalcon( fname, encoding ) from BaseDom( "" )
    init
       ss = StringStream()
-      out = stdOut( ss )
+      out = VMProcess.stdOut( ss )
       try
          include( fname, encoding )
          self.text = ss.closeToString()
       catch in error
       end
 
-      stdOut(out)
+      VMProcess.stdOut(out)
       if error: raise error
    end
 

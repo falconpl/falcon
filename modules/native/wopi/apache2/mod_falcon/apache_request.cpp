@@ -213,7 +213,7 @@ void ApacheRequest::parseHeader( Stream* )
    if( m_request->filename != 0 ) m_filename = m_request->filename;
    if( m_request->protocol != 0 ) m_protocol = m_request->protocol;
    if( m_request->args != 0 ) m_args = m_request->args;
-   if( m_request->connection->remote_ip != 0 ) m_remote_ip = m_request->connection->remote_ip;
+   if( m_request->useragent_ip != 0 ) m_remote_ip = m_request->useragent_ip;
    if( m_request->unparsed_uri != 0 ) m_sUri = m_request->unparsed_uri;
 
    m_request_time = (Falcon::int64) m_request->request_time;

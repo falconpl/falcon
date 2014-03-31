@@ -50,11 +50,11 @@ namespace Ext {
    @see get
 */
 
-class FALCON_DYN_CLASS Get: public PseudoFunction
+class FALCON_DYN_CLASS GetP: public PseudoFunction
 {
 public:
-   Get();
-   virtual ~Get();
+   GetP();
+   virtual ~GetP();
    virtual void invoke( VMContext* vm, int32 nParams );
 
 private:
@@ -101,11 +101,11 @@ private:
    @see set
 */
 
-class FALCON_DYN_CLASS Set: public PseudoFunction
+class FALCON_DYN_CLASS SetP: public PseudoFunction
 {
 public:
-   Set();
-   virtual ~Set();
+   SetP();
+   virtual ~SetP();
    virtual void invoke( VMContext* vm, int32 nParams );
 
 private:
@@ -143,11 +143,11 @@ private:
    @see set
 */
 
-class FALCON_DYN_CLASS Has: public PseudoFunction
+class FALCON_DYN_CLASS HasP: public PseudoFunction
 {
 public:
-   Has();
-   virtual ~Has();
+   HasP();
+   virtual ~HasP();
    virtual void invoke( VMContext* vm, int32 nParams );
 
 private:

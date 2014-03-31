@@ -66,6 +66,13 @@ In this way, it is possible to load multiple times the same module, which has th
 and exports the same variables, without generating a symbol export clash, and keeping their state
 isolated so that each loaded copy can work separately and autonomously.
 
+@note Using the constructor of this class to create a new module space will
+cause the module space not to have any standard module to be accessible by it,
+including the core module. Only built-in classes and function will be available. To
+be able to access the core module, it is possible to create a child module space of the
+main module space (invoking VMContext.current.modSpace.makeChild), or invoke @a ModSpace.addCore method
+on this module space after creation.
+
 @section modspace_loading
 
 Other than organizing the living space of modules, the ModSpace class is also responsible for
@@ -774,6 +781,25 @@ FALCON_DEFINE_FUNCTION_P1(setExport)
    ctx->returnFrame();
 }
 
+/*#
+ @method addCore ModSpace
+ @brief Adds the core module to this module space.
+ @return the self object.
+
+ To create a fully configured module loader you can:
+ @code
+ ms = ModSpace().addCore()
+ @endcode
+ */
+FALCON_DECLARE_FUNCTION(addCore, "")
+FALCON_DEFINE_FUNCTION_P1(addCore)
+{
+   ModSpace* ms = ctx->tself<ModSpace*>();
+   ms->add(Engine::instance()->getCore());
+   ctx->returnFrame(ctx->self());
+}
+
+
 }
 
 
@@ -816,6 +842,7 @@ ClassModSpace::ClassModSpace():
 
    addMethod( new Function_loadByName );
    addMethod( new Function_loadByURI );
+   addMethod( new Function_addCore );
 }
 
 ClassModSpace::~ClassModSpace()

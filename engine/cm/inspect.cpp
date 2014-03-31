@@ -44,6 +44,7 @@ Inspect::~Inspect()
 {
 }
 
+
 static void internal_inspect( TextWriter* tw, const Item& itm, int32 depth, int32 maxdepth, int32 maxsize )
 {
    String temp;
@@ -68,6 +69,44 @@ static void internal_inspect( TextWriter* tw, const Item& itm, int32 depth, int3
    // but in case of classes, prototypes, arrays and dictionaries, it does a special work.
    switch( itm.type() )
    {
+   case FLC_ITEM_NIL:
+      tw->write("Nil");
+      break;
+
+   case FLC_ITEM_BOOL:
+      tw->write( itm.asBoolean() ? "true" : "false");
+      break;
+
+   case FLC_ITEM_INT:
+      tw->write( "int(");
+      temp.writeNumber( itm.asInteger() );
+      tw->write(temp);
+      tw->write( ")" );
+      break;
+
+   case FLC_ITEM_NUM:
+      tw->write( "num(");
+      temp.writeNumber( itm.asNumeric() );
+      tw->write(temp);
+      tw->write( ")" );
+      break;
+
+   case FLC_CLASS_ID_FUNC:
+      tw->write( itm.asFunction()->name() );
+      tw->write( "(" );
+      tw->write( itm.asFunction()->getDescription() );
+      tw->write( ")" );
+      break;
+
+   case FLC_ITEM_METHOD:
+      tw->write( itm.asMethodClass()->name() );
+      tw->write( "." );
+      tw->write( itm.asMethodFunction()->name() );
+      tw->write( "(" );
+      tw->write( itm.asMethodFunction()->signature() );
+      tw->write( ")" );
+      break;
+
    case FLC_CLASS_ID_ARRAY:
    {
       ItemArray* ia = itm.asArray();
@@ -79,18 +118,19 @@ static void internal_inspect( TextWriter* tw, const Item& itm, int32 depth, int3
       {
          tw->write("[\n");
 
-         for( length_t pos = 0; pos < ia->length(); ++pos )
+         uint32 len = ia->length();
+         for( length_t pos = 0; pos < len; ++pos )
          {
+            if( pos > 0 )
+            {
+               tw->write(",\n");
+            }
+
             Item& item = ia->at(pos);
             internal_inspect(tw, item, depth+1, maxdepth, maxsize );
-            if( pos+1 < ia->length() )
-            {
-               tw->write(",");
-            }
-            tw->write("\n");
          }
 
-         tw->write( PStep::renderPrefix(depth ) );
+         tw->write( PStep::renderPrefix(depth) );
          tw->write("]");
       }
    }
@@ -99,7 +139,7 @@ static void internal_inspect( TextWriter* tw, const Item& itm, int32 depth, int3
    case FLC_CLASS_ID_DICT:
    {
       ItemDict* id = itm.asDict();
-      if( id->empty() == 0 )
+      if( id->empty() )
       {
          tw->write("[=>]");
       }
@@ -148,7 +188,7 @@ static void internal_inspect( TextWriter* tw, const Item& itm, int32 depth, int3
    {
       FlexyDict* fd = static_cast<FlexyDict*>(itm.asInst());
 
-      if( fd->empty() == 0 )
+      if( fd->empty() )
       {
          tw->write("p{}");
       }
@@ -192,16 +232,21 @@ static void internal_inspect( TextWriter* tw, const Item& itm, int32 depth, int3
 
       if( cls->isFalconClass() )
       {
+         tw->write("Class ");
+         tw->write( cls->name() );
+         tw->write("{");
+
          class Rator: public Class::PropertyEnumerator {
          public:
             Rator(TextWriter* tw, int32 depth, int32 maxdepth, int32 maxsize, FalconInstance* fi, FalconClass* fcls ):
                m_tw(tw), m_depth(depth), m_maxdepth(maxdepth), m_maxsize(maxsize),
-               m_fi(fi), m_fcls(fcls) {}
+               m_fi(fi), m_fcls(fcls), count(0) {}
 
             virtual ~Rator() {}
 
             virtual bool operator()( const String& propName ) {
                Item item;
+               m_tw->write( "\n" );
                m_tw->write( PStep::renderPrefix(m_depth) );
                const FalconClass::Property* prop = m_fcls->getProperty(propName);
                switch( prop->m_type )
@@ -214,7 +259,6 @@ static void internal_inspect( TextWriter* tw, const Item& itm, int32 depth, int3
                   m_tw->write( propName );
                   m_tw->write( " = " );
                   internal_inspect(m_tw, item, -(m_depth+1), m_maxdepth, m_maxsize );
-                  m_tw->write( "\n" );
                   break;
 
                case FalconClass::Property::t_inh:
@@ -226,7 +270,7 @@ static void internal_inspect( TextWriter* tw, const Item& itm, int32 depth, int3
                case FalconClass::Property::t_state:
                   m_tw->write( "[" );
                   m_tw->write( propName );
-                  m_tw->write( "]\n" );
+                  m_tw->write( "]" );
                   break;
 
                case FalconClass::Property::t_static_func:
@@ -234,9 +278,10 @@ static void internal_inspect( TextWriter* tw, const Item& itm, int32 depth, int3
                   /* no break */
                case FalconClass::Property::t_func:
                   m_tw->write( propName );
-                  m_tw->write( "()\n" );
+                  m_tw->write( prop->m_value.func->getDescription() );
                   break;
                }
+               ++count;
                return true;
             }
 
@@ -244,22 +289,71 @@ static void internal_inspect( TextWriter* tw, const Item& itm, int32 depth, int3
             TextWriter* m_tw; int32 m_depth; int32 m_maxdepth; int32 m_maxsize;
             FalconInstance* m_fi;
             FalconClass* m_fcls;
+            int32 count;
          };
 
          FalconInstance* fi = static_cast<FalconInstance*>( data );
          FalconClass* fcls = static_cast<FalconClass*>(cls);
 
-         tw->write("Class ");
-         tw->write( fcls->name() );
-         tw->write("{\n");
          Rator rator( tw, depth+1, maxdepth, maxsize, fi, fcls );
          fcls->enumerateProperties(data, rator);
+
          tw->write( PStep::renderPrefix(depth) );
+         if( rator.count != 0 ) { tw->write("\n"); }
+         tw->write("}");
+
+      }
+      else if (itm.type() == FLC_ITEM_USER)
+      {
+         tw->write("Class ");
+         tw->write( cls->name() );
+         tw->write("{");
+
+         class Rator: public Class::PVEnumerator
+         {
+         public:
+            Rator(TextWriter* _tw, int32 d, int32 md, int32 ms ):
+               tw(_tw), count(0), depth(d), maxdepth(md), maxsize(ms)
+            {}
+
+            virtual ~Rator() {}
+
+            virtual void operator()( const String& property, Item& value )
+            {
+               tw->write("\n");
+               tw->write( PStep::renderPrefix(depth) );
+               tw->write(property);
+               if( value.isMethod() || value.isFunction() )
+               {
+                  Function* func = value.isFunction() ? value.asFunction() : value.asMethodFunction();
+                  tw->write("(");
+                  tw->write( func->getDescription() );
+                  tw->write(")");
+               }
+               else {
+                  tw->write( " = " );
+                  internal_inspect( tw, value, -depth, maxdepth, maxsize );
+               }
+               ++count;
+            }
+
+         public:
+            TextWriter* tw;
+            int32 count;
+            int32 depth;
+            int32 maxdepth;
+            int32 maxsize;
+         }
+         rator(tw, depth + 1, maxdepth, maxsize);
+
+         cls->enumeratePV( data, rator );
+         tw->write( PStep::renderPrefix(depth) );
+         if( rator.count != 0 ) { tw->write("\n"); tw->write( PStep::renderPrefix(depth) ); }
          tw->write("}");
       }
       else {
-         cls->describe(data, temp, depth, maxsize );
-         tw->write( temp );
+         cls->describe(data,temp,maxdepth-depth,maxsize);
+         tw->write(temp);
       }
       break;
    }

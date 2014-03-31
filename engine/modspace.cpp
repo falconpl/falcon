@@ -785,7 +785,7 @@ bool ModSpace::exportFromModule( Module* mod, Error*& link_errors )
             Error* e = new LinkError( ErrorParam( e_already_def )
                   .origin(ErrorParam::e_orig_linker)
                   .module( m_module->uri() )
-                  .symbol( sym->name() ) );
+                  .extra( sym->name() ) );
 
             m_owner->addLinkError( m_link_errors, e );
          }
