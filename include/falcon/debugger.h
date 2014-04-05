@@ -63,7 +63,8 @@ private:
    String m_lastCommand;
    bool m_hello;
 
-
+   class Private;
+   Private* _p;
 };
 
 }

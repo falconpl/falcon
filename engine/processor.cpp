@@ -68,6 +68,31 @@ public:
    }
 };
 
+// Class used to instantiate a execute with no debug checking.
+class NoDebug
+{
+public:
+   void checkDebug( Processor*, VMContext*, const PStep* )
+   {
+      // does nothing.
+   }
+};
+
+
+class Debug
+{
+public:
+   void checkDebug( Processor* prs, VMContext* ctx, const PStep* ps )
+   {
+      Process* prc = ctx->process();
+
+      // Is there a breakpoint active on this line?
+      if( prc->hitBreakpoint(ctx, ps) )
+      {
+         prc->onBreakpoint(prs,ctx);
+      }
+   }
+};
 
 // we can't have an init fiasco as m_me is used only after starting some processor thread.
 ThreadSpecific Processor::m_me;
@@ -180,7 +205,15 @@ void* Processor::run()
 
       // proceed running with this context
       m_currentContext = ctx;
-      execute( ctx );
+
+      // select to execute with or without debug checking.
+      if( ctx->process()->inDebug() )
+      {
+         execute<Debug>( ctx );
+      }
+      else {
+         execute<NoDebug>( ctx );
+      }
 
       if( m_owner->scheduler().cancelActivity(m_activity) ) {
          ctx->decref();
@@ -201,6 +234,7 @@ void Processor::manageEvents( VMContext* ctx, int32 &events )
 
       events &= ~VMContext::evtBreak;
       ctx->clearBreakpointEvent();
+      ctx->process()->setDebug(true);
       ctx->process()->onBreakpoint(this, ctx);
    }
 
@@ -283,12 +317,14 @@ void Processor::manageEvents( VMContext* ctx, int32 &events )
 }
 
 
-void Processor::execute( VMContext* ctx )
+template<class _DCHECK>
+   void Processor::execute( VMContext* ctx )
 {
    TRACE( "Processor::execute(%d) %d:%d with depth %d",
             this->id(), ctx->process()->id(), ctx->id(), (int) ctx->callDepth() );
    PARANOID( "Call stack empty", (ctx->callDepth() > 0) );
 
+   _DCHECK check;
    ctx->setStatus(VMContext::statusActive);
 
    while( true )
@@ -298,6 +334,7 @@ void Processor::execute( VMContext* ctx )
 
       try
       {
+         check.checkDebug(this, ctx, ps);
          ps->apply( ps, ctx );
       }
       catch( Error* e )
@@ -326,7 +363,7 @@ void Processor::execute( VMContext* ctx )
 void Processor::step( VMContext* ctx )
 {
    ctx->setBreakpointEvent();
-   execute(ctx);
+   execute<NoDebug>(ctx);
    ctx->clearBreakpointEvent();
 }
 

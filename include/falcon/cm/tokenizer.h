@@ -17,9 +17,10 @@
 #define _FALCON_TOKENIZER_H_
 
 #include <falcon/class.h>
+#include <falcon/instancelock.h>
 
 namespace Falcon {
-
+namespace Ext {
 /*#
  @class Tokenizer
  @brief Helper for iterative and generator-based sub-string extractor.
@@ -49,9 +50,10 @@ public:
    void op_iter( VMContext* ctx, void* self ) const;
    void op_next( VMContext* ctx, void* instance ) const;
 
+   mutable InstanceLock m_lock;
 private:
-   InstanceLock m_lock;
 };
+}
 
 }
 

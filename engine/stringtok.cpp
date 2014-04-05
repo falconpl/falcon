@@ -16,14 +16,15 @@
 #define SRC "engine/stringtok.cpp"
 
 #include <falcon/stringtok.h>
-#include <falcon/error.h>
-#include <falcon/error_messages.h>
+#include <falcon/stderrors.h>
 
 namespace Falcon {
 
 StringTokenizer::StringTokenizer( const String& source, const String& token, bool bGroupTokens ):
    m_source(source),
    m_pos(0),
+   m_count(0),
+   m_limit(0xffffffff),
    m_bGroupTokens(bGroupTokens)
 {
    if( token.empty() )
@@ -33,13 +34,26 @@ StringTokenizer::StringTokenizer( const String& source, const String& token, boo
 
    if( token.length() == 1 )
    {
-      m_chr = m_token.getCharAt(0);
+      m_chr = token.getCharAt(0);
       m_bIsChr = true;
    }
    else {
       m_bIsChr = false;
       m_token = token;
    }
+}
+
+
+StringTokenizer::StringTokenizer( const StringTokenizer& other ):
+   m_source( other.m_source ),
+   m_token( other.m_token ),
+   m_chr( other.m_chr ),
+   m_pos( other.m_pos ),
+   m_count( other.m_count ),
+   m_limit( other.m_limit ),
+   m_bGroupTokens( other.m_bGroupTokens ),
+   m_bIsChr( other.m_bIsChr )
+{
 }
 
 
@@ -50,6 +64,17 @@ bool StringTokenizer::next( String& target )
       return false;
    }
 
+   // hit limit? -- return the rest.
+   if( m_count == m_limit )
+   {
+      target = m_source.subString(m_pos);
+      // from now on, we have no next.
+      m_pos = String::npos;
+      // anyhow account the find.
+      m_count++;
+      return true;
+   }
+
    if( m_bIsChr )
    {
       nextChr( target );
@@ -57,6 +82,8 @@ bool StringTokenizer::next( String& target )
    else {
       nextStr( target );
    }
+
+   ++m_count;
 
    return true;
 }
@@ -79,7 +106,7 @@ void StringTokenizer::nextChr( String& target )
       if( m_bGroupTokens )
       {
          uint32 len = m_source.length();
-         while( nextPos < len &&  target.getCharAt(nextPos) == m_chr )
+         while( nextPos < len && m_source.getCharAt(nextPos) == m_chr )
          {
             ++nextPos;
          }

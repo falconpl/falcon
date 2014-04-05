@@ -163,6 +163,7 @@ add_library(falcon_engine SHARED
   cm/textreader.cpp
   cm/textstream.cpp
   cm/textwriter.cpp
+  cm/tokenizer.cpp
   cm/vmcontext.cpp
   cm/vmcontextbase.cpp
   cm/vmprocess.cpp
@@ -414,6 +415,7 @@ add_library(falcon_engine SHARED
   streambuffer.cpp
   string.cpp
   stringstream.cpp
+  stringtok.cpp
   stripoldata.cpp
   sun_strtod.cpp
   symbol.cpp

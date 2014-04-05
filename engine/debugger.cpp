@@ -39,6 +39,8 @@
 
 #include <falcon/psteps/stmttry.h>
 
+#include <vector>
+
 namespace Falcon {
 
 class Debugger::PStepCatcher:public SynTree
@@ -112,7 +114,51 @@ private:
    }
 };
 
+//========================================================================
+// Command handler
+//========================================================================
 
+class CmdHandler
+{
+public:
+   CmdHandler( Debugger* dbg, const String& name ):
+      m_name(name),
+      m_debugger(dbg)
+   {}
+
+   virtual ~CmdHandler(){}
+
+   virtual String help();
+   virtual bool execute( const String& params );
+   const String& name() const;
+
+protected:
+   const String m_name;
+   const String m_params;
+   const String m_description;
+
+   Debugger* m_debugger;
+
+   typedef std::vector<String> ParamList;
+   // tokenize the parameters.
+   void tokenize(const String& params, ParamList& list);
+
+private:
+   // disable copy
+   CmdHandler( const CmdHandler& ) {}
+};
+
+
+
+class Debugger::Private
+{
+public:
+
+};
+
+//========================================================================
+// Main Debugger
+//========================================================================
 
 Debugger::Debugger() :
     m_hello(true)
@@ -120,6 +166,7 @@ Debugger::Debugger() :
    StmtTry* t = new PStepPostEval;
    m_stepPostEval = t;
    m_stepAfterNext = new PStepAfterNext;
+   _p = new Private;
 }
 
 Debugger::~Debugger()

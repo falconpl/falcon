@@ -33,6 +33,7 @@
 #include <falcon/falconclass.h>
 #include <falcon/stdhandlers.h>
 #include <falcon/classes/classmodule.h>
+#include <falcon/log.h>
 
 #include <map>
 #include <deque>
@@ -709,6 +710,10 @@ void ModSpace::add( Module* mod )
 void ModSpace::store( Module* mod )
 {
    TRACE( "ModSpace::store %s", mod->name().c_ize() );
+
+   Engine::instance()->log()->log(Log::fac_engine, Log::lvl_info,
+            String("Adding module ").A(mod->name()).A("(").A(mod->uri()).A(")") );
+
    mod->incref();
 
    Private::ModMap::iterator iter = _p->m_modmap.find( mod->name() );
@@ -744,6 +749,9 @@ void ModSpace::store( Module* mod )
 
    // invoke the callback to inform the module.
    mod->onLoad();
+
+   // invoke the process information handler
+   m_process->onModuleAdded(mod);
 }
 
 

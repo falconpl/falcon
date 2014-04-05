@@ -49,6 +49,58 @@
 
 namespace Falcon {
 
+namespace {
+class Breakpoint
+{
+public:
+   int32 m_id;
+   int32 m_line;
+   String m_modName;
+   String m_modPath;
+   Module* m_mod;
+
+   bool m_bEnabled;
+   bool m_bTemp;
+
+   Breakpoint(int32 id, int32 line, const String& path, const String& name, bool bTemporary, bool bEnabled):
+      m_id(id),
+      m_line(line),
+      m_modName(name),
+      m_modPath(path),
+      m_mod(0),
+      m_bEnabled(bEnabled),
+      m_bTemp(bTemporary)
+   {}
+
+   Breakpoint(int32 line, bool bTemporary):
+      m_id(0),
+      m_line(line),
+      m_mod(0),
+      m_bEnabled(true),
+      m_bTemp(bTemporary)
+   {}
+
+   Breakpoint(Module* mod, int32 line):
+      m_line(line),
+      m_mod(mod),
+      m_bEnabled(true),
+      m_bTemp(true)
+   {}
+
+   Breakpoint( const Breakpoint& other ):
+      m_id(other.m_id),
+      m_line(other.m_line),
+      m_modName(other.m_modName),
+      m_modPath(other.m_modPath),
+      m_mod(other.m_mod),
+      m_bEnabled(other.m_bEnabled),
+      m_bTemp(other.m_bTemp)
+   {}
+
+   ~Breakpoint() {}
+};
+}
+
 class Process::Private
 {
 public:
@@ -67,6 +119,16 @@ public:
    typedef std::list<GCLock*> CleanupList;
    CleanupList m_cleanups;
    Mutex m_mtx_cleanups;
+
+   typedef std::multimap<VMContext*, Breakpoint> NegBreakMap;
+   NegBreakMap m_negBreaks;
+   Mutex m_mtx_negBreaks;
+
+   typedef std::multimap<String, Breakpoint> BreakMap;
+   typedef std::map<int, BreakMap::iterator> BreakByIdMap;
+   BreakMap m_breaks;
+   BreakByIdMap m_breaksById;
+   Mutex m_mtx_breaks;
 
    Private() {
       m_transTable = 0;
@@ -114,7 +176,8 @@ Process::Process( VMachine* owner, ModSpace* ms ):
    m_resultLock(0),
    m_mark(0),
    m_tlgen(1),
-   m_breakCallback(0)
+   m_breakCallback(0),
+   m_debug(0)
 {
    m_itemPagePool = new Pool;
    m_superglobals = new ItemStack(m_itemPagePool);
@@ -150,7 +213,8 @@ Process::Process( VMachine* owner, bool bAdded ):
    m_resultLock(0),
    m_mark(0),
    m_tlgen(1),
-   m_breakCallback(0)
+   m_breakCallback(0),
+   m_debug(0)
 {
    m_itemPagePool = new Pool;
    _p = new Private;
@@ -930,6 +994,209 @@ bool Process::onBreakpoint( Processor* prc, VMContext* ctx )
    }
 
    return false;
+}
+
+bool Process::inDebug() const
+{
+   return atomicFetch(m_debug) != 0;
+}
+
+
+void Process::setDebug( bool m )
+{
+   atomicSet(m_debug, m ? 1 : 0);
+}
+
+
+bool Process::hitBreakpoint( VMContext* ctx, const PStep* ps )
+{
+   const CallFrame& cf = ctx->currentFrame();
+
+   // no module? -- no breakpoint
+   if( cf.m_function == 0 || cf.m_function->module() == 0 )
+   {
+      return false;
+   }
+
+   Module* mod = cf.m_function->module();
+   int32 line = ps->line();
+
+   // is there a negative breakpoint?
+   {
+      _p->m_mtx_negBreaks.lock();
+      Private::NegBreakMap::iterator iter = _p->m_negBreaks.find(ctx);
+      while( iter != _p->m_negBreaks.end() && iter->first == ctx )
+      {
+         const Breakpoint& bp = iter->second;
+
+         if( bp.m_mod != mod || bp.m_line != line )
+         {
+            // all the negative breaks are temporary, however you can never know in future...
+            if( bp.m_bTemp )
+            {
+               // negative breaks have no id.
+               _p->m_negBreaks.erase(iter);
+            }
+            _p->m_mtx_negBreaks.unlock();
+
+            return true;
+         }
+         ++iter;
+      }
+      _p->m_mtx_negBreaks.unlock();
+   }
+
+   // Normal breaks
+   {
+      _p->m_mtx_breaks.lock();
+      const String& modName = mod->name();
+      Private::BreakMap::iterator iter = _p->m_breaks.find(modName);
+      while( iter != _p->m_breaks.end() && iter->first == modName )
+      {
+         const Breakpoint& bp = iter->second;
+
+         if( bp.m_bEnabled && bp.m_mod == mod && bp.m_line == line )
+         {
+            if( bp.m_bTemp )
+            {
+               _p->m_breaksById.erase(bp.m_id); // ok even if not assigned -- will be 0
+               _p->m_breaks.erase(iter);
+            }
+            _p->m_mtx_breaks.unlock();
+
+            return true;
+         }
+
+         ++iter;
+      }
+      _p->m_mtx_breaks.unlock();
+   }
+
+   return false;
+}
+
+
+void Process::addNegativeBreakpoint( VMContext* ctx, const PStep* ps )
+{
+   const CallFrame& cf = ctx->currentFrame();
+
+   // no module? -- no breakpoint
+   if( cf.m_function == 0 || cf.m_function->module() == 0 )
+   {
+      return;
+   }
+
+   Module* mod = cf.m_function->module();
+   int32 line = ps->line();
+
+   _p->m_mtx_negBreaks.lock();
+   _p->m_negBreaks.insert(std::make_pair(ctx, Breakpoint(mod, line)) );
+   _p->m_mtx_negBreaks.unlock();
+
+}
+
+
+int Process::addBreakpoint( const String& path, const String& name, int32 line, bool bTemp, bool bEnabled )
+{
+   int id = 1;
+
+   _p->m_mtx_breaks.lock();
+   // get the next useable ID.
+   if( ! _p->m_breaksById.empty() )
+   {
+      id = _p->m_breaksById.rbegin()->first;
+      ++id;
+   }
+
+   // if the module is pending, the name is empty, so the entry will be inserted at the top of the multi-map
+   Private::BreakMap::iterator iter = _p->m_breaks.insert(std::make_pair( name, Breakpoint(id, line, path, name, bTemp, bEnabled ) ) );
+   _p->m_breaksById[id] = iter;
+   _p->m_mtx_breaks.unlock();
+
+   return id;
+}
+
+
+bool Process::removeBreakpoint( int id )
+{
+   _p->m_mtx_breaks.lock();
+   Private::BreakByIdMap::iterator iid = _p->m_breaksById.find(id);
+   if( iid != _p->m_breaksById.end() )
+   {
+      _p->m_breaks.erase(iid->second);
+      _p->m_breaksById.erase(iid);
+      _p->m_mtx_breaks.unlock();
+      return true;
+   }
+   _p->m_mtx_breaks.unlock();
+   return false;
+}
+
+
+bool Process::enableBreakpoint( int id, bool mode )
+{
+   _p->m_mtx_breaks.lock();
+   Private::BreakByIdMap::iterator iid = _p->m_breaksById.find(id);
+   if( iid != _p->m_breaksById.end() )
+   {
+      Breakpoint& bp = iid->second->second;
+      bp.m_bEnabled = mode;
+      return true;
+   }
+   _p->m_mtx_breaks.unlock();
+   return false;
+}
+
+
+void Process::enumerateBreakpoints( BreakpointEnumerator& be )
+{
+   _p->m_mtx_breaks.lock();
+   Private::BreakByIdMap::iterator iid = _p->m_breaksById.begin();
+   while( iid != _p->m_breaksById.end() )
+   {
+      Breakpoint& bp = iid->second->second;
+      be(bp.m_id, bp.m_bEnabled, bp.m_modPath, bp.m_modName, bp.m_bTemp );
+      ++iid;
+   }
+   _p->m_mtx_breaks.unlock();
+}
+
+
+void Process::onModuleAdded( Module* mod )
+{
+   int32 found = -1;
+
+   // scan unresolved modules.
+   _p->m_mtx_breaks.lock();
+   if( !_p->m_breaks.empty() )
+   {
+      Private::BreakMap::iterator iter = _p->m_breaks.begin();
+
+      while( iter != _p->m_breaks.end() && iter->first == "" )
+      {
+         if( mod->uri() == iter->second.m_modPath )
+         {
+            // make a copy, we'll need it...
+            Breakpoint bp( iter->second );
+            found = bp.m_id;
+            bp.m_modName = mod->name();
+            _p->m_breaks.erase(iter);
+            Private::BreakMap::iterator pos =_p->m_breaks.insert( std::make_pair(mod->name(), bp) );
+            _p->m_breaksById.erase(found);
+            _p->m_breaksById.insert( std::make_pair(found, pos) );
+            break;
+         }
+         ++iter;
+      }
+
+   }
+   _p->m_mtx_breaks.unlock();
+
+   if( found > 0 )
+   {
+      Engine::instance()->log()->log( Log::fac_engine, Log::lvl_info, String("Breakpoint ")
+               .N(found).A(" for ").A(mod->uri()).A(" resolved with ").A(mod->name()) );
+   }
 }
 
 }

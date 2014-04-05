@@ -41,7 +41,10 @@ public:
    int32 id() const { return m_id; }
 
    virtual void* run();
-   void execute(VMContext* ctx);
+
+   template<class _DCHECK>
+      void execute(VMContext* ctx);
+
    void manageEvents( VMContext* ctx, int32 &events );
 
    void step( VMContext* ctx );

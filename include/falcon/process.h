@@ -40,6 +40,8 @@ class GCLock;
 class ModSpace;
 class ItemPagePool;
 class ItemStack;
+class PStep;
+class Module;
 
 class BreakCallback;
 
@@ -499,6 +501,87 @@ public:
     */
    void pushCleanup(const Item& code);
 
+   /** True if the process is currently debugged.
+    *
+    * When this flag is on, the processors send contexts from this process to a step
+    * loop that will check for breakpoints at each step.
+    */
+   bool inDebug() const;
+
+   /** Changed the debug mode of a process.
+    *
+    * \param mode The new mode.
+    *
+    * When this flag is on, the processors send contexts from this process to a step
+    * loop that will check for breakpoints at each step.
+    */
+   void setDebug( bool mode );
+
+   /** Returns true if there is an active break point on the given context-step pair.
+    * \param ctx The context executing the step.
+    * \param ps The step under execution.
+    *
+    * If the found break-point is temporary, it will be canceled after this call.
+    */
+   bool hitBreakpoint( VMContext* ctx, const PStep* ps );
+
+   /** Adds a negative breakpoint.
+    *
+    * The process will stop whenever the processor handling the given context abandon
+    * the current context module or step line.
+    */
+   void addNegativeBreakpoint( VMContext* ctx, const PStep* ps );
+
+   /** Adds a breakpoint at given location.
+    * \param path The path of the module where the breakpoint should be set.
+    * \param name The logical name of the module where the breakpoint should be set.
+    * \param line The line where the breakpoint is placed.
+    * \param bTemp True if the BP is to be automatically removed when hit.
+    * \param bEnabled Set to false to create the breakpoint initially disabled.
+    *
+    * If name is empty, the breakpoint is considered a pending forward breakponint,
+    * and won't be enabled until a module with a matching path is presented by
+    * the module spaces to the process.
+    *
+    */
+   int addBreakpoint( const String& path, const String& name, int32 line, bool bTemp = false, bool bEnabled = true );
+
+   /** Remove a given breakpoint.
+    * \param id The id of the breakpoint to be removed.
+    * \return true if the id is valid and the breakpoint is removed.
+    */
+   bool removeBreakpoint( int id );
+
+   /** Enables or disables a given breakpoint.
+    * \param id The id of the breakpoint to be enabled or disabled.
+    * \param mode True to enable the breakpoint, false to disable it.
+    * \return true if the id is valid and the breakpoint status is changed..
+    */
+   bool enableBreakpoint( int id, bool mode );
+
+   /** Callback enumerator for breakpoints.
+    *
+    */
+   class BreakpointEnumerator {
+   public:
+      virtual ~BreakpointEnumerator(){}
+      /** Callback on enumeration.
+       *
+       * If the name is empty, the breakpoint is to considered pending (and so, not enabled).
+       */
+      virtual void operator()(int id, bool bEnabled, const String& path, const String& name, bool bTemp )=0;
+   };
+
+   /** Enumerate all the breakpoints in the process.
+    * \param be The called back enumerator.
+    *
+    * The method is invoked while holding the breakpoint map structures locked;
+    * delay long computations until after the enumeration is complete.
+    */
+   void enumerateBreakpoints( BreakpointEnumerator& be );
+
+   void onModuleAdded( Module* mod );
+
 protected:
    Process( VMachine* owner, bool added );
    virtual ~Process();
@@ -545,6 +628,7 @@ protected:
 
    BreakCallback* m_breakCallback;
    Mutex m_mtxBcb;
+   atomic_int m_debug;
 
    void inheritStreams();
 
