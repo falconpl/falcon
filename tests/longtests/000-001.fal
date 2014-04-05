@@ -48,3 +48,5 @@ for i = 1 to 25
 end
 
 > "Test complete."
+
+return "OK"

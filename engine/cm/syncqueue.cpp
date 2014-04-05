@@ -139,8 +139,10 @@ void SharedSyncQueue::gcMark( uint32 mark )
    _p->m_gcMark = mark;
    Private::ValueList::iterator iter;
    Private::ValueList::iterator end;
-   do
+   bool done = false;
+   while( ! done )
    {
+      done = true;
       iter = _p->m_values.begin();
       end = _p->m_values.end();
 
@@ -156,12 +158,13 @@ void SharedSyncQueue::gcMark( uint32 mark )
          if ( version != _p->m_version )
          {
             // try again.
+            done = false;
             break;
          }
          ++iter;
       }
 
-   } while( iter != end );
+   }
    unlockSignals();
 }
 

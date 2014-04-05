@@ -255,7 +255,7 @@ int TextReader::readToken( String& target, const String* tokens, int32 tokenCoun
       throw new EncodingError(ErrorParam(e_dec_fail, __LINE__, __FILE__).extra("Missing tokens"));
    }
 
-   return readTokenInternal( target, m_cTokens, m_cTSize, maxCount );
+   return readTokenInternal( target, m_cTokens, m_cTSize, maxCount ) >= 0;
 }
 
 
@@ -278,7 +278,7 @@ int TextReader::readTokenInternal( String& target, struct token* tokens, int32 t
       if( ! fetch( m_decoder->encodingSize(maxCount - target.length())) )
       {
          // eof? -- return the last token.
-         return target.size() == 0 ? -1 : 1;
+         return target.size() == 0 ? -1 : 0;
       }
 
       length_t pos = m_bufPos;
