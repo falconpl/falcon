@@ -285,6 +285,16 @@ protected:
       void Function_ ## FN_NAME::invoke( ::Falcon::VMContext* ctx, ::Falcon::int32 )
 #define FALCON_FUNCTION_NAME(FN_NAME) Function_ ## FN_NAME
 
+
+#define FALCON_PCHECK( _pname , _pCheck ) ( _pname != 0 && _pname->is##_pCheck() )
+#define FALCON_PCHECK_O( _pname , _pCheck ) ( _pname == 0 || _pname->isNil() || _pname->is##_pCheck() )
+
+#define FALCON_PCHECK_GET( _pname , _pCheck, _tgt ) ( _pname != 0 && _pname->is##_pCheck() && ((_tgt= _pname->as##_pCheck()) || true) )
+#define FALCON_PCHECK_O_GET( _pname , _pCheck, _tgt, _dflt ) ( \
+        ((_pname == 0 || _pname->isNil()) && ((_tgt=_dflt) || true)) || \
+        ( _pname->is##_pCheck() && ((_tgt=_pname->as##_pCheck()) || true) ) \
+        )
+
 }
 
 #endif /* FUNCTION_H_ */

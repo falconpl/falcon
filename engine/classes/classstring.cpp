@@ -18,6 +18,7 @@
 
 #include <falcon/classes/classstring.h>
 #include <falcon/range.h>
+#include <falcon/stringtok.h>
 #include <falcon/itemid.h>
 #include <falcon/vmcontext.h>
 #include <falcon/optoken.h>
@@ -387,35 +388,7 @@ FALCON_DEFINE_FUNCTION_P1(back)
 }
 
 
-
-/*#
-   @method splittr String
-   @brief Subdivides a string in an array of substrings given a token substring.
-   @optparam token The token by which the string should be split.
-   @optparam count Optional maximum split count.
-   @return An array of strings containing the split string.
-
-   This function returns an array of strings extracted from the given parameter.
-   The array is filled with strings extracted from the first parameter, by dividing
-   it based on the occurrences of the token substring. A count parameter may be
-   provided to limit the splitting, so to take into consideration only the first
-   relevant  tokens.  Adjacent matching tokens will be ignored.
-   If no matches are possible, the returned array contains
-   at worst a single element containing a copy of the whole string passed as a
-   parameter.
-
-   Differently to @a String.split, this function will "eat up" adjacent tokens. While
-   @a strSplit is more adequate to parse field-oriented strings (as i.e.
-   colon separated fields in configuration files) this function is best employed
-   in word extraction.
-
-   @note See @a Tokenizer for a more adequate function to scan extensively
-   wide strings.
-
-   @note When used statically, this method takes a target string as first parameter.
-*/
-FALCON_DECLARE_FUNCTION( splittr, "token:[S],count:[N]" );
-FALCON_DEFINE_FUNCTION_P1(splittr)
+static void internal_split( Function* func, VMContext* ctx, bool bGroup )
 {
    Item *target;
    Item *splitstr;
@@ -435,124 +408,107 @@ FALCON_DEFINE_FUNCTION_P1(splittr)
       count = ctx->param(2);
    }
 
-   uint32 limit;
 
-   if ( target == 0 || ! target->isString()
+   if ( (target == 0 || ! target->isString())
         || (splitstr != 0 && ! (splitstr->isString() || splitstr->isNil()))
         || ( count != 0 && ! count->isOrdinal() ) )
    {
-      throw paramError(__LINE__, SRC, ctx->isMethodic() );
+      throw func->paramError(__LINE__, SRC, ctx->isMethodic() );
    }
 
    // Parameter extraction.
-   limit = count == 0 ? 0xffffffff: (uint32) count->forceInteger();
+   uint32 limit = count == 0 ? 0xffffffff: (uint32) count->forceInteger();
 
    String *tg_str = target->asString();
-   ClassString* cstring = static_cast<ClassString*>(methodOf());
+   ClassString* cstring = static_cast<ClassString*>(func->methodOf());
    InstanceLock::Token* tk_str = cstring->lockInstance(tg_str);
    uint32 tg_len = target->asString()->length();
 
+   // if the string is empty, we must return an array with a single empty string.
+   if( tg_str->empty() )
+   {
+      cstring->unlockInstance(tk_str);
+
+      ItemArray* ca = new ItemArray( 1 );
+      ca->append(FALCON_GC_HANDLE(new String));
+      ctx->returnFrame( FALCON_GC_HANDLE(ca) );
+      return;
+   }
+
    // split in chars?
-   if( splitstr == 0 || splitstr->isNil() || splitstr->asString()->size() == 0 )
+   if( splitstr == 0 || splitstr->isNil() || splitstr->asString()->empty() )
    {
       // split the string in an array.
       if( limit > tg_len )
          limit = tg_len;
 
       ItemArray* ca = new ItemArray( limit );
-      for( uint32 i = 0; i + 1 < limit; ++i )
+      for( uint32 i = 0; i+1 < limit; ++i )
       {
          String* elem = new String(1);
          elem->append( tg_str->getCharAt(i) );
          ca->append( FALCON_GC_HANDLE(elem) );
       }
-      // add remains if there are any
+      // add the rest if there ise any
       if(limit <= tg_len)
          ca->append(tg_str->subString(limit - 1));
 
       cstring->unlockInstance(tk_str);
 
-      ctx->returnFrame(FALCON_GC_HANDLE(ca));
+      ctx->returnFrame( FALCON_GC_HANDLE(ca) );
       return;
    }
 
    String* mstr = splitstr->asString();
    InstanceLock::Token* tk1 = cstring->lockInstance(mstr);
-   String sp_str( *mstr );
+
+   // we know mstr is not empty; so this constructor won't throw
+   StringTokenizer tokenizer(*tg_str,*mstr, bGroup);
+
    cstring->unlockInstance(tk1);
-
-   uint32 sp_len = sp_str.length();
-
-   // return item.
-   ItemArray *retarr = new ItemArray;
-
-   // if the split string is empty, return empty string
-   if ( sp_len == 0 )
-   {
-      retarr->append( FALCON_GC_HANDLE(new String()) );
-      cstring->unlockInstance(tk_str);
-      ctx->returnFrame(FALCON_GC_HANDLE(retarr));
-      return;
-   }
-
-   // if the token is wider than the string, just return the string
-   if ( tg_len < sp_len )
-   {
-      retarr->append( FALCON_GC_HANDLE(new String( *tg_str )) );
-      cstring->unlockInstance(tk_str);
-      ctx->returnFrame(FALCON_GC_HANDLE(retarr));
-      return;
-   }
-
-   uint32 pos = 0;
-   uint32 last_pos = 0;
-   bool lastIsEmpty = false;
-   // scan the string
-   while( limit > 1 && pos <= tg_len - sp_len  )
-   {
-      uint32 sp_pos = 0;
-      // skip matching pattern-
-      while ( tg_str->getCharAt( pos ) == sp_str.getCharAt( sp_pos ) &&
-              sp_pos < sp_len && pos <= tg_len - sp_len ) {
-         sp_pos++;
-         pos++;
-      }
-
-      // a match?
-      if ( sp_pos == sp_len ) {
-         // put the item in the array.
-         uint32 splitend = pos - sp_len;
-         retarr->append( FALCON_GC_HANDLE(new String( String( *tg_str, last_pos, splitend ) ) ) );
-
-         lastIsEmpty = (last_pos >= splitend);
-
-         last_pos = pos;
-         limit--;
-         // skip matching pattern
-         while( sp_pos == sp_len && pos <= tg_len - sp_len ) {
-            sp_pos = 0;
-            last_pos = pos;
-            while ( tg_str->getCharAt( pos ) == sp_str.getCharAt( sp_pos )
-                    && sp_pos < sp_len && pos <= tg_len - sp_len ) {
-               sp_pos++;
-               pos++;
-            }
-         }
-         pos = last_pos;
-
-      }
-      else
-         pos++;
-   }
-
-   // Residual element?
-   // -- but only if we didn't already put a "" in the array
-   if ( limit >= 1 && ! lastIsEmpty ) {
-      retarr->append( FALCON_GC_HANDLE(new String( String( *tg_str, last_pos, (uint32) tg_len ) ) ) );
-   }
-
    cstring->unlockInstance(tk_str);
-   ctx->returnFrame(FALCON_GC_HANDLE(retarr));
+
+   tokenizer.setLimit(limit);
+   String temp;
+   ItemArray* retarr = new ItemArray;
+   while( tokenizer.next(temp) )
+   {
+      retarr->append( FALCON_GC_HANDLE(new String(temp)) );
+   }
+
+   ctx->returnFrame( FALCON_GC_HANDLE(retarr) );
+}
+
+/*#
+   @method splittr String
+   @brief Subdivides a string in an array of substrings given a token substring.
+   @optparam token The token by which the string should be split.
+   @optparam count Optional maximum split count.
+   @return An array of strings containing the split string.
+
+   This function returns an array of strings extracted from the given parameter.
+   The array is filled with strings extracted from the first parameter, by dividing
+   it based on the occurrences of the token substring. A count parameter may be
+   provided to limit the splitting, so to take into consideration only the first
+   relevant  tokens.  Adjacent matching tokens will be ignored.
+   If no matches are possible, the returned array contains
+   at worst a single element containing a copy of the whole string passed as a
+   parameter.
+
+   Differently to @a String.split, this function will "eat up" adjacent tokens. While
+   @a String.split is more adequate to parse field-oriented strings (as i.e.
+   colon separated fields in configuration files) this function is best employed
+   in word extraction.
+
+   @note See @a Tokenizer for a more adequate function to scan extensively
+   wide strings.
+
+   @note When used statically, this method takes a target string as first parameter.
+*/
+FALCON_DECLARE_FUNCTION( splittr, "token:[S],count:[N]" );
+FALCON_DEFINE_FUNCTION_P1(splittr)
+{
+   internal_split(this, ctx, true);
 }
 
 
@@ -594,130 +550,10 @@ FALCON_DEFINE_FUNCTION_P1(splittr)
 
 FALCON_DECLARE_FUNCTION( split, "string:S,token:[S],count:[N]" );
 FALCON_DEFINE_FUNCTION_P1(split)
-
 {
-   Item *target;
-   Item *splitstr;
-   Item *count;
 
-   // Parameter checking;
-   if( ctx->isMethodic() )
-   {
-      target = &ctx->self();
-      splitstr = ctx->param(0);
-      count = ctx->param(1);
-   }
-   else
-   {
-      target = ctx->param(0);
-      splitstr = ctx->param(1);
-      count = ctx->param(2);
-   }
+   internal_split( this, ctx, false );
 
-
-   if ( (target == 0 || ! target->isString())
-        || (splitstr != 0 && ! (splitstr->isString() || splitstr->isNil()))
-        || ( count != 0 && ! count->isOrdinal() ) )
-   {
-      throw paramError(__LINE__, SRC, ctx->isMethodic() );
-   }
-
-   // Parameter extraction.
-   uint32 limit = count == 0 ? 0xffffffff: (uint32) count->forceInteger();
-
-   String *tg_str = target->asString();
-   ClassString* cstring = static_cast<ClassString*>(methodOf());
-   InstanceLock::Token* tk_str = cstring->lockInstance(tg_str);
-   uint32 tg_len = target->asString()->length();
-
-   // split in chars?
-   if( splitstr == 0 || splitstr->isNil() || splitstr->asString()->size() == 0)
-   {
-      // split the string in an array.
-      if( limit > tg_len )
-         limit = tg_len;
-
-      ItemArray* ca = new ItemArray( limit );
-      for( uint32 i = 0; i+1 < limit; ++i )
-      {
-         String* elem = new String(1);
-         elem->append( tg_str->getCharAt(i) );
-         ca->append( FALCON_GC_HANDLE(elem) );
-      }
-      // add remains if there are any
-      if(limit <= tg_len)
-         ca->append(tg_str->subString(limit - 1));
-
-      cstring->unlockInstance(tk_str);
-
-      ctx->returnFrame( FALCON_GC_HANDLE(ca) );
-      return;
-   }
-
-   String* mstr = splitstr->asString();
-   InstanceLock::Token* tk1 = cstring->lockInstance(mstr);
-   String sp_str( *mstr );
-   cstring->unlockInstance(tk1);
-
-   uint32 sp_len = sp_str.length();
-
-   // return item.
-   ItemArray *retarr = new ItemArray;
-
-   // if the split string is empty, return empty string
-   if ( sp_len == 0 )
-   {
-      cstring->unlockInstance(tk_str);
-
-      retarr->append( FALCON_GC_HANDLE(new String()) );
-      ctx->returnFrame( FALCON_GC_HANDLE(retarr) );
-      return;
-   }
-
-   // if the token is wider than the string, just return the string
-   if ( tg_len < sp_len )
-   {
-      retarr->append( FALCON_GC_HANDLE(new String( *tg_str ) ) );
-      cstring->unlockInstance(tk_str);
-
-      ctx->returnFrame( FALCON_GC_HANDLE(retarr) );
-      return;
-   }
-
-   uint32 pos = 0;
-   uint32 last_pos = 0;
-   // scan the string
-   while( limit > 1 && pos <= tg_len - sp_len  )
-   {
-      uint32 sp_pos = 0;
-      // skip matching pattern-
-      while ( tg_str->getCharAt( pos ) == sp_str.getCharAt( sp_pos ) &&
-              sp_pos < sp_len && pos <= tg_len - sp_len ) {
-         sp_pos++;
-         pos++;
-      }
-
-      // a match?
-      if ( sp_pos == sp_len ) {
-         // put the item in the array.
-         uint32 splitend = pos - sp_len;
-         retarr->append( FALCON_GC_HANDLE(new String( *tg_str, last_pos, splitend )) );
-         last_pos = pos;
-         limit--;
-
-      }
-      else
-         pos++;
-   }
-
-   // Residual element?
-   if ( limit >= 1 || last_pos < tg_len ) {
-      uint32 splitend = tg_len;
-      retarr->append( FALCON_GC_HANDLE(new String( *tg_str, last_pos, splitend )) );
-   }
-
-   cstring->unlockInstance(tk_str);
-   ctx->returnFrame( FALCON_GC_HANDLE(retarr) );
 }
 
 

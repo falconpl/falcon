@@ -491,6 +491,7 @@ public:
 
    bool asBoolean() const { return content.data.val32 != 0; }
    int64 asInteger() const { return content.data.val64; }
+   int64 asOrdinal() const { return isInteger() ? content.data.val64 : (int64) content.data.number; }
    numeric asNumeric() const { return content.data.number; }
    Function* asFunction() const { return static_cast<Function*>(content.data.ptr.pInst); }
 

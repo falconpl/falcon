@@ -42,6 +42,7 @@
 #include <falcon/cm/semaphore.h>
 #include <falcon/cm/stdfunctions.h>
 #include <falcon/cm/syncqueue.h>
+#include <falcon/cm/tokenizer.h>
 #include <falcon/cm/vmcontext.h>
 #include <falcon/cm/waiter.h>
 #include <falcon/cm/vmprocess.h>
@@ -110,6 +111,7 @@ CoreModule::CoreModule():
       << new Ext::ClassVMProcess
       << new Ext::ClassWaiter
       << new Ext::ClassLog
+      << new Ext::ClassTokenizer
       ;
 
    this->addObject( new Ext::ClassGC );
