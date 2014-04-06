@@ -1029,7 +1029,7 @@ bool Process::hitBreakpoint( VMContext* ctx, const PStep* ps )
       {
          const Breakpoint& bp = iter->second;
 
-         if( bp.m_mod != mod || bp.m_line != line )
+         if( bp.m_mod != mod || (bp.m_line != line && line != 0) )
          {
             // all the negative breaks are temporary, however you can never know in future...
             if( bp.m_bTemp )

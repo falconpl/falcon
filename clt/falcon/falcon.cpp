@@ -151,7 +151,6 @@ void FalconApp::guardAndGo( int argc, char* argv[] )
 
 
 void FalconApp::interactive()
-
 {
    IntMode intmode( this );
    intmode.run();

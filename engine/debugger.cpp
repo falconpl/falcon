@@ -25,6 +25,7 @@
 #include <falcon/treestep.h>
 #include <falcon/function.h>
 #include <falcon/symbol.h>
+#include <falcon/stringtok.h>
 
 #include <falcon/stream.h>
 #include <falcon/textreader.h>
@@ -53,6 +54,7 @@ public:
    virtual void render( TextWriter* tw, int32 ) const { tw->write("/*catcher*/\n"); }
 
 private:
+
    static void apply_( const PStep*, VMContext* ctx )
    {
       ctx->popCode();
@@ -128,20 +130,32 @@ public:
 
    virtual ~CmdHandler(){}
 
-   virtual String help();
-   virtual bool execute( const String& params );
-   const String& name() const;
+   virtual void execute( VMContext* ctx, const String& ) = 0;
+   const String& pdesc() const { return m_pdesc; }
+   const String& desc() const { return m_desc; }
+   const String& help() const { return m_help; }
+   const String& name() const { return m_name; }
 
 protected:
-   const String m_name;
-   const String m_params;
-   const String m_description;
-
+   String m_name;
    Debugger* m_debugger;
 
+   String m_help;
+   String m_pdesc;
+   String m_desc;
+
    typedef std::vector<String> ParamList;
+
    // tokenize the parameters.
-   void tokenize(const String& params, ParamList& list);
+   void tokenize(const String& params, ParamList& list)
+   {
+      StringTokenizer tk(params,' ', true);
+      String temp;
+      while( tk.next(temp) )
+      {
+         list.push_back(temp);
+      }
+   }
 
 private:
    // disable copy
@@ -149,11 +163,344 @@ private:
 };
 
 
+class CmdHelp: public CmdHandler
+{
+public:
+   CmdHelp(Debugger* dbg):
+      CmdHandler(dbg,"help")
+   {
+      m_pdesc = "[command]";
+      m_desc = "Gives the list of commands or provide help on a command";
+   }
+
+   virtual ~CmdHelp(){}
+
+   virtual void execute( VMContext*, const String& params )
+   {
+      if( params.empty() )
+      {
+         m_debugger->listCommands();
+      }
+      else
+      {
+         m_debugger->describe(params);
+      }
+   }
+};
+
+
+class CmdQuit: public CmdHandler
+{
+public:
+   CmdQuit(Debugger* dbg):
+      CmdHandler(dbg,"quit")
+   {
+      m_desc = "Terminates the host program";
+   }
+
+   virtual ~CmdQuit(){}
+
+   virtual void execute( VMContext* ctx, const String& )
+   {
+      m_debugger->writeLine("**: terminating host process");
+      ctx->process()->terminate();
+      m_debugger->exitDebugger();
+   }
+};
+
+
+class CmdCont: public CmdHandler
+{
+public:
+   CmdCont(Debugger* dbg):
+      CmdHandler(dbg,"cont")
+   {
+      m_desc = "Resumes the execution of the host program";
+   }
+
+   virtual ~CmdCont(){}
+
+   virtual void execute( VMContext*, const String& )
+   {
+      m_debugger->writeLine("**: continuing");
+      m_debugger->exitDebugger();
+   }
+};
+
+
+class CmdStep: public CmdHandler
+{
+public:
+   CmdStep(Debugger* dbg):
+      CmdHandler(dbg,"step")
+   {
+      m_desc = "Performs a single step in the code";
+   }
+
+   virtual ~CmdStep(){}
+
+   virtual void execute( VMContext* ctx, const String& )
+   {
+      m_debugger->writeLine( "**: single step" );
+      ctx->setBreakpointEvent();
+      m_debugger->exitDebugger();
+   }
+};
+
+
+class CmdNext: public CmdHandler
+{
+public:
+   CmdNext(Debugger* dbg):
+      CmdHandler(dbg,"next")
+   {
+      m_desc = "Proceeds until a different source line is reached.";
+   }
+
+   virtual ~CmdNext(){}
+
+   virtual void execute( VMContext* ctx, const String& )
+   {
+      m_debugger->writeLine( "**: long step" );
+      ctx->process()->addNegativeBreakpoint( ctx, ctx->currentCode().m_step );
+      ctx->setSwapEvent();
+      m_debugger->exitDebugger();
+   }
+};
+
+
+class CmdEval: public CmdHandler
+{
+public:
+   CmdEval(Debugger* dbg):
+      CmdHandler(dbg,"eval")
+   {
+      m_desc = "Evaluates the rest of the line in in the current context";
+      m_pdesc = "<cmd>";
+   }
+
+   virtual ~CmdEval(){}
+
+   virtual void execute( VMContext* ctx, const String& params )
+   {
+      Stream* sinput = new StringStream( params );
+      TextReader* reader = new TextReader(sinput);
+      DynCompiler dynComp( ctx );
+
+      try
+      {
+         SynTree* st = dynComp.compile( reader );
+         ctx->pushData( FALCON_GC_HANDLE(st) );
+         ctx->pushCodeWithUnrollPoint(m_debugger->m_stepPostEval);
+         ctx->pushCode(st);
+      }
+      catch( Error* err )
+      {
+         m_debugger->write("**!: ");
+         m_debugger->write(err->describe(true));
+         m_debugger->write("\n");
+         err->decref();
+      }
+      reader->decref();
+   }
+};
+
+
+class CmdSrc: public CmdHandler
+{
+public:
+   CmdSrc(Debugger* dbg):
+      CmdHandler(dbg,"src")
+   {
+      m_desc = "Locate current code in module and function";
+   }
+
+   virtual ~CmdSrc(){}
+
+   virtual void execute( VMContext* ctx, const String& )
+   {
+      m_debugger->printLoc(ctx);
+      m_debugger->printCode(ctx);
+   }
+};
+
+
+class CmdData: public CmdHandler
+{
+public:
+   CmdData(Debugger* dbg):
+      CmdHandler(dbg,"data")
+   {
+      m_desc = "Display the data in the stack (top N positions, 0 for all)";
+      m_pdesc = "[N]";
+   }
+
+   virtual ~CmdData(){}
+
+   virtual void execute( VMContext* ctx, const String& param )
+   {
+      if( param.empty() )
+      {
+         m_debugger->displayStack( ctx, 1 );
+      }
+      else
+      {
+         int64 depth;
+         if( ! param.parseInt(depth) || depth < 0 )
+         {
+            m_debugger->writeLine( "**: invalid depth" );
+         }
+         else {
+            m_debugger->displayStack( ctx, depth );
+         }
+      }
+   }
+};
+
+
+class CmdDyns: public CmdHandler
+{
+public:
+   CmdDyns(Debugger* dbg):
+      CmdHandler(dbg,"dyns")
+   {
+      m_desc = "Display the data in the dynamic symbol stack (top N positions, 0 for all)";
+      m_pdesc = "[N]";
+   }
+
+   virtual ~CmdDyns(){}
+
+   virtual void execute( VMContext* ctx, const String& params )
+   {
+      if( params.empty() )
+      {
+         m_debugger->displayDyns( ctx, 1 );
+      }
+      else
+      {
+        int64 depth;
+        if( ! params.parseInt(depth) || depth < 0 )
+        {
+           m_debugger->writeLine( "**: invalid depth" );
+        }
+        else {
+           m_debugger->displayDyns( ctx, depth );
+        }
+      }
+   }
+};
+
+
+class CmdCode: public CmdHandler
+{
+public:
+   CmdCode(Debugger* dbg):
+      CmdHandler(dbg,"code")
+   {
+      m_desc = "Display the data in the code stack (top N positions, 0 for all)";
+      m_pdesc = "[N]";
+   }
+
+   virtual ~CmdCode(){}
+
+   virtual void execute( VMContext* ctx, const String& params )
+   {
+      if( params.empty() )
+      {
+         m_debugger->displayCode( ctx, 1 );
+      }
+      else
+      {
+        int64 depth;
+        if( ! params.parseInt(depth) || depth < 0 )
+        {
+           m_debugger->writeLine( "**: invalid depth" );
+        }
+        else {
+           m_debugger->displayCode( ctx, depth );
+        }
+      }
+   }
+};
+
+
+class CmdBack: public CmdHandler
+{
+public:
+   CmdBack(Debugger* dbg):
+      CmdHandler(dbg,"back")
+   {
+      m_desc = "Display the data in the call stack (top N positions, 0 for all)";
+      m_pdesc = "[N]";
+   }
+
+   virtual ~CmdBack(){}
+
+   virtual void execute( VMContext* ctx, const String& params )
+   {
+      if( params.empty() )
+      {
+         m_debugger->displayCall( ctx, 1 );
+      }
+      else
+      {
+        int64 depth;
+        if( ! params.parseInt(depth) || depth < 0 )
+        {
+           m_debugger->writeLine( "**: invalid depth" );
+        }
+        else {
+           m_debugger->displayCall( ctx, depth );
+        }
+      }
+   }
+};
+
+
+class CmdGlob: public CmdHandler
+{
+public:
+   CmdGlob(Debugger* dbg):
+      CmdHandler(dbg,"glob")
+   {
+      m_desc = "Display the globals table for the current module (if any)";
+   }
+
+   virtual ~CmdGlob(){}
+
+   virtual void execute( VMContext* ctx, const String& )
+   {
+      m_debugger->displayGlobals( ctx );
+   }
+};
+
 
 class Debugger::Private
 {
 public:
+   typedef std::map<String,CmdHandler*> CmdMap;
+   CmdMap m_commands;
 
+
+   Private( Debugger* dbg )
+   {
+      m_commands["help"] = new CmdHelp(dbg);
+      m_commands["quit"] = new CmdQuit(dbg);
+
+      m_commands["step"] = new CmdStep(dbg);
+      m_commands["next"] = new CmdNext(dbg);
+      m_commands["cont"] = new CmdCont(dbg);
+
+      m_commands["eval"] = new CmdEval(dbg);
+      m_commands["src"] = new CmdSrc(dbg);
+
+      m_commands["data"] = new CmdData(dbg);
+      m_commands["dyns"] = new CmdDyns(dbg);
+      m_commands["code"] = new CmdCode(dbg);
+      m_commands["back"] = new CmdBack(dbg);
+      m_commands["glob"] = new CmdGlob(dbg);
+
+   }
 };
 
 //========================================================================
@@ -166,14 +513,69 @@ Debugger::Debugger() :
    StmtTry* t = new PStepPostEval;
    m_stepPostEval = t;
    m_stepAfterNext = new PStepAfterNext;
-   _p = new Private;
+   _p = new Private(this);
 }
 
 Debugger::~Debugger()
 {
    delete m_stepPostEval;
    delete m_stepAfterNext;
+   delete _p;
 }
+
+
+void Debugger::listCommands() const
+{
+   m_tw->write( "*: Command list:\n" );
+   Private::CmdMap::const_iterator iter = _p->m_commands.begin();
+   while( iter != _p->m_commands.end() )
+   {
+      m_tw->write( "*: " );
+      CmdHandler* h = iter->second;
+      m_tw->write(h->name());
+      m_tw->write(" ");
+      m_tw->write(h->pdesc());
+      m_tw->write(": ");
+      m_tw->write(h->desc());
+      m_tw->write("\n");
+      ++iter;
+   }
+   m_tw->write("**: Entering an empty line repeats the previous command.\n");
+}
+
+
+void Debugger::describe(const String& cmd) const
+{
+   Private::CmdMap::const_iterator iter = _p->m_commands.find(cmd);
+   if(iter == _p->m_commands.end())
+   {
+      m_tw->write("**: Command not found\n");
+   }
+   else {
+      CmdHandler* h = iter->second;
+      if( h->help().empty() )
+      {
+         m_tw->write("**:" + h->desc() +"\n");
+      }
+      else {
+         m_tw->write("**:" + h->help() +"\n");
+      }
+   }
+}
+
+
+void Debugger::write(const String& str) const
+{
+   m_tw->write(str);
+}
+
+
+void Debugger::writeLine(const String& str) const
+{
+   m_tw->writeLine(str);
+}
+
+
 
 void Debugger::onBreak( Process* p, Processor*, VMContext* ctx )
 {
@@ -188,6 +590,7 @@ void Debugger::onBreak( Process* p, Processor*, VMContext* ctx )
 
    TextReader tr(input);
    TextWriter wr( output );
+   m_tw = &wr;
 
    if( m_hello )
    {
@@ -195,9 +598,9 @@ void Debugger::onBreak( Process* p, Processor*, VMContext* ctx )
       m_hello = false;
    }
 
-   printCode( wr, ctx );
+   printCode( ctx );
 
-   bool more;
+   m_bActive = true;
    do
    {
       MESSAGE1("Debugger::onBreak -- Accepting command");
@@ -207,9 +610,9 @@ void Debugger::onBreak( Process* p, Processor*, VMContext* ctx )
       String line;
       tr.readLine(line, 1024);
 
-      more = parseCommand( wr, line, ctx );
+      parseCommand( line, ctx );
    }
-   while( more );
+   while( m_bActive );
 
    // the result of the function.
    ctx->pushData(Item());
@@ -217,193 +620,45 @@ void Debugger::onBreak( Process* p, Processor*, VMContext* ctx )
 }
 
 
-bool Debugger::parseCommand( TextWriter& wr, const String& line1, VMContext* ctx )
+void Debugger::parseCommand( const String& line1, VMContext* ctx )
 {
    TRACE("Debugger::parseCommand -- parsing '%s'", line1.c_ize() );
 
-   // by default, we don't want to loop immediately.
-   bool cont = false;
    // whether to save this line or not
    bool save = true;
 
    String line = line1;
    line.trim();
-   if( line == "quit" )
-   {
-      ctx->process()->terminate();
-      save = false;
-   }
-   else if( line == "exit" )
-   {
-      MESSAGE("Debugger::parseCommand -- Exiting the debugger on user request" );
-      cont = false;
-   }
-   else if( line == "help" || line == "?" )
-   {
-      wr.write( "*: Command list:\n"
-               "*: help: This help.\n"
 
-               "*: quit: Terminate current Falcon VM process.\n"
-               "*: exit: terminate the debugger and resume execution.\n"
-
-               "*: step: Proceed in the next expression (step in).\n"
-               "*: next: Execute next expression without descending into it (step over).\n"
-               "*: cont: Resume execution up to the next breakpoint.\n"
-
-               "*: eval <expr>: Evaluate given expression -- can change variables.\n"
-               "*: src: Locate current code in module and function.\n"
-
-               "*: data [N]: Display the data in the stack (top N positions, 0 for all).\n"
-               "*: dyns [N]: Display the data in the dynamic stack (top N positions, 0 for all).\n"
-               "*: code [N]: Display the data in the code stack (top N positions, 0 for all).\n"
-               "*: back [N]: Display the data in the call stack (top N positions, 0 for all).\n"
-               "*: glob: Dysplay the globals table for the current module (if any)."
-
-               "*: Entering an empty line repeats the previous command.\n"
-               );
-      cont = true;
-   }
-   else if( line == "step" )
-   {
-      wr.write( "*: single step\n" );
-      ctx->setBreakpointEvent();
-   }
-   else if( line == "next" )
-   {
-      wr.writeLine( "*: big step" );
-      CodeFrame temp;
-      temp.m_step = ctx->currentCode().m_step;
-      temp.m_seqId = ctx->currentCode().m_seqId;
-      temp.m_dataDepth = ctx->currentCode().m_dataDepth;
-      temp.m_dynsDepth = ctx->currentCode().m_dynsDepth;
-
-      ctx->resetCode( m_stepAfterNext );
-      ctx->currentCode().m_dataDepth = ctx->dataSize();
-      ctx->currentCode().m_dynsDepth = ctx->dynsDepth();
-
-      ctx->pushCode( temp.m_step );
-      ctx->currentCode().m_seqId = temp.m_seqId;
-      ctx->currentCode().m_dataDepth = temp.m_dataDepth;
-      ctx->currentCode().m_dynsDepth = temp.m_dynsDepth;
-   }
-   else if( line == "cont" )
-   {
-      wr.writeLine( "*: Continuing." );
-   }
-   else if( line == "data" )
-   {
-      displayStack( wr, ctx, 1 );
-      cont = true;
-   }
-   else if( line.startsWith("data ") )
-   {
-      int64 depth;
-      if( ! line.parseInt(depth,5) || depth < 0 )
-      {
-         wr.write( "*: invalid depth \n" );
-      }
-      else {
-         displayStack( wr, ctx, depth );
-      }
-      cont = true;
-   }
-   else if( line == "dyns" )
-   {
-      displayDyns( wr, ctx, 1 );
-      cont = true;
-   }
-   else if( line.startsWith("dyns ") )
-   {
-     int64 depth;
-     if( ! line.parseInt(depth,5) || depth < 0 )
-     {
-        wr.write( "*: invalid depth \n" );
-     }
-     else {
-        displayDyns( wr, ctx, depth );
-     }
-     cont = true;
-   }
-   else if( line == "call" )
-   {
-      displayCall( wr, ctx, 1 );
-      cont = true;
-   }
-   else if( line.startsWith("call ") )
-   {
-     int64 depth;
-     if( ! line.parseInt(depth,5) || depth < 0 )
-     {
-        wr.write( "*: invalid depth \n" );
-     }
-     else {
-        displayCall( wr, ctx, depth );
-     }
-     cont = true;
-   }
-   else if( line == "glob" )
-   {
-     displayGlobals( wr, ctx );
-     cont = true;
-   }
-   else if( line == "code" )
-   {
-     displayCode( wr, ctx, 1 );
-     cont = true;
-   }
-   else if( line.startsWith("code ") )
-   {
-     int64 depth;
-     if( ! line.parseInt(depth,5) || depth < 0 )
-     {
-        wr.write( "*: invalid depth \n" );
-     }
-     else {
-        displayCode( wr, ctx, depth );
-     }
-     cont = true;
-   }
-   else if( line.startsWith("eval ") )
-   {
-      Stream* sinput = new StringStream( line.subString(5) );
-      TextReader* reader = new TextReader(sinput);
-      DynCompiler dynComp( ctx );
-
-      try
-      {
-         SynTree* st = dynComp.compile( reader );
-         ctx->pushData( FALCON_GC_HANDLE(st) );
-         ctx->pushCodeWithUnrollPoint(m_stepPostEval);
-         ctx->pushCode(st);
-      }
-      catch( Error* err )
-      {
-         wr.write("*!: ");
-         wr.writeLine(err->describe(true));
-         err->decref();
-         cont = true;
-      }
-      reader->decref();
-   }
-   else if( line == "src" )
-   {
-      printLoc(wr, ctx);
-      printCode(wr, ctx);
-      cont = true;
-   }
-   else if( line == "" )
+   if( line == "" )
    {
       if (m_lastCommand != "")
       {
-         cont = Debugger::parseCommand(wr, m_lastCommand, ctx);
+         Debugger::parseCommand( m_lastCommand, ctx);
       }
-      else {
-         save = false;
-      }
+      // do nothing, will repeat prompt
+      return;
+   }
+
+   String cmd, params;
+   uint32 pos = line.find(' ');
+   if( pos != String::npos )
+   {
+      cmd = line.subString(0,pos);
+      params = line.subString(pos+1);
+      params.trim();
    }
    else {
-      wr.writeLine("*!: Unknown command");
-      cont = true;
+      cmd = line;
+   }
+
+   Private::CmdMap::iterator iter = _p->m_commands.find(cmd);
+   if( iter != _p->m_commands.end() )
+   {
+      iter->second->execute(ctx, params);
+   }
+   else {
+      m_tw->writeLine("*!: Unknown command");
       save = false;
    }
 
@@ -412,42 +667,41 @@ bool Debugger::parseCommand( TextWriter& wr, const String& line1, VMContext* ctx
       m_lastCommand = line;
    }
 
-   TRACE1("Debugger::parseCommand -- return with continuation '%s'", (cont? "true": "false") );
-   return cont;
+   MESSAGE1("Debugger::parseCommand -- return" );
 }
 
 
-void Debugger::printCode(TextWriter& wr, VMContext* ctx)
+void Debugger::printCode(VMContext* ctx)
 {
    const PStep* step = ctx->nextStep();
    if( step->sr().line() == 0 )
    {
-      wr.writeLine(step->describe());
+      m_tw->writeLine(step->describe());
    }
    else {
       const TreeStep* ts = static_cast<const TreeStep*>(step);
-      wr.write(String("*: line ").N(step->sr().line()).A(": "));
-      ts->render(&wr,1);
+      m_tw->write(String("*: line ").N(step->sr().line()).A(": "));
+      ts->render(m_tw,1);
    }
 }
 
 
-void Debugger::printLoc(TextWriter& wr, VMContext* ctx)
+void Debugger::printLoc(VMContext* ctx)
 {
    Function* func = ctx->currentFrame().m_function;
    if( func == 0 )
    {
-      wr.writeLine("*: No current function context.");
+      m_tw->writeLine("**: No current function context.");
    }
    else {
-      wr.writeLine("*: in " + func->locate());
+      m_tw->writeLine("**: in " + func->locate());
    }
 }
 
 
-void Debugger::displayStack( TextWriter& wr, VMContext* ctx, int64 depth )
+void Debugger::displayStack( VMContext* ctx, int64 depth )
 {
-   wr.write( String("*: Data stack size ").N((int64)ctx->dataSize()).A("\n") );
+   m_tw->write( String("*: Data stack size ").N((int64)ctx->dataSize()).A("\n") );
    int64 top = 0;
    while( (depth == 0 && top < ctx->dataSize()) || (depth > 0 && top < depth ) )
    {
@@ -459,14 +713,14 @@ void Debugger::displayStack( TextWriter& wr, VMContext* ctx, int64 depth )
       String temp;
       cls->describe(data, temp, 3, 128);
 
-      wr.write( String("*: ").H((uint64)item,true).A(" - ").N(top).A(": ").A(temp).A("\n") );
+      m_tw->write( String("*: ").H((uint64)item,true).A(" - ").N(top).A(": ").A(temp).A("\n") );
       ++top;
    }
 }
 
-void Debugger::displayDyns( TextWriter& wr, VMContext* ctx, int64 depth )
+void Debugger::displayDyns( VMContext* ctx, int64 depth )
 {
-   wr.write( String("*: Dyns stack size ").N((int64)ctx->dynsDepth()).A("\n") );
+   m_tw->write( String("*: Dyns stack size ").N((int64)ctx->dynsDepth()).A("\n") );
    int64 top = 0;
    while( (depth == 0 && top < ctx->dynsDepth()) || (depth > 0 && top < depth ) )
    {
@@ -479,29 +733,29 @@ void Debugger::displayDyns( TextWriter& wr, VMContext* ctx, int64 depth )
       String temp;
       cls->describe(data, temp, 3, 128);
 
-      wr.write( String("*: ").N(top).A(": ").A(dd->m_sym->name()).A("=(").H((uint64)item,true).A(") ").A(temp).A("\n") );
+      m_tw->write( String("*: ").N(top).A(": ").A(dd->m_sym->name()).A("=(").H((uint64)item,true).A(") ").A(temp).A("\n") );
       ++top;
    }
 }
 
 
-void Debugger::displayCode( TextWriter& wr, VMContext* ctx, int64 depth )
+void Debugger::displayCode( VMContext* ctx, int64 depth )
 {
-   wr.write( String("*: Code stack size ").N((int64)ctx->codeDepth()).A("\n") );
+   m_tw->write( String("*: Code stack size ").N((int64)ctx->codeDepth()).A("\n") );
    int64 top = 0;
    while( (depth == 0 && top < ctx->codeDepth()) || (depth > 0 && top < depth ) )
    {
       CodeFrame* cf = ctx->codeAt(top);
       String temp;
       cf->m_step->describeTo(temp);
-      wr.write( String("*: ").N(top).A(": ").A(temp).A("(").N(cf->m_seqId).A(")\n") );
+      m_tw->write( String("*: ").N(top).A(": ").A(temp).A("(").N(cf->m_seqId).A(")\n") );
       ++top;
    }
 }
 
-void Debugger::displayCall( TextWriter& wr, VMContext* ctx, int64 depth )
+void Debugger::displayCall( VMContext* ctx, int64 depth )
 {
-   wr.write( String("*: Call stack size ").N((int64)ctx->callDepth()).A("\n") );
+   m_tw->write( String("*: Call stack size ").N((int64)ctx->callDepth()).A("\n") );
    TraceBack tb;
    ctx->fillTraceBack(&tb, true, depth);
 
@@ -512,19 +766,19 @@ void Debugger::displayCall( TextWriter& wr, VMContext* ctx, int64 depth )
       String str;
       TraceStep* ts = tb.at(i);
       ts->toString(str);
-      wr.write( String("*: ").N(i).A(": ").A(str).A("\n") );
+      m_tw->write( String("*: ").N(i).A(": ").A(str).A("\n") );
    }
 }
 
 
-void Debugger::displayGlobals( TextWriter& wr, VMContext* ctx )
+void Debugger::displayGlobals( VMContext* ctx )
 {
    Function* func = ctx->currentFrame().m_function;
    if( func->module() != 0 )
    {
       GlobalsMap& gmap = func->module()->globals();
       int64 size = gmap.size();
-      wr.write( String("*: Global variables for module \"").A(func->module()->name()).A("\": ").N((int64)size).A("\n") );
+      m_tw->write( String("*: Global variables for module \"").A(func->module()->name()).A("\": ").N((int64)size).A("\n") );
       class Rator: public GlobalsMap::VariableEnumerator
       {
       public:
@@ -538,16 +792,15 @@ void Debugger::displayGlobals( TextWriter& wr, VMContext* ctx )
       private:
          TextWriter& m_tw;
       }
-      rator(wr);
+      rator(*m_tw);
 
       gmap.enumerate(rator);
    }
    else
    {
-      wr.write( String("*: No current module\n") );
+      m_tw->writeLine( "**: No current module\n" );
    }
 }
-
 
 }
 

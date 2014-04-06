@@ -39,29 +39,37 @@ public:
    virtual ~Debugger();
 
    virtual void onBreak( Process* p, Processor* pr, VMContext* ctx );
+   void parseCommand( const String& line, VMContext* ctx );
 
-   bool parseCommand( TextWriter& wr, const String& line, VMContext* ctx );
-   void printCode( TextWriter& wr, VMContext* ctx );
-   void printLoc( TextWriter& wr, VMContext* ctx );
+   void printCode( VMContext* ctx );
+   void printLoc( VMContext* ctx );
 
-   void displayStack( TextWriter& wr, VMContext* ctx, int64 depth );
-   void displayDyns( TextWriter& wr, VMContext* ctx, int64 depth );
-   void displayCode( TextWriter& wr, VMContext* ctx, int64 depth );
-   void displayCall( TextWriter& wr, VMContext* ctx, int64 depth );
-   void displayBack( TextWriter& wr, VMContext* ctx, int64 depth );
-   void displayGlobals( TextWriter& wr, VMContext* ctx );
+   void displayStack( VMContext* ctx, int64 depth );
+   void displayDyns( VMContext* ctx, int64 depth );
+   void displayCode( VMContext* ctx, int64 depth );
+   void displayCall( VMContext* ctx, int64 depth );
+   void displayBack( VMContext* ctx, int64 depth );
+   void displayGlobals( VMContext* ctx );
+
+   void exitDebugger() { m_bActive = false; }
+   void listCommands() const;
+   void describe(const String& cmd) const;
+   void write(const String& str) const;
+   void writeLine(const String& str) const;
+
+   PStep* m_stepPostEval;
+   PStep* m_stepAfterNext;
 
 private:
-   PStep* m_stepPostEval;
    class PStepPostEval;
-
-   PStep* m_stepAfterNext;
    class PStepAfterNext;
-
    class PStepCatcher;
 
    String m_lastCommand;
    bool m_hello;
+   bool m_bActive;
+
+   TextWriter* m_tw;
 
    class Private;
    Private* _p;

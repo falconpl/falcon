@@ -58,6 +58,7 @@ void IntMode::run()
    mod->setMainFunction( mainfunc );
    process->modSpace()->add(mod);
    
+   process->setBreakCallback(&m_owner->m_dbg);
    // prepare the loader to fulfill dynamic load requests.
 
    // do we have a load path?
