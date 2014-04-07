@@ -50,6 +50,7 @@ FalconOptions::FalconOptions():
    parse_ftd( false ),
 
    interactive( false ),
+   debug(false),
    ignore_syspath( false ),
    errOnStdout(false),
    testMode(false),
@@ -74,6 +75,7 @@ void FalconOptions::usage( bool deep )
       << "       falcon --test <directory> [test_opts]" << endl
       << "       falcon [c_opts] [r_opts] module [script options]" << endl
       << "       falcon -i [-p module] ... [-p module]" << endl
+      << "       falcon -d module [script options]" << endl
       << endl;
 
    if( deep )
@@ -81,6 +83,7 @@ void FalconOptions::usage( bool deep )
       cout
       << "Modal options:" << endl
       << "  -c           compile the given source(s) in a .fam module" << endl
+      << "  -d           Debug (activate the debugger at startup)" << endl
       << "  -i           interactive mode" << endl
       << "  -t           generate a syntactic tree (for logic debug)" << endl
       << "  -x           execute a binary '.fam' module" << endl
@@ -91,7 +94,6 @@ void FalconOptions::usage( bool deep )
       << "  --test <dir> Execute tests in the given directory" << endl
       << endl
       << "Compilation options (c_opts):" << endl
-      << "  -d           Set directive (as <directive>=<value>)" << endl
       << "  -D           Set constant (as <constant>=<value>)" << endl
       << "  -E <enc>     Source files are in <enc> encoding (overrides -e)" << endl
       << "  -f           force recompilation of modules even when .fam are found" << endl
@@ -163,13 +165,16 @@ void FalconOptions::parse( int argc, char **argv, int &script_pos )
          {
             case 'c': modalGiven(); compile_only = true; break;
             case 'C': check_memory = true; break;
+            case 'd': modalGiven(); debug = true; break;
+
+            /*
             case 'd':
                if ( op[2] == 0 && i + 1< argc )
                   parseDirective( argv[++i] );
                else
                   parseDirective( op + 2 );
                break;
-
+            */
             case 'D':
                if ( op[2] == 0 && i + 1< argc )
                   parseDefine( argv[++i] );

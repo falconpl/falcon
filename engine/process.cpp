@@ -1055,7 +1055,7 @@ bool Process::hitBreakpoint( VMContext* ctx, const PStep* ps )
       {
          const Breakpoint& bp = iter->second;
 
-         if( bp.m_bEnabled && bp.m_mod == mod && bp.m_line == line )
+         if( bp.m_bEnabled && bp.m_modName == modName && bp.m_line == line )
          {
             if( bp.m_bTemp )
             {
@@ -1071,6 +1071,8 @@ bool Process::hitBreakpoint( VMContext* ctx, const PStep* ps )
       }
       _p->m_mtx_breaks.unlock();
    }
+
+   // TODO: Check the breakpoint in forwards.
 
    return false;
 }
@@ -1141,6 +1143,7 @@ bool Process::enableBreakpoint( int id, bool mode )
    {
       Breakpoint& bp = iid->second->second;
       bp.m_bEnabled = mode;
+      _p->m_mtx_breaks.unlock();
       return true;
    }
    _p->m_mtx_breaks.unlock();
@@ -1155,7 +1158,7 @@ void Process::enumerateBreakpoints( BreakpointEnumerator& be )
    while( iid != _p->m_breaksById.end() )
    {
       Breakpoint& bp = iid->second->second;
-      be(bp.m_id, bp.m_bEnabled, bp.m_modPath, bp.m_modName, bp.m_bTemp );
+      be(bp.m_id, bp.m_bEnabled, bp.m_modPath, bp.m_modName, bp.m_line, bp.m_bTemp );
       ++iid;
    }
    _p->m_mtx_breaks.unlock();

@@ -684,7 +684,7 @@ void ModSpace::loadModuleInContext( const String& name, bool isUri, bool isLoad,
 
    if( ! loading ) {
       throw new IOError( ErrorParam( e_mod_notfound, __LINE__, SRC )
-               .module( loader->name() )
+               .module( loader == 0 ? "" : loader->name() )
                .extra( name + " in " + m_loader->getSearchPath() ));
    }
 

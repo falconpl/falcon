@@ -569,7 +569,7 @@ public:
        *
        * If the name is empty, the breakpoint is to considered pending (and so, not enabled).
        */
-      virtual void operator()(int id, bool bEnabled, const String& path, const String& name, bool bTemp )=0;
+      virtual void operator()(int id, bool bEnabled, const String& path, const String& name, int32 line, bool bTemp )=0;
    };
 
    /** Enumerate all the breakpoints in the process.

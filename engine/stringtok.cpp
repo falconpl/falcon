@@ -44,6 +44,19 @@ StringTokenizer::StringTokenizer( const String& source, const String& token, boo
 }
 
 
+StringTokenizer::StringTokenizer( const String& source, char_t token, bool bGroupTokens ):
+   m_source(source),
+   m_pos(0),
+   m_count(0),
+   m_limit(0xffffffff),
+   m_bGroupTokens(bGroupTokens)
+{
+   m_chr = token;
+   m_bIsChr = true;
+}
+
+
+
 StringTokenizer::StringTokenizer( const StringTokenizer& other ):
    m_source( other.m_source ),
    m_token( other.m_token ),

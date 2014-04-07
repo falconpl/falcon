@@ -53,6 +53,7 @@ FALCON_DECLARE_FUNCTION( breakpoint, "" )
 void Function_breakpoint::invoke( VMContext* ctx, int32 )
 {
    ctx->returnFrame();
+   ctx->topData().type(0xff);  // tell the debugger we're in.
    ctx->setBreakpointEvent();
 }
 

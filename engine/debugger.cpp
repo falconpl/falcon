@@ -220,9 +220,12 @@ public:
 
    virtual ~CmdCont(){}
 
-   virtual void execute( VMContext*, const String& )
+   virtual void execute( VMContext* ctx, const String& )
    {
       m_debugger->writeLine("**: continuing");
+      ctx->process()->setDebug(true);
+      // force the processor to reload the debugged context
+      ctx->setSwapEvent();
       m_debugger->exitDebugger();
    }
 };
@@ -293,6 +296,7 @@ public:
          ctx->pushData( FALCON_GC_HANDLE(st) );
          ctx->pushCodeWithUnrollPoint(m_debugger->m_stepPostEval);
          ctx->pushCode(st);
+         m_debugger->exitDebugger();
       }
       catch( Error* err )
       {
@@ -457,6 +461,212 @@ public:
 };
 
 
+class CmdBpl: public CmdHandler
+{
+public:
+   CmdBpl(Debugger* dbg):
+      CmdHandler(dbg,"bpl")
+   {
+      m_desc = "List the breakpoints.";
+      m_pdesc = "";
+   }
+
+   virtual ~CmdBpl(){}
+
+   virtual void execute( VMContext* ctx, const String& )
+   {
+      Process* prc = ctx->process();
+
+      class Rator: public Process::BreakpointEnumerator
+      {
+      public:
+         Rator( Debugger* dbg ): m_dbg(dbg) {}
+         virtual ~Rator() {}
+
+         virtual void operator()(int id, bool bEnabled, const String& path, const String& name, int32 line, bool bTemp )
+         {
+            const char* mode = name == "" ? "P" : (bEnabled ? "E" : "D");
+            m_dbg->write( String().N(id).A("[").A(mode).A("]:"));
+            if( name != "" )
+            {
+               m_dbg->write(name);
+            }
+            else {
+               m_dbg->write(path);
+            }
+            m_dbg->write(String(":").N(line));
+
+            if( bTemp )
+            {
+               m_dbg->write("[T]");
+            }
+            m_dbg->writeLine("");
+         }
+      private:
+         Debugger* m_dbg;
+      }
+      rator(m_debugger);
+
+      prc->enumerateBreakpoints(rator);
+   }
+};
+
+class CmdBpa: public CmdHandler
+{
+public:
+   CmdBpa(Debugger* dbg):
+      CmdHandler(dbg,"bpa")
+   {
+      m_desc = "Add a breakpoint";
+      m_pdesc = "[module]:<line> [F]";
+      m_help = "The the module is intended as a logical name of a module, unless the 'f' "
+               "flag is added at the end of the command. In that case, the module name is intended "
+               "as a URI, and the breakpoint is left pending until the given module is loaded."
+               " If the module is not given, the current module is used.";
+   }
+
+   virtual ~CmdBpa(){}
+
+   virtual void execute( VMContext* ctx, const String& params )
+   {
+      Process* prc = ctx->process();
+      StringTokenizer pt(params, ' ');
+      String bp, flag;
+      pt.next(bp);
+      pt.next(flag);
+
+      // find the line.
+      uint32 posComma = bp.rfind(':');
+      int64 line = 0;
+      if( posComma == String::npos || ! bp.subString(posComma+1).parseInt(line) || line <= 0 )
+      {
+         m_debugger->writeLine( "**: Invalid module:line format" );
+         return;
+      }
+
+      int bpID = 0;
+      if( posComma == 0 )
+      {
+         CallFrame& cf = ctx->currentFrame();
+         if( cf.m_function != 0 && cf.m_function->module() != 0 )
+         {
+            bpID = prc->addBreakpoint( cf.m_function->module()->uri(), cf.m_function->module()->name(), line, false, true );
+         }
+         else {
+            m_debugger->writeLine( "**: No current context" );
+         }
+      }
+      else if( !flag.empty() || bp.find('/') )
+      {
+         bpID = prc->addBreakpoint( bp.subString(0,posComma), "", line, false, true );
+      }
+
+      m_debugger->writeLine( String("**: Added breakpoint ").N(bpID) );
+   }
+
+};
+
+
+class CmdBpr: public CmdHandler
+{
+public:
+   CmdBpr(Debugger* dbg):
+      CmdHandler(dbg,"bpr")
+   {
+      m_desc = "Remove a breakpoint";
+      m_pdesc = "[N]";
+      m_help = "The parameter is the ID of the breakpoint, as reported by bpa and bpl commands";
+   }
+
+   virtual ~CmdBpr(){}
+
+   virtual void execute( VMContext* ctx, const String& params )
+   {
+      Process* prc = ctx->process();
+      int64 id = 0;
+      if ( ! params.parseInt(id) || id <= 0 )
+      {
+         m_debugger->writeLine( "**: Invalid breakpoint ID" );
+      }
+      else if ( ! prc->removeBreakpoint((int) id) )
+      {
+         m_debugger->writeLine( "**: Breakpoint ID not found" );
+      }
+      else
+      {
+         m_debugger->writeLine( "**: Breakpoint removed" );
+      }
+   }
+};
+
+
+class CmdBpe: public CmdHandler
+{
+public:
+   CmdBpe(Debugger* dbg):
+      CmdHandler(dbg,"bpe")
+   {
+      m_desc = "Enables a breakpoint";
+      m_pdesc = "[N]";
+      m_help = "The parameter is the ID of the breakpoint, as reported by bpa and bpl commands";
+   }
+
+   virtual ~CmdBpe(){}
+
+   virtual void execute( VMContext* ctx, const String& params )
+   {
+      Process* prc = ctx->process();
+      int64 id = 0;
+      if ( ! params.parseInt(id) || id <= 0 )
+      {
+         m_debugger->writeLine( "**: Invalid breakpoint ID" );
+      }
+      else if ( ! prc->enableBreakpoint((int) id, true) )
+      {
+         m_debugger->writeLine( "**: Breakpoint ID not found" );
+      }
+      else
+      {
+         m_debugger->writeLine( "**: Breakpoint enabled" );
+      }
+   }
+};
+
+
+class CmdBpd: public CmdHandler
+{
+public:
+   CmdBpd(Debugger* dbg):
+      CmdHandler(dbg,"bpd")
+   {
+      m_desc = "Disable a breakpoint";
+      m_pdesc = "[N]";
+      m_help = "The parameter is the ID of the breakpoint, as reported by bpa and bpl commands";
+   }
+
+   virtual ~CmdBpd(){}
+
+   virtual void execute( VMContext* ctx, const String& params )
+   {
+      Process* prc = ctx->process();
+      int64 id = 0;
+      if ( ! params.parseInt(id) || id <= 0 )
+      {
+         m_debugger->writeLine( "**: Invalid breakpoint ID" );
+      }
+      else if ( ! prc->enableBreakpoint((int) id, false) )
+      {
+         m_debugger->writeLine( "**: Breakpoint ID not found" );
+      }
+      else
+      {
+         m_debugger->writeLine( "**: Breakpoint disabled" );
+      }
+   }
+};
+
+
+
 class CmdGlob: public CmdHandler
 {
 public:
@@ -500,6 +710,22 @@ public:
       m_commands["back"] = new CmdBack(dbg);
       m_commands["glob"] = new CmdGlob(dbg);
 
+      m_commands["bpl"] = new CmdBpl(dbg);
+      m_commands["bpa"] = new CmdBpa(dbg);
+      m_commands["bpr"] = new CmdBpr(dbg);
+      m_commands["bpe"] = new CmdBpe(dbg);
+      m_commands["bpd"] = new CmdBpd(dbg);
+   }
+
+
+   ~Private()
+   {
+      CmdMap::iterator iter = m_commands.begin();
+      while( iter != m_commands.end() )
+      {
+         delete iter->second;
+         ++iter;
+      }
    }
 };
 
@@ -581,8 +807,13 @@ void Debugger::onBreak( Process* p, Processor*, VMContext* ctx )
 {
    MESSAGE("Debugger::onBreak -- Debugger invoked.");
 
-   // the result of the function that called us
-   ctx->popData();
+   bool addNil = false;
+   // the result of the function Debugger.breakpoint() that called us
+   if( ctx->topData().type() == 0xff )
+   {
+      addNil = true;
+      ctx->popData();
+   }
 
    // get the standard input stream.
    Stream* input = p->vm()->stdIn();
@@ -614,8 +845,12 @@ void Debugger::onBreak( Process* p, Processor*, VMContext* ctx )
    }
    while( m_bActive );
 
+   if( addNil )
+   {
+      // add a nil to simulate the exit of the funciton Debugger.breakpoint()
+      ctx->pushData(Item());
+   }
    // the result of the function.
-   ctx->pushData(Item());
    MESSAGE("Debugger::onBreak -- Exiting.");
 }
 

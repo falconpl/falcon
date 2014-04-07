@@ -69,6 +69,7 @@ public:
    bool parse_ftd;
 
    bool interactive;
+   bool debug;
 
    bool ignore_syspath;
 

@@ -231,6 +231,11 @@ void FalconApp::launch( const String& script, int argc, char* argv[], int pos )
          log->log(Log::fac_app, Log::lvl_info, String("Launching main script function") );
 
          process->mainContext()->call( mod->getMainFunction() );
+         if( m_options.debug )
+         {
+            log->log(Log::fac_app, Log::lvl_info, String("Activating debug") );
+            process->mainContext()->setBreakpointEvent();
+         }
          process->start();
          process->wait();
 

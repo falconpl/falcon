@@ -56,7 +56,7 @@ public:
     *
     * If the source string is empty, then hasNext() method will return false even before the first call to next().
     */
-   StringTokenizer( const String& source, uint32 chr, bool bGroupTokens=false );
+   StringTokenizer( const String& source, char_t chr, bool bGroupTokens=false );
    StringTokenizer( const StringTokenizer& other );
    ~StringTokenizer() {}
 
@@ -74,7 +74,7 @@ private:
    String m_source;
    String m_token;
 
-   uint32 m_chr;
+   char_t m_chr;
    uint32 m_pos;
    uint32 m_count;
    uint32 m_limit;
