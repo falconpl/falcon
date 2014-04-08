@@ -72,9 +72,10 @@ public:
 class NoDebug
 {
 public:
-   void checkDebug( Processor*, VMContext*, const PStep* )
+   bool checkDebug( Processor*, VMContext*, const PStep* )
    {
       // does nothing.
+      return true;
    }
 };
 
@@ -82,7 +83,7 @@ public:
 class Debug
 {
 public:
-   void checkDebug( Processor* prs, VMContext* ctx, const PStep* ps )
+   bool checkDebug( Processor* prs, VMContext* ctx, const PStep* ps )
    {
       Process* prc = ctx->process();
 
@@ -90,7 +91,13 @@ public:
       if( prc->hitBreakpoint(ctx, ps) )
       {
          prc->onBreakpoint(prs,ctx);
+         // the breakpoint operation might have changed the current step
       }
+      // always force the next pstep to be presented to the processor.
+      ctx->setEmergeEvent();
+
+      // should we exit immediately or execute the next pstep?
+      return ps == ctx->currentCode().m_step;
    }
 };
 
@@ -236,6 +243,7 @@ void Processor::manageEvents( VMContext* ctx, int32 &events )
       ctx->clearBreakpointEvent();
       ctx->process()->setDebug(true);
       ctx->process()->onBreakpoint(this, ctx);
+      events = ctx->events();
    }
 
    if( (events & VMContext::evtEmerge) ) {
@@ -334,8 +342,10 @@ template<class _DCHECK>
 
       try
       {
-         check.checkDebug(this, ctx, ps);
-         ps->apply( ps, ctx );
+         if(check.checkDebug(this, ctx, ps))
+         {
+            ps->apply( ps, ctx );
+         }
       }
       catch( Error* e )
       {

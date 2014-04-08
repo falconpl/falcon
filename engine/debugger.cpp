@@ -58,6 +58,7 @@ private:
    static void apply_( const PStep*, VMContext* ctx )
    {
       ctx->popCode();
+      ctx->popData(1); // we pushed the syntree as well to keep it in the GC
       if( ctx->thrownError() != 0)
       {
          TextWriter tw( ctx->vm()->stdErr() );
@@ -89,7 +90,7 @@ private:
       TextWriter tw( ctx->vm()->stdErr() );
       tw.write("**: ");
       tw.writeLine( ctx->topData().describe() );
-      ctx->popData(1);
+      ctx->popData(2); // we pushed the syntree as well to keep it in the GC
       ctx->setBreakpointEvent();
    }
 };
@@ -296,6 +297,10 @@ public:
          ctx->pushData( FALCON_GC_HANDLE(st) );
          ctx->pushCodeWithUnrollPoint(m_debugger->m_stepPostEval);
          ctx->pushCode(st);
+         // force to exit from debug evaluation
+         ctx->clearEvents();
+         ctx->setSwapEvent();
+         ctx->process()->setDebug(false);
          m_debugger->exitDebugger();
       }
       catch( Error* err )

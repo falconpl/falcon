@@ -1276,6 +1276,10 @@ public:
    */
    inline void setCompleteEvent() { atomicOr(m_events, evtComplete);  }
 
+   /** Sets the emerge event
+   */
+   inline void setEmergeEvent() { atomicOr(m_events, evtEmerge);  }
+
    /** Activates a breakpoint.
 
         Breaks the current run loop. This is usually done by specific
