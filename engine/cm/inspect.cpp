@@ -278,7 +278,9 @@ static void internal_inspect( TextWriter* tw, const Item& itm, int32 depth, int3
                   /* no break */
                case FalconClass::Property::t_func:
                   m_tw->write( propName );
+                  m_tw->write( "(" );
                   m_tw->write( prop->m_value.func->getDescription() );
+                  m_tw->write( ")" );
                   break;
                }
                ++count;
