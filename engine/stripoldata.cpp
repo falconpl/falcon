@@ -313,14 +313,14 @@ StrIPolData::t_parse_result StrIPolData::parse( const String& source, int& failP
          if( chr == ')' && parCount )
          {
             // we're done -- can't be long 0 or we'd have cought it
-            list.push_back( new Slice(Slice::e_t_symbol, expr) );
+            list.push_back( new Slice( expr == "self" ? Slice::e_t_expr : Slice::e_t_symbol, expr) );
             dynCount++;
             state = e_basic;
             parCount = 0;
          }
          else if( chr == ':' && parCount )
          {
-            list.push_back( new Slice(Slice::e_t_symbol, expr) );
+            list.push_back( new Slice( expr == "self" ? Slice::e_t_expr : Slice::e_t_symbol, expr) );
             dynCount++;
             state = e_formatspec;
             format.size(0);
@@ -335,7 +335,7 @@ StrIPolData::t_parse_result StrIPolData::parse( const String& source, int& failP
          }
          else
          {
-            list.push_back( new Slice(Slice::e_t_symbol, expr) );
+            list.push_back( new Slice(expr == "self" ? Slice::e_t_expr : Slice::e_t_symbol, expr) );
             dynCount++;
             state = e_basic;
             text.size(0);
@@ -444,7 +444,7 @@ StrIPolData::t_parse_result StrIPolData::parse( const String& source, int& failP
    if( state == e_symbol && parCount == 0 )
    {
       // put in the last symbol.
-      list.push_back( new Slice(Slice::e_t_symbol, expr) );
+      list.push_back( new Slice(expr == "self" ? Slice::e_t_expr : Slice::e_t_symbol, expr) );
       dynCount++;
       state = e_basic;
    }
