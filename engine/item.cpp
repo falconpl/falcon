@@ -106,7 +106,7 @@ bool Item::isTrue() const
       return ! asString()->empty();
 
    default:
-      return false;
+      return true;
    }
 
    return false;

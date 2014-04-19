@@ -134,6 +134,7 @@ add_library(falcon_engine SHARED
   builtin/foreach.cpp
   builtin/len.cpp
   builtin/minmax.cpp
+  builtin/qreturn.cpp
   builtin/render.cpp
   builtin/tostring.cpp
   builtin/typeid.cpp

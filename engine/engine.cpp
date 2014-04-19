@@ -65,6 +65,7 @@
 #include <falcon/builtin/render.h>
 #include <falcon/builtin/tostring.h>
 #include <falcon/builtin/dynprop.h>
+#include <falcon/builtin/qreturn.h>
 
 #include <falcon/bom.h>
 #include <falcon/stdsteps.h>
@@ -290,6 +291,7 @@ Engine::Engine()
    addMantra(new Ext::Describe);
    addMantra(new Ext::ToString);
    addMantra(new Ext::Render);
+   addMantra(new Ext::QReturn);
    addMantra(new Ext::GetP);
    addMantra(new Ext::SetP);
    addMantra(new Ext::HasP);

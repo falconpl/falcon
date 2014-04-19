@@ -53,7 +53,7 @@ void Inspect::invoke( VMContext* ctx, int32 )
    }
 
    // prepare the local frame
-   int64 maxdepth = i_maxdepth == 0 ? -1 : i_maxdepth->forceInteger();
+   int64 maxdepth = i_maxdepth == 0 ? 3 : i_maxdepth->forceInteger();
    int64 maxsize = i_maxsize == 0 ? -1 : i_maxsize->forceInteger();
 
    Inspector insp( ctx->vm()->textOut() );

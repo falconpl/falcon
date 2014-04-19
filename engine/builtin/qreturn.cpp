@@ -17,8 +17,9 @@
 #define SRC "falcon/builtin/len.cpp"
 
 #include <falcon/builtin/len.h>
+#include <falcon/vm.h>
 #include <falcon/vmcontext.h>
-#include <falcon/item.h>
+#include <falcon/itemid.h>
 #include <falcon/error.h>
 
 namespace Falcon {
