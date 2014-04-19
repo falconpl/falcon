@@ -26,6 +26,7 @@
 #include <falcon/function.h>
 #include <falcon/symbol.h>
 #include <falcon/stringtok.h>
+#include <falcon/inspector.h>
 
 #include <falcon/stream.h>
 #include <falcon/textreader.h>
@@ -189,6 +190,40 @@ public:
    }
 };
 
+
+class CmdInsp: public CmdHandler
+{
+public:
+   CmdInsp(Debugger* dbg):
+      CmdHandler(dbg,"insp")
+   {
+      m_pdesc = "[var]";
+      m_desc = "Inspects the given variable";
+   }
+
+   virtual ~CmdInsp(){}
+
+   virtual void execute( VMContext* ctx, const String& params )
+   {
+      if( params.empty() )
+      {
+         m_debugger->writeLine("**: missing variable to be inspected");
+      }
+      else
+      {
+         try {
+            Item* itm = ctx->resolveSymbol(params, false);
+            Inspector insp(m_debugger->writer());
+            insp.inspect(*itm);
+         }
+         catch( CodeError * e )
+         {
+            e->decref();
+            m_debugger->writeLine("**: Symbol not found");
+         }
+      }
+   }
+};
 
 class CmdQuit: public CmdHandler
 {
@@ -699,27 +734,33 @@ public:
 
    Private( Debugger* dbg )
    {
-      m_commands["help"] = new CmdHelp(dbg);
-      m_commands["quit"] = new CmdQuit(dbg);
+      addCommand(new CmdHelp(dbg));
+      addCommand(new CmdQuit(dbg));
 
-      m_commands["step"] = new CmdStep(dbg);
-      m_commands["next"] = new CmdNext(dbg);
-      m_commands["cont"] = new CmdCont(dbg);
+      addCommand(new CmdStep(dbg));
+      addCommand(new CmdNext(dbg));
+      addCommand(new CmdCont(dbg));
+      addCommand(new CmdInsp(dbg));
 
-      m_commands["eval"] = new CmdEval(dbg);
-      m_commands["src"] = new CmdSrc(dbg);
+      addCommand(new CmdEval(dbg));
+      addCommand(new CmdSrc(dbg));
 
-      m_commands["data"] = new CmdData(dbg);
-      m_commands["dyns"] = new CmdDyns(dbg);
-      m_commands["code"] = new CmdCode(dbg);
-      m_commands["back"] = new CmdBack(dbg);
-      m_commands["glob"] = new CmdGlob(dbg);
+      addCommand(new CmdData(dbg));
+      addCommand(new CmdDyns(dbg));
+      addCommand(new CmdCode(dbg));
+      addCommand(new CmdBack(dbg));
+      addCommand(new CmdGlob(dbg));
 
-      m_commands["bpl"] = new CmdBpl(dbg);
-      m_commands["bpa"] = new CmdBpa(dbg);
-      m_commands["bpr"] = new CmdBpr(dbg);
-      m_commands["bpe"] = new CmdBpe(dbg);
-      m_commands["bpd"] = new CmdBpd(dbg);
+      addCommand(new CmdBpl(dbg));
+      addCommand(new CmdBpa(dbg));
+      addCommand(new CmdBpr(dbg));
+      addCommand(new CmdBpe(dbg));
+      addCommand(new CmdBpd(dbg));
+   }
+
+   void addCommand( CmdHandler* cmd )
+   {
+      m_commands[cmd->name()] = cmd;
    }
 
 

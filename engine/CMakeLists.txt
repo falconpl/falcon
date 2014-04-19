@@ -371,6 +371,7 @@ add_library(falcon_engine SHARED
   globalsmap.cpp
   hyperclass.cpp
   importdef.cpp
+  inspector.cpp
   instancelock.cpp
   intcompiler.cpp
   item.cpp

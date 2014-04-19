@@ -60,6 +60,8 @@ public:
    PStep* m_stepPostEval;
    PStep* m_stepAfterNext;
 
+   TextWriter* writer() const { return m_tw; }
+
 private:
    class PStepPostEval;
    class PStepAfterNext;
