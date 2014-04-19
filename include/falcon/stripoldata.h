@@ -137,6 +137,9 @@ public:
     */
    bool prepareStep( VMContext* ctx, uint32 nth );
 
+   void line( int32 l ) {m_line = l;}
+   int32 line() const { return m_line; }
+
 private:
    class Private;
    Private* _p;
@@ -144,6 +147,7 @@ private:
    uint32 m_mark;
    //String m_source;
    uint32 m_dynCount;
+   int32 m_line;
 
    class FALCON_DYN_CLASS PStepExprComp: public PStep
    {

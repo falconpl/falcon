@@ -734,6 +734,9 @@ bool StrIPolData::prepareStep( VMContext* ctx , uint32 id )
          {
             slice->m_compiled = tree;
          }
+
+         // set the line where this thing is compiled
+         slice->m_compiled->decl(line(),1);
       }
 
       ctx->pushCode( slice->m_compiled );

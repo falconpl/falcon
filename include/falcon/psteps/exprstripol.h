@@ -54,7 +54,7 @@ private:
       }
    };
 
-   PStepIPolData m_pstepIPolData;
+   mutable PStepIPolData m_pstepIPolData;
    mutable Mutex m_mtx;
    mutable bool m_bTestExpr;
 };

@@ -12,6 +12,9 @@
 
    See LICENSE file for licensing details.
 */
+
+#define SRC "engine/psteps/stripol.cpp"
+
 #include <falcon/psteps/exprstripol.h>
 #include <falcon/trace.h>
 #include <falcon/vmcontext.h>
@@ -19,6 +22,7 @@
 #include <falcon/stripoldata.h>
 #include <falcon/psteps/exprvalue.h>
 #include <falcon/stderrors.h>
+
 
 namespace Falcon {
 
@@ -109,8 +113,10 @@ void ExprStrIPol::handleDynamicInterpolated( const String &str, VMContext *ctx )
    TRACE1( "ExprStrIPol::handleDynamicInterpolated Creating dynamic copy of \"%s\"", describe().c_ize() );
 
    StrIPolData* sipol = new StrIPolData;
+   sipol->line( line() );
    int fp = 0;
    StrIPolData::t_parse_result result = sipol->parse(str, fp);
+
 
    if( result == StrIPolData::e_pr_fail )
    {
@@ -128,7 +134,10 @@ void ExprStrIPol::handleDynamicInterpolated( const String &str, VMContext *ctx )
       return;
    }
    else {
-      ctx->topData().setUser(FALCON_GC_HANDLE(sipol));
+      ctx->topData() = FALCON_GC_HANDLE(sipol);
+
+      // be sure to have the interpolation source line updated.
+      m_pstepIPolData.decl(line(), chr());
       ctx->resetAndApply(&m_pstepIPolData);
    }
 }
@@ -138,6 +147,7 @@ void ExprStrIPol::handleStaticInterpolated( const String &str, VMContext *ctx ) 
    TRACE1( "ExprStrIPol::handleStaticInterpolated Creating static copy of \"%s\"", describe().c_ize() );
 
    StrIPolData* sipol = new StrIPolData;
+   sipol->line( line() );
    int fp = 0;
    StrIPolData::t_parse_result result = sipol->parse(str, fp);
 
@@ -167,6 +177,7 @@ void ExprStrIPol::handleStaticInterpolated( const String &str, VMContext *ctx ) 
       m_mtx.unlock();
 
       ctx->pushData(Item(sipol->handler(), sipol));
+      m_pstepIPolData.decl(line(), chr());
       ctx->resetAndApply(&m_pstepIPolData);
    }
 }
