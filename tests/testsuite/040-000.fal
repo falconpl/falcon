@@ -1,0 +1,26 @@
+/*
+@name Node Smoke
+@category Struct
+
+@output   
+Node: first
+Node: second
+Node: third
+@endoutput
+*/
+
+load struct.tree
+
+top = Node("top")
+
+ch = .[
+   Node("first")
+   Node("second")
+   Node("third")
+] 
+
+^[ch] top.appendChild
+
+for node in top.children()
+   > "Node: ", node.type
+end

@@ -1,0 +1,40 @@
+/*
+@name Redo test
+@category Functions
+
+@output
+Redo test
+Redo without parameters
+Elem is: Nil
+==========
+Redo with one parameter
+Elem is: one
+==========
+Redo with more parameters
+Elem is: one
+Elem is: two
+Elem is: three
+==========
+Done.
+@endoutput
+*/
+
+function withRedo( elem )
+   > "Elem is: ", elem
+   Function.redo()
+end
+
+> "Redo test"
+
+> "Redo without parameters"
+withRedo()
+> "=" * 10
+> "Redo with one parameter"
+withRedo( "one" )
+> "=" * 10
+
+> "Redo with more parameters"
+withRedo( "one" "two" "three" )
+> "=" * 10
+
+> "Done."

@@ -1,0 +1,47 @@
+/*
+@name Method with redo
+@category Classes
+
+@output
+Redo test
+Redo without parameters
+Elem is: Nil
+==========
+Redo with one parameter
+Elem is: one
+==========
+Redo with more parameters
+Elem is: one
+Elem is: two
+Elem is: three
+==========
+Done.
+@endoutput
+*/
+
+class Cls(message)
+   message = message
+
+   function withRedo( elem )
+      > self.message, elem
+      Function.redo()
+   end
+end
+
+
+> "Redo test"
+
+inst = Cls("Elem is: ")
+
+> "Redo without parameters"
+inst.withRedo()
+> "=" * 10
+> "Redo with one parameter"
+inst.withRedo( "one" )
+> "=" * 10
+
+> "Redo with more parameters"
+inst.withRedo( "one" "two" "three" )
+> "=" * 10
+
+> "Done."

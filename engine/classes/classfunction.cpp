@@ -45,9 +45,10 @@ namespace Falcon {
 @class Function
 @brief Reflects a function, possibly the current one.
 @prop current  (static) Returns the current function (equivalent to fself)
-@prop pcount (static) Count of parameters through which the current function has been called.
+@prop pcount (static) Count of parameters currently being passed to this function.
 @prop params (static) Array of actual parameter values sent to the current function
 @prop pdict (static) Dictionary of actual parameter values sent to the current function.
+@prop vcount (static) Count of variable parameters (total parameters minus declared parameters).
 @prop vp (static) Array of extra variable parameters sent to the current function.
 
 @prop name Name of the given function
@@ -74,6 +75,17 @@ static void get_pcount( const Class*, const String&, void*, Item& value )
 {
    VMContext* ctx = Processor::currentProcessor()->currentContext();
    value = (int64)ctx->currentFrame().m_paramCount;
+}
+
+static void get_vcount( const Class*, const String&, void*, Item& value )
+{
+   VMContext* ctx = Processor::currentProcessor()->currentContext();
+   CallFrame& frame = ctx->currentFrame();
+   uint32 pdef = frame.m_function->paramCount();
+   int64 pc = (int64) ctx->currentFrame().m_paramCount;
+   pc -= pdef;
+   if( pc < 0 ){ pc = 0;}
+   value = pc;
 }
 
 
@@ -351,6 +363,106 @@ void Function_call::invoke( VMContext* ctx, int32 )
 }
 
 
+class PStepRedo: public PStep
+{
+public:
+   PStepRedo() { apply = apply_; }
+   virtual ~PStepRedo() {}
+   virtual void describeTo( String& tgt ) const { tgt = "PStepRedo"; }
+
+   static void apply_(const PStep*, VMContext* ctx )
+   {
+      int32& seqId = ctx->currentCode().m_seqId;
+      Item* curParam = ctx->param(seqId);
+      // no more params?
+      if( curParam == 0 )
+      {
+         ctx->popCode();
+         return;
+      }
+
+      ++seqId;
+      Item param = *curParam;
+      CallFrame& cf = ctx->currentFrame();
+      ClosedData* closed =  cf.m_closure;
+      if( cf.m_bMethodic )
+      {
+         ctx->call(cf.m_function, cf.m_self, 1, &param );
+      }
+      else {
+         ctx->call(cf.m_function, 1, &param );
+      }
+
+      // repeat the closure if necessary.
+      ctx->currentFrame().m_closure = closed;
+   }
+};
+
+/*#
+ @method redo Funciton
+ @brief (static) Invokes the current function passing the variable parameters one at a time.
+
+ This method invokes the current function, and passes each non-declared parameters
+ to it one at a time.
+
+ It is equivalent to the following code:
+ @code
+ function test( param )
+    // do things...
+
+   // equivalent to Function.redo()
+    for p in Function.vp
+       fself(p)
+    end
+ end
+ @endcode
+
+ For instance, a function printing an arbitrary list of terms can be writen as:
+
+ @code
+ function printList()
+    for elem in Function.vp
+       > "Elem is: ", elem
+    end
+ end
+
+ // or
+ function printList( elem )
+    > "Elem is: ", elem
+    Function.redo()
+ end
+ @endcode
+
+ The second form saves a for-loop and the creation of the variable parameter array,
+ resulting widely more efficient. Also, it is possible to write the function simply
+ as if it had a single parameter, and then just add Function.redo() that will be nearly
+ no-op if the function is actually called with a single parameter.
+
+ @note If the current function is a method, the self item is repeated as if calling
+ @b self.method.
+
+ @see passvp
+ */
+FALCON_DECLARE_FUNCTION_EX(redo, "", PStepRedo m_stepRedo; )
+void Function_redo::invoke( VMContext* ctx, int32 )
+{
+   // we abandon the frame immediately, as we operate in the caller frame.
+   ctx->returnFrame();
+
+   CallFrame& frame = ctx->currentFrame();
+   uint32 pdef = frame.m_function->paramCount();
+   uint32 pc = ctx->currentFrame().m_paramCount;
+
+   if( pc <= pdef ){
+      return;
+   }
+
+   ctx->pushCode( &m_stepRedo );
+   ctx->currentCode().m_seqId = pdef;
+   // let the VM handle the rest.
+}
+
+
 }
 
 
@@ -361,6 +473,7 @@ ClassFunction::ClassFunction(ClassMantra* parent):
    addProperty("pcount", &get_pcount, 0, true );
    addProperty("params", &get_params, 0, true );
    addProperty("vp", &get_vp, 0, true );
+   addProperty("vcount", &get_vcount, 0, true );
    addProperty("pdict", &get_pdict, 0, true );
 
    addProperty("name", &get_name );
@@ -373,6 +486,7 @@ ClassFunction::ClassFunction(ClassMantra* parent):
 
    addMethod(new CFunction::Function_parameter, true);
    addMethod(new CFunction::Function_call );
+   addMethod(new CFunction::Function_redo, true );
    setConstuctor( &CFunction::mth_ctor, "name:[S]");
 
    setParent(parent);
