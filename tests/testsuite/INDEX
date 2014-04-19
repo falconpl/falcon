@@ -23,6 +23,7 @@
 033 Feather module - bitbuf
 034 Feather module - containers
 
+040 Lib modules - struct
 
 100 Advanced tests
 101 Engine tests
