@@ -509,7 +509,7 @@ void OverridableClass::op_iter( VMContext* ctx, void* self ) const
    ctx->addSpace(1);
    ctx->opcodeParam(0) = ctx->opcodeParam(1);
 
-   override_unary( ctx, self, OVERRIDE_OP_NEXT_ID, OVERRIDE_OP_ITER );
+   override_unary( ctx, self, OVERRIDE_OP_ITER_ID, OVERRIDE_OP_ITER );
 }
 
 void OverridableClass::op_next( VMContext* ctx, void* self ) const
