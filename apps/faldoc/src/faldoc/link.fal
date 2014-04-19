@@ -55,11 +55,11 @@ class Link( source, line, destination, explicit )
          return self.target.toString()
       end
 
-      return @"(undef at $(self.source.file):$(self.line)) " + self.destination
+      return @"(undef at ${self.source.file}:${self.line}) " + self.destination
    end
 
    function describe()
-      return (@ "$(self.destination) at $(self.source.file):$(self.line) ") + (self.target ? "(*)" : "(-)")
+      return (@ "${self.destination} at ${self.source.file}:${self.line} ") + (self.target ? "(*)" : "(-)")
    end
 end
 

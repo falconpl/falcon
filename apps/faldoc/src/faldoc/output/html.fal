@@ -62,7 +62,7 @@ class Page(title, file, master_entity ) from tree.Node
       title = category + itemName ? " - " + itemName : ""
 
       return ht.Head().add(
-         ht.Meta( nil, @"text/html;charset=\"$(_generator.encoding)\"", "Content-type" ),
+         ht.Meta( nil, @"text/html;charset=\"${_generator.encoding}\"", "Content-type" ),
          ht.Link( "faldoc.css", "stylesheet", "text/css"),
          ht.Title( title ))
    end
@@ -460,7 +460,7 @@ class FaldocHtmlRenderer() from render.Renderer()
       title = _htmlEscape(node.infos["title"])
       link = node.infos["name"].escape()
       
-      prefix = @"<h$(hl)><a name=\"$(link)\">$(title)</a></h$(hl)>\n"
+      prefix = @"<h$(hl)><a name=\"${link}\">${title}</a></h${hl}>\n"
       ++self.level
       content = self.rcont(node)
       --self.level
@@ -572,7 +572,7 @@ class HTMLGenerator( doctree, conf )
    function makeModule( page, module )
       // skip virtual modules
       if module.isVirtual
-         faldoc.verbose( @"Skipping virtual module $module.name" )
+         faldoc.verbose( @"Skipping virtual module ${module.name}" )
          for name, subModule in module.getModules()
             self.makeModule( page, subModule )
          end
@@ -580,7 +580,7 @@ class HTMLGenerator( doctree, conf )
       end
 
       // Else, create a module page and proceed.
-      faldoc.verbose( @"Making module $module.name" )
+      faldoc.verbose( @"Making module ${module.name}" )
       ip_mod = ModulePage( module )
       self.makeTree( ip_mod, module )
       page.appendChild( ip_mod )

@@ -251,11 +251,13 @@ class Parser()
    end
 
    function parseLine( line, ctx )
-      linelen = line.len()
+      linelen = line.len
       col = 0
       
       hadWinner = false
+      > "Before trace"
       if self.trace: self.traceText( line )
+      > "After trace"
       atEnd = false
       state = nil
 
@@ -266,7 +268,7 @@ class Parser()
          state = self._stack[-1]
          sr = state.rules
          ruleId = 0
-         srlen = sr.len()
+         srlen = sr.len
 
          while ruleId < srlen
             xrule = sr[ruleId++]
@@ -299,6 +301,8 @@ class Parser()
 
             if (not state.onUnmatched)
                statedesc = ", ".merge(self._stateNames)
+               row = self.row
+               > "PARSE ERROR: ", @"[$row:$col]{$statedesc} \"$prefix\""
                raise ParseError( 10003, i"Unrecognized text", @"[$(self.row):$(col)]{$(statedesc)} \"$prefix\"" )
             end
             if state.onUnmatched != "*": state.onUnmatched( ctx, prefix )
