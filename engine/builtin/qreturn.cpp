@@ -1,72 +1,74 @@
 /*
    FALCON - The Falcon Programming Language.
-   FILE: len.cpp
+   FILE: qreturn.cpp
 
-   Falcon core module -- len function/method
+   Falcon core module -- qreturn function
    -------------------------------------------------------------------
    Author: Giancarlo Niccolai
-   Begin: Sat, 04 Jun 2011 20:52:06 +0200
+   Begin: Sat, 19 Apr 2014 13:36:35 +0200
 
    -------------------------------------------------------------------
-   (C) Copyright 2011: the FALCON developers (see list in AUTHORS file)
+   (C) Copyright 2014: the FALCON developers (see list in AUTHORS file)
 
    See LICENSE file for licensing details.
 */
 
 #undef SRC
-#define SRC "falcon/builtin/len.cpp"
+#define SRC "falcon/builtin/qreturn.cpp"
 
-#include <falcon/builtin/len.h>
-#include <falcon/vm.h>
+#include <falcon/builtin/qreturn.h>
 #include <falcon/vmcontext.h>
-#include <falcon/itemid.h>
+#include <falcon/item.h>
 #include <falcon/error.h>
 
 namespace Falcon {
 namespace Ext {
 
-Len::Len():
-   PseudoFunction( "len", &m_invoke )
+QReturn::QReturn():
+   PseudoFunction( "returnq", &m_invoke )
 {
-   signature("X");
-   addParam("item");
+   signature("X,X");
+   addParam("check");
+   addParam("value");
 }
 
-Len::~Len()
+QReturn::~QReturn()
 {
 }
 
-void Len::invoke( VMContext* ctx, int32 nParams )
+void QReturn::invoke( VMContext* ctx, int32 nParams )
 {
-   Item *elem;
-   register int64 len;
-   if ( ctx->isMethodic() )
+   if( nParams < 2 )
    {
-      elem = &ctx->self();
-      len = elem->len();
+      throw paramError();
+   }
+
+   Item copy = *ctx->param(1);
+   bool question = ctx->param(0)->isTrue();
+   ctx->returnFrame();
+   if( question )
+   {
+      ctx->returnFrameDoubt(copy);
    }
    else
    {
-      if( nParams <= 0 )
-      {
-         throw paramError();
-      }
-
-      elem = ctx->params();
-      len = elem->len();
+      ctx->returnFrame(copy);
    }
-
-   ctx->returnFrame(len);
 }
 
-void Len::Invoke::apply_( const PStep*, VMContext* ctx )
+void QReturn::Invoke::apply_( const PStep*, VMContext* ctx )
 {
-   register Item& top = ctx->topData();
-   top = top.len();
-   ctx->popCode();
+   Item value = ctx->opcodeParam(0);
+   if( ctx->opcodeParam(1).isTrue() )
+   {
+      ctx->returnFrameDoubt(value);
+   }
+   else {
+      ctx->returnFrame(value);
+   }
 }
 
 }
 }
 
-/* end of len.cpp */
+/* end of qreturn.cpp */

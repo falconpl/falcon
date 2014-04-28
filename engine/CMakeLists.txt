@@ -154,6 +154,7 @@ add_library(falcon_engine SHARED
   cm/inspect.cpp
   cm/siter.cpp
   cm/log.cpp
+  cm/multitokenizer.cpp
   cm/mutex.cpp
   cm/parallel.cpp
   cm/print.cpp
@@ -417,6 +418,7 @@ add_library(falcon_engine SHARED
   streambuffer.cpp
   string.cpp
   stringstream.cpp
+  streamtok.cpp
   stringtok.cpp
   stripoldata.cpp
   sun_strtod.cpp

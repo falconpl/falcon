@@ -49,10 +49,11 @@ class StringPiece {
   StringPiece(const std::string& str)
     : ptr_(str.data()), length_(static_cast<int>(str.size())), buffer_(0) { }
   StringPiece(const char* offset, int len) : ptr_(offset), length_(len), buffer_(0) { }
-  StringPiece(const Falcon::String& src )
+  StringPiece(const Falcon::String& src, int start = 0 )
   {
-     set(src);
+     set(src, start);
   }
+
   ~StringPiece() {
      delete[] buffer_;
   }
@@ -82,7 +83,7 @@ class StringPiece {
     length_ = len;
   }
 
-  void set(const Falcon::String& src );
+  void set(const Falcon::String& src, Falcon::length_t start );
 
   char operator[](int i) const { return ptr_[i]; }
 

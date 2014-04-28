@@ -1319,6 +1319,28 @@ int String::compareIgnoreCase( const String &other ) const
    return 0;
 }
 
+
+char* String::toUTF8String( length_t &bufsize ) const
+{
+   bool result = false;
+   length_t buflen = length() * manipulator()->charSize() + 4;
+
+   char* buffer = 0;
+   while(! result)
+   {
+      delete[] buffer;
+      buffer = new char[buflen];
+      result = (buflen = toUTF8String(buffer, buflen)) != String::npos;
+      if( ! result ) {
+         buflen *=2;
+      }
+   }
+
+   bufsize = buflen;
+   return buffer;
+}
+
+
 length_t String::toCString( char *target, uint32 bufsize ) const
 {
    length_t len = length();

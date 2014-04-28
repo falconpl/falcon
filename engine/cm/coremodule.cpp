@@ -46,6 +46,7 @@
 #include <falcon/cm/vmcontext.h>
 #include <falcon/cm/waiter.h>
 #include <falcon/cm/vmprocess.h>
+#include <falcon/cm/multitokenizer.h>
 #include <falcon/stdhandlers.h>
 
 #include <falcon/engine.h>
@@ -112,6 +113,7 @@ CoreModule::CoreModule():
       << new Ext::ClassWaiter
       << new Ext::ClassLog
       << new Ext::ClassTokenizer
+      << new Ext::ClassMultiTokenizer
       ;
 
    this->addObject( new Ext::ClassGC );

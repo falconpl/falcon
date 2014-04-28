@@ -13,23 +13,22 @@
    See LICENSE file for licensing details.
 */
 
-#ifndef _FALCON_TOKENIZER_H_
-#define _FALCON_TOKENIZER_H_
+#ifndef _FALCON_MULTITOKENIZER_H_
+#define _FALCON_MULTITOKENIZER_H_
 
 #include <falcon/class.h>
-#include <falcon/instancelock.h>
 
 namespace Falcon {
 namespace Ext {
 
-class ClassTokenizer: public Class
+class ClassMultiTokenizer: public Class
 {
 public:
    /** Create the textstream class.
     \param clsStream A ClassStream that will be known in the owning module.
     */
-   ClassTokenizer();
-   virtual ~ClassTokenizer();
+   ClassMultiTokenizer();
+   virtual ~ClassMultiTokenizer();
 
    virtual void dispose( void* instance ) const;
    virtual void* clone( void* instance ) const;
@@ -42,8 +41,9 @@ public:
    void op_iter( VMContext* ctx, void* self ) const;
    void op_next( VMContext* ctx, void* instance ) const;
 
-   mutable InstanceLock m_lock;
 private:
+   Function* m_mthNext;
+
 };
 }
 

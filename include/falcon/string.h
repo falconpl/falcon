@@ -715,6 +715,21 @@ public:
       return toCString( target, bufsize );
    }
 
+   /** Creates an utf-8 C string out of this string.
+      This funciton creates a buffer using the new char[] standard allocator,
+      and fills it with the utf-8 conversion from this string.
+
+      The size of the allocated buffer is kept to a reasonable size, that is
+      wide enough to store the whole string.
+
+      \note Consider using AutoCString helper class for automated allocation
+      in stack or in heap of the needed memory.
+
+      \param bufsize the size of the output utf-8 string in bytes.
+      \return the newly allocated buffer
+   */
+   char* toUTF8String( length_t &bufsize ) const;
+
    /**
      Alias to toUTF8String.
 

@@ -86,12 +86,18 @@ StringPiece StringPiece::substr(size_type pos, size_type n) const {
 
 const StringPiece::size_type StringPiece::npos = size_type(-1);
 
-void StringPiece::set( const Falcon::String& src )
+void StringPiece::set( const Falcon::String& src, Falcon::length_t start )
 {
    // check if we can use the string data directly.
+
+   /*
+   This pre-check is all less efficient than transforming the string in utf8 unconditionally,
+   however, if we ever have this check preloaded in the string, we might use it.
+   For this reason I leave the stuff commented here.
+
    if( src.manipulator()->charSize() == 1 )
    {
-      Falcon::byte* pos = src.getRawStorage();
+      Falcon::byte* pos = src.getRawStorage() + start;
       Falcon::byte* end = pos+src.size();
 
       while( pos < end )
@@ -112,16 +118,22 @@ void StringPiece::set( const Falcon::String& src )
          return;
       }
    }
+   */
 
    // we must convert to utf-8
-   Falcon::length_t bufSize = src.length();
+   Falcon::length_t bufSize = src.length()-start;
    bool result = false;
    while( ! result )
    {
       delete[] buffer_; // initally 0
       bufSize = bufSize * 2 + 4;
       buffer_ = new char[bufSize];
-      result = src.toUTF8String( buffer_, bufSize ) > 0;
+      if( start == 0 )
+      {
+         result = src.toUTF8String( buffer_, bufSize ) != Falcon::String::npos;
+      }
+      else {
+         result = src.subString(start).toUTF8String(buffer_, bufSize ) != Falcon::String::npos;
+      }
    }
-
 }

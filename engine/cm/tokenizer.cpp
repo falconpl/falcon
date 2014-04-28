@@ -25,6 +25,26 @@
 namespace Falcon {
 namespace {
 
+/*#
+ @class Tokenizer
+ @brief Helper for iterative and generator-based sub-string extractor.
+ @param string The string to be tokenized
+ @param token The token used for tokenization
+ @optparam group True to group sequences on tokens
+ @optparam limit Count of maximum number of tokens
+
+ This class performs an iterative tokenization over a given string, using a single element
+ as separator.
+
+ This class has support for generator usage (can be used in for/in loops, advance() function,
+ ^[] iterator operator, forEach() BOM method etc.), and it provides next()/hasNext() methods
+ that can be used directly to extract the desired tokens.
+
+ This class is meant to efficiently break a string in sub-parts using a simple
+ single-token tokenization. The @a MultiTokenizer provides a less efficient but
+ more flexible support that allows to break a string using multiple tokens and regular
+ expression-based tokens.
+*/
 FALCON_DECLARE_FUNCTION( init, "string:S,token:[S],group:[B],limit:[N]" );
 FALCON_DEFINE_FUNCTION_P1( init )
 {
