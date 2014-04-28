@@ -330,6 +330,7 @@ void ExprAccumulator::apply_( const PStep* ps, VMContext* ctx )
 
    // we're done
    ctx->popCode();
+   /*
    if( self->m_filter == 0 && self->m_target == 0 )
    {
       // without filter or target, just generate this stuff as an array
@@ -339,6 +340,7 @@ void ExprAccumulator::apply_( const PStep* ps, VMContext* ctx )
       ctx->pushData(FALCON_GC_HANDLE(arr));
       return;
    }
+   */
 
    // now push the space needed for the buffer
    ctx->addSpace(len);
@@ -496,6 +498,7 @@ void ExprAccumulator::PStepTakeNext::apply_( const PStep* ps, VMContext* ctx )
       }
       else
       {
+         /*
          // just store the new array in a master array
          Item& target = base[arity];
          ItemArray* masterArr;
@@ -518,6 +521,7 @@ void ExprAccumulator::PStepTakeNext::apply_( const PStep* ps, VMContext* ctx )
          {
             masterArr->append( base[0] );
          }
+         */
 
          // try another iteration
          self->regress(ctx);
