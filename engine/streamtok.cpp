@@ -250,10 +250,17 @@ bool StreamTokenizer::next()
       // the token content can be either static or a result of the regex
       Token* tk = _p->m_tlist[id];
 
-      m_bufPos = pos + (tk->m_token != 0 ?
+      pos += (tk->m_token != 0 ?
                tk->m_tokenLen :
                static_cast<length_t>(tk->m_result.end() - tk->m_result.begin()) );
-
+      if( m_bufPos == pos )
+      {
+         m_bufPos++;
+      }
+      else
+      {
+         m_bufPos = pos;
+      }
       _p->m_mtx.unlock();
 
       String *tok = new String;
@@ -262,7 +269,7 @@ bool StreamTokenizer::next()
          tok->fromUTF8(tk->m_token);
       }
       else {
-         tok->fromUTF8(tk->m_result.begin());
+         tok->fromUTF8(tk->m_result.begin(), tk->m_result.length() );
       }
 
       onTokenFound(id, running, tok, tk->m_data);
@@ -345,7 +352,7 @@ bool StreamTokenizer::findNext( int32& id, length_t& pos )
    pos = String::npos;
 
    // this is a very fast op when m_buffer is char*
-   re2::StringPiece spc(m_buffer, (int)m_bufPos);
+   re2::StringPiece spc(m_buffer+m_bufPos, (int)m_bufLen);
 
    while( iter != end )
    {
@@ -362,9 +369,9 @@ bool StreamTokenizer::findNext( int32& id, length_t& pos )
       }
       else {
          fassert( tk->m_regex != 0 );
-         if( tk->m_regex->Match( spc, 0, m_bufLen, re2::RE2::UNANCHORED, &tk->m_result, 1 ) )
+         if( tk->m_regex->Match( spc, 0, m_bufLen-m_bufPos, re2::RE2::UNANCHORED, &tk->m_result, 1 ) )
          {
-            length_t foundAt = static_cast<length_t>(tk->m_result.end() - spc.begin());
+            length_t foundAt = static_cast<length_t>(tk->m_result.begin() - spc.begin())+m_bufPos;
             if( foundAt < pos )
             {
                pos = foundAt;

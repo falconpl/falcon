@@ -16,9 +16,11 @@
 
 
 /*# Generic Node of a tree structure.
+   @optparam type A descriptor indicating what this node is about.
    @optparam content Some generic payload for the tree structure.
 */
-class Node( content )
+class Node( type, content )
+   type = type
    content = content
    parent = nil
    next = nil
@@ -51,6 +53,7 @@ class Node( content )
 
    /*# Inserts the parameter before this node
 	   @pram node The node to be inserted.
+	   @optparam ... more children to be inserted.
    */
    function insertBefore( node )
       if self.prev
@@ -67,10 +70,13 @@ class Node( content )
       node.parent = self.parent
 
       self.prev = node
+      
+      Function.redo()
    end
 
    /*# Inserts the parameter after this node
 	   @pram node The node to be inserted.
+	   @optparam ... more children to be inserted.
    */
    function insertAfter( node )
       if self.next
@@ -87,6 +93,8 @@ class Node( content )
       node.parent = self.parent
 
       self.next = node
+      
+      Function.redo()
    end
 
    /*# Detach this node from the tree
@@ -124,6 +132,7 @@ class Node( content )
 
    /*# Adds a child after the already present children.
 	  @param The child to be added.
+	  @optparam ... more children to be added
    */
    function appendChild( child )
       child.prev = self.lastChild
@@ -136,10 +145,13 @@ class Node( content )
       
       self.lastChild = child
       child.parent = self
+      
+      Function.redo()
    end
 
    /*# Adds a child in front of the children
-      @param The child to be added.
+      @param The child to be prepended.
+      @optparam ... more children to be prepended.
    */
    function prependChild( child )
       child.next = self.firstChild
@@ -152,6 +164,8 @@ class Node( content )
 
       self.firstChild = child
       child.parent = self
+      
+      Function.redo()
    end
 
 
@@ -170,6 +184,45 @@ class Node( content )
          node = node.next
       end
    end
-         
+   
+   /*# Returns an array containing the children.
+      Changes to the array are not reflected in the tree structure.
+      @note Each time this method is called, the returned array
+      is newly created and a new copy is handed to the caller.
+   */
+   function children()
+      chd = []
+      node = self.firstChild
+      while node != nil
+         chd += node
+         node = node.next
+      end
+      return chd
+   end
+   
+   function __iter()
+      return [self.firstChild]
+   end
+   
+   function __next( iter )
+      node = iter[0]
+      if not node: return break
+      nextNode = node.next      
+      iter[0] = nextNode
+      returnq( nextNode, node )
+   end
 end
 
+/*
+
+load struct.tree
+top = Node("top")
+top.appendChild( Node("one"), Node("two"), Node("three") )
+for n in top
+   >> n.type
+   formiddle: >>","
+   forlast: >"."
+end
+
+map( {x=>x.type}, top )
+*/

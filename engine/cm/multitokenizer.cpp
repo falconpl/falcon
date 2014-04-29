@@ -291,10 +291,11 @@ FALCON_DEFINE_FUNCTION_P1( addToken )
  @code
  mt = MultiTokenizer( "Hello World" );
  mt.addRE( "[A-Z]| ", { id, string, token =>
-          > "Found word: ", token
+          > "Found word: '", string, "'"
           if id >= 0: > "The token was '",token,"'"
           return string
           } )
+ mt.onResidual( {t => > "Last part: '", t, "'"; return t } )
 
  ^[ mt ]   // equivalent to while mt.next(); end
 

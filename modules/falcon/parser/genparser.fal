@@ -172,7 +172,7 @@ class Parser()
       @raise ParseError if the state backlist is empty.
    */
    function popState()
-      len1 = self._stack.len()
+      len1 = self._stack.len
       if len1 <= 1
          raise ParseError( 10001, i"Cannot pop topmost state" )
       end
@@ -255,9 +255,7 @@ class Parser()
       col = 0
       
       hadWinner = false
-      > "Before trace"
       if self.trace: self.traceText( line )
-      > "After trace"
       atEnd = false
       state = nil
 
@@ -269,6 +267,8 @@ class Parser()
          sr = state.rules
          ruleId = 0
          srlen = sr.len
+
+                  Debugger.breakpoint()
 
          while ruleId < srlen
             xrule = sr[ruleId++]
