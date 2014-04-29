@@ -159,11 +159,11 @@ FALCON_DEFINE_FUNCTION_P1( init )
          throw FALCON_SIGN_XERROR(ParamError, e_param_range, .extra("Invalid encoding "+*enc));
       }
 
-      TextReader* tr = new TextReader( i_source->castInst<Stream>(clsStream), tc );
-      tr->decref();
+      Stream* stream = i_source->castInst<Stream>(clsStream);
+      TextReader* tr = new TextReader( stream, tc );
       tk = new MultiTokenizer(tr);
+      tr->decref();
    }
-
 
    ctx->self() = FALCON_GC_STORE(methodOf(), tk);
    ctx->returnFrame(ctx->self());

@@ -118,6 +118,7 @@ public:
 StreamTokenizer::StreamTokenizer( TextReader* source, uint32 bufsize )
 {
    m_tr = source;
+   source->incref();
    m_bufSize = bufsize*4+4;
    m_bufLen = 0;
    m_buffer = 0;
@@ -440,6 +441,11 @@ bool StreamTokenizer::refill()
          m_bufPos -= bs2;
          m_bufLen -= bs2;
          memcpy(m_buffer, m_buffer +bs2, bs2);
+      }
+
+      if( m_buffer == 0 )
+      {
+         m_buffer = new char[m_bufSize];
       }
 
       // now try to utf8-ize the new stuff in the read string.
