@@ -94,6 +94,7 @@ StringStream::StringStream( int32 size ):
       size = 32;
 
    m_b->m_str->reserve(size);
+   status(t_open);
 }
 
 
@@ -106,6 +107,7 @@ StringStream::StringStream( const String &strbuf ):
 {
    *m_b->m_str = strbuf;
    m_b->m_str->bufferize();
+   status(t_open);
 }
 
 StringStream::StringStream( byte* data, int64 size ):
@@ -127,6 +129,7 @@ StringStream::StringStream( const StringStream &strbuf ):
 {
    strbuf.m_b->incref();
    m_b = strbuf.m_b;
+   status(t_open);
 }
 
 
@@ -257,7 +260,6 @@ size_t StringStream::read( void *buffer, size_t size )
    uint32 bsize =  m_b->m_str->size();
 
    if ( m_posRead >= bsize ) {
-      m_status = m_status | t_eof;
       m_b->m_mtx.unlock();
       
       return 0;
@@ -270,6 +272,9 @@ size_t StringStream::read( void *buffer, size_t size )
    if(! m_bPipeMode )
    {
       m_posWrite = m_posRead;
+      if ( m_posRead >= bsize ) {
+         m_status = m_status | t_eof;
+      }
    }
 
    m_b->m_mtx.unlock();
@@ -298,6 +303,10 @@ size_t StringStream::write( const void *buffer, size_t size )
    if( m_posWrite > m_b->m_str->size() )
    {
       m_b->m_str->size( (length_t) m_posWrite );
+      m_status = m_status | Stream::t_eof;
+   }
+   else {
+      m_status = m_status & ~Stream::t_eof;
    }
 
    if(! m_bPipeMode )
@@ -348,10 +357,12 @@ int64 StringStream::seek( int64 pos, Stream::e_whence w )
    else if ( m_posWrite < 0LL )
    {
       m_posWrite = 0;
-      m_status = t_none;
+      m_status = m_status & ~t_eof;
    }
    else
-      m_status = t_none;
+   {
+      m_status = m_status & ~t_eof;
+   }
 
    pos = m_posRead = m_posWrite;
    m_b->m_mtx.unlock();
