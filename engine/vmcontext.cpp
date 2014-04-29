@@ -2155,35 +2155,37 @@ void VMContext::contextualize( Error* error, bool force )
       error->line(l);
    }
 
-   if( error->mantra().empty() || force)
+   if( curFunc != 0 )
    {
-      error->mantra( curFunc->fullName() );
-   }
-
-   Module* mod = curFunc->module();
-   if( mod != 0 )
-   {
-      if( error->module().empty() || force )
+      if( error->mantra().empty() || force)
       {
-         error->module(mod->name());
+         error->mantra( curFunc->fullName() );
       }
 
-      if( error->path().empty() || force )
+      Module* mod = curFunc->module();
+      if( mod != 0 )
       {
-         error->path(mod->uri());
-      }
-
-      if( error->handler() == 0 )
-      {
-         // try to contextualize the handler in the module
-         const Class* cls = mod->getClass(error->className());
-         if( cls != 0 )
+         if( error->module().empty() || force )
          {
-            error->handler(cls);
+            error->module(mod->name());
+         }
+
+         if( error->path().empty() || force )
+         {
+            error->path(mod->uri());
+         }
+
+         if( error->handler() == 0 )
+         {
+            // try to contextualize the handler in the module
+            const Class* cls = mod->getClass(error->className());
+            if( cls != 0 )
+            {
+               error->handler(cls);
+            }
          }
       }
    }
-
 }
 
 void VMContext::fillTraceBack( TraceBack* tb, bool bRenderParams, long maxDepth )
