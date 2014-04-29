@@ -25,11 +25,7 @@
 
 namespace Falcon {
 
-/*#
- @class StringStream
- @brief Memory based virtual stream.
 
- */
 class FALCON_DYN_CLASS ClassStringStream: public ClassStream
 {
 public:
@@ -39,7 +35,6 @@ public:
    //=============================================================
    //
    virtual void* createInstance() const;
-   virtual bool op_init( VMContext* ctx, void*, int pcount ) const;
 
 };
 

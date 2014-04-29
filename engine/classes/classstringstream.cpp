@@ -28,6 +28,7 @@
 
 namespace Falcon {
 
+namespace {
 /*#
  @property pipeMode StringStream
  @brief Gets or sets the pipe mode for this string stream.
@@ -87,7 +88,48 @@ void Function_closeToString::invoke(Falcon::VMContext *ctx, Falcon::int32)
 }
 
 
+FALCON_DECLARE_FUNCTION(init, "prealloc:[S|N]");
+void Function_init::invoke(Falcon::VMContext *ctx, Falcon::int32)
+{
+   Item* i_count = ctx->param(0);
+   StringStream* ss;
+   if( i_count == 0 )
+   {
+      ss = new StringStream();
+   }
+   else {
+      int64 count;
+      if( i_count->isString() )
+      {
+         String* data = i_count->asString();
+         count = (int64) data->size();
+         ss = new StringStream( (int32) count );
+         ss->write(data->getRawStorage(), count);
+         ss->seekBegin(0);
+      }
+      else if( i_count->isOrdinal() )
+      {
+         count = (int64) i_count->forceInteger();
+         ss = new StringStream( (int32) count );
+      }
+      else {
+         throw paramError();
+      }
+   }
 
+   ctx->self() = FALCON_GC_STORE(this->methodOf(), ss);
+   ctx->returnFrame(ctx->self());
+}
+
+}
+
+/*#
+ @class StringStream
+ @brief Memory based virtual stream.
+ @from Stream
+ @param prealloc A number
+
+ */
 ClassStringStream::ClassStringStream():
       ClassStream("StringStream")
 {
@@ -96,6 +138,8 @@ ClassStringStream::ClassStringStream():
    addProperty( "pipeMode", &get_pipeMode, &set_pipeMode );
    addProperty( "content", &get_content );
    addMethod( new Function_closeToString );
+
+   setConstuctor(new Function_init);
 }
 
 ClassStringStream::~ClassStringStream()
@@ -104,33 +148,6 @@ ClassStringStream::~ClassStringStream()
 void* ClassStringStream::createInstance() const
 {
    return FALCON_CLASS_CREATE_AT_INIT;
-}
-
-
-bool ClassStringStream::op_init( VMContext* ctx, void*, int pcount ) const
-{
-   int64 count;
-
-   if( pcount == 0 )
-   {
-      count = 0;
-   }
-   else {
-      Item* i_count = ctx->opcodeParams(pcount);
-      if( ! i_count->isOrdinal() )
-      {
-         throw FALCON_SIGN_XERROR( ParamError, e_inv_params, .extra("N") );
-      }
-      count = i_count->forceInteger();
-      if( count < 0 )
-      {
-         throw FALCON_SIGN_XERROR( ParamError, e_param_range, .extra(">=0") );
-      }
-   }
-
-   StringStream* ss = new StringStream( (int32) count );
-   ctx->stackResult(pcount+1, FALCON_GC_STORE(this, ss));
-   return true;
 }
 
 }
