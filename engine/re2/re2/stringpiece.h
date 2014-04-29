@@ -49,7 +49,7 @@ class StringPiece {
   StringPiece(const std::string& str)
     : ptr_(str.data()), length_(static_cast<int>(str.size())), buffer_(0) { }
   StringPiece(const char* offset, int len) : ptr_(offset), length_(len), buffer_(0) { }
-  StringPiece(const Falcon::String& src, int start = 0 )
+  StringPiece(const Falcon::String& src, int start = 0 ): ptr_(0), length_(0), buffer_(0)
   {
      set(src, start);
   }

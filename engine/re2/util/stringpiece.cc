@@ -122,18 +122,22 @@ void StringPiece::set( const Falcon::String& src, Falcon::length_t start )
 
    // we must convert to utf-8
    Falcon::length_t bufSize = src.length()-start;
-   bool result = false;
-   while( ! result )
+   Falcon::length_t result = bufSize;
+   do
    {
       delete[] buffer_; // initally 0
       bufSize = bufSize * 2 + 4;
       buffer_ = new char[bufSize];
       if( start == 0 )
       {
-         result = src.toUTF8String( buffer_, bufSize ) != Falcon::String::npos;
+         result = src.toUTF8String( buffer_, bufSize );
       }
       else {
-         result = src.subString(start).toUTF8String(buffer_, bufSize ) != Falcon::String::npos;
+         result = src.subString(start).toUTF8String(buffer_, bufSize );
       }
    }
+   while( result == Falcon::String::npos );
+
+   ptr_ = buffer_;
+   length_ = result;
 }
