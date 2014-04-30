@@ -26,6 +26,7 @@
 #include <falcon/vmcontext.h>
 #include <falcon/processor.h>
 #include <falcon/gclock.h>
+#include <falcon/mt.h>
 
 namespace Falcon {
 namespace {
@@ -33,8 +34,17 @@ namespace {
 class MultiTokenizer: public StreamTokenizer
 {
 public:
+   bool m_giveTokens;
+   bool m_groupTokens;
+   bool m_tokenLoaded;
+   String m_lastToken;
+   Mutex m_mtmtx;
+
    MultiTokenizer(const String& src ):
-      StreamTokenizer(src)
+      StreamTokenizer(src),
+      m_giveTokens(false),
+      m_groupTokens(false),
+      m_tokenLoaded(false)
    {
       setOwnText(false);
       setOwnToken(false);
@@ -42,7 +52,10 @@ public:
 
 
    MultiTokenizer( TextReader* tr, uint32 bufsize = StreamTokenizer::DEFAULT_BUFFER_SIZE ):
-      StreamTokenizer(tr, bufsize)
+      StreamTokenizer(tr, bufsize),
+      m_giveTokens(false),
+      m_groupTokens(false),
+      m_tokenLoaded(false)
    {
       setOwnText(false);
       setOwnToken(false);
@@ -53,16 +66,39 @@ public:
    {}
 
 
-   virtual ~MultiTokenizer() {}
+   virtual ~MultiTokenizer() {
+   }
 
 
    virtual void onTokenFound( int32 id, String* textContent, String* tokenContent, void* userData )
    {
       static const PStep* rt = &Engine::instance()->stdSteps()->m_returnFrameWithTop;
       static const PStep* rtd = &Engine::instance()->stdSteps()->m_returnFrameWithTopDoubt;
+      static const PStep* reinv = &Engine::instance()->stdSteps()->m_reinvoke;
 
       VMContext* ctx = Processor::currentProcessor()->currentContext();
       GCLock* glk = static_cast<GCLock*>(userData);
+
+      // ignore identical tokens?
+      if( tokenContent != 0 )
+      {
+         m_mtmtx.lock();
+         if(
+             m_groupTokens
+             && m_lastToken == *tokenContent
+             && textContent->empty() )
+         {
+            m_mtmtx.unlock();
+            delete tokenContent;
+            delete textContent;
+            ctx->pushCode(reinv);
+            return;
+         }
+
+         m_lastToken = *tokenContent;
+         m_tokenLoaded = true;
+         m_mtmtx.unlock();
+      }
 
       if( glk == 0 )
       {
@@ -99,11 +135,70 @@ public:
    }
 };
 
+
+static MultiTokenizer* internal_setSource(Function* caller, VMContext* ctx, MultiTokenizer* tk)
+{
+   static Class* clsStream = Engine::instance()->stdHandlers()->streamClass();
+
+
+   Item* i_source= ctx->param(0);
+   Item* i_enc = ctx->param(1);
+   if( i_source == 0 || ! (i_source->isString() || i_source->isInstanceOf(clsStream))
+       || (i_enc != 0 && ! (i_enc->isNil() || i_enc->isString()) )
+       )
+   {
+      throw caller->paramError();
+   }
+
+   String dflt("C");
+   String* enc;
+   if( i_enc == 0 || i_enc->isNil() )
+   {
+      enc = &dflt;
+   }
+   else {
+      enc = i_enc->asString();
+   }
+
+   if( i_source->isString() )
+   {
+      if( tk == 0 ) {
+         tk = new MultiTokenizer(*i_source->asString());
+      }
+      else {
+         tk->setSource( *i_source->asString() );
+      }
+   }
+   else {
+      Transcoder* tc = Engine::instance()->getTranscoder(*enc);
+      if( tc == 0 )
+      {
+         throw FALCON_SIGN_XERROR(ParamError, e_param_range, .extra("Invalid encoding "+*enc));
+      }
+
+      Stream* stream = i_source->castInst<Stream>(clsStream);
+      TextReader* tr = new TextReader( stream, tc );
+      if( tk == 0 )
+      {
+         tk = new MultiTokenizer(tr);
+      }
+      else
+      {
+         tk->setSource(tr);
+      }
+      tr->decref();
+   }
+
+   return tk;
+}
+
 /*#
  @class MultiTokenizer
  @brief Advanced helper for iterative and generator-based sub-string extractor.
  @param source The string to be tokenized or a @a Stream
- @optparam enc Text-encoding of the given stream (defaults to "utf8").
+ @optparam enc Text-encoding of the given stream (defaults to "C").
+ @optparam give If true, tokens will be returned in next() calls.
+ @optparam group If true, sbusequent identical tokens delimiting an empty string won't be returned.
 
  This class performs an iterative tokenization over a given string, using multiple
  tokens and providing information about which token is actually found.
@@ -120,49 +215,39 @@ public:
  ^[] iterator operator, forEach() BOM method etc.), and it provides next()/hasNext() methods
  that can be used directly to extract the desired tokens.
 
+ If the @b give parameter is set to true, the iterations and the next() method will also
+ return the tokens that have been found; otherwise, they will just return the strings that
+ are delimited by the tokens.
 
+ If the @b group parameter is true, then identical tokens following one another wihtout
+ delimiting any non-empty string will be silently discarded; even the assigned callback,
+ if any, won't be invoked. For instance, with grouping active, the tokenizing the
+ string "a,,b" on the ',' token will generate the sequence ['a' 'b'] (or eventually
+ ['a' ',' 'b'] if the @b give parameter is true), while without grouping the sequence
+ would be ['a' '' 'b'], or ['a' ',' '' ',' 'b'] with @b give set to true.
+
+ The @b group and @b give options can be dynamically changed through the properties
+ @b giveTokens and @b groupTokens.
+
+ @prop giveTokens if true, tokens will be given back as part of the iterations.
+ @prop groupTokens if true, subsequent identical tokens will be discarded.
 */
-FALCON_DECLARE_FUNCTION( init, "source:S|Stream,enc:[S]" );
+FALCON_DECLARE_FUNCTION( init, "source:S|Stream,enc:[S],give:[B],group:[B]" );
 FALCON_DEFINE_FUNCTION_P1( init )
 {
-   static Class* clsStream = Engine::instance()->stdHandlers()->streamClass();
+   MultiTokenizer* tk = internal_setSource(this, ctx, 0);
 
-   Item* i_source= ctx->param(0);
-   Item* i_enc = ctx->param(1);
+   Item* i_give = ctx->param(2);
+   Item* i_group = ctx->param(3);
 
-   if( i_source == 0 || ! (i_source->isString() || i_source->isInstanceOf(clsStream))
-       || (i_enc != 0 && ! i_enc->isString() )
-       )
+   if( i_group!= 0 && i_group->isTrue() )
    {
-      throw paramError();
+      tk->m_groupTokens = true;
    }
 
-   String dflt("utf8");
-   String* enc;
-   if( i_enc == 0 )
+   if( i_give != 0 && i_give->isTrue() )
    {
-      enc = &dflt;
-   }
-   else {
-      enc = i_enc->asString();
-   }
-
-   MultiTokenizer* tk;
-   if( i_source->isString() )
-   {
-      tk = new MultiTokenizer(*i_source->asString());
-   }
-   else {
-      Transcoder* tc = Engine::instance()->getTranscoder(*enc);
-      if( tc == 0 )
-      {
-         throw FALCON_SIGN_XERROR(ParamError, e_param_range, .extra("Invalid encoding "+*enc));
-      }
-
-      Stream* stream = i_source->castInst<Stream>(clsStream);
-      TextReader* tr = new TextReader( stream, tc );
-      tk = new MultiTokenizer(tr);
-      tr->decref();
+      tk->m_giveTokens = true;
    }
 
    ctx->self() = FALCON_GC_STORE(methodOf(), tk);
@@ -171,6 +256,7 @@ FALCON_DEFINE_FUNCTION_P1( init )
 
 /*#
  @method next MultiTokenizer
+ @brief Iterates through the tokenized sequence.
  @return the next tokenized substring or nil of none.
 
  */
@@ -178,12 +264,76 @@ FALCON_DECLARE_FUNCTION( next, "" );
 FALCON_DEFINE_FUNCTION_P1( next )
 {
    MultiTokenizer* tk = ctx->tself<MultiTokenizer*>();
-
-   if( ! tk->next() )
+   tk->m_mtmtx.lock();
+   if( tk->m_giveTokens && tk->m_tokenLoaded )
    {
-      ctx->returnFrame();
+      tk->m_tokenLoaded = false;
+      String* copy = new String(tk->m_lastToken);
+      tk->m_mtmtx.unlock();
+
+      ctx->returnFrame( FALCON_GC_HANDLE( copy ) );
+
+      if( tk->hasNext() )
+      {
+         ctx->topData().setDoubt();
+      }
+   }
+   else {
+      tk->m_mtmtx.unlock();
+
+      if( ! tk->next() )
+      {
+         ctx->returnFrame();
+      }
+      // if next() was succesful, MultiTokenizer onTokenFound will return the frame.
    }
 }
+
+/*#
+ @method rewind() MultiTokenizer
+ @brief resets the tokenizer to its initial status.
+ @throw IOError if the source cannot be rewound
+
+ This method will throw an I/O error if the source is a pipe-like
+ stream. In all the other cases, the source is rewound to its initial status.
+ */
+FALCON_DECLARE_FUNCTION( rewind, "" );
+FALCON_DEFINE_FUNCTION_P1( rewind )
+{
+   MultiTokenizer* tk = ctx->tself<MultiTokenizer*>();
+   tk->m_mtmtx.lock();
+   tk->m_tokenLoaded = false;
+   tk->m_mtmtx.unlock();
+
+   tk->rewind();
+
+   ctx->returnFrame();
+}
+
+
+/*#
+ @method setSource() MultiTokenizer
+ @brief Changes the source used by this tokenizer.
+ @param source The string to be tokenized or a @a Stream
+ @optparam enc Text-encoding of the given stream (defaults to "C").
+
+ This method changes the source from which the tokenization is
+ performed. It's effect is that of keeping the tokenizer structure
+ (tokens and callbacks) while being able to perform a new tokenization
+ on a new input.
+ */
+FALCON_DECLARE_FUNCTION( setSource, "source:S|Stream,enc:[S]" );
+FALCON_DEFINE_FUNCTION_P1( setSource )
+{
+   MultiTokenizer* tk = ctx->tself<MultiTokenizer*>();
+   tk->m_mtmtx.lock();
+   tk->m_tokenLoaded = false;
+   tk->m_mtmtx.unlock();
+
+   internal_setSource(this, ctx, tk);
+   ctx->returnFrame();
+}
+
 
 /*#
  @property hasNext MultiTokenizer
@@ -323,6 +473,48 @@ FALCON_DEFINE_FUNCTION_P1( onResidual )
 }
 
 
+static void get_giveTokens(const Class*, const String&, void* inst, Item& value )
+{
+   MultiTokenizer* tk = static_cast<MultiTokenizer*>(inst);
+   tk->m_mtmtx.lock();
+   bool v = tk->m_giveTokens;
+   tk->m_mtmtx.unlock();
+   value.setBoolean(v);
+}
+
+
+static void set_giveTokens(const Class*, const String&, void* inst, const Item& value )
+{
+   bool v = value.isTrue();
+
+   MultiTokenizer* tk = static_cast<MultiTokenizer*>(inst);
+   tk->m_mtmtx.lock();
+   tk->m_giveTokens = v;
+   tk->m_mtmtx.unlock();
+}
+
+
+static void get_groupTokens(const Class*, const String&, void* inst, Item& value )
+{
+   MultiTokenizer* tk = static_cast<MultiTokenizer*>(inst);
+   tk->m_mtmtx.lock();
+   bool v = tk->m_groupTokens;
+   tk->m_mtmtx.unlock();
+   value.setBoolean(v);
+}
+
+
+static void set_groupTokens(const Class*, const String&, void* inst, const Item& value )
+{
+   bool v = value.isTrue();
+
+   MultiTokenizer* tk = static_cast<MultiTokenizer*>(inst);
+   tk->m_mtmtx.lock();
+   tk->m_groupTokens = v;
+   tk->m_mtmtx.unlock();
+}
+
+
 }
 
 
@@ -338,8 +530,11 @@ ClassMultiTokenizer::ClassMultiTokenizer():
    addMethod( new FALCON_FUNCTION_NAME(addToken) );
    addMethod( new FALCON_FUNCTION_NAME(addRE) );
    addMethod( new FALCON_FUNCTION_NAME(onResidual) );
+   addMethod( new FALCON_FUNCTION_NAME(rewind) );
 
    addProperty("hasNext", &get_hasNext);
+   addProperty("giveTokens", &get_giveTokens, &set_giveTokens);
+   addProperty("groupTokens", &get_groupTokens, &set_groupTokens );
 }
 
 

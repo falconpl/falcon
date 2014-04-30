@@ -19,6 +19,7 @@
 #include <falcon/fassert.h>
 #include <falcon/textreader.h>
 #include <falcon/mt.h>
+#include <falcon/stream.h>
 
 #include "../re2/re2/re2.h"
 #include "../re2/re2/stringpiece.h"
@@ -117,13 +118,12 @@ public:
 
 StreamTokenizer::StreamTokenizer( TextReader* source, uint32 bufsize )
 {
-   m_tr = source;
-   source->incref();
-   m_bufSize = bufsize*4+4;
-   m_bufLen = 0;
-   m_buffer = 0;
-   init();
+   m_tr = 0;
+   _p = new Private;
+
+   setSource( source, bufsize );
 }
+
 
 StreamTokenizer::StreamTokenizer( const StreamTokenizer& other )
 {
@@ -155,9 +155,9 @@ StreamTokenizer::StreamTokenizer( const StreamTokenizer& other )
 StreamTokenizer::StreamTokenizer( const String& buffer )
 {
    m_tr = 0;
-   m_buffer = buffer.toUTF8String(m_bufSize);
-   m_bufLen = m_bufSize;
-   init();
+   _p = new Private;
+
+   setSource(buffer);
 }
 
 
@@ -188,8 +188,47 @@ void StreamTokenizer::init()
    m_bOwnText = true;
    m_bOwnToken = true;
    m_hasRegex = false;
+}
 
-   _p = new Private;
+
+void StreamTokenizer::setSource(TextReader* source, uint32 bufsize )
+{
+   source->incref();
+
+   _p->m_mtx.lock();
+   if( m_tr != 0 )
+   {
+      TextReader* old = m_tr;
+      m_tr = 0;
+      _p->m_mtx.unlock();
+      old->decref();
+      _p->m_mtx.lock();
+   }
+
+   m_tr = source;
+   m_bufSize = bufsize*2+4;
+   m_bufLen = 0;
+   m_buffer = 0;
+   init();
+   _p->m_mtx.unlock();
+}
+
+void StreamTokenizer::setSource(const String& buffer )
+{
+   _p->m_mtx.lock();
+   if( m_tr != 0 )
+   {
+      TextReader* old = m_tr;
+      m_tr = 0;
+      _p->m_mtx.unlock();
+      old->decref();
+      _p->m_mtx.lock();
+   }
+
+   m_buffer = buffer.toUTF8String(m_bufSize);
+   m_bufLen = m_bufSize;
+   init();
+   _p->m_mtx.unlock();
 }
 
 
@@ -222,6 +261,31 @@ void StreamTokenizer::onResidual(void* data, StreamTokenizer::deletor del)
    _p->m_mtx.unlock();
 }
 
+
+void StreamTokenizer::rewind()
+{
+   _p->m_mtx.lock();
+   m_bufPos = 0;
+   if( m_tr != 0 )
+   {
+      m_bufLen = 0;
+      Stream* stream = m_tr->underlying();
+      Transcoder* tc = m_tr->transcoder();
+      // this might throw
+      stream->seekBegin(0);
+
+      stream->incref();
+      m_tr->decref();
+
+      m_tr = new TextReader(stream, tc);
+      stream->decref();
+
+   }
+   else {
+      m_bufLen = m_bufSize;
+   }
+   _p->m_mtx.unlock();
+}
 
 void StreamTokenizer::onTokenFound( int32 , String* , String* , void* )
 {

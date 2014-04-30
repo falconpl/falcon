@@ -50,6 +50,9 @@ public:
 
    virtual ~StreamTokenizer();
 
+   void setSource(TextReader* source, uint32 bufsize=DEFAULT_BUFFER_SIZE );
+   void setSource(const String& source );
+
    bool next();
    bool hasNext() const;
 
@@ -68,6 +71,8 @@ public:
    void addToken( const String& token, void *data = 0, deletor del = 0 );
    void addRE( const String& re, void *data = 0, deletor del = 0  );
    void onResidual(void* data, deletor del = 0);
+
+   void rewind();
 
 private:
    TextReader* m_tr;
