@@ -206,6 +206,18 @@ inline bool isEta( const Item& top, int& pcount )
      }
      break;
 
+     case FLC_CLASS_ID_CLASS:
+     {
+        Class* cls = static_cast<Class*>(top.asInst());
+        Function* ctr = cls->getConstructor();
+        if( ctr != 0 )
+        {
+           pcount = ctr->paramCount();
+           return ctr->isEta();
+        }
+     }
+     break;
+
      case FLC_ITEM_METHOD:
      {
         Function* f = top.asMethodFunction();
@@ -294,6 +306,16 @@ inline int findParameter( const Item& called, const String& pname )
 
       case FLC_ITEM_METHOD:
          symbols = &called.asMethodFunction()->parameters();
+         break;
+
+      case FLC_CLASS_ID_CLASS:
+         {
+            Class* cls = static_cast<Class*>(called.asInst());
+            if( cls->getConstructor() != 0 )
+            {
+               symbols = &cls->getConstructor()->parameters();
+            }
+         }
          break;
 
       case FLC_CLASS_ID_TREESTEP:
