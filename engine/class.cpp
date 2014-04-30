@@ -518,6 +518,12 @@ void Class::setConstuctor( ext_func_t func, const String& prototype )
 }
 
 
+Function* Class::getConstructor() const
+{
+   return _p->m_constructor;
+}
+
+
 void Class::addConstant( const String& name, const Item& value )
 {
    _p->m_props[name].set(0, 0, true, true, true, 0, value );

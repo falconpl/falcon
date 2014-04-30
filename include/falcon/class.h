@@ -1151,6 +1151,11 @@ public:
    */
    void setConstuctor( ext_func_t func, const String& prototype );
 
+   /** Returns the constructor
+    * \return the constructor
+    */
+   Function* getConstructor() const;
+
    /** Adds a class-wide constant. 
       \param name the name of the constant.
       \param value The value that the constant should assume.
