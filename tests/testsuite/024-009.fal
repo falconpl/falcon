@@ -1,0 +1,48 @@
+/*
+@name MultiTokenizer on Stream
+@category Core-various
+
+@output
+MultiTokenizer on Stream
+Getting off, Grouping off:
+Sequence: 'a', '', 'b', '', 'c', 'd', 'e', '', ''.
+==================================================
+Getting off, Grouping on
+Sequence: 'a', 'b', 'c', 'd', 'e', ''.
+==================================================
+Getting on, Grouping on:
+Sequence: 'a', ',', 'b', ';', 'c', ' ', 'd', '.', 'e', ';', ''.
+Done
+*/
+
+> "MultiTokenizer on Stream"
+
+function test(mt)
+   for piece in mt
+      forfirst: >> "Sequence: "
+      >> "'", piece, "'"
+      formiddle: >> ", "
+      forlast: > "."
+   end
+end
+
+> "Getting off, Grouping off:"
+mt = MultiTokenizer( StringStream("a,,b;;c d.e;;") )
+mt.add( r",|;", " ", "." )
+
+test(mt)
+
+> "="*50
+> "Getting off, Grouping on"
+mt.rewind()
+mt.groupTokens = true
+test(mt)
+
+> "="*50
+> "Getting on, Grouping on:"
+mt.rewind()
+mt.giveTokens = true
+mt.groupTokens = true
+test(mt)
+
+> "Done"
