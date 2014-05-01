@@ -252,6 +252,16 @@ void StreamTokenizer::addRE( const String& re, void* data, StreamTokenizer::dele
    _p->m_mtx.unlock();
 }
 
+void StreamTokenizer::addRE( re2::RE2* regex, void* data, StreamTokenizer::deletor del )
+{
+   // this might throw
+   Token* tk = new Token(_p->m_tlist.size(), regex, data, del );
+   _p->m_mtx.lock();
+   _p->m_tlist.push_back(tk);
+   _p->m_mtx.unlock();
+}
+
+
 
 void StreamTokenizer::onResidual(void* data, StreamTokenizer::deletor del)
 {

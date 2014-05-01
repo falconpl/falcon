@@ -20,6 +20,10 @@
 #include <falcon/types.h>
 #include <falcon/string.h>
 
+namespace re2 {
+   class RE2;
+}
+
 namespace Falcon {
 
 class TextReader;
@@ -70,6 +74,7 @@ public:
 
    void addToken( const String& token, void *data = 0, deletor del = 0 );
    void addRE( const String& re, void *data = 0, deletor del = 0  );
+   void addRE( re2::RE2* regex, void* data = 0, deletor del = 0 );
    void onResidual(void* data, deletor del = 0);
 
    void rewind();

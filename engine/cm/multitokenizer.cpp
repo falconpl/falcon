@@ -28,6 +28,8 @@
 #include <falcon/gclock.h>
 #include <falcon/mt.h>
 
+#include "../re2/re2/re2.h"
+
 namespace Falcon {
 namespace {
 
@@ -514,6 +516,50 @@ static void set_groupTokens(const Class*, const String&, void* inst, const Item&
    tk->m_mtmtx.unlock();
 }
 
+/*#
+ @method add MultiTokenizer
+ @brief Adds multiple tokens or regular expressions to the tokenizer.
+ @param token The token to be added
+ @optparam ... More tokens.
+ @return This instance
+
+ This method adds one or more strings or regular expressions to the tokenizer.
+ A regular expression can be added using a r"" string or an instance of
+ the RE.
+
+ */
+FALCON_DECLARE_FUNCTION( add, "token:S|RE,..." );
+FALCON_DEFINE_FUNCTION_P( add )
+{
+   if( pCount == 0 )
+   {
+      throw paramError(__LINE__, SRC);
+   }
+
+   MultiTokenizer* mt = ctx->tself<MultiTokenizer*>();
+
+   for( int i = 0; i < pCount; i++ )
+   {
+      Item* item = ctx->param(i);
+      if( item->isString() )
+      {
+         String* token = item->asString();
+         mt->addToken(*token);
+      }
+      else if( item->type() == FLC_CLASS_ID_RE )
+      {
+         re2::RE2* re = static_cast<re2::RE2*>(item->asInst());
+         re2::RE2* cre = new re2::RE2(re->pattern());
+         mt->addRE( cre );
+      }
+      else
+      {
+         throw paramError(__LINE__, SRC, String("Parameter ").N(i).A(" is not String nor RE").c_ize() );
+      }
+   }
+
+   ctx->returnFrame( ctx->self() );
+}
 
 }
 
@@ -531,6 +577,7 @@ ClassMultiTokenizer::ClassMultiTokenizer():
    addMethod( new FALCON_FUNCTION_NAME(addRE) );
    addMethod( new FALCON_FUNCTION_NAME(onResidual) );
    addMethod( new FALCON_FUNCTION_NAME(rewind) );
+   addMethod( new FALCON_FUNCTION_NAME(add) );
 
    addProperty("hasNext", &get_hasNext);
    addProperty("giveTokens", &get_giveTokens, &set_giveTokens);
