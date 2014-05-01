@@ -120,6 +120,7 @@ StreamTokenizer::StreamTokenizer( TextReader* source, uint32 bufsize )
 {
    m_tr = 0;
    _p = new Private;
+   init();
 
    setSource( source, bufsize );
 }
@@ -156,6 +157,7 @@ StreamTokenizer::StreamTokenizer( const String& buffer )
 {
    m_tr = 0;
    _p = new Private;
+   init();
 
    setSource(buffer);
 }
@@ -185,6 +187,7 @@ StreamTokenizer::~StreamTokenizer()
 void StreamTokenizer::init()
 {
    m_bufPos = 0;
+   m_lastToken = false;
    m_bOwnText = true;
    m_bOwnToken = true;
    m_hasRegex = false;
@@ -209,7 +212,8 @@ void StreamTokenizer::setSource(TextReader* source, uint32 bufsize )
    m_bufSize = bufsize*2+4;
    m_bufLen = 0;
    m_buffer = 0;
-   init();
+   m_bufPos = 0;
+   m_lastToken = false;
    _p->m_mtx.unlock();
 }
 
@@ -227,7 +231,7 @@ void StreamTokenizer::setSource(const String& buffer )
 
    m_buffer = buffer.toUTF8String(m_bufSize);
    m_bufLen = m_bufSize;
-   init();
+   m_bufPos = 0;
    _p->m_mtx.unlock();
 }
 
@@ -276,6 +280,7 @@ void StreamTokenizer::rewind()
 {
    _p->m_mtx.lock();
    m_bufPos = 0;
+   m_lastToken = false;
    if( m_tr != 0 )
    {
       m_bufLen = 0;
@@ -336,6 +341,7 @@ bool StreamTokenizer::next()
       {
          m_bufPos = pos;
       }
+      m_lastToken = m_bufPos == m_bufLen;
       _p->m_mtx.unlock();
 
       String *tok = new String;
@@ -368,6 +374,7 @@ bool StreamTokenizer::next()
       String* running = new String;
       running->fromUTF8(m_buffer + m_bufPos, m_bufLen - m_bufPos);
       m_bufPos = m_bufLen = 0;
+      m_lastToken = false;
       _p->m_mtx.unlock();
 
       onTokenFound(-1, running, 0, _p->m_resData);
@@ -399,6 +406,7 @@ bool StreamTokenizer::hasNext() const
    else {
       res = m_bufPos != m_bufLen;
    }
+   res |= m_lastToken;
    _p->m_mtx.unlock();
 
    return res;
@@ -505,7 +513,7 @@ bool StreamTokenizer::refill()
       // hit eof?
       if( rlen == 0 )
       {
-         return false;
+         return m_lastToken;
       }
 
       // need to move the upper size of the buffers back?
@@ -538,7 +546,7 @@ bool StreamTokenizer::refill()
       return true;
    }
 
-   return false;
+   return m_lastToken;
 }
 
 }

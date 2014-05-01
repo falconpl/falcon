@@ -1,0 +1,36 @@
+/*
+@name MultiTokenizer RE
+@category Core-various
+
+@output
+MultiTokenizer RE
+Sequence: a, b, c, d, e.
+==================================================
+Leaving a token at end
+Sequence: a, b, c, d.
+Done
+@endoutput
+*/
+
+> "MultiTokenizer RE"
+
+function test(mt)
+   for piece in mt
+      forfirst: >> "Sequence: "
+      >> piece
+      formiddle: >> ", "
+      forlast: > "."
+   end
+end
+
+mt = MultiTokenizer( "a,b;c d.e" )
+mt.add( r",|\\.|;| " )
+
+test(mt)
+
+> "="*50
+> "Leaving a token at end"
+mt.setSource("a,b;c d.")
+test(mt)
+
+> "Done"

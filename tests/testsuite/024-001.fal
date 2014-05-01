@@ -1,0 +1,46 @@
+/*
+@name MultiTokenizer change source
+@category Core-various
+
+@output
+MultiTokenizer change source
+Testing 'Hello World'
+Hello
+World
+==================================================
+Testing 'Hello World' via rewind
+Hello
+World
+==================================================
+Testing 'Hello World Again' via setSource
+Hello
+World
+Again
+Done
+@endoutput
+*/
+
+> "MultiTokenizer change source"
+
+function check(mt)
+   while mt.hasNext
+      > mt.next()
+   end
+end
+
+> "Testing 'Hello World'"
+mt = MultiTokenizer("Hello World")
+mt.add(" ")
+check(mt)
+
+> "="*50
+> "Testing 'Hello World' via rewind"
+mt.rewind()
+check(mt)
+
+> "="*50
+> "Testing 'Hello World Again' via setSource"
+mt.setSource( "Hello World Again" )
+check(mt)
+
+> "Done"

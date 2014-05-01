@@ -1,0 +1,39 @@
+/*
+@name MultiTokenizer getting tokens
+@category Core-various
+
+@output
+MultiTokenizer Getting Tokens
+Getting off:
+Sequence: 'a', '', 'b', '', 'c', 'd', 'e', ''.
+==================================================
+Getting on:
+Sequence: 'a', ',', '', ',', 'b', ';', '', ';', 'c', ' ', 'd', '.', 'e', ';', ''.
+Done
+@endoutput
+*/
+
+> "MultiTokenizer Getting Tokens"
+
+function test(mt)
+   for piece in mt
+      forfirst: >> "Sequence: "
+      >> "'", piece, "'"
+      formiddle: >> ", "
+      forlast: > "."
+   end
+end
+
+> "Getting off:"
+mt = MultiTokenizer( "a,,b;;c d.e;;" )
+mt.add( r",|;", " ", "." )
+
+test(mt)
+
+> "="*50
+> "Getting on:"
+mt.rewind()
+mt.giveTokens = true
+test(mt)
+
+> "Done"

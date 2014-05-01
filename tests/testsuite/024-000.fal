@@ -1,0 +1,22 @@
+/*
+@name MultiTokenizer smoke test
+@category Core-various
+
+@output
+MultiTokenizer smoke test
+Hello
+World
+Done
+@endoutput
+*/
+
+> "MultiTokenizer smoke test"
+
+mt = MultiTokenizer("Hello World")
+mt.add(" ")
+
+while mt.hasNext
+   > mt.next()
+end
+
+> "Done"

@@ -81,6 +81,7 @@ public:
       VMContext* ctx = Processor::currentProcessor()->currentContext();
       GCLock* glk = static_cast<GCLock*>(userData);
 
+      bool loaded = false;
       // ignore identical tokens?
       if( tokenContent != 0 )
       {
@@ -98,14 +99,14 @@ public:
          }
 
          m_lastToken = *tokenContent;
-         m_tokenLoaded = true;
+         loaded = m_tokenLoaded = true;
          m_mtmtx.unlock();
       }
 
       if( glk == 0 )
       {
          delete tokenContent;
-         if( hasNext() )
+         if( hasNext() || loaded )
          {
             ctx->returnFrameDoubt(FALCON_GC_HANDLE(textContent));
          }
@@ -116,7 +117,7 @@ public:
       }
       else {
          const Item& cb = glk->item();
-         ctx->pushCode( hasNext() ? rtd : rt );
+         ctx->pushCode( hasNext() || loaded ? rtd : rt );
          int count;
          Item params[3];
 
@@ -305,6 +306,7 @@ FALCON_DEFINE_FUNCTION_P1( rewind )
    MultiTokenizer* tk = ctx->tself<MultiTokenizer*>();
    tk->m_mtmtx.lock();
    tk->m_tokenLoaded = false;
+   tk->m_lastToken.size(0);
    tk->m_mtmtx.unlock();
 
    tk->rewind();
@@ -578,6 +580,7 @@ ClassMultiTokenizer::ClassMultiTokenizer():
    addMethod( new FALCON_FUNCTION_NAME(onResidual) );
    addMethod( new FALCON_FUNCTION_NAME(rewind) );
    addMethod( new FALCON_FUNCTION_NAME(add) );
+   addMethod( new FALCON_FUNCTION_NAME(setSource) );
 
    addProperty("hasNext", &get_hasNext);
    addProperty("giveTokens", &get_giveTokens, &set_giveTokens);

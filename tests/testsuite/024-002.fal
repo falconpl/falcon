@@ -1,0 +1,23 @@
+/*
+@name MultiTokenizer iterator
+@category Core-various
+
+@output
+MultiTokenizer iterator
+Sequence: Hello, World, Again.
+Done
+@endoutput
+*/
+
+> "MultiTokenizer iterator"
+
+mt = MultiTokenizer( "Hello World Again" )
+mt.add(" ")
+for piece in mt
+   forfirst: >> "Sequence: "
+   >> piece
+   formiddle: >> ", "
+   forlast: > "."
+end
+
+> "Done"

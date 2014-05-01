@@ -96,6 +96,7 @@ private:
 
    // set to true when there is some regex in tokens.
    bool m_hasRegex;
+   bool m_lastToken;
 
    class Private;
    Private* _p;
