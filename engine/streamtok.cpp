@@ -91,7 +91,9 @@ public:
    Private():
       m_refCount(1),
       m_resData(0),
-      m_resDataDel(0)
+      m_resDataDel(0),
+      m_resTokData(0),
+      m_resTokDataDel(0)
    {}
 
    ~Private() {
@@ -106,23 +108,39 @@ public:
       {
          m_resDataDel(m_resData);
       }
+
+      if ( m_resTokDataDel != 0 )
+      {
+         m_resTokDataDel(m_resTokData);
+      }
    }
 
    Mutex m_mtx;
    int m_refCount;
    void* m_resData;
    StreamTokenizer::deletor m_resDataDel;
+
+   void* m_resTokData;
+   StreamTokenizer::deletor m_resTokDataDel;
 };
 
 
 
 StreamTokenizer::StreamTokenizer( TextReader* source, uint32 bufsize )
 {
-   m_tr = 0;
-   _p = new Private;
+   m_bufSize = bufsize;
    init();
 
-   setSource( source, bufsize );
+   setSource( source );
+}
+
+
+StreamTokenizer::StreamTokenizer( const String& buffer, uint32 bufsize )
+{
+   m_bufSize = bufsize;
+   init();
+
+   setSource(buffer);
 }
 
 
@@ -143,23 +161,17 @@ StreamTokenizer::StreamTokenizer( const StreamTokenizer& other )
       memcpy( m_buffer, other.m_buffer, m_bufLen );
    }
 
-   m_bufPos = other.m_bufPos;
+   m_srcPos = other.m_srcPos;
    m_bOwnText = other.m_bOwnText;
    m_bOwnToken = other.m_bOwnToken;
    m_hasRegex = other.m_hasRegex;
 
+   m_giveTokens = other.m_giveTokens;
+   m_groupTokens = other.m_groupTokens;
+
    _p = other._p;
    _p->m_refCount++;
    _p->m_mtx.unlock();
-}
-
-StreamTokenizer::StreamTokenizer( const String& buffer )
-{
-   m_tr = 0;
-   _p = new Private;
-   init();
-
-   setSource(buffer);
 }
 
 
@@ -170,7 +182,7 @@ StreamTokenizer::~StreamTokenizer()
       m_tr->decref();
    }
 
-   delete m_buffer;
+   delete[] m_buffer;
 
    _p->m_mtx.lock();
    if( --_p->m_refCount == 0 )
@@ -186,15 +198,30 @@ StreamTokenizer::~StreamTokenizer()
 
 void StreamTokenizer::init()
 {
-   m_bufPos = 0;
-   m_lastToken = false;
    m_bOwnText = true;
    m_bOwnToken = true;
    m_hasRegex = false;
+   m_giveTokens = false;
+   m_groupTokens = false;
+   m_buffer = new char[m_bufSize];
+
+   m_tr = 0;
+   m_tokenID = 0;
+   _p = new Private;
 }
 
 
-void StreamTokenizer::setSource(TextReader* source, uint32 bufsize )
+void StreamTokenizer::reinit()
+{
+   m_hasLastToken = true;
+   m_tokenLoaded = false;
+   m_hasToken = false;
+   m_srcPos = 0;
+   m_bufLen = 0;
+}
+
+
+void StreamTokenizer::setSource(TextReader* source )
 {
    source->incref();
 
@@ -209,13 +236,10 @@ void StreamTokenizer::setSource(TextReader* source, uint32 bufsize )
    }
 
    m_tr = source;
-   m_bufSize = bufsize*2+4;
-   m_bufLen = 0;
-   m_buffer = 0;
-   m_bufPos = 0;
-   m_lastToken = false;
+   reinit();
    _p->m_mtx.unlock();
 }
+
 
 void StreamTokenizer::setSource(const String& buffer )
 {
@@ -229,9 +253,9 @@ void StreamTokenizer::setSource(const String& buffer )
       _p->m_mtx.lock();
    }
 
-   m_buffer = buffer.toUTF8String(m_bufSize);
-   m_bufLen = m_bufSize;
-   m_bufPos = 0;
+   m_source = buffer;
+   m_source.bufferize();
+   reinit();
    _p->m_mtx.unlock();
 }
 
@@ -256,6 +280,7 @@ void StreamTokenizer::addRE( const String& re, void* data, StreamTokenizer::dele
    _p->m_mtx.unlock();
 }
 
+
 void StreamTokenizer::addRE( re2::RE2* regex, void* data, StreamTokenizer::deletor del )
 {
    // this might throw
@@ -267,7 +292,7 @@ void StreamTokenizer::addRE( re2::RE2* regex, void* data, StreamTokenizer::delet
 
 
 
-void StreamTokenizer::onResidual(void* data, StreamTokenizer::deletor del)
+void StreamTokenizer::setTextCallbackData(void* data, StreamTokenizer::deletor del)
 {
    _p->m_mtx.lock();
    _p->m_resData = data;
@@ -276,11 +301,38 @@ void StreamTokenizer::onResidual(void* data, StreamTokenizer::deletor del)
 }
 
 
+void StreamTokenizer::setTokenCallbackData(void* data, StreamTokenizer::deletor del)
+{
+   _p->m_mtx.lock();
+   _p->m_resTokData = data;
+   _p->m_resTokDataDel = del;
+   _p->m_mtx.unlock();
+}
+
+
+void* StreamTokenizer::getTextCallbackData() const
+{
+   _p->m_mtx.lock();
+   void* data = _p->m_resData;
+   _p->m_mtx.unlock();
+
+   return data;
+}
+
+
+void* StreamTokenizer::getTokenCallbackData() const
+{
+   _p->m_mtx.lock();
+   void* data = _p->m_resTokData;
+   _p->m_mtx.unlock();
+
+   return data;
+}
+
+
 void StreamTokenizer::rewind()
 {
    _p->m_mtx.lock();
-   m_bufPos = 0;
-   m_lastToken = false;
    if( m_tr != 0 )
    {
       m_bufLen = 0;
@@ -296,98 +348,133 @@ void StreamTokenizer::rewind()
       stream->decref();
 
    }
-   else {
-      m_bufLen = m_bufSize;
-   }
+   reinit();
    _p->m_mtx.unlock();
 }
 
-void StreamTokenizer::onTokenFound( int32 , String* , String* , void* )
+
+bool StreamTokenizer::getNextChar( char_t &chr )
 {
-   // Do Nothing
+   if( m_tr != 0 )
+   {
+      if( m_tr->eof() ) return false;
+      chr = m_tr->getChar();
+      return true;
+   }
+   else if( m_srcPos < m_source.length() )
+   {
+      chr = m_source[m_srcPos++];
+      return true;
+   }
+   return false;
 }
+
 
 bool StreamTokenizer::next()
 {
+   String currentToken;
+
    _p->m_mtx.lock();
-   if( m_bufPos == m_bufLen )
+   // if we recorded a token, then we're bound to give it back.
+   if( m_tokenLoaded )
    {
-      if ( ! refill() )
-      {
-         _p->m_mtx.unlock();
-         return false;
-      }
-   }
-
-   int32 id = 0;
-   length_t pos = 0;
-   if( findNext(id, pos) )
-   {
-      // the running text is m_bufPos -> pos
-      String* running = new String;
-      running->fromUTF8(m_buffer + m_bufPos, pos - m_bufPos);
-
-      // the token content can be either static or a result of the regex
-      Token* tk = _p->m_tlist[id];
-
-      pos += (tk->m_token != 0 ?
-               tk->m_tokenLen :
-               static_cast<length_t>(tk->m_result.end() - tk->m_result.begin()) );
-      if( m_bufPos == pos )
-      {
-         m_bufPos++;
-      }
-      else
-      {
-         m_bufPos = pos;
-      }
-      m_lastToken = m_bufPos == m_bufLen;
+      Token* tk = _p->m_tlist[m_tokenID];
+      m_tokenLoaded = false;
+      String* token = new String(m_lastToken);
+      void* data = tk->m_data == 0 ? _p->m_resTokData : tk->m_data;
       _p->m_mtx.unlock();
 
-      String *tok = new String;
-      if( tk->m_token != 0 )
+      onTokenFound(m_tokenID, token, data);
+
+      if( m_bOwnToken )
       {
-         tok->fromUTF8(tk->m_token);
+         delete token;
       }
-      else {
-         tok->fromUTF8(tk->m_result.begin(), tk->m_result.length() );
-      }
-
-      onTokenFound(id, running, tok, tk->m_data);
-
-      if( ownText() )
-      {
-         delete running;
-      }
-
-      if( ownToken() )
-      {
-         delete tok;
-      }
-
-      return true;
-   }
-   else
-   {
-      // we already refilled to the best of our capacity -- call onTokenFound with "residual text"
-
-      String* running = new String;
-      running->fromUTF8(m_buffer + m_bufPos, m_bufLen - m_bufPos);
-      m_bufPos = m_bufLen = 0;
-      m_lastToken = false;
-      _p->m_mtx.unlock();
-
-      onTokenFound(-1, running, 0, _p->m_resData);
-
-      if( ownText() )
-      {
-         delete running;
-      }
-
+      // there is *ALWAYS* something after a token.
       return true;
    }
 
-   return false;
+   char_t nextChar;
+   String* running = new String;
+   if ( ! m_hasLastToken )
+   {
+      _p->m_mtx.unlock();
+      return false;
+   }
+
+   m_hasLastToken = false;
+
+   while( true )
+   {
+      if( ! getNextChar(nextChar) )
+      {
+         // the running text is m_bufPos -> buflen (might be 0)
+         running->fromUTF8(m_buffer, m_bufLen );
+         // do not declare having found a token.
+         break;
+      }
+
+      if( m_bufLen + 5 >= m_bufSize )
+      {
+         m_bufSize *= 2;
+         char* newMem = new char[m_bufSize];
+         memcpy(newMem, m_buffer, m_bufLen);
+         delete m_buffer;
+         m_buffer = newMem;
+      }
+
+      length_t utf8Len = String::charToUTF8(nextChar, m_buffer + m_bufLen );
+      m_bufLen += utf8Len;
+
+      int32 id = 0;
+      length_t pos = 0;
+      if( findNext(id, pos) )
+      {
+         if( m_giveTokens || m_groupTokens )
+         {
+            currentToken.fromUTF8(m_buffer + pos, m_bufLen);
+
+            if( m_groupTokens && pos == 0 && m_hasToken ) {
+               // retry?
+               if( currentToken == m_lastToken )
+               {
+                  m_bufLen = 0;
+                  continue;
+               }
+            }
+            m_lastToken = currentToken;
+
+            if( m_giveTokens )
+            {
+               m_tokenLoaded = true;
+               m_tokenID = id;
+            }
+         }
+
+         // the running text is m_bufPos -> pos
+         running->fromUTF8(m_buffer, pos);
+
+         // inform hasNext that we have at least an empty string to return.
+         m_hasLastToken = true;
+         m_hasToken = true;
+
+         m_bufLen = 0;
+         break;
+      }
+   }
+
+   void* resData = _p->m_resData;
+   bool bOwnText = m_bOwnText;
+   _p->m_mtx.unlock();
+
+   onTextFound( running, resData );
+
+   if( bOwnText )
+   {
+      delete running;
+   }
+
+   return true;
 }
 
 
@@ -401,12 +488,12 @@ bool StreamTokenizer::hasNext() const
    if( m_tr != 0 )
    {
       // and of course, when we also have exhausted our buffer.
-      res = !( m_bufPos == m_bufLen && m_tr->eof() );
+      res = ! m_tr->eof();
    }
    else {
-      res = m_bufPos != m_bufLen;
+      res = m_srcPos < m_source.length();
    }
-   res |= m_lastToken;
+   res |= m_tokenLoaded || m_hasLastToken;
    _p->m_mtx.unlock();
 
    return res;
@@ -425,7 +512,6 @@ void StreamTokenizer::gcMark( uint32 mark )
 }
 
 
-
 bool StreamTokenizer::findNext( int32& id, length_t& pos )
 {
    Private::TokenList::const_iterator iter = _p->m_tlist.begin();
@@ -435,7 +521,7 @@ bool StreamTokenizer::findNext( int32& id, length_t& pos )
    pos = String::npos;
 
    // this is a very fast op when m_buffer is char*
-   re2::StringPiece spc(m_buffer+m_bufPos, (int)m_bufLen);
+   re2::StringPiece spc(m_buffer, (int)m_bufLen);
 
    while( iter != end )
    {
@@ -452,9 +538,9 @@ bool StreamTokenizer::findNext( int32& id, length_t& pos )
       }
       else {
          fassert( tk->m_regex != 0 );
-         if( tk->m_regex->Match( spc, 0, m_bufLen-m_bufPos, re2::RE2::UNANCHORED, &tk->m_result, 1 ) )
+         if( tk->m_regex->Match( spc, 0, m_bufLen, re2::RE2::UNANCHORED, &tk->m_result, 1 ) )
          {
-            length_t foundAt = static_cast<length_t>(tk->m_result.begin() - spc.begin())+m_bufPos;
+            length_t foundAt = static_cast<length_t>(tk->m_result.begin() - spc.begin());
             if( foundAt < pos )
             {
                pos = foundAt;
@@ -471,82 +557,95 @@ bool StreamTokenizer::findNext( int32& id, length_t& pos )
 
 length_t StreamTokenizer::findText( const char* token, length_t len )
 {
-   length_t tpos = 0;
-   length_t rest = m_bufLen - m_bufPos;
-   char* buf = m_buffer + m_bufPos;
-
-   while( tpos != len && rest >= len )
+   if( len > m_bufLen )
    {
-      if ( buf[tpos] != token[tpos] )
+      return String::npos;
+   }
+
+   length_t tpos = m_bufLen-len;
+   char* buf = m_buffer + tpos;
+
+   while( len > 0 )
+   {
+      if ( *buf != *token )
       {
-         tpos = 0;
-         ++buf;
-         --rest;
+         return String::npos;
       }
-      else {
-         tpos ++;
-      }
+
+      ++buf;
+      ++token;
+      --len;
    }
 
-   if( tpos == len )
-   {
-      return static_cast<length_t>(buf - m_buffer);
-   }
-
-   return String::npos;
+   return tpos;
 }
 
 
-bool StreamTokenizer::refill()
+bool StreamTokenizer::giveTokens() const
 {
-   if( m_tr != 0 )
-   {
-      // check the invariant
-      fassert( m_bufPos <= m_bufLen );
+   _p->m_mtx.lock();
+   bool b = m_giveTokens;
+   _p->m_mtx.unlock();
+   return b;
+}
 
-      // We have created bufSize using a *2 factor.
-      // the first time, with m_bufLen == 0, read all.
-      length_t bs2 = m_bufLen > 0 ? m_bufSize/2 : m_bufSize;
-      String str;
-      int32 rlen = m_tr->read(str, bs2);
 
-      // hit eof?
-      if( rlen == 0 )
-      {
-         return m_lastToken;
-      }
+bool StreamTokenizer::groupTokens() const
+{
+   _p->m_mtx.lock();
+   bool b = m_groupTokens;
+   _p->m_mtx.unlock();
+   return b;
+}
 
-      // need to move the upper size of the buffers back?
-      if ( m_bufPos > bs2 )
-      {
-         // copy the upper part in the lower part.
-         m_bufPos -= bs2;
-         m_bufLen -= bs2;
-         memcpy(m_buffer, m_buffer +bs2, bs2);
-      }
 
-      if( m_buffer == 0 )
-      {
-         m_buffer = new char[m_bufSize];
-      }
+void StreamTokenizer::giveTokens(bool b)
+{
+   _p->m_mtx.lock();
+   m_giveTokens = b;
+   _p->m_mtx.unlock();
+}
 
-      // now try to utf8-ize the new stuff in the read string.
-      length_t len = 0;
-      while( (len = str.toUTF8String(m_buffer+m_bufLen, m_bufSize - m_bufLen)) == String::npos )
-      {
-         // we have to allocate enough memory.
-         m_bufSize *= 2;
-         char* buf2 = new char[m_bufSize];
-         memcpy( buf2, m_buffer, m_bufLen );
-         delete[] m_buffer;
-         m_buffer = buf2;
-      }
 
-      m_bufLen += len;
-      return true;
-   }
+void StreamTokenizer::groupTokens(bool b)
+{
+   _p->m_mtx.lock();
+   m_groupTokens = b;
+   _p->m_mtx.unlock();
+}
 
-   return m_lastToken;
+
+void StreamTokenizer::setOwnText( bool mode )
+{
+   _p->m_mtx.lock();
+   m_bOwnText= mode;
+   _p->m_mtx.unlock();
+}
+
+
+bool StreamTokenizer::ownText() const
+{
+   _p->m_mtx.lock();
+   bool b = m_bOwnText;
+   _p->m_mtx.unlock();
+   return b;
+}
+
+
+void StreamTokenizer::setOwnToken( bool mode )
+{
+   _p->m_mtx.lock();
+   m_bOwnToken = mode;
+   _p->m_mtx.unlock();
+}
+
+
+bool StreamTokenizer::ownToken() const
+{
+   _p->m_mtx.lock();
+   bool b = m_bOwnToken;
+   _p->m_mtx.unlock();
+   return b;
 }
 
 }

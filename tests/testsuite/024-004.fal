@@ -4,11 +4,12 @@
 
 @output
 MultiTokenizer RE
-Sequence: a, b, c, d, e.
+Sequence: 'a', 'b', 'c', 'd', 'e'.
 ==================================================
 Leaving a token at end
-Sequence: a, b, c, d.
+Sequence: 'a', 'b', 'c', 'd', ''.
 Done
+
 @endoutput
 */
 
@@ -17,7 +18,7 @@ Done
 function test(mt)
    for piece in mt
       forfirst: >> "Sequence: "
-      >> piece
+      >> "'",piece,"'"
       formiddle: >> ", "
       forlast: > "."
    end

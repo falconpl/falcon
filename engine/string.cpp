@@ -1341,6 +1341,39 @@ char* String::toUTF8String( length_t &bufsize ) const
 }
 
 
+length_t String::charToUTF8( char_t chr, char* target )
+{
+   if ( chr < 0x80 )
+   {
+      target[0] = chr;
+      target[1] = '\0';
+      return 1;
+   }
+   else if ( chr < 0x800 )
+   {
+      target[ 0 ] = 0xC0 | ((chr >> 6 ) & 0x1f);
+      target[ 1 ] = 0x80 | (0x3f & chr);
+      target[ 2 ] = '\0';
+      return 2;
+   }
+   else if ( chr < 0x10000 )
+   {
+      target[ 0 ] = 0xE0 | ((chr >> 12) & 0x0f );
+      target[ 1 ] = 0x80 | ((chr >> 6) & 0x3f );
+      target[ 2 ] = 0x80 | (0x3f & chr);
+      target[ 3 ] = '\0';
+      return 3;
+   }
+
+   target[ 0 ] = 0xF0 | ((chr >> 18) & 0x7 );
+   target[ 1 ] = 0x80 | ((chr >> 12) & 0x3f );
+   target[ 2 ] = 0x80 | ((chr >> 6) & 0x3f );
+   target[ 3 ] = 0x80 | (0x3f & chr );
+   target[ 4 ] = '\0';
+   return 4;
+}
+
+
 length_t String::toCString( char *target, uint32 bufsize ) const
 {
    length_t len = length();

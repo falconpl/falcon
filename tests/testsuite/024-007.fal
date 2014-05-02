@@ -5,10 +5,10 @@
 @output
 MultiTokenizer Getting Tokens
 Getting off:
-Sequence: 'a', '', 'b', '', 'c', 'd', 'e', ''.
+Sequence: 'a', '', 'b', '', 'c', 'd', 'e', '', ''.
 ==================================================
 Getting on:
-Sequence: 'a', ',', '', ',', 'b', ';', '', ';', 'c', ' ', 'd', '.', 'e', ';', ''.
+Sequence: 'a', ',', '', ',', 'b', ';', '', ';', 'c', ' ', 'd', '.', 'e', ';', '', ';', ''.
 Done
 @endoutput
 */

@@ -36,17 +36,9 @@ namespace {
 class MultiTokenizer: public StreamTokenizer
 {
 public:
-   bool m_giveTokens;
-   bool m_groupTokens;
-   bool m_tokenLoaded;
-   String m_lastToken;
-   Mutex m_mtmtx;
 
    MultiTokenizer(const String& src ):
-      StreamTokenizer(src),
-      m_giveTokens(false),
-      m_groupTokens(false),
-      m_tokenLoaded(false)
+      StreamTokenizer(src)
    {
       setOwnText(false);
       setOwnToken(false);
@@ -54,10 +46,7 @@ public:
 
 
    MultiTokenizer( TextReader* tr, uint32 bufsize = StreamTokenizer::DEFAULT_BUFFER_SIZE ):
-      StreamTokenizer(tr, bufsize),
-      m_giveTokens(false),
-      m_groupTokens(false),
-      m_tokenLoaded(false)
+      StreamTokenizer(tr, bufsize)
    {
       setOwnText(false);
       setOwnToken(false);
@@ -68,81 +57,80 @@ public:
    {}
 
 
-   virtual ~MultiTokenizer() {
-   }
+   virtual ~MultiTokenizer() {}
 
-
-   virtual void onTokenFound( int32 id, String* textContent, String* tokenContent, void* userData )
+   virtual void onTokenFound(  int32 id, String* tokenContent, void* tokData )
    {
       static const PStep* rt = &Engine::instance()->stdSteps()->m_returnFrameWithTop;
       static const PStep* rtd = &Engine::instance()->stdSteps()->m_returnFrameWithTopDoubt;
-      static const PStep* reinv = &Engine::instance()->stdSteps()->m_reinvoke;
+      //static const PStep* reinv = &Engine::instance()->stdSteps()->m_reinvoke;
 
       VMContext* ctx = Processor::currentProcessor()->currentContext();
-      GCLock* glk = static_cast<GCLock*>(userData);
 
-      bool loaded = false;
-      // ignore identical tokens?
-      if( tokenContent != 0 )
+      if( tokData != 0 )
       {
-         m_mtmtx.lock();
-         if(
-             m_groupTokens
-             && m_lastToken == *tokenContent
-             && textContent->empty() )
-         {
-            m_mtmtx.unlock();
-            delete tokenContent;
-            delete textContent;
-            ctx->pushCode(reinv);
-            return;
-         }
+         GCLock* glk = static_cast<GCLock*>(tokData);
 
-         m_lastToken = *tokenContent;
-         loaded = m_tokenLoaded = true;
-         m_mtmtx.unlock();
-      }
+         const Item& cb = glk->item();
+         ctx->pushCode( hasNext() ? rtd : rt );
 
-      if( glk == 0 )
-      {
-         delete tokenContent;
-         if( hasNext() || loaded )
-         {
-            ctx->returnFrameDoubt(FALCON_GC_HANDLE(textContent));
-         }
-         else
-         {
-            ctx->returnFrame(FALCON_GC_HANDLE(textContent));
-         }
+         Item params[2];
+         params[0] = FALCON_GC_HANDLE(tokenContent);
+         params[1].setInteger(id);
+
+         ctx->callItem(cb, 2, params);
       }
       else {
-         const Item& cb = glk->item();
-         ctx->pushCode( hasNext() || loaded ? rtd : rt );
-         int count;
-         Item params[3];
-
-         if( tokenContent != 0 )
+         if( hasNext() )
          {
-            params[0] = (int64) id;
-            params[1] = FALCON_GC_HANDLE(textContent);
-            params[2] = FALCON_GC_HANDLE(tokenContent);
-            count = 3;
+            ctx->returnFrameDoubt( FALCON_GC_HANDLE(tokenContent) );
          }
          else {
-            count = 1;
-            params[0] = FALCON_GC_HANDLE(textContent);
+            ctx->returnFrame( FALCON_GC_HANDLE(tokenContent) );
          }
-
-         ctx->callItem(cb, count, params);
       }
    }
+
+
+   virtual void onTextFound( String* textContent, void* textData )
+   {
+      static const PStep* rt = &Engine::instance()->stdSteps()->m_returnFrameWithTop;
+      static const PStep* rtd = &Engine::instance()->stdSteps()->m_returnFrameWithTopDoubt;
+      //static const PStep* reinv = &Engine::instance()->stdSteps()->m_reinvoke;
+
+      VMContext* ctx = Processor::currentProcessor()->currentContext();
+
+      if( textData != 0 )
+      {
+         GCLock* glk = static_cast<GCLock*>(textData);
+
+         const Item& cb = glk->item();
+         ctx->pushCode( hasNext() ? rtd : rt );
+
+         Item params[2];
+         params[0] = FALCON_GC_HANDLE(textContent);
+         params[1].setNil();
+
+         ctx->callItem(cb, 2, params);
+      }
+      else {
+         if( hasNext() )
+         {
+            ctx->returnFrameDoubt( FALCON_GC_HANDLE(textContent) );
+         }
+         else {
+            ctx->returnFrame( FALCON_GC_HANDLE(textContent) );
+         }
+      }
+
+   }
+
 };
 
 
 static MultiTokenizer* internal_setSource(Function* caller, VMContext* ctx, MultiTokenizer* tk)
 {
    static Class* clsStream = Engine::instance()->stdHandlers()->streamClass();
-
 
    Item* i_source= ctx->param(0);
    Item* i_enc = ctx->param(1);
@@ -245,12 +233,12 @@ FALCON_DEFINE_FUNCTION_P1( init )
 
    if( i_group!= 0 && i_group->isTrue() )
    {
-      tk->m_groupTokens = true;
+      tk->groupTokens(true);
    }
 
    if( i_give != 0 && i_give->isTrue() )
    {
-      tk->m_giveTokens = true;
+      tk->giveTokens(true);
    }
 
    ctx->self() = FALCON_GC_STORE(methodOf(), tk);
@@ -267,29 +255,11 @@ FALCON_DECLARE_FUNCTION( next, "" );
 FALCON_DEFINE_FUNCTION_P1( next )
 {
    MultiTokenizer* tk = ctx->tself<MultiTokenizer*>();
-   tk->m_mtmtx.lock();
-   if( tk->m_giveTokens && tk->m_tokenLoaded )
+   if( ! tk->next() )
    {
-      tk->m_tokenLoaded = false;
-      String* copy = new String(tk->m_lastToken);
-      tk->m_mtmtx.unlock();
-
-      ctx->returnFrame( FALCON_GC_HANDLE( copy ) );
-
-      if( tk->hasNext() )
-      {
-         ctx->topData().setDoubt();
-      }
+      ctx->returnFrame();
    }
-   else {
-      tk->m_mtmtx.unlock();
-
-      if( ! tk->next() )
-      {
-         ctx->returnFrame();
-      }
-      // if next() was succesful, MultiTokenizer onTokenFound will return the frame.
-   }
+   // if next() was succesful, MultiTokenizer onTokenFound will return the frame.
 }
 
 /*#
@@ -304,13 +274,8 @@ FALCON_DECLARE_FUNCTION( rewind, "" );
 FALCON_DEFINE_FUNCTION_P1( rewind )
 {
    MultiTokenizer* tk = ctx->tself<MultiTokenizer*>();
-   tk->m_mtmtx.lock();
-   tk->m_tokenLoaded = false;
-   tk->m_lastToken.size(0);
-   tk->m_mtmtx.unlock();
 
    tk->rewind();
-
    ctx->returnFrame();
 }
 
@@ -330,10 +295,6 @@ FALCON_DECLARE_FUNCTION( setSource, "source:S|Stream,enc:[S]" );
 FALCON_DEFINE_FUNCTION_P1( setSource )
 {
    MultiTokenizer* tk = ctx->tself<MultiTokenizer*>();
-   tk->m_mtmtx.lock();
-   tk->m_tokenLoaded = false;
-   tk->m_mtmtx.unlock();
-
    internal_setSource(this, ctx, tk);
    ctx->returnFrame();
 }
@@ -378,6 +339,11 @@ static void internal_add( Function* caller, VMContext* ctx, bool isRE )
       tk->addToken(*token, i_cb == 0 ? 0 : Engine::instance()->GC_lock(*i_cb), &internal_unlocker );
    }
 
+   if( i_cb != 0 )
+   {
+      tk->giveTokens(true);
+   }
+
    ctx->returnFrame(ctx->self());
 }
 
@@ -392,31 +358,31 @@ static void internal_add( Function* caller, VMContext* ctx, bool isRE )
  method returns the string between the last position and the beginning of the found
  token.
 
+
  If a callback is provided, then it gets called before @b next return with the
  following parameters:
- # the ordinal ID of the token.
- # the found string.
- # the token itself.
 
- The residual string (the one between the last found token and the end of the stream)
- can be processed using the method @b onResidual.
+ # token -- the token that was identified
+ # id -- the ordinal count of tokens that were added before this one.
 
  The @b next() call will return the return value of the the callback.
+
 
  The following is a working example:
 
  @code
  mt = MultiTokenizer( "Hello World" )
- mt.addToken( " ", { id, string, token =>
-          > "Found word: '", string, "'"
-          if id >= 0: > "The token was '",token,"'"
-          return string
+ mt.addToken( " ", { token, id =>
+          > "Token: '",token,"'"
+          return token
           } )
-  mt.onResidual( {t => > "Last part: '", t, "'"; return t } )
+  mt.onText = {t => > "Text: '", t, "'"; return t }
 
  ^[ mt ]   // equivalent to while mt.next(); end
-
  @endcode
+
+ @note If @cb is given, it is actually invoked only if @b giveTokens is
+ active; providing a cb parameter implicitly turns this option on.
  */
 FALCON_DECLARE_FUNCTION( addToken, "token:S,cb:[C]" );
 FALCON_DEFINE_FUNCTION_P1( addToken )
@@ -444,14 +410,16 @@ FALCON_DEFINE_FUNCTION_P1( addToken )
 
  @code
  mt = MultiTokenizer( "Hello World" );
- mt.addRE( "[A-Z]| ", { id, string, token =>
-          > "Found word: '", string, "'"
-          if id >= 0: > "The token was '",token,"'"
-          return string
+ mt.addRE( "[A-Z]| ", { token, id =>
+          > "Token: '",token,"'"
+          return token
           } )
- mt.onResidual( {t => > "Last part: '", t, "'"; return t } )
+ mt.onText = {t => > "Text: '", t, "'"; return t }
 
  ^[ mt ]   // equivalent to while mt.next(); end
+
+  @note If @cb is given, it is actually invoked only if @b giveTokens is
+ active; providing a cb parameter implicitly turns this option on.
 
  @endcode
  */
@@ -461,61 +429,96 @@ FALCON_DEFINE_FUNCTION_P1( addRE )
    internal_add( this, ctx, true );
 }
 
-FALCON_DECLARE_FUNCTION( onResidual, "cb:[C]" );
-FALCON_DEFINE_FUNCTION_P1( onResidual )
+/*#
+ @property onText MultiTokenizer
+ @brief Callback invoked when text is found.
+
+ This property receives a function or other callable that gets evaluated
+ with the text that is found between tokens.
+
+ In case of an iteration, the value received by the iterating entity
+ is the value returned by the callback function.
+ */
+static void get_onText(const Class*, const String&, void* inst, Item& value )
 {
-   Item* i_cb = ctx->param(0);
-
-   if( i_cb == 0 || ! i_cb->isCallable() )
+   MultiTokenizer* tk = static_cast<MultiTokenizer*>(inst);
+   if( tk->getTextCallbackData() != 0 )
    {
-      throw paramError();
+      GCLock* cbd = static_cast<GCLock*>(tk->getTextCallbackData());
+      value = cbd->item();
    }
+}
 
-   MultiTokenizer* tk = ctx->tself<MultiTokenizer*>();
-   tk->onResidual(Engine::instance()->GC_lock(*i_cb), &internal_unlocker);
-   ctx->returnFrame(ctx->self());
+
+static void set_onText(const Class*, const String&, void* inst, const Item& value )
+{
+   MultiTokenizer* tk = static_cast<MultiTokenizer*>(inst);
+   tk->setTextCallbackData(Engine::instance()->GC_lock(value), &internal_unlocker);
+}
+
+/*#
+ @property onToken MultiTokenizer
+ @brief Callback invoked when a token is found.
+
+ This property receives a function or other callable that gets evaluated
+ with the found tokens, in case they were not added with a specific
+ callback with @a MultiTokenizer.addToken or  @a MultiTokenizer.addRE.
+
+ The callback is only invoked if the token is actually processed (i.e.
+ being part of an iteration). This requires @a MultiTokenizer.giveTokens
+ property to be set to true; also, tokens skipped because of
+ @a MultiTokenizer.groupTokens trims them away do @b not get their @b onToken
+ callback called.
+
+ Setting this property implicitly turns on @a MultiTokenizer.giveTokens.
+
+ In case of an iteration, the value received by the iterating entity
+ is the value returned by the callback function.
+ */
+static void get_onToken(const Class*, const String&, void* inst, Item& value )
+{
+   MultiTokenizer* tk = static_cast<MultiTokenizer*>(inst);
+   if( tk->getTokenCallbackData() != 0 )
+   {
+      GCLock* cbd = static_cast<GCLock*>(tk->getTokenCallbackData());
+      value = cbd->item();
+      tk->giveTokens(true);
+   }
+}
+
+
+static void set_onToken(const Class*, const String&, void* inst, const Item& value )
+{
+   MultiTokenizer* tk = static_cast<MultiTokenizer*>(inst);
+   tk->setTokenCallbackData(Engine::instance()->GC_lock(value), &internal_unlocker);
 }
 
 
 static void get_giveTokens(const Class*, const String&, void* inst, Item& value )
 {
    MultiTokenizer* tk = static_cast<MultiTokenizer*>(inst);
-   tk->m_mtmtx.lock();
-   bool v = tk->m_giveTokens;
-   tk->m_mtmtx.unlock();
-   value.setBoolean(v);
+   value.setBoolean( tk->giveTokens() );
 }
 
 
 static void set_giveTokens(const Class*, const String&, void* inst, const Item& value )
 {
-   bool v = value.isTrue();
-
    MultiTokenizer* tk = static_cast<MultiTokenizer*>(inst);
-   tk->m_mtmtx.lock();
-   tk->m_giveTokens = v;
-   tk->m_mtmtx.unlock();
+   tk->giveTokens(value.isTrue());
 }
 
 
 static void get_groupTokens(const Class*, const String&, void* inst, Item& value )
 {
    MultiTokenizer* tk = static_cast<MultiTokenizer*>(inst);
-   tk->m_mtmtx.lock();
-   bool v = tk->m_groupTokens;
-   tk->m_mtmtx.unlock();
-   value.setBoolean(v);
+   value.setBoolean( tk->groupTokens() );
 }
 
 
 static void set_groupTokens(const Class*, const String&, void* inst, const Item& value )
 {
-   bool v = value.isTrue();
-
    MultiTokenizer* tk = static_cast<MultiTokenizer*>(inst);
-   tk->m_mtmtx.lock();
-   tk->m_groupTokens = v;
-   tk->m_mtmtx.unlock();
+   tk->groupTokens(value.isTrue());
 }
 
 /*#
@@ -577,7 +580,6 @@ ClassMultiTokenizer::ClassMultiTokenizer():
    addMethod( m_mthNext );
    addMethod( new FALCON_FUNCTION_NAME(addToken) );
    addMethod( new FALCON_FUNCTION_NAME(addRE) );
-   addMethod( new FALCON_FUNCTION_NAME(onResidual) );
    addMethod( new FALCON_FUNCTION_NAME(rewind) );
    addMethod( new FALCON_FUNCTION_NAME(add) );
    addMethod( new FALCON_FUNCTION_NAME(setSource) );
@@ -585,6 +587,8 @@ ClassMultiTokenizer::ClassMultiTokenizer():
    addProperty("hasNext", &get_hasNext);
    addProperty("giveTokens", &get_giveTokens, &set_giveTokens);
    addProperty("groupTokens", &get_groupTokens, &set_groupTokens );
+   addProperty("onText", &get_onText, &set_onText );
+   addProperty("onToken", &get_onToken, &set_onToken );
 }
 
 

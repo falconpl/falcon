@@ -49,12 +49,12 @@ public:
    /** Create a tokenizer.
     */
    StreamTokenizer( TextReader* source, uint32 bufsize=DEFAULT_BUFFER_SIZE );
-   StreamTokenizer( const String& source );
+   StreamTokenizer( const String& source, uint32 bufsize=DEFAULT_BUFFER_SIZE );
    StreamTokenizer( const StreamTokenizer& other );
 
    virtual ~StreamTokenizer();
 
-   void setSource(TextReader* source, uint32 bufsize=DEFAULT_BUFFER_SIZE );
+   void setSource(TextReader* source );
    void setSource(const String& source );
 
    bool next();
@@ -63,27 +63,40 @@ public:
    uint32 currentMark() const;
    void gcMark( uint32 mark );
 
-   virtual void onTokenFound(  int32 id, String* textContent, String* tokenContent, void* userData );
+   virtual void onTokenFound(  int32 id, String* tokenContent, void* tokData ) = 0;
+   virtual void onTextFound(  String* textContent, void* textData ) = 0;
 
-   void setOwnText( bool mode ) { m_bOwnText= mode; }
-   bool ownText() const { return m_bOwnText; }
-   void setOwnToken( bool mode ) { m_bOwnToken = mode; }
-   bool ownToken() const { return m_bOwnToken; }
+   void setOwnText( bool mode );
+   bool ownText() const;
+   void setOwnToken( bool mode );
+   bool ownToken() const;
 
    typedef void (*deletor)(void*);
 
    void addToken( const String& token, void *data = 0, deletor del = 0 );
    void addRE( const String& re, void *data = 0, deletor del = 0  );
    void addRE( re2::RE2* regex, void* data = 0, deletor del = 0 );
-   void onResidual(void* data, deletor del = 0);
+   void setTextCallbackData(void* data, deletor del = 0);
+   void setTokenCallbackData(void* data, deletor del = 0);
+
+   void* getTextCallbackData() const;
+   void* getTokenCallbackData() const;
 
    void rewind();
 
+   bool giveTokens() const;
+   bool groupTokens() const;
+
+   void giveTokens(bool b);
+   void groupTokens(bool b);
+
+
 private:
    TextReader* m_tr;
+   String m_source;
+   length_t m_srcPos;
 
    uint32 m_bufSize;
-   uint32 m_bufPos;
    uint32 m_bufLen;
    char* m_buffer;
 
@@ -96,15 +109,25 @@ private:
 
    // set to true when there is some regex in tokens.
    bool m_hasRegex;
-   bool m_lastToken;
+   bool m_hasLastToken;
+   bool m_hasToken;
+   bool m_tokenLoaded;
+
+   bool m_giveTokens;
+   bool m_groupTokens;
+   String m_lastToken;
+   int32 m_tokenID;
+
 
    class Private;
    Private* _p;
 
    void init();
-   bool refill();
+   void reinit();
    bool findNext( int32& id, length_t& pos);
    length_t findText( const char* token, length_t len );
+
+   bool getNextChar( char_t &chr );
 };
 
 }

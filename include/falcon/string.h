@@ -1316,6 +1316,15 @@ public:
     */
    static length_t UTF8Size( const char *utf8, length_t len = String::npos );
 
+   /** Transform a single character in a utf8 string.
+    *  \param chr the UNICODE character to be converted.
+    *  \param utf8 the buffer where the character is encoded.
+    *  \return length The number of byte used in the conversion.
+    *
+    *  The string gets a \0 at the end, resulting in a valid 1-character UTF8 string.
+    */
+   static length_t charToUTF8( char_t chr, char* utf8 );
+
    /** Access to a single character.
       Please, notice that Falcon strings are polymorphic in assignment,
       so they cannot support the following syntax:

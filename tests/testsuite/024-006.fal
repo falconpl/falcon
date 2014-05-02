@@ -5,10 +5,10 @@
 @output
 MultiTokenizer Grouping
 Grouping off:
-Sequence: a, , b, , c, d, e.
+Sequence: 'a', '', 'b', '', 'c', 'd', 'e'.
 ==================================================
 Grouping on:
-Sequence: a, b, c, d, e.
+Sequence: 'a', 'b', 'c', 'd', 'e'.
 Done
 @endoutput
 */
@@ -18,7 +18,7 @@ Done
 function test(mt)
    for piece in mt
       forfirst: >> "Sequence: "
-      >> piece
+      >> "'",piece,"'"
       formiddle: >> ", "
       forlast: > "."
    end
@@ -28,6 +28,7 @@ end
 mt = MultiTokenizer( "a,,b;;c d.e" )
 mt.add( r",|;", " ", "." )
 
+//mt.giveTokens = true
 test(mt)
 
 > "="*50
