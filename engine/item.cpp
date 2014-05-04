@@ -313,7 +313,7 @@ bool Item::exactlyEqual( const Item& other ) const
 }
 
 
-void* Item::asParentInst( Class* parent )
+void* Item::asParentInst( const Class* parent ) const
 {
    Class* cls = 0;
    void* data = 0;
@@ -326,7 +326,7 @@ void* Item::asParentInst( Class* parent )
 }
 
 
-void* Item::forceParentInst( Class* parent )
+void* Item::forceParentInst( const Class* parent )
 {
    Class* cls = 0;
    void* data = 0;

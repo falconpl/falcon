@@ -510,7 +510,7 @@ public:
     * in this item, and then use Class::getParentData to get the instance data
     * as the parent knows it.
     */
-   void* asParentInst( Class* parent );
+   void* asParentInst( const Class* parent ) const;
 
    /** Shortcut to get the parent data of an instance.
     * @param parent the parent base class.
@@ -526,7 +526,7 @@ public:
     * with flat data. asParentInst() should be used with items known to be non-flat
     * data only.
     */
-   void* forceParentInst( Class* parent );
+   void* forceParentInst( const Class* parent );
 
 
    Class* asClass() const { return content.data.ptr.pClass; }
@@ -753,7 +753,7 @@ public:
     * This method will not work for flat objects (integers etc) unless the item
     * has been previusly unflattened.
     */
-   bool isInstanceOf( Class* cls )
+   bool isInstanceOf( const Class* cls ) const
    {
       return isUser() && asClass()->isDerivedFrom(cls);
    }
