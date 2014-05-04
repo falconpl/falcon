@@ -28,9 +28,21 @@
 
 namespace Falcon {
 
+namespace {
+
+static void get_closed( const Class* , const String&, void* instance, Item& value )
+{
+   Closure* closure = static_cast<Closure*>(instance);
+   value = closure->closed();
+}
+
+}
+
 ClassClosure::ClassClosure():
    Class("Closure", FLC_CLASS_ID_CLOSURE)
-{}
+{
+   addProperty("closed",&get_closed);
+}
 
 
 ClassClosure::~ClassClosure()
