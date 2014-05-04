@@ -33,6 +33,8 @@
 #include <falcon/modspace.h>
 #include <falcon/textwriter.h>
 #include <falcon/stringstream.h>
+#include <falcon/stdsteps.h>
+
 
 #include <falcon/itemarray.h>
 #include <falcon/itemdict.h>
@@ -384,13 +386,23 @@ public:
       ++seqId;
       Item param = *curParam;
       CallFrame& cf = ctx->currentFrame();
+      uint32 pc = cf.m_function->paramCount();
+
+      ctx->pushData(cf.m_function);
+      for( uint32 i = 0; i + 1 < pc; ++i )
+      {
+         Item temp = *ctx->param(i);
+         ctx->pushData(temp);
+      }
+
+      ctx->pushData(param);
       ClosedData* closed =  cf.m_closure;
       if( cf.m_bMethodic )
       {
-         ctx->call(cf.m_function, cf.m_self, 1, &param );
+         ctx->callInternal(cf.m_function, pc, cf.m_self );
       }
       else {
-         ctx->call(cf.m_function, 1, &param );
+         ctx->callInternal(cf.m_function, pc );
       }
 
       // repeat the closure if necessary.
@@ -437,6 +449,22 @@ public:
  resulting widely more efficient. Also, it is possible to write the function simply
  as if it had a single parameter, and then just add Function.redo() that will be nearly
  no-op if the function is actually called with a single parameter.
+
+ If the function has more than one declared parameter, then all the declared parameters but
+ the last one are passed unchanged, and the last one assumes the value of each variable
+ parameter in turn. For example:
+
+ @code
+ function printWithPrompt( p, elem )
+    > p, ": ", elem
+    function.redo()
+ end
+
+ printWithPrompt( "Elem is", 1, 2, 3, 4 )
+ @endcode
+
+ In the above code, the @b parameter rest unchanged, while @b elem becomes 1, 2, 3 and 4
+ in each subsequent invocation.
 
  @note If the current function is a method, the self item is repeated as if calling
  @b self.method.
