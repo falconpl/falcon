@@ -71,6 +71,14 @@ static void internal_render( Item* elem, TextWriter* tw )
       }
       break;
 
+   case FLC_CLASS_ID_CLOSURE:
+      {
+         Closure* cls = static_cast<Closure*>(elem->asInst());
+         tw->write("/* closure */");
+         cls->closed()->render(tw, 0);
+      }
+      break;
+
 
       // else, falls back to describe.
    default:
