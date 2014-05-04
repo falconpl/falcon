@@ -77,7 +77,7 @@ static void internal_render( Item* elem, TextWriter* tw )
       {
          Class* cls = 0;
          void* data = 0;
-         elem->asClassInst(cls, data);
+         elem->forceClassInst(cls, data);
          String target;
          cls->describe(data, target, 1, -1);
          tw->write(target);
