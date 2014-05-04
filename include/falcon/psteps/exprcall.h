@@ -65,6 +65,8 @@ public:
 
    bool hasNamedParams() const { return m_bHasNamedParams; }
 
+   void resolveUnquote( VMContext* ctx, const UnquoteResolver& );
+
 protected:
    TreeStep* m_callExpr;
 

@@ -339,6 +339,34 @@ inline int findParameter( const Item& called, const String& pname )
    return pos;
 }
 
+void ExprCall::resolveUnquote( VMContext* ctx, const UnquoteResolver& res )
+{
+   ExprVector::resolveUnquote(ctx, res);
+
+   class ElemUR: public UnquoteResolver
+   {
+   public:
+      ElemUR( ExprCall* cs ):
+         m_parent(cs)
+      {}
+
+      virtual ~ElemUR() {}
+
+      void onUnquoteResolved( TreeStep* newStep ) const
+      {
+         m_parent->selector(newStep);
+      }
+
+      ExprCall* m_parent;
+   };
+
+   ElemUR ur(this);
+   if( m_callExpr != 0 )
+   {
+      m_callExpr->resolveUnquote(ctx, ur);
+   }
+}
+
 //=================================================================
 // Apply
 //
