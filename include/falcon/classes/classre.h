@@ -24,37 +24,6 @@
 namespace Falcon
 {
 
-/*
- @class RE
- @brief Engine bound regular expressions.
- @param pattern The regular expression pattern.
- @optparam options A string containing pattern options.
- @raise ParamError if the pattern string is malformed.
-
- The class can be initialized also through the gramar
- construct called R-String, which is a "r" letter followed
- by a single or double quote.
-
- Some operators are overloaded with special meanings:
-
- - The division operator "/" matches the string;
- - the multiply operator "*" matches the string, but requires a complete match;
- - the modulo operator "%" generates a list of captured expressions;
- - the power operator "**" returns the matched substring.
-
- @code
- > r"H...o" / "Hello World"   // true
- > r"H...o" * "Hello World"   // false
- > r"w.." ** "Hello World"    // "Wor"
- > (r'(\w*) (\w*)' % "Hello world").describe() //["Hello", "world"]
- @endcode
-
- @prop captures Number of capture expressions (excluding the total one).
- @prop groupNames Dictionary of named captured expressions and positions.
- @prop caseSensitive True to set case sensitivity match (the default),
-       false to make it insensitive.
- */
-
 class FALCON_DYN_CLASS ClassRE: public Class
 {
 public:
@@ -78,6 +47,7 @@ public:
    //=============================================================
    virtual bool op_init( VMContext* ctx, void*, int32 pcount ) const;
 
+   virtual void op_compare( VMContext* ctx, void* self ) const;
    virtual void op_div( VMContext* ctx, void* instance ) const;
    virtual void op_mod( VMContext* ctx, void* instance ) const;
    virtual void op_mul( VMContext* ctx, void* instance ) const;

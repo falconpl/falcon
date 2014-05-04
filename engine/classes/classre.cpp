@@ -39,6 +39,39 @@
 
 namespace Falcon {
 
+
+   /*
+    @class RE
+    @brief Engine bound regular expressions.
+    @param pattern The regular expression pattern.
+    @optparam options A string containing pattern options.
+    @raise ParamError if the pattern string is malformed.
+
+    The class can be initialized also through the gramar
+    construct called R-String, which is a "r" letter followed
+    by a single or double quote.
+
+    Some operators are overloaded with special meanings:
+
+    - The division operator "/" matches the string;
+    - the multiply operator "*" matches the string, but requires a complete match;
+    - the modulo operator "%" generates a list of captured expressions;
+    - the power operator "**" returns the matched substring.
+
+    @code
+    > r"H...o" / "Hello World"   // true
+    > r"H...o" * "Hello World"   // false
+    > r"w.." ** "Hello World"    // "Wor"
+    > (r'(\w*) (\w*)' % "Hello world").describe() //["Hello", "world"]
+    @endcode
+
+    @prop captures Number of capture expressions (excluding the total one).
+    @prop groupNames Dictionary of named captured expressions and positions.
+    @prop caseSensitive True to set case sensitivity match (the default),
+          false to make it insensitive.
+    @prop pattern A copy of the original pattern, as a (mutable) string.
+    */
+
 //=====================================================================
 // Properties
 //
@@ -119,6 +152,22 @@ static void get_caseSensitive( const Class*, const String&, void* instance, Item
 {
    re2::RE2* re = static_cast<re2::RE2*>( instance );
    value.setBoolean(re->options().case_sensitive());
+}
+
+
+static void get_pattern( const Class*, const String&, void* instance, Item& value )
+{
+   re2::RE2* re = static_cast<re2::RE2*>( instance );
+   String* string = new String;
+   try {
+      string->fromUTF8(re->pattern().c_str());
+      value = FALCON_GC_HANDLE( string );
+   }
+   catch( ... )
+   {
+      delete string;
+      value.setNil();
+   }
 }
 
 namespace CRE {
@@ -901,6 +950,7 @@ ClassRE::ClassRE():
    addProperty( "captures", &get_captures );
    addProperty( "caseSensitive", &get_caseSensitive );
    addProperty( "groupNames", &get_groupNames );
+   addProperty( "pattern", &get_pattern );
 
    addMethod(new CRE::Function_match);
    addMethod(new CRE::Function_grab);
@@ -1142,6 +1192,23 @@ static void internal_match( VMContext* ctx, void* instance, bool partial )
 
    ctx->popData();
    ctx->topData().setBoolean( match );
+}
+
+void ClassRE::op_compare( VMContext* ctx, void* self ) const
+{
+   Item *op1, *op2;
+
+   ctx->operands( op1, op2 );
+
+   if( op2->isInstanceOf(this) )
+   {
+      re2::RE2* re = static_cast<re2::RE2*>( op1->asInst() );
+      re2::RE2* ore = static_cast<re2::RE2*>( op2->asParentInst(this) );
+      ctx->stackResult( 2, (int64)  (re->pattern().compare(ore->pattern())) );
+      return;
+   }
+
+   Class::op_compare(ctx, self);
 }
 
 void ClassRE::op_div( VMContext* ctx, void* instance ) const
