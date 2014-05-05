@@ -213,6 +213,15 @@ class Node( type, content )
    end
 end
 
+
+class Tree(top)
+   top = Node(top? top : "top")
+   current = nil
+   init
+      self.current = self.top
+   end
+end
+
 /*
 
 load struct.tree
