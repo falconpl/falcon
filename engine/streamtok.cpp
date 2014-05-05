@@ -432,7 +432,7 @@ bool StreamTokenizer::next()
       {
          if( m_giveTokens || m_groupTokens )
          {
-            currentToken.fromUTF8(m_buffer + pos, m_bufLen);
+            currentToken.fromUTF8(m_buffer + pos, m_bufLen-pos);
 
             if( m_groupTokens && pos == 0 && m_hasToken ) {
                // retry?
@@ -540,17 +540,44 @@ bool StreamTokenizer::findNext( int32& id, length_t& pos )
          fassert( tk->m_regex != 0 );
          if( tk->m_regex->Match( spc, 0, m_bufLen, re2::RE2::UNANCHORED, &tk->m_result, 1 ) )
          {
-            length_t foundAt = static_cast<length_t>(tk->m_result.begin() - spc.begin());
-            if( foundAt < pos )
+            // we have a match, but can we trust it?
+            if( spc.end() > tk->m_result.end()
+                     || ( m_tr != 0 && m_tr->eof())
+                     || (m_srcPos == m_source.length()) )
             {
-               pos = foundAt;
-               id = tk->m_id;
+               length_t foundAt = static_cast<length_t>(tk->m_result.begin() - spc.begin());
+               if( foundAt < pos )
+               {
+                  pos = foundAt;
+                  id = tk->m_id;
+               }
             }
          }
       }
       ++iter;
    }
 
+   // regex?
+   if(id != -1 && _p->m_tlist[id]->m_regex != 0 )
+   {
+      Token* tk = _p->m_tlist[id];
+      if ( spc.end() > tk->m_result.end() )
+      {
+         String unget;
+         if( m_tr != 0 )
+         {
+            unget.fromUTF8( tk->m_result.end(),m_bufLen - (tk->m_result.end() - m_buffer) );
+            m_tr->ungetChar(unget.getCharAt(0));
+         }
+         else
+         {
+            m_srcPos--;
+         }
+         m_bufLen = (tk->m_result.end() - m_buffer);
+         //m_buffer[m_bufLen] = 0;
+      }
+
+   }
    return id != -1;
 }
 
