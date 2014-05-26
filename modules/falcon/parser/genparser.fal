@@ -1,416 +1,371 @@
 /*
    FALCON - Generic Parser
 
-   FILE: parser.fal
+   FILE: genparser.fal
 
-   Generic customizable grammar parser.
+   Generic parser.
    -------------------------------------------------------------------
    Author: Giancarlo Niccolai
-   Begin: Sat, 30 Aug 2010 09:42:22 +0200
+   Begin: Thu, 19 Aug 2010 01:34:20 +0200
 
    -------------------------------------------------------------------
-   (C) Copyright 2010: the FALCON developers (see list in AUTHORS file)
+   (C) Copyright 2014: the FALCON developers (see list in AUTHORS file)
 
    See LICENSE file for licensing details.
 */
 
-import Context from self.context as Context
-import Node from self.node as Node
-import DummyRule from self.rules
+import Syn.*
+import Node,Tree from struct.tree
 
+/*# 
+   @brief A simple triplet expressing a parsing rule.
+   @param token a token or RE that is used to break up the input
+   @param target The target status in which the parser must be when the token is found
+   @param action -- The thing to be done (a function) with the input text and the ongoing parsing
+   
+   The @b action can be a user-defined function, or one of the following
+   functions, defined in genparser:
+   
+   - addToContent: Adds the identified text to the content.
+   - popNode: removes the current node from the context.
+   - addBelow( type, [regex], [subst] ): generate a function that will add the 
+      node of the given type, settin its content as required; eventually, the content
+      can be transformed as per regex-subst pair indicates.
+   - addBesides( type, [regex], [subst] ): generate a function that will add the 
+      node of the given type, settin its content as required; eventually, the content
+      can be transformed as per regex-subst pair indicates.
+      
+   A user-defined @b action will receive the following parameters:
+   - tree: the Tree instance passed to the parser.
+   - text: The recognized text
+   - parser: the parser that is performing the parsing.
+   
+   Each other user-defined data or context-dependent information should be held
+   using a closure or a method instead of a function.
+*/
 
-//# Parser states (behaviors)
-
-class PState( rules, onUnmatched, eolRule )
-   rules = rules
-   onUnmatched = onUnmatched
-   eolRule = eolRule
+class PRule( token, target, action )
+   token = token
+   target = target
+   action = action
 end
 
 /*#
-   @brief Main parsing class.
-
-   A generic parser is a parsing system based on token recognition
-   and callback invocation. This class provides general token
-   recognition and calls adequate callbacks.
-
-   In strick terms, this class acts more like a @b lexer which drives
-   a callback-driven parser provided by the user.
-
-   The @b Parser class works by using a set of named states (in the
-   class @a PState), which corespond to different ruleset which are
-   used in different parsing steps.
-
-   Rules, that is, user-provided callbacks, can return a string
-   representing a state name; the coresponding satate is then pushed
-   on a stack, and can be popped later by returning the special
-   state "#pop".
-
-   Each @a PState provides a set of four elements:
-      - separators: a string containing characters considered "blanks"
-         which hasn't any grammar meaning except that of separating
-         tokens and keywords. In example, " \t" would recognize spaces
-         and tab characters as separators.
-      - tokens: A list of @a Rule instances which match recognized tokens.
-         Tokens are recognized when it can be demonstrated that no other
-         token can be matched. In example, if the parser has "+" and "+="
-         tokens, the proper action (either the one associated with + or +=)
-         will be called when the ambiguity can be resolved.
-      - keywords: A list of @a Rule instances which are recognized only if
-         surrounded by separators or tokens. In example, a keyword "fun"
-         would be recognized only if preceded and followed by any of the
-         characters in the @a seperators string, or by any recognized token.
-      - onElement: it's a callback which gets called when identifying a sequence
-        between separators and/or tokens which is not listed in the keywords.
-
-   In example, the following parser regognizes and saves strings by pushing a different
-   state when they are found:
-
-   @code
-   load parser
-
-   // base state
-   base = PState(
-      separators|" \t\n\r",
-      tokens| [ Rule( '"', onQuote ) ],
-      onElement|ignoring )
-
-   // state when parsing a string
-   pstring = PState(
-      separators|"", // spaces are relevant
-      tokens|[
-         Rule( "\\\"", onEscapeQuote ),
-         Rule( "\"", onStringClosed ) ],
-      onElement| addToString )
-
-   content = ""
-   function onQuote( qt )
-      global content
-      // starting string mode
-      content = ""
-      return "string"
-   end
-
-   function ignoring( item )
-      > "Ignoring ", item
-   end
-
-   function addToString( data )
-      global content
-      content += data
-   end
-
-   function onEscapeQuote( qt )
-      global content
-      content += "\""
-   end
-
-   function onStringClosed( qt )
-      global content
-      > "Found string: >>", content, "<<"
-      return "#pop"
-   end
-
-   parser = Parser()
-   parser.addState( "base", base )
-   parser.addState( "string", pstring )
-
-   stream = StringStream( 'unrecognized text, "an \"interesting\" string", other text')
-   parser.parse( stream, "base" )
-   @endcode
-
-   The parser ensures that all the tokens, keywords and unrecognized elements
-   are notified via callbacks in the same order in which they are found in the
-   parsed file.
-
-   Other than returning a state name, the rule callbacks may also return a new
-   instance of @a PState; this would push the state on the stack and make it
-   the currently active state. This makes possible to create new parser states
-   on the fly, in case some of the parsing conditions are not known in advance.
-
-   It is also possible to modify existing states by i.e. adding new keywords or
-   tokens as they become defined while parsing the source code.
+@brief Error generated by the generic parser.
 */
-
-class Parser()
-   //# known states by name
-   states = nil
-   
-   //# stack of ParserStates
-   _stack = []
-
-   //# Used for tracing
-   _stateNames = []
-
-   //# false when asked to quit
-   _proceed = false
-
-   //# current parsing row
-   row = 1
-
-   //# true to activate rule tracing
-   trace = false
-
-   /*# Pushes a given state making it the active state.
-   *  @param name The name of the state that should be pushed.
-   *  @raise ParseError if the state name is not known.
-   */
-   function pushState( name )
-      if not name in self.states
-         raise ParseError( 10000, i"Setting invalid state", name )
-      end
-
-      self._stack += self.states[name]
-      self._stateNames += name
-      if self.trace
-         self.traceStates()
-      end
-   end
-
-   /*#
-      @brief Pops current state.
-      @raise ParseError if the state backlist is empty.
-   */
-   function popState()
-      len1 = self._stack.len
-      if len1 <= 1
-         raise ParseError( 10001, i"Cannot pop topmost state" )
-      end
-
-      self._stack.resize( len1 - 1 )
-      self._stateNames.resize( len1 - 1 )
-      if self.trace
-         self.traceStates()
-      end
-   end
-
-   /*#
-      @brief Performs complete parsing.
-      @param stream An input stream where the input data is read.
-      @param initState The name of the initial state.
-      @optparam initRow If given, set the initial row to this number
-      @raise ParseError if the parser has not been correctly initialized.
-   */
-   function parse( string, initState, initRow )
-      if not initState: initState = "start"
-      self.initParser(initState)
-      if initRow: self.row = initRow
-      
-      ctx = Context()
-      pos = 0
-      strlen = string.len()
-
-      loop
-         // find the next line
-         poseol = string.find( "\n", pos )
-         eolsize = 1
-
-         // consider \r\n or \n\r
-         if poseol > 0
-            if string[* (poseol-1)] == 0xD
-               --poseol
-               ++eolsize
-            elif poseol+1 < strlen and string[* (poseol+1)] == 0xD
-               ++eolsize
-            end
-         end
-         
-         line = string[pos: (poseol >= 0 ? poseol: strlen)]
-         self.parseLine( line, ctx )
-
-         if poseol < 0: break
-         pos = poseol + eolsize
-      end 
-      
-      return ctx
-   end
-
-   //# Parses a file
-   function parseStream( stream, initState )
-      self.initParser( initState )
-      ctx = Context()
-      line = " " * 4096
-      while stream.readLine( line, 4096 )
-         self.parseLine( line, ctx )
-      end
-
-      return ctx
-   end
-   
-   function initParser(initState)
-      if initState
-         self._stack = []
-         if self.trace: self._stateNames = []
-         self.pushState( initState )
-      elif self._stack.len() != 1
-         raise ParseError( 10002, i"Parser not initialized before parsing" )
-      end
-
-      self._proceed = true
-      self.row = 1
-   end
-
-   function parseLine( line, ctx )
-      linelen = line.len
-      col = 0
-      
-      hadWinner = false
-      if self.trace: self.traceText( line )
-      atEnd = false
-      state = nil
-
-      loop
-         matchAt = linelen
-         winner = nil
-
-         state = self._stack[-1]
-         sr = state.rules
-         ruleId = 0
-         srlen = sr.len
-
-                  Debugger.breakpoint()
-
-         while ruleId < srlen
-            xrule = sr[ruleId++]
-            rulePos = xrule.match( line, col )
-            
-            if rulePos == 0
-               // we found the rule
-               winner = xrule
-               hadWinner = true
-               matchAt = 0
-               break
-            elif rulePos > 0
-               if rulePos < matchAt
-                  winner = xrule
-                  matchAt = rulePos
-                  hadWinner = true
-               elif rulePos == matchAt and not winner
-                  // match at end
-                  winner = xrule
-                  hadWinner = true
-               end
-            end
-            
-         end
-
-         //we found it -- do we have a prefix?
-         if col < matchAt
-            // else, the rule doesn't match
-            prefix = line[col:matchAt]
-
-            if (not state.onUnmatched)
-               statedesc = ", ".merge(self._stateNames)
-               row = self.row
-               > "PARSE ERROR: ", @"[$row:$col]{$statedesc} \"$prefix\""
-               raise ParseError( 10003, i"Unrecognized text", @"[$(self.row):$(col)]{$(statedesc)} \"$prefix\"" )
-            end
-            if state.onUnmatched != "*": state.onUnmatched( ctx, prefix )
-         end
-
-         if winner
-            count = winner.apply( ctx )
-            if self.trace: self.traceRule( winner, ctx )
-            self._fulfil( winner.nextState )
-            // ensure that end of lines with look-ahead are respected
-            if winner.lookAhead: atEnd = false
-         else
-            // empty line and no matching rule, so it seems.
-            break
-         end
-
-         col = matchAt + count
-
-         // are we done?
-         if col > linelen
-            break
-         elif col == linelen
-            // offer an extra loop for rules matching at end of line
-            if atEnd: break
-            atEnd = true
-         end
-      end
-
-      if state and state.eolRule and (not winner or winner.nextState == "#stay")
-         // is this a conditional rule?
-         if state.eolRule[0] == "*"
-            if not hadWinner
-               if self.trace: self.traceMsg("Following optional eolRule")
-               self._fulfil( state.eolRule[1:] )
-            end
-         else
-            if self.trace: self.traceMsg("Following mandatory eolRule")
-            self._fulfil( state.eolRule )
-         end
-      end
-
-      ++self.row
-      ctx.row = self.row
-   end
-
-
-   function _fulfil( slist )
-      states = slist.split( ";")
-
-      si = 0
-      l = states.len()
-      while si < l
-         what = states[si++]
-         if what == "#pop"
-            self.popState()
-         elif what == "#stay"
-            if self.trace: self.traceMsg( "Staying in current state" )
-            return
-         elif what == "#quit"
-            self.terminate()
-         elif what.typeId() == StringType
-            self.pushState( what )
-         elif what.derivedFrom( PState )
-            self._stack += what
-            self._stateNames += "anon(" + what.toString()+ ")"
-            if self.trace
-               self.traceStates()
-            end
-         else
-            // otherwise we have something wrong
-            raise ParseError( 10004, i"Invalid state change", what )
-         end
-      end
-   end
-
-   /*#
-      @brief Request parsing termination.
-
-      A rule callback may call this method via @b sender.terminate()
-      to request immediate exit from the parser sequence.
-
-      A rule may also quit the parser by returning the special
-      "#quit" state.
-   */
-
-   function terminate()
-      self._proceed = false
-   end
-
-   function traceText( line )
-      > "[PTRC:text] <<", line, ">>"
-   end
-
-   function traceStates()
-      > "[PTRC:stat] ", ", ".merge(self._stateNames)
-   end
-
-   function traceMsg( msg )
-      > "[PTRC:msg ] ", msg
-   end
-
-   function traceRule( r, context )
-      >> "[PTRC:rule] (ctx depth:", context.nodeStack.len(),  ") Applying ", r.className(), "("
-      if r provides token: >> '"', r.token.escape(), "\", "
-      >> '"', r.nextState, '")'
-      > " matcing ", r.matchLen, " chars."
-   end
-   
+class ParserError( code, desc, extra ) from Error(code, desc, extra )
 end
 
-export
+
+/*#
+   @brief Generic parser engine.
+   
+   @code
+   x = Parser()
+   // shortcut
+   PState = x.add
+
+   PState( "start",
+      // AddBelow will actually create a function that will be responsible
+      // for adding the text below the forming tree
+      PRule( "/*#", "faldoc_text", addBelow("FaldocBlock") ),
+      PRule( "//#", "faldoc_text_eol", addBelow("FaldocBlock") ),
+      // addToContent doesn't need configuration, so we can use it directly
+      PRule( nil, "#stay", addToContent )
+   )
+
+   base_faldocText = .[ 
+      PRule( r'@b\s\w+\b', "#stay", addBesides("b", r'@b\s+(\w)', '\1') )
+      // the action is optional
+      PRule("\\", "ignore")
+      PRule(nil, "#stay", addBesides("text") )
+      ]
+
+   PState( "faldoc_text",
+      base_faldocText,
+      PRule( '*'+'/', "#pop", popNode )
+   )
+
+   PState( "faldoc_text_eol",
+      base_faldocText,
+      PRule( "\n", "#pop", popNode )
+   )
+
+   PState( "ignore",
+      PRule( nil, "#pop", addToContent )
+   )
+
+@endcode
+*/
+class Parser
+   // states
+   states = [=>]
+   
+   // The parser status will be set here.
+   tree = nil
+      
+   // This are temporary status used internally
+   tokenMap = nil
+   reMap = nil
+   nilStates = nil
+   _stateList = nil
+
+   // This method is used to add a rule to a state.
+   // It's actually a variable parameter function, with r assuming the value
+   // of each rule passed after the state name, in turn.
+   // r can also be an array of rules.
+   function add( stateName, r )
+      if r.typeId == ArrayType
+         for elem in r
+            self.add(stateName, elem )
+         end
+      else
+         if not r.derivedFrom(PRule)
+            raise ParamError(10001, "Parameter error", "Rule is not a PRule instance")
+         end
+         
+         state = self.states.find(stateName, nil)
+         if not state
+            self.states[stateName] = [r]
+         else
+            state += r
+         end
+      end
+      
+      fself.redo()
+   end
+   
+
+   // Start parsing
+   // Test can also be a stream.
+   function parse( text, enc )
+      // reset the maps
+      self.tokenMap = [=>]
+      self.reMap = [=>]
+      self.nilStates = [=>]
+      self._stateList = []
+
+      self.prepareMaps()
+      mt = MultiTokenizer(text, enc)
+      tree = Tree()
+      self.prepareParsing(mt, tree)
+      self.setState("start")
+      ^[mt]
+      
+      return tree
+   end
+   
+   //==========================================================
+   // Private part
+   //
+   
+   // This function reorganizes the states and the rules BY TOKEN.
+   // Rules are more easily declared by rule, but then, we need
+   // to know what to do when we find a token; so we reorder the
+   // states and their rules by token.
+   function prepareMaps()
+      for state, seq in self.states
+         for r in seq
+            if r.token.typeId == StringType
+               stateMap = self.tokenMap.find(r.token,nil)
+               if stateMap
+                  stateMap[state] = r
+               else
+                  self.tokenMap[r.token] = [state => r]
+               end
+            elif r.token == nil
+               self.nilStates[state] = r
+            else
+               stateMap = self.reMap.find(r.token.pattern,nil)
+               if stateMap
+                  stateMap[state] = r
+               else
+                  self.reMap[r.token.pattern] = [state => r]
+               end
+            end
+         end
+      end                  
+   end
+   
+   
+   // This method fills the MultiTokenizer with callbacks that act on the forming syntactic tree.
+   // The calbacks are generated on the fly, filling them with dynamic code.
+   // The workhorse for that is the next function.
+   function prepareParsing( mt, tree )    
+      
+      for token, stateMap in 
+      
+         self.trace( "Generating parser for token", token.escape() )
+         sw = self.prepareSwitch( stateMap, "state" )         
+         func = {(text) state = ^~self.currentState(); tree = ^~tree; ^~sw() }
+         self.trace2( func.render() )
+         mt.addToken( token, func )
+      end
+      
+      for re, stateMap in self.reMap
+         self.trace( "Generating parser for re", re.escape() )
+         sw = self.prepareSwitch( stateMap, "state" )         
+         self.trace2( sw.render() )
+         func = {(text) state = ^~self.currentState(); tree = ^~tree; ^~sw() }
+         mt.addRE( re, func )
+      end
+      
+      self.trace( "Generating parser pure text" )
+      sw = self.prepareSwitch( self.nilStates, "state" )
+      self.trace2( sw.render() )
+      func = {(text) state = ^~self.currentState(); tree = ^~tree; ^~sw() }
+      mt.onText = func
+      
+   end
+   
+   // This function transform a map of "state" => PRule entities
+   // into a switch() ... end code that select the correct rule at given state.
+   function prepareSwitch( stateMap, stateVar )      
+      // Generate a switch on state ... 
+      sw = Syn.Switch( Symbol(stateVar) )
+      
+      for state, r in stateMap
+         
+         //... in which every state is a branch ...
+         cs = SynTree()
+         cs.selector = Syn.Case(state)
+         
+         // ... where it invokes the action tied with the rule...
+         action = r.action
+         if action
+            cs.append( {[] ^~action(tree, text)} )
+         end
+         // ... and possibly changes the state of the parser ...
+         cs.append( {[] ^~self.setState(^~(r.target))} )
+         
+         sw.append(cs)
+      end
+      dflt = SynTree()
+      dflt.append( {[] printl("Default: ", state)} )
+      sw.append( dflt )
+      return sw
+   end
+   
+   function currentState()
+      if self._stateList
+         return self._stateList[-1]
+      end
+      return "<EMPTY>"
+   end
+   
+   function setState( newState )
+      self.trace("setState", newState )
+      
+      states = newState.split(";")
+      for s in states
+         switch s
+            case "#pop"
+               self.popState()
+            case "#stay"
+               // do nothing
+            default
+               if s notin states
+                  self.error("State '" + s + "' not found")
+               else               
+                  self.trace("Descending in state", s)
+                  self._stateList += s
+               end
+         end
+      end      
+   end
+   
+   function popState()
+      if not self._stateList
+         self.error("Pop state without states.")
+      else
+         self._stateList.remove(-1)
+      end
+   end
+   
+   function error( s )
+      raise ParserError( 10001, "Parser Error", s)
+   end
+   
+   function trace()
+      >> "[P-TRC] "
+      ^[fself.params] {(v) >>v, " "}
+      printl()
+   end
+   
+   function trace2()
+      >> "[P-TR2] "
+      ^[fself.params] {(v) >>v, " "}
+      printl()
+   end
+end
+
+//=====================================================================
+// Callbacks
+//=====================================================================
+
+// This is an action that creates a closure that will act on the tree
+// It's purpose it's that of creating a node of type 'name', and 
+// eventually transform the input text via regex/subst pair.
+function addBelow( name, processor )
+   return { tree, text => 
+      if processor 
+         text = processor(text)
+      end
+      newNode = Node(name, text)
+      tree.current.appendChild(newNode)
+      tree.current = newNode
+   }
+end
+
+// As above, but adds a sibling to the current node
+function addBesides(name, processor )
+   return { tree, text => 
+      if processor 
+         text = processor(text)
+      end
+      newNode = Node(name, text)
+      tree.current.insertAfter(newNode)
+      tree.current = newNode
+      }
+end
+
+// As above, but adds a sibling to the current node
+function addAbove(name, processor )
+   return { tree, text => 
+      tree.popNode()
+      if regex 
+         text = processor(text)
+      end
+      newNode = Node(name, text)
+      tree.current.insertAfter(newNode)
+      tree.current = newNode
+      }
+end
+
+// sets the current node as the parent of the current node
+function popNode(tree) 
+   if tree.current.parent == nil
+      raise ParseError( 10002, "Popping top node in tree" )
+   end
+   tree.current = tree.current.parent
+end
+
+// Adds content to the currently active node (or fills it's content field)
+function addToContent(tree, text)
+   if tree.current.content
+      tree.current.content += text
+   else
+      tree.current.content = text + ""
+   end
+end
+
+// Adds content to the currently active node (or fills it's content field)
+function addText(text)
+   { tree =>
+   if tree.current.content
+      tree.current.content += text
+   else
+      tree.current.content = text + ""
+   end
+   }
+end

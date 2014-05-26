@@ -62,6 +62,9 @@ CoreModule::CoreModule():
    Function* ffor = new Ext::Function_ffor;
    ffor->setEta(true);
 
+   m_ctw = new Ext::ClassTextWriter( classStream );
+   m_ctr = new Ext::ClassTextReader( classStream );
+
    *this
       // Standard functions
       << new Ext::Compile
@@ -101,8 +104,8 @@ CoreModule::CoreModule():
       << new Ext::ClassMutex
       << new Ext::ClassGenerator
       << new Ext::ClassTextStream( classStream )
-      << new Ext::ClassTextWriter( classStream )
-      << new Ext::ClassTextReader( classStream )
+      << m_ctw
+      << m_ctr
       << new Ext::ClassDataWriter( classStream )
       << new Ext::ClassDataReader( classStream )
       << new Ext::ClassSelector

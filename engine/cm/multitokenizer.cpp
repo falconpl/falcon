@@ -19,7 +19,10 @@
 #include <falcon/stdhandlers.h>
 #include <falcon/stdsteps.h>
 #include <falcon/stderrors.h>
+
 #include <falcon/cm/multitokenizer.h>
+#include <falcon/cm/coremodule.h>
+
 #include <falcon/function.h>
 #include <falcon/item.h>
 #include <falcon/textreader.h>
@@ -130,25 +133,13 @@ public:
 
 static MultiTokenizer* internal_setSource(Function* caller, VMContext* ctx, MultiTokenizer* tk)
 {
-   static Class* clsStream = Engine::instance()->stdHandlers()->streamClass();
+   static Class* clsTR = static_cast<CoreModule*>(caller->methodOf()->module())->clsTextReader();
+
 
    Item* i_source= ctx->param(0);
-   Item* i_enc = ctx->param(1);
-   if( i_source == 0 || ! (i_source->isString() || i_source->isInstanceOf(clsStream))
-       || (i_enc != 0 && ! (i_enc->isNil() || i_enc->isString()) )
-       )
+   if( i_source == 0 || ! (i_source->isString() || i_source->isInstanceOf(clsTR)) )
    {
       throw caller->paramError();
-   }
-
-   String dflt("C");
-   String* enc;
-   if( i_enc == 0 || i_enc->isNil() )
-   {
-      enc = &dflt;
-   }
-   else {
-      enc = i_enc->asString();
    }
 
    if( i_source->isString() )
@@ -161,14 +152,8 @@ static MultiTokenizer* internal_setSource(Function* caller, VMContext* ctx, Mult
       }
    }
    else {
-      Transcoder* tc = Engine::instance()->getTranscoder(*enc);
-      if( tc == 0 )
-      {
-         throw FALCON_SIGN_XERROR(ParamError, e_param_range, .extra("Invalid encoding "+*enc));
-      }
 
-      Stream* stream = i_source->castInst<Stream>(clsStream);
-      TextReader* tr = new TextReader( stream, tc );
+      TextReader* tr = i_source->castInst<TextReader>(clsTR);
       if( tk == 0 )
       {
          tk = new MultiTokenizer(tr);
@@ -177,7 +162,6 @@ static MultiTokenizer* internal_setSource(Function* caller, VMContext* ctx, Mult
       {
          tk->setSource(tr);
       }
-      tr->decref();
    }
 
    return tk;
@@ -186,8 +170,7 @@ static MultiTokenizer* internal_setSource(Function* caller, VMContext* ctx, Mult
 /*#
  @class MultiTokenizer
  @brief Advanced helper for iterative and generator-based sub-string extractor.
- @param source The string to be tokenized or a @a Stream
- @optparam enc Text-encoding of the given stream (defaults to "C").
+ @param source The string to be tokenized or a @a TextReader
  @optparam give If true, tokens will be returned in next() calls.
  @optparam group If true, sbusequent identical tokens delimiting an empty string won't be returned.
 
@@ -223,13 +206,13 @@ static MultiTokenizer* internal_setSource(Function* caller, VMContext* ctx, Mult
  @prop giveTokens if true, tokens will be given back as part of the iterations.
  @prop groupTokens if true, subsequent identical tokens will be discarded.
 */
-FALCON_DECLARE_FUNCTION( init, "source:S|Stream,enc:[S],give:[B],group:[B]" );
+FALCON_DECLARE_FUNCTION( init, "source:S|TextReader,give:[B],group:[B]" );
 FALCON_DEFINE_FUNCTION_P1( init )
 {
    MultiTokenizer* tk = internal_setSource(this, ctx, 0);
 
-   Item* i_give = ctx->param(2);
-   Item* i_group = ctx->param(3);
+   Item* i_give = ctx->param(1);
+   Item* i_group = ctx->param(2);
 
    if( i_group!= 0 && i_group->isTrue() )
    {
@@ -283,15 +266,14 @@ FALCON_DEFINE_FUNCTION_P1( rewind )
 /*#
  @method setSource() MultiTokenizer
  @brief Changes the source used by this tokenizer.
- @param source The string to be tokenized or a @a Stream
- @optparam enc Text-encoding of the given stream (defaults to "C").
+ @param source The string to be tokenized or a @a TextReader
 
  This method changes the source from which the tokenization is
  performed. It's effect is that of keeping the tokenizer structure
  (tokens and callbacks) while being able to perform a new tokenization
  on a new input.
  */
-FALCON_DECLARE_FUNCTION( setSource, "source:S|Stream,enc:[S]" );
+FALCON_DECLARE_FUNCTION( setSource, "source:S|TextReader" );
 FALCON_DEFINE_FUNCTION_P1( setSource )
 {
    MultiTokenizer* tk = ctx->tself<MultiTokenizer*>();

@@ -170,7 +170,7 @@ static void get_pattern( const Class*, const String&, void* instance, Item& valu
    }
 }
 
-namespace CRE {
+namespace {
 /*#
  @method match RE
  @param target The string to be matched.
@@ -952,23 +952,23 @@ ClassRE::ClassRE():
    addProperty( "groupNames", &get_groupNames );
    addProperty( "pattern", &get_pattern );
 
-   addMethod(new CRE::Function_match);
-   addMethod(new CRE::Function_grab);
-   addMethod(new CRE::Function_find);
-   addMethod(new CRE::Function_findAll);
-   addMethod(new CRE::Function_range);
-   addMethod(new CRE::Function_rangeAll);
-   addMethod(new CRE::Function_capture);
+   addMethod(new Function_match);
+   addMethod(new Function_grab);
+   addMethod(new Function_find);
+   addMethod(new Function_findAll);
+   addMethod(new Function_range);
+   addMethod(new Function_rangeAll);
+   addMethod(new Function_capture);
 
-   addMethod(new CRE::Function_replace);
-   addMethod(new CRE::Function_replaceFirst);
-   addMethod(new CRE::Function_substitute);
-   addMethod(new CRE::Function_change);
-   addMethod(new CRE::Function_changeFirst);
-   addMethod(new CRE::Function_chop);
+   addMethod(new Function_replace);
+   addMethod(new Function_replaceFirst);
+   addMethod(new Function_substitute);
+   addMethod(new Function_change);
+   addMethod(new Function_changeFirst);
+   addMethod(new Function_chop);
 
-   addMethod(new CRE::Function_consume);
-   addMethod(new CRE::Function_consumeMatch);
+   addMethod(new Function_consume);
+   addMethod(new Function_consumeMatch);
 }
 
 
@@ -1194,21 +1194,14 @@ static void internal_match( VMContext* ctx, void* instance, bool partial )
    ctx->topData().setBoolean( match );
 }
 
-void ClassRE::op_compare( VMContext* ctx, void* self ) const
+void ClassRE::op_compare( VMContext* ctx, void* ) const
 {
    Item *op1, *op2;
 
    ctx->operands( op1, op2 );
 
-   if( op2->isInstanceOf(this) )
-   {
-      re2::RE2* re = static_cast<re2::RE2*>( op1->asInst() );
-      re2::RE2* ore = static_cast<re2::RE2*>( op2->asParentInst(this) );
-      ctx->stackResult( 2, (int64)  (re->pattern().compare(ore->pattern())) );
-      return;
-   }
-
-   Class::op_compare(ctx, self);
+   // RE has type digntity, it's compare is managed by the standard item compare.
+   ctx->stackResult( 2, (int64)  op1->compare(*op2) );
 }
 
 void ClassRE::op_div( VMContext* ctx, void* instance ) const

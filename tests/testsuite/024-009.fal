@@ -28,7 +28,8 @@ function test(mt)
 end
 
 > "Getting off, Grouping off:"
-mt = MultiTokenizer( StringStream("a,,b;;c d.e;;") )
+tr = TextReader(StringStream("a,,b;;c d.e;;"))
+mt = MultiTokenizer( tr )
 mt.add( r",|;", " ", "." )
 
 test(mt)

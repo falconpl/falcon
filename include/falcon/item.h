@@ -804,7 +804,7 @@ public:
     * out of the instance in this item, and adding a useful typecast.
     */
    template< class T_ >
-   T_* castInst(Class* baseClass)
+   T_* castInst(const Class* baseClass) const
    {
       fassert(isUser());
 

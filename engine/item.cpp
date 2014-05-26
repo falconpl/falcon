@@ -23,6 +23,9 @@
 
 #include <falcon/itemarray.h>
 #include <falcon/itemdict.h>
+#include <falcon/stdhandlers.h>
+
+#include "re2/re2.h"
 
 
 namespace Falcon
@@ -266,6 +269,25 @@ int Item::compare( const Item& other ) const
 
       case FLC_CLASS_ID_STRING:
          return i1->asString()->compare(*i2->asString());
+
+      case FLC_CLASS_ID_RE:
+      {
+         static const Class* clsre = Engine::instance()->stdHandlers()->reClass();
+
+         const re2::RE2* re1 = i1->castInst<re2::RE2>(clsre);
+         const re2::RE2* re2 = i2->castInst<re2::RE2>(clsre);
+         int32 comp = re1->getPattern().compare( re2->getPattern() );
+         if( comp == 0 )
+         {
+            const RE2::RE2::Options& opt1 = re1->options();
+            const RE2::RE2::Options& opt2 = re2->options();
+            return (int64) (opt1.FlagsToNumber() - opt2.FlagsToNumber());
+         }
+
+         return (int64) comp;
+      }
+      break;
+
 
       default:
          return (int64) (static_cast<byte*>(i1->asInst()) - static_cast<byte*>(i2->asInst()));

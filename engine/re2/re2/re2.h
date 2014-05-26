@@ -267,8 +267,8 @@ class RE2 {
   //   re.pattern();    // "ab*c?d+"
   const string& pattern() const { return pattern_; }
 
-  void getPattern(Falcon::String& str ) { str.fromUTF8(pattern_.c_str()); }
-  Falcon::String getPattern() { Falcon::String temp; getPattern(temp); return temp; }
+  void getPattern(Falcon::String& str ) const { str.fromUTF8(pattern_.c_str()); }
+  Falcon::String getPattern() const { Falcon::String temp; getPattern(temp); return temp; }
 
   // If RE2 could not be created properly, returns an error string.
   // Else returns the empty string.
@@ -629,6 +629,7 @@ class RE2 {
     }
 
     int ParseFlags() const;
+    int FlagsToNumber() const;
 
    private:
     // Private constructor for defining constants like RE2::Latin1.

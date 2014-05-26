@@ -14,91 +14,83 @@
    See LICENSE file for licensing details.
 */
 
-import Node from parser.genparser.node as Node
-import LevelNode from parser.genparser.node as LevelNode
-import InfoNode from parser.genparser.node as InfoNode
+import Parser from parser.genparser as GP
+import from parser.genparser
 
-import PState from parser.genparser as PState
-import Context from parser.genparser as Context
-
-import ReRule from parser.genparser.rules as ReRule
-import ReRuleLA from parser.genparser.rules as ReRuleLA
-import TagRule from parser.genparser.rules as TagRule
-import EmptyLineRule from parser.genparser.rules as EmptyLineRule
-import DummyRule from parser.genparser.rules as DummyRule
-import CharRule from parser.genparser.rules as CharRule
-
-import Parser from parser.genparser
+function _substTitle( t )
+   return  r'^\s*=+\s*(.+?)\s*=*$'.subst(t,'\1')
+end
 
 Headers = .[
-   ReRule( '^\s*======\s*(.+?)\s*=*$', "#stay", {ctx, ma, title=> ctx.add( LevelNode("header", 6, title))})
-   ReRule( '^\s*=====\s*(.+?)\s*=*$', "#stay", {ctx, ma, title=> ctx.add( LevelNode("header", 5, title))})
-   ReRule( '^\s*====\s*(.+?)\s*=*$', "#stay", {ctx, ma, title=> ctx.add( LevelNode("header", 4, title))})
-   ReRule( '^\s*===\s*(.+?)\s*=*$', "#stay", {ctx, ma, title=> ctx.add( LevelNode("header", 3, title))})
-   ReRule( '^\s*==\s*(.+?)\s*=*$',  "#stay", {ctx, ma, title=>  ctx.add( LevelNode("header", 2, title))} )
-   ReRule( '^\s*=\s*(.+?)\s*=*$',  "#stay", {ctx, ma, title=>  ctx.add( LevelNode("header", 1, title))} )
-   ReRule( '^\s*----*$',  "#stay", {ctx, ma, title=>  ctx.add( Node("hr", title))} )
+   PRule( r'^\s*======\s*(.+?)\s*=*$', "#stay", addBesides( "header6", _substTitle )
+   PRule( r'^\s*=====\s*(.+?)\s*=*$', "#stay", addBesides( "header5", _substTitle )
+   PRule( r'^\s*====\s*(.+?)\s*=*$', "#stay", addBesides( "header4", _substTitle)
+   PRule( r'^\s*===\s*(.+?)\s*=*$', "#stay", addBesides( "header3", _substTitle)
+   PRule( r'^\s*==\s*(.+?)\s*=*$',  "#stay", addBesides( "header2", _substTitle )
+   PRule( r'^\s*=\s*(.+?)\s*=*$',  "#stay", addBesides( "header1", _substTitle )
+   PRule( r'^\s*----*$',  "#stay", addBesides( "hr" ) )
 ]
 
 Headers2 = .[
-   ReRule( '^\s*======\s*(.+?)\s*=*$', "#pop", {ctx, ma, title=> ctx.popNode(); ctx.add( LevelNode("header", 6, title))})
-   ReRule( '^\s*=====\s*(.+?)\s*=*$', "#pop", {ctx, ma, title=> ctx.popNode();ctx.add( LevelNode("header", 5, title))})
-   ReRule( '^\s*====\s*(.+?)\s*=*$', "#pop", {ctx, ma, title=> ctx.popNode();ctx.add( LevelNode("header", 4, title))})
-   ReRule( '^\s*===\s*(.+?)\s*=*$', "#pop", {ctx, ma, title=> ctx.popNode();ctx.add( LevelNode("header", 3, title))})
-   ReRule( '^\s*==\s*(.+?)\s*=*$',  "#pop", {ctx, ma, title=> ctx.popNode(); ctx.add( LevelNode("header", 2, title))} )
-   ReRule( '^\s*=\s*(.+?)\s*=*$',  "#pop", {ctx, ma, title=> ctx.popNode(); ctx.add( LevelNode("header", 1, title))} )
-   ReRule( '^\s*----*$',  "#pop", {ctx=> ctx.popNode(); ctx.add( Node("hr"))} )
+   PRule( r'^\s*======\s*(.+?)\s*=*$', "#pop",  addAbove( "header6", _substTitle ) )
+   PRule( r'^\s*=====\s*(.+?)\s*=*$', "#pop", addAbove( "header5", _substTitle ) )
+   PRule( r'^\s*====\s*(.+?)\s*=*$', "#pop", addAbove( "header4", _substTitle ))
+   PRule( r'^\s*===\s*(.+?)\s*=*$', "#pop", addAbove( "header3", _substTitle ))
+   PRule( r'^\s*==\s*(.+?)\s*=*$',  "#pop", addAbove( "header2", _substTitle ))
+   PRule( r'^\s*=\s*(.+?)\s*=*$',  "#pop", addAbove( "header1", _substTitle ) )
+   PRule( r'^\s*----*$',  "#pop", addAbove( "hr" ) )
 ]
 
 TableStart = .[
-   ReRule( '^\s*\|=\s*',  "table", {ctx =>  ctx.pushNode( Node("table") ); ctx.pushNode(Node("tr")); ctx.pushNode(Node("th"))} )
-   ReRule( '^\s*\|\s*',  "table", {ctx =>  ctx.pushNode( Node("table") ); ctx.pushNode(Node("tr")); ctx.pushNode(Node("td"))} )
+   //PRule( '^\s*\|=\s*',  "table", {ctx =>  ctx.pushNode( Node("table") ); ctx.pushNode(Node("tr")); ctx.pushNode(Node("th"))} )
+   //PRule( '^\s*\|\s*',  "table", {ctx =>  ctx.pushNode( Node("table") ); ctx.pushNode(Node("tr")); ctx.pushNode(Node("td"))} )
 ]
 
 
 Indents = .[
-   ReRule( '^\s*::::\s*', "#stay", {ctx=> ctx.pushNode( LevelNode("indent", 4) ) })
-   ReRule( '^\s*:::\s*', "#stay", {ctx=> ctx.pushNode( LevelNode("indent", 3) ) })
-   ReRule( '^\s*::\s*', "#stay", {ctx=> ctx.pushNode( LevelNode("indent", 2) ) })
-   ReRule( '^\s*:\s*', "#stay", {ctx=> ctx.pushNode( LevelNode("indent", 1) ) })
+   PRule( '^\s*::::\s*', "#stay", addBelow("indent4") )
+   RRule( '^\s*:::\s*', "#stay", addBelow("indent3") )
+   RRule( '^\s*::\s*', "#stay", addBelow("indent2") )
+   RRule( '^\s*:\s*', "#stay", addBelow("indent1"))
 ]
 
 
 SpecialEntities = .[
-      TagRule( '<', "#stay", {ctx => ctx.add("&lt;")} )
-      TagRule( '>', "#stay", {ctx => ctx.add("&gt;")} )
-      TagRule( '&', "#stay", {ctx => ctx.add("&amp;")} )
-      TagRule( '"', "#stay", {ctx => ctx.add("&quot;")} )
+      PRule( '<', "#stay", addText("&lt;") )
+      PRule( '>', "#stay", addText("&gt;") )
+      PRule( '&', "#stay", addText("&amp;") )
+      PRule( '"', "#stay", addText("&quot;") )
 ]
 
 
 ListStart =  .[
-      ReRule( '^\s*#\s*', "list", {ctx=> ctx.setListDepth( 1, "ol") })
-      ReRule( '^\s*\*\s*', "list", {ctx=> ctx.setListDepth( 1, "ul") })
+      //ReRule( '^\s*#\s*', "list", {ctx=> ctx.setListDepth( 1, "ol") })
+      //ReRule( '^\s*\*\s*', "list", {ctx=> ctx.setListDepth( 1, "ul") })
 ]
 
 
 FormatElements = .[
-   TagRule( "**",  "bold", {ctx => ctx.pushNode( Node("b"))} )
-   TagRule( "//",  "italic", {ctx => ctx.pushNode( Node("i"))} )
-   TagRule( "__",  "underline", {ctx => ctx.pushNode( Node("u"))} )
-   TagRule( "^^",  "superscript", {ctx => ctx.pushNode( Node("sup"))} )
-   TagRule( ",,",  "subscript", {ctx => ctx.pushNode( Node("sub"))} )
-   TagRule( '\\',  "#stay", {ctx=> ctx.add( Node("br"))} )
-   TagRule( '{{{',  "verbatim", {ctx => ctx.pushNode( Node("tt"))} )
-   TagRule( "~~", "#stay", {ctx => ctx.add( "~" )} ) // escape escaped
-   TagRule( "~", "escape" ) // escape char
+   PRule( r'\*\*.*(\*\*|\n)',  "#stay", addBesides("b", { t=>t[ 2:-2 ] } ) )
+   PRule( r'//.*(//|\n)',  "#stay", addBesides("i", { t=>t[ 2:-2 ] } ) )
+   PRule( r'__.*(__|\n)',  "#stay", addBesides("u", { t=>t[ 2:-2 ] } ) )
+   PRule( r'^^.*(^^|\n)',  "#stay", addBesides("sup", { t=>t[ 2:-2 ] } ) )
+   PRule( r',,.+(,,|\n)',  "#stay", addBesides("sub", { t=>t[ 2:-2 ] } ) )
+   PRule( '\\',  "#stay", addBesides("br") )
+   PRule( '{{{',  "verbatim", addBelow("verbatim") )
+   PRule( "~~", "#stay", addText("~") ) // escape escaped
+   PRule( "~", "escape" ) // escape char
 ]
 
+/*
 LinkElements = .[
-    ReRule( '\[\[:(.*?)(\|(.*?))?(\|(.*?))?\]\]',  "#stay",
+    PRule( '\[\[:(.*?)(\|(.*?))?(\|(.*?))?\]\]',  "#stay",
                         {ctx, ma, pg, d1, txt, d2, mx =>
                            ctx.add(
                               InfoNode("file", _options(mx, ["name"=>pg, "text"=>txt, "ext"=>true]))
                            )
                         })
 
-   ReRule( '\[\[(https?:.*?|ftp:.*?)(\|(.*?))?(\|(.*?))?\]\]',  "#stay",
+   PRule( '\[\[(https?:.*?|ftp:.*?)(\|(.*?))?(\|(.*?))?\]\]',  "#stay",
                         {ctx, ma, pg, d1, txt, d2, mx =>
                            ctx.add(
                               InfoNode("link", _options(mx, ["name"=>pg, "text"=>txt, "ext"=>true]))
@@ -106,29 +98,30 @@ LinkElements = .[
                         })
 
    
-    ReRule( '\[\[([^:|\]]+):(.*?)(\|(.*?))?(\|(.*?))?\]\]',  "#stay",
+    PRule( '\[\[([^:|\]]+):(.*?)(\|(.*?))?(\|(.*?))?\]\]',  "#stay",
                         {ctx, ma, ilink, pg, d1, txt, d2, mx =>
                            ctx.add(
                               InfoNode("link", _options(mx, ["name"=>pg, "ext"=>false, "text"=>txt, "ilink"=>ilink]))
                            )
                         })
    
-   ReRule( '\[\[(.*?)(\|(.*?))?(\|(.*?))?\]\]',  "#stay",
+   PRule( '\[\[(.*?)(\|(.*?))?(\|(.*?))?\]\]',  "#stay",
                         {ctx, ma, pg, d1, txt, d2, mx =>
                            ctx.add(
                               InfoNode("link", _options(mx, ["name"=>pg, "ext"=>false, "text"=>txt]))
                            )
                         })
-   ReRule( 'https?://[^ ;,\?!:]+',  "#stay", {ctx, ma=> ctx.add( InfoNode("link", ["name"=>ma, "text"=>nil, "ext"=>true]))} )
-   ReRule( 'ftp://[^ ;,\?!:]+',  "#stay", {ctx, ma=> ctx.add( InfoNode("link", ["name"=>ma, "text"=>nil, "ext"=>true]))} )
+   PRule( 'https?://[^ ;,\?!:]+',  "#stay", {ctx, ma=> ctx.add( InfoNode("link", ["name"=>ma, "text"=>nil, "ext"=>true]))} )
+   PRule( 'ftp://[^ ;,\?!:]+',  "#stay", {ctx, ma=> ctx.add( InfoNode("link", ["name"=>ma, "text"=>nil, "ext"=>true]))} )
 
-   ReRule( '\{\{(.*?)(\|(.*?))?(\|(.*?))\}\}',  "#stay", {ctx, ma, pg, d0, txt, d1, mx =>
+   PRule( '\{\{(.*?)(\|(.*?))?(\|(.*?))\}\}',  "#stay", {ctx, ma, pg, d0, txt, d1, mx =>
                                                  ctx.add( InfoNode("img", _options(mx, ["name"=>pg, "alt"=> (txt? txt:pg)])))} )
-   ReRule( '<<(.*?)(\s+(.*?))?>>', "#stay", {ctx, ma, pname, d0, popts =>
+   PRule( '<<(.*?)(\s+(.*?))?>>', "#stay", {ctx, ma, pname, d0, popts =>
                         ctx.add( InfoNode("plugin", ["name"=>pname, "params"=>_params(popts)], true) ) } )
 ]
+*/
 
-InlineElements = FormatElements + LinkElements + SpecialEntities
+InlineElements = FormatElements + SpecialEntities //+ LinkElements
 
 /*
    Determine the options of a optioned link
@@ -175,30 +168,33 @@ function _inlineState( limit )
 end
    
 
-class Parser from parser.genparser.Parser
-   states = [
-      "start"=> PState(.[
-            EmptyLineRule( "#stay" )  // at start, empty lines are ignored
-         ] 
-         + Headers 
-         + .[ DummyRule( "para", { ctx => ctx.pushNode( Node("para") )} ) ]
-      ),
-
-      "para" =>PState(.[
-            EmptyLineRule( "#pop", {ctx=> ctx.popNode()})
-            
-            ReRule( '^\{\{\{([^\s]+)$',  "verbatim_code", {ctx, ma, lang => ctx.pushNode( InfoNode("code", ["lang"=>lang]))} )
-            ReRule( '^\{\{\{$',  "verbatim_line", {ctx => ctx.pushNode( Node("pre"))} )            
-            ReRule( '^\+\+\+*\s*(.*)?$',  "quote_base", {ctx, ma, link => ctx.popNode();
+class Parser from GP
+   init
+      PState = self.add
+      
+      PState("start", 
+         Headers,
+         .[
+         PRule( r'^\{\{\{([^\s]+)$',  "verbatim_code", {ctx, ma, lang => ctx.pushNode( InfoNode("code", ["lang"=>lang]))} )
+         RRule( r'^\{\{\{$',  "verbatim_line", {ctx => ctx.pushNode( Node("pre"))} )            
+         RRule( r'^\+\+\+*\s*(.*)?$',  "quote_base", {ctx, ma, link => ctx.popNode();
                                                             ctx.pushNode( InfoNode("quote", ["link"=>link]))} )
+         PRule( r'\w', "para", addBelow("p")),
+         ]
+         
+      )
+
+      PState("para",
+         PRule("\n\n", "#pop", popNode ),
+            
          ]
          + TableStart
          + ListStart
          + InlineElements
          + Indents
          + Headers2,
-         {ctx, data=>ctx.add( data )},
-         "para_continue"
+         
+        
       ),
 
       "quote_base" =>PState(.[

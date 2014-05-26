@@ -39,6 +39,13 @@ class FALCON_DYN_CLASS CoreModule: public Module
 {
 public:
    CoreModule();
+
+   Class* clsTextWriter() const { return m_ctw; }
+   Class* clsTextReader() const { return m_ctr; }
+
+private:
+   Class* m_ctw;
+   Class* m_ctr;
 };
 
 }

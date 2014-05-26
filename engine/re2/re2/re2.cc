@@ -115,6 +115,25 @@ RE2::RE2(const StringPiece& pattern, const Options& options) {
   Init(pattern, options);
 }
 
+
+int RE2::Options::FlagsToNumber() const
+{
+   int val1 =
+                        (encoding_ == RE2::RE2::Options::EncodingUTF8 ? 1 : 0)
+                      | (posix_syntax_ ? 1 << 1 : 0)
+                      | (longest_match_ ? 1 << 2: 0 )
+                      | (log_errors_ ? 1 << 3: 0 )
+                      | (literal_  ? 1 << 4: 0 )
+                      | (never_nl_ ? 1 << 5: 0 )
+                      | (case_sensitive_ ? 1 << 6: 0 )
+                      | (perl_classes_ ? 1 << 7: 0 )
+                      | (word_boundary_ ? 1 << 8: 0 )
+                      | (one_line_ ? 1 << 9: 0 ) ;
+
+   return val1;
+}
+
+
 int RE2::Options::ParseFlags() const {
   int flags = Regexp::ClassNL;
   switch (encoding()) {
