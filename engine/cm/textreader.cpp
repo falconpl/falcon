@@ -73,6 +73,20 @@ static void get_underlying( const Class*, const String&, void* instance, Item& v
    value = Item( sc->underlying()->handler(), sc->underlying());
 }
 
+static void get_eof( const Class*, const String&, void* instance, Item& value )
+{
+   TextReader* sc = static_cast<TextReader*>(instance);
+   value.setBoolean(sc->eof());
+}
+
+static void get_status( const Class*, const String&, void* instance, Item& value )
+{
+   TextReader* sc = static_cast<TextReader*>(instance);
+   value.setInteger((int64)sc->underlying()->status());
+}
+
+
+
 //=================================================================
 // Methods
 //
@@ -529,6 +543,8 @@ ClassTextReader::ClassTextReader( ClassStream* clsStream ):
 {
    addProperty( "encoding", &get_encoding, &set_encoding );
    addProperty( "underlying", &get_underlying );
+   addProperty( "eof", &get_eof );
+   addProperty( "status", &get_status );
    
    addMethod( new CTextReader::Function_read );
    addMethod( new CTextReader::Function_grab );

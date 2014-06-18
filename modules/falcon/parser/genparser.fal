@@ -103,11 +103,9 @@ class Parser
    
    // The parser status will be set here.
    tree = nil
+   mtMap = nil
       
-   // This are temporary status used internally
-   tokenMap = nil
-   reMap = nil
-   nilStates = nil
+   // current state list
    _stateList = nil
 
    // This method is used to add a rule to a state.
@@ -137,20 +135,25 @@ class Parser
    
 
    // Start parsing
-   // Test can also be a stream.
+   // Text can also be a stream.
    function parse( text, enc )
       // reset the maps
-      self.tokenMap = [=>]
-      self.reMap = [=>]
-      self.nilStates = [=>]
       self._stateList = []
+      self.mtMap = [=>]
 
-      self.prepareMaps()
-      mt = MultiTokenizer(text, enc)
-      tree = Tree()
-      self.prepareParsing(mt, tree)
+      select text
+         case StringType
+            if not enc: enc = "utf8"
+            reader = TextReader(StringStream(text), enc)
+         case TextReader
+            reader = text
+         default
+            raise ParamError( 10001, "Invalid parameter", "S|TextReader,[enc]" )
+      end
+      
+      self.prepareParsing(reader)
       self.setState("start")
-      ^[mt]
+      tree = self._doParse(reader)
       
       return tree
    end
@@ -159,92 +162,45 @@ class Parser
    // Private part
    //
    
-   // This function reorganizes the states and the rules BY TOKEN.
-   // Rules are more easily declared by rule, but then, we need
-   // to know what to do when we find a token; so we reorder the
-   // states and their rules by token.
-   function prepareMaps()
-      for state, seq in self.states
-         for r in seq
-            if r.token.typeId == StringType
-               stateMap = self.tokenMap.find(r.token,nil)
-               if stateMap
-                  stateMap[state] = r
-               else
-                  self.tokenMap[r.token] = [state => r]
-               end
-            elif r.token == nil
-               self.nilStates[state] = r
-            else
-               stateMap = self.reMap.find(r.token.pattern,nil)
-               if stateMap
-                  stateMap[state] = r
-               else
-                  self.reMap[r.token.pattern] = [state => r]
-               end
-            end
-         end
-      end                  
-   end
-   
-   
    // This method fills the MultiTokenizer with callbacks that act on the forming syntactic tree.
    // The calbacks are generated on the fly, filling them with dynamic code.
    // The workhorse for that is the next function.
-   function prepareParsing( mt, tree )    
+   function prepareParsing( reader )    
       
-      for token, stateMap in 
-      
-         self.trace( "Generating parser for token", token.escape() )
-         sw = self.prepareSwitch( stateMap, "state" )         
-         func = {(text) state = ^~self.currentState(); tree = ^~tree; ^~sw() }
-         self.trace2( func.render() )
-         mt.addToken( token, func )
-      end
-      
-      for re, stateMap in self.reMap
-         self.trace( "Generating parser for re", re.escape() )
-         sw = self.prepareSwitch( stateMap, "state" )         
-         self.trace2( sw.render() )
-         func = {(text) state = ^~self.currentState(); tree = ^~tree; ^~sw() }
-         mt.addRE( re, func )
-      end
-      
-      self.trace( "Generating parser pure text" )
-      sw = self.prepareSwitch( self.nilStates, "state" )
-      self.trace2( sw.render() )
-      func = {(text) state = ^~self.currentState(); tree = ^~tree; ^~sw() }
-      mt.onText = func
+      for name, ruleList in self.states
+         mt = MultiTokenizer( reader )         
+         self.mtMap[name] = mt
+         
+         for r in ruleList
+            f = r.action
+            // the action accepts {tree, text=>}               
+            action = {(text) > ^~(r.token),": ", text; ^~f(^~(self).tree, text) }
+            
+            // a nil or "" is an catch all token
+            if not r.token
+               mt.onText = action
+            else
+               mt.addToken( r.token, action )
+            end
+         end         
+      end   
       
    end
    
-   // This function transform a map of "state" => PRule entities
-   // into a switch() ... end code that select the correct rule at given state.
-   function prepareSwitch( stateMap, stateVar )      
-      // Generate a switch on state ... 
-      sw = Syn.Switch( Symbol(stateVar) )
+   // Main parser loop
+   function _doParse(reader)
+      tree = Tree()
+      self.tree = tree
       
-      for state, r in stateMap
-         
-         //... in which every state is a branch ...
-         cs = SynTree()
-         cs.selector = Syn.Case(state)
-         
-         // ... where it invokes the action tied with the rule...
-         action = r.action
-         if action
-            cs.append( {[] ^~action(tree, text)} )
-         end
-         // ... and possibly changes the state of the parser ...
-         cs.append( {[] ^~self.setState(^~(r.target))} )
-         
-         sw.append(cs)
+      while not reader.eof()
+         curstate = self.currentState()
+         mt = self.mtMap[curstate]
+         mt.next()
       end
-      dflt = SynTree()
-      dflt.append( {[] printl("Default: ", state)} )
-      sw.append( dflt )
-      return sw
+      
+      return tree
    end
+   
    
    function currentState()
       if self._stateList
@@ -264,7 +220,7 @@ class Parser
             case "#stay"
                // do nothing
             default
-               if s notin states
+               if s notin self.mtMap
                   self.error("State '" + s + "' not found")
                else               
                   self.trace("Descending in state", s)
@@ -307,7 +263,7 @@ end
 // It's purpose it's that of creating a node of type 'name', and 
 // eventually transform the input text via regex/subst pair.
 function addBelow( name, processor )
-   return { tree, text => 
+   return { tree, text =>
       if processor 
          text = processor(text)
       end
@@ -333,7 +289,7 @@ end
 function addAbove(name, processor )
    return { tree, text => 
       tree.popNode()
-      if regex 
+      if processor 
          text = processor(text)
       end
       newNode = Node(name, text)
@@ -361,7 +317,7 @@ end
 
 // Adds content to the currently active node (or fills it's content field)
 function addText(text)
-   { tree =>
+   return { tree => 
    if tree.current.content
       tree.current.content += text
    else

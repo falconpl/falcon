@@ -167,6 +167,8 @@ int RE2::Options::ParseFlags() const {
 
   if (one_line())
     flags |= Regexp::OneLine;
+  else
+     flags &=~Regexp::OneLine;
 
   return flags;
 }

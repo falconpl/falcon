@@ -250,7 +250,7 @@ Parsing::TokenInstance* SourceLexer::makeString()
 
       String opts;
       char_t chr = m_reader->getChar();
-      while( (chr == 'i' || chr == 'o' || chr == 'l' || chr == 'n') && opts.length() <= 4 )
+      while( (chr == 'i' || chr == 'm' || chr == 'l' || chr == 'n') && opts.length() <= 4 )
       {
          opts.append(chr);
          if( chr == 'i' ) {

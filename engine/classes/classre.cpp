@@ -65,6 +65,18 @@ namespace Falcon {
     > (r'(\w*) (\w*)' % "Hello world").describe() //["Hello", "world"]
     @endcode
 
+    The regular expression can be followed by one or more (options):
+    - i: ignore case. -- can be shortcut using R"..." instead of r"..."i
+    - m: Multiline (^ and $ match after each newline); by default, ^ and $ match
+         at the beginning and end of the whole string only.
+    - n: Never matches '\\n' even if explicitly contained in the search pattern.
+    - l: Search longest match. Same as adding a greedy match setting to all the matches.
+
+    For instance, to ask for a multiline match ignoring the case, you can use the following:
+    @code
+    > r'^(h\w*)'iml.grabAll("Hello\nhotel world").describe() // ["Hello", "hotel"]
+    @endcode
+
     @prop captures Number of capture expressions (excluding the total one).
     @prop groupNames Dictionary of named captured expressions and positions.
     @prop caseSensitive True to set case sensitivity match (the default),
@@ -186,6 +198,14 @@ FALCON_DECLARE_FUNCTION( match, "target:S" );
     otherwise returns nil
 */
 FALCON_DECLARE_FUNCTION( grab, "target:S" );
+
+/*#
+ @method grabAll RE
+ @param target The string to be matched.
+ @return If the string matches, all the substrings in the given string
+    matching the pattern as an array.
+*/
+FALCON_DECLARE_FUNCTION( grabAll, "target:S" );
 
 
 /*#
@@ -524,7 +544,7 @@ bool internal_check_params( VMContext* ctx, String* &target, int64& start, int64
 }
 
 
-static bool internal_find( VMContext* ctx, Item& result, bool (*on_found)(Item& target, int count, int pos, int size) )
+static bool internal_find( VMContext* ctx, Item& result, bool (*on_found)(Item& target, const String& src, int count, int pos, int size) )
 {
    String* target;
    int64 start, end;
@@ -559,7 +579,7 @@ static bool internal_find( VMContext* ctx, Item& result, bool (*on_found)(Item& 
       int64 pos = String::UTF8Size( text.data(), pos_utf8 );
       int64 size = String::UTF8Size( captured.data(), size_utf8 );
 
-      if( ! on_found( result, count++, (int) (start + pos), (int) size ) )
+      if( ! on_found( result, *target, count++, (int) (start + pos), (int) size ) )
       {
          break;
       }
@@ -579,14 +599,14 @@ static bool internal_find( VMContext* ctx, Item& result, bool (*on_found)(Item& 
 }
 
 
-bool on_found_find(Item& target, int , int pos, int )
+bool on_found_find(Item& target, const String&, int , int pos, int )
 {
    target = (int64) pos;
    return false;
 }
 
 
-bool on_found_findAll(Item& target, int count, int pos, int )
+bool on_found_findAll(Item& target, const String&, int count, int pos, int )
 {
    if( count == 0 )
    {
@@ -599,7 +619,7 @@ bool on_found_findAll(Item& target, int count, int pos, int )
    return true;
 }
 
-bool on_found_range(Item& target, int, int pos, int size)
+bool on_found_range(Item& target, const String&, int, int pos, int size)
 {
    static class Class* crng = Engine::handlers()->rangeClass();
    Range* rng = static_cast<Range*>( crng->createInstance() );
@@ -612,7 +632,7 @@ bool on_found_range(Item& target, int, int pos, int size)
 }
 
 
-bool on_found_rangeAll(Item& target, int count, int pos, int size)
+bool on_found_rangeAll(Item& target, const String&, int count, int pos, int size)
 {
    static class Class* crng = Engine::handlers()->rangeClass();
 
@@ -626,6 +646,20 @@ bool on_found_rangeAll(Item& target, int count, int pos, int size)
    rng->start( pos );
    rng->end( pos + size );
    array->append( FALCON_GC_STORE( crng, rng ) );
+
+   return true;
+}
+
+bool on_found_grabAll(Item& target, const String& src, int count, int pos, int size)
+{
+   if( count == 0 )
+   {
+      target = FALCON_GC_HANDLE(new ItemArray);
+   }
+   ItemArray* array = static_cast<ItemArray*>(target.asInst());
+
+   String* rng = new String( src, pos, pos + size );
+   array->append( FALCON_GC_HANDLE( rng ) );
 
    return true;
 }
@@ -671,6 +705,17 @@ void Function_rangeAll::invoke( VMContext* ctx, int32 )
    Item result;
 
    if( ! internal_find(ctx, result, &on_found_rangeAll) ) {
+      throw paramError();
+   }
+
+   ctx->returnFrame(result);
+}
+
+void Function_grabAll::invoke( VMContext* ctx, int32 )
+{
+   Item result;
+
+   if( ! internal_find(ctx, result, &on_found_grabAll) ) {
       throw paramError();
    }
 
@@ -954,6 +999,7 @@ ClassRE::ClassRE():
 
    addMethod(new Function_match);
    addMethod(new Function_grab);
+   addMethod(new Function_grabAll);
    addMethod(new Function_find);
    addMethod(new Function_findAll);
    addMethod(new Function_range);
@@ -1065,9 +1111,9 @@ void ClassRE::describe( void* instance, String& target, int, int ) const
 
    target += "'" + temp + "'";
 
-   if( self->options().one_line() )
+   if( ! self->options().one_line() )
    {
-      target += "o";
+      target += "m";
    }
 
    if( self->options().longest_match() )
@@ -1132,6 +1178,8 @@ bool ClassRE::op_init( VMContext* ctx, void*, int pcount ) const
    
    String* pattern = i_pattern.asString();
    re2::RE2::Options opts;
+   // one line true by default
+   opts.set_one_line(true);
 
    if( sopts != 0 )
    {
@@ -1143,7 +1191,7 @@ bool ClassRE::op_init( VMContext* ctx, void*, int pcount ) const
          case 'i': opts.set_case_sensitive(false); break;
          case 'n': opts.set_never_nl(true); break;
          case 'l': opts.set_longest_match(true); break;
-         case 'o': opts.set_one_line(true); break;
+         case 'm': opts.set_one_line(false); break;
          default:
             throw new ParamError(ErrorParam(e_inv_params, __LINE__, SRC)
                            .extra("Unrecognized options: "+*sopts));

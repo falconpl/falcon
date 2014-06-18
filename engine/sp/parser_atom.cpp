@@ -147,6 +147,10 @@ void apply_Atom_RString ( const NonTerminal&, Parser& p )
    //==============================================
    // scan for options
    re2::RE2::Options opts;
+
+   // one line true by default.
+   opts.set_one_line(true);
+
    uint32 count = 1;
    uint32 slen = s->length();
    while( count < slen && count <= 7 )
@@ -166,7 +170,7 @@ void apply_Atom_RString ( const NonTerminal&, Parser& p )
             case 'i': opts.set_case_sensitive(false); break;
             case 'n': opts.set_never_nl(true); break;
             case 'l': opts.set_longest_match(true); break;
-            case 'o': opts.set_one_line(true); break;
+            case 'm': opts.set_one_line(false); break;
             default:
                p.addError( e_regex_def,
                                  p.currentSource(), ti->line(), ti->chr(), 0, "Unknown option" );

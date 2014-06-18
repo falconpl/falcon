@@ -22,12 +22,12 @@ function _substTitle( t )
 end
 
 Headers = .[
-   PRule( r'^\s*======\s*(.+?)\s*=*$', "#stay", addBesides( "header6", _substTitle )
-   PRule( r'^\s*=====\s*(.+?)\s*=*$', "#stay", addBesides( "header5", _substTitle )
-   PRule( r'^\s*====\s*(.+?)\s*=*$', "#stay", addBesides( "header4", _substTitle)
-   PRule( r'^\s*===\s*(.+?)\s*=*$', "#stay", addBesides( "header3", _substTitle)
-   PRule( r'^\s*==\s*(.+?)\s*=*$',  "#stay", addBesides( "header2", _substTitle )
-   PRule( r'^\s*=\s*(.+?)\s*=*$',  "#stay", addBesides( "header1", _substTitle )
+   PRule( r'^\s*======\s*(.+?)\s*=*$', "#stay", addBesides( "header6", _substTitle ) )
+   PRule( r'^\s*=====\s*(.+?)\s*=*$', "#stay", addBesides( "header5", _substTitle ) )
+   PRule( r'^\s*====\s*(.+?)\s*=*$', "#stay", addBesides( "header4", _substTitle) )
+   PRule( r'^\s*===\s*(.+?)\s*=*$', "#stay", addBesides( "header3", _substTitle) )
+   PRule( r'^\s*==\s*(.+?)\s*=*$',  "#stay", addBesides( "header2", _substTitle ) )
+   PRule( r'^\s*=\s*(.+?)\s*=*$',  "#stay", addBesides( "header1", _substTitle ) )
    PRule( r'^\s*----*$',  "#stay", addBesides( "hr" ) )
 ]
 

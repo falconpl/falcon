@@ -54,6 +54,9 @@ class StringPiece {
      set(src, start);
   }
 
+  StringPiece(const StringPiece& other ): ptr_(other.ptr_), length_(other.length_), buffer_(0)
+  {}
+
   ~StringPiece() {
      delete[] buffer_;
   }
@@ -166,7 +169,17 @@ class StringPiece {
   StringPiece substr(size_type pos, size_type n = npos) const;
   
   static bool _equal(const StringPiece&, const StringPiece&);
+
+  inline StringPiece& operator=(const StringPiece& x) {
+    delete[] buffer_;
+    buffer_ = 0;
+    ptr_ = x.ptr_;
+    length_ = x.length_;
+    return *this;
+  }
+
 };
+
 
 inline bool operator==(const StringPiece& x, const StringPiece& y) {
   return StringPiece::_equal(x, y);

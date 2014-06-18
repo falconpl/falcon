@@ -40,7 +40,7 @@ ExprClosure::ExprClosure( Function* closed ):
    FALCON_DECLARE_SYN_CLASS( expr_closure );
    apply = apply_;   
    m_trait = e_trait_composite;
-   
+   decl(closed->declaredAt(),0);
    // TODO: GarbageLock the function
 }
 
@@ -55,6 +55,14 @@ ExprClosure::ExprClosure( const ExprClosure& other ):
 
 ExprClosure::~ExprClosure() {}
    
+void ExprClosure::function( Function* f )
+{
+   m_function = f;
+   if (f != 0 )
+   {
+      decl(f->declaredAt(),0);
+   }
+}
 
 void ExprClosure::render( TextWriter* tw, int depth ) const
 {

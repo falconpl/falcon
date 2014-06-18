@@ -37,7 +37,7 @@ public:
    virtual bool simplify( Item& ) const { return false; }
    
    Function* function() const { return m_function; }
-   void function( Function* f ) { m_function = f; }
+   void function( Function* f );
    
 private:
    Function* m_function;

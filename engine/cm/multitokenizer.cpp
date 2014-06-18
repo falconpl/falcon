@@ -178,12 +178,8 @@ static MultiTokenizer* internal_setSource(Function* caller, VMContext* ctx, Mult
  tokens and providing information about which token is actually found.
 
  The tokens can be simple text-based tokens or whole regular expressions,
- are added separately using the @a MultiTokenizer.addToken() or @a MultiTokenizer.addRE()
- methods.
-
- Do not use precompiled regular expressions (r"" strings), or instances of the @a RE class to
- add a regular expression as a token in an instance of this class; the instance will create
- its own copy of the regular expression out of the addRE() method parameter.
+ are added separately using the @a MultiTokenizer.addToken(). The token can be a regular string
+ or a regular expression (r"" strings), or an instance of the @a RE class.
 
  This class has support for generator usage (can be used in for/in loops, advance() function,
  ^[] iterator operator, forEach() BOM method etc.), and it provides next()/hasNext() methods
@@ -301,24 +297,26 @@ static void internal_unlocker( void* unlk )
 }
 
 
-static void internal_add( Function* caller, VMContext* ctx, bool isRE )
+static void internal_add( Function* caller, VMContext* ctx )
 {
    Item* i_token = ctx->param(0);
    Item* i_cb = ctx->param(1);
-   String* token;
 
-   bool bCheck = FALCON_PCHECK_GET( i_token, String, token ) && (i_cb == 0 || i_cb->isCallable() );
-   if( ! bCheck ) {
+
+   if( i_token == 0 || !(i_token->isString() || i_token->isRE()) )
+   {
       throw caller->paramError();
    }
 
    MultiTokenizer* tk = ctx->tself<MultiTokenizer*>();
-   if (isRE)
+   if (i_token->isRE())
    {
-      tk->addRE(*token, i_cb == 0 ? 0 : Engine::instance()->GC_lock(*i_cb), &internal_unlocker );
+      re2::RE2* re = static_cast<re2::RE2*>(i_token->asInst());
+      re2::RE2* cre = new re2::RE2(re->pattern(), re->options());
+      tk->addRE(cre, i_cb == 0 ? 0 : Engine::instance()->GC_lock(*i_cb), &internal_unlocker );
    }
    else {
-      tk->addToken(*token, i_cb == 0 ? 0 : Engine::instance()->GC_lock(*i_cb), &internal_unlocker );
+      tk->addToken(*i_token->asString(), i_cb == 0 ? 0 : Engine::instance()->GC_lock(*i_cb), &internal_unlocker );
    }
 
    if( i_cb != 0 )
@@ -365,50 +363,13 @@ static void internal_add( Function* caller, VMContext* ctx, bool isRE )
 
  @note If @cb is given, it is actually invoked only if @b giveTokens is
  active; providing a cb parameter implicitly turns this option on.
+
+ @see MultiTokenizer.add
  */
-FALCON_DECLARE_FUNCTION( addToken, "token:S,cb:[C]" );
+FALCON_DECLARE_FUNCTION( addToken, "token:S|RE,cb:[C]" );
 FALCON_DEFINE_FUNCTION_P1( addToken )
 {
-   internal_add(this, ctx, false);
-}
-
-/*#
- @method addRE MultiTokenizer
- @brief Adds a regular expression to the multi tokenizer.
- @param re A string that will be interpreted as the regular expression.
- @optparam cb A callback code that will be evaluated if the expression is found.
- @return This instance
-
-
- This method works analogously to @a MultiTokenizer.addToken, the only difference being
- the fact that the string passed will be interpreted not as a literal token, but as a
- regular expression.
-
- If @b cb is provided, when the regular expression is found it's @b token parameter
- will contain the expansion of the found regular expression. Eventual parenthetized sub-regular
- expressions are discarded.
-
- The following is a working example:
-
- @code
- mt = MultiTokenizer( "Hello World" );
- mt.addRE( "[A-Z]| ", { token, id =>
-          > "Token: '",token,"'"
-          return token
-          } )
- mt.onText = {t => > "Text: '", t, "'"; return t }
-
- ^[ mt ]   // equivalent to while mt.next(); end
-
-  @note If @cb is given, it is actually invoked only if @b giveTokens is
- active; providing a cb parameter implicitly turns this option on.
-
- @endcode
- */
-FALCON_DECLARE_FUNCTION( addRE, "token:S,cb:[C]" );
-FALCON_DEFINE_FUNCTION_P1( addRE )
-{
-   internal_add( this, ctx, true );
+   internal_add(this, ctx);
 }
 
 /*#
@@ -444,7 +405,7 @@ static void set_onText(const Class*, const String&, void* inst, const Item& valu
 
  This property receives a function or other callable that gets evaluated
  with the found tokens, in case they were not added with a specific
- callback with @a MultiTokenizer.addToken or  @a MultiTokenizer.addRE.
+ callback with @a MultiTokenizer.addToken.
 
  The callback is only invoked if the token is actually processed (i.e.
  being part of an iteration). This requires @a MultiTokenizer.giveTokens
@@ -536,7 +497,7 @@ FALCON_DEFINE_FUNCTION_P( add )
       else if( item->type() == FLC_CLASS_ID_RE )
       {
          re2::RE2* re = static_cast<re2::RE2*>(item->asInst());
-         re2::RE2* cre = new re2::RE2(re->pattern());
+         re2::RE2* cre = new re2::RE2(re->pattern(), re->options());
          mt->addRE( cre );
       }
       else
@@ -561,7 +522,6 @@ ClassMultiTokenizer::ClassMultiTokenizer():
    setConstuctor( new FALCON_FUNCTION_NAME(init) );
    addMethod( m_mthNext );
    addMethod( new FALCON_FUNCTION_NAME(addToken) );
-   addMethod( new FALCON_FUNCTION_NAME(addRE) );
    addMethod( new FALCON_FUNCTION_NAME(rewind) );
    addMethod( new FALCON_FUNCTION_NAME(add) );
    addMethod( new FALCON_FUNCTION_NAME(setSource) );

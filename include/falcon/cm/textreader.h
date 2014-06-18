@@ -32,6 +32,9 @@ namespace Ext {
 
 /*# @class TextStream
    @param stream A stream on which to operate.
+
+   @prop underlying The underlying stream
+   @prop eof True when all the data from the stream has been read.
  
  */
 class ClassTextReader: public Class

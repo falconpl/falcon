@@ -543,7 +543,7 @@ bool StreamTokenizer::findNext( int32& id, length_t& pos )
             // we have a match, but can we trust it?
             if( spc.end() > tk->m_result.end()
                      || ( m_tr != 0 && m_tr->eof())
-                     || (m_srcPos == m_source.length()) )
+                     || (  m_tr == 0 && m_srcPos == m_source.length()) )
             {
                length_t foundAt = static_cast<length_t>(tk->m_result.begin() - spc.begin());
                if( foundAt < pos )
@@ -567,7 +567,7 @@ bool StreamTokenizer::findNext( int32& id, length_t& pos )
          if( m_tr != 0 )
          {
             unget.fromUTF8( tk->m_result.end(),m_bufLen - (tk->m_result.end() - m_buffer) );
-            m_tr->ungetChar(unget.getCharAt(0));
+            m_tr->ungetChar(unget.getCharAt(unget.length()-1));
          }
          else
          {

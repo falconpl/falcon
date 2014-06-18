@@ -1858,7 +1858,7 @@ bool Prog::SearchDFA(const StringPiece& text, const StringPiece& const_context,
                      StringPiece* match0, bool* failed, vector<int>* matches) {
   *failed = false;
 
-  StringPiece context = const_context;
+  StringPiece context( const_context );
   if (context.begin() == NULL)
     context = text;
   bool carat = anchor_start();

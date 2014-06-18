@@ -220,6 +220,26 @@ class Tree(top)
    init
       self.current = self.top
    end
+   
+   /*# 
+      @brief Dump the tree for debugging purposes.
+   */
+   function dump( node, depth )
+      if not node: node = self.top
+      if not depth: depth = 0
+      
+      val = node.content.toString()
+      if val.len > 50: val = val[0:50] + "..."
+      > " " * depth, node.type, ":", val
+
+      sub = node.firstChild
+      while sub != nil
+         self.dump(sub, depth+1)
+         sub = sub.next
+      end
+      
+   end
+   
 end
 
 /*

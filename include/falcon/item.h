@@ -27,6 +27,10 @@
 
 #include <falcon/atomic.h>
 
+namespace re2 {
+   class RE2;
+}
+
 namespace Falcon {
 
 class Function;
@@ -572,6 +576,10 @@ public:
       return (type() == FLC_CLASS_ID_STRING);
    }
 
+   bool isRE() const {
+      return (type() == FLC_CLASS_ID_RE );
+   }
+
    bool isRange() const {
       return (type() == FLC_CLASS_ID_RANGE);
    }
@@ -718,7 +726,12 @@ public:
    {      
       return static_cast<String*>(asInst());
    }
-   
+
+   re2::RE2* asRE() const
+   {
+      return static_cast<re2::RE2*>(asInst());
+   }
+
    const Symbol* asSymbol() const
    {
       return static_cast<Symbol*>(asInst());

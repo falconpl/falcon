@@ -1,0 +1,51 @@
+
+import from parser.genparser
+
+parser = Parser()
+
+PState = parser.add
+
+function _substTitle( t )
+   return  r'^\s*=+\s*(.+?)\s*=*$'.replace(t,'\1')
+end
+
+Headers = .[
+   PRule( r'^\s*======\s*(.+?)\s*=*$'m, "#stay", addBelow( "header6", _substTitle ) )
+   PRule( r'^\s*=====\s*(.+?)\s*=*$'m, "#stay", addBelow( "header5", _substTitle ) )
+   PRule( r'^\s*====\s*(.+?)\s*=*$'m, "#stay", addBelow( "header4", _substTitle) )
+   PRule( r'^\s*===\s*(.+?)\s*=*$'m, "#stay", addBelow( "header3", _substTitle) )
+   PRule( r'^\s*==\s*(.+?)\s*=*$'m,  "#stay", addBelow( "header2", _substTitle ) )
+   PRule( r'^\s*=\s*(.+?)\s*=*$'m,  "#stay", addBelow( "header1", _substTitle ) )
+   PRule( r'^\s*----*$'m,  "#stay", addBelow( "hr" ) )
+]
+
+PState( "start", 
+   Headers,
+   PRule( nil, "#stay", addBelow("text") )
+)
+
+text = '
+=Hello world=
+This is a standard creole text
+== Subtitle ==
+This is only a demo of what we can do.
+===Third subtitle===
+===Again===
+More text here.
+=More first level title=
+Text under second first level title.
+'
+
+/*
+mt = MultiTokenizer( TextReader( StringStream(text), "utf8") )
+count = 0
+for rl in Headers
+   tok = rl.token.toString()
+   mt.addToken( rl.token , {(t) > ^~tok; ^= t} )
+end
+mt.onText = {t => > "Text: ", t; return t }
+> (^[mt] => []).describe()
+*/
+
+parser.parse(text)
+parser.tree.dump()
