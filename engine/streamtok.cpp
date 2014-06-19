@@ -168,6 +168,7 @@ StreamTokenizer::StreamTokenizer( const StreamTokenizer& other )
 
    m_giveTokens = other.m_giveTokens;
    m_groupTokens = other.m_groupTokens;
+   m_maxTokenSize = 0;
 
    _p = other._p;
    _p->m_refCount++;
@@ -204,6 +205,7 @@ void StreamTokenizer::init()
    m_giveTokens = false;
    m_groupTokens = false;
    m_buffer = new char[m_bufSize];
+   m_maxTokenSize = 0;
 
    m_tr = 0;
    m_tokenID = 0;
@@ -264,6 +266,11 @@ void StreamTokenizer::addToken( const String& token, void* data, StreamTokenizer
 {
    Token* tk = new Token(_p->m_tlist.size(), token, data, del );
    _p->m_mtx.lock();
+   if( m_maxTokenSize < tk->m_tokenLen  )
+   {
+      m_maxTokenSize = tk->m_tokenLen;
+   }
+
    _p->m_tlist.push_back(tk);
    _p->m_mtx.unlock();
 }
@@ -359,7 +366,7 @@ bool StreamTokenizer::getNextChar( char_t &chr )
    {
       if( m_tr->eof() ) return false;
       chr = m_tr->getChar();
-      return true;
+      return ! m_tr->eof();
    }
    else if( m_srcPos < m_source.length() )
    {
@@ -403,42 +410,55 @@ bool StreamTokenizer::next()
    }
 
    m_hasLastToken = false;
+   bool readNext = m_bufLen == 0;
 
    while( true )
    {
-      if( ! getNextChar(nextChar) )
+      if( readNext )
       {
-         // the running text is m_bufPos -> buflen (might be 0)
-         running->fromUTF8(m_buffer, m_bufLen );
-         // do not declare having found a token.
-         break;
-      }
+         if( ! getNextChar(nextChar) )
+         {
+            // the running text is m_bufPos -> buflen (might be 0)
+            running->fromUTF8(m_buffer, m_bufLen );
+            // do not declare having found a token.
+            break;
+         }
 
-      if( m_bufLen + 5 >= m_bufSize )
-      {
-         m_bufSize *= 2;
-         char* newMem = new char[m_bufSize];
-         memcpy(newMem, m_buffer, m_bufLen);
-         delete m_buffer;
-         m_buffer = newMem;
-      }
+         if( m_bufLen + 5 >= m_bufSize )
+         {
+            m_bufSize *= 2;
+            char* newMem = new char[m_bufSize];
+            memcpy(newMem, m_buffer, m_bufLen);
+            delete m_buffer;
+            m_buffer = newMem;
+         }
 
-      length_t utf8Len = String::charToUTF8(nextChar, m_buffer + m_bufLen );
-      m_bufLen += utf8Len;
+         length_t utf8Len = String::charToUTF8(nextChar, m_buffer + m_bufLen );
+         m_bufLen += utf8Len;
+      }
+      readNext = true;
 
       int32 id = 0;
       length_t pos = 0;
       if( findNext(id, pos) )
       {
+         Token* tk = _p->m_tlist[id];
+         uint32 toklen = tk->m_result.length();
+
          if( m_giveTokens || m_groupTokens )
          {
-            currentToken.fromUTF8(m_buffer + pos, m_bufLen-pos);
+            currentToken.fromUTF8(m_buffer + pos, toklen );
 
             if( m_groupTokens && pos == 0 && m_hasToken ) {
                // retry?
                if( currentToken == m_lastToken )
                {
-                  m_bufLen = 0;
+                  if( m_bufLen > toklen )
+                  {
+                     readNext = false;
+                     memcpy( m_buffer, m_buffer + toklen, m_bufLen - toklen );
+                  }
+                  m_bufLen -= toklen;
                   continue;
                }
             }
@@ -458,7 +478,12 @@ bool StreamTokenizer::next()
          m_hasLastToken = true;
          m_hasToken = true;
 
-         m_bufLen = 0;
+         uint32 tokend = pos + toklen;
+         if( m_bufLen > tokend )
+         {
+            memcpy( m_buffer, m_buffer + tokend, m_bufLen - tokend );
+         }
+         m_bufLen -= tokend;
          break;
       }
    }
@@ -526,27 +551,32 @@ bool StreamTokenizer::findNext( int32& id, length_t& pos )
    while( iter != end )
    {
       Token* tk = *iter;
+      length_t foundAt = String::npos;
 
       if( tk->m_token != 0 )
       {
-         length_t foundAt = findText( tk->m_token, tk->m_tokenLen );
+         foundAt = findText( tk->m_token, tk->m_tokenLen );
+         // we have a match, but can we trust it?
          if( foundAt < pos )
          {
-            pos = foundAt;
-            id = tk->m_id;
+            if (m_tr == 0 || m_tr->eof() || m_bufLen-foundAt >=  m_maxTokenSize)
+            {
+               tk->m_result.set(tk->m_token, (int)tk->m_tokenLen);
+               pos = foundAt;
+               id = tk->m_id;
+            }
          }
       }
       else {
          fassert( tk->m_regex != 0 );
          if( tk->m_regex->Match( spc, 0, m_bufLen, re2::RE2::UNANCHORED, &tk->m_result, 1 ) )
          {
+            foundAt = static_cast<length_t>(tk->m_result.begin() - spc.begin());
             // we have a match, but can we trust it?
-            if( spc.end() > tk->m_result.end()
-                     || ( m_tr != 0 && m_tr->eof())
-                     || (  m_tr == 0 && m_srcPos == m_source.length()) )
+            if( foundAt < pos )
             {
-               length_t foundAt = static_cast<length_t>(tk->m_result.begin() - spc.begin());
-               if( foundAt < pos )
+               // if we have a string buffer, we're at EOF or we read 1 char past the lenght of the token, we found it.
+               if ( m_tr == 0 || m_tr->eof() || spc.end() > tk->m_result.end() )
                {
                   pos = foundAt;
                   id = tk->m_id;
@@ -554,30 +584,11 @@ bool StreamTokenizer::findNext( int32& id, length_t& pos )
             }
          }
       }
+
+
       ++iter;
    }
 
-   // regex?
-   if(id != -1 && _p->m_tlist[id]->m_regex != 0 )
-   {
-      Token* tk = _p->m_tlist[id];
-      if ( spc.end() > tk->m_result.end() )
-      {
-         String unget;
-         if( m_tr != 0 )
-         {
-            unget.fromUTF8( tk->m_result.end(),m_bufLen - (tk->m_result.end() - m_buffer) );
-            m_tr->ungetChar(unget.getCharAt(unget.length()-1));
-         }
-         else
-         {
-            m_srcPos--;
-         }
-         m_bufLen = (tk->m_result.end() - m_buffer);
-         //m_buffer[m_bufLen] = 0;
-      }
-
-   }
    return id != -1;
 }
 
@@ -589,7 +600,14 @@ length_t StreamTokenizer::findText( const char* token, length_t len )
       return String::npos;
    }
 
-   length_t tpos = m_bufLen-len;
+   length_t tpos;
+   if( m_bufLen >= m_maxTokenSize )
+   {
+      tpos = m_bufLen - m_maxTokenSize;
+   }
+   else {
+      tpos = 0;
+   }
    char* buf = m_buffer + tpos;
 
    while( len > 0 )

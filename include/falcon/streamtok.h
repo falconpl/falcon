@@ -118,6 +118,7 @@ private:
    String m_lastToken;
    int32 m_tokenID;
 
+   uint32 m_maxTokenSize;
 
    class Private;
    Private* _p;

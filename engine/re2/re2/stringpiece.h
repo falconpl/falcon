@@ -71,16 +71,18 @@ class StringPiece {
   bool empty() const { return length_ == 0; }
 
   void clear() { ptr_ = NULL; length_ = 0; buffer_ = 0; }
-  void set(const char* data, int len) { buffer_ = 0; ptr_ = data; length_ = len; }
+  void set(const char* data, int len) { delete[] buffer_; buffer_ = 0; ptr_ = data; length_ = len; }
   void set(const char* str) {
     ptr_ = str;
     if (str != NULL)
       length_ = static_cast<int>(strlen(str));
     else
       length_ = 0;
+    delete[] buffer_;
     buffer_ = 0;
   }
   void set(const void* data, int len) {
+     delete[] buffer_;
      buffer_ = 0;
     ptr_ = reinterpret_cast<const char*>(data);
     length_ = len;
