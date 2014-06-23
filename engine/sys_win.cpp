@@ -13,10 +13,6 @@
    See LICENSE file for licensing details.
 */
 
-#ifdef __MINGW32__
-#define _time64 time
-#endif
-
 /** \file
    System level support for basic and common operatios.
 */
@@ -34,6 +30,9 @@
 #include <errno.h>
 #include <time.h>
 
+#if defined __MINGW32__ && !defined __MINGW64_VERSION_MAJOR
+#define _time64 time
+#endif
 
 #ifndef INVALID_FILE_ATTRIBUTES
 #define INVALID_FILE_ATTRIBUTES ((DWORD)-1)
@@ -480,7 +479,7 @@ int64 _win_fileTimeToEpochMS( const FILETIME& local_timing )
    res <<=32;
    res |= local_timing.dwLowDateTime;
    // Filesystem times are in tenth of ms from epoch!
-   res /= 10; 
+   res /= 10;
 
    return res;
 }
