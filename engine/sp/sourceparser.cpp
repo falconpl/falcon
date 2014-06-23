@@ -755,6 +755,7 @@ void SourceParser::init()
       << "int" << apply_CaseListToken_int << T_Int
       << "string" << apply_CaseListToken_string << T_String
       << "r-string" << apply_CaseListToken_rstring << T_RString
+      << "sym" << apply_CaseListToken_tilde_sym << T_Tilde << T_Name
       << "sym" << apply_CaseListToken_sym << T_Name
       << NonTerminal::endr;
 

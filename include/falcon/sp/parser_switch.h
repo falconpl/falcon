@@ -47,6 +47,8 @@ void apply_CaseListToken_int( const NonTerminal&, Parser& p );
 void apply_CaseListToken_string( const NonTerminal&, Parser& p );
 void apply_CaseListToken_rstring( const NonTerminal&, Parser& p );
 void apply_CaseListToken_sym( const NonTerminal&, Parser& p );
+void apply_CaseListToken_tilde_sym( const NonTerminal&, Parser& p );
+
 
 void apply_CaseList_next( const NonTerminal&, Parser& p );
 void apply_CaseList_first( const NonTerminal&, Parser& p );

@@ -54,7 +54,7 @@ public:
    void addEntry( const String& str1 );
    void addEntry( const String& str1, const String& str2 );
    void addEntry( re2::RE2* regex );
-   void addEntry( const Symbol* symbol );
+   void addEntry( const Symbol* symbol, bool hasTilde = false );
    void addEntry( Class* cls );
    bool addEntry( const Item& value );
 

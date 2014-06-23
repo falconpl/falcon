@@ -183,7 +183,7 @@ static bool make_case_branch(  Parser& p, ParserContext* ctx, SynTree* st, bool 
 
             case CaseItem::e_sym:
                noClash = swc->findBlockForItem(Item(symClass,(void*)itm->m_sym)) == 0;
-               ecase->addEntry(itm->m_sym);
+               ecase->addEntry(itm->m_sym, itm->m_hasTilde );
                break;
 
             case CaseItem::e_rngInt:
@@ -232,6 +232,7 @@ static bool make_case_branch(  Parser& p, ParserContext* ctx, SynTree* st, bool 
 
             case CaseItem::e_sym:
                // Search the symbol
+               if ( ! itm->m_hasTilde )
                {
                   bool isLocal = ctx->accessSymbol( itm->m_sym->name() );
                   // if it's 0, we need a requirement; and we shall also add an external symbol.
@@ -272,6 +273,11 @@ static bool make_case_branch(  Parser& p, ParserContext* ctx, SynTree* st, bool 
                         ecase->addEntry( tgtCls );
                      }
                   }
+               }
+               else {
+                  // if the symbol is tilde-ized, ignore all resolutions
+                  noClash = swc->findBlockForSymbol( itm->m_sym ) == 0;
+                  ecase->addEntry(itm->m_sym, true);
                }
                break;
             
@@ -485,8 +491,14 @@ void apply_CaseListToken_rstring( const NonTerminal&, Parser& p )
 }
 
 
-void apply_CaseListToken_sym( const NonTerminal&, Parser& p )
+static void internal_case_sym( const NonTerminal&, Parser& p, bool hasTilde )
 {
+   // remove the tilde if needed.
+   if( hasTilde )
+   {
+      p.simplify(1);
+   }
+
    TokenInstance* ti = p.getNextToken();
    SourceParser* sp = static_cast<SourceParser*>(&p);
    ParserContext* ctx = static_cast<ParserContext*>(p.context());
@@ -500,10 +512,23 @@ void apply_CaseListToken_sym( const NonTerminal&, Parser& p )
       ti->setValue( new CaseItem( builtin->asInteger() ), &CaseItem::deletor );
    }
    else {
-      ctx->accessSymbol(name);
-      ti->setValue( new CaseItem( Engine::getSymbol(name) ), &CaseItem::deletor );
+      if (! hasTilde )
+      {
+         ctx->accessSymbol(name);
+      }
+      ti->setValue( new CaseItem( Engine::getSymbol(name), hasTilde ), &CaseItem::deletor );
    }
 
+}
+
+void apply_CaseListToken_sym( const NonTerminal&nt , Parser& p )
+{
+   internal_case_sym( nt, p, false );
+}
+
+void apply_CaseListToken_tilde_sym( const NonTerminal& nt, Parser& p )
+{
+   internal_case_sym( nt, p, true );
 }
 
 
