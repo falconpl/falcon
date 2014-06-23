@@ -74,7 +74,11 @@ public:
       }
       strings;
 
-      const Symbol* symbol;
+      struct {
+         const Symbol* symbol;
+         bool tilde;
+      }
+      sym;
 
       re2::RE2* regex;
    }
@@ -135,8 +139,9 @@ public:
         break;
 
      case e_t_symbol:
-        m_data.symbol = other.m_data.symbol;
-        m_data.symbol->incref();
+        m_data.sym.symbol = other.m_data.sym.symbol;
+        m_data.sym.tilde = other.m_data.sym.tilde;
+        m_data.sym.symbol->incref();
         break;
 
      case e_t_class:
@@ -208,12 +213,13 @@ public:
    }
 
    /** Warning: the symbol is not increffed here. */
-   CaseEntry( const Symbol* symbol ):
+   CaseEntry( const Symbol* symbol, bool hasTilde = false ):
       m_type(e_t_symbol),
       m_class(0),
       m_lock(0)
    {
-      m_data.symbol = symbol;
+      m_data.sym.symbol = symbol;
+      m_data.sym.tilde = hasTilde;
    }
 
    /** Warning: the symbol is not increffed here. */
@@ -286,11 +292,12 @@ public:
    }
 
    /** Warning: the symbol is not increffed here. */
-   void setSymbol( const Symbol* symbol )
+   void setSymbol( const Symbol* symbol, bool hasTilde = false )
    {
       clear();
       m_type = e_t_symbol;
-      m_data.symbol = symbol;
+      m_data.sym.symbol = symbol;
+      m_data.sym.tilde = hasTilde;
    }
 
 
@@ -328,7 +335,7 @@ public:
          break;
 
       case e_t_symbol:
-         m_data.symbol->decref();
+         m_data.sym.symbol->decref();
          break;
 
       case e_t_class:
@@ -393,7 +400,8 @@ public:
          break;
 
       case e_t_symbol:
-         dw->write(m_data.symbol->name());
+         dw->write(m_data.sym.symbol->name());
+         dw->write(m_data.sym.tilde);
          break;
 
       case e_t_class:
@@ -477,7 +485,9 @@ public:
 
       case e_t_symbol:
          dr->read(temp);
-         m_data.symbol = Engine::getSymbol(temp);
+         // read the tilde status now,
+         dr->read(m_data.sym.tilde);
+         m_data.sym.symbol = Engine::getSymbol(temp);
          m_type = e_t_symbol;
          return;
 
@@ -564,7 +574,7 @@ public:
       case e_t_symbol:
          if( value.type() == FLC_CLASS_ID_SYMBOL )
          {
-            static_cast<Symbol*>(value.asInst())->name() == m_data.symbol->name();
+            static_cast<Symbol*>(value.asInst())->name() == m_data.sym.symbol->name();
          }
          return false;
 
@@ -700,7 +710,11 @@ void ExprCase::render( TextWriter* tw, int32 depth ) const
          break;
 
       case CaseEntry::e_t_symbol:
-         tw->write(ce->m_data.symbol->name());
+         if(ce->m_data.sym.tilde)
+         {
+            tw->write("~");
+         }
+         tw->write(ce->m_data.sym.symbol->name());
          break;
 
       case CaseEntry::e_t_class:
@@ -822,9 +836,9 @@ void ExprCase::addEntry( re2::RE2* regex )
    _p->m_entries.push_back(new CaseEntry(regex));
 }
 
-void ExprCase::addEntry( const Symbol* symbol )
+void ExprCase::addEntry( const Symbol* symbol, bool hasTilde )
 {
-   _p->m_entries.push_back(new CaseEntry(symbol));
+   _p->m_entries.push_back(new CaseEntry(symbol, hasTilde));
 }
 
 void ExprCase::addEntry( Class* cls )
@@ -870,7 +884,7 @@ bool ExprCase::verifySymbol( const Symbol* value ) const
             ++iter )
    {
       CaseEntry* entry = *iter;
-      if( entry->m_type == CaseEntry::e_t_symbol && entry->m_data.symbol == value )
+      if( entry->m_type == CaseEntry::e_t_symbol && entry->m_data.sym.symbol == value )
       {
          return true;
       }
@@ -982,7 +996,7 @@ bool ExprCase::verifyItem( const Item& item, VMContext* ctx ) const
 
       if( entry->m_type == CaseEntry::e_t_symbol )
       {
-         Item* var = ctx->resolveSymbol(entry->m_data.symbol, false);
+         Item* var = ctx->resolveSymbol(entry->m_data.sym.symbol, false);
          if ( var != 0 && var->exactlyEqual(item) )
          {
             return true;
@@ -1006,7 +1020,7 @@ bool ExprCase::verifyType( const Item& item, VMContext* ctx ) const
       if( entry->m_type == CaseEntry::e_t_symbol )
       {
          // Resolve NOW
-         const Symbol* sym = entry->m_data.symbol;
+         const Symbol* sym = entry->m_data.sym.symbol;
          Item* value = ctx->resolveSymbol( sym, false );
          if( value == 0 ) {
             throw FALCON_SIGN_XERROR(LinkError, e_undef_sym, .extra(sym->name()).line(line()) );
@@ -1084,7 +1098,7 @@ TreeStep* ExprCase::nth( int32 n ) const
    case CaseEntry::e_t_int_range: result = new ExprValue( FALCON_GC_STORE( clsRange, new Range(ce->m_data.ints.int1, ce->m_data.ints.int2) ) ); break;
    case CaseEntry::e_t_string: result = new ExprValue( FALCON_GC_HANDLE(new String( *ce->m_data.strings.string1) ) ); break;
    case CaseEntry::e_t_regex: result = new ExprValue( Item( clsRegex, ce->m_data.regex ) ); break;
-   case CaseEntry::e_t_symbol: result = new ExprValue( Item(clsSym, ce->m_data.symbol) ); break;
+   case CaseEntry::e_t_symbol: result = new ExprValue( Item(clsSym, ce->m_data.sym.symbol) ); break;
    case CaseEntry::e_t_class:
       if( ce->m_class != 0 )
       {
