@@ -47,6 +47,7 @@ FALCON_DECLARE_FUNCTION(firstOf, "...")
 FALCON_DECLARE_FUNCTION(ffirstOf, "&...")
 FALCON_DECLARE_FUNCTION(ffor, "initialize:Expression, check:Expression, increment:Expression, code:Syntree")
 
+FALCON_DECLARE_FUNCTION(makeEnum, "...")
 }
 }
 

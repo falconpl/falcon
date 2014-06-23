@@ -441,7 +441,7 @@ void Function_call::invoke( VMContext* ctx, int32 )
 
    ItemArray* ir = iParams == 0 ? 0 : iParams->asArray();
    ctx->returnFrame();
-   ctx->topData();
+   //ctx->popData();
 
    if( ir == 0 )
    {
@@ -1297,6 +1297,88 @@ FALCON_DEFINE_FUNCTION_P(ffor)
    // this is an ETA functions, parameters are always expressions.
    ctx->pushCode( static_cast<PStep*>(ctx->param(0)->asInst()) );
 }
+
+/*#
+  @function makeEnum
+  @brief Creates an enumerated set of symbols.
+  @param ... Names of the symbols to be enumerated.
+
+  This funcion creates a set of N symbols in the caller context that are enumerated 0 to N-1.
+
+  For example:
+  @code
+  makeEnum( "one", "two", "three" )
+  > ~one    // 0
+  > ~two    // 1
+  > ~three  // 2
+  @endcode
+
+  @notee The '~' prepended to the symbol names in the example is used to
+  prevent the module compiler to generate an implicit import request for
+  symbols that are not found in the source code.
+
+*/
+
+FALCON_DEFINE_FUNCTION_P(makeEnum)
+{
+   // This is called after op_next generates the next item.
+   class PStepGen: public PStep {
+   public:
+      PStepGen(){ apply = apply_;}
+      virtual ~PStepGen() {}
+      virtual void describeTo(String& tgt) { tgt = "Function_makeEnum::PStepGen"; }
+
+      static void apply_(const PStep*, VMContext* ctx )
+      {
+         int pCount = ctx->currentCode().m_seqId;
+         while( pCount > 0 )
+         {
+            // we should have checked before entering this pstep
+            fassert( ctx->topData().isString() || ctx->topData().isSymbol() );
+            const String* name = ctx->topData().isString() ? ctx->topData().asString() : &ctx->topData().asSymbol()->name();
+            Item* value = ctx->resolveSymbol( *name, true );
+            value->setInteger(pCount-1);
+            --pCount;
+            ctx->popData();
+         }
+
+         // clear the item that shall be seen as return value by the caller.
+         ctx->topData().setNil();
+         // out of business
+         ctx->popCode();
+      }
+   };
+   static PStepGen s_stepNext;
+
+   // we have nothing to do without parameters.
+   if( pCount == 0 )
+   {
+      ctx->returnFrame();
+      return;
+   }
+
+   // check that all the parameters are strings
+   for(int i = 0; i < pCount; ++i )
+   {
+      Item* i_param = ctx->param(i);
+      if( ! (i_param->isString() || i_param->isSymbol()) )
+      {
+         throw paramError("*S|$");
+      }
+   }
+
+
+   // we'll use a bit of a trick; we modify the base of the call stack so that
+   // we can still access the parameters after we return the frame.
+   ctx->pushData(Item()); // create a nil that can be changed
+   ctx->currentFrame().m_dataBase += pCount+1;
+   ctx->returnFrame();
+   ctx->popData(); // here
+   ctx->pushCode( &s_stepNext );
+   ctx->currentCode().m_seqId = pCount;
+   s_stepNext.apply(&s_stepNext, ctx);
+}
+
 
 }
 }

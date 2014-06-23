@@ -92,6 +92,7 @@ CoreModule::CoreModule():
       << new Ext::Function_cascade
       << new Ext::Function_perform
       << new Ext::Function_ffirstOf
+      << new Ext::Function_makeEnum
 
       << ffor
 
