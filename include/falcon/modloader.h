@@ -21,6 +21,7 @@
 #include <falcon/string.h>
 #include <falcon/uri.h>
 #include <falcon/pstep.h>
+#include <falcon/stream.h>
 
 namespace Falcon
 {
@@ -34,38 +35,38 @@ class Error;
 class VMContext;
 
 /** Module loader and reference resolutor.
- 
+
  The Module Loader is a helper class that searches for a module file
  given a logical module name or an URI, and then either compiles, deserializes
- or loads it as a native dynamic shared object (dll/so/dylib etc.), and 
+ or loads it as a native dynamic shared object (dll/so/dylib etc.), and
  serves it as a Falcon::Module entity.
- 
- On success, the module is loaded and ready to be added to a ModSpace. 
+
+ On success, the module is loaded and ready to be added to a ModSpace.
  Dependencies of the module are not resolved.
- 
+
  This class uses instances of helper classes to access the required resources;
  those classes can be used directly if the location and type of the module
  are known in advance. They are:
- 
+
  - ModCompiler: compiles a module from an open TextReader.
  - FAMLoader: loads a precompiled falcon module from an open DataReader.
  - DynLoader: loads a native shared object providing a Falcon Moduler.
- 
+
  To compile a source code directly (i.e. from an open stream, or from
  inside a String), use the ModCompiler class.
- 
+
  To load a moduel
  */
 class FALCON_DYN_CLASS ModLoader
 {
 public:
-   
+
    /** File type enumeration.
       The module loader tries to determine which type of file
       the it is trying to load (or is told this information
       by the loader user).
    */
-   typedef enum 
+   typedef enum
    {
       /** Undetermined / detect. */
       e_mt_none,
@@ -83,24 +84,24 @@ public:
       */
       t_defaultSource
    } t_modtype;
-   
+
    /** Creates the ModLoader.
     \param ctx The context where the loading occurs.
     \param owner The module space owning this loader.
     \param mc An optional previously created and configured ModCompiler.
     \param faml An optional previously created and configured FamLoader.
     \param dld An optional previously created and configured DynLoader.
-    
+
     If not given, the module compiler used by this ModLoader will be
     created internally.
-    
+
     The ownership of the ModCompiler stays on this instance; the compiler
     willl be destroyed with it.
-    
+
     This constructor sets the path to the default ("." + system falcon load path)
     */
    ModLoader( ModSpace* owner, ModCompiler* mc = 0, FAMLoader* faml=0, DynLoader* dld=0 );
-   
+
    /** Creates a module loader with a given path.
     \param path The path where modules will be searched for.
     \param ctx The context where the loading occurs.
@@ -108,7 +109,7 @@ public:
     \param mc An optional previously created and configured ModCompiler.
     \param faml An optional previously created and configured FamLoader.
     \param dld An optional previously created and configured DynLoader.
-      
+
     The path is in the FALCON format; path are separated by semicolons (;). If the system uses
       disk specification, falcon is able to understand a single letter, a colon and a slash as
       a disk specification. I.e.
@@ -123,10 +124,10 @@ public:
       as a single "." entry.
    */
    ModLoader( const String &path, ModSpace* owner, ModCompiler* mc = 0, FAMLoader* faml=0, DynLoader* dld=0 );
-   
+
    ~ModLoader();
 
-      
+
    /** Gets the compiler used by this loader. */
    ModCompiler* compiler() const { return m_compiler; }
 
@@ -135,22 +136,22 @@ public:
 
    /** Gets the dynamic native module loader used by this loader. */
    DynLoader* dynLoader() const { return m_dynLoader; }
-   
-   /** Loads a module through its logical name. 
+
+   /** Loads a module through its logical name.
     \param path The path of the module.
     \param type Detect the type of the resource to be loaded or provide a
     specific type.
     \param loader The module that originated the request, if any. Used to relativize file names.
     \return 0 If the module could not be found
     \throw Error* or appropriate error subclass in case of other errors.
-    
+
     \note The name of the module must be already de-relativized by adding
     the proper parent module names in case of self.xxx or .xxx module naming
     convnetion.
     */
    bool loadName( VMContext* tgtctx, const String& name, t_modtype type=e_mt_none, Module* loader = 0 );
-   
-   /** Loads a module through its physical path. 
+
+   /** Loads a module through its physical path.
     \param path The path of the module.
     \param name Logical name to be assigned to the module.
     \param type Detect the type of the resource to be loaded or provide a
@@ -168,8 +169,8 @@ public:
     or it contains the self keyword.
     */
    bool loadFile( VMContext* tgtctx, const String& name, const String& path, t_modtype type=e_mt_none, bool bScan = true, Module* loader = 0 );
-   
-   /** Loads a module through its physical path. 
+
+   /** Loads a module through its physical path.
     \param uri The uri of the module.
     \param type Detect the type of the resource to be loaded or provide a
     \param name Logical name to be assigned to the module.
@@ -178,14 +179,15 @@ public:
     \param loader The module that originated the request, if any. Used to relativize file names.
     \return 0 If the module could not be found
     \throw Error* or appropriate error subclass in case of other errors.
-    
+
     This version uses an URI instead of a String.
     */
    bool loadFile( VMContext* tgtctx,  const String& name, const URI& uri, t_modtype type=e_mt_none, bool bScan = false, Module* loader = 0 );
+   bool loadMem( VMContext* tgtctx,  const String& name, Stream* script, const String& path = "", t_modtype type = e_mt_source );
    //============================================================
    // Compilation process setting
    //
-   
+
    /** Should compilation process save the precompiled modules? */
    typedef enum {
       /** Never save the precompiled modules. */
@@ -205,7 +207,7 @@ public:
       /** All sources are FTD */
       e_ftd_force
    } t_check_ftd;
-   
+
    /** Use sources when in doubt between a source and a precompiled? */
    typedef enum {
       /** If sources are newer than FAM, use sources. */
@@ -215,7 +217,7 @@ public:
       /** Ignore sources, and use FAM only. */
       e_us_never
    } t_use_sources;
-      
+
    /** Check if this ModSpace will save precompiled sources.*/
    t_save_pc savePC() const { return m_savePC; }
    /** Set how this ModSpace saves precompiled sources. */
@@ -235,39 +237,39 @@ public:
    bool saveRemote() const { return m_saveRemote; }
    /** Sets if this ModLoader tries to save FAM modules on remote devices.*/
    void saveRemote( bool value ) { m_saveRemote = value; }
-   
+
    /** Returns the current extension for FTD files. */
    const String& ftdExt() const { return m_ftdExt; }
-   
+
    /** Changes the extension for FTD files. */
    void ftdExt( const String& value ) { m_ftdExt = value; }
-   
-   
+
+
    /** Returns the current extension for precompiled files. */
    const String& famExt() const { return m_famExt; }
-   
+
    /** Changes the extension for FTD files. */
    void famExt( const String& value ) { m_famExt = value; }
-   
+
    /** Sets the given source file encoding.
     \param encName One of the available ISO/POSIX encoding names.
     \return True if the encoding is known, false if the encoding is not available.
-    
+
     If the loaded modules are sources, this setting will be used to
     determine which encoding should be used.
-    
+
     \note Set the encoding name to "C" to use no text transcoding.
-    
+
     \TODO Add auto-detection.
     */
    bool sourceEncoding( const String& encName );
-   
+
    const String& sourceEncoding() const { return m_encName; }
-   
+
    //=============================================================
    // Search path manipulation
    //
-   
+
    /** Changes the search path used to load modules by this module loader
 
       This method changes the search specification path used by this module
@@ -317,7 +319,7 @@ public:
       The directories will be added with a priority lower than the currently searched ones;
       that is, they will be searched after the ones that have been previously added are
       searched.
-    
+
       The path can contain complete URIs. When an URI is not given, the local
       filesystem will be used.
 
@@ -346,46 +348,46 @@ public:
       \param directory the directory to be added to the path
    */
    void addDirectoryBack( const String &directory );
-   
+
    /** Returns the currently set search path. */
    const String& getSearchPath() const;
-   
+
    //==============================================================
    // Utility functions
    //
-   
+
    /** Converts a module physical location into a logical name.
       \param path Relative or absolute top-path.
       \param modFile the path to a possible falcon module
       \param modNmae the possible falcon module name
    */
    static void pathToName( const URI &prefix, const URI &modFile, String &modName );
-   
+
 
 private:
    class Private;
    Private* _p;
-   
+
    ModSpace* m_owner;
    ModCompiler* m_compiler;
-   FAMLoader* m_famLoader; 
+   FAMLoader* m_famLoader;
    DynLoader* m_dynLoader;
-     
+
    t_save_pc m_savePC;
    t_check_ftd m_checkFTD;
    t_use_sources m_useSources;
-   
+
    bool m_saveRemote;
-   
+
    String m_ftdExt;
    String m_famExt;
    mutable String m_path;
-   
+
    String m_encName;
    Transcoder* m_tcoder;
 
    void init ( const String &path, ModSpace* ms, ModCompiler* mc, FAMLoader* faml, DynLoader* dld );
-   
+
    t_modtype checkFile_internal( const URI& uri, t_modtype type, URI& foundUri );
    void load_internal( VMContext* tgtctx, const String& name, const String& prefixPath, const URI& uri, t_modtype type );
    void saveModule_internal( VMContext* tgtctx, Module* module, const URI& uri, const String& modName );
