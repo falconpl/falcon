@@ -72,7 +72,7 @@ namespace Falcon
       */
 
         /*#
-      * @method add Module
+      * @method addMantra Module
       * @brief Adds a mantra to the module.
       * @param mantra The mantra to add to the module.
       * @optparam export Whether or not to export the mantra from the module.
