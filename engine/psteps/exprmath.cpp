@@ -417,7 +417,14 @@ void generic_apply_( const PStep* ps, VMContext* ctx )
                Class* cls = 0;
                void* inst = 0;
                op1->forceClassInst( cls, inst );
-               _cpr::operate( ctx, cls, inst );
+               try {
+                  _cpr::operate( ctx, cls, inst );
+               }
+               catch(Error* e)
+               {
+                  e->line(ps->line());
+                  throw e;
+               }
                return;
             }
          }
