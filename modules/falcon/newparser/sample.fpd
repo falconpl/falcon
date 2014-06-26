@@ -1,0 +1,17 @@
+{ import from struct.tree
+   > "Hello world!"
+   > r"Hello again"il
+}
+
+FILE:- ELEMENT:l FILE:tree  { tree.current.addBelow(l); return tree }.
+
+FILE :- {Tree()}.
+
+ELEMENT :- TITLE | TEXT.
+
+TITLE :- r"^="m TEXT:node r"=*" EOL { node.type = "h1" }.
+
+EOL :- "\n".
+EOL :- EOF.
+
+TEXT :- ? {Node("text")}.

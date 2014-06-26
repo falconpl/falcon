@@ -234,10 +234,10 @@ void apply_static_pdecl_expr( const NonTerminal&, Parser& p )
    sp.getNextToken(); // 'EOL'
 
    Expression* expr = (Expression*) texpr->detachValue();
-   if( expr->trait() == Expression::e_trait_value )
+   Item temp;
+   if( expr->simplify(temp) )
    {
-      cls->addProperty( *tname->asString(), static_cast<ExprValue*>(expr)->item(), true );
-      // we don't need the expression anymore
+      cls->addProperty( *tname->asString(), temp, true );
       delete expr;
    }
    else

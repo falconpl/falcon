@@ -1,0 +1,558 @@
+import from vfs
+
+/*
+Single Entry of a Non Terminal specification.
+
+Each alternative definition will have its own NTDef
+   - name: The name of the Non Terminal of which this is an alternative
+   - line: Line at which this alternative is declared
+*/
+class NTAlt(name, line)
+   name = name
+   
+   // line where the definition is declared
+   line = line ? line: 0
+   
+   // sequence of Tokens
+   sequence = []
+   
+   // raw text code
+   code = nil
+   
+   // compiled code
+   compiled = nil
+end
+
+
+/*
+   Single token (entry in a NonTerminal entry sequence)
+   - type: tString, tRE or tNT
+   - content: either a string, a re or a NonTerminal
+   - name: non-terminal name, if this is a non-terminal
+   - repeat: 0/nil - single, -1: asterisk, -2: plus
+*/
+class Token(type, content, name, repeat, line)
+   static tString = 0
+   static tRE = 1
+   static tNT = 2
+   
+   static tSingle = 0
+   static tAsterisk = -1
+   static tPlus = -2
+   
+   type = type
+   content = content
+   name = name
+   pname = nil
+   repeat = repeat
+   resolved = false
+   line = line ? line: 0
+end
+
+/*
+   NonTerminal entry.
+   A nonterminal is a colleciton of 0 or more alternatives,
+   each being a NTAlt, which fully defines a certain non terminal
+   pattern.
+*/
+class NonTerminal(name)
+   name = name
+   // list of zero or more NTAlt
+   alts = []
+end
+
+
+class Grammar
+   // "ID" => [NonTerminal]
+   entries = [=>]
+   
+   // "ID" => [NTAlt] -- still unresolved entries.
+   unresolved = [=>]
+   
+   // Code that must be executed at initialization
+   preamble = m""
+   
+   // Line at which the preamble has been declared
+   preambleLine = 0
+   
+   // Code to be executed at end
+   postamble = m""
+   
+   // internal state.
+   _state = nil
+   
+   // current line
+   curLine = 0
+   
+   errors = 0
+   
+   mt = nil
+
+   /*#
+      @brief Parses a Falcon Parser Definition (FPD).
+      @param source A TextReader or String from which to read the definition
+      
+      On success, the parser is configured and ready to parse one or
+      more input sources.
+   */
+   function parseDef( source )
+      
+      // we'll use the parameter checking of our multitokenizer
+      try
+         mt = MultiTokenizer(source)
+      catch ParamError 
+         raise ParamError( 1001, "Invalid paramters", "Need a string or TextReader" )
+      end
+      
+      commands = [":-", ":", ".", "{", "}", "r\'", "r\"", "R'", "R\"", '"', "'", "*", "+", "|" ]
+      whiteSpaces = [" ",  "\n", "\r", "\t"]
+      call( mt.add, commands )
+      call( mt.add, whiteSpaces )
+      mt.giveTokens = true
+
+      syms = .["start" "dfn" "quote" "defBody"
+               "code" "Rafter" "escape" "defpre"
+               "defName1" "defName2"
+               "codeQuote" "codeEsc"
+               ]
+      call( makeEnum, map({[v] "S." + v}, syms ) )
+      self._state = ~S..start
+      self.curLine = 1
+      self.errors = 0
+      
+      self.mt = mt
+
+      parCount = 0
+      code = m""
+      currentToken = nil
+      currentNT = nil
+      repetition = nil
+      
+      // variables controlling quotes
+      Rignore = false
+      Rquote = false
+      quoteType = false
+      quoteText = nil
+      
+      // used to reiterate the same token in different states
+      take = true
+      
+      while mt.hasNext
+
+         // used to reiterate the same token in different states
+         if take
+            tok = mt.next()
+         else
+            take = true
+         end
+         
+         // count lines and discard blanks
+         if tok == "\n" or tok == " " or tok == "\r" or tok == "\t"
+            // but if we are after a regular expression, change state
+            if self._state == ~S..Rafter
+               // time to create the RE
+               self.commitRE( quoteText, currentNT, repetition, nil )
+               repetition = Token.tSingle
+               self.changeState( ~S..defBody )
+            elif self._state == ~S..defpre
+               self.preamble += tok
+            elif self._state == ~S..code
+               code += tok
+            elif self._state == ~S..quote
+               quoteText += tok
+            end
+
+            // also, count line if necessary
+            if tok == "\n": self.curLine ++
+            
+            continue         
+         // ignore white spaces and token separators.
+         elif tok == "" 
+            continue
+         end
+         
+         switch self._state
+         
+            case ~S..start
+               if tok == '{'
+                  self.changeState( ~S..defpre, tok )
+                  self.preambleLine = self.curLine ++
+               elif tok in commands
+                  self.xerror(self.curLine, "invalid declaration")
+               else               
+                  self.changeState( ~S..dfn, tok )
+                  currentToken = tok
+               end
+               
+            case ~S..defpre
+               if tok != '}'
+                  self.preamble += tok
+               else
+                  self.changeState(~S..start, tok)
+               end
+               
+            case ~S..dfn
+               if tok != ":-"
+                  self.xerror(self.curLine, "Need :- after token specification.")
+               else
+                  currentNT = NTAlt( currentToken, self.curLine )
+                  repetition = Token.tSingle
+                  self.changeState(~S..defBody, tok)
+               end
+               
+            case ~S..defBody
+               // now things get interesting.
+               switch tok
+               
+                  case "."
+                     // done
+                     self.commitAlt( currentToken, currentNT )
+                     self.changeState(~S..start, tok)
+                     currentNT = nil
+                     
+                  case "|"
+                     // new alternative
+                     self.commitAlt( currentToken, currentNT )
+                     currentNT = NTAlt( currentToken, self.curLine )
+                     // stay in defbody state
+      
+                  case "{"
+                     code = m""
+                     // change the MultiTokenizer
+                     mt.clearTokens()
+                     mt.add('"', "'", "\\", "{", "}", "\n")
+                     parCount = 0
+                     self.changeState( ~S..code, tok )
+                     
+                  case "r\'", "R'", "r\"", "R\"", '"', "'"
+                     Rignore = (tok == "R'" or tok == "r\'")
+                     quoteType = (tok[-1] == '"')
+                     Rquote = (tok[0] == 'R' or tok[0] == 'r')
+                     quoteText = m""
+                     self.changeState( ~S..quote, tok )
+                                          
+                  case "*", "+"
+                     if repetition != Token.tSingle
+                        self.xerror(self.curLine, "Conflicting repetition type" )                        
+                     else                     
+                        repetition = tok == "*" ? Token.tAsterisk : Token.tPlus
+                     end
+                     
+                  default
+                     if tok in commands
+                        self.xerror(self.curLine, "Unexpected token '" + tok + "'" )
+                     else
+                        repetition = Token.tSingle
+                        // the token is a non-terminal in this alternative
+                        self.commitNT( tok, currentNT, repetition )
+                        // reset the repetition count
+                        repetition = Token.tSingle
+                        // enter in defName states
+                        self.changeState( ~S..defName1, tok )
+                     end
+               end
+               
+            case ~S..defName1
+               // we're past the token name, and waiting for ':' to define the name as paramter in code
+               if tok == ':'
+                  // wait for the real name
+                  self.changeState( ~S..defName2, tok )
+               else
+                  // go back to body definition and reparse the same token
+                  take = false
+                  self.changeState( ~S..defBody, tok )
+               end
+               
+            case ~S..defName2
+               if tok in commands
+                  self.xerror(self.curLine, "Waiting for token name but received '" + tok + "'" )
+               else                  
+                  self.trace( "Assigning name '", tok, "' to token ", currentNT.sequence[-1].name )
+                  currentNT.sequence[-1].pname = tok
+                  self.changeState( ~S..defBody, tok )
+               end
+               
+            case ~S..quote
+               if tok == "\\"
+                  self.changeState( ~S..escape, tok )
+               else
+                  if (quoteType and tok == '"') or (not quoteType and tok == "'")
+                     if Rquote
+                        self.changeState( ~S..Rafter, tok )
+                     else
+                        self.commitText(quoteText, currentNT, repetition)
+                        repetition = Token.tSingle
+                        self.changeState( ~S..defBody, tok )
+                     end
+                  else
+                     quoteText += tok
+                  end
+               end
+               
+            case ~S..escape
+               quoteText += tok
+               self.changeState( ~S..quote, tok )
+               
+                   
+            case ~S..Rafter
+               // time to create the RE
+               self.commitRE( quoteText, currentNT, repetition, tok )
+               repetition = Token.tSingle
+               self.changeState( ~S..defBody )
+               
+            case ~S..code               
+               switch tok 
+                  case '}'
+                     // are we done?
+                     if parCount == 0
+                        self.commitCode(code, currentNT)                        
+                        // reset the parser to the normal status
+                        mt.clearTokens()
+                        call( mt.add, commands )
+                        call( mt.add, whiteSpaces )
+                        self.changeState(~S..defBody, tok)                        
+                     else
+                        code += "}"
+                        parCount--
+                     end
+                  
+                  case '{'
+                     code += "{"
+                     parCount++
+                  
+                  case "\\"
+                     code += "\\"
+                     
+                  case '"', "'"
+                     code += tok
+                     quoteType = tok == '"'
+                     self.changeState(~S..codeQuote, tok)
+                  default
+                     code += tok
+               end
+                  
+            case ~S..codeQuote
+               // we always add the token.
+               code += tok
+               
+               if tok == "\\"                  
+                  self.changeState(~S..codeEsc, tok)
+               elif (quoteType and tok == '"') or (not quoteType and tok == "'")
+                  self.changeState(~S..code, tok)
+               end
+                  
+            case ~S..codeEsc
+               code += tok
+               self.changeState(~S..codeEsc, tok)
+                  
+         end /* Switch */
+         
+      end
+      
+      // we should be in start state
+      if self._state = ~S..start
+         self.error( self.curLine, "Unterminated definition at end of file" )
+      end
+      
+      // and check for undefined
+      for name,tok in self.unresolved
+         for element in tok
+            self.error( element.line, "Unresolved token " + element.name )
+         end
+      end
+      
+      self.mt = nil
+      return self.errors == 0
+   end
+   
+   /*
+      Creates a new alternative for the given non terminal token.
+      token - string name of the token
+      alt - an instance of NTAlt that constitutes an alternative.
+   */
+   function commitAlt( name, alt )
+      // is the token already in our maps?
+      entry = self.entries.find(name, nil)
+      
+      // new entry?
+      if not entry
+         // create the non-terminal of which this is an alternative
+         entry = NonTerminal(name, alt.line)
+         self.entries[name] = entry
+         
+         // now, were we in wait of this non-terminal?
+         undefs = self.unresolved.find(name, nil)
+         // if we were, assign this nonterminal to all the previously undefined tokens
+         for utok in undefs
+            utok.content = entry
+         end
+         self.unresolved -= name
+            
+      end
+      
+      entry.alts += alt
+   end
+   
+   /*
+      Commits a non terminal token into a forming alternative.
+      name -- the name of the non-terminal 
+      alt -- the forming alternative (a NTAlt instance)
+      rept -- the repetition count previously detected
+   */
+   function commitNT(name, alt, rept )
+      self.trace( "commitNT", name, "into", alt.name )
+   
+      nt = self.entries.find( name, nil )
+      // for the token -- if the non terminal is undefined, nt will be nil
+      token = Token( Token.tNT, nt, name, rept, self.curLine )
+      
+      if not nt
+         if name == "EOF"
+            // pre-defined
+         else
+            // it's undefined, add to the undefined list         
+            undefList = self.unresolved.find(name, nil)
+            // do we already have a undefined list for this non-terminal name?
+            if not undefList
+               // if not add an entry
+               undefList = []
+               self.unresolved[name] = undefList
+            end
+         
+            undefList += token
+         end
+      end
+      
+      alt.sequence += token      
+   end
+   
+   /*
+      Commits a regular expression terminal token into a forming alternative.
+      text -- The regular expression text
+      alt -- the forming alternative (a NTAlt instance)
+      rept -- the repetition count previously detected
+      opt -- Regular expression options
+   */
+   function commitRE( text, alt, rept, opts )
+      self.trace( "commitRE '", text, "' into", alt.name )
+      try
+         re = RE( text, opts )
+         alt.sequence += Token(Token.tRE, re, nil, rept, self.curLine )
+      catch in e
+         self.xerror( self.curLine, "Invalid regular expression: " + e )
+      end
+   end
+
+   /*
+      Commits a text terminal token into a forming alternative.
+      text -- The text
+      alt -- the forming alternative (a NTAlt instance)
+      rept -- the repetition count previously detected
+   */
+   function commitText( text, alt, rept )
+      self.trace( "commitText '", text, "' into", alt.name )
+      alt.sequence += Token(Token.tString, text, nil, rept, self.curLine )
+   end
+   
+      /*
+      Commits a code into a forming alternative.
+      text -- The text
+      alt -- the forming alternative (a NTAlt instance)
+      rept -- the repetition count previously detected
+   */
+   function commitCode( code, alt )
+      self.trace( "commitCode into", alt.name )
+      alt.code = code
+   end
+   
+   //========================================================================
+   // Utilities
+   //========================================================================
+   
+   function changeState( newState, tok )
+      self.trace( tok, ": ", self._state, "=>", newState )
+      self._state = newState()
+   end
+   
+   function trace()
+      > " ".merge(map( {[v] v.toString()}, passvp() ))
+   end
+   
+   /*
+      Consume up to the limits declared as variable parameters
+   */
+   function consume(mt)
+      limits = passvp()
+      while mt.hasNext
+         tok = mt.next()
+         if tok == "\n"
+            self.curLine ++
+         end
+         
+         if tok in limits
+            break
+         end
+      end
+   end
+         
+   function error(line, reason)
+      > @"ERROR ($line): $reason"
+      self.errors++
+   end
+   
+   function xerror(line, reason)
+      self.error( line, reason )
+      self.consume(self.mt,".","\n")
+      self._status = 0
+   end
+   
+   
+   function dump()
+      for name, entry in self.entries
+         > entry.name, ":- "
+         
+         for alt in entry.alts
+         
+            for tok in alt.sequence
+               
+               if tok.type == Token.tString
+                  >> '"',tok.content.escape(), '"'
+               elif tok.type == Token.tRE
+                  >> tok.content.toString()
+               else
+                  >> tok.name
+                  if tok.pname
+                     >> ":", tok.pname
+                  end
+               end
+               formiddle: >> " "
+            end
+            
+            code = alt.code
+            if code
+               >> "  {", code, "}"
+            end
+            > "."
+            
+            forfirst:  >> "     "
+            formiddle: >> "   | "
+         
+         end
+      end
+   end
+end
+
+if args.len == 0
+   > "Usage: <file>"
+   return 1
+end
+
+parsed = InputStream(args[0])
+
+x = Grammar()
+x.parseDef( TextReader(parsed, "utf8") )
+
+> "Errors: ", x.errors
+
+x.dump()
+> "Done"
