@@ -16,5 +16,7 @@ EOL :- EOF.
 
 TEXT :- *WORD {Node("text")}.
 
-WORD :- r"[A-Za-z]".
+WORD :- R"[A-Za-z]".
+
+
 

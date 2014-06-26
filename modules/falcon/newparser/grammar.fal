@@ -151,7 +151,7 @@ class Grammar
             // but if we are after a regular expression, change state
             if self._state == ~S..Rafter
                // time to create the RE
-               self.commitRE( quoteText, currentNT, repetition, nil )
+               self.commitRE( quoteText, currentNT, repetition, Rignore ?"i":"" )
                repetition = Token.tSingle
                self.changeState( ~S..defBody )
             elif self._state == ~S..defpre
@@ -225,7 +225,7 @@ class Grammar
                      self.changeState( ~S..code, tok )
                      
                   case "r\'", "R'", "r\"", "R\"", '"', "'"
-                     Rignore = (tok == "R'" or tok == "r\'")
+                     Rignore = (tok == "R'" or tok == "R\"")
                      quoteType = (tok[-1] == '"')
                      Rquote = (tok[0] == 'R' or tok[0] == 'r')
                      quoteText = m""
@@ -295,7 +295,16 @@ class Grammar
                    
             case ~S..Rafter
                // time to create the RE
-               self.commitRE( quoteText, currentNT, repetition, tok )
+               if tok in commands
+                  take = false   
+                  opts = m""
+               else
+                  opts = tok                  
+               end
+               
+               if Rignore: opts += "i"
+               self.commitRE( quoteText, currentNT, repetition, opts )
+               
                repetition = Token.tSingle
                self.changeState( ~S..defBody )
                
