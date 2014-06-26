@@ -242,7 +242,6 @@ class Grammar
                      if tok in commands
                         self.xerror(self.curLine, "Unexpected token '" + tok + "'" )
                      else
-                        repetition = Token.tSingle
                         // the token is a non-terminal in this alternative
                         self.commitNT( tok, currentNT, repetition )
                         // reset the repetition count
@@ -400,7 +399,7 @@ class Grammar
       rept -- the repetition count previously detected
    */
    function commitNT(name, alt, rept )
-      self.trace( "commitNT", name, "into", alt.name )
+      self.trace( "commitNT", name, "into", alt.name, "rept", rept )
    
       nt = self.entries.find( name, nil )
       // for the token -- if the non terminal is undefined, nt will be nil
@@ -434,7 +433,7 @@ class Grammar
       opt -- Regular expression options
    */
    function commitRE( text, alt, rept, opts )
-      self.trace( "commitRE '", text, "' into", alt.name )
+      self.trace( "commitRE '", text, "' into", alt.name, "rept", rept )
       try
          re = RE( text, opts )
          alt.sequence += Token(Token.tRE, re, nil, rept, self.curLine )
@@ -503,7 +502,7 @@ class Grammar
    function xerror(line, reason)
       self.error( line, reason )
       self.consume(self.mt,".","\n")
-      self._status = 0
+      self._state = 0
    end
    
    
@@ -514,6 +513,11 @@ class Grammar
          for alt in entry.alts
          
             for tok in alt.sequence
+               if tok.repeat == Token.tAsterisk
+                  >> "*"
+               elif tok.repeat == Token.tPlus
+                  >> "+"
+               end
                
                if tok.type == Token.tString
                   >> '"',tok.content.escape(), '"'

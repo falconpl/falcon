@@ -14,4 +14,7 @@ TITLE :- r"^="m TEXT:node r"=*" EOL { node.type = "h1" }.
 EOL :- "\n".
 EOL :- EOF.
 
-TEXT :- ? {Node("text")}.
+TEXT :- *WORD {Node("text")}.
+
+WORD :- r"[A-Za-z]".
+
