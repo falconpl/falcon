@@ -260,7 +260,7 @@ FALCON_DEFINE_FUNCTION_P1( rewind )
 
 
 /*#
- @method setSource() MultiTokenizer
+ @method setSource MultiTokenizer
  @brief Changes the source used by this tokenizer.
  @param source The string to be tokenized or a @a TextReader
 
@@ -274,6 +274,24 @@ FALCON_DEFINE_FUNCTION_P1( setSource )
 {
    MultiTokenizer* tk = ctx->tself<MultiTokenizer*>();
    internal_setSource(this, ctx, tk);
+   ctx->returnFrame();
+}
+
+
+/*#
+ @method clearTokens MultiTokenizer
+ @brief Removes all the tokens from the tokenizer.
+
+ This method removes all the tokens and their actions
+ from the tokenizer definition. It is then possible to add
+ new and possibly different tokens to change the way the stream
+ is parsed.
+ */
+FALCON_DECLARE_FUNCTION( clearTokens, "" );
+FALCON_DEFINE_FUNCTION_P1( clearTokens )
+{
+   MultiTokenizer* tk = ctx->tself<MultiTokenizer*>();
+   tk->clearTokens();
    ctx->returnFrame();
 }
 
@@ -525,6 +543,7 @@ ClassMultiTokenizer::ClassMultiTokenizer():
    addMethod( new FALCON_FUNCTION_NAME(rewind) );
    addMethod( new FALCON_FUNCTION_NAME(add) );
    addMethod( new FALCON_FUNCTION_NAME(setSource) );
+   addMethod( new FALCON_FUNCTION_NAME(clearTokens) );
 
    addProperty("hasNext", &get_hasNext);
    addProperty("giveTokens", &get_giveTokens, &set_giveTokens);

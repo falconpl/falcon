@@ -97,12 +97,7 @@ public:
    {}
 
    ~Private() {
-      TokenList::iterator iter = m_tlist.begin();
-      while( iter != m_tlist.end() )
-      {
-         delete *iter;
-         ++iter;
-      }
+      clear();
 
       if ( m_resDataDel != 0 )
       {
@@ -113,6 +108,18 @@ public:
       {
          m_resTokDataDel(m_resTokData);
       }
+   }
+
+   void clear()
+   {
+      TokenList::iterator iter = m_tlist.begin();
+      while( iter != m_tlist.end() )
+      {
+         delete *iter;
+         ++iter;
+      }
+
+      m_tlist.clear();
    }
 
    Mutex m_mtx;
@@ -335,6 +342,15 @@ void* StreamTokenizer::getTokenCallbackData() const
 
    return data;
 }
+
+
+void StreamTokenizer::clearTokens()
+{
+   _p->m_mtx.lock();
+   _p->clear();
+   _p->m_mtx.unlock();
+}
+
 
 
 void StreamTokenizer::rewind()

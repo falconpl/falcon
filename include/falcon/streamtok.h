@@ -91,6 +91,8 @@ public:
    void groupTokens(bool b);
 
 
+   void clearTokens();
+
 private:
    TextReader* m_tr;
    String m_source;
