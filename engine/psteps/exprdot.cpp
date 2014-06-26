@@ -47,6 +47,7 @@ ExprDot::ExprDot( int line, int chr ):
    FALCON_DECLARE_SYN_CLASS( expr_dot )
    apply = apply_; 
    m_pstep_lvalue = &m_pslv;
+   m_pslv.decl(line,chr);
    m_trait = e_trait_assignable;
 }
 
@@ -58,6 +59,7 @@ ExprDot::ExprDot( const ExprDot& other ):
 {
    apply = apply_;
    m_pstep_lvalue = &m_pslv;
+   m_pslv.decl(line(),chr());
    m_trait = e_trait_assignable;
 }
    
@@ -125,7 +127,7 @@ void ExprDot::PstepLValue::apply_( const PStep* ps, VMContext* ctx )
    ctx->topData().forceClassInst(cls, self);
 
    // anyhow we're done.
-   FALCON_POPCODE_CONDITIONAL( ctx, ps, cls->op_setProperty(ctx, self, prop ) );
+   FALCON_POPCODE_CONDITIONAL( ctx, dot_lv_expr->m_owner, cls->op_setProperty(ctx, self, prop ) );
 
    // it's not our duty to remove the tompost value from the stack.
 }
