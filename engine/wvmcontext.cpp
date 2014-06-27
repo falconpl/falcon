@@ -158,6 +158,7 @@ void WVMContext::start( Closure* closure, int32 np, Item const* params )
 
 void WVMContext::startItem( const Item& item, int32 np, Item const* params )
 {
+   m_evtComplete->reset();
    reset();
    callItem(item,np,params);
    process()->startContext(this);
