@@ -1207,7 +1207,15 @@ Parsing::TokenInstance* SourceLexer::nextToken()
       }
    }
 
-   if ( m_state == state_line )
+   if ( m_state == state_name || m_state == state_name_next )
+   {
+      // the file ended right after a name.
+      // generate a syntetic \n and return the word
+      m_state = state_none;
+      _p->m_nextTokens.push_back(m_parser->T_EOL.makeInstance(m_line, m_chr));
+      return checkWord();
+   }
+   else if ( m_state == state_line )
    {
       m_state = state_none;
       m_hadImport = false;
