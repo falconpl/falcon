@@ -278,7 +278,7 @@ bool Reader::ensure( length_t size )
 }
 
 
-bool Reader::eof()
+bool Reader::eof() const
 {
    fassert( m_stream != 0 );
 
