@@ -477,12 +477,25 @@ int32 Parser::lastErrorLine() const
 
 const String& Parser::currentSource() const
 {
-   return _p->m_lLexers.back()->uri();
+   if( _p->m_lLexers.empty() )
+   {
+      return m_lastSource;
+   }
+   else
+   {
+      return _p->m_lLexers.back()->uri();
+   }
 }
 
 int Parser::currentLine() const
 {
-   return _p->m_lLexers.back()->line();
+   if( _p->m_lLexers.empty() )
+   {
+      return m_lastLine;
+   }
+   else {
+      return _p->m_lLexers.back()->line();
+   }
 }
 
 void Parser::setContext( void* ctx )
