@@ -124,7 +124,7 @@ public:
    virtual void changeStream( Stream* s, bool bDiscard = false );
       
    /** Returns true if the underlying stream is exhausted. */
-   bool eof();
+   virtual bool eof() const;
    
    /** Discards read buffer and syncs with current position in the underlying stream. */
    void sync();

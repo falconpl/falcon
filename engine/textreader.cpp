@@ -429,6 +429,11 @@ void TextReader::ungetChar( char_t chr )
    m_pushedChr = chr;
 }
 
+bool TextReader::eof() const
+{
+   return m_pushedChr == ((char_t)-1) && Reader::eof();
+}
+
 }
 
 /* end of textreader.cpp */

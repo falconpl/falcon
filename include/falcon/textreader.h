@@ -255,6 +255,9 @@ public:
 
    void gcMark( uint32 mark ) { m_mark = mark; }
    uint32 currentMark() const { return m_mark; }
+
+   virtual bool eof() const;
+
 protected:
    char_t m_pushedChr;
    Transcoder* m_decoder;
