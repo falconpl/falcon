@@ -21,12 +21,18 @@ class NTAlt(name, line)
    
    // compiled code
    compiled = nil
+   
+   // transition to a different state
+   transition = nil
+   
+   // or... pop to different states
+   transpop = 0
 end
 
 
 /*
    Single token (entry in a NonTerminal entry sequence)
-   - type: tString, tRE or tNT
+   - type: tString, tRE or tNT  (tPredef for predefined terminals)
    - content: either a string, a re or a NonTerminal
    - name: non-terminal name, if this is a non-terminal
    - repeat: 0/nil - single, -1: asterisk, -2: plus
@@ -35,10 +41,12 @@ class Token(type, content, name, repeat, line)
    static tString = 0
    static tRE = 1
    static tNT = 2
+   static tPredef = 3
    
    static tSingle = 0
    static tAsterisk = -1
    static tPlus = -2
+   static tQMark = -3
    
    type = type
    content = content
@@ -62,27 +70,129 @@ class NonTerminal(name)
 end
 
 
-class Grammar
+class GrammarState(name, line)
+   name = name
+   
+   // master grammar states
+   includes = []
+
    // "ID" => [NonTerminal]
    entries = [=>]
    
    // "ID" => [NTAlt] -- still unresolved entries.
    unresolved = [=>]
    
+   // line where the state is declared
+   line = line
+   
+   // list of lexer tokens known to the state
+   tokens = nil
+   
+   // Reverse rendering for the state grammar
+   function dump()
+      if self.includes
+            >> @"[${state.name}:"
+            for state in self.includes
+               >> state.name
+               formiddle: >> ","
+            end
+            > "]"
+         else
+            > @"[$(name)]"
+         end
+         
+         > /* white line */
+         
+      for name, entry in self.entries
+         > entry.name, ":- "
+         
+         for alt in entry.alts
+         
+            for tok in alt.sequence
+               if tok.repeat == Token.tAsterisk
+                  >> "*"
+               elif tok.repeat == Token.tPlus
+                  >> "+"
+               elif tok.repeat == Token.tQMark
+                  >> "?"
+               end
+               
+               if tok.type == Token.tString
+                  >> '"',tok.content.escape(), '"'
+               elif tok.type == Token.tRE
+                  >> tok.content.toString()
+               else
+                  >> tok.name
+                  if tok.pname
+                     >> ":", tok.pname
+                  end
+               end
+               formiddle: >> " "
+            end
+            
+            code = alt.code
+            if code
+               >> "  {", code, "}"
+            end
+            
+            if alt.transition
+               >> " => ", alt.transition.name
+            elif alt.transpop
+               >> " => ", "#" * alt.transpop
+            end
+            
+            > "."
+            
+            forfirst:  >> "     "
+            formiddle: >> "   | "
+         
+         end
+      end
+   end
+
+end
+
+
+class Grammar
+   // Map of grammar states.
+   states = [=>]
+   
+   // Reverse rendering for the state grammar
+   function dump()
+      for name, state in self.states         
+         state.dump()
+         > /* White line */
+      end
+   end
+   
+end
+
+
+class GrammarParser
+   
+   // grammar state being currently parsed.
+   _cgs = nil
+   
+   // grammar being currently parsed
+   _grammar = nil
+   
    // Code that must be executed at initialization
    preamble = m""
    
    // Line at which the preamble has been declared
    preambleLine = 0
-   
-   // Code to be executed at end
-   postamble = m""
-   
+      
    // internal state.
    _state = nil
    
    // current line
    curLine = 0
+   
+   // List of predefined tokens
+   predefined = .[
+      "eof"       // End of file
+      "error"     // matches everything in case of error.
+   ]
    
    errors = 0
    
@@ -95,7 +205,10 @@ class Grammar
       On success, the parser is configured and ready to parse one or
       more input sources.
    */
-   function parseDef( source )
+   function parse( source, grammar )
+      
+      if not grammar: grammar = Grammar()         
+      self._grammar = grammar
       
       // we'll use the parameter checking of our multitokenizer
       try
@@ -104,8 +217,11 @@ class Grammar
          raise ParamError( 1001, "Invalid paramters", "Need a string or TextReader" )
       end
       
-      commands = [":-", ":", ".", "{", "}", "r\'", "r\"", "R'", "R\"", '"', "'", "*", "+", "|" ]
-      whiteSpaces = [" ",  "\n", "\r", "\t"]
+      commands = .[":-" "/*" "r\'" "r\"" "R'" "R\"" ":" "." "{" "}" 
+                   '"' "'" "*" "+" "?" "|" "[" "]" 
+                   "=>" "#"
+                   ]
+      whiteSpaces = .[" " "\n" "\r" "\t"]
       call( mt.add, commands )
       call( mt.add, whiteSpaces )
       mt.giveTokens = true
@@ -114,6 +230,9 @@ class Grammar
                "code" "Rafter" "escape" "defpre"
                "defName1" "defName2"
                "codeQuote" "codeEsc"
+               "comment"
+               "defState" "defPState" "defPState2" "postState"
+               "transition"
                ]
       call( makeEnum, map({[v] "S." + v}, syms ) )
       self._state = ~S..start
@@ -133,6 +252,8 @@ class Grammar
       Rquote = false
       quoteType = false
       quoteText = nil
+      oldState = nil
+      stateName = nil
       
       // used to reiterate the same token in different states
       take = true
@@ -144,6 +265,16 @@ class Grammar
             tok = mt.next()
          else
             take = true
+         end
+         
+         // manage comments
+         //  -- notice that in code the lexer changes state, 
+         //  -- so we can't parse the comments in codeblocks.
+         if tok == "/*"
+            oldState = self._state
+            self._state = ~S..comment
+            mt.clearTokens()
+            mt.add("*/", "\n")
          end
          
          // count lines and discard blanks
@@ -163,7 +294,15 @@ class Grammar
             end
 
             // also, count line if necessary
-            if tok == "\n": self.curLine ++
+            if tok == "\n"
+               // we wait a newline after a state declararion
+               if self._state == ~S..postState
+                  // return to initial state
+                  self.changeState(~S..start)
+               end
+               
+               self.curLine ++
+            end
             
             continue         
          // ignore white spaces and token separators.
@@ -177,6 +316,8 @@ class Grammar
                if tok == '{'
                   self.changeState( ~S..defpre, tok )
                   self.preambleLine = self.curLine ++
+               elif tok == "["
+                  self.changeState( ~S..defState, tok )                  
                elif tok in commands
                   self.xerror(self.curLine, "invalid declaration")
                else               
@@ -189,6 +330,38 @@ class Grammar
                   self.preamble += tok
                else
                   self.changeState(~S..start, tok)
+               end
+               
+            case ~S..defState
+               if tok in commands
+                  self.xerror(self.curLine, "invalid declaration")
+               else
+                  stateName = tok
+                  self.changeState( ~S..defPState, tok )
+               end
+               
+            case ~S..defPState            
+               if tok == ":"
+                  // we expect state names
+                  self.addGState(stateName)
+                  self.changeState( ~S..defPState2, tok )
+               elif tok == "]"
+                  // completed state delcaration
+                  self.addGState(stateName)
+                  self.changeState( ~S..postState, tok )
+               else
+                  self.xerror(self.curLine, "Invalid state declaration")
+               end               
+               
+            case ~S..defPState2
+               if tok == "]"
+                  // completed state delcaration
+                  self.changeState( ~S..postState, tok )
+               elif tok in commands
+                  self.xerror(self.curLine, "invalid declaration")
+               else
+                  // a parent state for the current state
+                  self.addGStateInclude(tok)
                end
                
             case ~S..dfn
@@ -231,12 +404,19 @@ class Grammar
                      quoteText = m""
                      self.changeState( ~S..quote, tok )
                                           
-                  case "*", "+"
+                  case "*", "+", "?"
                      if repetition != Token.tSingle
                         self.xerror(self.curLine, "Conflicting repetition type" )                        
                      else                     
-                        repetition = tok == "*" ? Token.tAsterisk : Token.tPlus
+                        switch tok
+                           case "*": repetition = Token.tAsterisk 
+                           case "+": repetition = Token.tPlus
+                           case "?": repetition = Token.tQMark
+                        end
                      end
+                     
+                  case "=>"
+                     self.changeState( ~S..transition, tok )
                      
                   default
                      if tok in commands
@@ -352,7 +532,38 @@ class Grammar
             case ~S..codeEsc
                code += tok
                self.changeState(~S..codeEsc, tok)
-                  
+               
+            case ~S..transition
+               if tok == "#"
+                  if currentNT.transition != nil
+                     self.xerror( self.curLine, "Conflicting state pop after transition" )
+                  else
+                     currentNT.transpop++
+                  end
+               elif tok == "." or tok == "{"
+                  take = false
+                  self.changeState(~S..defBody, tok)
+               elif tok in commands
+                  self.xerror( self.curLine, "Unexpected token in transition declaration" )
+               else
+                  if currentNT.transition != nil
+                     self.xerror( self.curLine, "Conflicting transition declaration" )
+                  elif currentNT.transpop != 0
+                     self.xerror( self.curLine, "Conflicting transition declaration after state pop" )
+                  else
+                     currentNT.transition = tok
+                  end
+               end
+               
+            // manage exit from comment.
+            case ~S..comment
+               if tok == "*/"
+                  self._state = oldState
+                  mt.clearTokens()
+                  call(mt.add, commands)
+                  call(mt.add, whiteSpaces)
+               end
+               
          end /* Switch */
          
       end
@@ -363,14 +574,17 @@ class Grammar
       end
       
       // and check for undefined
-      for name,tok in self.unresolved
-         for element in tok
-            self.error( element.line, "Unresolved token " + element.name )
-         end
+      if self.resolveStates()
+         // if states are inconsistent, we can't resolve tokens across states
+         self.resolveTokens()
       end
       
+      // deref unused stuff
       self.mt = nil
-      return self.errors == 0
+      self._grammar = nil
+      
+      // shall generate the grammar?
+      return self.errors == 0 ? grammar : nil
    end
    
    /*
@@ -380,21 +594,22 @@ class Grammar
    */
    function commitAlt( name, alt )
       // is the token already in our maps?
-      entry = self.entries.find(name, nil)
+      state = self._cgs
+      entry = state.entries.find(name, nil)
       
       // new entry?
       if not entry
          // create the non-terminal of which this is an alternative
          entry = NonTerminal(name, alt.line)
-         self.entries[name] = entry
+         state.entries[name] = entry
          
          // now, were we in wait of this non-terminal?
-         undefs = self.unresolved.find(name, nil)
+         undefs = state.unresolved.find(name, nil)
          // if we were, assign this nonterminal to all the previously undefined tokens
          for utok in undefs
             utok.content = entry
          end
-         self.unresolved -= name
+         state.unresolved -= name
             
       end
       
@@ -410,21 +625,22 @@ class Grammar
    function commitNT(name, alt, rept )
       self.trace( "commitNT", name, "into", alt.name, "rept", rept )
    
-      nt = self.entries.find( name, nil )
+      state = self._cgs
+      nt = state.entries.find( name, nil )
       // for the token -- if the non terminal is undefined, nt will be nil
-      token = Token( Token.tNT, nt, name, rept, self.curLine )
+      type = name in self.predefined ? Token.tPredef : Token.tNT
+      token = Token( type, nt, name, rept, self.curLine )
       
       if not nt
-         if name == "EOF"
-            // pre-defined
-         else
+         // of course, we won't find predefined symbols
+         if type != Token.tPredef 
             // it's undefined, add to the undefined list         
-            undefList = self.unresolved.find(name, nil)
+            undefList = state.unresolved.find(name, nil)
             // do we already have a undefined list for this non-terminal name?
             if not undefList
                // if not add an entry
                undefList = []
-               self.unresolved[name] = undefList
+               state.unresolved[name] = undefList
             end
          
             undefList += token
@@ -443,6 +659,7 @@ class Grammar
    */
    function commitRE( text, alt, rept, opts )
       self.trace( "commitRE '", text, "' into", alt.name, "rept", rept )
+      
       try
          re = RE( text, opts )
          alt.sequence += Token(Token.tRE, re, nil, rept, self.curLine )
@@ -462,7 +679,7 @@ class Grammar
       alt.sequence += Token(Token.tString, text, nil, rept, self.curLine )
    end
    
-      /*
+   /*
       Commits a code into a forming alternative.
       text -- The text
       alt -- the forming alternative (a NTAlt instance)
@@ -472,10 +689,148 @@ class Grammar
       self.trace( "commitCode into", alt.name )
       alt.code = code
    end
+
+   /*
+      Changes name-oriented state inclusion into object references,
+      and check for formal errors (i.e. loops).
+   */
+   function resolveStates()
+      self.trace( "Resolving states" )
+      
+      grammar = self._grammar
+      
+      for sname, state in grammar.states 
+         objs = nil
+         inc = state.includes
+         self.trace( @"Resolving inclusion for state \"${sname}\"" )
+         
+         // initially, states are just names.
+         for name in inc
+            self.trace( @"Resolving included state \"${name}\"" )
+            
+            // if we have something to do, create an array
+            forfirst: objs = []
+            
+            objState = grammar.states.find(name, nil)            
+            if objState == nil
+               self.error( state.line, @"In state [${state.name}] unresolved inclusion of ${element.name}" )                              
+            else
+               objs += objState
+            end                        
+         end
+         
+         if objs
+            state.includes = objs
+            self.trace( @"Completed include resolution of state \"${sname}\"" )
+         end
+         
+         // now do a formal check for recursive definitions
+         if not self.checkStateRecursion( state.includes, 0, [] )
+            return false
+         end
+      end
+      
+      return true
+   end
+
+   /*
+      Checks for undefined tokens.
+   */
+   function resolveTokens()
+      self.trace( "Resolving tokens" )
+      grammar = self._grammar
+      for sname, state in grammar.states         
+         for name, undefs in state.unresolved
+            self.trace( @"Searching token \"${name}\" in includes" )
+            tok = self.findInIncludes(name, state)
+            if tok
+               self.trace( @"Token \"${name}\" resolved in includes" )
+               for element in undefs
+                  element.content = tok
+               end
+            else
+               self.error( element.line, @"In state [${state.name}] unresolved token ${element.name}" )
+            end         
+         end
+
+         // resolve transitions in alternatives.
+         for name, entry in state.entries
+            for alt in entry.alts
+               if alt.transition != nil
+                  target = grammar.states.find(alt.transition, nil)
+                  if not target
+                     self.error( alt.line, @"Transition target state \"${alt.transition}\" not found" )
+                  else
+                     alt.transition = target
+                     self.trace("In non terminal ", alt.name, "Resolved transition to", target.name )
+                  end
+               end
+            end
+         end
+      end
+   end
    
+   
+   function checkStateRecursion(includes, position, parents)
+      // break the recursion when done
+      if position >= includes.len: return true
+      
+      state = includes[position]
+      if state in parents
+         self.error( state.line, @"State \"${state.name}\" is recursively included by a child state")
+         return false
+      end
+      
+      parents += state
+      if state.includes
+         if not self.checkStateRecursion(state.includes, 0, parents)
+            return false
+         end
+      end
+      
+      return self.checkStateRecursion(includes, position+1, parents)
+   end
+   
+   function findInIncludes(name, state)
+      for pstate in state.includes
+         tok = pstate.entries.find( name )
+         if tok: return tok
+         tok = self.findInIncludes(name, pstate)
+         if tok: return tok
+      end
+      
+      return nil
+   end
+      
    //========================================================================
    // Utilities
    //========================================================================
+   
+   /** Adds a grammar state to the state definition.
+   */
+   function addGState( name )
+      self.trace( "Adding Grammar State: ", name )
+      if name in self._grammar.states
+         // ignore [main] as first state declaration
+         if name != "main" or self._cgs.name != "main"
+            self.xerror(self.curLine, "Duplicate state declaration:", name)
+         end
+
+         // anyhow return current state (don't change it)
+         return self._cgs
+      end
+      
+      // clear to add a new state
+      gstate = GrammarState(name, self.curLine)
+      self._cgs = gstate
+      self._grammar.states[name] = gstate
+      return gstate
+   end
+
+   function addGStateInclude( name )
+      self.trace( "Adding Inclusion of Grammar State: ", name , "to", self._cgs.name)
+      self._cgs.includes += name
+   end
    
    function changeState( newState, tok )
       self.trace( tok, ": ", self._state, "=>", newState )
@@ -513,46 +868,7 @@ class Grammar
       self.consume(self.mt,".","\n")
       self._state = 0
    end
-   
-   
-   function dump()
-      for name, entry in self.entries
-         > entry.name, ":- "
          
-         for alt in entry.alts
-         
-            for tok in alt.sequence
-               if tok.repeat == Token.tAsterisk
-                  >> "*"
-               elif tok.repeat == Token.tPlus
-                  >> "+"
-               end
-               
-               if tok.type == Token.tString
-                  >> '"',tok.content.escape(), '"'
-               elif tok.type == Token.tRE
-                  >> tok.content.toString()
-               else
-                  >> tok.name
-                  if tok.pname
-                     >> ":", tok.pname
-                  end
-               end
-               formiddle: >> " "
-            end
-            
-            code = alt.code
-            if code
-               >> "  {", code, "}"
-            end
-            > "."
-            
-            forfirst:  >> "     "
-            formiddle: >> "   | "
-         
-         end
-      end
-   end
 end
 
 if args.len == 0
@@ -562,10 +878,10 @@ end
 
 parsed = InputStream(args[0])
 
-x = Grammar()
-x.parseDef( TextReader(parsed, "utf8") )
+x = GrammarParser()
+grammar = x.parse( TextReader(parsed, "utf8") )
 
 > "Errors: ", x.errors
 
-x.dump()
+if grammar: grammar.dump()
 > "Done"

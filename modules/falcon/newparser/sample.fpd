@@ -1,22 +1,35 @@
+/*
+   This is the prologue
+*/
 { import from struct.tree
    > "Hello world!"
    > r"Hello again"il
 }
 
-FILE:- ELEMENT:l FILE:tree  { tree.current.addBelow(l); return tree }.
+[main]
+
+FILE:- ELEMENT:l FILE:tree  { /* comments in code */ tree.current.addBelow(l); return tree }.
 
 FILE :- {Tree()}.
 
 ELEMENT :- TITLE | TEXT.
 
-TITLE :- r"^="m TEXT:node r"=*" EOL { node.type = "h1" }.
+/* More comments */
+TITLE :- r"^="m /* comment in rule */ TEXT:node r"=*" EOL { node.type = "h1" }.
 
-EOL :- "\n".
-EOL :- EOF.
+EOL :- +"\n".
+EOL :- eof.
 
-TEXT :- *WORD {Node("text")}.
+TEXT :- ?WORD {Node("text")} => second.
 
 WORD :- R"[A-Za-z]".
 
 
+[second:main]
 
+SEMIWORD:- TITLE => ###.
+
+[third]
+
+NEW_STATE:- STATE.
+STATE :-.
