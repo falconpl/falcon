@@ -147,6 +147,7 @@ void QVMContext::PStepDeque::apply_( const PStep* ps, VMContext* ctx )
 		qctx->pushCode( itm->m_onComplete ? itm->m_onComplete : psd->m_stepComplete );
 		qctx->callItem( itm->m_itm, itm->m_nParams, itm->m_params );
 		qctx->m_running = itm->m_name;
+		qctx->m_isSleeping = false;
 		delete[] itm->m_params;
 	}
 
