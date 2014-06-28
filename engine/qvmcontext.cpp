@@ -20,10 +20,27 @@
 #include <falcon/psteps/stmttry.h>
 #include <falcon/stderrors.h>
 #include <falcon/synfunc.h>
-#include <falcon/dyncompiler.h>
+#include <falcon/stream.h>
 
 namespace Falcon
 {
+
+class QVMContext::QueueItem
+{
+	public:
+		String m_name;
+		Item m_itm;
+		int32 m_nParams;
+		Item const* m_params;
+		PStep* m_onComplete;
+		PStep* m_onError;
+
+		QueueItem( String name, Item itm, int32 nParams = 0, Item const* params = 0, PStep* onComplete = 0, PStep* onError = 0 ):
+			m_name( name ), m_itm( itm ), m_nParams( nParams ), m_params( params ), m_onComplete( onComplete ), m_onError( onError )
+		{
+
+		}
+};
 
 class QVMContext::PStepComplete: public PStep
 {
@@ -41,34 +58,11 @@ class QVMContext::PStepComplete: public PStep
 void QVMContext::PStepComplete::apply_( const PStep*, VMContext* ctx )
 {
 	MESSAGE( "QVMContext::PStepComplete::apply_" );
-	QVMContext* wctx = static_cast<QVMContext*>( ctx );
 
-	ctx->popCode();  // not really necessary, but...
+	ctx->popCode();
+	ctx->popCode();
 
-	// save the result -- and remove it from stack.
-	Item tmp = wctx->topData();
-
-	if( !tmp.isNil() )
-		wctx->m_result.append( tmp );
-
-	wctx->popData();
-
-	if( wctx->m_items.length() > 0 )
-	{
-		Item itm = wctx->m_items.at( 0 );
-		wctx->m_items.remove(0,1);
-
-		wctx->pushCode( wctx->m_stepComplete );
-
-		if( itm.isFunction() )
-			wctx->call( itm.asFunction() );
-
-		else
-			wctx->callItem( itm );
-	}
-
-	else
-		wctx->m_evtComplete->set();
+	ctx->popData();
 }
 
 class QVMContext::PStepErrorGate: public SynTree
@@ -93,20 +87,80 @@ void QVMContext::PStepErrorGate::apply_( const PStep*, VMContext* ctx )
 {
 	MESSAGE( "QVMContext::PStepErrorGate::apply_" );
 
-	QVMContext* wctx = static_cast<QVMContext*>( ctx );
+	//QVMContext* qctx = static_cast<QVMContext*>( ctx );
 
-	ctx->popCode(); // not really necessary, the ctx is going to die, but...
+	ctx->popCode();
+	ctx->popCode();
 
 	if( ctx->thrownError() == 0 )
 	{
 		CodeError* error = FALCON_SIGN_ERROR( CodeError, e_uncaught );
 		error->raised( ctx->raised() );
-		wctx->completeWithError( error );
+		String str = error->describe();
+		ctx->process()->stdErr()->write( str.c_ize(), str.length() );
 		error->decref();
 	}
 	else
 	{
-		wctx->completeWithError( ctx->thrownError() );
+		String str = ctx->thrownError()->describe();
+		ctx->process()->stdErr()->write( str.c_ize(), str.length() );
+	}
+}
+
+class QVMContext::PStepDeque: public PStep
+{
+	public:
+		PStepDeque()
+		{
+			apply = apply_;
+
+			StmtTry* errorGate = new StmtTry;
+			errorGate->catchSelect().append( new PStepErrorGate );
+			m_stepErrorGate = errorGate;
+
+			m_stepComplete = new PStepComplete;
+		}
+		virtual ~PStepDeque() {}
+
+	private:
+		PStep* m_stepErrorGate;
+		PStep* m_stepComplete;
+
+		static void apply_( const PStep* ps, VMContext* ctx );
+};
+
+void QVMContext::PStepDeque::apply_( const PStep* ps, VMContext* ctx )
+{
+	QVMContext* qctx = static_cast<QVMContext*>( ctx );
+	const PStepDeque* psd = static_cast<const PStepDeque*>( ps );
+
+	MESSAGE( "QVMContext::PStepDeque::apply_" );
+
+	if( qctx->m_Queue )
+	{
+		QVMContext::Node* tmp = qctx->m_Queue;
+		QVMContext::QueueItem* itm = tmp->data;
+		qctx->m_Queue = tmp->next;
+		delete tmp;
+
+		qctx->pushCodeWithUnrollPoint( itm->m_onError ? itm->m_onError : psd->m_stepErrorGate );
+		qctx->pushCode( itm->m_onComplete ? itm->m_onComplete : psd->m_stepComplete );
+		qctx->callItem( itm->m_itm, itm->m_nParams, itm->m_params );
+		qctx->m_running = itm->m_name;
+		delete[] itm->m_params;
+	}
+
+	else
+	{
+		if( qctx->events() == VMContext::evtTerminate )
+			qctx->swapOut();
+
+		else
+		{
+		    qctx->m_running = "Sleeping";
+			qctx->m_isSleeping = true;
+			qctx->m_QueueEnd = 0;
+		}
 	}
 }
 
@@ -116,136 +170,60 @@ void QVMContext::PStepErrorGate::apply_( const PStep*, VMContext* ctx )
 
 QVMContext::QVMContext( Process* prc, ContextGroup* grp ):
 	VMContext( prc, grp ),
-	m_completeCbFunc( 0 ),
-	m_completeData( 0 ),
-	m_completionError( 0 )
+	m_Queue( 0 ),
+	m_QueueEnd( 0 ),
+	m_running( "Sleeping" )
 {
-	// event is hand-reset.
-	m_evtComplete = new Event( false, false );
-
 	// create the completion step
-	m_stepComplete = new PStepComplete;
-
-	// prepare the error gate.
-	StmtTry* errorGate = new StmtTry;
-	errorGate->catchSelect().append( new PStepErrorGate );
-	m_stepErrorGate = errorGate;
+	m_stepQueue = new PStepDeque;
 
 	m_baseFrame = new SynFunc( "<base>" );
+
+	m_isSleeping = true;
+
+	call( m_baseFrame );
+	pushCode( m_stepQueue );
+	process()->startContext( this );
 }
 
 QVMContext::~QVMContext()
 {
-	if( m_completionError != 0 )
-	{
-		m_completionError->decref();
-	}
-
-	delete m_evtComplete;
-	delete m_stepComplete;
+	delete m_stepQueue;
 	delete m_baseFrame;
-}
 
-void QVMContext::onComplete()
-{
-	if( m_completeCbFunc != 0 )
+	while( m_Queue )
 	{
-		m_completeCbFunc( this, m_completeData );
+		Node* tmp = m_Queue->next;
+		delete m_Queue;
+		m_Queue = tmp;
 	}
 }
 
-void QVMContext::start( Function* f, int32 np, Item const* params )
+void QVMContext::start( String name, Item item, int32 np, Item const* params, PStep* complete, PStep* error )
 {
-    ItemArray itm;
+	m_isSleeping = false;
 
-    for( int32 i = 0; i < np; ++i )
-        itm.append( params[i] );
+	Node* tmp = new Node;
+	tmp->data = new QueueItem( name, item, np, params, complete, error );
+	tmp->next = 0;
 
-	if( m_items.empty() )
-	{
-		m_evtComplete->reset();
-		reset();
-		m_items.append( Item(f) );
-		process()->startContext( this );
-	}
+	if( m_Queue && m_QueueEnd )
+		m_QueueEnd->next = tmp;
 
 	else
-		m_items.append( Item(f) );
-}
+		m_Queue = tmp;
 
-//void QVMContext::start( Closure* closure, int32 np, Item const* params )
-//{
-////	call( closure, np, params );
-////	process()->startContext( this );
-//}
-
-void QVMContext::startItem( const Item& item, int32 np, Item const* params )
-{
-    ItemArray itm;
-
-    for( int32 i = 0; i < np; ++i )
-        itm.append( params[i] );
-
-	if( m_items.empty() )
-	{
-		m_evtComplete->reset();
-		reset();
-		m_items.append( item );
-		process()->startContext( this );
-	}
-
-	else
-		m_items.append( item );
-}
-
-void QVMContext::setOnComplete( complete_cbfunc func, void* data )
-{
-	m_completeCbFunc = func;
-	m_completeData = data;
+	m_QueueEnd = tmp;
 }
 
 void QVMContext::gcPerformMark()
 {
 	VMContext::gcPerformMark();
-	m_result.gcMark( m_currentMark );
 }
 
-bool QVMContext::wait( int32 to ) const
+void QVMContext::onComplete()
 {
-	bool result = m_evtComplete->wait( to );
-	if( m_completionError != 0 )
-	{
-		throw m_completionError;
-	}
-	return result;
-}
 
-void QVMContext::completeWithError( Error* error )
-{
-	error->incref();
-
-	if( m_completionError != 0 )
-	{
-		m_completionError->decref();
-	}
-
-	m_completionError = error;
-
-	swapOut();
-}
-
-void QVMContext::reset()
-{
-	VMContext::reset();
-	if( m_completionError != 0 )
-	{
-		m_completionError->decref();
-		m_completionError = 0;
-	}
-
-	call( m_baseFrame );
-	pushCodeWithUnrollPoint( m_stepErrorGate );
-	pushCode( m_stepComplete );
 }
 
 }
