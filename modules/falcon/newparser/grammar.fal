@@ -1,7 +1,340 @@
+/*
+   FALCON - Grammar Parser
+
+   FILE: grammar.fal
+
+   Generic parser.
+   -------------------------------------------------------------------
+   Author: Giancarlo Niccolai
+   Begin: Thu, 19 Aug 2010 01:34:20 +0200
+
+   -------------------------------------------------------------------
+   (C) Copyright 2014: the FALCON developers (see list in AUTHORS file)
+
+   See LICENSE file for licensing details.
+*/
+
 import from vfs
 
-/*
-Single Entry of a Non Terminal specification.
+/*#
+   @module grammar
+   @brief Advanced context-free grammar definition parser.
+   
+   This module parses a generic EBNF-like grammar definition 
+   (provided in a generic stream) and generates a structured
+   representation of that grammar, which can then be used to
+   parse an expression writte under the rules of the given 
+   grammar.
+   
+   @note While the parsed grammar is functionally equivalent to
+   a EBNF grammar, some conventions in are different for practical 
+   purposes. In particular, the usage of "[x]" and "{x}" to indicate 
+   repetition in the EBNF convention makes extremely difficult to 
+   declare inline Falcon code as the rule action.
+   
+   @section overview Overview
+   
+   The formal context-free grammar definition recognized by this
+   parser has several distinguishing features that set it apart from
+   basic LL, LR and LARL commonly known grammars.
+   
+   - The grammar definition can be divided in sections, called "states", 
+   which can be insolated from the rest of the grammar definition or include
+   one or more states. A state transition can happen when a rule is recognized.
+   Special tokens in the grammar are provided to define state transitions.
+   
+   - Each token (terminal and non-terminal) can be associate with a symbolic
+   name, that will be used to identify that portion of data while processing
+   the rule.
+   
+   - Each grammar rule can be associated with a portion of Falcon code that
+      will receive the data being parsed.
+      
+   - Terminal tokens can be either strings or Falcon regular expressions 
+     (r'' strings).
+   
+   - Each state can have associated Falcon code sections, 
+     called preamble and postamble,
+     that will be executed as the transition into and out from that state 
+     happens.
+   
+   @section fdef Formal Definition
+   
+   Here follows a formal definition of the grammar known by this parser:
+   
+   @code
+   GRAMMAR ::= INIT-CODE? MAIN-STATE STATE.
+   
+   INIT-CODE ::= CODE.
+   
+   MAIN-STATE ::= MAIN-STATE-DECLARATION? STATE-BODY.
+   
+   MAIN-STATE-DECLARATION ::= '[' 'main' ']'.
+   
+   STATE ::= STATE-DECLARATION STATE-BODY.      
+   
+   STATE-DECLARATION::= '[' NAME INCLUDES? ']' <end of line>.
+   
+   STATE-BODY::= PREAMBLE? POSTAMBLE? *RULE.
+   
+   PREAMBLE ::= '#' CODE.
+   
+   POSTAMBLE ::= '=>' CODE.
+   
+   CODE ::= '{' <any Falcon code slice> '}'.
+   
+   NAME ::= <any valid Falcon symbolic name>.
+   
+   INCLUDES::= ':' NAME+.
+   
+   RULE ::= NAME '::=' RULE-BODY '.' .
+   
+   RULE-BODY::= ALTERNATIVE *NEXT-ALTERNATIVE. 
+   
+   ALTERNATIVE ::= *TOKEN ?CODE ?TRANSITION.
+   
+   NEXT-ALTERNATIVE ::= '|' ALTERNATIVE.
+   
+   TOKEN ::=  (NAME | TERMINAL | PREDEFINED) REPETITION? TOKEN-SPEC?.
+            
+   PREDEFINED ::= 'eof' | 'error'.
+   
+   REPETITION ::= '?' | '+' | '*'.
+   
+   TRANSITION ::= '=>' NAME | POP-STATE-DIRECTIVE.
+   
+   POP-STATE-DIRECTIVE ::= +'#'.
+   
+   TOKEN-SPEC ::= ':' NAME.
+   
+   TERMINAL::= STRING | REGEX.
+   
+   STRING ::= "'" <any valid falcon string> "'"  | '"' <any valid falcon string> '"'.
+   
+   REGEX ::= <any valid Falcon regular expression>.
+   @endcode
+   
+   Legend:
+   - "name ::= definition .": The given "name" is defined as indicated up to the '.'
+   - "A | B" ::= Indicates an alternative definition, A or B.
+   - "( A | B )" ::= Indicates an alternative element A or B inside a definition.
+   - "*": Previous token can be present, and repeated multiple times.
+   - "+": Previous token must be present, and can be repeated multiple times.
+   - "?": Provious token can be preset at most one time.
+   - "<...>": informal description of an element.
+   
+   @subsection remarks Remarks
+   
+   - The strings parsed by this parser are always interpreted as Falcon double-quoted
+     strings, even if initiated with a single quote.
+   - It is possible to insert out-of-grammar comments in C-like comment blocks \/* ... *\/
+   - The parser is actually flexible in recognizing preamble and postamble, and the three
+     elements of a rule alternative (tokens, transition and code), 
+     that can appear in any order.
+   - Before the tree structure created out of the grammar definition is returned to the
+     caller, the Falcon code slices and regular expressions will be compiled, and thus,
+     checked for formal errors; but they won't be pre-executed, so it won't be possible
+     to spot potential run-time errors.
+   - Prior returning the structure, the parser will also check for the correctness of
+     formal definitions: undeclared non-terminal tokens, undeclared included states and
+     recursive state inclusion will be reported as error, and that will cause the the
+     parsing process to fail.
+   - Notice that the grammar doesn't recognize the '(' and ')' symbols, and doesn't
+     allow single or multiple token alternatives. Alternatives need to be full new versions
+     of the previous rule, different enough so that the parser is able to distinguish them.
+   - Multiple rules starting with the same non-terminal name are considered alternatives;
+     "A ::= <alt1> | <alt2> ."  and "A ::= <alt1>. A ::= <alt2>." are semantically
+     equivalent.     
+   - The special predefined terminal token 'eof' recognizes the end of the input data.
+   - The special predefined terminal token 'error' matches the rest of the rule
+     if and only if it couldn't be matched otherwise.
+    
+   
+   @subsection idef Informal definition.
+   
+      The parser recognizes texts generally used to describe context-free grammars,
+      with the addition of the "state" concept and with the insertion of Falcon code
+      that can handle a recognized grammar. Also, a name can be given to any token,
+      even terminal tokens, that are then passed to the Falcon code in a variable
+      having the given name.
+      
+      A parser state can be useful to reduce the scope and complexity of the analisys 
+      of a certain portion of text, and thus, the complexity of its definition. The ability
+      to include previously declared states (or actually, also states declared afterward)
+      allows for better modularity and reusability of the definitions, and the code that
+      manages them.
+      
+      Each state actually generates a different parser, and state transition allows to
+      dynamically change the parser that is in charge of recognizing a certain porion of
+      input text.
+      
+   @section code Inline code slices.
+   
+      All the code slices provided (preamble and postamble of states, and code slices handling
+      rule alternatives) will be seen by Falcon as stand-alone anonymous functions. 
+      
+      While this parser is not in charge of running any code slice, it is necessary to
+      explain how the code is meant to work here so that the parser users know the conventions
+      that shall be adopted by the final result grammar parsers.
+      
+      First, if present, the preamble of the main status is executed; its return value
+      is then assumed to be the context that will be passed to all the other code slices
+      with the name 'CTX'. If the preamble is not present, or doesn't return a non-nil object,
+      the final parser shall generate an empty prototype object ("p{}"), that will then be
+      seen as CTX by all the other code slices.
+      
+      Code slices handling rule alternatives will receive CTX as first parameter, and the
+      entities that are being given a name as further parameters. Terminal entries (regex and
+      tokens, including pre-defined tokens) will be seen as string. The type of the other
+      entries will be whatever the result of previous operations has assigned to them.
+      
+      The return value of the functions (or the expression values of single-statement 
+      expressions) will be assigned as the value of the defined token.
+      
+      For example:
+      
+      @code
+         SUM ::= r"[0-9]+":op1 "+" r"[0-9]+":op2 { int(op1) + int(op2) }.
+      @endcode
+      
+      This rule will put the sum of op1 and op2 in the value of the token SUM. So,
+      SUM will be aleady a number in the next alternative:
+      
+      @code
+         SUM ::= r"[0-9]+":op1 "+" SUM:sum { int(op1) + sum }.        
+      @endcode
+      
+      If an alternative doesn't declare a code, the declared token value is synthesized
+      by applying the Falcon '+' operator to all the token values (terminal and non-terminal)
+      comprised in the alternative. This might generate a runtime error in case the types
+      of the values assigned to the tokens is not compatible.
+      
+      For instance, the following rule set:
+      
+      @code
+         FULLTEXT ::= *PART.
+         PART ::= WHITESPACE | WORD.
+         WHITESPACE ::= +" " {" "}.
+         WORD ::= r"[^ ]+".
+      @endcode
+      
+      will have the effect of putting in FULLTEXT a version of the original text stripped
+      of multiple spaces between words: the FULLTEXT rule will autmatically apply the Falcon
+      "+" operator to all the PART tokens it receives.
+      
+      Repeated tokens (tokens prefixed with '*', '+' and '?') shall be passed to the code
+      as an array. For example, the following rule:
+      
+      @code
+         SORTED::= *WORD:word_array { word_array.sort(); return word_array }.
+      @endcode
+      
+      Will assign an array of sorted words to the SORTED token. 
+      
+      @note Tokens repeated with the '?' repetition indicator will be seen in code slices
+            as arrays with 0 or 1 elements.
+            
+      Of course, if the value associated with the repeated token is originally an array,
+      it will be incapsulated again an another array, becoming an array-of-array.
+      
+   @section struct Target structure
+   
+      Once the parsing is complete, the result is an entity of type @a Gramamr,
+      defined in this module.
+            
+      The relational structure of the generated entity is as follows:
+      
+      @code
+      Grammar
+        + states [GrammarState]
+                  |- name
+                  |- preamble/postamble
+                  + includes [GrammarState]
+                  + top NonTerminal
+                         + alts [NTAlt]
+                                 | line
+                                 | code
+                                 | transition
+                                 + sequence [Token]
+                                             | line
+                                             | name
+                                             | repeat
+                                             | type
+                                             + content (NonTerminal|String)
+      @endcode
+      
+      The grammar has a list of @a GrammarState entities. Each one represents a
+      grammar state, that can include other GrammarState entities (by direct reference)
+      and has a top rule of type @a NonTerminal. The @a NonTerminal entity is
+      constituted by one or more @a NTAlt (alternatives), each being basically a
+      sequence of @a Token entities. Depending on their type, tokens can be terminal,
+      in which case their content is a string, or a regular expression, or can be
+      non-terminal, in which case their content is child @a NonTerminal entity.
+
+      This tree structure can be used by the final parser to generate a grammar parsing
+      table, inspected, modified, rendered back to a grammar textual definition document
+      and eventually serialized.
+*/
+
+/*# @beginmodule grammar */
+
+
+/*#
+   @brief Single token (entry in a NonTerminal entry sequence)
+   @param type tString, tRE or tNT  (tPredef for predefined terminals)
+   @param content either a string, a re or a NonTerminal
+   @param name non-terminal name, if this is a non-terminal
+   @param repeat 0/nil - single, -1: asterisk, -2: plus, -3: question mark
+   @param line Where the token was defined.
+*/
+class Token(type, content, name, line)
+   static tString = 0
+   static tRE = 1
+   static tNT = 2
+   static tPredef = 3
+   
+   static tSingle = 0
+   static tAsterisk = -1
+   static tPlus = -2
+   static tQMark = -3
+   
+   type = type
+   content = content
+   name = name
+   pname = nil
+   repeat = 0
+   resolved = false
+   line = line ? line: 0
+   
+   function dump(output)
+      tok = self
+      
+      if tok.type == Token.tString
+         output.write( '"' + tok.content.escape() + '"' )
+      elif tok.type == Token.tRE
+         output.write( tok.content.toString() )
+      else
+         output.write( tok.name )
+      end
+      
+      if tok.repeat == Token.tAsterisk
+         output.write( "*" )
+      elif tok.repeat == Token.tPlus
+         output.write( "+" )
+      elif tok.repeat == Token.tQMark
+         output.write( "?" )
+      end
+      
+      if tok.pname
+         output.write( ":" + tok.pname )
+      end
+   end
+   
+end
+
+
+/*#
+@brief Single Entry of a Non Terminal specification.
 
 Each alternative definition will have its own NTDef
    - name: The name of the Non Terminal of which this is an alternative
@@ -27,49 +360,62 @@ class NTAlt(name, line)
    
    // or... pop to different states
    transpop = 0
+   
+   function dump( output )
+   
+      alt = self
+      
+      for tok in alt.sequence
+         tok.dump(output)
+         formiddle: output.write( " " )
+      end
+      
+      code = alt.code
+      if code
+         output.write( "  {"+ code + "}" )
+      end
+      
+      if alt.transition
+         output.write( " => " + alt.transition.name )
+      elif alt.transpop
+         output.write( " => " + ("#" * alt.transpop) )
+      end
+      
+      output.write( "." )
+   end
 end
 
 
-/*
-   Single token (entry in a NonTerminal entry sequence)
-   - type: tString, tRE or tNT  (tPredef for predefined terminals)
-   - content: either a string, a re or a NonTerminal
-   - name: non-terminal name, if this is a non-terminal
-   - repeat: 0/nil - single, -1: asterisk, -2: plus
-*/
-class Token(type, content, name, repeat, line)
-   static tString = 0
-   static tRE = 1
-   static tNT = 2
-   static tPredef = 3
+/*#
+   @b Non terminal entry in a gramamr definition.
    
-   static tSingle = 0
-   static tAsterisk = -1
-   static tPlus = -2
-   static tQMark = -3
-   
-   type = type
-   content = content
-   name = name
-   pname = nil
-   repeat = repeat
-   resolved = false
-   line = line ? line: 0
-end
-
-/*
-   NonTerminal entry.
    A nonterminal is a colleciton of 0 or more alternatives,
-   each being a NTAlt, which fully defines a certain non terminal
+   each being a @a NTAlt, which fully defines a certain non terminal
    pattern.
 */
 class NonTerminal(name)
    name = name
    // list of zero or more NTAlt
    alts = []
+   
+   function dump(output)
+      entry = self      
+      output.write( entry.name + "::= \n" )
+      
+      for alt in entry.alts
+         alt.dump(output)
+         output.write( "\n" )
+         
+         forfirst:  output.write( "     " )
+         formiddle: output.write( "   | " )
+      end
+   end
 end
 
 
+/*#
+   @brief State of a multi-state grammar definition.
+*/
 class GrammarState(name, line)
    name = name
    
@@ -79,88 +425,98 @@ class GrammarState(name, line)
    // "ID" => [NonTerminal]
    entries = [=>]
    
+   // NonTerminal at top of the entry tree
+   top = nil
+   
    // "ID" => [NTAlt] -- still unresolved entries.
    unresolved = [=>]
    
    // line where the state is declared
    line = line
    
-   // list of lexer tokens known to the state
+   //# list of lexer tokens known to the state
    tokens = nil
    
+   //# Code to be exucted when entering this state
+   preamble = nil
+   
+   preamble_compiled = nil
+   
+   //# Code to be executed when leaving this state
+   postamble = nil
+   
+   preamble_compiled = nil
+   
    // Reverse rendering for the state grammar
-   function dump()
+   function dump( output )
       if self.includes
-            >> @"[${state.name}:"
-            for state in self.includes
-               >> state.name
-               formiddle: >> ","
-            end
-            > "]"
-         else
-            > @"[$(name)]"
+         output.write( @"[${state.name}:" )
+         for state in self.includes
+            output.write( state.name )
+            formiddle: output.write( "," )
          end
-         
-         > /* white line */
-         
-      for name, entry in self.entries
-         > entry.name, ":- "
-         
-         for alt in entry.alts
-         
-            for tok in alt.sequence
-               if tok.repeat == Token.tAsterisk
-                  >> "*"
-               elif tok.repeat == Token.tPlus
-                  >> "+"
-               elif tok.repeat == Token.tQMark
-                  >> "?"
-               end
-               
-               if tok.type == Token.tString
-                  >> '"',tok.content.escape(), '"'
-               elif tok.type == Token.tRE
-                  >> tok.content.toString()
-               else
-                  >> tok.name
-                  if tok.pname
-                     >> ":", tok.pname
-                  end
-               end
-               formiddle: >> " "
-            end
-            
-            code = alt.code
-            if code
-               >> "  {", code, "}"
-            end
-            
-            if alt.transition
-               >> " => ", alt.transition.name
-            elif alt.transpop
-               >> " => ", "#" * alt.transpop
-            end
-            
-            > "."
-            
-            forfirst:  >> "     "
-            formiddle: >> "   | "
-         
-         end
+         output.write( "]\n" )
+      else
+         output.write( @"[$(name)]\n" )
       end
+      
+      output.write("\n") /* white line */
+      
+      if self.preamble
+         output.write( "# {" )
+         output.write( self.preamble )
+         output.write( "}\n" )
+      end
+      
+      if self.postamble
+         output.write( "=> {" )
+         output.write( self.postamble )
+         output.write( "}\n" )
+      end      
+         
+      // for convention, write the root on top
+      root = self.top
+      if root
+         root.dump(output)
+         output.write("\n") /* white line */
+      else
+         output.write("/* This state has no root */\n")
+      end
+      
+      for name, entry in self.entries
+         if entry != root
+            entry.dump( output )
+            output.write("\n") /* white line */
+         end
+      end      
    end
 
 end
 
 
+/*# 
+   @brief Result of a succesful parsing.   
+*/
 class Grammar
-   // Map of grammar states.
+   //# Map of grammar states.
    states = [=>]
    
-   // Reverse rendering for the state grammar
-   function dump()
+   //# Code to be executed at initialization
+   initcode = nil
+   
+   initcode_compiled = nil
+   
+   //# Reverse rendering for the state grammar
+   function dump( output )
+   
+      if self.initcode
+         output.write( "{" )
+         output.write( self.initcode )
+         output.write( "}\n" )
+      end
+      
       for name, state in self.states         
-         state.dump()
+         state.dump( output )
          > /* White line */
       end
    end
@@ -168,6 +524,9 @@ class Grammar
 end
 
 
+/*#
+   @brief Parser for formal context-free grammar definitions.
+*/
 class GrammarParser
    
    // grammar state being currently parsed.
@@ -176,12 +535,6 @@ class GrammarParser
    // grammar being currently parsed
    _grammar = nil
    
-   // Code that must be executed at initialization
-   preamble = m""
-   
-   // Line at which the preamble has been declared
-   preambleLine = 0
-      
    // internal state.
    _state = nil
    
@@ -194,6 +547,23 @@ class GrammarParser
       "error"     // matches everything in case of error.
    ]
    
+   /*#
+      @brief Error handler function
+      
+      This property is assinged a function that receives the
+      notification of an error in the grammar. On error, 
+      it is invoked with the following parameters:
+         - The line where the error happened.
+         - A textual description of the error that happened.
+         
+      The default function writes the error notification to the process
+      standard output. It can be overridden to change its behavior.
+   */
+   handleError = function( line, reason )
+         > @"ERROR ($line): $reason"
+      end
+   
+   //# Count of errors in last parsing
    errors = 0
    
    mt = nil
@@ -217,7 +587,7 @@ class GrammarParser
          raise ParamError( 1001, "Invalid paramters", "Need a string or TextReader" )
       end
       
-      commands = .[":-" "/*" "r\'" "r\"" "R'" "R\"" ":" "." "{" "}" 
+      commands = .["::=" "/*" "r\'" "r\"" "R'" "R\"" ":" "." "{" "}" 
                    '"' "'" "*" "+" "?" "|" "[" "]" 
                    "=>" "#"
                    ]
@@ -227,7 +597,8 @@ class GrammarParser
       mt.giveTokens = true
 
       syms = .["start" "dfn" "quote" "defBody"
-               "code" "Rafter" "escape" "defpre"
+               "defPreamble" "defPostamble"
+               "code" "Rafter" "escape"
                "defName1" "defName2"
                "codeQuote" "codeEsc"
                "comment"
@@ -245,7 +616,6 @@ class GrammarParser
       code = m""
       currentToken = nil
       currentNT = nil
-      repetition = nil
       
       // variables controlling quotes
       Rignore = false
@@ -254,6 +624,8 @@ class GrammarParser
       quoteText = nil
       oldState = nil
       stateName = nil
+      
+      codeStage = 0
       
       // used to reiterate the same token in different states
       take = true
@@ -282,11 +654,8 @@ class GrammarParser
             // but if we are after a regular expression, change state
             if self._state == ~S..Rafter
                // time to create the RE
-               self.commitRE( quoteText, currentNT, repetition, Rignore ?"i":"" )
-               repetition = Token.tSingle
+               self.commitRE( quoteText, currentNT, Rignore ?"i":"" )
                self.changeState( ~S..defBody )
-            elif self._state == ~S..defpre
-               self.preamble += tok
             elif self._state == ~S..code
                code += tok
             elif self._state == ~S..quote
@@ -314,10 +683,20 @@ class GrammarParser
          
             case ~S..start
                if tok == '{'
-                  self.changeState( ~S..defpre, tok )
-                  self.preambleLine = self.curLine ++
+                  if grammar.initcode
+                     self.error(self.curLine, "Global initialization code already defined" )
+                  end
+                  // anyhow take the code as a preamble
+                  code = m""
+                  codeStage = 0
+                  self.enterCode(~S..code)
+                  
                elif tok == "["
                   self.changeState( ~S..defState, tok )                  
+               elif tok == "#"
+                  self.changeState( ~S..defPreamble, tok )
+               elif tok == "=>"
+                  self.changeState( ~S..defPostamble, tok)
                elif tok in commands
                   self.xerror(self.curLine, "invalid declaration")
                else               
@@ -325,13 +704,30 @@ class GrammarParser
                   currentToken = tok
                end
                
-            case ~S..defpre
-               if tok != '}'
-                  self.preamble += tok
+            
+            case ~S..defPreamble, ~S..defPostamble
+               if tok == '{'
+                  if self._state == ~S..defPreamble
+                     data = self._cgs.preamble
+                     word = "preamble"
+                     codeStage = 1
+                  else
+                     data = self._cgs.postamble
+                     word = "postamble"
+                     codeStage = 2
+                  end
+                  
+                  if data
+                     self.error(self.curLine, @"State $word already defined" )
+                  end
+                  
+                  // anyhow take the code as a preamble
+                  code = m""
+                  self.enterCode(~S..code)
                else
-                  self.changeState(~S..start, tok)
+                  self.xerror(self.curLine, "Expected preamble or postamble" )
                end
-               
+                              
             case ~S..defState
                if tok in commands
                   self.xerror(self.curLine, "invalid declaration")
@@ -365,11 +761,10 @@ class GrammarParser
                end
                
             case ~S..dfn
-               if tok != ":-"
-                  self.xerror(self.curLine, "Need :- after token specification.")
+               if tok != "::="
+                  self.xerror(self.curLine, "Need ::= after token specification.")
                else
                   currentNT = NTAlt( currentToken, self.curLine )
-                  repetition = Token.tSingle
                   self.changeState(~S..defBody, tok)
                end
                
@@ -391,11 +786,8 @@ class GrammarParser
       
                   case "{"
                      code = m""
-                     // change the MultiTokenizer
-                     mt.clearTokens()
-                     mt.add('"', "'", "\\", "{", "}", "\n")
-                     parCount = 0
-                     self.changeState( ~S..code, tok )
+                     codeStage = 3
+                     self.enterCode(~S..code)
                      
                   case "r\'", "R'", "r\"", "R\"", '"', "'"
                      Rignore = (tok == "R'" or tok == "R\"")
@@ -404,17 +796,6 @@ class GrammarParser
                      quoteText = m""
                      self.changeState( ~S..quote, tok )
                                           
-                  case "*", "+", "?"
-                     if repetition != Token.tSingle
-                        self.xerror(self.curLine, "Conflicting repetition type" )                        
-                     else                     
-                        switch tok
-                           case "*": repetition = Token.tAsterisk 
-                           case "+": repetition = Token.tPlus
-                           case "?": repetition = Token.tQMark
-                        end
-                     end
-                     
                   case "=>"
                      self.changeState( ~S..transition, tok )
                      
@@ -423,9 +804,7 @@ class GrammarParser
                         self.xerror(self.curLine, "Unexpected token '" + tok + "'" )
                      else
                         // the token is a non-terminal in this alternative
-                        self.commitNT( tok, currentNT, repetition )
-                        // reset the repetition count
-                        repetition = Token.tSingle
+                        self.commitNT( tok, currentNT )
                         // enter in defName states
                         self.changeState( ~S..defName1, tok )
                      end
@@ -436,6 +815,18 @@ class GrammarParser
                if tok == ':'
                   // wait for the real name
                   self.changeState( ~S..defName2, tok )
+               elif tok == "*" or tok == "+" or tok == "?"
+                  lastTok = currentNT.sequence[-1]
+                  if lastTok.repeat != Token.tSingle
+                     self.xerror(self.curLine, "Conflicting repetition type" )                        
+                  else                     
+                     switch tok
+                        case "*": lastTok.repeat = Token.tAsterisk 
+                        case "+": lastTok.repeat = Token.tPlus
+                        case "?": lastTok.repeat = Token.tQMark
+                     end
+                  end
+                  // stay in this state.
                else
                   // go back to body definition and reparse the same token
                   take = false
@@ -459,9 +850,8 @@ class GrammarParser
                      if Rquote
                         self.changeState( ~S..Rafter, tok )
                      else
-                        self.commitText(quoteText, currentNT, repetition)
-                        repetition = Token.tSingle
-                        self.changeState( ~S..defBody, tok )
+                        self.commitText(quoteText, currentNT )
+                        self.changeState( ~S..defName1, tok )
                      end
                   else
                      quoteText += tok
@@ -483,22 +873,33 @@ class GrammarParser
                end
                
                if Rignore: opts += "i"
-               self.commitRE( quoteText, currentNT, repetition, opts )
-               
-               repetition = Token.tSingle
-               self.changeState( ~S..defBody )
+               self.commitRE( quoteText, currentNT, opts )               
+               self.changeState( ~S..defName1 )
                
             case ~S..code               
                switch tok 
                   case '}'
                      // are we done?
                      if parCount == 0
-                        self.commitCode(code, currentNT)                        
                         // reset the parser to the normal status
                         mt.clearTokens()
                         call( mt.add, commands )
                         call( mt.add, whiteSpaces )
-                        self.changeState(~S..defBody, tok)                        
+                        
+                        switch codeStage
+                           case 0
+                              grammar.initcode = code
+                              self.changeState(~S..start, tok)
+                           case 1
+                              self._cgs.preamble = code
+                              self.changeState(~S..start, tok)
+                           case 2
+                              self._cgs.postamble = code
+                              self.changeState(~S..start, tok)
+                           case 3
+                              self.commitCode(code, currentNT)                        
+                              self.changeState(~S..defBody, tok)  
+                        end
                      else
                         code += "}"
                         parCount--
@@ -577,6 +978,10 @@ class GrammarParser
       if self.resolveStates()
          // if states are inconsistent, we can't resolve tokens across states
          self.resolveTokens()
+         if self.errors == 0 
+            // And if nodes are consistent, we can try to resolve the roots
+            self.resolveRoots()
+         end
       end
       
       // deref unused stuff
@@ -586,7 +991,15 @@ class GrammarParser
       // shall generate the grammar?
       return self.errors == 0 ? grammar : nil
    end
-   
+
+   function enterCode(status)   
+      // change the MultiTokenizer
+      self.mt.clearTokens()
+      self.mt.add('"', "'", "\\", "{", "}", "\n")
+      parCount = 0
+      self.changeState( status )
+   end
+
    /*
       Creates a new alternative for the given non terminal token.
       token - string name of the token
@@ -620,16 +1033,15 @@ class GrammarParser
       Commits a non terminal token into a forming alternative.
       name -- the name of the non-terminal 
       alt -- the forming alternative (a NTAlt instance)
-      rept -- the repetition count previously detected
    */
-   function commitNT(name, alt, rept )
-      self.trace( "commitNT", name, "into", alt.name, "rept", rept )
+   function commitNT(name, alt)
+      self.trace( "commitNT", name, "into", alt.name)
    
       state = self._cgs
       nt = state.entries.find( name, nil )
       // for the token -- if the non terminal is undefined, nt will be nil
       type = name in self.predefined ? Token.tPredef : Token.tNT
-      token = Token( type, nt, name, rept, self.curLine )
+      token = Token( type, nt, name, self.curLine )
       
       if not nt
          // of course, we won't find predefined symbols
@@ -654,15 +1066,14 @@ class GrammarParser
       Commits a regular expression terminal token into a forming alternative.
       text -- The regular expression text
       alt -- the forming alternative (a NTAlt instance)
-      rept -- the repetition count previously detected
       opt -- Regular expression options
    */
-   function commitRE( text, alt, rept, opts )
-      self.trace( "commitRE '", text, "' into", alt.name, "rept", rept )
+   function commitRE( text, alt, opts )
+      self.trace( "commitRE '", text, "' into", alt.name )
       
       try
          re = RE( text, opts )
-         alt.sequence += Token(Token.tRE, re, nil, rept, self.curLine )
+         alt.sequence += Token(Token.tRE, re, nil, self.curLine )
       catch in e
          self.xerror( self.curLine, "Invalid regular expression: " + e )
       end
@@ -672,18 +1083,16 @@ class GrammarParser
       Commits a text terminal token into a forming alternative.
       text -- The text
       alt -- the forming alternative (a NTAlt instance)
-      rept -- the repetition count previously detected
    */
-   function commitText( text, alt, rept )
+   function commitText( text, alt )
       self.trace( "commitText '", text, "' into", alt.name )
-      alt.sequence += Token(Token.tString, text, nil, rept, self.curLine )
+      alt.sequence += Token(Token.tString, text, nil, self.curLine )
    end
    
    /*
       Commits a code into a forming alternative.
       text -- The text
       alt -- the forming alternative (a NTAlt instance)
-      rept -- the repetition count previously detected
    */
    function commitCode( code, alt )
       self.trace( "commitCode into", alt.name )
@@ -716,7 +1125,7 @@ class GrammarParser
                self.error( state.line, @"In state [${state.name}] unresolved inclusion of ${element.name}" )                              
             else
                objs += objState
-            end                        
+            end            
          end
          
          if objs
@@ -727,6 +1136,49 @@ class GrammarParser
          // now do a formal check for recursive definitions
          if not self.checkStateRecursion( state.includes, 0, [] )
             return false
+         end
+      end
+      
+      return true
+   end
+   
+   /*
+      Pick the top rule in states
+   */
+   function resolveRoots()
+      // every state must have exactly one token that is not referenced.
+      for sname,state in self._grammar.states
+         self.trace( "Picking the root node of ", state.name )
+         refs = state.entries.values()
+         for name, nt in state.entries       
+            self.removeNTs( refs, nt )            
+         end
+         
+         if refs.len > 1
+            self.error( state.line, "Multiple roots in state " + state.name )
+            for nt in refs
+               self.error( state.line, "Token '" + nt.name + "' is a non-unique root in state " + state.name )
+            end
+         elif refs.len == 0 and state.entries.len > 0
+            self.error( state.line, "State " + state.name +" has no root entry"  )
+         else
+            state.top = refs[0]
+            self.trace( "In state", state.name, "token", state.top.name, "is the root node." )
+         end
+      end
+   end
+   
+   function removeNTs( refs, nt )
+      
+      for alt in nt.alts
+         for tok in alt.sequence
+            if tok.type == Token.tNT
+               child_nt = tok.content
+               if child_nt != nt and child_nt in refs
+                  refs -= child_nt
+                  self.removeNTs( refs, child_nt )
+               end
+            end
          end
       end
       
@@ -749,7 +1201,7 @@ class GrammarParser
                   element.content = tok
                end
             else
-               self.error( element.line, @"In state [${state.name}] unresolved token ${element.name}" )
+               self.error( state.line, @"In state [${state.name}] unresolved token ${name}" )
             end         
          end
 
@@ -838,7 +1290,7 @@ class GrammarParser
    end
    
    function trace()
-      > " ".merge(map( {[v] v.toString()}, passvp() ))
+      //> " ".merge(map( {[v] v.toString()}, passvp() ))
    end
    
    /*
@@ -859,7 +1311,7 @@ class GrammarParser
    end
          
    function error(line, reason)
-      > @"ERROR ($line): $reason"
+      self.handleError(line, reason)      
       self.errors++
    end
    
@@ -883,5 +1335,6 @@ grammar = x.parse( TextReader(parsed, "utf8") )
 
 > "Errors: ", x.errors
 
-if grammar: grammar.dump()
+if grammar: grammar.dump(VMProcess.current.stdOut())
 > "Done"
+

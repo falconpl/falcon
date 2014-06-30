@@ -8,28 +8,30 @@
 
 [main]
 
-FILE:- ELEMENT:l FILE:tree  { /* comments in code */ tree.current.addBelow(l); return tree }.
+FILE::= ELEMENT:l FILE:tree  { /* comments in code */ tree.current.addBelow(l); return tree }.
 
-FILE :- {Tree()}.
+FILE ::= {Tree()}.
 
-ELEMENT :- TITLE | TEXT.
+ELEMENT ::= TITLE | TEXT.
 
 /* More comments */
-TITLE :- r"^="m /* comment in rule */ TEXT:node r"=*" EOL { node.type = "h1" }.
+TITLE ::= r"^=":rexp /* comment in rule */ TEXT*:node r"=*" EOL { node.type = "h1" }.
 
-EOL :- +"\n".
-EOL :- eof.
+EOL ::= "\n"+.
+EOL ::= eof.
 
-TEXT :- ?WORD {Node("text")} => second.
+TEXT ::= WORD? {Node("text")} => second.
 
-WORD :- R"[A-Za-z]".
+WORD ::= R"[A-Za-z]"*.
 
 
 [second:main]
+# { > "This shall be the preamble" }
+=> { > "This shall be the postamble" }
 
-SEMIWORD:- TITLE => ###.
+SEMIWORD::= TITLE => ###.
 
 [third]
 
-NEW_STATE:- STATE.
-STATE :-.
+NEW_STATE::= STATE.
+STATE ::=.
