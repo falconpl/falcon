@@ -410,6 +410,22 @@ void StringStream::getString( String &target ) const
    m_b->m_mtx.unlock();
 }
 
+String StringStream::getStringAndClear()
+{
+	m_b->m_mtx.lock();
+	
+	String s = *m_b->m_str;
+	
+	m_b->m_str->size( 0 );
+	
+	m_posRead = 0;
+    m_posWrite = 0;
+	
+	m_b->m_mtx.unlock();
+	
+	return s;
+}
+
 bool StringStream::closeToString( String &target )
 {
    m_b->m_mtx.lock();
