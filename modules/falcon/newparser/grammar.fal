@@ -315,7 +315,7 @@ class Token(type, content, name, line)
    resolved = false
    line = line ? line: 0
    
-   function dump(output)
+   function dump(output, purged)
       tok = self
       
       if tok.type == Token.tString
@@ -325,7 +325,7 @@ class Token(type, content, name, line)
       elif tok.name == nil
          // anonymous non-terminal token
          output.write( "( " )
-         tok.content.dump(output, true)
+         tok.content.dump(output, purged)
          output.write( " )" )         
       else
          output.write( tok.name )
@@ -339,7 +339,7 @@ class Token(type, content, name, line)
          output.write( "?" )
       end
       
-      if tok.pname
+      if tok.pname and not purged
          output.write( ":" + tok.pname )
       end
    end
@@ -372,17 +372,17 @@ class NTAlt(line)
    // or... pop to different states
    transpop = 0
    
-   function dump( output )
+   function dump( output, purged )
    
       alt = self
       
       for tok in alt.sequence
-         tok.dump(output)
+         tok.dump(output, purged)
          formiddle: output.write( " " )
       end
       
       code = alt.code
-      if code
+      if code and not purged
          output.write( "  {"+ code + "}" )
       end
       
@@ -412,7 +412,7 @@ class NonTerminal(name)
    alts = []
    
 
-   function dump(output, singleLine)
+   function dump(output, purged)
       entry = self
       
       // manage inline anonymous non terminals
@@ -421,16 +421,16 @@ class NonTerminal(name)
       end
       
       for alt in entry.alts         
-         alt.dump(output)
+         alt.dump(output, purged)
          
          forfirst
-            if not singleLine and entry.alts.len > 1
+            if entry.name and entry.alts.len > 1
                output.write( "\n     " )
             end
          end
          
          formiddle
-            if not singleLine: output.write("\n  ")
+            if entry.name: output.write("\n  ")
             output.write( " | " )
          end
       end
@@ -474,8 +474,22 @@ class GrammarState(name, line)
    postamble_line = nil
    postamble_compiled = nil
    
-   // Reverse rendering for the state grammar
-   function dump( output )
+   /*#
+      @brief Reverse rendering for the state grammar
+      @param output A stream where to write the data
+      @optparam purged set to true to hide inline code
+      
+      This method renders the grammar definition on the
+      given output in the special EBNF-like format recognized
+      by the @a GrammarParser.
+     
+      With the @b purged option set to true, the code snippets
+      and the variable name token specifiers won't be rendered;
+      this makes possible to extract a ready-to-use EBNF-like
+      grammar for documentation and exposition purposes.
+      
+   */
+   function dump( output, purged )
       if self.includes
          output.write( @"[${state.name}:" )
          for state in self.includes
@@ -489,13 +503,13 @@ class GrammarState(name, line)
       
       output.write("\n") /* white line */
       
-      if self.preamble
+      if self.preamble and not purged
          output.write( "# {" )
          output.write( self.preamble )
          output.write( "}\n" )
       end
       
-      if self.postamble
+      if self.postamble and not purged
          output.write( "=> {" )
          output.write( self.postamble )
          output.write( "}\n" )
@@ -504,7 +518,7 @@ class GrammarState(name, line)
       // for convention, write the root on top
       root = self.top
       if root
-         root.dump(output)
+         root.dump(output, purged)
          output.write("\n") /* white line */
       else
          output.write("/* This state has no root */\n")
@@ -512,7 +526,7 @@ class GrammarState(name, line)
       
       for name, entry in self.entries
          if entry != root
-            entry.dump( output )
+            entry.dump( output, purged )
             output.write("\n") /* white line */
          end
       end      
@@ -534,16 +548,16 @@ class Grammar
    initcode_compiled = nil
    
    //# Reverse rendering for the state grammar
-   function dump( output )
+   function dump( output, purged )
    
-      if self.initcode
+      if self.initcode and not purged
          output.write( "{" )
          output.write( self.initcode )
          output.write( "}\n" )
       end
       
       for name, state in self.states         
-         state.dump( output )
+         state.dump( output, purged )
          > /* White line */
       end
    end
@@ -1512,6 +1526,6 @@ grammar = x.parse( TextReader(parsed, "utf8") )
 
 > "Errors: ", x.errors
 
-if grammar: grammar.dump(VMProcess.current.stdOut())
+if grammar: grammar.dump(VMProcess.current.stdOut() )
 > "Done"
 
