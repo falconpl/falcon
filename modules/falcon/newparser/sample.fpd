@@ -29,7 +29,7 @@ WORD ::= R"[A-Za-z]"*.
 # { > "This shall be the preamble" }
 => { > "This shall be the postamble" }
 
-SEMIWORD::= TITLE => ###.
+SEMIWORD::= "?" (TITLE TEXT | ( TEXT | WORD EOL ) )+:oneOrOther "?"  => ###.
 
 [third]
 

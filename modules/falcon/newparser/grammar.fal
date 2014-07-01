@@ -89,14 +89,16 @@ import from vfs
    
    RULE ::= NAME '::=' RULE-BODY '.' .
    
-   RULE-BODY::= ALTERNATIVE *NEXT-ALTERNATIVE. 
+   RULE-BODY::= ALTERNATIVE NEXT-ALTERNATIVE*.
    
-   ALTERNATIVE ::= *TOKEN ?CODE ?TRANSITION.
+   ALTERNATIVE ::= TOKEN* CODE? TRANSITION?.
    
    NEXT-ALTERNATIVE ::= '|' ALTERNATIVE.
    
-   TOKEN ::=  (NAME | TERMINAL | PREDEFINED) REPETITION? TOKEN-SPEC?.
+   TOKEN ::=  (NAME | TERMINAL | PREDEFINED | SUB-ALTERNATIVE) REPETITION? TOKEN-SPEC?.
             
+   SUB-ALTERNATIVE ::= '(' TOKEN+ ')'.
+   
    PREDEFINED ::= 'eof' | 'error'.
    
    REPETITION ::= '?' | '+' | '*'.
@@ -139,9 +141,6 @@ import from vfs
      formal definitions: undeclared non-terminal tokens, undeclared included states and
      recursive state inclusion will be reported as error, and that will cause the the
      parsing process to fail.
-   - Notice that the grammar doesn't recognize the '(' and ')' symbols, and doesn't
-     allow single or multiple token alternatives. Alternatives need to be full new versions
-     of the previous rule, different enough so that the parser is able to distinguish them.
    - Multiple rules starting with the same non-terminal name are considered alternatives;
      "A ::= <alt1> | <alt2> ."  and "A ::= <alt1>. A ::= <alt2>." are semantically
      equivalent.     
@@ -281,17 +280,27 @@ import from vfs
 
 /*#
    @brief Single token (entry in a NonTerminal entry sequence)
-   @param type tString, tRE or tNT  (tPredef for predefined terminals)
+   @param type tString, tRE, tNT  (tPredef for predefined terminals)
    @param content either a string, a re or a NonTerminal
    @param name non-terminal name, if this is a non-terminal
    @param repeat 0/nil - single, -1: asterisk, -2: plus, -3: question mark
    @param line Where the token was defined.
+   
+   The content is determined by the type:
+   - tString or tPredef: @b content is a String
+   - tRE: @b content is a RE
+   - tNT: @b Content is an instance of NonTerminal
+   
+   @note The token name can be nil if the token content is an anonymous
+   NonTerminal.
 */
 class Token(type, content, name, line)
    static tString = 0
    static tRE = 1
    static tNT = 2
    static tPredef = 3
+   // sub alternative
+   static tSubAlt = 4
    
    static tSingle = 0
    static tAsterisk = -1
@@ -313,6 +322,11 @@ class Token(type, content, name, line)
          output.write( '"' + tok.content.escape() + '"' )
       elif tok.type == Token.tRE
          output.write( tok.content.toString() )
+      elif tok.name == nil
+         // anonymous non-terminal token
+         output.write( "( " )
+         tok.content.dump(output, true)
+         output.write( " )" )         
       else
          output.write( tok.name )
       end
@@ -337,12 +351,9 @@ end
 @brief Single Entry of a Non Terminal specification.
 
 Each alternative definition will have its own NTDef
-   - name: The name of the Non Terminal of which this is an alternative
    - line: Line at which this alternative is declared
 */
-class NTAlt(name, line)
-   name = name
-   
+class NTAlt(line)   
    // line where the definition is declared
    line = line ? line: 0
    
@@ -380,8 +391,6 @@ class NTAlt(name, line)
       elif alt.transpop
          output.write( " => " + ("#" * alt.transpop) )
       end
-      
-      output.write( "." )
    end
 end
 
@@ -392,23 +401,41 @@ end
    A nonterminal is a colleciton of 0 or more alternatives,
    each being a @a NTAlt, which fully defines a certain non terminal
    pattern.
+   
+   @note A NonTerminal can be anonymous if it's generated out of
+   a locally defined alternative (a parentezised alternative within a sequence).
+   
 */
 class NonTerminal(name)
    name = name
    // list of zero or more NTAlt
    alts = []
    
-   function dump(output)
-      entry = self      
-      output.write( entry.name + "::= \n" )
+
+   function dump(output, singleLine)
+      entry = self
       
-      for alt in entry.alts
-         alt.dump(output)
-         output.write( "\n" )
-         
-         forfirst:  output.write( "     " )
-         formiddle: output.write( "   | " )
+      // manage inline anonymous non terminals
+      if entry.name
+         output.write( entry.name + " ::= " )
       end
+      
+      for alt in entry.alts         
+         alt.dump(output)
+         
+         forfirst
+            if not singleLine and entry.alts.len > 1
+               output.write( "\n     " )
+            end
+         end
+         
+         formiddle
+            if not singleLine: output.write("\n  ")
+            output.write( " | " )
+         end
+      end
+      
+      if entry.name: output.write( "." )
    end
 end
 
@@ -538,6 +565,9 @@ class GrammarParser
    // internal state.
    _state = nil
    
+   // forming nested non terminal stacks.
+   _NTStack = nil
+   
    // current line
    curLine = 0
    
@@ -588,7 +618,8 @@ class GrammarParser
       end
       
       commands = .["::=" "/*" "r\'" "r\"" "R'" "R\"" ":" "." "{" "}" 
-                   '"' "'" "*" "+" "?" "|" "[" "]" 
+                   '"' "'" "*" "+" "?" "|" "[" "]"
+                   "(" ")"
                    "=>" "#"
                    ]
       whiteSpaces = .[" " "\n" "\r" "\t"]
@@ -606,15 +637,18 @@ class GrammarParser
                "transition"
                ]
       call( makeEnum, map({[v] "S." + v}, syms ) )
-      self._state = ~S..start
-      self.curLine = 1
-      self.errors = 0
+      self._resetParsing()
       
       self.mt = mt
 
       parCount = 0
       code = m""
+      
+      // cached token (name)
       currentToken = nil
+      // cached NTAlt we're working on
+      currentAlt = nil
+      // cached NonTerminal at top of the NTStack.
       currentNT = nil
       
       // variables controlling quotes
@@ -626,6 +660,8 @@ class GrammarParser
       stateName = nil
       
       codeStage = 0
+      // level of parenthesis inside an alternative.
+      parLevel = 0
       
       // used to reiterate the same token in different states
       take = true
@@ -654,7 +690,7 @@ class GrammarParser
             // but if we are after a regular expression, change state
             if self._state == ~S..Rafter
                // time to create the RE
-               self.commitRE( quoteText, currentNT, Rignore ?"i":"" )
+               self.commitRE( quoteText, currentAlt, Rignore ?"i":"" )
                self.changeState( ~S..defBody )
             elif self._state == ~S..code
                code += tok
@@ -738,9 +774,13 @@ class GrammarParser
                
             case ~S..defPState            
                if tok == ":"
-                  // we expect state names
-                  self.addGState(stateName)
-                  self.changeState( ~S..defPState2, tok )
+                  if parLevel > 0
+                     self.xerror( self.curLine, "Can assign parameter names to top-level tokens only" )
+                  else                     
+                     // we expect state names
+                     self.addGState(stateName)
+                     self.changeState( ~S..defPState2, tok )
+                  end
                elif tok == "]"
                   // completed state delcaration
                   self.addGState(stateName)
@@ -764,7 +804,7 @@ class GrammarParser
                if tok != "::="
                   self.xerror(self.curLine, "Need ::= after token specification.")
                else
-                  currentNT = NTAlt( currentToken, self.curLine )
+                  currentNT, currentAlt = self.pushNT(currentToken)
                   self.changeState(~S..defBody, tok)
                end
                
@@ -774,15 +814,43 @@ class GrammarParser
                
                   case "."
                      // done
-                     self.commitAlt( currentToken, currentNT )
+                     if parLevel > 0
+                        self.error(self.curLine, "Unbalanced open parenthesis at rule closing")
+                     else
+                        self.commitNT()
+                     end
+                     // anyhow reset the rule
                      self.changeState(~S..start, tok)
-                     currentNT = nil
+                     // current cache reset
+                     currentAlt = currentNT = currentToken = nil
                      
                   case "|"
                      // new alternative
-                     self.commitAlt( currentToken, currentNT )
-                     currentNT = NTAlt( currentToken, self.curLine )
+                     currentAlt = NTAlt( self.curLine )
+                     currentNT.alts += currentAlt
                      // stay in defbody state
+                     
+                  case "(" 
+                     parLevel++
+                     topTok = Token(Token.tNT, nil, nil, self.curLine)
+                     currentAlt.sequence += topTok
+                     currentNT, currentAlt = self.pushNT()
+                     topTok.content = currentNT
+                     
+                     
+                  case ")"
+                     if parLevel == 0
+                        self.xerror(self.curLine, "Unbalanced closed parenthesis")
+                     else  
+                        parLevel--
+                        if currentAlt.sequence.empty
+                           self.error(self.curLine, "Empty sub-alternative")
+                           // but to not invalidate this rule
+                        end
+                        currentNT, currentAlt = self.popNT()
+                     end
+                     // consider this as if it was the post-name
+                     self.changeState(~S..defName1, tok )
       
                   case "{"
                      code = m""
@@ -804,7 +872,7 @@ class GrammarParser
                         self.xerror(self.curLine, "Unexpected token '" + tok + "'" )
                      else
                         // the token is a non-terminal in this alternative
-                        self.commitNT( tok, currentNT )
+                        self.commitToken( tok, currentAlt )
                         // enter in defName states
                         self.changeState( ~S..defName1, tok )
                      end
@@ -816,7 +884,7 @@ class GrammarParser
                   // wait for the real name
                   self.changeState( ~S..defName2, tok )
                elif tok == "*" or tok == "+" or tok == "?"
-                  lastTok = currentNT.sequence[-1]
+                  lastTok = currentAlt.sequence[-1]
                   if lastTok.repeat != Token.tSingle
                      self.xerror(self.curLine, "Conflicting repetition type" )                        
                   else                     
@@ -837,8 +905,8 @@ class GrammarParser
                if tok in commands
                   self.xerror(self.curLine, "Waiting for token name but received '" + tok + "'" )
                else                  
-                  self.trace( "Assigning name '", tok, "' to token ", currentNT.sequence[-1].name )
-                  currentNT.sequence[-1].pname = tok
+                  self.trace( "Assigning name '", tok, "' to token ", currentAlt.sequence[-1].name )
+                  currentAlt.sequence[-1].pname = tok
                   self.changeState( ~S..defBody, tok )
                end
                
@@ -850,7 +918,7 @@ class GrammarParser
                      if Rquote
                         self.changeState( ~S..Rafter, tok )
                      else
-                        self.commitText(quoteText, currentNT )
+                        self.commitText(quoteText, currentAlt )
                         self.changeState( ~S..defName1, tok )
                      end
                   else
@@ -873,7 +941,7 @@ class GrammarParser
                end
                
                if Rignore: opts += "i"
-               self.commitRE( quoteText, currentNT, opts )               
+               self.commitRE( quoteText, currentAlt, opts )               
                self.changeState( ~S..defName1 )
                
             case ~S..code               
@@ -897,7 +965,7 @@ class GrammarParser
                               self._cgs.postamble = code
                               self.changeState(~S..start, tok)
                            case 3
-                              self.commitCode(code, currentNT)                        
+                              self.commitCode(code, currentAlt)                        
                               self.changeState(~S..defBody, tok)  
                         end
                      else
@@ -936,10 +1004,10 @@ class GrammarParser
                
             case ~S..transition
                if tok == "#"
-                  if currentNT.transition != nil
+                  if currentAlt.transition != nil
                      self.xerror( self.curLine, "Conflicting state pop after transition" )
                   else
-                     currentNT.transpop++
+                     currentAlt.transpop++
                   end
                elif tok == "." or tok == "{"
                   take = false
@@ -947,12 +1015,12 @@ class GrammarParser
                elif tok in commands
                   self.xerror( self.curLine, "Unexpected token in transition declaration" )
                else
-                  if currentNT.transition != nil
+                  if currentAlt.transition != nil
                      self.xerror( self.curLine, "Conflicting transition declaration" )
-                  elif currentNT.transpop != 0
+                  elif currentAlt.transpop != 0
                      self.xerror( self.curLine, "Conflicting transition declaration after state pop" )
                   else
-                     currentNT.transition = tok
+                     currentAlt.transition = tok
                   end
                end
                
@@ -1000,33 +1068,66 @@ class GrammarParser
       self.changeState( status )
    end
 
+   function commitNT()
+      self.trace( "commitNT()" )
+      if self._NTStack.empty
+         self.error( self.curLine, "Internal error: committed empty stack" )
+      end
+      self._NTStack.clear()
+   end
+   
    /*
-      Creates a new alternative for the given non terminal token.
-      token - string name of the token
-      alt - an instance of NTAlt that constitutes an alternative.
+      Pushes a new token in the sequence of forming tokens.
+      @return [NonTerminal, NTAlt]
    */
-   function commitAlt( name, alt )
-      // is the token already in our maps?
-      state = self._cgs
-      entry = state.entries.find(name, nil)
+   function pushNT( tokenName )
+      self.trace( @"pushNT($tokenName)" )
       
-      // new entry?
-      if not entry
-         // create the non-terminal of which this is an alternative
-         entry = NonTerminal(name, alt.line)
-         state.entries[name] = entry
-         
-         // now, were we in wait of this non-terminal?
-         undefs = state.unresolved.find(name, nil)
-         // if we were, assign this nonterminal to all the previously undefined tokens
-         for utok in undefs
-            utok.content = entry
-         end
-         state.unresolved -= name
+      // evevntually resolve the token now
+      if tokenName
+         state = self._cgs
+         nt = state.entries.find(tokenName,nil)
+         if not nt
+            // if not found, create anew...
+            nt = NonTerminal(tokenName, self.curLine )
+            state.entries[tokenName] = nt
+            // ... and try to see if it was waited for.
             
+            // now, were we in wait of this non-terminal?
+            undefs = state.unresolved.find(tokenName, nil)
+            // if we were, assign this nonterminal to all the previously undefined tokens
+            for utok in undefs
+               utok.content = nt
+            end
+            state.unresolved -= tokenName
+         end
+      else
+         // anonymous non-terminal
+         nt = NonTerminal( nil, self.curLine )
       end
       
-      entry.alts += alt
+      self._NTStack.push(nt)
+      
+      // add a first alternative to the new token
+      alt = NTAlt( self.curLine )
+      nt.alts += alt            
+      
+      return [nt, alt]
+   end
+   
+   /*
+      Removes the topmost NT and return the previous one.
+      @return [NonTerminal, NTAlt] or nil
+   */
+   function popNT()
+      self.trace( "popNT()" )
+      self._NTStack.pop()
+      if self._NTStack.len
+         nt = self._NTStack[-1]      
+         return [nt, nt.alts[-1]]
+      end
+      
+      return nil
    end
    
    /*
@@ -1034,8 +1135,8 @@ class GrammarParser
       name -- the name of the non-terminal 
       alt -- the forming alternative (a NTAlt instance)
    */
-   function commitNT(name, alt)
-      self.trace( "commitNT", name, "into", alt.name)
+   function commitToken(name, alt)
+      self.trace( "commitToken", name )
    
       state = self._cgs
       nt = state.entries.find( name, nil )
@@ -1059,7 +1160,7 @@ class GrammarParser
          end
       end
       
-      alt.sequence += token      
+      alt.sequence += token
    end
    
    /*
@@ -1069,7 +1170,7 @@ class GrammarParser
       opt -- Regular expression options
    */
    function commitRE( text, alt, opts )
-      self.trace( "commitRE '", text, "' into", alt.name )
+      self.trace( "commitRE '", text )
       
       try
          re = RE( text, opts )
@@ -1085,7 +1186,7 @@ class GrammarParser
       alt -- the forming alternative (a NTAlt instance)
    */
    function commitText( text, alt )
-      self.trace( "commitText '", text, "' into", alt.name )
+      self.trace( "commitText '", text )
       alt.sequence += Token(Token.tString, text, nil, self.curLine )
    end
    
@@ -1095,7 +1196,7 @@ class GrammarParser
       alt -- the forming alternative (a NTAlt instance)
    */
    function commitCode( code, alt )
-      self.trace( "commitCode into", alt.name )
+      self.trace( "commitCode()" )
       alt.code = code
    end
 
@@ -1214,7 +1315,7 @@ class GrammarParser
                      self.error( alt.line, @"Transition target state \"${alt.transition}\" not found" )
                   else
                      alt.transition = target
-                     self.trace("In non terminal ", alt.name, "Resolved transition to", target.name )
+                     self.trace("In non terminal ", entry.name, "Resolved transition to", target.name )
                   end
                end
             end
@@ -1245,7 +1346,7 @@ class GrammarParser
    
    function findInIncludes(name, state)
       for pstate in state.includes
-         tok = pstate.entries.find( name )
+         tok = pstate.entries.find( name, nil )
          if tok: return tok
          tok = self.findInIncludes(name, pstate)
          if tok: return tok
@@ -1257,6 +1358,13 @@ class GrammarParser
    //========================================================================
    // Utilities
    //========================================================================
+   
+   function _resetParsing()
+      self._state = ~S..start
+      self.curLine = 1
+      self.errors = 0
+      self._NTStack = []
+   end
    
    /** Adds a grammar state to the state definition.
    */
