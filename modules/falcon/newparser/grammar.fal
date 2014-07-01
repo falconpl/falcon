@@ -462,7 +462,7 @@ class GrammarState(name, line)
    line = line
    
    //# list of lexer tokens known to the state
-   tokens = nil
+   tokens = []
    
    //# Code to be exucted when entering this state
    preamble = nil
@@ -1183,6 +1183,7 @@ class GrammarParser
       try
          re = RE( text, opts )
          alt.sequence += Token(Token.tRE, re, nil, self.curLine )
+         if re notin self._cgs.tokens: self._cgs.tokens += re
       catch in e
          self.xerror( self.curLine, "Invalid regular expression: " + e )
       end
@@ -1196,6 +1197,7 @@ class GrammarParser
    function commitText( text, alt )
       self.trace( "commitText '", text )
       alt.sequence += Token(Token.tString, text, nil, self.curLine )
+      if text notin self._cgs.tokens: self._cgs.tokens += text
    end
    
    /*
