@@ -466,13 +466,13 @@ class GrammarState(name, line)
    
    //# Code to be exucted when entering this state
    preamble = nil
-   
+   preamble_line = nil
    preamble_compiled = nil
    
    //# Code to be executed when leaving this state
    postamble = nil
-   
-   preamble_compiled = nil
+   postamble_line = nil
+   postamble_compiled = nil
    
    // Reverse rendering for the state grammar
    function dump( output )
@@ -530,7 +530,7 @@ class Grammar
    
    //# Code to be executed at initialization
    initcode = nil
-   
+   initcode_line = 0
    initcode_compiled = nil
    
    //# Reverse rendering for the state grammar
@@ -725,6 +725,7 @@ class GrammarParser
                   // anyhow take the code as a preamble
                   code = m""
                   codeStage = 0
+                  grammar.initcode_line = self.curLine
                   self.enterCode(~S..code)
                   
                elif tok == "["
@@ -745,10 +746,12 @@ class GrammarParser
                if tok == '{'
                   if self._state == ~S..defPreamble
                      data = self._cgs.preamble
+                     self._cgs.preamble_line = self.curLine
                      word = "preamble"
                      codeStage = 1
                   else
                      data = self._cgs.postamble
+                     self._cgs.postamble_line = self.curLine
                      word = "postamble"
                      codeStage = 2
                   end
@@ -1049,6 +1052,11 @@ class GrammarParser
          if self.errors == 0 
             // And if nodes are consistent, we can try to resolve the roots
             self.resolveRoots()
+            
+            // and finally, compile code snippets
+            if self.errors == 0 
+               self.compileSnippets()
+            end
          end
       end
       
@@ -1354,6 +1362,65 @@ class GrammarParser
       
       return nil
    end
+   
+   
+   function compileSnippets()
+      self.trace( "compileSnippets()" )
+      g = self._grammar
+      if g.initcode
+         try
+            g.initcode_compiled = compile(g.initcode)
+         catch in e
+            e.line += g.initcode_line
+            self.error( e.line, "Compilation errors in preamble:" + e)
+         end
+      end
+
+      for name,state in g.states
+         state.preamble_compiled = self.compSnippet(
+               state.preamble_line, state.preamble )
+         
+         state.postamble_compiled = self.compSnippet(
+               state.postamble_line, state.postamble )
+               
+         // and now, compile each snippet.
+         for name,entry in state.entries
+            for alt in entry.alts
+               // only if we have a code for this alternative
+               if alt.code
+                  params = []
+                  for tok in alt.sequence
+                     if tok.pname: params += tok.pname
+                  end
+                  alt.compiled = self.compSnippet(alt.line, alt.code, params)
+               end
+            end
+         end
+         
+      end
+   end
+   
+   
+   function compSnippet( line, code, params )
+      if not code: return nil
+      //self.trace( @"compileSnippets($line, ${code.describe()}, ${params.describe()}" )
+      
+      try
+         fullcode = "{ctx"
+         if params: fullcode = fullcode + "," + ",".merge(params)  
+         fullcode = fullcode + "=> " + code + "}"
+         self.trace( "Compiling " + fullcode )
+         gen = compile( fullcode )         
+         // this compile a function generator; we must invoke it to get the funcion
+         comp = gen()
+         return comp
+      catch in e
+         e.line = line
+         self.error( line, (@"Compilation errors in snippet at ${line}:") + e.toString())
+         return nil
+      end 
+
+   end
       
    //========================================================================
    // Utilities
@@ -1398,7 +1465,7 @@ class GrammarParser
    end
    
    function trace()
-      //> " ".merge(map( {[v] v.toString()}, passvp() ))
+      > " ".merge(map( {[v] v.toString()}, passvp() ))
    end
    
    /*
