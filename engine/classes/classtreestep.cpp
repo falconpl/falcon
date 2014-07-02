@@ -529,6 +529,8 @@ ClassTreeStep::InsertMethod::~InsertMethod()
 
 void ClassTreeStep::InsertMethod::invoke( VMContext* ctx, int32 pcount )
 {
+   static Class* treeStepClass = Engine::instance()->stdHandlers()->treeStepClass();
+
    Item& self = ctx->self();
    fassert( self.isUser() );
 
@@ -543,9 +545,8 @@ void ClassTreeStep::InsertMethod::invoke( VMContext* ctx, int32 pcount )
    Class* cls;
    void* inst;
 
-   ClassTreeStep* owner = static_cast<ClassTreeStep*>(methodOf());
    if( (! i_pos->isOrdinal()) ||
-        !( i_treestep->asClassInst(cls, inst) && cls->isDerivedFrom(owner) )
+        !( i_treestep->asClassInst(cls, inst) && cls->isDerivedFrom(treeStepClass) )
       )
    {
       ctx->raiseError(paramError(__LINE__, SRC ));
