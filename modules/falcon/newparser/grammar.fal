@@ -211,9 +211,9 @@ import from vfs
       For instance, the following rule set:
       
       @code
-         FULLTEXT ::= *PART.
+         FULLTEXT ::= PART*.
          PART ::= WHITESPACE | WORD.
-         WHITESPACE ::= +" " {" "}.
+         WHITESPACE ::= " "+ {" "}.
          WORD ::= r"[^ ]+".
       @endcode
       
@@ -221,7 +221,7 @@ import from vfs
       of multiple spaces between words: the FULLTEXT rule will autmatically apply the Falcon
       "+" operator to all the PART tokens it receives.
       
-      Repeated tokens (tokens prefixed with '*', '+' and '?') shall be passed to the code
+      Repeated tokens (tokens postfixed with '*', '+' and '?') shall be passed to the code
       as an array. For example, the following rule:
       
       @code
@@ -1065,12 +1065,7 @@ class GrammarParser
          self.resolveTokens()
          if self.errors == 0 
             // And if nodes are consistent, we can try to resolve the roots
-            self.resolveRoots()
-            
-            // and finally, compile code snippets
-            if self.errors == 0 
-               self.compileSnippets()
-            end
+            self.resolveRoots()            
          end
       end
       
@@ -1379,10 +1374,17 @@ class GrammarParser
       return nil
    end
    
-   
-   function compileSnippets()
+   /*#
+      @brief Separately compile code snippets.
+      @param g The grammar whose code snippets must be compiled.
+      
+      If the grammar application actions are Falcon code, this
+      utility can be used to dynamically compile the code into
+      runnable functions.
+   */
+   function compileSnippets( g )
       self.trace( "compileSnippets()" )
-      g = self._grammar
+
       if g.initcode
          try
             g.initcode_compiled = compile(g.initcode)
@@ -1393,10 +1395,10 @@ class GrammarParser
       end
 
       for name,state in g.states
-         state.preamble_compiled = self.compSnippet(
+         state.preamble_compiled = self._compSnippet(
                state.preamble_line, state.preamble )
          
-         state.postamble_compiled = self.compSnippet(
+         state.postamble_compiled = self._compSnippet(
                state.postamble_line, state.postamble )
                
          // and now, compile each snippet.
@@ -1408,7 +1410,7 @@ class GrammarParser
                   for tok in alt.sequence
                      if tok.pname: params += tok.pname
                   end
-                  alt.compiled = self.compSnippet(alt.line, alt.code, params)
+                  alt.compiled = self._compSnippet(alt.line, alt.code, params)
                end
             end
          end
@@ -1417,7 +1419,7 @@ class GrammarParser
    end
    
    
-   function compSnippet( line, code, params )
+   function _compSnippet( line, code, params )
       if not code: return nil
       //self.trace( @"compileSnippets($line, ${code.describe()}, ${params.describe()}" )
       
@@ -1523,6 +1525,9 @@ parsed = InputStream(args[0])
 
 x = GrammarParser()
 grammar = x.parse( TextReader(parsed, "utf8") )
+if grammar
+   x.compileSnippets( grammar )
+end
 
 > "Errors: ", x.errors
 
