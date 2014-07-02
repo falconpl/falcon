@@ -81,6 +81,10 @@ public:
       return temp;
    }
    
+   /** Gets a string containing the content of the stream and empties the stream
+	  \return a string containing all the data in the stream (may be empty).
+   */
+   String getStringAndClear();
 
    /** Gets the phisical memory created by this object and turns it into a string.
       The memory that has been created by the stream-like operations is directly
