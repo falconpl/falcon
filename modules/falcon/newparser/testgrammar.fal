@@ -1,0 +1,21 @@
+import from grammar
+import from vfs
+
+
+if args.len == 0
+   > "Usage: <file>"
+   return 1
+end
+
+parsed = InputStream(args[0])
+
+x = GrammarParser()
+grammar = x.parse( TextReader(parsed, "utf8") )
+if grammar
+   x.compileSnippets( grammar )
+end
+
+> "Errors: ", x.errors
+
+if grammar: grammar.dump(VMProcess.current.stdOut() )
+> "Done"
