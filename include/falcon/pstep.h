@@ -42,7 +42,7 @@ class FALCON_DYN_CLASS PStep
 public:
    /** Size of each depth scale in describe(). */
    static const int depthIndent = 2;
-   
+
    inline PStep( int line=0, int chr=0 ):
       m_bIsLoopBase(false),
       m_bIsNextBase(false),
@@ -50,12 +50,12 @@ public:
       m_catchMode(false),
       m_sr(line, chr)
    {}
-   
+
    inline virtual ~PStep() {}
 
    /** Convert into a string.
     \param target A target string where to write the pstep representation.
-    
+
     The default base class function does nothing. This is useful for
     pstep that are not part of the syntactic tree, but just of the
     VM code.
@@ -71,27 +71,27 @@ public:
     */
    inline virtual uint32 flags() const { return 0; }
 
-   /** Apply function. 
+   /** Apply function.
     \param self The PStep that was applied here.
     \param ctx The virtual machine context where this apply function was run
-    
+
     This is the callback function that the virtual machine will invoke when
     this step is found in the code stack. As such, the step being called via
     the apply function is \b granted to be on top of the code stack of the
     \b ctx it receives.
-    
-    \note the apply function is called exclusively by a Virtual Machine or 
+
+    \note the apply function is called exclusively by a Virtual Machine or
     Virtual Machine Context related operation on the top item in the code
     stack.
-    
+
     The function could be called also by a composite PStep. For instance,
-    it can be called by a parent expression or by a SynTree, which is a 
+    it can be called by a parent expression or by a SynTree, which is a
     collection of special subclasses of PStep (more specifically, a collection
     of Statement instances).
-    
+
     The composite PStep will check if the called sub-steps have changed the
     code stack, and in case they did, it will yield the control to its caller.
-    
+
     The pattern for composite step is as follows:
     @code
     // I am at top of VMContext
@@ -102,34 +102,34 @@ public:
     end
     pop myself from VMContext.
     @endcocde
-    
+
     There are two ways to check if the VMContext has been changed. It is possible
     to check if the topmost code frame is changed,
     @code
     CodeFrame& topCode = ctx->currentCode(); // yep, that's me
     doSomething();
-    if( &topCode != &ctx->currentCode() ) 
+    if( &topCode != &ctx->currentCode() )
        return;
     ctx->popCode(); // remove me.
     @endcode
-    
+
     Although fast, this method is subject to false positive in case the code
     in doSomething pushed something in the stack but then removed it, as the
     stack might have been invalidated in the meanwhile.
-    
+
     However, this is hardly a problem as the stack soon stabilizes to a size
     accomodating the program depth, and the code must be designed to properly
-    be resumed after returning. However, if this causes some problem, or if 
+    be resumed after returning. However, if this causes some problem, or if
     arranging for return is slower than peforming a little more complex check,
     this second pattern can be used:
-    
+
     @code
     long depth = ctx->codeSize();
     doSomething();
-    if( ctx->wentDeepSized( depth ) ) 
+    if( ctx->wentDeepSized( depth ) )
        return;
     @endcode
-    
+
     The check is slower (this requires some pointer math) but avoids
     false postives.
     */
@@ -148,7 +148,7 @@ public:
       m_sr.chr(chr);
       return *this;
    }
-   
+
    /** Returns the line where this PStep was declared in source.
     If the PStep wasn't generated from source, the line will be 0.
     */
@@ -202,8 +202,8 @@ protected:
    bool m_bIsComposed;
    byte m_catchMode;
 
-private:   
-   
+private:
+
    SourceRef m_sr;
 };
 
@@ -217,13 +217,15 @@ private:
          PStep ## name(){apply = apply_;}\
          virtual ~PStep ## name() {}\
          static void apply_( const PStep*, VMContext* ctx );\
-         virtual void describeTo( String& desc , int ) const\
+         virtual void describeTo( String& desc ) const\
          {\
             desc = #name;\
          }\
       };\
       PStep ## name m_step ## name ;
 
+
+      //Need to do something about this (m_Owner)
 #define FALCON_DECLARE_INTERNAL_PSTEP_OWNED( name, ownerclass ) \
       class FALCON_DYN_CLASS PStep ## name : public PStep\
       {\
@@ -231,11 +233,10 @@ private:
          PStep ## name( ownerclass* owner): m_owner(owner) {apply = apply_;}\
          virtual ~ PStep ## name() {}\
          static void apply_( const PStep*, VMContext* ctx );\
-         virtual void describeTo( String& desc , int ) const\
+         virtual void describeTo( String& desc ) const\
          {\
             desc = #ownerclass "::" #name;\
          }\
-         private:\
          ownerclass* m_owner;\
       };\
       PStep ## name m_step ## name ;

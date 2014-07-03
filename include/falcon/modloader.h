@@ -400,11 +400,14 @@ private:
          apply = apply_;
       }
       virtual ~PStepSave() {};
-      virtual void describeTo( String& str, int ) const { str = "PStepSave"; }
+      virtual void describeTo( String& str ) const { str = "PStepSave"; }
+
+      //Need to do something about this
+    ModLoader* m_owner;
 
    private:
       static void apply_( const PStep* self, VMContext* ctx );
-      ModLoader* m_owner;
+
    };
    PStepSave m_stepSave;
 

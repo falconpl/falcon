@@ -43,7 +43,7 @@ private:
    public:
       PStepNext( RuleSynTree* owner ): m_owner(owner) { apply = apply_; }
       virtual ~PStepNext() {};
-      virtual void describeTo( String& str, int=0 ) const { str = "RuleSynTree::PStepNext" ; }
+      virtual void describeTo( String& str ) const { str = "RuleSynTree::PStepNext" ; }
 
    private:
       static void apply_( const PStep* self, VMContext* ctx );

@@ -42,20 +42,20 @@ public:
          return first.compare(second) < 0;
       }
    };
-   
+
    typedef std::map<Item, Item, ItemComparer> ItemMap;
 
    ItemMap m_itemMap;
-   
+
    Private()
    {}
-   
+
    Private( const Private& other):
       m_itemMap( other.m_itemMap )
    {}
-   
+
    ~Private() {}
-   
+
    void gcMark( uint32 mark )
    {
       ItemMap::iterator iter = m_itemMap.begin();
@@ -104,7 +104,7 @@ void ItemDict::gcMark( uint32 mark )
 
 
 void ItemDict::insert( const Item& key, const Item& value )
-{     
+{
    Item ckey;
 
    if ( (key.isString() && ! key.asString()->isImmutable()) || (key.isUser() && key.asClass()->isFlatInstance() ) )
@@ -165,7 +165,7 @@ Item* ItemDict::find( const Item& key )
       return &iter->second;
    }
 
-   return 0;                       
+   return 0;
 }
 
 
@@ -191,7 +191,7 @@ Item* ItemDict::find( const String& key )
 length_t ItemDict::size() const
 {
    length_t count = _p->m_itemMap.size();
-   
+
    return count;
 }
 
@@ -199,7 +199,7 @@ length_t ItemDict::size() const
 void ItemDict::describe( String& target, int depth, int maxlen ) const
 {
    String ks, vs;
-   
+
    if( size() == 0 )
    {
       target = "[=>]";
@@ -211,7 +211,7 @@ void ItemDict::describe( String& target, int depth, int maxlen ) const
       target = "...";
       return;
    }
-   
+
    target.size(0);
    target += "[";
 
@@ -231,7 +231,7 @@ void ItemDict::describe( String& target, int depth, int maxlen ) const
       target += ks + " => " + vs;
       ++kiter;
    }
-   
+
    target += "]";
 }
 
@@ -259,9 +259,9 @@ class ItemDict::Iterator::Private
 {
 public:
    ItemArray m_pair;
-   
+
    ItemDict::Private::ItemMap::const_iterator t_iter;
-   
+
    Private() {
       m_pair.resize(2);
    }
@@ -272,12 +272,12 @@ public:
 
 ItemDict::Iterator::Iterator( ItemDict* item ):
    GenericData( "ItemDict::Iterator" ),
+   m_state( e_st_none ),
    _pm( new Private ),
    m_dict( item ),
    m_version( item->version() ),
    m_currentMark(0),
-   m_complete( false ),
-   m_state( e_st_none )
+   m_complete( false )
 {
    _pm->t_iter = item->_p->m_itemMap.begin();
 }
@@ -308,12 +308,12 @@ bool ItemDict::Iterator::gcCheck( uint32 value )
    // If all our components are old...
    if( _pm->m_pair.currentMark() < value
       && m_tempString.currentMark() < value
-      && m_currentMark < value 
+      && m_currentMark < value
       )
    {
       return false; // item dead
    }
-   
+
    return true;
 }
 
@@ -338,7 +338,7 @@ void ItemDict::Iterator::describe( String& target ) const
 bool ItemDict::Iterator::next( Item& target )
 {
    static Class* ac = Engine::handlers()->arrayClass();
-   
+
    if( m_dict == 0 ) return false;
    if( m_version != m_dict->version() )
    {
@@ -351,32 +351,32 @@ bool ItemDict::Iterator::next( Item& target )
       target.setBreak();
       return true;
    }
-      
+
    if( m_complete )
    {
-      target.setBreak(); 
+      target.setBreak();
       return true;
    }
-    
+
    advance();
-    
+
    // create a copied item, and ask to mark it for gc.
    target.copyFromLocal( Item(ac, &_pm->m_pair ) );
    if( ! m_complete )
    {
       target.setDoubt();
    }
-   
+
    return true;
 }
 
 
 void ItemDict::Iterator::advance()
 {
-   
+
    fassert( m_dict != 0 );
    fassert( m_dict->version() == m_version );
-   
+
    if( m_complete )
    {
       return;

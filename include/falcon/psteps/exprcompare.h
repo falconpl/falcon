@@ -23,7 +23,7 @@ namespace Falcon {
 /** Abstract base class for comparers. */
 class FALCON_DYN_CLASS ExprCompare: public BinaryExpression
 {
-public:   
+public:
    virtual ~ExprCompare();
 
    inline virtual bool isStandAlone() const { return false; }
@@ -35,7 +35,7 @@ public:
    public:
       PStepPostCompare(ExprCompare* owner): m_owner(owner) { apply = apply_; }
       virtual ~PStepPostCompare() {}
-      virtual void describeTo( String& str, int = 0 ) const { str = "PStepPostCompare"; }
+      virtual void describeTo( String& str ) const { str = "PStepPostCompare"; }
 
    private:
       static void apply_( const PStep* self, VMContext* ctx );
@@ -60,7 +60,7 @@ public:
    ExprLT( const ExprLT& other );
 
    virtual ~ExprLT();
-   inline virtual ExprLT* clone() const { return new ExprLT( *this ); }   
+   inline virtual ExprLT* clone() const { return new ExprLT( *this ); }
    virtual bool simplify( Item& value ) const;
 
    virtual bool checkCompare( int64 value ) const { return value < 0; }

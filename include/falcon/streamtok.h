@@ -93,6 +93,11 @@ public:
 
    void clearTokens();
 
+    //Need to do something about this
+    String* m_runningText;
+    //Need to do something about this
+    String* m_runningToken;
+
 private:
    TextReader* m_tr;
    String m_source;
@@ -101,9 +106,6 @@ private:
    uint32 m_bufSize;
    uint32 m_bufLen;
    char* m_buffer;
-
-   String* m_runningText;
-   String* m_runningToken;
 
    uint32 m_mark;
    bool m_bOwnToken;

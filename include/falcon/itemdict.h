@@ -61,10 +61,10 @@ public:
    public:
       virtual void operator()( const Item& key, Item& value )=0;
    };
-   
+
    void enumerate( Enumerator& rator ) const;
    uint32 version() const { return m_version; }
-   
+
    void merge( const ItemDict& other );
    void clear();
 
@@ -74,9 +74,9 @@ public:
    class Iterator: public GenericData
    {
    public:
-      Iterator( ItemDict* item );      
+      Iterator( ItemDict* item );
       virtual ~Iterator();
-      
+
       virtual bool gcCheck( uint32 value );
       virtual void gcMark( uint32 value );
       virtual Iterator* clone() const;
@@ -86,20 +86,8 @@ public:
       bool next( Item& target );
 
       ItemDict* dict() const { return m_dict; }
-            
-   private:
-      class Private;
-      Private* _pm;
-      
-      ItemDict* m_dict;
-      uint32 m_version;      
-      uint32 m_currentMark;
-      bool m_complete;
-      String m_tempString;
-      
-      /** Internal iterator advancement. */
-      void advance();
-      
+
+      //Need to do something about this
       typedef enum
       {
          e_st_none,
@@ -112,16 +100,29 @@ public:
          e_st_other,
          e_st_done
       } state;
-      
+
       state m_state;
+
+   private:
+      class Private;
+      Private* _pm;
+
+      ItemDict* m_dict;
+      uint32 m_version;
+      uint32 m_currentMark;
+      bool m_complete;
+      String m_tempString;
+
+      /** Internal iterator advancement. */
+      void advance();
    };
 
    ConcurrencyGuard& guard() const { return m_guard; }
-   
+
 private:
    class Private;
    Private* _p;
-   
+
    uint32 m_flags;
    uint32 m_currentMark;
    uint32 m_version;

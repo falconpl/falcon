@@ -739,7 +739,7 @@ void Parser::saveErrorFrame()
    if( pf.m_bErrorMode )
    {
       TRACE( "Parser::saveErrorFrame -- Not saving Frame %d for rule %s(%d:%d) because in error mode.",
-               _p->m_pframes->size(), pf.m_owningToken->name().c_ize(), pf.m_hypotesis, pf.m_hypToken );
+               (int32)_p->m_pframes->size(), pf.m_owningToken->name().c_ize(), pf.m_hypotesis, pf.m_hypToken );
       return;
    }
 
@@ -759,8 +759,8 @@ void Parser::saveErrorFrame()
          }
 
 
-         TRACE( "Parser::saveErrorFrame -- saving error frame of depth %d at rule %s",
-                  _p->m_pErrorFrames->size(),
+         TRACE( "Parser::saveErrorFrame -- saving error frame of depth %u at rule %s",
+                  (unsigned int)_p->m_pErrorFrames->size(),
                   _p->m_pErrorFrames->back().m_owningToken->name().c_ize() );
       }
       else {
@@ -1059,8 +1059,8 @@ void Parser::applyCurrentRule()
    // clear the error frames if they'rebelow our frame.
    if ( _p->m_pframes->size() < _p->m_pErrorFrames->size() )
    {
-      TRACE1("Parser::applyCurrentRule -- clearing error frame of lower rules (%d on %d)",
-               _p->m_pframes->size(), _p->m_pErrorFrames->size());
+      TRACE1("Parser::applyCurrentRule -- clearing error frame of lower rules (%u on %u)",
+               (unsigned int)_p->m_pframes->size(), (unsigned int)_p->m_pErrorFrames->size());
 
       _p->m_pErrorFrames->clear();
    }

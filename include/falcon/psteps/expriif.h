@@ -46,7 +46,7 @@ private:
    class FALCON_DYN_CLASS Gate: public PStep {
    public:
       Gate( ExprIIF* owner );
-      virtual void describeTo( String& target, int=0 ) const { target = "Gate for expriif"; }
+      virtual void describeTo( String& target ) const { target = "Gate for expriif"; }
       static void apply_( const PStep*, VMContext* ctx );
    private:
       ExprIIF* m_owner;

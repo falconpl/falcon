@@ -350,7 +350,7 @@ void Selector::addErr( Selectable* stream )
 bool Selector::remove( Selectable* resource )
 {
    Multiplex* mplex = 0;
-   bool bFound;
+   bool bFound = false;
 
    _p->m_mtx.lock();
    Private::StreamMap::iterator iter = _p->m_selectables.find(resource);
