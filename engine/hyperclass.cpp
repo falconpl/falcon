@@ -256,7 +256,7 @@ bool HyperClass::isDerivedFrom( const Class* cls ) const
    for( int i = 0; i < m_parentship->arity(); ++i ) {
       Class* pcls = static_cast<ExprInherit*>( m_parentship->nth(i) )->base();
 
-      if( cls->isDerivedFrom(pcls) ) {
+      if( pcls->isDerivedFrom(cls) ) {
          return true;
       }
    }

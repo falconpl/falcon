@@ -574,7 +574,9 @@ public:
       case e_t_symbol:
          if( value.type() == FLC_CLASS_ID_SYMBOL )
          {
-            return static_cast<Symbol*>(value.asInst())->name() == m_data.sym.symbol->name();
+			//Need to do something about this
+            //static_cast<Symbol*>(value.asInst())->name() == m_data.sym.symbol->name();
+			return false;
          }
          return false;
 
@@ -592,7 +594,9 @@ public:
          }
          else if( value.type() == FLC_CLASS_ID_STRING )
          {
-            return *value.asString() == *m_data.strings.string1;
+			//Need to do something about this
+            //*value.asString() == *m_data.strings.string1;
+			return false;
          }
          else if( value.type() == FLC_CLASS_ID_CLASS )
          {
@@ -646,8 +650,6 @@ ExprCase::ExprCase( int line, int chr ):
    apply = apply_;
    _p = new Private;
 }
-
-
 ExprCase::ExprCase( const ExprCase& other ):
    Expression( other )
 {
