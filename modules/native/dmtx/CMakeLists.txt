@@ -4,9 +4,16 @@
 #   Author(s): Stanislas Marquis <stnsls@gmail.com>
 #
 
+if(NOT FALCON_MODULE_DTMX )
+	message( STATUS "NOT building module: dtmx")
+	return()
+end()
+
 falcon_define_module( FALCON_MODULE dmtx )
 
-message( STATUS "Adding DataMatrix module" )
+message( STATUS "Building module: dtmx" )
+
+list( APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake )
 
 ##
 #   Find Falcon

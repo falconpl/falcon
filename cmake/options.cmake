@@ -16,27 +16,6 @@
 #################################################################
 
 
-function( set_default_var OPT desc VAL )
-	set(NAME "FALCON_${OPT}" )
-	if("${${NAME}}" STREQUAL "" )
-		set("${NAME}" "${VAL}" PARENT_SCOPE)
-		set("${NAME}" "${VAL}" )
-	endif()
-	Message( STATUS "${NAME}{${${NAME}}} - ${desc}" )
-	
-	set(lowname "Falcon_${OPT}")
-	set("${lowname}" "${VAL}" PARENT_SCOPE)
-	#message( STATUS "(lowercase) ${lowname} = ${${lowname}}" )
-endfunction()
-
-
-function( set_default_opt OPT desc VAL )
-	option( ${OPT} desc ${VAL} )
-	message( STATUS "FALCON_${OPT}{${VAL}} - ${desc} [ON|OFF]" )
-endfunction()
-
-
-
 Message("#################################################################")
 Message("#                 TOP-LEVEL BUILD OPTIONS                       #")
 Message("#################################################################")
@@ -146,7 +125,21 @@ endif()
  
  
 Message("#################################################################")
-Message("#               END OF TOP-LEVEL BUILD OPTIONS                  #")
+Message("#                 MODULES BUILD OPTIONS                         #")
 Message("#################################################################")
 
-  
+#########################################################
+
+set_default_opt( FALCON_NATMODS_AUTO "Select automatically all the modules that have support" ON )
+
+# Native modules, usually compiled
+set_default_opt( FALCON_MODULE_DBI "Build DBI module" ON )
+set_default_opt( FALCON_MODULE_DYNLIB "Build DYNLIB module" OFF)
+set_default_opt( FALCON_MODULE_MONGODB "Build MongoDB module" ON )
+set_default_opt( FALCON_MODULE_VFS_PROVIDERS "Build VFS modules" ON )
+set_default_opt( FALCON_BUILD_WOPI "Install Web Oriented Programming Interface" OFF  )
+
+# Bindings -- native modules requiring external libraries.
+FalconMakeBinding( CURL CURL "Install CURL binding" )
+FalconMakeBinding( SDL SDL "Install SDL binding" )
+

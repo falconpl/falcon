@@ -86,3 +86,58 @@ function( falcon_install_moddirs module_dirs )
    endforeach()
    
 endfunction()
+
+
+#################################################################
+# Create a publicly visible option with a default value
+# OPT - The option
+# desc - The description of the option 
+# VAL - ON or OFF
+
+function( set_default_var OPT desc VAL )
+	set(NAME "FALCON_${OPT}" )
+	if("${${NAME}}" STREQUAL "" )
+		set("${NAME}" "${VAL}" PARENT_SCOPE)
+		set("${NAME}" "${VAL}" )
+	endif()
+	Message( STATUS "${NAME}{${${NAME}}} - ${desc}" )
+	
+	set(lowname "Falcon_${OPT}")
+	set("${lowname}" "${VAL}" PARENT_SCOPE)
+	#message( STATUS "(lowercase) ${lowname} = ${${lowname}}" )
+endfunction()
+
+
+#################################################################
+# Create a publicly visible variable with a default value
+# OPT -  The variable name
+# desc - The description of the variable
+# VAL - the default value for the variable
+
+function( set_default_opt OPT desc VAL )
+	option( ${OPT} desc ${VAL} )
+	message( STATUS "FALCON_${OPT}{${VAL}} - ${desc} [ON|OFF]" )
+endfunction()
+
+
+
+#################################################################
+# Automatic binding module generation
+# module - The name of a falcon module
+# lib - the CMAKE name for the bound library 
+# desc - description to be sent to message
+
+macro( FalconMakeBinding module lib desc )
+
+   if( FALCON_NATMODS_AUTO )
+      find_package( ${lib} )
+      if ( ${lib}_FOUND )
+         set_default_opt( FALCON_BUILD_${module} "${desc}" ON )
+      else()
+         set_default_opt( FALCON_BUILD_${module} "${desc}" OFF )
+      endif()
+   else()
+      set_default_opt( FALCON_BUILD_${module} "${desc}" OFF )
+   endif()
+
+endmacro()

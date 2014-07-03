@@ -1,11 +1,48 @@
-###############################################################################
-# Falcon Programming language
-# Build and installation suite
+#################################################################
 #
-# Native modules
+#   FALCON - The Falcon Programming Language.
+#   FILE: /modules/native/CMakeLists.txt
+#
+#   CMake build system list for native (C/C++/asm) modules
+#   -------------------------------------------------------------------
+#   Author: Giancarlo Niccolai
+#   Begin: Wed, 02 Jul 2014 23:02:17 +0200
+#
+#   -------------------------------------------------------------------
+#   (C) Copyright 2014: the FALCON developers (see list in AUTHORS file)
+#
+#   See LICENSE file for licensing details.
+#   
+#################################################################
+
+#####################################################
+# Internal language modules
 #
 
-list( APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake )
+add_subdirectory(feathers)
+
+#####################################################
+# Other canonical native modules
+#
+# Note: Some module are disabled in ALPHA
+
+# add_subdirectory(conio)
+add_subdirectory(curl)
+add_subdirectory(dbi)
+# add_subdirectory(dbus)
+add_subdirectory(dtmx)
+# add_subdirectory(dynlib)
+add_subdirectory(gd2)
+# add_subdirectory(gtk)
+# add_subdirectory(hpdf)
+# add_subdirectory(mongodb)
+# add_subdirectory(MP)
+# add_subdirectory(sdl)
+add_subdirectory(vfs_providers)
+
+
+
+
 
 #########################################################
 # Utilities used in this section
@@ -37,7 +74,7 @@ OPTION( FALCON_BUILD_VFS "Install VFS modules" ON )
 
 # Bindings -- native modules requiring external libraries.
 FalconMakeBinding( CURL CURL "Install CURL binding" )
-FalconMakeBinding( SDL SDL "Install SDL  binding" )
+FalconMakeBinding( SDL SDL "Install SDL binding" )
 
 
 # Other modules

@@ -454,19 +454,12 @@ set_target_properties(falcon_engine PROPERTIES
 
 #In unix and mac we have to add extra libraries
 if(UNIX OR APPLE)
-  #also dl for linux and solaris
-  # and RT only for solaris and non-bsd systems
-  set(SYS_LIBS pthread m)
-  if(APPLE)
-    list(APPEND SYS_LIBS dl)
-  else()
-    IF(CMAKE_SYSTEM_NAME MATCHES ".*BSD")
-    else()
-      list(APPEND SYS_LIBS dl rt)
-    endif()
-  endif()
-  target_link_libraries(falcon_engine ${SYS_LIBS})
+  set(SYS_LIBS pthread m)  
 endif()
+
+#if this doesn't work on solaris, add dl and rt
+list(APPEND SYS_LIBS ${CMAKE_DL_LIBS})
+target_link_libraries(falcon_engine ${SYS_LIBS})
 
 install(TARGETS falcon_engine 
   EXPORT falcon-core-targets

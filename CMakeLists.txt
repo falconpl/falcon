@@ -81,8 +81,15 @@ include( cmake/install-gnudocs.cmake )
 
 #collect the include files in FALCON_HEADER
 add_subdirectory(include)
-add_subdirectory(clt)
 add_subdirectory(engine)
+add_subdirectory(clt)
+
+add_subdirectory(modules)
+add_subdirectory( apps )
+add_subdirectory( docs )
+add_subdirectory( tests/bin )
+add_subdirectory( dist )
+
 
 #add_subdirectory(devtools)
 #add_custom_target(falcon-core)
@@ -150,22 +157,13 @@ endif()
 
 if( FALCON_BUILD_BINTESTS )
     message( STATUS "Building embedding binary tests" )
-    add_subdirectory( tests/bin )
+    #add_subdirectory( tests/bin )
 endif()
 
 if( FALCON_INSTALL_TESTS )
     message( STATUS "Adding (source) tests, samples and demos to the distribution" )
 else()
     message( STATUS "Not installing tests" )
-endif()
-
-# CMake generated information.  Is used by our falcon-config.cmake
-if (NOT FALCON_CMAKE_DIR)
-   if(WIN32)
-      set(FALCON_CMAKE_DIR cmake)
-   else()
-      set(FALCON_CMAKE_DIR ${FALCON_SHARE_DIR}/cmake)
-   endif()
 endif()
 
 install(EXPORT falcon-core-targets
