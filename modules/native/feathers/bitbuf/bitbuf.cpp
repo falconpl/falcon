@@ -32,12 +32,7 @@
    the Falcon engine.
 */
 
-#include <falcon/module.h>
-#include <falcon/class.h>
-#include <falcon/ov_names.h>
-#include "bitbuf_ext.h"
-#include "bitbuf_mod.h"
-#include "buffererror.h"
+#include "module_bitbuf.h"
 
 /*#
 @module feathers.bitbuf Bit-orieted read/write buffer.
@@ -115,31 +110,9 @@ multiple writes that are to be seen atomically by the script.
 
 */
 
-Falcon::Module *bufext_module_init(void)
-{
-   // initialize the module
-   Falcon::Module *self = new Falcon::Module("bitbuf");
-
-   //============================================================
-   // API declarations
-   //
-
-   self->addConstant( "NATIVE_ENDIAN", (Falcon::int64)Falcon::Ext::BitBuf::e_endian_same );
-   self->addConstant( "LITTLE_ENDIAN", (Falcon::int64)Falcon::Ext::BitBuf::e_endian_little );
-   self->addConstant( "BIG_ENDIAN",    (Falcon::int64)Falcon::Ext::BitBuf::e_endian_big );
-   self->addConstant( "REVERSE_ENDIAN",(Falcon::int64)Falcon::Ext::BitBuf::e_endian_reverse );
-
-   Falcon::Class *bitbuf = Falcon::Ext::init_classbitbuf();
-
-   self->addMantra( bitbuf, true );
-   self->addMantra( new Falcon::Ext::ClassBitBufError, true );
-
-   return self;
-}
-
 FALCON_MODULE_DECL
 {
-    return bufext_module_init();
+    return new Falcon::Feathers::ModuleBitbuf();
 }
 
 /* end of bitbuf.cpp */

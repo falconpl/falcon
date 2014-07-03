@@ -3,10 +3,10 @@
 
    FILE: grammar.fal
 
-   Generic parser.
+   EBNF-Like grammar parser.
    -------------------------------------------------------------------
    Author: Giancarlo Niccolai
-   Begin: Thu, 19 Aug 2010 01:34:20 +0200
+   Begin: Wed, 02 Jul 2014 14:37:04 +0200
 
    -------------------------------------------------------------------
    (C) Copyright 2014: the FALCON developers (see list in AUTHORS file)
@@ -288,8 +288,6 @@
       Of course, if the value associated with the repeated token is originally an array,
       it will be incapsulated again an another array, becoming an array-of-array.
 */
-
-/*# @beginmodule grammar */
 
 
 /*#

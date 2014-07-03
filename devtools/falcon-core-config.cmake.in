@@ -58,7 +58,7 @@ set( Falcon_PATCH_VERSION @FALCON_VERSION_PATCH@ )
 if(NOT Falcon_IN_CORE_SOURCETREE)
   #Check if everything is in place.
   find_program(Falcon_EXECUTABLE falcon "${Falcon_BINARY_DIR}")
-  find_program(Falcon_falpack_EXECUTABLE falpack "${Falcon_BINARY_DIR}")
+  #find_program(Falcon_falpack_EXECUTABLE falpack "${Falcon_BINARY_DIR}")
   find_library(Falcon_ENGINE falcon_engine "${Falcon_LIBRARY_DIR}")
   find_file(Falcon_ENGINE_INC falcon/engine.h "${Falcon_INCLUDE_DIR}" )
 endif()

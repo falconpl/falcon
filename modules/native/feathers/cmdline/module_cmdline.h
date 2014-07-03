@@ -13,8 +13,8 @@
    See LICENSE file for licensing details.
 */
 
-#ifndef FALCON_FEATHERS_MOD_CMDLINEPARSER
-#define FALCON_FEATHERS_MOD_CMDLINEPARSER
+#ifndef FALCON_FEATHERS_MODULE_CMDLINE
+#define FALCON_FEATHERS_MODULE_CMDLINE
 
 #include <falcon/setup.h>
 #include <falcon/module.h>
@@ -23,9 +23,9 @@ namespace Falcon {
 
 class PStep;
 
-namespace Ext {
+namespace Feathers {
 
-class ModCmdlineParser: public Module
+class ModuleCmdline: public Module
 {
 public:
    // step called to get the next option
@@ -33,8 +33,8 @@ public:
    // step landing after a callback
    PStep* m_stepAfterCall;
 
-   ModCmdlineParser();
-   virtual ~ModCmdlineParser();
+   ModuleCmdline();
+   virtual ~ModuleCmdline();
 };
 
 }

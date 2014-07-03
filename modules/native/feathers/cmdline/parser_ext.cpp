@@ -32,7 +32,7 @@
 #include <falcon/vm.h>
 #include <stdarg.h>
 
-#include "modcmdlineparser.h"
+#include "module_cmdline.h"
 
 
 #define PARSE_LOCAL_LASTPARSED   0
@@ -219,9 +219,7 @@
 */
 
 namespace Falcon{
-namespace Ext {
-namespace CCmdLineParser {
-
+namespace {
 
 /*#
    @method parse Parser
@@ -238,7 +236,7 @@ namespace CCmdLineParser {
 FALCON_DECLARE_FUNCTION( parse, "args:[A]" )
 FALCON_DEFINE_FUNCTION_P1( parse )
 {
-   ModCmdlineParser* mod = static_cast<ModCmdlineParser*>(this->module());
+   ::Falcon::Feathers::ModuleCmdline* mod = static_cast< ::Falcon::Feathers::ModuleCmdline*>(this->module());
 
    FalconInstance *self = static_cast<FalconInstance*>(ctx->self().asInst());
    Item *i_params = ctx->param( 0 );
@@ -322,54 +320,6 @@ FALCON_DEFINE_FUNCTION_P1( usage )
    ctx->vm()->textOut()->write( "This class should be derived and the method usage() overloaded.\n" );
 }
 
-}
-
-//================================================================================================
-// Main module part.
-//================================================================================================
-
-static void callACallback( VMContext* ctx, uint32 lastParsed, const String& method, ... )
-{
-   FalconInstance *self = static_cast<FalconInstance*>(ctx->self().asInst());
-
-   // clear request prior the call
-   self->setProperty( PARSE_PROPERTY_REQUEST, Item() );
-
-   // get the required method
-   Item i_method;
-   self->getProperty( method, i_method );
-   if ( i_method.isCallable() )
-   {
-     va_list params;
-     va_start(params, method);
-
-     ctx->pushData( i_method );
-     uint32 count = 0;
-     Item* p;
-     while( (p = va_arg(params,Item*)) != 0 )
-     {
-        ctx->pushData( *p );
-        ++count;
-     }
-     va_end(params);
-
-     ctx->callInternal( i_method, count );
-   }
-   else
-   {
-     FalconInstance *self = static_cast<FalconInstance*>(ctx->self().asInst());
-     self->setProperty( PARSE_PROPERTY_LASTPARSED, Item().setInteger(lastParsed) );
-     ctx->returnFrame( Item().setBoolean(false) );
-     return;
-   }
-}
-
-static void saveStatus( VMContext* ctx, uint32 lastParsed, uint32 status, const Item& lastOption )
-{
-   ctx->local(PARSE_LOCAL_LASTPARSED)->setInteger(lastParsed);
-   ctx->local(PARSE_LOCAL_STAUS)->setInteger(status);
-   *ctx->local(PARSE_LOCAL_CURRENTOPT) = lastOption;
-}
 
 /*#
    @method onFree CmdlineParser
@@ -441,9 +391,59 @@ static void saveStatus( VMContext* ctx, uint32 lastParsed, uint32 status, const 
    invalid option is received, an error state should be set in the application
    or in the parser object.
 */
+}
+
+namespace Feathers {
+
+//================================================================================================
+// Main module part.
+//================================================================================================
+
+static void callACallback( VMContext* ctx, uint32 lastParsed, const String& method, ... )
+{
+   FalconInstance *self = static_cast<FalconInstance*>(ctx->self().asInst());
+
+   // clear request prior the call
+   self->setProperty( PARSE_PROPERTY_REQUEST, Item() );
+
+   // get the required method
+   Item i_method;
+   self->getProperty( method, i_method );
+   if ( i_method.isCallable() )
+   {
+     va_list params;
+     va_start(params, method);
+
+     ctx->pushData( i_method );
+     uint32 count = 0;
+     Item* p;
+     while( (p = va_arg(params,Item*)) != 0 )
+     {
+        ctx->pushData( *p );
+        ++count;
+     }
+     va_end(params);
+
+     ctx->callInternal( i_method, count );
+   }
+   else
+   {
+     FalconInstance *self = static_cast<FalconInstance*>(ctx->self().asInst());
+     self->setProperty( PARSE_PROPERTY_LASTPARSED, Item().setInteger(lastParsed) );
+     ctx->returnFrame( Item().setBoolean(false) );
+     return;
+   }
+}
+
+static void saveStatus( VMContext* ctx, uint32 lastParsed, uint32 status, const Item& lastOption )
+{
+   ctx->local(PARSE_LOCAL_LASTPARSED)->setInteger(lastParsed);
+   ctx->local(PARSE_LOCAL_STAUS)->setInteger(status);
+   *ctx->local(PARSE_LOCAL_CURRENTOPT) = lastOption;
+}
 
 
-ModCmdlineParser::ModCmdlineParser():
+ModuleCmdline::ModuleCmdline():
          Module("cmdline")
 {
    class PStepGetOption: public PStep
@@ -453,7 +453,7 @@ ModCmdlineParser::ModCmdlineParser():
       virtual ~PStepGetOption() {}
       virtual void describeTo( String& target ) const
       {
-         target = "ModCmdlineParser::PStepGetOption";
+         target = "ModuleCmdline::PStepGetOption";
       }
 
    private:
@@ -461,7 +461,7 @@ ModCmdlineParser::ModCmdlineParser():
       static void apply_(const PStep*, VMContext* ctx )
       {
          // status.
-         ModCmdlineParser* mod = static_cast<ModCmdlineParser*>(ctx->currentFrame().m_function->module());
+         ModuleCmdline* mod = static_cast<ModuleCmdline*>(ctx->currentFrame().m_function->module());
          FalconInstance *self = static_cast<FalconInstance*>(ctx->self().asInst());
          uint32 i = ctx->local(PARSE_LOCAL_LASTPARSED)->asInteger();
          uint32 state = ctx->local(PARSE_LOCAL_STAUS)->asInteger();
@@ -511,7 +511,7 @@ ModCmdlineParser::ModCmdlineParser():
                     // we'll eventually change the status later, but now save the option.
                     saveStatus( ctx, i+1, PARSE_LOCAL_STAUS_NONE, i_option );
                     // get the module...
-                    ModCmdlineParser* mod = static_cast<ModCmdlineParser*>( ctx->currentFrame().m_function->module() );
+                    ModuleCmdline* mod = static_cast<ModuleCmdline*>( ctx->currentFrame().m_function->module() );
                     // ... see you after the call.
                     ctx->pushCode( mod->m_stepAfterCall );
                     callACallback( ctx, i, PARSE_PROPERTY_ONOPTION, &i_option, 0 );
@@ -583,10 +583,10 @@ ModCmdlineParser::ModCmdlineParser():
    FalconClass* cls = new FalconClass("Parser");
    addMantra(cls);
 
-   cls->addMethod( new CCmdLineParser::Function_parse );
-   cls->addMethod( new CCmdLineParser::Function_terminate );
-   cls->addMethod( new CCmdLineParser::Function_usage );
-   cls->addMethod( new CCmdLineParser::Function_expectValue );
+   cls->addMethod( new Function_parse );
+   cls->addMethod( new Function_terminate );
+   cls->addMethod( new Function_usage );
+   cls->addMethod( new Function_expectValue );
 
    cls->addProperty( PARSE_PROPERTY_REQUEST );
    cls->addProperty( PARSE_PROPERTY_LASTPARSED );
@@ -594,7 +594,7 @@ ModCmdlineParser::ModCmdlineParser():
 
 }
 
-ModCmdlineParser::~ModCmdlineParser()
+ModuleCmdline::~ModuleCmdline()
 {
    delete m_stepGetOption;
    delete m_stepAfterCall;

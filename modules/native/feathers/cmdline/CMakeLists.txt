@@ -11,7 +11,7 @@ endif()
 add_library(cmdline_fm MODULE
   parser_ext.cpp
   parser_ext.h
-  modcmdlineparser.h
+  module_cmdline.h
   cmdline.cpp
   ${SYS_RC}
 )

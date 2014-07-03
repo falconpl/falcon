@@ -27,9 +27,9 @@ endforeach()
 #
 
 IF(WIN32)
-   SET(sys_in_spec falconenv.bat icomp.bat)
+   SET(sys_in_spec)
 ELSE()
-   SET(sys_in_spec falcon-conf falconenv.sh icomp.sh)
+   SET(sys_in_spec falcon-conf)
 ENDIF()
 
 SET(in_bin_files
@@ -50,8 +50,6 @@ endforeach()
 #
 # Add non-configured files to be installed
 #
-
-list(APPEND inst_bin_files "fallc.fal")
 
 ########################################################################
 # Install

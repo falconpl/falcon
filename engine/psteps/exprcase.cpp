@@ -574,7 +574,7 @@ public:
       case e_t_symbol:
          if( value.type() == FLC_CLASS_ID_SYMBOL )
          {
-            static_cast<Symbol*>(value.asInst())->name() == m_data.sym.symbol->name();
+            return static_cast<Symbol*>(value.asInst())->name() == m_data.sym.symbol->name();
          }
          return false;
 
