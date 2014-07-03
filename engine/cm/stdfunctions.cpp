@@ -56,16 +56,16 @@ namespace Ext {
 FALCON_DEFINE_FUNCTION_P(sleep)
 {
    TRACE1( "-- called with %d params", pCount );
-   
-   // all the evaluation happens in the 
+
+   // all the evaluation happens in the
    if( pCount < 1 || ! ctx->param(0)->isOrdinal() ) {
       throw paramError();
    }
-   
+
    numeric to = ctx->param(0)->forceNumeric();
    ctx->sleep( (int64)(to * 1000) );
    ctx->returnFrame();
-} 
+}
 
 /*#
    @function rest
@@ -499,7 +499,7 @@ FALCON_DEFINE_FUNCTION_P1(map)
    public:
       PStepGetNext(){ apply = apply_;}
       virtual ~PStepGetNext() {}
-      virtual void describeTo(String& tgt) { tgt = "Function_map::PStepGetNext"; }
+      virtual void describeTo( String& tgt ) const { tgt = "Function_map::PStepGetNext"; }
 
       static void apply_(const PStep*, VMContext* ctx )
       {
@@ -526,7 +526,7 @@ FALCON_DEFINE_FUNCTION_P1(map)
    public:
       PStepProcessNext(){ apply = apply_;}
       virtual ~PStepProcessNext() {}
-      virtual void describeTo(String& tgt) { tgt = "Function_map::PStepProcessNext"; }
+      virtual void describeTo( String& tgt ) const { tgt = "Function_map::PStepProcessNext"; }
 
       static void apply_(const PStep*, VMContext* ctx )
       {
@@ -552,7 +552,7 @@ FALCON_DEFINE_FUNCTION_P1(map)
    public:
       PStepBeginIter(){ apply = apply_;}
       virtual ~PStepBeginIter() {}
-      virtual void describeTo(String& tgt) { tgt = "Function_map::PStepBeginIter"; }
+      virtual void describeTo( String& tgt ) const { tgt = "Function_map::PStepBeginIter"; }
 
       static void apply_(const PStep*, VMContext* ctx )
       {
@@ -627,7 +627,7 @@ FALCON_DEFINE_FUNCTION_P1(reduce)
    public:
       PStepGetNext(){ apply = apply_;}
       virtual ~PStepGetNext() {}
-      virtual void describeTo(String& tgt) { tgt = "Function_reduce::PStepGetNext"; }
+      virtual void describeTo( String& tgt ) const { tgt = "Function_reduce::PStepGetNext"; }
 
       static void apply_(const PStep*, VMContext* ctx )
       {
@@ -651,7 +651,7 @@ FALCON_DEFINE_FUNCTION_P1(reduce)
    public:
       PStepInvokeReduce(){ apply = apply_;}
       virtual ~PStepInvokeReduce() {}
-      virtual void describeTo(String& tgt) { tgt = "Function_reduce::PStepInvokeReduce"; }
+      virtual void describeTo( String& tgt ) const { tgt = "Function_reduce::PStepInvokeReduce"; }
 
       static void apply_(const PStep*, VMContext* ctx )
       {
@@ -679,7 +679,7 @@ FALCON_DEFINE_FUNCTION_P1(reduce)
    public:
       PStepGenSecond(){ apply = apply_;}
       virtual ~PStepGenSecond() {}
-      virtual void describeTo(String& tgt) { tgt = "Function_reduce::PStepGenSecond"; }
+      virtual void describeTo( String& tgt ) const { tgt = "Function_reduce::PStepGenSecond"; }
 
       static void apply_(const PStep*, VMContext* ctx )
       {
@@ -701,7 +701,7 @@ FALCON_DEFINE_FUNCTION_P1(reduce)
    public:
       PStepGenFirst(){ apply = apply_;}
       virtual ~PStepGenFirst() {}
-      virtual void describeTo(String& tgt) { tgt = "Function_reduce::PStepGenFirst"; }
+      virtual void describeTo( String& tgt ) const { tgt = "Function_reduce::PStepGenFirst"; }
 
       static void apply_(const PStep*, VMContext* ctx )
       {
@@ -768,7 +768,7 @@ FALCON_DEFINE_FUNCTION_P1(filter)
    public:
       PStepGetNext(){ apply = apply_;}
       virtual ~PStepGetNext() {}
-      virtual void describeTo(String& tgt) { tgt = "Function_filter::PStepGetNext"; }
+      virtual void describeTo( String& tgt ) const { tgt = "Function_filter::PStepGetNext"; }
 
       static void apply_(const PStep*, VMContext* ctx )
       {
@@ -801,7 +801,7 @@ FALCON_DEFINE_FUNCTION_P1(filter)
    public:
       PStepProcessNext(){ apply = apply_;}
       virtual ~PStepProcessNext() {}
-      virtual void describeTo(String& tgt) { tgt = "Function_filter::PStepProcessNext"; }
+      virtual void describeTo( String& tgt ) const { tgt = "Function_filter::PStepProcessNext"; }
 
       static void apply_(const PStep*, VMContext* ctx )
       {
@@ -827,7 +827,7 @@ FALCON_DEFINE_FUNCTION_P1(filter)
    public:
       PStepBeginIter(){ apply = apply_;}
       virtual ~PStepBeginIter() {}
-      virtual void describeTo(String& tgt) { tgt = "Function_filter::PStepBeginIter"; }
+      virtual void describeTo( String& tgt ) const { tgt = "Function_filter::PStepBeginIter"; }
 
       static void apply_(const PStep*, VMContext* ctx )
       {
@@ -953,7 +953,7 @@ FALCON_DEFINE_FUNCTION_P1(cascade)
    public:
       PStepGetNext(){ apply = apply_;}
       virtual ~PStepGetNext() {}
-      virtual void describeTo(String& tgt) { tgt = "Function_cascade::PStepGetNext"; }
+      virtual void describeTo( String& tgt ) const { tgt = "Function_cascade::PStepGetNext"; }
 
       static void apply_(const PStep*, VMContext* ctx )
       {
@@ -978,7 +978,7 @@ FALCON_DEFINE_FUNCTION_P1(cascade)
    public:
       PStepFuncResult(){ apply = apply_;}
       virtual ~PStepFuncResult() {}
-      virtual void describeTo(String& tgt) { tgt = "Function_cascade::PStepFuncResult"; }
+      virtual void describeTo( String& tgt ) const { tgt = "Function_cascade::PStepFuncResult"; }
 
       static void apply_(const PStep*, VMContext* ctx )
       {
@@ -1001,7 +1001,7 @@ FALCON_DEFINE_FUNCTION_P1(cascade)
    public:
       PStepProcessFirst(){ apply = apply_;}
       virtual ~PStepProcessFirst() {}
-      virtual void describeTo(String& tgt) { tgt = "Function_cascade::PStepProcessFirst"; }
+      virtual void describeTo( String& tgt ) const { tgt = "Function_cascade::PStepProcessFirst"; }
 
       static void apply_(const PStep*, VMContext* ctx )
       {
@@ -1032,7 +1032,7 @@ FALCON_DEFINE_FUNCTION_P1(cascade)
    public:
       PStepBeginIter(){ apply = apply_;}
       virtual ~PStepBeginIter() {}
-      virtual void describeTo(String& tgt) { tgt = "Function_cascade::PStepBeginIter"; }
+      virtual void describeTo( String& tgt ) const { tgt = "Function_cascade::PStepBeginIter"; }
 
       static void apply_(const PStep*, VMContext* ctx )
       {
@@ -1092,7 +1092,7 @@ FALCON_DEFINE_FUNCTION_P1(perform)
    public:
       PStepGetNext(){ apply = apply_;}
       virtual ~PStepGetNext() {}
-      virtual void describeTo(String& tgt) { tgt = "Function_perform::PStepGetNext"; }
+      virtual void describeTo( String& tgt ) const { tgt = "Function_perform::PStepGetNext"; }
 
       static void apply_(const PStep*, VMContext* ctx )
       {
@@ -1152,7 +1152,7 @@ FALCON_DEFINE_FUNCTION_P1(ffirstOf)
    public:
       PStepGetNext(){ apply = apply_;}
       virtual ~PStepGetNext() {}
-      virtual void describeTo(String& tgt) { tgt = "Function_firstOf::PStepGetNext"; }
+      virtual void describeTo( String& tgt ) const { tgt = "Function_firstOf::PStepGetNext"; }
 
       static void apply_(const PStep*, VMContext* ctx )
       {
@@ -1222,7 +1222,7 @@ FALCON_DEFINE_FUNCTION_P(ffor)
    public:
       PStepCheckLimit(){ apply = apply_;}
       virtual ~PStepCheckLimit() {}
-      virtual void describeTo(String& tgt) { tgt = "Function_ffor::PStepCheckLimit"; }
+      virtual void describeTo( String& tgt ) const { tgt = "Function_ffor::PStepCheckLimit"; }
 
       static void apply_(const PStep*, VMContext* ctx )
       {
@@ -1246,7 +1246,7 @@ FALCON_DEFINE_FUNCTION_P(ffor)
    public:
       PStepCheckResult(){ apply = apply_;}
       virtual ~PStepCheckResult() {}
-      virtual void describeTo(String& tgt) { tgt = "Function_ffor::PStepCheckResult"; }
+      virtual void describeTo( String& tgt ) const { tgt = "Function_ffor::PStepCheckResult"; }
 
       static void apply_(const PStep*, VMContext* ctx )
       {
@@ -1274,7 +1274,7 @@ FALCON_DEFINE_FUNCTION_P(ffor)
    public:
       PStepIncrement(){ apply = apply_;}
       virtual ~PStepIncrement() {}
-      virtual void describeTo(String& tgt) { tgt = "Function_ffor::PStepIncrement"; }
+      virtual void describeTo( String& tgt ) const { tgt = "Function_ffor::PStepIncrement"; }
 
       static void apply_(const PStep*, VMContext* ctx )
       {
@@ -1326,7 +1326,7 @@ FALCON_DEFINE_FUNCTION_P(makeEnum)
    public:
       PStepGen(){ apply = apply_;}
       virtual ~PStepGen() {}
-      virtual void describeTo(String& tgt) { tgt = "Function_makeEnum::PStepGen"; }
+      virtual void describeTo( String& tgt ) const { tgt = "Function_makeEnum::PStepGen"; }
 
       static void apply_(const PStep*, VMContext* ctx )
       {

@@ -49,7 +49,7 @@ SynFunc::~SynFunc()
 
 Class* SynFunc::handler() const
 {
-   static Class* cls = Engine::handlers()->synFuncClass();   
+   static Class* cls = Engine::handlers()->synFuncClass();
    return cls;
 }
 
@@ -60,14 +60,14 @@ void SynFunc::setConstructor()
    public:
       PStepReturnCtor() { apply = apply_; }
       virtual ~PStepReturnCtor() {}
-      void describeTo( String& v, int ) const { v = "Automatic return constructor value"; }
-      
+      void describeTo( String& v ) const { v = "Automatic return constructor value"; }
+
    private:
-      static void apply_( const PStep*, VMContext* ctx ) {         
+      static void apply_( const PStep*, VMContext* ctx ) {
          ctx->returnFrame( ctx->self() );
       }
    };
-   
+
    static PStepReturnCtor s_ctorReturn;
 
    m_bIsConstructor = true;
@@ -78,11 +78,11 @@ void SynFunc::setConstructor()
 
 #if 0
 void SynFunc::invoke( VMContext* ctx, int32 nparams )
-{  
+{
    // nothing to do?
    register int paramCount = (int) this->paramCount();
    register int localCount = (int) this->parameters().localCount();
-   
+
    // fill the parameters
    TRACE1( "-- filing parameters: %d/%d, and locals %d",
          nparams, paramCount,
@@ -99,7 +99,7 @@ void SynFunc::invoke( VMContext* ctx, int32 nparams )
    //ctx->addLocals( localCount );
    // Structure in data stack is:
    // [np0] [np1] [..] [..] [l0] [l1] [..]
-   
+
    // push a static return in case of problems.
    ctx->pushCode( m_retStep );
    ctx->pushCode( &this->syntree() );

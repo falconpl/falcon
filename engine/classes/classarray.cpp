@@ -903,7 +903,7 @@ class PStepScanInvoke: public PStep
 public:
    PStepScanInvoke() {apply=apply_;}
    virtual ~PStepScanInvoke() {}
-   void describeTo(String& tgt) {tgt = "PStepScanInvoke";}
+   void describeTo( String& tgt ) const {tgt = "PStepScanInvoke";}
 
    static void apply_(const PStep*, VMContext* ctx )
    {
@@ -1133,7 +1133,7 @@ class PStepQSort: public PStep
 public:
    PStepQSort( ClassArray* ca ): m_ca(ca) {apply=apply_;}
    virtual ~PStepQSort() {}
-   void describeTo(String& tgt) {tgt = "PStepQSort";}
+   void describeTo( String& tgt ) const {tgt = "PStepQSort";}
 
    static void apply_(const PStep* ps, VMContext* ctx )
    {
@@ -1212,7 +1212,7 @@ class PStepQSortLow: public PStep
 public:
    PStepQSortLow() {apply=apply_;}
    virtual ~PStepQSortLow() {}
-   void describeTo(String& tgt) {tgt = "PStepQSortLow";}
+   void describeTo( String& tgt ) const {tgt = "PStepQSortLow";}
 
    static void apply_(const PStep*, VMContext* ctx )
    {
@@ -1264,7 +1264,7 @@ class PStepQSortPartHigh: public PStep
 public:
    PStepQSortPartHigh() {apply=apply_;}
    virtual ~PStepQSortPartHigh() {}
-   void describeTo(String& tgt) {tgt = "PStepQSortPartHigh";}
+   void describeTo( String& tgt ) const {tgt = "PStepQSortPartHigh";}
 
    static void apply_(const PStep*, VMContext* ctx )
    {
@@ -1321,7 +1321,7 @@ class PStepCompareNext: public PStep
 public:
    PStepCompareNext() {apply=apply_;}
    virtual ~PStepCompareNext() {}
-   void describeTo(String& tgt) {tgt = "PStepCompareNext";}
+   void describeTo( String& tgt ) const {tgt = "PStepCompareNext";}
 
    static void apply_(const PStep*, VMContext* ctx )
    {
@@ -1682,7 +1682,7 @@ bool ClassArray::op_init( VMContext* ctx, void* instance, int pcount ) const
          (*array)[pos] = first[pos];
       }
    }
-   
+
    return false;
 }
 
@@ -2171,7 +2171,7 @@ void ClassArray::op_call( VMContext* ctx, int32 paramCount, void* self ) const
 
    if( len == 0 )
    {
-      Class::op_call( ctx, paramCount, self ); 
+      Class::op_call( ctx, paramCount, self );
    }
    else
    {

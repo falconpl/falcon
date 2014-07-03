@@ -58,36 +58,36 @@ class MetaHyperClass;
  in some cases, this helps to transparently hold Falcon item types as subclasses,
  and simplifies garbage collecting management in case some subclass requires
  the generated self instance not to be marked.
- 
+
  */
 class FALCON_DYN_CLASS HyperClass: public ClassMulti
 {
-public:   
-   
+public:
+
    /** Creates a stand-alone hyperclass.
     \param name The name under which this class is known (can be the same as
-           the name of the master class.   
+           the name of the master class.
 
-    This version of the constructor can be used to synthezise a hyperclass 
+    This version of the constructor can be used to synthezise a hyperclass
     from code obviating the need to create a FalconClass prior to it. It is
     then possible to directly add parents to this hyperclass. This helps to
     create derived class from multiple parents in third party modules.
     */
    HyperClass( const String& name );
-   
+
    virtual ~HyperClass();
 
    Function* constructor() const { return m_constructor; }
-   
+
    /** Sets a topmost constructor function.
     This method can be used to set an initialization function that is
     called above the master class constructor, in case the hyperclass
     is synthezized.
     */
-   void constructor( Function* c ) { m_constructor = c; }      
+   void constructor( Function* c ) { m_constructor = c; }
 
    bool addParent( Class* parent );
-   
+
    bool addProperty( const String& name, const Item& initValue );
    bool addProperty( const String& name, Expression* initExpr );
    bool addProperty( const String& name );
@@ -99,11 +99,11 @@ public:
    virtual void dispose( void* self ) const;
    virtual void* clone( void* source ) const;
    virtual void* createInstance() const;
- 
-   
+
+
    virtual bool isDerivedFrom( const Class* cls ) const;
    virtual void* getParentData( const Class* parent, void* data ) const;
-   
+
    //=========================================================
    // Class management
    //
@@ -138,26 +138,26 @@ private:
    FalconClass* m_master;
    int m_nParents;
    bool m_ownParentship;
-   
+
    /** Creates the hyperclass with a name and a master (final child) class.
     \param master The master class.
-    
+
     The master class is owned by this hyperclass and it's destroyed
     when the hyperclass is destroyed.
     */
-   HyperClass( FalconClass* master );   
-   
+   HyperClass( FalconClass* master );
+
    void setParentship( ExprParentship* ps, bool own = true );
-   
+
    class FALCON_DYN_CLASS InitParentsStep: public PStep
    {
    public:
       InitParentsStep( HyperClass* o ): m_owner(o) { apply = apply_; }
       virtual ~InitParentsStep() {};
-      virtual void describeTo( String& tgt, int ) const { 
+      virtual void describeTo( String& tgt ) const {
          tgt = "InitParentStep for " + m_owner->name();
       }
-      
+
       static void apply_(const PStep* ps, VMContext* ctx );
 
    private:
@@ -171,7 +171,7 @@ private:
    public:
       InitMasterExprStep( HyperClass* o ): m_owner(o) { apply = apply_; }
       virtual ~InitMasterExprStep() {};
-      virtual void describeTo( String& tgt, int ) const {
+      virtual void describeTo( String& tgt ) const {
          tgt = "InitMasterExprStep for " + m_owner->name();
       }
 

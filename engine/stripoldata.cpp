@@ -61,7 +61,7 @@ public:
 
          fmt->opFormat(ctx, ivalue );
       }
-      virtual void describeTo( String& desc , int ) const
+      virtual void describeTo( String& desc ) const
       {
          desc = "StrIPolData::PStepFormatter";
       }
@@ -82,7 +82,7 @@ public:
          ctx->topData().forceClassInst(cls, inst);
          cls->op_toString( ctx, inst );
       }
-      virtual void describeTo( String& desc , int ) const
+      virtual void describeTo( String& desc ) const
       {
          desc = "StrIPolData::PStepStringifier";
       }

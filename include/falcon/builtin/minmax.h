@@ -29,8 +29,10 @@ public:
    virtual ~MinOrMax();
    virtual void invoke( VMContext* vm, int32 pCount = 0 );
 
-private:
+   //Need to do something about this
    bool m_bIsMax;
+
+private:
 
    // Step for invocation
    class FALCON_DYN_CLASS InvokeStep: public PStep

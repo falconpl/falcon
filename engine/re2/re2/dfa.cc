@@ -155,7 +155,7 @@ class DFA {
         return false;
       if (a == NULL )
         return true;
-      if( b == NULL ) 
+      if( b == NULL )
          return false;
       if (a->flag_ < b->flag_)
         return true;
@@ -1767,7 +1767,7 @@ bool DFA::Search(const StringPiece& text,
     return false;
   }
   if (params.start == DeadState)
-    return NULL;
+    return false;
   if (params.start == FullMatchState) {
     if (run_forward == want_earliest_match)
       *epp = text.begin();

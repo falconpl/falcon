@@ -15,7 +15,7 @@
 
 
 #ifndef _FALCON_SP_PARSER_DYNSYM_H_
-#define _FALCON_SP_PARSER_DELETOR_H_
+#define _FALCON_SP_PARSER_DYNSYM_H_
 
 #include <falcon/setup.h>
 

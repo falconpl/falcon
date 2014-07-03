@@ -56,7 +56,7 @@ class ModSpace::PStepManagedLoadedModule: public PStep
 			apply = apply_;
 		}
 		virtual ~PStepManagedLoadedModule() {};
-		virtual void describeTo( String& str, int ) const
+		virtual void describeTo( String& str ) const
 		{
 			str = "PStepManagedLoadedModule";
 		}
@@ -74,7 +74,7 @@ class ModSpace::PStepResolveModReq: public PStep
 			apply = apply_;
 		}
 		virtual ~PStepResolveModReq() {};
-		virtual void describeTo( String& str, int ) const
+		virtual void describeTo( String& str ) const
 		{
 			str = "PStepResolveModReq";
 		}
@@ -92,14 +92,17 @@ class ModSpace::PStepStoreModReq: public PStep
 			apply = apply_;
 		}
 		virtual ~PStepStoreModReq() {};
-		virtual void describeTo( String& str, int ) const
+		virtual void describeTo( String& str ) const
 		{
 			str = "PStepStoreModReq";
 		}
 
+		//Need to do something about this
+        ModSpace* m_owner;
+
 	private:
 		static void apply_( const PStep* self, VMContext* ctx );
-		ModSpace* m_owner;
+
 };
 
 class ModSpace::PStepSetupModule: public PStep
@@ -110,14 +113,17 @@ class ModSpace::PStepSetupModule: public PStep
 			apply = apply_;
 		}
 		virtual ~PStepSetupModule() {};
-		virtual void describeTo( String& str, int ) const
+		virtual void describeTo( String& str ) const
 		{
 			str = "PStepSetupModule";
 		}
 
+		//Need to do something about this
+        ModSpace* m_owner;
+
 	private:
 		static void apply_( const PStep* self, VMContext* ctx );
-		ModSpace* m_owner;
+
 };
 
 class ModSpace::PStepCompleteLoad: public PStep
@@ -128,14 +134,16 @@ class ModSpace::PStepCompleteLoad: public PStep
 			apply = apply_;
 		}
 		virtual ~PStepCompleteLoad() {};
-		virtual void describeTo( String& str, int ) const
+		virtual void describeTo( String& str ) const
 		{
 			str = "PStepCompleteLoad";
 		}
 
+		//Need to do something about this
+        ModSpace* m_owner;
+
 	private:
 		static void apply_( const PStep* self, VMContext* ctx );
-		ModSpace* m_owner;
 };
 
 
@@ -147,14 +155,16 @@ class ModSpace::PStepDisposeLoad: public PStep
 			apply = apply_;
 		}
 		virtual ~PStepDisposeLoad() {};
-		virtual void describeTo( String& str, int ) const
+		virtual void describeTo( String& str ) const
 		{
 			str = "PStepDisposeLoad";
 		}
 
+		//Need to do something about this
+        ModSpace* m_owner;
+
 	private:
 		static void apply_( const PStep* self, VMContext* ctx );
-		ModSpace* m_owner;
 };
 
 class ModSpace::PStepSaveDynMantra: public PStep
@@ -165,14 +175,16 @@ class ModSpace::PStepSaveDynMantra: public PStep
 			apply = apply_;
 		}
 		virtual ~PStepSaveDynMantra() {};
-		virtual void describeTo( String& str, int ) const
+		virtual void describeTo( String& str ) const
 		{
 			str = "PStepSaveDynMantra";
 		}
 
+		//Need to do something about this
+        ModSpace* m_owner;
+
 	private:
 		static void apply_( const PStep* self, VMContext* ctx );
-		ModSpace* m_owner;
 };
 
 class ModSpace::PStepSetProcResult: public PStep
@@ -183,14 +195,16 @@ class ModSpace::PStepSetProcResult: public PStep
 			apply = apply_;
 		}
 		virtual ~PStepSetProcResult() {};
-		virtual void describeTo( String& str, int ) const
+		virtual void describeTo( String& str ) const
 		{
 			str = "PStepSetProcResult";
 		}
 
+		//Need to do something about this
+        ModSpace* m_owner;
+
 	private:
 		static void apply_( const PStep* self, VMContext* ctx );
-		ModSpace* m_owner;
 };
 
 
@@ -202,14 +216,16 @@ class ModSpace::PStepCallMain: public PStep
 			apply = apply_;
 		}
 		virtual ~PStepCallMain() {};
-		virtual void describeTo( String& str, int ) const
+		virtual void describeTo( String& str ) const
 		{
 			str = "PStepCallMain";
 		}
 
+		//Need to do something about this
+        ModSpace* m_owner;
+
 	private:
 		static void apply_( const PStep* self, VMContext* ctx );
-		ModSpace* m_owner;
 };
 
 

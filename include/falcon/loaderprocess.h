@@ -35,7 +35,7 @@ class FALCON_DYN_CLASS LoaderProcess: public Process
 public:
    LoaderProcess( VMachine* vm, ModSpace* ms );
 
-   void loadModule( const String& modUri, bool isUri, bool launchMain=false );  
+   void loadModule( const String& modUri, bool isUri, bool launchMain=false );
 
    ModSpace* modSpace() const { return m_ms; }
 
@@ -58,7 +58,7 @@ private:
          apply = apply_;
       }
       virtual ~PStepSetupMain() {};
-      virtual void describeTo( String& str, int ) const { str = "PStepSetupMain"; }
+      virtual void describeTo( String& str ) const { str = "PStepSetupMain"; }
 
    private:
       static void apply_( const PStep* self, VMContext* ctx );

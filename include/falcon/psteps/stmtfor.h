@@ -208,9 +208,11 @@ private:
       virtual ~PStepGetNext() {};
       virtual void describeTo( String& str ) const { str = "PStepGetNext"; }
 
+      //Need to do something about this
+      StmtForIn* m_owner;
    private:
       static void apply_( const PStep* self, VMContext* ctx );
-      StmtForIn* m_owner;
+
    };
 
 

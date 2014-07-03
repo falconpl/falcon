@@ -40,7 +40,7 @@ public:
    StrIPolData();
    StrIPolData(const StrIPolData& other);
    virtual ~StrIPolData();
-   
+
    typedef enum
    {
       e_pr_fail,
@@ -68,10 +68,10 @@ public:
 
    virtual void gcMark( uint32 value );
    virtual bool gcCheck( uint32 value );
-   
+
    virtual StrIPolData* clone() const;
    virtual void describe( String& target ) const;
-   
+
    class FALCON_DYN_CLASS Slice {
    public:
       typedef enum {
@@ -155,7 +155,7 @@ private:
       PStepExprComp(StrIPolData* ipd): m_owner(ipd) {apply = apply_;}
       virtual ~PStepExprComp() {}
       static void apply_( const PStep*, VMContext* ctx );
-      virtual void describeTo( String& desc , int ) const
+      virtual void describeTo( String& desc ) const
       {
          desc = "StrIPolData::PStepExprComp";
       }

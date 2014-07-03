@@ -318,7 +318,7 @@ NonTerminal& NonTerminal::addSubName(const String& name)
 NonTerminal::BuildError::BuildError(const NonTerminal& src, const String& descr)
 {
    m_descr = descr;
-   m_descr.A(" in ").A(src.name()).A(":").N(src._p->m_subTokens.size()+1);
+   m_descr.A(" in ").A(src.name()).A(":").N( (int32)(src._p->m_subTokens.size()+1) );
 }
 
 }
