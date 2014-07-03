@@ -17,7 +17,12 @@
    Buffer wrapper for stream operations.
 */
 
+#if defined BSD || defined __APPLE__
+#include <stdlib.h>
+#else
 #include <malloc.h>
+#endif
+
 #include <falcon/streambuffer.h>
 #include <falcon/fassert.h>
 #include <falcon/stdhandlers.h>

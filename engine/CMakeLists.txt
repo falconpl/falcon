@@ -114,7 +114,8 @@ set( re2_SRCS
 
 #TODO re2 switch   
    
-add_library(falcon_engine SHARED
+#add_library(falcon_engine SHARED
+add_library(falcon_engine STATIC
   ${SYS_SPECIFIC}
 
   parser/lexer.cpp
@@ -458,7 +459,7 @@ if(UNIX OR APPLE)
   # and RT only for solaris and non-bsd systems
   set(SYS_LIBS pthread m)
   if(APPLE)
-    list(APPEND SYS_LIBS dl)
+    list(APPEND SYS_LIBS ${CMAKE_DL_LIBS})
   else()
     IF(CMAKE_SYSTEM_NAME MATCHES ".*BSD")
     else()

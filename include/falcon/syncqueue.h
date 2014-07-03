@@ -18,7 +18,7 @@
 
 #include <falcon/setup.h>
 
-#ifdef FALCON_SYSTEM_UNIX
+#if defined(FALCON_SYSTEM_UNIX) || defined(FALCON_SYSTEM_MAC)
 #include <falcon/syncqueue_posix.h>
 #else
 

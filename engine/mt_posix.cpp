@@ -18,7 +18,12 @@
 
 // this for gettimeofday on macosx
 #include <sys/time.h>
+
+#if defined BSD || defined __APPLE__
+#include <stdlib.h>
+#else
 #include <malloc.h>
+#endif
 
 #include <falcon/mt.h>
 #include <falcon/atomic.h>

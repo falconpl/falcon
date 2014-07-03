@@ -19,6 +19,13 @@
 #include <falcon/dynloader.h>
 #include <falcon/string.h>
 
+#include <falcon/stderrors.h>
+#include <falcon/autocstring.h>
+#include <falcon/string.h>
+#include <dlfcn.h>
+#include <errno.h>
+#include <falcon/module.h>
+
 #include <dlfcn.h>
 
 namespace Falcon

@@ -54,9 +54,9 @@ using std::tr1::unordered_set;
 using std::set;
 #define unordered_set set
 #else
-#include <hash_set>
-using std::hash_set;
-#define unordered_set hash_set
+#include <unordered_set>
+using std::unordered_set;
+//#define unordered_set hash_set
 #endif
 #endif
 
