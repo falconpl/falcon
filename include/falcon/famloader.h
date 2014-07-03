@@ -35,8 +35,8 @@ class FALCON_DYN_CLASS FAMLoader
 public:
    FAMLoader( ModSpace* ms );
    virtual ~FAMLoader();
-   
-   /** Loads a pre-compiled module from a data stream. 
+
+   /** Loads a pre-compiled module from a data stream.
     \param input The reader where the binary module is stored.
     \param uri The URI where the module is being read from.
     \param local_name The name under which the module is internally known.
@@ -58,7 +58,7 @@ private:
          apply = apply_;
       }
       virtual ~PStepLoad() {};
-      virtual void describeTo( String& str, int ) const { str = "PStepLoad"; }
+      virtual void describeTo( String& str ) const { str = "PStepLoad"; }
 
    private:
       static void apply_( const PStep* self, VMContext* ctx );

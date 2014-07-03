@@ -78,7 +78,7 @@ public:
    }
 
    ~Private()
-   {      
+   {
       StateList::iterator si = m_states->begin();
       while( si != m_states->end() )
       {
@@ -93,11 +93,11 @@ public:
          ++mi;
       }
    }
-   
+
    void constructing()
    {
       return;
-      
+
       m_curMembers = m_origMembers;
       m_members = &m_curMembers;
       m_curStates = m_origStates;
@@ -210,7 +210,7 @@ void* FalconClass::createInstance() const
       TRACE( "Class %s is not constructed, failing.", name().c_ize() );
       return 0;
    }
-   
+
    // we just need to copy the defaults.
    FalconInstance* inst = new FalconInstance(this);
    initInstance( inst );
@@ -257,14 +257,14 @@ bool FalconClass::registerAttributes( VMContext* ctx )
 bool FalconClass::addProperty( const String& name, const Item& initValue, bool bIsStatic )
 {
    TRACE1( "Addong a property \"%s\" to class %s with value.", name.c_ize(), m_name.c_ize() );
-   
+
    if( m_bConstructed )
    {
-      TRACE( "Class %s is ALREADY constructed, failing to add property %s.", 
+      TRACE( "Class %s is ALREADY constructed, failing to add property %s.",
                m_name.c_ize(), name.c_ize() );
       return false;
    }
-   
+
    Private::MemberMap& members = *_p->m_members;
 
    // first time around?
@@ -291,14 +291,14 @@ bool FalconClass::addProperty( const String& name, const Item& initValue, bool b
 bool FalconClass::addProperty( const String& name, Expression* initExpr )
 {
    TRACE1( "Adding a property \"%s\" to class %s with expression.", name.c_ize(), m_name.c_ize() );
-   
+
    if( m_bConstructed )
    {
-      TRACE( "Class %s is ALREADY constructed, failing to add property %s.", 
+      TRACE( "Class %s is ALREADY constructed, failing to add property %s.",
                m_name.c_ize(), name.c_ize() );
       return false;
    }
-   
+
    Private::MemberMap& members = *_p->m_members;
 
    // first time around?
@@ -316,7 +316,7 @@ bool FalconClass::addProperty( const String& name, Expression* initExpr )
    _p->m_initExpr.push_back( prop );
    m_hasInitExpr = true;
    m_constructor = makeConstructor();
-   
+
    // Let's parent the expression so that it understands the evaluation context.
    // notice that although we have a parent now, we're not owned by it.
    initExpr->setParent(&m_constructor->syntree());
@@ -328,14 +328,14 @@ bool FalconClass::addProperty( const String& name, Expression* initExpr )
 bool FalconClass::addProperty( const String& name )
 {
    TRACE1( "Adding a property \"%s\" to class %s.", name.c_ize(), m_name.c_ize() );
-   
+
    if( m_bConstructed )
    {
-      TRACE( "Class %s is ALREADY constructed, failing to add property %s.", 
+      TRACE( "Class %s is ALREADY constructed, failing to add property %s.",
                m_name.c_ize(), name.c_ize() );
       return false;
    }
-   
+
    Private::MemberMap& members = *_p->m_members;
 
    // first time around?
@@ -359,15 +359,15 @@ bool FalconClass::addMethod( Function* mth, bool bStatic )
 bool FalconClass::addMethod( const String& name, Function* mth, bool bStatic )
 {
    TRACE1( "Adding method \"%s\" to class %s.", name.c_ize(), m_name.c_ize() );
-   
+
    if( m_bConstructed )
    {
-      TRACE( "Class %s is ALREADY constructed, failing to add method %s.", 
+      TRACE( "Class %s is ALREADY constructed, failing to add method %s.",
                m_name.c_ize(), mth->name().c_ize() );
       return false;
    }
-      
-   Private::MemberMap& members = *_p->m_members;  
+
+   Private::MemberMap& members = *_p->m_members;
 
    // first time around?
    if ( members.find( name ) != members.end() )
@@ -405,7 +405,7 @@ bool FalconClass::addParent( ExprInherit* inh )
    {
       return false;
    }
-   
+
    Private::MemberMap& members = *_p->m_members;
 
    const String& name = inh->symbol()->name();
@@ -437,7 +437,7 @@ bool FalconClass::addParent( ExprInherit* inh )
       SynFunc* ctr = makeConstructor();
       m_parentship->setParent( &ctr->syntree() );
    }
-   
+
    m_parentship->append( inh );
    return true;
 }
@@ -449,17 +449,17 @@ bool FalconClass::addParent( ExprInherit* inh )
     {
        return false;
     }
-    
+
     m_bPureFalcon = true;
     m_missingParents = 0;
-    
+
     // now see what's the situation
     m_parentship = inh;
     for( int i = 0; i < inh->arity(); i++ )
     {
        ExprInherit* ei = static_cast<ExprInherit*>( inh->nth(i) );
        fassert( ei->trait() == Expression::e_trait_inheritance );
-       
+
        if( ei->base() == 0 )
        {
           m_missingParents++;
@@ -468,16 +468,16 @@ bool FalconClass::addParent( ExprInherit* inh )
        {
           m_bPureFalcon = false;
        }
-       
+
        (*_p->m_members)[ei->symbol()->name()] = new Property( ei );
     }
-    
+
     SynFunc* ctr = makeConstructor();
     inh->setParent( &ctr->syntree() );
-    
+
     return true;
 }
- 
+
 
 bool FalconClass::getProperty( const String& name, Item& target ) const
 {
@@ -604,7 +604,7 @@ bool FalconClass::isDerivedFrom( const Class* cls ) const
    // are we the required class?
    if( this == cls ) return true;
    if( m_parentship ==  0 ) return false;
-   
+
    for( int i = 0; i < m_parentship->arity(); ++i )
    {
       ExprInherit* inh = static_cast<ExprInherit*>(m_parentship->nth(i));
@@ -655,16 +655,16 @@ SynFunc* FalconClass::makeConstructor()
 bool FalconClass::construct( VMContext* ctx )
 {
    TRACE( "FalconClass::construct -- constructing class \"%s\"", this->name().c_ize() );
-   
+
    if( m_bConstructed )
    {
       TRACE1( "FalconClass::construct -- already constructed \"%s\"", this->name().c_ize() );
       return true;
    }
-   
+
    // copy the current status
    _p->constructing();
-   
+
    // perform property flattening.
    if( m_parentship != 0 )
    {
@@ -714,7 +714,7 @@ bool FalconClass::construct( VMContext* ctx )
          //... and we checked that we're pure falcon, so it should be a falcon class.
          fassert( base->isFalconClass() );
          FalconClass* fbase = static_cast<FalconClass*>(base);
-         
+
          Private::MemberMap::const_iterator fbpi = fbase->_p->m_members->begin();
          while( fbpi != fbase->_p->m_members->end() )
          {
@@ -732,12 +732,12 @@ bool FalconClass::construct( VMContext* ctx )
                   (*_p->m_members)[np->m_name] = np;
                }
             }
-            
+
             ++fbpi;
          }
       }
    }
-   
+
    m_bConstructed = true;
 
    if( m_missingParents > 0 || ! m_bPureFalcon )
@@ -758,7 +758,7 @@ HyperClass* FalconClass::hyperConstruct()
       TRACE( "FalconClass %s has not the requisites to become an hyperclass", name().c_ize() );
       return 0;
    }
-   
+
    HyperClass* nself = new HyperClass( this );
    if( m_parentship != 0 )
    {
@@ -766,7 +766,7 @@ HyperClass* FalconClass::hyperConstruct()
       nself->setParentship( this->m_parentship, false );
       this->m_parentship = 0;
    }
-   
+
    // it's now duty of the caller to construct the hyperclass.
    return nself;
 }
@@ -946,8 +946,8 @@ void FalconClass::storeSelf( DataWriter* wr ) const
    wr->write(m_shouldMark);
    wr->write(m_hasInitExpr);
    wr->write(m_hasInit);
-   wr->write(m_bPureFalcon); 
-   
+   wr->write(m_bPureFalcon);
+
    // now write name and type of each member -- for the values, use flatten.
    // first, always save the original members.
    Private::MemberMap* members = &_p->m_origMembers;
@@ -957,14 +957,14 @@ void FalconClass::storeSelf( DataWriter* wr ) const
    {
       Property* prop = pos->second;
       wr->write( prop->m_name);
-      wr->write( (char) prop->m_type );      
+      wr->write( (char) prop->m_type );
       ++pos;
    }
 
    // save the attributes
    attributes().store(wr);
 }
-   
+
 
 void FalconClass::restoreSelf( DataReader* rd )
 {
@@ -972,8 +972,8 @@ void FalconClass::restoreSelf( DataReader* rd )
    rd->read(m_shouldMark);
    rd->read(m_hasInitExpr);
    rd->read(m_hasInit);
-   rd->read(m_bPureFalcon); 
-   
+   rd->read(m_bPureFalcon);
+
    // Read the original members.
    uint32 count;
    rd->read( count );
@@ -983,24 +983,24 @@ void FalconClass::restoreSelf( DataReader* rd )
       char type;
       rd->read( name );
       rd->read( type );
-      
+
       Property* prop = new Property(name, (Property::Type) type );
       _p->m_origMembers[name] = prop;
    }
-   
+
    m_bConstructed = false;
    // restore the attributes
    attributes().restore(rd);
 }
-   
+
 
 void FalconClass::flattenSelf( ItemArray& flatArray ) const
 {
    Private::MemberMap* members = &_p->m_origMembers;
    Private::MemberMap::iterator pos = members->begin();
-   
+
    flatArray.reserve( members->size() + 5 );
-   
+
    if( m_constructor != 0 )
    {
       flatArray.append( Item( m_constructor->handler(), m_constructor ) );
@@ -1008,15 +1008,15 @@ void FalconClass::flattenSelf( ItemArray& flatArray ) const
    else {
       flatArray.append( Item() );
    }
-   
+
    if( m_parentship != 0 )
    {
-      flatArray.append( Item( m_parentship->handler(), m_parentship ) );      
+      flatArray.append( Item( m_parentship->handler(), m_parentship ) );
    }
    else {
       flatArray.append( Item() );
    }
-   
+
    while( pos != members->end() )
    {
       Property* prop = pos->second;
@@ -1027,27 +1027,27 @@ void FalconClass::flattenSelf( ItemArray& flatArray ) const
             flatArray.append( prop->m_dflt );
             if( prop->expression() != 0 )
             {
-               flatArray.append( Item( prop->expression()->handler(), prop->expression()));                              
+               flatArray.append( Item( prop->expression()->handler(), prop->expression()));
             }
             else {
                flatArray.append( Item() );
             }
             break;
-            
+
          case Property::t_func:
          case Property::t_static_func:
             flatArray.append( Item( prop->m_value.func->handler(), prop->m_value.func ) );
             break;
-            
+
          case Property::t_inh:
             flatArray.append( Item( prop->m_value.inh->handler(), prop->m_value.inh ) );
             break;
-            
+
          case Property::t_state:
             // TODO
             break;
       }
-      
+
       ++pos;
    }
 
@@ -1063,7 +1063,7 @@ void FalconClass::unflattenSelf( ItemArray& flatArray )
             (m_bConstructed ? "constructed" : "not-constructed"));
 
    Private::MemberMap::iterator pos = members->begin();
-   
+
    fassert( flatArray.length() >= 2 );
 
    if( ! flatArray[0].isNil() )
@@ -1074,13 +1074,13 @@ void FalconClass::unflattenSelf( ItemArray& flatArray )
       m_constructor->setConstructor();
       m_constructor->module(this->module());
    }
-   
+
    if( ! flatArray[1].isNil() )
    {
       ExprParentship* parents = static_cast<ExprParentship*>(flatArray[1].asInst());
       setParentship(parents);
    }
-   
+
    _p->m_initExpr.clear(); // just in case
    uint32 count = 2;
    while( pos != members->end() )
@@ -1098,7 +1098,7 @@ void FalconClass::unflattenSelf( ItemArray& flatArray )
                m_hasInitExpr = true;
             }
             break;
-            
+
          case Property::t_func:
          case Property::t_static_func:
             prop->m_value.func = static_cast<Function*>(flatArray[count].asInst());
@@ -1106,16 +1106,16 @@ void FalconClass::unflattenSelf( ItemArray& flatArray )
             prop->m_value.func->methodOf(this);
             prop->m_value.func->module(this->module());
             break;
-            
+
          case Property::t_inh:
             prop->m_value.inh = static_cast<ExprInherit*>(flatArray[count].asInst());
             break;
-            
+
          case Property::t_state:
             // TODO
             break;
       }
-      
+
       ++pos;
       ++count;
    }
@@ -1206,7 +1206,7 @@ bool FalconClass::op_init( VMContext* ctx, void* instance, int32 pcount ) const
 
    // we just need to copy the defaults.
    FalconInstance* inst = static_cast<FalconInstance*>(instance);
-   
+
    // we have to invoke the init method, if any
    if( m_constructor != 0 )
    {
@@ -1214,7 +1214,7 @@ bool FalconClass::op_init( VMContext* ctx, void* instance, int32 pcount ) const
       Item self( this, inst );
       ctx->insertData( pcount, &self, 1, 0 );
       ctx->callInternal( m_constructor, pcount, Item( this, inst ) );
-      
+
       // now that we are in the constructor context, we can push the property initializer
       // if we're a base class, we don't need to do this, because property initializers
       // -- are flattened in the topmost child class.
@@ -1222,17 +1222,17 @@ bool FalconClass::op_init( VMContext* ctx, void* instance, int32 pcount ) const
       {
          ctx->pushCode( &m_initExprStep );
       }
-      
+
       // now that we are in the constructor context, we can invoke the inherit sequence.
       if( m_parentship != 0 )
       {
          ctx->stepIn( m_parentship );
       }
-      
+
       // the constructor goes deep, and will pop the parameters.
       return true;
    }
-   
+
    return false;
 }
 
@@ -1259,7 +1259,7 @@ void FalconClass::op_getProperty( VMContext* ctx, void* self, const String& prop
             value = inst->_p->getProperty( &propName );
          }
       }
-      
+
       if( value != 0 )
       {
          Item temp;
@@ -1501,7 +1501,7 @@ FalconClass::PStepInitExpr::PStepInitExpr( FalconClass* o ):
    apply = apply_;
 }
 
-void FalconClass::PStepInitExpr::describeTo( String& tgt, int ) const
+void FalconClass::PStepInitExpr::describeTo( String& tgt ) const
 {
    tgt = "PStepInitExpr for " + m_owner->name();
 }
@@ -1512,7 +1512,7 @@ void FalconClass::PStepInitExpr::apply_( const PStep* ps, VMContext* ctx )
    const PStepInitExpr* step = static_cast<const PStepInitExpr*>(ps);
    CallFrame& frame = ctx->currentFrame();
    FalconInstance* inst = static_cast<FalconInstance*>( frame.m_self.asInst() );
-   
+
    applyInitExpr( ctx, step->m_owner, inst );
 }
 
@@ -1535,7 +1535,7 @@ void FalconClass::applyInitExpr( VMContext* ctx, FalconClass* cls, FalconInstanc
       fassert( prop != 0 );
       fassert( prop->m_type == FalconClass::Property::t_prop );
       fassert( prop->expression() != 0 );
-      
+
       // during init, instances are not shared,
       // we can safely copy them directly.
       inst->_p->m_data[&prop->m_name] = ctx->topData();
@@ -1546,11 +1546,11 @@ void FalconClass::applyInitExpr( VMContext* ctx, FalconClass* cls, FalconInstanc
    {
 
       const Property* prop = iprops[seqId];
-      TRACE2( "Initializing property %s at step step %d/%d", 
+      TRACE2( "Initializing property %s at step step %d/%d",
                                        prop->m_name.c_ize(), seqId, size );
       fassert( prop->m_type == FalconClass::Property::t_prop );
       fassert( prop->expression() != 0 );
-      
+
       // prepare for descent
       seqId++;
       if( ctx->stepInYield( prop->expression(), ccode ) )

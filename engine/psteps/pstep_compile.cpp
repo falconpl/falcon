@@ -51,9 +51,10 @@ private:
       }
    }
 
-   virtual void describeTo( String& tgt, int depth = 0) const
+   virtual void describeTo( String& tgt ) const
    {
-      tgt = String(" ").replicate( depth * depthIndent ) + "/*CatchSyntree*/";
+        //Need to do something about this
+      tgt = String(" ").replicate( 0 ) + "/*CatchSyntree*/";
    }
 
    virtual void oneLinerTo( String& tgt ) const
@@ -95,7 +96,7 @@ PStepCompile* PStepCompile::clone() const
    return new PStepCompile(*this);
 }
 
-void PStepCompile::describeTo( String& tgt, int ) const
+void PStepCompile::describeTo( String& tgt ) const
 {
    tgt ="<compile>";
 }

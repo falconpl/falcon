@@ -74,7 +74,7 @@ class QVMContext::PStepErrorGate: public SynTree
 		}
 		virtual ~PStepErrorGate() {}
 
-		void describeTo( String& tgt, int ) const
+		void describeTo( String& tgt ) const
 		{
 			tgt = "QVMContext::PStepErrorGate";
 		}

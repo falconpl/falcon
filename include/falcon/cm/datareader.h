@@ -29,34 +29,35 @@ class ClassDataReader: public Class
 public:
    ClassDataReader( Class* clsStream );
    virtual ~ClassDataReader();
-   
+
    //=============================================================
    // Using a different carrier.
-   
+
    virtual void dispose( void* instance ) const;
    virtual void* clone( void* insatnce ) const;
    virtual void gcMarkInstance( void* instance, uint32 mark ) const;
    virtual bool gcCheckInstance( void* instance, uint32 mark ) const;
-   
+
    //=============================================================
    //
 
    virtual void* createInstance() const;
    virtual bool op_init( VMContext* ctx, void* instance, int pcount ) const;
-   
+
 private:
-   
+
    Class* m_clsStream;
 
-   
+
    class FALCON_DYN_CLASS ReadItemNext: public PStep
    {
    public:
       ReadItemNext(ClassDataReader* owner): m_owner(owner) { apply = apply_; }
       virtual ~ReadItemNext() {}
       static void apply_( const PStep* ps, VMContext* ctx );
-   private:
-      ClassDataReader* m_owner; 
+
+      //Need to do something about this
+      ClassDataReader* m_owner;
    };
 
    friend class ReadItemNext;

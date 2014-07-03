@@ -137,6 +137,11 @@ public:
    void startEvaluation( TextReader* tr );
 
    void reset();
+
+   //Need to do something about this
+   // A module used to store globals and mantras that might be dynamically defined.
+   Module* m_defhub;
+
 private:
    Event* m_evtComplete;
    complete_cbfunc m_completeCbFunc;
@@ -153,9 +158,6 @@ private:
    Error* m_completionError;
 
    Function* m_baseFrame;
-
-   // A module used to store globals and mantras that might be dynamically defined.
-   Module* m_defhub;
 };
 
 }

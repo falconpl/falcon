@@ -110,14 +110,14 @@ public:
 
       Property( const Property& other );
       Property( const Property& other, bool copyInitExpr );
-      
+
       inline Property( const String& name, Type t ):
          m_name( name ),
          m_type(t),
          m_expr(0)
       {
       }
-      
+
       inline Property( const String& name, const Item& value ):
          m_name( name ),
          m_type(t_prop),
@@ -151,14 +151,14 @@ public:
    virtual ~FalconClass();
 
    void* createInstance() const;
-   
+
    /** Creates a new instance.
     \return A new instance created out of this class.
     The method will return 0 if the class is not completely resolved,
     i.e. if there is some parent that couldn't be found.
    */
-   FalconInstance* createFalconInstance() const { 
-      return static_cast<FalconInstance*>( createInstance() );  
+   FalconInstance* createFalconInstance() const {
+      return static_cast<FalconInstance*>( createInstance() );
    }
 
    /** Adds a property.
@@ -212,7 +212,7 @@ public:
     needed anymore.
     */
    bool addMethod( Function* mth, bool bIsStatic = false );
-   
+
    bool addMethod( const String& name, Function* mth, bool bIsStatic = false );
 
    bool hasInit() const { return m_hasInit; }
@@ -234,7 +234,7 @@ public:
     */
    bool addParent( ExprInherit* inh );
 
-   /** Sets the whole parentship structure. */   
+   /** Sets the whole parentship structure. */
    bool setParentship( ExprParentship* inh );
 
    /** Gets a member of this class.
@@ -330,7 +330,7 @@ public:
 
    /** Return the constructor of this class. */
    SynFunc* constructor() const { return m_constructor; }
-   
+
    void setConstructor(SynFunc* sf ) { m_constructor = sf; }
 
    /** Create the class structure compiling it from its parents.
@@ -342,10 +342,10 @@ public:
 
     The role of this method is that to build the property list that composes
     this class, flattening the properties inherited from the base classes.
-    
+
     A FalconClass needs to be constructed prior being used. Failing to do so
     will cause an error at instance creation.
-    
+
     If some of the parents are not FalconClass, the engine must generate an
     hyperclass out of this falcon class.
     */
@@ -374,9 +374,9 @@ public:
     It expects to be called while inside a constructor frame.
     */
    void pushInitExprStep( VMContext* ctx );
-   
+
    virtual Class* handler() const;
-   
+
    /** Used by the module link system to prepare attribute generation for methods.
     *
     */
@@ -393,10 +393,10 @@ public:
    //
    void storeSelf( DataWriter* wr ) const;
    void restoreSelf( DataReader* wr );
-   
+
    void flattenSelf( ItemArray& flatArray ) const;
    void unflattenSelf( ItemArray& flatArray );
-   
+
    /**
     * Render the class back as source code.
     */
@@ -429,7 +429,7 @@ private:
    bool m_hasInit;
    int m_missingParents;
    bool m_bPureFalcon;
-   
+
    bool m_bConstructed;
 
    void initInstance( FalconInstance* inst ) const;
@@ -441,11 +441,11 @@ private:
    public:
       PStepInitExpr( FalconClass* o );
       static void apply_( const PStep*, VMContext* );
-      virtual void describeTo( String&, int depth=0 ) const;
+      virtual void describeTo( String& ) const;
    private:
       FalconClass* m_owner;
    };
-   
+
    PStepInitExpr m_initExprStep;
 };
 

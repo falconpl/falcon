@@ -37,11 +37,11 @@ public:
 
    void set();
 
+   //Need to do something about this
+   int m_status;
+
 protected:
    virtual int32 lockedConsumeSignal(VMContext*, int32 count );
-
-private:
-   int m_status;
 };
 
 /*#

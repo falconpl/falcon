@@ -31,27 +31,27 @@ public:
             m_pstep_lvalue = &m_pslv; \
             m_pslv.m_owner = this; \
             m_trait = e_trait_assignable; );
-   
+
    virtual void render( TextWriter* tw, int depth ) const;
 private:
-   
+
    /** Step used to SET a value in the array.*/
    class FALCON_DYN_CLASS PstepLValue: public PStep
    {
    public:
       PstepLValue() { apply = apply_; }
       virtual ~PstepLValue() {}
-      virtual void describeTo( String& target, int =0 ) const { target = "Index lvalue"; }
+      virtual void describeTo( String& target ) const { target = "Index lvalue"; }
       static void apply_( const PStep*, VMContext* ctx );
    private:
       ExprIndex* m_owner;
       friend class ExprIndex;
-   };   
-   PstepLValue m_pslv;   
+   };
+   PstepLValue m_pslv;
 };
 
 }
 
-#endif 
+#endif
 
 /* end of exprindex.h */

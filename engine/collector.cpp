@@ -839,7 +839,7 @@ void Collector::algoTimeout( uint32 to )
 void Collector::markLocked( uint32 mark )
 {
    fassert( m_lockRoot != 0 );
-   
+
    // temporarily disconnect the lock loop structure
    m_mtx_lockitem.lock();
    GCLock *firstLock = this->m_lockRoot->m_next;
@@ -867,7 +867,7 @@ void Collector::markLocked( uint32 mark )
       if( lock->m_bDisposed )
       {
          GCLock* next = lock->m_next;
-          
+
          // disengage the current lock
          // advance the head/tail in case we're pointing to it
          if ( firstLock == lock )
@@ -878,16 +878,16 @@ void Collector::markLocked( uint32 mark )
          {
             lock->m_prev->m_next = lock->m_next;
          }
-         
+
          if( lastLock == lock )
          {
             lastLock = lock->m_prev;
          }
-         else 
+         else
          {
             lock->m_next->m_prev = lock->m_prev;
          }
-         
+
          // send this lock to the memory pool
          this->disposeLock(lock);
          lock = next;
@@ -903,7 +903,7 @@ void Collector::markLocked( uint32 mark )
 #endif
             cls->gcMarkInstance(data, mark);
          }
-         
+
          lock = lock->m_next;
       }
    }
@@ -933,7 +933,7 @@ void Collector::disposeLock( GCLock* lock )
       delete lock;
    }
    else
-   {  
+   {
       m_recycleLockCount++;
       lock->m_next = m_recycleLock;
       m_recycleLock = lock;
@@ -945,7 +945,7 @@ void Collector::disposeLock( GCLock* lock )
 GCLock* Collector::lock( const Item& item )
 {
    GCLock* l = 0;
-   
+
    m_mtx_recycle_locks.lock();
    // do we have a free token?
    if( m_recycleLock != 0 )
@@ -1493,7 +1493,7 @@ void Collector::Marker::askMark()
          m_state = e_state_inspecting;
       }
 
-      TRACE1("Collector::Marker::askMark -- inspecting %d contexts", i_set.size() );
+      TRACE1("Collector::Marker::askMark -- inspecting %u contexts", (unsigned int)i_set.size() );
    }
    else
    {

@@ -48,7 +48,7 @@ private:
       PStepIPolData(){apply = apply_;}
       virtual ~PStepIPolData() {}
       static void apply_( const PStep*, VMContext* ctx );
-      virtual void describeTo( String& desc , int ) const
+      virtual void describeTo( String& desc ) const
       {
          desc = "ExprStrIPol::PstepIPolData";
       }

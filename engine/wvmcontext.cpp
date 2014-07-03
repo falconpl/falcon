@@ -60,7 +60,7 @@ public:
    PStepErrorGate(){ apply = apply_; }
    virtual ~PStepErrorGate() {}
 
-   void describeTo( String& tgt, int ) const
+   void describeTo( String& tgt ) const
    {
       tgt = "WVMContext::PStepErrorGate";
    }

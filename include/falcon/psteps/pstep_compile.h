@@ -40,7 +40,7 @@ public:
    virtual ~PStepCompile();
    PStepCompile* clone() const;
 
-   void describeTo( String& tgt, int depth=0 ) const;
+   void describeTo( String& tgt ) const;
    static void apply_( const PStep*, VMContext* ctx );
 
    void setCompilerContext( Function* func, Module* mod, TextReader* tin, TextWriter* tout );

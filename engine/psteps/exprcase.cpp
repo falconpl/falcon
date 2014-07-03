@@ -592,7 +592,7 @@ public:
          }
          else if( value.type() == FLC_CLASS_ID_STRING )
          {
-            *value.asString() == *m_data.strings.string1;
+            return *value.asString() == *m_data.strings.string1;
          }
          else if( value.type() == FLC_CLASS_ID_CLASS )
          {
@@ -647,7 +647,7 @@ ExprCase::ExprCase( int line, int chr ):
    _p = new Private;
 }
 
-   
+
 ExprCase::ExprCase( const ExprCase& other ):
    Expression( other )
 {
@@ -739,7 +739,7 @@ bool ExprCase::simplify( Item& ) const
 
 
 void ExprCase::apply_( const PStep*, VMContext* ctx )
-{  
+{
    // not really used.
    ctx->popCode();
    ctx->pushData(Item());

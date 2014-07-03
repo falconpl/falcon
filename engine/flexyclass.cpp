@@ -130,8 +130,8 @@ void* FlexyClass::getParentData( const Class* parent, void* data ) const
 {
    // if we're the searched class...
    if( parent == this ) return data;
-   
-   // else, scan our bases, and provide the classe in our bases with their 
+
+   // else, scan our bases, and provide the classe in our bases with their
    // -- own data.
    FlexyDict* dict = static_cast<FlexyDict*>(data);
    const ItemArray& bases = dict->base();
@@ -150,7 +150,7 @@ void* FlexyClass::getParentData( const Class* parent, void* data ) const
          return udata;
       }
    }
-   
+
    // No-luck
    return 0;
 }
@@ -197,7 +197,7 @@ void FlexyClass::describe( void* self, String& target, int depth, int maxlen ) c
 bool FlexyClass::op_init( VMContext* ctx, void* instance, int32 pcount ) const
 {
    FlexyDict* self = static_cast<FlexyDict*>(instance);
-   
+
    // In case of a single parameter...
    if( pcount >= 1 )
    {
@@ -231,8 +231,10 @@ bool FlexyClass::op_init( VMContext* ctx, void* instance, int32 pcount ) const
                }
             }
 
-         private:
+            //Need to do something about this
             const FlexyClass* m_owner;
+
+         private:
             FlexyDict* m_self;
             Item m_fself;
          };
@@ -250,7 +252,7 @@ bool FlexyClass::op_init( VMContext* ctx, void* instance, int32 pcount ) const
                m_owner(owner),
                m_self(self),
                m_fself( owner, self)
-            {               
+            {
             }
             virtual ~Enum() {}
 
@@ -258,9 +260,11 @@ bool FlexyClass::op_init( VMContext* ctx, void* instance, int32 pcount ) const
             {
                m_self->insert( data, value );
             }
-            
-         private:
+
+            //Need to do something about this
             const FlexyClass* m_owner;
+
+         private:
             FlexyDict* m_self;
             Item m_fself;
          };
@@ -320,7 +324,7 @@ inline bool FlexyClass::operand( int opCount, const String& name, VMContext* ctx
    Item* item = dict.find( name );
    if( item != 0 )
    {
-      if( item->isFunction() ) 
+      if( item->isFunction() )
       {
          Function* f = item->asFunction();
          Item &iself = ctx->opcodeParam(opCount-1);
@@ -337,7 +341,7 @@ inline bool FlexyClass::operand( int opCount, const String& name, VMContext* ctx
       }
       return true;
    }
-    
+
    if( bRaise )
    {
       throw new OperandError( ErrorParam(e_invop, __LINE__, SRC )
@@ -566,7 +570,7 @@ void FlexyClass::op_in( VMContext* ctx, void* self ) const
 
 void FlexyClass::op_call( VMContext* ctx, int32 paramCount, void* self ) const
 {
-   operand( paramCount+1, OVERRIDE_OP_CALL, ctx, self );   
+   operand( paramCount+1, OVERRIDE_OP_CALL, ctx, self );
 }
 
 void FlexyClass::op_toString( VMContext* ctx, void* self ) const
@@ -588,14 +592,14 @@ void FlexyClass::op_iter( VMContext* ctx, void* self ) const
 
 void FlexyClass::op_next( VMContext* ctx, void* self ) const
 {
-   // copy the 2 items at the top 
+   // copy the 2 items at the top
    ctx->addSpace(2);
    ctx->opcodeParam(0) = ctx->opcodeParam(2);
    ctx->opcodeParam(1) = ctx->opcodeParam(3);
    operand( 2, OVERRIDE_OP_NEXT, ctx, self );
 }
 
-   
+
 }
 
 /* end of flexyclass.cpp */
