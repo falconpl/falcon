@@ -114,8 +114,8 @@ set( re2_SRCS
 
 #TODO re2 switch   
    
-#add_library(falcon_engine SHARED
-add_library(falcon_engine STATIC
+add_library(falcon_engine SHARED
+#add_library(falcon_engine STATIC
   ${SYS_SPECIFIC}
 
   parser/lexer.cpp
