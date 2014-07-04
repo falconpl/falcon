@@ -16,7 +16,7 @@
 #################################################################
 
 
-include(../version.cmake)
+include(version.cmake)
 
 if(NOT FALCON_SONAME_AGE)
    # A couple of useful shortcuts

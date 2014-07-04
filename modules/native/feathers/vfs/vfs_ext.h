@@ -23,9 +23,6 @@
  @beginmodule vfs
  */
 namespace Falcon {
-
-class VFSModule;
-
 namespace Ext {
 
 

@@ -23,7 +23,7 @@
 #include <falcon/mt.h>
 
 namespace Falcon {
-namespace Mod {
+namespace Feathers {
 
 /** Logging channel using self-rotating files
 *

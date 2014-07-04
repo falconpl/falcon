@@ -51,11 +51,34 @@ Interface extension functions
 #include <falcon/common.h>
 
 #include "hash_mod.h"
-#include "hash_ext.h"
+#include "hash_fm.h"
 
 
 namespace Falcon {
-namespace Ext {
+namespace Feathers {
+
+
+class ClassHash: public Class
+{
+public:
+   ClassHash();
+   virtual ~ClassHash();
+
+   virtual void* createInstance() const;
+   virtual void* clone( void* instance ) const;
+   virtual void dispose( void* instance ) const;
+
+   virtual void gcMarkInstance( void* instance, uint32 mark ) const;
+   virtual bool gcCheckInstance( void* instance, uint32 mark ) const;
+
+   virtual void store( VMContext* ctx, DataWriter* stream, void* instance ) const;
+   virtual void restore( VMContext* ctx, DataReader* stream ) const;
+
+   bool op_init( VMContext*, void*, int32 ) const;
+
+protected:
+   ClassHash(const String& name, Class* parent);
+};
 
 // updateItem is a helper function to process the individual items passed to update()
 static void Hash_updateItem_internal(Item *what, Mod::HashBase *hash, ::Falcon::VMContext *vm, uint32 stackDepth)
@@ -132,7 +155,7 @@ FALCON_FUNC Func_GetSupportedHashes( ::Falcon::VMContext *ctx, int32 )
 
 static void internal_hash( Function* caller, VMContext* ctx, int32 pcount, bool isRaw )
 {
-   ModHash* mod = static_cast<ModHash*>(caller->module());
+   ModuleHash* mod = static_cast<ModuleHash*>(caller->module());
    if( pcount < 2 )
    {
        throw caller->paramError(__LINE__, SRC );
@@ -254,7 +277,7 @@ FALCON_DEFINE_FUNCTION_P(hash_r)
 FALCON_DECLARE_FUNCTION(makeHash, "name:S,silent:[B]")
 FALCON_DEFINE_FUNCTION_P(makeHash)
 {
-   ModHash* mod = static_cast<ModHash*>(module());
+   ModuleHash* mod = static_cast<ModuleHash*>(module());
    if( pCount < 1 || !ctx->param(0)->isString())
    {
        throw paramError(__LINE__, SRC);
@@ -293,7 +316,7 @@ static void internal_hmac( Function* caller, VMContext* ctx, bool raw )
        throw caller->paramError(__LINE__, SRC);
    }
 
-   ModHash* mod = static_cast<ModHash*>(caller->module());
+   ModuleHash* mod = static_cast<ModuleHash*>(caller->module());
    Class* hashCls;
    if( i_which->isString() )
    {
@@ -887,7 +910,7 @@ HASH_CLASS_HANDLER(RIPEMD320Hash, RIPEMD320)
 
 
 
-ModHash::ModHash():
+ModuleHash::ModuleHash():
          Module("hash")
 {
    m_baseHashCls = new ClassHash;
@@ -931,11 +954,9 @@ ModHash::ModHash():
 }
 
 
-ModHash::~ModHash()
+ModuleHash::~ModuleHash()
 {
 }
-
-
 
 }
 }

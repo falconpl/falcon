@@ -46,7 +46,8 @@ add_library(zlib_fm MODULE
    # ZLib module source
    zlib.cpp
    zlib_ext.cpp
-   zlib_st.cpp
+   zlib_fm.cpp
+   
    #zlibstream.cpp
 )
 

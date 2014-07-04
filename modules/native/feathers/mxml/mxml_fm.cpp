@@ -1,6 +1,6 @@
 /*
    FALCON - The Falcon Programming Language.
-   FILE: mxml_ext.cpp
+   FILE: mxml_fm.cpp
 
    MXML module main file - extension implementation.
    -------------------------------------------------------------------
@@ -13,7 +13,7 @@
    See LICENSE file for licensing details.
 */
 
-#define SRC "modules/native/feathers/mxml/mxml_ext.cpp"
+#define SRC "modules/native/feathers/mxml/mxml_fm.cpp"
 
 /** \file
    MXML module main file - extension implementation.
@@ -30,20 +30,20 @@
 #include <falcon/itemdict.h>
 #include <falcon/itemarray.h>
 
-#include "mxml_ext.h"
+#include "mxml_fm.h"
 
 #include "mxml.h"
 
 /*#
-   @beginmodule feathers.mxml
+   @beginmodule mxml
 */
 
 namespace Falcon {
-namespace Ext {
+namespace Feathers {
 
 static MXML::Node *internal_getNodeParameter( Function *func, VMContext* ctx, int pid )
 {
-   MXMLModule* mod = static_cast<MXMLModule*>(func->fullModule());
+   ModuleMXML* mod = static_cast<ModuleMXML*>(func->fullModule());
    Class* clsNode = mod->classNode();
    Item *i_child = ctx->param(pid);
 
@@ -228,7 +228,7 @@ static void set_style( const Class*, const String&, void* instance, const Item& 
 static void get_top( const Class* cls, const String&, void* instance, Item& value )
 {
    MXML::Document *doc = static_cast<MXML::Document *>( instance );
-   MXMLModule* mod = static_cast<MXMLModule*>(cls->module());
+   ModuleMXML* mod = static_cast<ModuleMXML*>(cls->module());
    fassert( mod != 0 );
 
    value = FALCON_GC_STORE( mod->classNode(), doc->root() );
@@ -258,7 +258,7 @@ static void get_top( const Class* cls, const String&, void* instance, Item& valu
 static void get_root( const Class* cls, const String&, void* instance, Item& value )
 {
    MXML::Document *doc = static_cast<MXML::Document *>( instance );
-   MXMLModule* mod = static_cast<MXMLModule*>(cls->module());
+   ModuleMXML* mod = static_cast<ModuleMXML*>(cls->module());
    fassert( mod != 0 );
 
    MXML::Node *root = doc->main();
@@ -347,7 +347,7 @@ FALCON_DEFINE_FUNCTION_P1( find )
    // the real find
    MXML::Document *doc = static_cast<MXML::Document *>( ctx->self().asInst() );
    MXML::Node *node = doc->find( *sName, *sValue, *sValAttr, *sData );
-   MXMLModule* mod = static_cast<MXMLModule*>( methodOf()->module() );
+   ModuleMXML* mod = static_cast<ModuleMXML*>( methodOf()->module() );
 
    Item ret;
    if ( node != 0 )
@@ -372,7 +372,7 @@ FALCON_DECLARE_FUNCTION( findNext, "" )
 FALCON_DEFINE_FUNCTION_P1( findNext )
 {
    MXML::Document *doc = static_cast<MXML::Document *>( ctx->self().asInst() );
-   MXMLModule* mod = static_cast<MXMLModule*>( methodOf()->module() );
+   ModuleMXML* mod = static_cast<ModuleMXML*>( methodOf()->module() );
    // the real find
    MXML::Node *node = doc->findNext();
 
@@ -432,7 +432,7 @@ FALCON_DEFINE_FUNCTION_P1( findPath )
 {
    Item *i_name = ctx->param(0);
    MXML::Document *doc = static_cast<MXML::Document *>( ctx->self().asInst() );
-   MXMLModule* mod = static_cast<MXMLModule*>( methodOf()->module() );
+   ModuleMXML* mod = static_cast<ModuleMXML*>( methodOf()->module() );
 
    // parameter sanity check
    if( i_name == 0 || ! i_name->isString() )
@@ -464,7 +464,7 @@ FALCON_DECLARE_FUNCTION( findPathNext, "" )
 FALCON_DEFINE_FUNCTION_P1( findPathNext )
 {
    MXML::Document *doc = static_cast<MXML::Document *>( ctx->self().asInst() );
-   MXMLModule* mod = static_cast<MXMLModule*>( methodOf()->module() );
+   ModuleMXML* mod = static_cast<ModuleMXML*>( methodOf()->module() );
 
    // the real find
    MXML::Node *node = doc->findNextPath();
@@ -1704,7 +1704,8 @@ ClassErrorCode::~ClassErrorCode()
 
 
 /*#
-   @module feathers.mxml  Minimal XML support.
+   @module mxml  Minimal XML support.
+   @ingroup feathers
    @brief Minimal XML support.
 
    The @b mxml module is a very simple, fast and powerful XML parser
@@ -1739,8 +1740,8 @@ ClassErrorCode::~ClassErrorCode()
    @endcode
 */
 
-MXMLModule::MXMLModule():
-         Module("mxml")
+ModuleMXML::ModuleMXML():
+         Module("mxml", true)
 {
    m_clsNode =  new ClassNode;
    m_clsDoc = new ClassDocument;
@@ -1754,12 +1755,11 @@ MXMLModule::MXMLModule():
    addMantra( new ClassStyle );
 }
 
-MXMLModule::~MXMLModule()
+ModuleMXML::~ModuleMXML()
 {
 }
 
-
 }
 }
 
-/* end of mxml_ext.cpp */
+/* end of mxml_fm.cpp */

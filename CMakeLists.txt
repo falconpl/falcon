@@ -16,7 +16,9 @@ project(Falcon)
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules" )
 include(cmake/system-detect.cmake)
+include(cmake/version-info.cmake)
 include(cmake/utils.cmake)
+include(devtools/falmod.cmake)
 
 ##################################################################
 # System specific
@@ -67,7 +69,7 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/${FALCON_LIB_DIR}" CACHE
 
 include_directories( include )
 
-#########################################################à
+#########################################################
 # Things to do at main level
 #
 
@@ -75,7 +77,7 @@ include_directories( include )
 include( cmake/install-gnudocs.cmake )
 
 
-#########################################################à
+#########################################################
 # Subdirectories
 #
 
@@ -94,79 +96,4 @@ add_subdirectory( dist )
 #add_subdirectory(devtools)
 #add_custom_target(falcon-core)
 
-#########################################################################
-# Feathers?
-#
-if( FALCON_BUILD_FEATHERS )
-   message( STATUS "Adding FEATHERS to this build" )
-
-   #override settings for the include dirs
-   list( APPEND Falcon_INCLUDE_DIRS
-      "${CMAKE_CURRENT_BINARY_DIR}/include" )
-
-   add_subdirectory( modules/native/feathers )
-
-else()
-    message( STATUS "Not building feathers" )
-endif()
-
-
-
-#########################################################################
-# Modules?
-#
-if( FALCON_BUILD_NATMODS )
-    message( STATUS "Adding native binary modules to this build" )
-    add_subdirectory( modules/native )
-else()
-    message( STATUS "Not building binary native modules" )
-endif()
-
-if( FALCON_BUILD_MODULES )
-    message( STATUS "Adding Falcon modules to this build" )
-    add_subdirectory( modules/falcon )
-else()
-    message( STATUS "Not building modules" )
-endif()
-
-if( FALCON_BUILD_FWKS )
-    message( STATUS "Adding frameworks to this build" )
-    add_subdirectory( frameworks )
-else()
-    message( STATUS "Not building frameworks" )
-endif()
-
-if( FALCON_BUILD_APPS )
-    message( STATUS "Adding applications to this build" )
-    add_subdirectory( apps )
-else()
-    message( STATUS "Not building applications" )
-endif()
-
-if( FALCON_BUILD_DOCS )
-    message( STATUS "Adding documentation to this build" )
-    add_subdirectory( docs )
-else()
-    message( STATUS "Not building documentation" )
-endif()
-
-#Generate make distro scripts
-if( FALCON_BUILD_DIST )
-	add_subdirectory( dist )
-endif()
-
-if( FALCON_BUILD_BINTESTS )
-    message( STATUS "Building embedding binary tests" )
-    #add_subdirectory( tests/bin )
-endif()
-
-if( FALCON_INSTALL_TESTS )
-    message( STATUS "Adding (source) tests, samples and demos to the distribution" )
-else()
-    message( STATUS "Not installing tests" )
-endif()
-
-install(EXPORT falcon-core-targets
-  DESTINATION ${FALCON_CMAKE_DIR}
-)
 

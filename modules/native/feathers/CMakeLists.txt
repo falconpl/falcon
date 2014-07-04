@@ -6,9 +6,6 @@
 cmake_minimum_required(VERSION 2.6.2)
 PROJECT(Falcon_Feathers)
 
-# Find our Find*.cmake files 
-list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake/modules)
-
 find_package(Falcon
    HINTS ${Falcon_Core_BINARY_DIR}/devtools
          "$ENV{FALCON_ACTIVE_TREE}/*/*/cmake"

@@ -18,32 +18,18 @@
    the Falcon engine.
 */
 
-#include <falcon/module.h>
-#include "vm_ext.h"
-
-#include "version.h"
+#include "vm_fm.h"
 
 /*#
-   @module feathers.vm
+   @module vm
+   @ingroup feathers
    @brief Interface to the Virtual Machine running this process.
 */
 
-//Define the math_extra module class
-class VMModule: public Falcon::Module
-{
-public:
-   // initialize the module
-   VMModule():
-      Module("vm")
-   {
-      addObject(new Falcon::Ext::ClassVM, true);
-   }
-   virtual ~VMModule() {}
-};
 
 FALCON_MODULE_DECL
 {
-   Falcon::Module* mod = new VMModule;
+   Falcon::Module* mod = new ::Falcon::Feathers::ModuleVM;
    return mod;
 }
 

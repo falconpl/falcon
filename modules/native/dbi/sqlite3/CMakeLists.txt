@@ -13,7 +13,7 @@ if( WIN32 OR APPLE )
 else( WIN32 OR APPLE )
    set(_sqlite_default OFF)
 endif( WIN32 OR APPLE)
-option(FALCON_DBI_WITH_INTERNAL_SQLITE "Use internal sqlite sources" ${_sqlite_default})
+option(FALCON_BUILD_DBI_SQLITE_INTERNAL "Use internal sqlite sources" ${_sqlite_default})
 
 
 falcon_define_module( FALCON_MODULE sqlite3 )
@@ -39,7 +39,7 @@ set(HDR_FILES
    version.h
 )
 
-if(FALCON_DBI_WITH_INTERNAL_SQLITE)
+if(FALCON_BUILD_DBI_SQLITE_INTERNAL)
    list(APPEND SRC_FILES sqlite3.c)
    list(APPEND HDR_FILES sqlite3.h)
 

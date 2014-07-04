@@ -1,11 +1,11 @@
 /*
    FALCON - The Falcon Programming Language.
-   FILE: cmdline/parser_ext.h
+   FILE: confparser_fm.h
 
-   The command line parser class
+   Configuration parser module
    -------------------------------------------------------------------
    Author: Giancarlo Niccolai
-   Begin: Tue, 06 Aug 2013 15:14:19 +0200
+   Begin: Thu, 08 Aug 2013 18:28:02 +0200
 
    -------------------------------------------------------------------
    (C) Copyright 2013: the FALCON developers (see list in AUTHORS file)
@@ -13,25 +13,25 @@
    See LICENSE file for licensing details.
 */
 
-
-#ifndef FALCON_EXT_PARSER_H
-#define FALCON_EXT_PARSER_H
+#ifndef FALCON_FEATHERS_MODULE_CONFPARSER
+#define FALCON_FEATHERS_MODULE_CONFPARSER
 
 #include <falcon/setup.h>
-#include <falcon/falconclass.h>
+#include <falcon/module.h>
 
-namespace Falcon{
-namespace Ext {
-namespace CCmdLineParser {
+namespace Falcon {
+namespace Feathers {
 
-class Parser: public FalconClass
+class ModuleConfparser: public Module
 {
-   Parser(): FalconClass("Parser") {}
-   virtual ~Parser() {}
+public:
+   ModuleConfparser();
+   virtual ~ModuleConfparser();
 };
 
-}}}
+}
+}
 
 #endif
 
-/* end of parser_ext.h */
+/* end of confparser_fm.h */

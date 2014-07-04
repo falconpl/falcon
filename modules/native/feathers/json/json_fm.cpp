@@ -17,6 +17,8 @@
    Funcext module main file - extension implementation.
 */
 
+#define SRC "modules/native/feathers/json/json_fm.cpp"
+
 #include <falcon/setup.h>
 #include <falcon/module.h>
 #include <falcon/vm.h>
@@ -25,15 +27,15 @@
 #include <falcon/stderrors.h>
 #include <falcon/stdhandlers.h>
 
-#include "json_ext.h"
+#include "json_fm.h"
 #include "json_mod.h"
 
 /*#
-   @beginmodule feathers.json
+   @beginmodule json
 */
 
 namespace Falcon {
-namespace Ext {
+namespace Feathers {
 
 
 namespace CJSON {
@@ -208,6 +210,20 @@ void* ClassJSON::createInstance() const
    // do nothing.
    return 0;
 }
+
+//====================================================================================================
+// Module
+//
+
+ModuleJSON::ModuleJSON():
+         Module("json", true)
+{
+   addMantra(new ClassJSON );
+   addMantra( new ClassJSONError );
+}
+
+ModuleJSON::~ModuleJSON()
+{}
 
 }
 }

@@ -20,7 +20,7 @@
 #include <falcon/log.h>
 
 namespace Falcon {
-namespace Mod {
+namespace Feathers {
 
 LogChannelEngine::LogChannelEngine( int level ):
    LogChannel( level )

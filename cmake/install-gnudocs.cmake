@@ -16,17 +16,17 @@
 #################################################################
 
 set( doc_files
-      ../AUTHORS
-      ../BUILDING
-      ../ChangeLog
-      ../copyright
-      ../LICENSE
-      ../README
-      ../README.editline
-      ../README.mersenne
-      ../TODO
-      ../LICENSE_GPLv2
-      ../RELNOTES
+      AUTHORS
+      BUILDING
+      ChangeLog
+      copyright
+      LICENSE
+      README
+      README.editline
+      README.mersenne
+      TODO
+      LICENSE_GPLv2
+      RELNOTES
    )
 
 install(

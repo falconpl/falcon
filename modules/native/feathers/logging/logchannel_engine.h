@@ -19,7 +19,7 @@
 #include "logchannel.h"
 
 namespace Falcon {
-namespace Mod {
+namespace Feathers {
 
 /** Logging channel writing to the standard Falcon engine log facility
  *

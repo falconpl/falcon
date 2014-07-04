@@ -4,14 +4,13 @@
 #   Author(s): Stanislas Marquis <stnsls@gmail.com>
 #
 
-if(NOT FALCON_MODULE_DTMX )
-	message( STATUS "NOT building module: dtmx")
+if(NOT FALCON_BUILD_DMTX )
+	message( STATUS "NOT building module: dmtx")
 	return()
-end()
+endif()
+message( STATUS "Building module: dmtx" )
 
 falcon_define_module( FALCON_MODULE dmtx )
-
-message( STATUS "Building module: dtmx" )
 
 list( APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake )
 

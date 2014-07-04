@@ -13,9 +13,9 @@
    See LICENSE file for licensing details.
 */
 
-#define SRC "modules/native/feathres/inet/inet_ext.cpp"
+#define SRC "modules/native/feathres/inet/inet_fm.cpp"
 #include "inet_mod.h"
-#include "inet_ext.h"
+#include "inet_fm.h"
 
 #ifdef FALCON_SYSTEM_WIN
 #include "winselectmpx.h"
@@ -41,7 +41,7 @@ namespace Falcon {
 
 static Mod::Address* internal_read_address( Function* func, Item* i_address )
 {
-   static Class* clsAddress = static_cast<Ext::ModuleInet*>(func->fullModule())->addressClass();
+   static Class* clsAddress = static_cast<Feathers::ModuleInet*>(func->fullModule())->addressClass();
 
    Mod::Address* target = 0;
    if( i_address != 0 )
@@ -68,9 +68,10 @@ static Mod::Address* internal_read_address( Function* func, Item* i_address )
    return target;
 }
 
-namespace Ext {
+namespace Feathers {
 
 namespace {
+
 /*#
    @function getHostName
    @brief Retrieves the host name of the local machine.

@@ -23,7 +23,7 @@
 #include <falcon/mt.h>
 
 namespace Falcon {
-namespace Mod {
+namespace Feathers {
 
 /** Logging for Syslog (POSIX) or Event Logger (MS-Windows).  */
 class LogChannelSyslog: public LogChannel

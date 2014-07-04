@@ -23,7 +23,7 @@
 #include <falcon/timestamp.h>
 
 namespace Falcon {
-namespace Mod {
+namespace Feathers {
 
 #define LOGLEVEL_FATAL 0
 #define LOGLEVEL_ERROR 1

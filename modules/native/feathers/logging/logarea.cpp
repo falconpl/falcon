@@ -22,7 +22,7 @@
 
 
 namespace Falcon {
-namespace Mod {
+namespace Feathers {
 
 class LogArea::Private
 {

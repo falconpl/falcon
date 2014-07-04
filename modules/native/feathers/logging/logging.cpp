@@ -16,15 +16,12 @@
 /** \file
    The confparser module - main file.
 */
-#include <falcon/module.h>
-#include "logging_ext.h"
-#include "logging_mod.h"
-
-#include "logarea.h"
+#include "logging_fm.h"
 
 
 /*#
-   @module feathers.logging Logging facility
+   @module logging Logging facility
+   @ingroup feathers
    @brief Multithread enabled logging facility.
 
    The @b logging module offers a very advanced facility for logging application
@@ -157,63 +154,9 @@
 */
 
 
-namespace Falcon {
-namespace Ext {
-
-LoggingModule::LoggingModule():
-         Module("LoggingModule")
-{
-   this->addConstant( "LOGFMT_TRACE", "[%s %M.%f]\t%m");
-   this->addConstant( "LOGFMT_ERROR", "%T\t%L%C\t[%a]\t%m");
-   this->addConstant( "LOGFMT_ERRORP", "%T\t%L%C\t[%a:%M.%f]\t%m");
-   this->addConstant( "LOGFMT_ERRORT", "%T\t%L%C\t[%M.%f]\t%m");
-   this->addConstant( "LOGFMT_ENTRY", "%T\t(%L) %m");
-   this->addConstant( "LOGFMT_ENTRYP", "%T\t(%L) [%a]\t%m");
-
-   this->addConstant( "LVC", LOGLEVEL_C );
-   this->addConstant( "LVE", LOGLEVEL_E );
-   this->addConstant( "LVW", LOGLEVEL_W );
-   this->addConstant( "LVI", LOGLEVEL_I );
-   this->addConstant( "LVD", LOGLEVEL_D );
-   this->addConstant( "LVD0", LOGLEVEL_D0 );
-   this->addConstant( "LVD1", LOGLEVEL_D1 );
-   this->addConstant( "LVD2", LOGLEVEL_D2 );
-   this->addConstant( "LVALL", LOGLEVEL_ALL );
-
-   m_logArea = new ClassLogArea;
-   m_logChannel = new ClassLogChannel;
-   m_generalArea = new Mod::LogArea("General");
-
-   *this
-       << new Function_LOG
-       << new Function_LOGC
-       << new Function_LOGE
-       << new Function_LOGW
-       << new Function_LOGI
-       << new Function_LOGD
-       << new Function_LOGD0
-       << new Function_LOGD1
-       << new Function_LOGD2
-
-       << m_logArea
-       << m_logChannel
-
-       << new ClassLogChannelFiles( m_logChannel )
-       << new ClassLogChannelStream( m_logChannel )
-       << new ClassLogChannelStream( m_logChannel )
-       << new ClassLogChannelEngine( m_logChannel )
-   ;
-
-   ClassGeneralLogAreaObj* glog = new ClassGeneralLogAreaObj( m_logArea );
-   addObject( glog, false );
-}
-
-LoggingModule::~LoggingModule()
-{
-}
-
-}
-}
+/*#
+   @beginmodule logging
+*/
 
 /*# @object GeneralLog
       @from LogArea
@@ -222,13 +165,9 @@ LoggingModule::~LoggingModule()
       This is the default log area used by the @a glog function.
   */
 
-
-/*#
-   @beginmodule feathers.logging
-*/
 FALCON_MODULE_DECL
 {
-   Falcon::Module *self = new Falcon::Ext::LoggingModule;
+   Falcon::Module *self = new Falcon::Feathers::ModuleLogging;
    return self;
 }
 

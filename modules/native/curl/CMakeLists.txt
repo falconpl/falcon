@@ -4,12 +4,16 @@
 # CMake configuration file for curl
 ####################################################################
 
-if(NOT FALCON_MODULE_CURL)
-	message( STATUS "NOT building module: dtmx")
-	return()
-end()
-
 cmake_minimum_required(VERSION 2.6)
+option( FALCON_BUILD_CURL "Install CURL binding" OFF )
+
+if(NOT FALCON_BUILD_CURL )
+	message( STATUS "NOT building module: curl")
+	return()
+endif()
+
+message( STATUS "Building module: curl")
+
 project(Falcon_curl)
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 

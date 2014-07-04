@@ -24,7 +24,7 @@
 #include <windows.h>
 
 namespace Falcon {
-namespace Mod {
+namespace Feathers {
 
 bool LogChannelSyslog::close()
 {

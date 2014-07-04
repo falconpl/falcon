@@ -1,6 +1,6 @@
 /*
    FALCON - The Falcon Programming Language.
-   FILE: shmemmodule.h
+   FILE: shmem_fm.h
 
    Compiler module version informations
    -------------------------------------------------------------------
@@ -13,19 +13,20 @@
 
    See LICENSE file for licensing details.
 */
-#ifndef _FALCON_FEATHERS_SHMEM_MODULE_EXT_H_
-#define _FALCON_FEATHERS_SHMEM_MODULE_EXT_H_
+#ifndef _FALCON_FEATHERS_SHMEM_FM_H_
+#define _FALCON_FEATHERS_SHMEM_FM_H_
 
 #include <falcon/module.h>
 
 namespace Falcon {
+namespace Feathers {
 
-class ShmemModule: public Module
+class ModuleShmem: public Module
 {
 public:
 
-   ShmemModule();
-   virtual ~ShmemModule();
+   ModuleShmem();
+   virtual ~ModuleShmem();
 
    Class* sessionClass() const { return m_classSession; }
 
@@ -39,8 +40,8 @@ private:
 };
 
 }
+}
 
+#endif /* _FALCON_FEATHERS_SHMEM_FM_H_ */
 
-#endif /* SHMEMMODULE_H_ */
-
-/* end of shmemmodule.h */
+/* end of shmem_fm.h */

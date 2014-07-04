@@ -4,12 +4,21 @@
 # CMake configuration file for module Process
 ####################################################################
 
+if(NOT FALCON_VSF_BUILD_ZIP )
+	message( STATUS "NOT building VFS zip")
+	return()
+endif()
+
+message( STATUS "Building VFS subsystem zip")
+
+
 if( WIN32 OR APPLE )
    set(_minizip_default ON)
 else( WIN32 OR APPLE )
    set(_minizip_default OFF)
 endif( WIN32 OR APPLE)
-option(FALCON_WITH_INTERNAL_MINIZIP "Use internal minizip library" ${_minizip_default})
+
+option(FALCON_BUILD_VSF_ZIP_INTERNAL "Use internal minizip library" ${_minizip_default})
 
 include_directories(
   ${CMAKE_CURRENT_SOURCE_DIR}

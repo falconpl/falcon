@@ -1,6 +1,6 @@
 /*
    FALCON - The Falcon Programming Language.
-   FILE: hash_ext.h
+   FILE: hash_fm.h
 
    Provides multiple hashing algorithms
    Interface extension functions
@@ -32,51 +32,27 @@
    Interface extension functions - header file
 */
 
-#ifndef FALCON_FEATHERS_HASH_EXT_H
-#define FALCON_FEATHERS_HASH_EXT_H
+#ifndef FALCON_FEATHERS_HASH_FM_H
+#define FALCON_FEATHERS_HASH_FM_H
 
 #include <falcon/module.h>
 #include <falcon/class.h>
 
 namespace Falcon {
-namespace Ext {
+namespace Feathers {
 
-class ModHash: public Module
+class ModuleHash: public Module
 {
 public:
    Class* m_baseHashCls;
 
-   ModHash();
-   ~ModHash();
+   ModuleHash();
+   ~ModuleHash();
 };
-
-
-class ClassHash: public Class
-{
-public:
-   ClassHash();
-   virtual ~ClassHash();
-
-   virtual void* createInstance() const;
-   virtual void* clone( void* instance ) const;
-   virtual void dispose( void* instance ) const;
-
-   virtual void gcMarkInstance( void* instance, uint32 mark ) const;
-   virtual bool gcCheckInstance( void* instance, uint32 mark ) const;
-
-   virtual void store( VMContext* ctx, DataWriter* stream, void* instance ) const;
-   virtual void restore( VMContext* ctx, DataReader* stream ) const;
-
-   bool op_init( VMContext*, void*, int32 ) const;
-
-protected:
-   ClassHash(const String& name, Class* parent);
-};
-
 
 }
 }
 
 #endif
 
-/* end of hash_ext.h */
+/* end of hash_fm.h */

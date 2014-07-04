@@ -4,7 +4,8 @@
 # CMake configuration file for DBI
 ####################################################################
 cmake_minimum_required(VERSION 2.6.2)
-project(Falcon_DBI)
+
+FalconDeclareModule( DBI dbi )
 
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 
@@ -14,7 +15,7 @@ find_package(Falcon REQUIRED)
 ### Options ###
 
 # SQLite3
-OPTION( FALCON_DBI_BUILD_SQLITE "Include SQLite3 DBI Module" ON )
+OPTION( FALCON_BUILD_DBI_SQLITE "Include SQLite3 DBI Module" ON )
 
 # MySQL
 FIND_PATH( MYSQL_INCLUDE_DIR mysql.h HINTS /usr/include/mysql /usr/local/include/mysql )
@@ -41,16 +42,16 @@ IF ( ORACLE_INCLUDE_DIR )
 ELSE()
     set ( _oracle OFF )
 ENDIF()
-OPTION( FALCON_DBI_BUILD_ORACLE "Include Oracle DBI Module" ${_oracle} )
+OPTION( FALCON_BUILD_DBI_ORACLE "Include Oracle DBI Module" ${_oracle} )
 
 # Firebird
-OPTION(FALCON_DBI_BUILD_FIREBIRD "Include Firebird DBI Module" OFF)
+OPTION(FALCON_BUILD_DBI_FIREBIRD "Include Firebird DBI Module" OFF)
 
 # For now, activate ODBC on windows
 IF(MSVC)
-   OPTION(FALCON_DBI_BUILD_ODBC "Include ODBC DBI Module" ON)
+   OPTION(FALCON_BUILD_DBI_ODBC "Include ODBC DBI Module" ON)
 ELSE(MSVC)
-   OPTION(FALCON_DBI_BUILD_ODBC "Include ODBC DBI Module" OFF)
+   OPTION(FALCON_BUILD_DBI_ODBC "Include ODBC DBI Module" OFF)
 ENDIF(MSVC)
 
 INCLUDE_DIRECTORIES(include)
@@ -86,26 +87,26 @@ set( dbi_common_files
 ADD_SUBDIRECTORY(dbi)
 
 # DBI Drivers
-IF(FALCON_DBI_BUILD_MYSQL)
+IF(FALCON_BUILD_DBI_MYSQL)
   ADD_SUBDIRECTORY(mysql)
 ENDIF()
 
-IF(FALCON_DBI_BUILD_PGSQL)
+IF(FALCON_BUILD_DBI_PGSQL)
   ADD_SUBDIRECTORY(pgsql)
 ENDIF()
 
-IF(FALCON_DBI_BUILD_SQLITE)
+IF(FALCON_BUILD_DBI_SQLITE)
   ADD_SUBDIRECTORY(sqlite3)
 ENDIF()
 
-IF(FALCON_DBI_BUILD_ODBC)
+IF(FALCON_BUILD_DBI_ODBC)
   ADD_SUBDIRECTORY(odbc)
 ENDIF()
 
-IF(FALCON_DBI_BUILD_ORACLE)
+IF(FALCON_BUILD_DBI_ORACLE)
     ADD_SUBDIRECTORY(oracle)
 ENDIF()
 
-IF(FALCON_DBI_BUILD_FIREBIRD)
+IF(FALCON_BUILD_DBI_FIREBIRD)
   ADD_SUBDIRECTORY(fbsql)
 ENDIF()

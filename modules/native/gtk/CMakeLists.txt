@@ -5,6 +5,12 @@ project( gtk )
 
 cmake_minimum_required( VERSION 2.6.3 )
 
+if(NOT FALCON_BUILD_GTK )
+	message( STATUS "NOT building module: gtk")
+	return()
+endif()
+message( STATUS "Building module: gtk" )
+
 list( APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake )
 
 ##

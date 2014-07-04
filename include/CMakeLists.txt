@@ -10,7 +10,6 @@ configure_file(
 )
 
 file( GLOB falcon_files falcon/*.h)
-#file( GLOB falcon_srv falcon/srv/*.h)
 file( GLOB falcon_classes falcon/classes/*.h)
 file( GLOB falcon_cm falcon/cm/*.h)
 file( GLOB falcon_errors falcon/errors/*.h)
@@ -27,7 +26,6 @@ set(FALCON_SRV_HEADERS
    ${falcon_srv} )
 
 install(FILES ${FALCON_HEADERS} DESTINATION ${FALCON_INC_DIR}/falcon)
-#install(FILES ${FALCON_SRV_HEADERS} DESTINATION ${FALCON_INC_DIR}/falcon/srv)
 install(FILES ${falcon_classes} DESTINATION ${FALCON_INC_DIR}/falcon/classes)
 install(FILES ${falcon_cm} DESTINATION ${FALCON_INC_DIR}/falcon/cm)
 install(FILES ${falcon_errors} DESTINATION ${FALCON_INC_DIR}/falcon/errors)

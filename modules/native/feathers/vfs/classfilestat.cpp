@@ -24,7 +24,6 @@
 #include <falcon/filestat.h>
 #include <falcon/stream.h>
 
-#include "vfs.h"
 #include "classfilestat.h"
 #include "classvfs.h"
 

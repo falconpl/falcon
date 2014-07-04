@@ -16,7 +16,7 @@
 #define SRC "modules/native/feathres/inet/inet_mod.cpp"
 
 #include "inet_mod.h"
-#include "inet_ext.h"
+#include "inet_fm.h"
 
 #ifndef FALCON_SYSTEM_WIN
 #include <netinet/in.h>
@@ -164,7 +164,7 @@ Address::Address( const String& addr):
 {
    if( ! parse(addr) )
    {
-      throw FALCON_SIGN_XERROR(Ext::NetError, FALSOCK_ERR_ADDRESS, .desc(FALSOCK_ERR_ADDRESS_MSG));
+      throw FALCON_SIGN_XERROR(Feathers::NetError, FALSOCK_ERR_ADDRESS, .desc(FALSOCK_ERR_ADDRESS_MSG));
    }
 }
 
@@ -387,7 +387,7 @@ void Address::convertToIPv6( void *vai, void* vsock6, socklen_t& sock6len )
    if ( res != 0 )
    {
       const char* ed = gai_strerror(res);
-      throw FALCON_SIGN_XERROR(Ext::NetError, FALSOCK_ERR_RESOLV, .desc(FALSOCK_ERR_RESOLV_MSG)
+      throw FALCON_SIGN_XERROR(Feathers::NetError, FALSOCK_ERR_RESOLV, .desc(FALSOCK_ERR_RESOLV_MSG)
                .extra(String("").N(res).A(": ").A(ed)) );
    }
 
@@ -404,7 +404,7 @@ void Address::convertToIPv6( void *vai, void* vsock6, socklen_t& sock6len )
    if ( res != 0 )
    {
       const char* ed = gai_strerror(res);
-      throw FALCON_SIGN_XERROR(Ext::NetError, FALSOCK_ERR_RESOLV, .desc(FALSOCK_ERR_RESOLV_MSG)
+      throw FALCON_SIGN_XERROR(Feathers::NetError, FALSOCK_ERR_RESOLV, .desc(FALSOCK_ERR_RESOLV_MSG)
                .extra(String("").N(res).A(": ").A(ed)) );
    }
 
@@ -615,7 +615,7 @@ void Socket::create( int family, int type, int protocol )
 {
    if( m_skt != 0 )
    {
-      throw FALCON_SIGN_XERROR( Ext::NetError, FALSOCK_ERR_ALREADY_CREATED, .desc(FALSOCK_ERR_ALREADY_CREATED_MSG));
+      throw FALCON_SIGN_XERROR( Feathers::NetError, FALSOCK_ERR_ALREADY_CREATED, .desc(FALSOCK_ERR_ALREADY_CREATED_MSG));
    }
 
 
@@ -625,7 +625,7 @@ void Socket::create( int family, int type, int protocol )
    m_skt = ::socket(family, type, protocol);
    if( m_skt == 0 )
    {
-      throw FALCON_SIGN_XERROR( Ext::NetError, FALSOCK_ERR_CREATE, .desc(FALSOCK_ERR_CREATE_MSG));
+      throw FALCON_SIGN_XERROR( Feathers::NetError, FALSOCK_ERR_CREATE, .desc(FALSOCK_ERR_CREATE_MSG));
    }
 
 }
@@ -658,7 +658,7 @@ Stream* Socket::makeStreamInterface()
 
    if( m_type != SOCK_STREAM )
    {
-      throw FALCON_SIGN_XERROR(Ext::NetError,
+      throw FALCON_SIGN_XERROR(Feathers::NetError,
                FALSOCK_ERR_INCOMPATIBLE, .desc(FALSOCK_ERR_INCOMPATIBLE_MSG));
    }
 
@@ -681,7 +681,7 @@ int Socket::getValidAddress( Address* addr, struct sockaddr_storage& target, FAL
    // has the address to be resolved?
    if( ! addr->isResolved() ) {
       if( ! addr->resolve(false) ) {
-         throw FALCON_SIGN_XERROR(Ext::NetError,
+         throw FALCON_SIGN_XERROR(Feathers::NetError,
                         FALSOCK_ERR_UNRESOLVED, .desc(FALSOCK_ERR_UNRESOLVED_MSG));
       }
    }
@@ -708,7 +708,7 @@ int Socket::getValidAddress( Address* addr, struct sockaddr_storage& target, FAL
 
    if( ai == 0 )
    {
-      throw FALCON_SIGN_XERROR(Ext::NetError,
+      throw FALCON_SIGN_XERROR(Feathers::NetError,
                               FALSOCK_ERR_INCOMPATIBLE, .desc(FALSOCK_ERR_INCOMPATIBLE_MSG));
    }
 
@@ -740,7 +740,7 @@ void Socket::bind( Address *addr )
       addr->incref();
    }
    else {
-      throw FALCON_SIGN_XERROR( Ext::NetError,
+      throw FALCON_SIGN_XERROR( Feathers::NetError,
                FALSOCK_ERR_BIND, .desc(FALSOCK_ERR_BIND_MSG)
                .sysError((uint32) FALCON_ERRNO ));
    }
@@ -757,7 +757,7 @@ void Socket::close()
          m_type = -1;
       }
       else {
-         throw FALCON_SIGN_XERROR( Ext::NetError,
+         throw FALCON_SIGN_XERROR( Feathers::NetError,
                        FALSOCK_ERR_CLOSE, .desc(FALSOCK_ERR_CLOSE_MSG)
                        .sysError((uint32) FALCON_ERRNO ));
       }
@@ -770,7 +770,7 @@ void Socket::closeWrite()
    {
       if ( ::shutdown( (int) m_skt, FALCON_SHUT_WR ) != 0 )
       {
-         throw FALCON_SIGN_XERROR( Ext::NetError,
+         throw FALCON_SIGN_XERROR( Feathers::NetError,
                        FALSOCK_ERR_CLOSE, .desc(FALSOCK_ERR_CLOSE_MSG)
                        .sysError((uint32) FALCON_ERRNO ));
       }
@@ -800,7 +800,7 @@ void Socket::closeRead()
    {
       if ( ::shutdown( (int) m_skt, FALCON_SHUT_RD ) != 0 )
       {
-         throw FALCON_SIGN_XERROR( Ext::NetError,
+         throw FALCON_SIGN_XERROR( Feathers::NetError,
                        FALSOCK_ERR_CLOSE, .desc(FALSOCK_ERR_CLOSE_MSG)
                        .sysError((uint32) FALCON_ERRNO ));
       }
@@ -831,7 +831,7 @@ void Socket::connect( Address* where, bool async )
       {
          ::FALCON_CLOSE_SOCKET( m_skt );
          m_skt = 0;
-         throw FALCON_SIGN_XERROR( Ext::NetError,
+         throw FALCON_SIGN_XERROR( Feathers::NetError,
                        FALSOCK_ERR_CONNECT, .desc(FALSOCK_ERR_CONNECT_MSG)
                        .sysError( error ));
       }
@@ -875,7 +875,7 @@ bool Socket::getBoolOption( int level, int option) const
 
    if( sys_getsockopt( level, option, &res, &len ) != 0 )
    {
-      throw FALCON_SIGN_XERROR( Ext::NetError,
+      throw FALCON_SIGN_XERROR( Feathers::NetError,
             FALSOCK_ERR_GENERIC, .desc(FALSOCK_ERR_GENERIC_MSG)
             .extra("getsockopt")
             .sysError((uint32) FALCON_ERRNO ));
@@ -892,7 +892,7 @@ int  Socket::getIntOption( int level, int option ) const
 
    if( sys_getsockopt( level, option, &value, &len ) != 0 )
    {
-      throw FALCON_SIGN_XERROR( Ext::NetError,
+      throw FALCON_SIGN_XERROR( Feathers::NetError,
             FALSOCK_ERR_GENERIC, .desc(FALSOCK_ERR_GENERIC_MSG)
             .extra("getsockopt")
             .sysError((uint32) FALCON_ERRNO ));
@@ -909,7 +909,7 @@ void Socket::getStringOption( int level, int option, String& value ) const
 
    if( sys_getsockopt( level, option, buffer, &len ) != 0 )
    {
-      throw FALCON_SIGN_XERROR( Ext::NetError,
+      throw FALCON_SIGN_XERROR( Feathers::NetError,
             FALSOCK_ERR_GENERIC, .desc(FALSOCK_ERR_GENERIC_MSG)
             .extra("getsockopt")
             .sysError((uint32) FALCON_ERRNO ));
@@ -925,7 +925,7 @@ void Socket::getDataOption( int level, int option, void* data, size_t& data_len 
 
    if( sys_getsockopt( level, option, data, &len ) != 0 )
    {
-      throw FALCON_SIGN_XERROR( Ext::NetError,
+      throw FALCON_SIGN_XERROR( Feathers::NetError,
            FALSOCK_ERR_GENERIC, .desc(FALSOCK_ERR_GENERIC_MSG)
            .extra("getsockopt")
            .sysError((uint32) FALCON_ERRNO ));
@@ -942,7 +942,7 @@ void Socket::setBoolOption( int level, int option, bool value )
 
    if( sys_setsockopt( level, option, &res, len ) != 0 )
    {
-      throw FALCON_SIGN_XERROR( Ext::NetError,
+      throw FALCON_SIGN_XERROR( Feathers::NetError,
             FALSOCK_ERR_GENERIC, .desc(FALSOCK_ERR_GENERIC_MSG)
             .extra("setsockopt")
             .sysError((uint32) FALCON_ERRNO ));
@@ -956,7 +956,7 @@ void Socket::setIntOption( int level, int option, int value )
 
    if( sys_setsockopt( level, option, &value, len ) != 0 )
    {
-      throw FALCON_SIGN_XERROR( Ext::NetError,
+      throw FALCON_SIGN_XERROR( Feathers::NetError,
             FALSOCK_ERR_GENERIC, .desc(FALSOCK_ERR_GENERIC_MSG)
             .extra("setsockopt")
             .sysError((uint32) FALCON_ERRNO ));
@@ -971,7 +971,7 @@ void Socket::setStringOption( int level, int option, const String& value )
 
    if( sys_setsockopt( level, option, cval.c_str(), len ) != 0 )
    {
-      throw FALCON_SIGN_XERROR( Ext::NetError,
+      throw FALCON_SIGN_XERROR( Feathers::NetError,
             FALSOCK_ERR_GENERIC, .desc(FALSOCK_ERR_GENERIC_MSG)
             .extra("setsockopt")
             .sysError((uint32) FALCON_ERRNO ));
@@ -983,7 +983,7 @@ void Socket::setDataOption( int level, int option, const void* data, size_t data
 {
    if( sys_setsockopt( level, option, data, (FALCON_SOCKLEN_T) data_len ) != 0 )
    {
-      throw FALCON_SIGN_XERROR( Ext::NetError,
+      throw FALCON_SIGN_XERROR( Feathers::NetError,
             FALSOCK_ERR_GENERIC, .desc(FALSOCK_ERR_GENERIC_MSG)
             .extra("setsockopt")
             .sysError((uint32) FALCON_ERRNO ));
@@ -1006,7 +1006,7 @@ void Socket::listen( int listenBacklog )
       m_skt = 0;
       m_type = -1;
 
-      throw FALCON_SIGN_XERROR(Ext::NetError,
+      throw FALCON_SIGN_XERROR(Feathers::NetError,
                      FALSOCK_ERR_LISTEN, .desc(FALSOCK_ERR_LISTEN_MSG)
                      .sysError(error));
    }
@@ -1032,7 +1032,7 @@ Socket *Socket::accept()
          return 0;
       }
 
-      throw FALCON_SIGN_XERROR(Ext::NetError,
+      throw FALCON_SIGN_XERROR(Feathers::NetError,
                      FALSOCK_ERR_ACCEPT, .desc(FALSOCK_ERR_ACCEPT_MSG)
                      .sysError((uint32) FALCON_ERRNO));
    }
@@ -1100,7 +1100,7 @@ int32 Socket::recv( byte *buffer, int32 size, Address *data )
          return 0;
       }
 
-      throw FALCON_SIGN_XERROR( Ext::NetError,
+      throw FALCON_SIGN_XERROR( Feathers::NetError,
                  FALSOCK_ERR_RECV, .desc(FALSOCK_ERR_RECV_MSG)
                  .sysError((uint32) FALCON_ERRNO ));
    }
@@ -1150,7 +1150,7 @@ int32 Socket::send( const byte *buffer, int32 size, Address *where )
          return 0;
       }
 
-      throw FALCON_SIGN_XERROR( Ext::NetError,
+      throw FALCON_SIGN_XERROR( Feathers::NetError,
                  FALSOCK_ERR_SEND, .desc(FALSOCK_ERR_SEND_MSG)
                  .sysError((uint32) FALCON_ERRNO ));
    }
@@ -1560,7 +1560,7 @@ void Socket::sslConfig( bool asServer,
 
    if ( m_skt < 0 ) // no socket to attach
    {
-      throw new Ext::NetError( ErrorParam( FALSOCK_ERR_SSLCONFIG, __LINE__, SRC )
+      throw new Feathers::NetError( ErrorParam( FALSOCK_ERR_SSLCONFIG, __LINE__, SRC )
            .desc( FALSOCK_ERR_SSLCONFIG_MSG )
            .extra( "Not ready" ) );
    }
@@ -1594,7 +1594,7 @@ void Socket::sslConfig( bool asServer,
       sslD->sslContext = SSL_CTX_new( sslD->sslMethod );
       if ( !sslD->sslContext )
       {
-         throw new Ext::NetError( ErrorParam( FALSOCK_ERR_SSLCONFIG, __LINE__, SRC )
+         throw new Feathers::NetError( ErrorParam( FALSOCK_ERR_SSLCONFIG, __LINE__, SRC )
                          .desc( FALSOCK_ERR_SSLCONFIG_MSG )
                          .extra( "Cannot create the SSL context" ) );
       }
@@ -1606,7 +1606,7 @@ void Socket::sslConfig( bool asServer,
          if ( ( i = SSL_CTX_use_certificate_file( sslD->sslContext, scf.c_str(),
              SSL_FILETYPE_PEM ) != 1 ) )
          {
-            throw new Ext::NetError( ErrorParam( FALSOCK_ERR_SSLCONFIG, __LINE__, SRC )
+            throw new Feathers::NetError( ErrorParam( FALSOCK_ERR_SSLCONFIG, __LINE__, SRC )
                  .desc( FALSOCK_ERR_SSLCONFIG_MSG )
                  .extra( "Failed to use certificate file" ) );
 
@@ -1621,7 +1621,7 @@ void Socket::sslConfig( bool asServer,
          if ( ( i = SSL_CTX_use_PrivateKey_file( sslD->sslContext, scf.c_str(),
              SSL_FILETYPE_PEM ) != 1 ) )
          {
-            throw new Ext::NetError( ErrorParam( FALSOCK_ERR_SSLCONFIG, __LINE__, SRC )
+            throw new Feathers::NetError( ErrorParam( FALSOCK_ERR_SSLCONFIG, __LINE__, SRC )
                           .desc( FALSOCK_ERR_SSLCONFIG_MSG )
                           .extra( "Failed to use key file" ) );
          }
@@ -1640,7 +1640,7 @@ void Socket::sslConfig( bool asServer,
          }
          else
          {
-            throw new Ext::NetError( ErrorParam( FALSOCK_ERR_SSLCONFIG, __LINE__, SRC )
+            throw new Feathers::NetError( ErrorParam( FALSOCK_ERR_SSLCONFIG, __LINE__, SRC )
                                    .desc( FALSOCK_ERR_SSLCONFIG_MSG )
                                    .extra( "Failed to use certificate authority file" ) );
          }
@@ -1651,7 +1651,7 @@ void Socket::sslConfig( bool asServer,
       sslD->sslHandle = SSL_new( sslD->sslContext );
       if ( !sslD->sslHandle )
       {
-         throw new Ext::NetError( ErrorParam( FALSOCK_ERR_SSLCONFIG, __LINE__, SRC )
+         throw new Feathers::NetError( ErrorParam( FALSOCK_ERR_SSLCONFIG, __LINE__, SRC )
                           .desc( FALSOCK_ERR_SSLCONFIG_MSG )
                           .extra( "Cannot create SSL Handle" ) );
       }
@@ -1659,7 +1659,7 @@ void Socket::sslConfig( bool asServer,
       // attach file descriptor
       if ( ( i = SSL_set_fd( sslD->sslHandle, m_skt ) ) != 1 )
       {
-         throw new Ext::NetError( ErrorParam( FALSOCK_ERR_SSLCONFIG, __LINE__, SRC )
+         throw new Feathers::NetError( ErrorParam( FALSOCK_ERR_SSLCONFIG, __LINE__, SRC )
                           .desc( FALSOCK_ERR_SSLCONFIG_MSG )
                           .extra( "Failed to use attach the file descriptor" ) );
       }
@@ -1690,7 +1690,7 @@ void Socket::sslConnect()
    // need ssl context
    if ( !m_sslData )
    {
-      throw FALCON_SIGN_XERROR( Ext::NetError, FALSOCK_ERR_SSLCONNECT,
+      throw FALCON_SIGN_XERROR( Feathers::NetError, FALSOCK_ERR_SSLCONNECT,
                     .desc(FALSOCK_ERR_SSLCONNECT_MSG)
                     .extra( "SSL not configured on this socket" ));
    }
@@ -1699,7 +1699,7 @@ void Socket::sslConnect()
    // no need to call several times
    if ( m_sslData->handshakeState != SSLData::handshake_todo )
    {
-      throw FALCON_SIGN_XERROR( Ext::NetError, FALSOCK_ERR_SSLCONNECT,
+      throw FALCON_SIGN_XERROR( Feathers::NetError, FALSOCK_ERR_SSLCONNECT,
                     .desc(FALSOCK_ERR_SSLCONNECT_MSG)
                     .extra( "SSL handshake already performed" ));
    }
@@ -1707,7 +1707,7 @@ void Socket::sslConnect()
    // socket needs to be connected
    if ( ! isConnected() )
    {
-      throw FALCON_SIGN_XERROR( Ext::NetError, FALSOCK_ERR_SSLCONNECT,
+      throw FALCON_SIGN_XERROR( Feathers::NetError, FALSOCK_ERR_SSLCONNECT,
                           .desc(FALSOCK_ERR_SSLCONNECT_MSG)
                           .extra( "SSL not connected" ));
    }
@@ -1726,7 +1726,7 @@ void Socket::sslConnect()
       int32 error = SSL_get_error( m_sslData->sslHandle, i );
       if( error == SSL_ERROR_SYSCALL && FALCON_ERRNO != 0 )
       {
-         throw FALCON_SIGN_XERROR( Ext::NetError, FALSOCK_ERR_RECV,
+         throw FALCON_SIGN_XERROR( Feathers::NetError, FALSOCK_ERR_RECV,
                               .desc(FALSOCK_ERR_RECV_MSG)
                               .sysError((uint32) FALCON_ERRNO) );
       }
@@ -1734,7 +1734,7 @@ void Socket::sslConnect()
       {
          char buffer[512];
          ERR_error_string_n(error, buffer, 512);
-         throw FALCON_SIGN_XERROR( Ext::NetError, FALSOCK_ERR_RECV,
+         throw FALCON_SIGN_XERROR( Feathers::NetError, FALSOCK_ERR_RECV,
                      .desc(FALSOCK_ERR_RECV_MSG)
                      .extra( String("SSL ").A(buffer)) );
       }
@@ -1751,7 +1751,7 @@ int32 Socket::sslWrite( const byte* buf, int32 sz )
       int error = SSL_get_error( m_sslData->sslHandle, i );
       if( error == SSL_ERROR_SYSCALL && FALCON_ERRNO != 0 )
       {
-         throw FALCON_SIGN_XERROR( Ext::NetError, FALSOCK_ERR_RECV,
+         throw FALCON_SIGN_XERROR( Feathers::NetError, FALSOCK_ERR_RECV,
                               .desc(FALSOCK_ERR_RECV_MSG)
                               .sysError((uint32) FALCON_ERRNO) );
       }
@@ -1759,7 +1759,7 @@ int32 Socket::sslWrite( const byte* buf, int32 sz )
       {
          char buffer[512];
          ERR_error_string_n(error, buffer, 512);
-         throw FALCON_SIGN_XERROR( Ext::NetError, FALSOCK_ERR_RECV,
+         throw FALCON_SIGN_XERROR( Feathers::NetError, FALSOCK_ERR_RECV,
                      .desc(FALSOCK_ERR_RECV_MSG)
                      .extra( String("SSL ").A(buffer)) );
       }
@@ -1775,7 +1775,7 @@ int32 Socket::sslRead( byte* buf, int32 sz )
       int error = SSL_get_error( m_sslData->sslHandle, i );
       if( error == SSL_ERROR_SYSCALL && FALCON_ERRNO != 0 )
       {
-         throw FALCON_SIGN_XERROR( Ext::NetError, FALSOCK_ERR_RECV,
+         throw FALCON_SIGN_XERROR( Feathers::NetError, FALSOCK_ERR_RECV,
                               .desc(FALSOCK_ERR_RECV_MSG)
                               .sysError((uint32) FALCON_ERRNO) );
       }
@@ -1783,7 +1783,7 @@ int32 Socket::sslRead( byte* buf, int32 sz )
       {
          char buffer[512];
          ERR_error_string_n(error, buffer, 512);
-         throw FALCON_SIGN_XERROR( Ext::NetError, FALSOCK_ERR_RECV,
+         throw FALCON_SIGN_XERROR( Feathers::NetError, FALSOCK_ERR_RECV,
                      .desc(FALSOCK_ERR_RECV_MSG)
                      .extra( String("SSL ").A(buffer)) );
       }

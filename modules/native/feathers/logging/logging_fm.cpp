@@ -29,7 +29,7 @@
 #include <falcon/stream.h>
 #include <falcon/stdhandlers.h>
 
-#include "logging_ext.h"
+#include "logging_fm.h"
 #include "logging_mod.h"
 
 #include "logarea.h"
@@ -40,14 +40,13 @@
 
 
 /*#
-   @beginmodule feathers.logging
+   @beginmodule logging
 */
 
-
-
 namespace Falcon {
+namespace Feathers {
 
-static void internal_log( uint32 level, VMContext* ctx, Function* func, Item* i_message, Item* i_code, ::Falcon::Mod::LogArea* la = 0 )
+static void internal_log( uint32 level, VMContext* ctx, Function* func, Item* i_message, Item* i_code, LogArea* la = 0 )
 {
    if ( i_message == 0 || !i_message->isString()
         || ( i_code != 0 && ! i_code->isOrdinal() ) )
@@ -58,7 +57,7 @@ static void internal_log( uint32 level, VMContext* ctx, Function* func, Item* i_
 
    if( la == 0 )
    {
-      la = static_cast< ::Falcon::Mod::LogArea* >( ctx->self().asInst());
+      la = static_cast< LogArea* >( ctx->self().asInst());
    }
    const String& message = *i_message->asString();
 
@@ -94,9 +93,6 @@ static void internal_log( uint32 level, VMContext* ctx, Function* func, Item* i_
    ctx->returnFrame();
 }
 
-
-namespace Ext {
-
 // ==============================================
 // Class LogArea functions and properties
 // ==============================================
@@ -118,7 +114,7 @@ FALCON_DEFINE_FUNCTION_P1( LogArea_init )
       throw paramError( __LINE__, SRC );
    }
 
-   Mod::LogArea* la = static_cast<Mod::LogArea*>(ctx->self().asInst());
+   LogArea* la = static_cast<LogArea*>(ctx->self().asInst());
    const String& name = *i_aname->asString();
    la->name(name);
    ctx->returnFrame(ctx->self());
@@ -152,13 +148,13 @@ FALCON_DEFINE_FUNCTION_P1( LogArea_init )
 */
 static void get_minlog( const Class*, const String&, void* instance, Item& value )
 {
-   Mod::LogArea* logArea = static_cast< Mod::LogArea* >(instance);
+   LogArea* logArea = static_cast< LogArea* >(instance);
    value.setInteger(logArea->minlog());
 }
 
 static void internal_add_remove( Function* func, VMContext* ctx, bool mode )
 {
-   LoggingModule* mod = static_cast<LoggingModule*>(func->methodOf()->module());
+   ModuleLogging* mod = static_cast<ModuleLogging*>(func->methodOf()->module());
    Class* clsChn = mod->classLogChannel();
    Item *i_chn = ctx->param(0);
 
@@ -167,11 +163,11 @@ static void internal_add_remove( Function* func, VMContext* ctx, bool mode )
       throw func->paramError(__LINE__, SRC);
    }
 
-   Mod::LogArea* la = static_cast<Mod::LogArea*>(ctx->self().asInst());
+   LogArea* la = static_cast<LogArea*>(ctx->self().asInst());
    Class* cls = 0;
    void* data = 0;
    i_chn->asClassInst(cls,data);
-   Mod::LogChannel* chn = static_cast<Mod::LogChannel*>( cls->getParentData(clsChn, data) );
+   LogChannel* chn = static_cast<LogChannel*>( cls->getParentData(clsChn, data) );
 
    if( mode )
    {
@@ -389,7 +385,6 @@ FALCON_DEFINE_FUNCTION_P1( logd2 )
 // Class LogArea definition
 // ==============================================
 
-
 ClassLogArea::ClassLogArea():
    Class("LogArea")
 {
@@ -427,33 +422,33 @@ ClassLogArea::~ClassLogArea()
 
 void ClassLogArea::dispose( void* instance ) const
 {
-   Mod::LogArea* la = static_cast<Mod::LogArea*>(instance);
+   LogArea* la = static_cast<LogArea*>(instance);
    la->decref();
 }
 
 void* ClassLogArea::clone( void* instance ) const
 {
-   Mod::LogArea* la = static_cast<Mod::LogArea*>(instance);
+   LogArea* la = static_cast<LogArea*>(instance);
    la->incref();
    return la;
 }
 
 void* ClassLogArea::createInstance() const
 {
-   Mod::LogArea* la = new Mod::LogArea("unnamed");
+   LogArea* la = new LogArea("unnamed");
    return la;
 }
 
 
 void ClassLogArea::gcMarkInstance( void* instance, uint32 mark ) const
 {
-   Mod::LogArea* la = static_cast<Mod::LogArea*>(instance);
+   LogArea* la = static_cast<LogArea*>(instance);
    la->gcMark( mark );
 }
 
 bool ClassLogArea::gcCheckInstance( void* instance, uint32 mark ) const
 {
-   Mod::LogArea* la = static_cast<Mod::LogArea*>(instance);
+   LogArea* la = static_cast<LogArea*>(instance);
    return la->currentMark() == mark;
 }
 
@@ -483,19 +478,20 @@ void* ClassGeneralLogAreaObj::createInstance() const
 
 bool ClassGeneralLogAreaObj::op_init( VMContext* ctx, void*, int32 ) const
 {
-   LoggingModule* mod = static_cast<LoggingModule*>( module() );
-   Mod::LogArea* genlog = mod->genericArea();
+   ModuleLogging* mod = static_cast<ModuleLogging*>( module() );
+   LogArea* genlog = mod->genericArea();
    genlog->incref();
    ctx->topData() = FALCON_GC_STORE( this, genlog );
    return false;
 }
+
 
 // ==============================================
 // Class LogChannel methods and properties
 // ==============================================
 
 
-namespace CLogChannel {
+namespace {
 
 
 /*#
@@ -514,13 +510,13 @@ namespace CLogChannel {
 */
 static void get_level( const Class*, const String&, void* instance, Item& value )
 {
-   Mod::LogChannel* chn = static_cast< Mod::LogChannel* >(instance);
+   LogChannel* chn = static_cast< LogChannel* >(instance);
    value.setInteger(chn->level());
 }
 
 static void set_level( const Class*, const String&, void* instance, const Item& value )
 {
-   Mod::LogChannel* chn = static_cast< Mod::LogChannel* >(instance);
+   LogChannel* chn = static_cast< LogChannel* >(instance);
    if( ! value.isOrdinal() )
    {
       throw FALCON_SIGN_XERROR( AccessTypeError, e_inv_prop_value, .extra("N") );
@@ -592,7 +588,7 @@ static void set_level( const Class*, const String&, void* instance, const Item& 
 
 static void get_format( const Class*, const String&, void* instance, Item& value )
 {
-   Mod::LogChannel* chn = static_cast< Mod::LogChannel* >(instance);
+   LogChannel* chn = static_cast< LogChannel* >(instance);
    String* string = new String;
    chn->getFormat(*string );
    value = FALCON_GC_HANDLE( string );
@@ -601,7 +597,7 @@ static void get_format( const Class*, const String&, void* instance, Item& value
 
 static void set_format( const Class*, const String&, void* instance, const Item& value )
 {
-   Mod::LogChannel* chn = static_cast< Mod::LogChannel* >(instance);
+   LogChannel* chn = static_cast< LogChannel* >(instance);
    if( ! value.isString() )
    {
       throw FALCON_SIGN_XERROR( AccessTypeError, e_inv_prop_value, .extra("S") );
@@ -630,14 +626,14 @@ ClassLogChannel::~ClassLogChannel()
 
 void ClassLogChannel::init()
 {
-   addProperty("format", &CLogChannel::get_format, &CLogChannel::set_format );
-   addProperty("level", &CLogChannel::get_level, &CLogChannel::set_level );
+   addProperty("format", &get_format, &set_format );
+   addProperty("level", &get_level, &set_level );
 }
 
 
 void ClassLogChannel::dispose( void* instance ) const
 {
-   Mod::LogChannel* chn = static_cast<Mod::LogChannel*>(instance);
+   LogChannel* chn = static_cast<LogChannel*>(instance);
    chn->decref();
 }
 
@@ -655,13 +651,13 @@ void* ClassLogChannel::createInstance() const
 
  void ClassLogChannel::gcMarkInstance( void* instance, uint32 mark ) const
  {
-    Mod::LogChannel* chn = static_cast<Mod::LogChannel*>(instance);
+    LogChannel* chn = static_cast<LogChannel*>(instance);
     chn->gcMark( mark );
  }
 
  bool ClassLogChannel::gcCheckInstance( void* instance, uint32 mark ) const
  {
-    Mod::LogChannel* chn = static_cast<Mod::LogChannel*>(instance);
+    LogChannel* chn = static_cast<LogChannel*>(instance);
     return chn->currentMark() >= mark;
  }
 
@@ -718,15 +714,15 @@ FALCON_DEFINE_FUNCTION_P1( init )
    }
 
    TextWriter* tw = new TextWriter( s, tc );
-   Mod::LogChannelTW* lcs;
+   LogChannelTW* lcs;
    if( i_format == 0 || i_format->isNil() )
    {
-      lcs = new Mod::LogChannelTW(tw, l);
+      lcs = new LogChannelTW(tw, l);
    }
    else
    {
       const String& format = *i_format->asString();
-      lcs = new Mod::LogChannelTW(tw, format, l);
+      lcs = new LogChannelTW(tw, format, l);
    }
 
    ctx->self() = FALCON_GC_STORE( methodOf(), lcs );
@@ -745,14 +741,14 @@ FALCON_DEFINE_FUNCTION_P1( init )
 
 static void get_flushall( const Class*, const String&, void* instance, Item& value )
 {
-   Mod::LogChannelTW* chn = static_cast< Mod::LogChannelTW* >(instance);
+   LogChannelTW* chn = static_cast< LogChannelTW* >(instance);
    value.setBoolean( chn->flushAll() );
 }
 
 
 static void set_flushall( const Class*, const String&, void* instance, const Item& value )
 {
-   Mod::LogChannelTW* chn = static_cast< Mod::LogChannelTW* >(instance);
+   LogChannelTW* chn = static_cast< LogChannelTW* >(instance);
    chn->flushAll( value.isTrue() );
 }
 } /* end of namespace CLogChannelStream */
@@ -763,7 +759,6 @@ ClassLogChannelStream::ClassLogChannelStream( Class* parent ):
    setParent(parent);
 
    setConstuctor( new CLogChannelStream::Function_init );
-
    addProperty("flushall", &CLogChannelStream::get_flushall, &CLogChannelStream::set_flushall );
 }
 
@@ -833,7 +828,7 @@ FALCON_DEFINE_FUNCTION_P1( init )
 
    try
    {
-      Mod::LogChannelSyslog* lc = new Mod::LogChannelSyslog(*i_identity->asString(), f, l);
+      LogChannelSyslog* lc = new LogChannelSyslog(*i_identity->asString(), f, l);
 
       if( i_format != 0 )
 	      lc->setFormat( *i_format->asString() );
@@ -978,11 +973,11 @@ FALCON_DEFINE_FUNCTION_P1( init )
    }
 
    uint32 level = i_level == 0 ? LOGLEVEL_ALL : (int32) i_level->forceInteger();
-   Mod::LogChannelFiles* lcf;
+   LogChannelFiles* lcf;
    if( i_format == 0 || i_format->isNil() )
-      lcf = new Mod::LogChannelFiles( *i_path->asString(), level );
+      lcf = new LogChannelFiles( *i_path->asString(), level );
    else
-      lcf = new Mod::LogChannelFiles(  *i_path->asString(), *i_format->asString(), level );
+      lcf = new LogChannelFiles(  *i_path->asString(), *i_format->asString(), level );
 
    if (i_maxCount != 0 && ! i_maxCount->isNil() )
       lcf->maxCount( (int32) i_maxCount->forceInteger() );
@@ -1011,7 +1006,7 @@ FALCON_DEFINE_FUNCTION_P1( init )
 FALCON_DECLARE_FUNCTION( open, "" )
 FALCON_DEFINE_FUNCTION_P1( open )
 {
-   Mod::LogChannelFiles* cc = static_cast< Mod::LogChannelFiles* >( ctx->self().asInst() );
+   LogChannelFiles* cc = static_cast< LogChannelFiles* >( ctx->self().asInst() );
    cc->open();
 }
 
@@ -1031,7 +1026,7 @@ FALCON_DEFINE_FUNCTION_P1( open )
 FALCON_DECLARE_FUNCTION( reset, "" )
 FALCON_DEFINE_FUNCTION_P1( reset )
 {
-   Mod::LogChannelFiles* cc = static_cast< Mod::LogChannelFiles* >( ctx->self().asInst() );
+   LogChannelFiles* cc = static_cast< LogChannelFiles* >( ctx->self().asInst() );
    cc->reset();
 }
 
@@ -1056,7 +1051,7 @@ FALCON_DEFINE_FUNCTION_P1( reset )
 FALCON_DECLARE_FUNCTION( rotate, "" )
 FALCON_DEFINE_FUNCTION_P1( rotate )
 {
-   Mod::LogChannelFiles* cc = static_cast< Mod::LogChannelFiles* >( ctx->self().asInst() );
+   LogChannelFiles* cc = static_cast< LogChannelFiles* >( ctx->self().asInst() );
    cc->rotate();
 }
 
@@ -1069,7 +1064,7 @@ FALCON_DEFINE_FUNCTION_P1( rotate )
 
 static void get_path( const Class*, const String&, void* instance, Item& value )
 {
-   Mod::LogChannelFiles* cc = static_cast< Mod::LogChannelFiles* >( instance );
+   LogChannelFiles* cc = static_cast< LogChannelFiles* >( instance );
    value = FALCON_GC_HANDLE( new String(cc->path()) );
 }
 
@@ -1082,13 +1077,13 @@ static void get_path( const Class*, const String&, void* instance, Item& value )
 */
 static void get_maxSize( const Class*, const String&, void* instance, Item& value )
 {
-   Mod::LogChannelFiles* cc = static_cast< Mod::LogChannelFiles* >( instance );
+   LogChannelFiles* cc = static_cast< LogChannelFiles* >( instance );
    value.setInteger( cc->maxSize() );
 }
 
 static void set_maxSize( const Class*, const String&, void* instance, const Item& value )
 {
-   Mod::LogChannelFiles* cc = static_cast< Mod::LogChannelFiles* >( instance );
+   LogChannelFiles* cc = static_cast< LogChannelFiles* >( instance );
    if( ! value.isOrdinal() )
    {
       throw FALCON_SIGN_XERROR( AccessTypeError, e_inv_prop_value, .extra("N") );
@@ -1106,13 +1101,13 @@ static void set_maxSize( const Class*, const String&, void* instance, const Item
 
 static void get_maxCount( const Class*, const String&, void* instance, Item& value )
 {
-   Mod::LogChannelFiles* cc = static_cast< Mod::LogChannelFiles* >( instance );
+   LogChannelFiles* cc = static_cast< LogChannelFiles* >( instance );
    value.setInteger( cc->maxCount() );
 }
 
 static void set_maxCount( const Class*, const String&, void* instance, const Item& value )
 {
-   Mod::LogChannelFiles* cc = static_cast< Mod::LogChannelFiles* >( instance );
+   LogChannelFiles* cc = static_cast< LogChannelFiles* >( instance );
    if( ! value.isOrdinal() )
    {
       throw FALCON_SIGN_XERROR( AccessTypeError, e_inv_prop_value, .extra("N") );
@@ -1130,13 +1125,13 @@ static void set_maxCount( const Class*, const String&, void* instance, const Ite
 
 static void get_overwrite( const Class*, const String&, void* instance, Item& value )
 {
-   Mod::LogChannelFiles* cc = static_cast< Mod::LogChannelFiles* >( instance );
+   LogChannelFiles* cc = static_cast< LogChannelFiles* >( instance );
    value.setBoolean( cc->overwrite() );
 }
 
 static void set_overwrite( const Class*, const String&, void* instance, const Item& value )
 {
-   Mod::LogChannelFiles* cc = static_cast< Mod::LogChannelFiles* >( instance );
+   LogChannelFiles* cc = static_cast< LogChannelFiles* >( instance );
    cc->overwrite(value.isTrue());
 }
 
@@ -1151,13 +1146,13 @@ static void set_overwrite( const Class*, const String&, void* instance, const It
 
 static void get_maxDays( const Class*, const String&, void* instance, Item& value )
 {
-   Mod::LogChannelFiles* cc = static_cast< Mod::LogChannelFiles* >( instance );
+   LogChannelFiles* cc = static_cast< LogChannelFiles* >( instance );
    value.setInteger( cc->maxDays() );
 }
 
 static void set_maxDays( const Class*, const String&, void* instance, const Item& value )
 {
-   Mod::LogChannelFiles* cc = static_cast< Mod::LogChannelFiles* >( instance );
+   LogChannelFiles* cc = static_cast< LogChannelFiles* >( instance );
    if( ! value.isOrdinal() )
    {
       throw FALCON_SIGN_XERROR( AccessTypeError, e_inv_prop_value, .extra("N") );
@@ -1211,7 +1206,7 @@ ClassLogChannelEngine::~ClassLogChannelEngine()
 
 void* ClassLogChannelEngine::createInstance() const
 {
-   return new Mod::LogChannelEngine;
+   return new LogChannelEngine;
 }
 
 
@@ -1225,6 +1220,18 @@ bool ClassLogChannelEngine::op_init( VMContext* , void* , int32 ) const
 // Proxy log functions
 //=================================================================
 
+namespace {
+FALCON_DECLARE_FUNCTION( LOG, "level:N,message:S,code:[N]" )
+FALCON_DECLARE_FUNCTION( minlog, "" )
+FALCON_DECLARE_FUNCTION( LOGC, "message:S,code:[N]" )
+FALCON_DECLARE_FUNCTION( LOGE, "message:S,code:[N]" )
+FALCON_DECLARE_FUNCTION( LOGW, "message:S,code:[N]" )
+FALCON_DECLARE_FUNCTION( LOGI, "message:S,code:[N]" )
+FALCON_DECLARE_FUNCTION( LOGD, "message:S,code:[N]" )
+FALCON_DECLARE_FUNCTION( LOGD0, "message:S,code:[N]" )
+FALCON_DECLARE_FUNCTION( LOGD1, "message:S,code:[N]" )
+FALCON_DECLARE_FUNCTION( LOGD2, "message:S,code:[N]" )
+
 /*#
    @function minlog
    @brief Determines what is the minimum log severity active on the GeneircLog area.
@@ -1234,8 +1241,8 @@ bool ClassLogChannelEngine::op_init( VMContext* , void* , int32 ) const
 */
 FALCON_DEFINE_FUNCTION_P1(minlog)
 {
-   LoggingModule* mod = static_cast<LoggingModule*>( module() );
-   Mod::LogArea* genlog = static_cast< Mod::LogArea* >( mod->genericArea() );
+   ModuleLogging* mod = static_cast<ModuleLogging*>( module() );
+   LogArea* genlog = static_cast< LogArea* >( mod->genericArea() );
    ctx->returnFrame( (int64) genlog->minlog() );
 }
 
@@ -1274,8 +1281,8 @@ FALCON_DEFINE_FUNCTION_P1(minlog)
 
 FALCON_DEFINE_FUNCTION_P1(LOG)
 {
-   LoggingModule* mod = static_cast<LoggingModule*>( module() );
-   Mod::LogArea* genlog = mod->genericArea();
+   ModuleLogging* mod = static_cast<ModuleLogging*>( module() );
+   LogArea* genlog = mod->genericArea();
 
    Item *i_level = ctx->param(0);
    Item *i_message = ctx->param(1);
@@ -1292,7 +1299,7 @@ FALCON_DEFINE_FUNCTION_P1(LOG)
 
 static void s_genlog( uint32 lvl, VMContext* ctx, Function* func )
 {
-   LoggingModule* mod = static_cast<LoggingModule*>( func->module() );
+   ModuleLogging* mod = static_cast<ModuleLogging*>( func->module() );
    Item *i_message = ctx->param(0);
    Item *i_code = ctx->param(1);
    internal_log( lvl, ctx, func, i_message, i_code, mod->genericArea() );
@@ -1428,6 +1435,59 @@ FALCON_DEFINE_FUNCTION_P1(LOGD1)
 FALCON_DEFINE_FUNCTION_P1(LOGD2)
 {
    s_genlog( LOGLEVEL_D2, ctx, this );
+}
+}
+
+ModuleLogging::ModuleLogging():
+         Module("LoggingModule")
+{
+   this->addConstant( "LOGFMT_TRACE", "[%s %M.%f]\t%m");
+   this->addConstant( "LOGFMT_ERROR", "%T\t%L%C\t[%a]\t%m");
+   this->addConstant( "LOGFMT_ERRORP", "%T\t%L%C\t[%a:%M.%f]\t%m");
+   this->addConstant( "LOGFMT_ERRORT", "%T\t%L%C\t[%M.%f]\t%m");
+   this->addConstant( "LOGFMT_ENTRY", "%T\t(%L) %m");
+   this->addConstant( "LOGFMT_ENTRYP", "%T\t(%L) [%a]\t%m");
+
+   this->addConstant( "LVC", LOGLEVEL_C );
+   this->addConstant( "LVE", LOGLEVEL_E );
+   this->addConstant( "LVW", LOGLEVEL_W );
+   this->addConstant( "LVI", LOGLEVEL_I );
+   this->addConstant( "LVD", LOGLEVEL_D );
+   this->addConstant( "LVD0", LOGLEVEL_D0 );
+   this->addConstant( "LVD1", LOGLEVEL_D1 );
+   this->addConstant( "LVD2", LOGLEVEL_D2 );
+   this->addConstant( "LVALL", LOGLEVEL_ALL );
+
+   m_logArea = new ClassLogArea;
+   m_logChannel = new ClassLogChannel;
+   m_generalArea = new LogArea("General");
+
+   *this
+       << new Function_LOG
+       << new Function_LOGC
+       << new Function_LOGE
+       << new Function_LOGW
+       << new Function_LOGI
+       << new Function_LOGD
+       << new Function_LOGD0
+       << new Function_LOGD1
+       << new Function_LOGD2
+
+       << m_logArea
+       << m_logChannel
+
+       << new ClassLogChannelFiles( m_logChannel )
+       << new ClassLogChannelStream( m_logChannel )
+       << new ClassLogChannelStream( m_logChannel )
+       << new ClassLogChannelEngine( m_logChannel )
+   ;
+
+   ClassGeneralLogAreaObj* glog = new ClassGeneralLogAreaObj( m_logArea );
+   addObject( glog, false );
+}
+
+ModuleLogging::~ModuleLogging()
+{
 }
 
 }

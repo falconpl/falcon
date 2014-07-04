@@ -1,6 +1,6 @@
 /*
    FALCON - The Falcon Programming Language.
-   FILE: inet_ext.cpp
+   FILE: inet_fm.h
 
    Falcon VM interface to inet module -- header.
    -------------------------------------------------------------------
@@ -18,8 +18,8 @@
 */
 
 
-#ifndef _FALCON_INET_EXT_H_
-#define _FALCON_INET_EXT_H_
+#ifndef _FALCON_INET_FM_H_
+#define _FALCON_INET_FM_H_
 
 #include <falcon/setup.h>
 #include <falcon/module.h>
@@ -78,7 +78,7 @@
 #endif
 
 namespace Falcon {
-namespace Ext {
+namespace Feathers {
 
 class ClassResolver: public ClassShared
 {
@@ -168,15 +168,6 @@ public:
    #endif
 };
 
-
-// =============================================
-// Generic Functions
-// ==============================================
-FALCON_FUNC  falcon_getHostName( ::Falcon::VMachine *vm );
-FALCON_FUNC  resolveAddress( ::Falcon::VMachine *vm );
-FALCON_FUNC  socketErrorDesc( ::Falcon::VMachine *vm );
-FALCON_FUNC  falcon_haveSSL( ::Falcon::VMachine *vm );
-
 FALCON_DECLARE_ERROR( NetError );
 
 }
@@ -184,4 +175,4 @@ FALCON_DECLARE_ERROR( NetError );
 
 #endif
 
-/* end of socket_ext.h */
+/* end of inet_fm.h */

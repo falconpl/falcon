@@ -18,7 +18,7 @@
 */
 
 /*#
-   @beginmodule core
+   @beginmodule cmdline
 */
 
 #include <falcon/setup.h>
@@ -32,7 +32,7 @@
 #include <falcon/vm.h>
 #include <stdarg.h>
 
-#include "module_cmdline.h"
+#include "cmdline_fm.h"
 
 
 #define PARSE_LOCAL_LASTPARSED   0
@@ -55,9 +55,9 @@
 #define PARSE_PROPERTY_REQUEST_TERM    2
 
 
-/*# @module cmdline
+/*# @module cmdline Command line parser module
  @brief Provides facilities to parse complex command line parameters
-
+ @ingroup feathers
 
  @beginmodule cmdline
  */
@@ -79,7 +79,7 @@
    option parser is a bit of a nuisance, boring and repetitive, and above anything
    it may be considered a huge piece of code with respect to the needs of a simple script.
 
-   The CmdlineParser class, that is declared directly in the RTL module, provides a simple,
+   The Parser class, that is declared directly in the RTL module, provides a simple,
    efficient and flexible mean to implement command line option parsing that let on the
    script the essential duty to grab the given values and store them for later usage.
 
@@ -150,7 +150,7 @@
    Here is a working sample of implementation.
 
    @code
-   object MyParser from CmdlineParser
+   object MyParser from Parser
 
       function onOption( option )
          switch option
@@ -221,6 +221,12 @@
 namespace Falcon{
 namespace {
 
+class Parser: public FalconClass
+{
+   Parser(): FalconClass("Parser") {}
+   virtual ~Parser() {}
+};
+
 /*#
    @method parse Parser
    @brief Starts command line parsing.
@@ -277,7 +283,7 @@ FALCON_DEFINE_FUNCTION_P1( parse )
 }
 
 /*#
-   @method expectValue CmdlineParser
+   @method expectValue Parser
    @brief Declares that current optt_waitingValueion needs a value.
 
    This method is to be called only from the onOption callback. When called,
@@ -297,10 +303,10 @@ FALCON_DEFINE_FUNCTION_P1( expectValue )
 }
 
 /*#
-   @method terminate CmdlineParser
+   @method terminate Parser
    @brief Requests the parser to terminate parsing.
 
-   This method should be called from inside one of the CmdlineParser
+   This method should be called from inside one of the Parser
    class callbacks. Once called, the parser will immediately return true.
    The calling application can know the position of the last parsed parameter by
    accessing the lastParsed property, and handle the missing parameters as it prefers.
@@ -316,13 +322,13 @@ FALCON_DEFINE_FUNCTION_P1( terminate )
 FALCON_DECLARE_FUNCTION( usage, "" )
 FALCON_DEFINE_FUNCTION_P1( usage )
 {
-   ctx->vm()->textOut()->write( "The stub for \"CmdlineParser.usage()\" has been called.\n" );
+   ctx->vm()->textOut()->write( "The stub for \"Parser.usage()\" has been called.\n" );
    ctx->vm()->textOut()->write( "This class should be derived and the method usage() overloaded.\n" );
 }
 
 
 /*#
-   @method onFree CmdlineParser
+   @method onFree Parser
    @brief Called when the parser finds a free option.
    @param opt The free option being read.
 
@@ -339,7 +345,7 @@ FALCON_DEFINE_FUNCTION_P1( usage )
 */
 
 /*#
-   @method onOption CmdlineParser
+   @method onOption Parser
    @brief Called when the parser finds an option.
    @param opt The option being read.
 
@@ -357,7 +363,7 @@ FALCON_DEFINE_FUNCTION_P1( usage )
 */
 
 /*#
-   @method onSwitchOff CmdlineParser
+   @method onSwitchOff Parser
    @brief Called when the parser finds a switch being turned off.
    @param opt The switch being turned off.
 
@@ -376,7 +382,7 @@ FALCON_DEFINE_FUNCTION_P1( usage )
 */
 
 /*#
-   @method onValue CmdlineParser
+   @method onValue Parser
    @brief Called when the parser finds a value for a given option.
    @param opt The option being parsed.
    @param value The given value for that option.
@@ -550,7 +556,7 @@ ModuleCmdline::ModuleCmdline():
       virtual ~PStepAfterCall() {}
       virtual void describeTo( String& target ) const
       {
-         target = "ModCmdlineParser::PStepAfterCall";
+         target = "ModParser::PStepAfterCall";
       }
 
    private:

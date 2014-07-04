@@ -30,7 +30,7 @@
 */
 
 namespace Falcon {
-
+namespace Feathers {
 ModuleContainers::ModuleContainers():
       Module("containers")
 {
@@ -47,14 +47,9 @@ ModuleContainers::ModuleContainers():
 ModuleContainers::~ModuleContainers()
 {
 }
-
+}
 }
 
-FALCON_MODULE_DECL
-{
-   Falcon::Module* mod = new Falcon::ModuleContainers;
-   return mod;
-}
 
-/* end of containers.cpp */
+/* end of containers_fm.cpp */
 

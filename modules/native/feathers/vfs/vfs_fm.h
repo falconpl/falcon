@@ -1,8 +1,8 @@
 /*
    FALCON - The Falcon Programming Language.
-   FILE: vfs.h
+   FILE: vfs_fm.h
 
-   Interface to Falcon Virtual File System -- main header
+   Interface to Falcon Virtual File System -- main file.
    -------------------------------------------------------------------
    Author: Giancarlo Niccolai
    Begin: Mon, 24 Oct 2011 14:34:31 +0200
@@ -13,22 +13,23 @@
    See LICENSE file for licensing details.
 */
 
-#ifndef FALCON_FEATHERS_VFS_H
-#define FALCON_FEATHERS_VFS_H
+#ifndef FALCON_FEATHERS_VFS_FM_H
+#define FALCON_FEATHERS_VFS_FM_H
 
 #include <falcon/module.h>
 
 namespace Falcon {
+namespace Feathers {
 
-class VFSModule: public Module
+class ModuleVFS: public Module
 {
 public:
-   VFSModule();
-   virtual ~VFSModule();
+   ModuleVFS();
+   virtual ~ModuleVFS();
 };
 
-}
+}}
 
 #endif
 
-/* end of vfs.h */
+/* end of vfs_fm.h */

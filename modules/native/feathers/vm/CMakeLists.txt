@@ -19,6 +19,7 @@ endif()
 # Sources files the module is built from.
 set(SRC_FILES 
   vm.cpp
+  vm_fm.cpp
   vm_ext.cpp
   ${SYS_RC}
 )
@@ -27,6 +28,7 @@ set(SRC_FILES
 # listed in the virtual file tree of Visual Studio.
 set(HDR_FILES
   version.h
+  vm_fm.h
   vm_ext.h
 )
 

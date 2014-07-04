@@ -5,8 +5,13 @@
 # VFS modules
 #
 
-OPTION( FALCON_BUILD_ZIP "Install Zip module" ON )
-
-if ( FALCON_BUILD_ZIP )
-    add_subdirectory( zip )
+if(NOT FALCON_BUILD_VFS )
+	message( STATUS "NOT building VFS subsystem")
+	return()
 endif()
+
+message( STATUS "Building VFS subsystem")
+
+
+
+add_subdirectory( zip )

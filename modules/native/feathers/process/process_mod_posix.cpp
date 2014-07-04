@@ -28,7 +28,7 @@
 
 #include "process.h"
 #include "process_mod.h"
-#include "process_ext.h"
+#include "process_fm.h"
 
 #include <falcon/pipestreams.h>
 #include <falcon/autocstring.h>
@@ -227,7 +227,7 @@ bool Process::terminate( bool severe )
 
    if( ::kill( _p->m_pid, sig ) != 0 )
    {
-      throw FALCON_SIGN_XERROR(::Falcon::Ext::ProcessError,
+      throw FALCON_SIGN_XERROR(::Falcon::Feathers::ProcessError,
                FALCON_PROCESS_ERROR_TERMINATE,
                .desc(FALCON_PROCESS_ERROR_TERMINATE_MSG)
                .sysError((unsigned int) errno ) );
@@ -263,7 +263,7 @@ void Process::sys_open( const String& cmd, int params )
    // step 1: prepare the needed pipes
    if ( pipe( _p->m_file_des_in ) < 0 )
    {
-      throw FALCON_SIGN_XERROR( ::Falcon::Ext::ProcessError,
+      throw FALCON_SIGN_XERROR( ::Falcon::Feathers::ProcessError,
                FALCON_PROCESS_ERROR_OPEN_PIPE,
                .desc( FALCON_PROCESS_ERROR_OPEN_PIPE_MSG )
                .extra("IN pipe")
@@ -272,7 +272,7 @@ void Process::sys_open( const String& cmd, int params )
 
    if ( pipe( _p->m_file_des_out ) < 0 )
    {
-      throw FALCON_SIGN_XERROR( ::Falcon::Ext::ProcessError,
+      throw FALCON_SIGN_XERROR( ::Falcon::Feathers::ProcessError,
                         FALCON_PROCESS_ERROR_OPEN_PIPE,
                         .desc( FALCON_PROCESS_ERROR_OPEN_PIPE_MSG )
                         .extra("OUT pipe")
@@ -288,7 +288,7 @@ void Process::sys_open( const String& cmd, int params )
    {
       if ( pipe( _p->m_file_des_err ) < 0 )
       {
-         throw FALCON_SIGN_XERROR( ::Falcon::Ext::ProcessError,
+         throw FALCON_SIGN_XERROR( ::Falcon::Feathers::ProcessError,
                FALCON_PROCESS_ERROR_OPEN_PIPE,
                .desc( FALCON_PROCESS_ERROR_OPEN_PIPE_MSG )
                .extra("AUX pipe")
@@ -457,7 +457,7 @@ ProcessEnum::ProcessEnum()
 
    if ( m_sysdata == 0 )
    {
-      throw FALCON_SIGN_XERROR( ::Falcon::Ext::ProcessError, FALCON_PROCESS_ERROR_ERRLIST3,
+      throw FALCON_SIGN_XERROR( ::Falcon::Feathers::ProcessError, FALCON_PROCESS_ERROR_ERRLIST3,
                .desc(FALCON_PROCESS_ERROR_ERRLIST3_MSG )
                .sysError((uint32) errno));
    }
@@ -489,7 +489,7 @@ bool ProcessEnum::next()
    FILE* fp = fopen( statent, "r" );
    if ( !fp )
    {
-      throw FALCON_SIGN_XERROR( ::Falcon::Ext::ProcessError, FALCON_PROCESS_ERROR_ERRLIST4,
+      throw FALCON_SIGN_XERROR( ::Falcon::Feathers::ProcessError, FALCON_PROCESS_ERROR_ERRLIST4,
                            .desc(FALCON_PROCESS_ERROR_ERRLIST4_MSG )
                            );
    }
@@ -500,7 +500,7 @@ bool ProcessEnum::next()
    if ( ::fscanf( fp, "%d %s %c %d", &p_pid, szName, &status, &p_ppid ) != 4 )
    {
       ::fclose( fp );
-      throw FALCON_SIGN_XERROR( ::Falcon::Ext::ProcessError, FALCON_PROCESS_ERROR_ERRLIST4,
+      throw FALCON_SIGN_XERROR( ::Falcon::Feathers::ProcessError, FALCON_PROCESS_ERROR_ERRLIST4,
                      .desc(FALCON_PROCESS_ERROR_ERRLIST4_MSG )
                      );
    }
@@ -541,7 +541,7 @@ void ProcessEnum::close()
    {
       if( ::closedir( static_cast<DIR*>(m_sysdata) ) != 0 )
       {
-         throw FALCON_SIGN_XERROR( ::Falcon::Ext::ProcessError, FALCON_PROCESS_ERROR_ERRLIST2,
+         throw FALCON_SIGN_XERROR( ::Falcon::Feathers::ProcessError, FALCON_PROCESS_ERROR_ERRLIST2,
                              .desc(FALCON_PROCESS_ERROR_ERRLIST2_MSG )
                              .sysError( (uint32) errno )
                              );

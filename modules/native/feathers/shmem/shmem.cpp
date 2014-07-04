@@ -1,6 +1,6 @@
 /*
    FALCON - The Falcon Programming Language.
-   FILE: shmem.cpp
+   FILE: shmem_fm.cpp
 
    Shared memory mapped object.
 
@@ -20,60 +20,19 @@
    the Falcon engine.
 */
 
-#include <falcon/module.h>
-
-#include "shmemmodule.h"
-#include "shmem_ext.h"
-#include "session_ext.h"
-#include "session_srv.h"
-#include "ipsem_ext.h"
-#include "errors.h"
-
-#include "version.h"
-
-namespace Falcon {
+#include "shmem_fm.h"
 
 /*#
-   @module feathers.shmem
+   @module shmem
+   @ingroup feathers
    @brief Shared and persistent memory extsnsions.
 */
 
-
-// initialize the module
-ShmemModule::ShmemModule():
-   Module("shmem")
-{
-   m_classSession = new ClassSession;
-
-   *this
-      << new ClassSharedMem
-      << new ClassIPSem
-      << new ClassShmemError
-      << m_classSession
-      << new ClassSessionError
-            ;
-}
-
-ShmemModule::~ShmemModule() {}
-
-Service* ShmemModule::createService( const String& name )
-{
-   if (name == "Session" )
-   {
-      return new SessionService(this);
-   }
-
-   return 0;
-}
-
-}
-
-
 FALCON_MODULE_DECL
 {
-   Falcon::Module* mod = new Falcon::ShmemModule;
+   Falcon::Module* mod = new Falcon::Feathers::ModuleShmem;
    return mod;
 }
 
-/* end of shmem.cpp */
+/* end of shmem_fm.cpp */
 

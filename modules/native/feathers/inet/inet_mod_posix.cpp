@@ -17,7 +17,7 @@
 #define SRC "modules/native/feathres/inet/inet_mod_posix.cpp"
 
 #include "inet_mod.h"
-#include "inet_ext.h"
+#include "inet_fm.h"
 
 #include <falcon/stdmpxfactories.h>
 
@@ -40,7 +40,7 @@ static int s_getFcntl( FALCON_SOCKET skt, int option )
    int result = ::fcntl( skt, option );
    if( result == -1 )
    {
-      throw FALCON_SIGN_XERROR( Ext::NetError,
+      throw FALCON_SIGN_XERROR( Feathers::NetError,
                  FALSOCK_ERR_FCNTL, .desc(FALSOCK_ERR_FCNTL_MSG)
                  .sysError((uint32) errno ));
    }
@@ -53,7 +53,7 @@ static int s_setFcntl( FALCON_SOCKET skt, int option, int flags )
    int res = ::fcntl( skt, option, flags );
    if( res == -1 )
    {
-      throw FALCON_SIGN_XERROR( Ext::NetError,
+      throw FALCON_SIGN_XERROR( Feathers::NetError,
                        FALSOCK_ERR_FCNTL, .desc(FALSOCK_ERR_FCNTL_MSG)
                        .sysError((uint32) errno ));
    }

@@ -22,10 +22,10 @@ include_directories(
 
 # Sources files the module is built from.
 set(SRC_FILES 
-  bitbuf.cpp
+  bitbuf_fm.cpp
   bitbuf_ext.cpp
   bitbuf_mod.cpp
-  module_bitbuf.cpp
+  bitbuf.cpp
   # add more source files starting here:
   ${SYS_RC}
 )
@@ -36,7 +36,7 @@ set(HDR_FILES
   bitbuf_ext.h
   bitbuf_mod.h
   buffererror.h
-  module_bitbuf.h
+  bitbuf_fm.h
 )
 
 

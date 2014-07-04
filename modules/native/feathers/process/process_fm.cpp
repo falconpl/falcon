@@ -14,6 +14,8 @@
    See LICENSE file for licensing details.
 */
 
+#define SRC "modules/native/feathers/process/process_fm.cpp"
+
 /** \file
    Process module -- Falcon interface functions
    This is the module implementation file.
@@ -28,18 +30,28 @@
 #include <falcon/stdhandlers.h>
 
 
-#include "process_ext.h"
+#include "process_fm.h"
 #include "process_mod.h"
 #include "process.h"
 
 #include <vector>
 
 /*#
-    @beginmodule feathers.process
+    @beginmodule process
 */
 
 namespace Falcon {
-namespace Ext {
+namespace Feathers {
+
+namespace {
+
+   FALCON_DECLARE_FUNCTION( pid, "" );
+   FALCON_DECLARE_FUNCTION( tid, "" );
+   FALCON_DECLARE_FUNCTION( kill, "pid:N,severe:[B]" );
+   FALCON_DECLARE_FUNCTION( system, "command:S,background:[B]" );
+   FALCON_DECLARE_FUNCTION( systemCall, "command:S,background:[B],usePath:[B]" );
+   FALCON_DECLARE_FUNCTION( pread, "command:S,background:[B],grabAux:[B]" );
+   FALCON_DECLARE_FUNCTION( preadCall, "command:S,background:[B],grabAux:[B],usePath:[B]" );
 
 /*#
    @funciton pid
@@ -114,7 +126,7 @@ static void internal_system( Function* func, VMContext* ctx, int mode, String* o
    {
       throw func->paramError(__LINE__, SRC);
    }
-   ProcessModule* mod = static_cast<ProcessModule*>(func->fullModule());
+   ModuleProcess* mod = static_cast<ModuleProcess*>(func->fullModule());
 
    LocalRef<Mod::Process> prc( new Mod::Process(ctx, mod->classProcess() ) );
    const String& command = *i_command->asString();
@@ -359,6 +371,8 @@ FALCON_DEFINE_FUNCTION_P1(preadCall)
                current system search path.
 
 */
+
+}
 
 namespace CProcess {
 
@@ -782,26 +796,26 @@ void ClassProcessEnum::describe( void*, String& target, int, int ) const
 // Process module
 //=================================================================
 
-ProcessModule::ProcessModule():
+ModuleProcess::ModuleProcess():
          Module("process")
 {
-   m_classProcess = new ::Falcon::Ext::ClassProcess;
+   m_classProcess = new ClassProcess;
 
    *this
-         << new ::Falcon::Ext::Function_kill
-         << new ::Falcon::Ext::Function_pid
-         << new ::Falcon::Ext::Function_tid
-         << new ::Falcon::Ext::Function_system
-         << new ::Falcon::Ext::Function_systemCall
-         << new ::Falcon::Ext::Function_pread
-         << new ::Falcon::Ext::Function_preadCall
+         << new Function_kill
+         << new Function_pid
+         << new Function_tid
+         << new Function_system
+         << new Function_systemCall
+         << new Function_pread
+         << new Function_preadCall
          << m_classProcess
-         << new ::Falcon::Ext::ClassProcessError
-         << new ::Falcon::Ext::ClassProcessEnum
+         << new ClassProcessError
+         << new ClassProcessEnum
       ;
 }
 
-ProcessModule::~ProcessModule()
+ModuleProcess::~ModuleProcess()
 {
 }
 

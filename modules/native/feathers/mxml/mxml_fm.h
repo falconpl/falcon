@@ -1,6 +1,6 @@
 /*
    FALCON - The Falcon Programming Language.
-   FILE: mxml_ext.h
+   FILE: mxml_FM.h
 
    Minimal XML module main file - extension definitions.
    -------------------------------------------------------------------
@@ -17,8 +17,8 @@
    Minimal XML module main file - extension definitions.
 */
 
-#ifndef flc_mxml_ext_H
-#define flc_mxml_ext_H
+#ifndef FALCON_FEATHERS_MXML_FM_H
+#define FALCON_FEATHERS_MXML_FM_H
 
 #include <falcon/setup.h>
 #include <falcon/module.h>
@@ -30,7 +30,7 @@
 #endif
 
 namespace Falcon {
-namespace Ext {
+namespace Feathers {
 
 
 FALCON_DECLARE_ERROR( MXMLError );
@@ -99,11 +99,11 @@ public:
    virtual ~ClassErrorCode();
 };
 
-class MXMLModule: public Module
+class ModuleMXML: public Module
 {
 public:
-   MXMLModule();
-   virtual ~MXMLModule();
+   ModuleMXML();
+   virtual ~ModuleMXML();
 
    Class* classNode() const { return m_clsNode; }
    Class* classDocument() const { return m_clsDoc; }
@@ -119,4 +119,4 @@ private:
 
 #endif
 
-/* end of mxml_ext.h */
+/* end of mxml_fm.h */

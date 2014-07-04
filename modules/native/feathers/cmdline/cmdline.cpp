@@ -13,7 +13,7 @@
    See LICENSE file for licensing details.
 */
 
-#include "module_cmdline.h"
+#include "cmdline_fm.h"
 
 FALCON_MODULE_DECL
 {

@@ -1,6 +1,6 @@
 /*
    FALCON - The Falcon Programming Language.
-   FILE: json_ext.h
+   FILE: json_fm.h
 
    JSON transport format interface -
    -------------------------------------------------------------------
@@ -17,8 +17,8 @@
    Compiler module main file - extension definitions.
 */
 
-#ifndef flc_json_ext_H
-#define flc_json_ext_H
+#ifndef FALCON_FEATHERS_JSON_FM_H
+#define FALCON_FEATHERS_JSON_FM_H
 
 #include <falcon/setup.h>
 #include <falcon/module.h>
@@ -39,7 +39,7 @@
 #define FALCON_JSON_NOT_APPLY_DESC "Data is not in json format"
 
 namespace Falcon {
-namespace Ext {
+namespace Feathers {
 
 /*#
    @class JSONError
@@ -67,9 +67,16 @@ public:
    // we don't have init: just static methods
 };
 
+class ModuleJSON: public Module
+{
+public:
+   ModuleJSON();
+   virtual ~ModuleJSON();
+};
+
 }
 }
 
 #endif
 
-/* end of json_ext.h */
+/* end of json_fm.h */

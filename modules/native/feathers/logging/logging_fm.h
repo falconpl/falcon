@@ -1,6 +1,6 @@
 /*
    FALCON - The Falcon Programming Language.
-   FILE: logging_ext.cpp
+   FILE: logging_fm.cpp
 
    Falcon VM interface to logging module -- header.
    -------------------------------------------------------------------
@@ -31,8 +31,15 @@
 #define LOGLEVEL_D2  7
 #define LOGLEVEL_ALL  100
 
+#ifndef FALCON_LOGGING_ERROR_BASE
+   #define FALCON_LOGGING_ERROR_BASE         1200
+#endif
+
+#define FALCON_LOGGING_ERROR_OPEN  (FALCON_LOGGING_ERROR_BASE + 0)
+#define FALCON_LOGGING_ERROR_DESC  "Error opening the logging service"
+
 namespace Falcon {
-namespace Ext {
+namespace Feathers {
 
 // ==============================================
 // Log area
@@ -132,20 +139,25 @@ public:
    virtual void* createInstance() const;
 };
 
-//=================================================================
-// Proxy function for the general log area
-//=================================================================
 
-FALCON_DECLARE_FUNCTION( LOG, "level:N,message:S,code:[N]" )
-FALCON_DECLARE_FUNCTION( minlog, "" )
-FALCON_DECLARE_FUNCTION( LOGC, "message:S,code:[N]" )
-FALCON_DECLARE_FUNCTION( LOGE, "message:S,code:[N]" )
-FALCON_DECLARE_FUNCTION( LOGW, "message:S,code:[N]" )
-FALCON_DECLARE_FUNCTION( LOGI, "message:S,code:[N]" )
-FALCON_DECLARE_FUNCTION( LOGD, "message:S,code:[N]" )
-FALCON_DECLARE_FUNCTION( LOGD0, "message:S,code:[N]" )
-FALCON_DECLARE_FUNCTION( LOGD1, "message:S,code:[N]" )
-FALCON_DECLARE_FUNCTION( LOGD2, "message:S,code:[N]" )
+class LogArea;
+
+class ModuleLogging: public Module
+{
+public:
+   ModuleLogging();
+   virtual ~ModuleLogging();
+
+   Class* classLogArea()  const { return m_logArea; }
+   Class* classLogChannel()  const { return m_logChannel; }
+   LogArea* genericArea() const { return m_generalArea; }
+
+private:
+
+   Class* m_logArea;
+   Class* m_logChannel;
+   LogArea* m_generalArea;
+};
 
 
 }
@@ -153,4 +165,4 @@ FALCON_DECLARE_FUNCTION( LOGD2, "message:S,code:[N]" )
 
 #endif
 
-/* end of logging_ext.h */
+/* end of logging_fm.h */

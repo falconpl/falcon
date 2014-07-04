@@ -23,7 +23,7 @@
 #include <falcon/tc/transcoderutf8.h>
 
 namespace Falcon {
-namespace Mod {
+namespace Feathers {
 
 //==========================================================
 // Stream writing to a rotor file

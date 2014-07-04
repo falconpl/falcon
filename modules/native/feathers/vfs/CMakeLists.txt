@@ -15,10 +15,16 @@ endif()
 
 add_library(vfs_fm MODULE
    vfs_ext.cpp
+   vfs_fm.cpp
    classvfs.cpp
    classfilestat.cpp
    classdirectory.cpp
 
+   vfs_fm.h
+   classvfs.h
+   classfilestat.h
+   classdirectory.h
+   
    ${SYS_RC}
    vfs.cpp
 )
