@@ -596,7 +596,8 @@ ModSpace::ModSpace( Process* owner, ModSpace* parent ):
 	_p( new Private ),
 	m_parent( parent ),
 	m_lastGCMark( 0 ),
-	m_mainMod( 0 )
+	m_mainMod( 0 ),
+	m_loadModuleCbFunc( 0 )
 {
 	m_process = owner;
 	m_loader = new ModLoader( this );
@@ -702,6 +703,11 @@ Process* ModSpace::loadModule( const String& name, Stream* script, const String&
 	return process;
 }
 
+bool ModSpace::loadModule( VMContext* tgtctx, const String& name )
+{
+    if( m_loadModuleCbFunc )
+    return m_loadModuleCbFunc( tgtctx, name );
+}
 
 void ModSpace::loadModuleInProcess( Process* process, const String& name, bool isUri,  bool asLoad, bool isMain, Module* loader )
 {
@@ -801,6 +807,11 @@ void ModSpace::add( Module* mod )
 	{
 		throw le;
 	}
+}
+
+void ModSpace::add( loadModule_cbfunction func )
+{
+    m_loadModuleCbFunc = func;
 }
 
 
