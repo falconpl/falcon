@@ -707,6 +707,8 @@ bool ModSpace::loadModule( VMContext* tgtctx, const String& name )
 {
     if( m_loadModuleCbFunc )
     return m_loadModuleCbFunc( tgtctx, name );
+
+    return false;
 }
 
 void ModSpace::loadModuleInProcess( Process* process, const String& name, bool isUri,  bool asLoad, bool isMain, Module* loader )
