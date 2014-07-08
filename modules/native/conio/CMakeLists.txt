@@ -5,6 +5,14 @@
 ####################################################################
 
 cmake_minimum_required(VERSION 2.6)
+
+if(NOT FALCON_BUILD_CONIO )
+	message( STATUS "NOT building module: conio")
+	return()
+end()
+
+message( STATUS "Building module: conio")
+
 project(conio)
 
 # find the falcon installation.  Set CMAKE_INSTALL_PREFIX to the falcon root 

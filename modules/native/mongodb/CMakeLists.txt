@@ -6,7 +6,11 @@
 
 falcon_define_module( FALCON_MODULE mongo )
 
-message( STATUS "Adding mongodb module" )
+if(NOT FALCON_BUILD_MONGO )
+	message( STATUS "NOT building module: mongo")
+	return()
+endif()
+message( STATUS "Building module: mongo" )
 
 ##
 #   Check for stdint.h

@@ -15,7 +15,7 @@
 
 
 #include "inet_mod.h"
-#include "inet_ext.h"
+#include "inet_fm.h"
 #include <falcon/module.h>
 
 #if WITH_OPENSSL
@@ -23,7 +23,8 @@
 #endif // WITH_OPENSSL
 
 /*#
-   @module feathers.inet Low level IP networking.
+   @module inet Low level IP networking.
+   @ingroup feathers
    @brief Low level TCP/IP networking support.
 
    The socket module provides a low level access to network (TCP/IP) socket wise
@@ -54,7 +55,7 @@ FALCON_MODULE_DECL
       return 0;
    }
 
-   Falcon::Module *self = new Falcon::Ext::ModuleInet();
+   Falcon::Module *self = new Falcon::Feathers::ModuleInet();
    return self;
 }
 

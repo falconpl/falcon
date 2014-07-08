@@ -9,10 +9,10 @@ if(WIN32 AND NOT MINGW)
 endif()
 
 add_library(cmdline_fm MODULE
-  parser_ext.cpp
-  parser_ext.h
-  modcmdlineparser.h
   cmdline.cpp
+  cmdline_fm.cpp  
+  cmdline_fm.h
+  
   ${SYS_RC}
 )
 

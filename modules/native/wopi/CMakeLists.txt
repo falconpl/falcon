@@ -4,6 +4,13 @@
 #
 
 cmake_minimum_required(VERSION 2.6.2)
+
+if(NOT FALCON_BUILD_WOPI )
+	message( STATUS "NOT building WOPI subsystem")
+	return()
+endif()
+message( STATUS "Building module WOPI subsystem" )
+
 project( falcon_wopi ) 
 
 ######################################################################

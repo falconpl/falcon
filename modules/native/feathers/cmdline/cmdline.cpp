@@ -13,15 +13,13 @@
    See LICENSE file for licensing details.
 */
 
-#include "modcmdlineparser.h"
+#include "cmdline_fm.h"
 
 FALCON_MODULE_DECL
 {
    // setup DLL engine common data
 
-   Falcon::Module *self = new Falcon::Ext::ModCmdlineParser;
-   //self->engineVersion( FALCON_VERSION_NUM );
-   //self->version( VERSION_MAJOR, VERSION_MINOR, VERSION_REVISION );
+   ::Falcon::Module *self = new ::Falcon::Feathers::ModuleCmdline;
 
    return self;
 }

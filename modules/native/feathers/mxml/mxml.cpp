@@ -17,14 +17,11 @@
    The mxml module - main file.
 */
 
-#include <falcon/module.h>
-
-#include "mxml.h"
-#include "mxml_ext.h"
+#include "mxml_fm.h"
 
 FALCON_MODULE_DECL
 {
-   Falcon::Module *self = new Falcon::Ext::MXMLModule();
+   Falcon::Module *self = new Falcon::Feathers::ModuleMXML();
    return self;
 }
 

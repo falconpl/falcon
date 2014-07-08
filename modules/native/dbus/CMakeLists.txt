@@ -4,15 +4,15 @@
 # CMake configuration file for dbus
 ####################################################################
 
-PROJECT(dbus)
 cmake_minimum_required(VERSION 2.6)
 
+FalconDeclareModule( DBUS dbus )
+
+PROJECT(dbus)
 INCLUDE( ${CMAKE_ROOT}/Modules/FindPkgConfig.cmake)
 
 # Set here project-wide options
 # OPTION( WITH_OPT  "An poption" OFF)
-
-#INCLUDE( "falmod.cmake" )
 
 # Search for dbus
 pkg_check_modules(DBUS REQUIRED dbus-1 )

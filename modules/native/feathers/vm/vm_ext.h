@@ -33,6 +33,7 @@ namespace Falcon {
           void* createInstance() const;
           void dispose( void* instance ) const;
           void* clone( void* instance ) const;
+          bool op_init( VMContext*, void* , int32 ) const;
        };
     }
 } // namespace Falcon::Ext

@@ -14,13 +14,22 @@ endif()
 
 add_library(mxml_fm MODULE
   mxml.cpp
-  mxml_ext.cpp
+  mxml_fm.cpp
   mxml_attribute.cpp
   mxml_document.cpp
   mxml_error.cpp
   mxml_node.cpp
   mxml_utility.cpp
 
+  mxml_fm.h
+  mxml_attribute.h
+  mxml_document.h
+  mxml_element.h
+  mxml_error.h
+  mxml_iterator.h
+  mxml_node.h
+  mxml_utility.h
+  mxml.h
   ${SYS_SPECIFIC}
 )
 

@@ -19,6 +19,7 @@ endif()
 # Sources files the module is built from.
 set(SRC_FILES 
   sys.cpp
+  sys_fm.cpp
   sys_ext.cpp
   ${SYS_RC}
 )
@@ -28,6 +29,7 @@ set(SRC_FILES
 set(HDR_FILES
   version.h
   sys_ext.h
+  sys_fm.h
 )
 
 # Builds and links from the source files

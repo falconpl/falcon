@@ -32,6 +32,7 @@
 */
 
 namespace Falcon {
+using namespace Feathers;
 using namespace Mod;
 
 namespace {

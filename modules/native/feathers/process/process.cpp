@@ -17,13 +17,12 @@
    Process oriented extensions
 */
 
-#include <falcon/module.h>
-#include "process_mod.h"
-#include "process_ext.h"
+#include "process_fm.h"
 
 
 /*#
-   @module feathers.process External process interface
+   @module process External process interface
+   @ingroup process
    @brief Process enumeration and subprocess control.
 
    The @b process module provides several functions to manage processes in the system
@@ -67,7 +66,7 @@
 FALCON_MODULE_DECL
 {
    // initialize the module
-   Falcon::Module *self = new Falcon::Ext::ProcessModule();
+   Falcon::Module *self = new Falcon::Feathers::ModuleProcess();
 
    return self;
 }

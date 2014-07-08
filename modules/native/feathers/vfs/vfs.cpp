@@ -13,63 +13,18 @@
    See LICENSE file for licensing details.
 */
 
-#undef SRC
-#define SRC "falcon/moduels/native/feathers/vfs.cpp"
-
-#include <falcon/symbol.h>
-#include <falcon/item.h>
-#include <falcon/vfsprovider.h>
-#include <falcon/stderrors.h>
-
-#include "vfs.h"
-#include "vfs_ext.h"
-#include "classvfs.h"
-#include "classfilestat.h"
-#include "classdirectory.h"
-
-namespace Falcon {
-
-VFSModule::VFSModule():
-   Module("vfs")
-{
-   *this
-      // Standard functions
-      << new Ext::ClassVFS
-      << new Ext::ClassFileStat
-      << new Ext::ClassDirectory
-      << new Ext::Function_IOStream
-      << new Ext::Function_InputStream
-      << new Ext::Function_OutputStream
-      
-      // Standard classes
-      ;
-   
-   // constants
-   this->addConstant( "O_RD", (int64)VFSProvider::OParams::e_oflag_rd );
-   this->addConstant( "O_WR", (int64)VFSProvider::OParams::e_oflag_wr );
-   this->addConstant( "O_APPEND", (int64)VFSProvider::OParams::e_oflag_append );
-   this->addConstant( "O_TRUNC", (int64)VFSProvider::OParams::e_oflag_trunc );
-   //this->addConstant( "O_RAW", (int64)FALCON_VFS_MODE_FLAG_RAW );
-   
-   this->addConstant( "SH_NR", (int64)VFSProvider::OParams::e_sflag_nr );
-   this->addConstant( "SH_NW", (int64)VFSProvider::OParams::e_sflag_nw );
-
-   this->addConstant( "C_NOOVR", (int64)VFSProvider::CParams::e_cflag_noovr );
-   this->addConstant( "C_NOSTREAM", (int64)VFSProvider::CParams::e_cflag_nostream );
-   //this->addConstant( "C_RAW", (int64)FALCON_VFS_MODE_FLAG_RAW );
-}
-
-VFSModule::~VFSModule()
-{}
-
-}
+#include "vfs_fm.h"
 
 //=================================
 // Export function.
 
+/*# @module vfs Virtual File System
+ @brief Interface for abstract access to local and remote filesystems.
+ @ingroup feathers
+ */
 FALCON_MODULE_DECL 
 {
-   Falcon::Module* mod = new Falcon::VFSModule;
+   Falcon::Module* mod = new Falcon::Feathers::ModuleVFS;
    return mod;
 }
 

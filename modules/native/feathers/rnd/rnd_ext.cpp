@@ -29,7 +29,7 @@
 #define SRC "modules/native/feathers/rnd/rnd_ext.cpp"
 
 /*#
-   @beginmodule feathers.rnd
+   @beginmodule rnd
 */
 
 #include <falcon/engine.h>

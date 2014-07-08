@@ -28,6 +28,7 @@ else()
         sharedmem_posix.cpp
         ipsem_posix.cpp
         sharedmem_private_posix.h
+        shmem.rc
    )
 endif()
 
@@ -41,6 +42,7 @@ include_directories(
 set(SRC_FILES 
   ${_files_sys}
   sharedmem.cpp
+  shmem_fm.cpp
   shmem_ext.cpp
   ipsem_ext.cpp
   shared_ipsem.cpp
@@ -49,12 +51,12 @@ set(SRC_FILES
   session_ext.cpp
   session_srv.cpp
     
+  shmem_fm.h
   sharedmem.h
   session.h
   ipsem.h
   shared_ipsem.h
-  session_srv.h
-  shmemmodule.h
+  session_srv.h  
   
   shmem_ext.h
   session_ext.h

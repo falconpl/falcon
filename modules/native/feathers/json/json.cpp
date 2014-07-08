@@ -15,7 +15,8 @@
 
 
 /*#
-   @module feathers.json JSON support
+   @module json JSON support
+   @ingroup feathers
    @brief JavaScript Object Notation interface.
 
    This module exposes functions to dump and load variables
@@ -35,16 +36,12 @@
    @beginmodule feathers.json
 */
 
-#include <falcon/module.h>
-#include "json_ext.h"
-#include <stdio.h>
+#include "json_fm.h"
 
 FALCON_MODULE_DECL
 {
-   Falcon::Module *self = new Falcon::Module("json");
-   self->addMantra( new Falcon::Ext::ClassJSON );
-   self->addMantra( new Falcon::Ext::ClassJSONError );
 
+   Falcon::Module *self = new Falcon::Feathers::ModuleJSON();
    return self;
 }
 

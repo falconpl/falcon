@@ -26,7 +26,6 @@
 #include <falcon/path.h>
 #include <falcon/stderrors.h>
 
-#include "vfs.h"
 #include "classdirectory.h"
 
 namespace Falcon {

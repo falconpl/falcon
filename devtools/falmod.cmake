@@ -3,9 +3,29 @@
 # Useful functions to finalize modules
 #
 
+#################################################################
+# Macro for generation of standard falcon modules.
+# OPTNAME - the name of the FALCON_BUILD_<option>
+# LIBNAME - The name of the module as a library.
+# 
+
+macro( FalconDeclareModule OPTNAME LIBNAME )
+	option( FALCON_BUILD_${OPTNAME} "Build ${OPTNAME} module" OFF)
+
+	if(NOT FALCON_BUILD_${OPTNAME} )
+		message( STATUS "NOT building module: ${LIBNAME}")
+	return()
+	endif()
+	message( STATUS "Building module: ${LIBNAME}" )
+	set( ${OPTNAME} "${LIBNAME}_fm" )
+
+	project(Falcon_${OPTNAME})
+endmacro()
+
 macro( falcon_define_module varname modname )
       set( ${varname} "${modname}_fm" )
 endmacro()
+
 
 function(falcon_install_module2 tgt dir )
    if(APPLE)

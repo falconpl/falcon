@@ -17,7 +17,7 @@ endif()
 # Target
 add_library(logging_fm MODULE
    logging.cpp
-   logging_ext.cpp
+   logging_fm.cpp
    logarea.cpp
    logchannel.cpp
    logchannel_engine.cpp
@@ -25,7 +25,7 @@ add_library(logging_fm MODULE
    logchannel_files.cpp
    logchannel_syslog.cpp
    
-   logging_ext.h
+   logging_fm.h
    logging_mod.h
    logchannel.h
    logchannel_engine.h

@@ -25,8 +25,8 @@
 #include <falcon/vfsprovider.h>
 #include <falcon/stream.h>
 
-#include "vfs.h"
 #include "classvfs.h"
+#include "vfs_fm.h"
 
 namespace Falcon {
 namespace Ext {

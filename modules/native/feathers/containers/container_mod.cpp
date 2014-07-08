@@ -20,6 +20,8 @@
 #include <falcon/vmcontext.h>
 
 namespace Falcon {
+using namespace Feathers;
+
 namespace Mod {
 Container::Container( const ClassContainerBase* h ):
          m_handler(h)

@@ -18,7 +18,7 @@
 #include "logchannel_syslog.h"
 
 namespace Falcon {
-namespace Mod {
+namespace Feathers {
 
 
 LogChannelSyslog::LogChannelSyslog( const String& identity, uint32 facility, int level ):

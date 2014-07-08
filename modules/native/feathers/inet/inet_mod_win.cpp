@@ -19,7 +19,7 @@
 
 
 #include "inet_mod.h"
-#include "inet_ext.h"
+#include "inet_fm.h"
 
 #ifdef __MINGW32__
    #define _inline __inline
@@ -125,7 +125,7 @@ void Socket::setNonBlocking( bool mode ) const
    int iResult = ioctlsocket( m_skt, FIONBIO, &iMode);
    if (iResult != NO_ERROR)
    {
-       throw FALCON_SIGN_XERROR( Ext::NetError,
+       throw FALCON_SIGN_XERROR( Feathers::NetError,
                  FALSOCK_ERR_FCNTL, .desc(FALSOCK_ERR_FCNTL_MSG)
                  .sysError((uint32) errno ));
    }
@@ -152,7 +152,7 @@ int Socket::sys_setsockopt( int level, int option_name, const void *option_value
 
 const Multiplex::Factory* SocketSelectable::factory() const
 {
-   Ext::ModuleInet* mi = static_cast<Ext::ModuleInet*>(handler()->module());
+   Feathers::ModuleInet* mi = static_cast<Feathers::ModuleInet*>(handler()->module());
    return mi->selectMPXFactory();
 }
 

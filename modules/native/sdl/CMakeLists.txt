@@ -7,6 +7,13 @@ if(COMMAND cmake_policy)
    cmake_policy(SET CMP0003 OLD)
 endif(COMMAND cmake_policy)
 cmake_minimum_required(VERSION 2.6)
+
+if(NOT FALCON_BUILD_SDL )
+	message( STATUS "NOT building module: sdl")
+	return()
+endif()
+message( STATUS "Building module: sdl" )
+
 PROJECT(Falcon_SDL)
 
 

@@ -10,8 +10,11 @@ endif()
 
 add_library(json_fm MODULE
    json_mod.cpp
-   json_ext.cpp
+   json_fm.cpp
    json.cpp
+   
+   json_mod.h
+   json_fm.h
    ${SYS_RC}
 )
 

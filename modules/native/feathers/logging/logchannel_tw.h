@@ -22,7 +22,7 @@ namespace Falcon {
 
 class TextWriter;
 
-namespace Mod {
+namespace Feathers {
 
 /** Logging channel writing text on a TextWriter
  *

@@ -18,11 +18,11 @@ endif()
 
 add_library(process_fm MODULE
    process.cpp
-   process_ext.cpp
+   process_fm.cpp
    process_mod.cpp
    
    process.h
-   process_ext.h
+   process_fm.h
    process_mod.h
    ${SYS_SPECIFIC}
 )

@@ -30,13 +30,11 @@
    the Falcon engine.
 */
 
-#include <falcon/module.h>
-#include "rnd_ext.h"
-
-#include "version.h"
+#include "rnd_fm.h"
 
 /*#
-   @module feathers.rnd
+   @module rnd
+   @ingroup feathers
    @brief Simple pseudo-random number generator functions.
 
    This module exposes a set of simple function-oriented
@@ -60,32 +58,10 @@
    pseudo-random number generation.
 */
 
-//Define the math_extra module class
-class RndModule: public Falcon::Module
-{
-public:
-   // initialize the module
-   RndModule():
-      Module("rnd")
-   {
-      // Standard
-      *this
-         << new Falcon::Ext::FALCON_FUNCTION_NAME(random)
-         << new Falcon::Ext::FALCON_FUNCTION_NAME(randomChoice)
-         << new Falcon::Ext::FALCON_FUNCTION_NAME(randomPick)
-         << new Falcon::Ext::FALCON_FUNCTION_NAME(randomWalk)
-         << new Falcon::Ext::FALCON_FUNCTION_NAME(randomGrab)
-         << new Falcon::Ext::FALCON_FUNCTION_NAME(randomDice)
-         << new Falcon::Ext::FALCON_FUNCTION_NAME(randomSeed)
-               ;
-
-   }
-   virtual ~RndModule() {}
-};
 
 FALCON_MODULE_DECL
 {
-   Falcon::Module* mod = new RndModule;
+   Falcon::Module* mod = new ::Falcon::Feathers::ModuleRnd;
    return mod;
 }
 

@@ -30,11 +30,11 @@
    the Falcon engine.
 */
 
-#include <falcon/module.h>
-#include "math_ext.h"
+#include "math_fm.h"
 
 /*#
-   @module feathers.math
+   @module math
+   @ingroup feathers
    @brief Mathematical functions
 
    The @b math module provides standard mathematical function that
@@ -47,73 +47,9 @@
    - Combinatory calculus.
 */
 
-//Define the math_extra module class
-class MathExtraModule: public Falcon::Module
-{
-public:
-   // initialize the module
-   MathExtraModule():
-      Module("math")
-   {
-      //============================================================
-      // Api Declartion
-      //
-      
-      // Hyperbolic
-      addMantra( new Falcon::Ext::FALCON_FUNCTION_NAME(cosh) );
-      addMantra( new Falcon::Ext::FALCON_FUNCTION_NAME(sinh) );
-      addMantra( new Falcon::Ext::FALCON_FUNCTION_NAME(tanh) );
-      
-      // Inverse Hyperbolic
-      addMantra( new Falcon::Ext::FALCON_FUNCTION_NAME(acosh) );
-      addMantra( new Falcon::Ext::FALCON_FUNCTION_NAME(asinh) );
-      addMantra( new Falcon::Ext::FALCON_FUNCTION_NAME(atanh) );
-
-      // Reciprocal trigonometric function
-      addMantra( new Falcon::Ext::FALCON_FUNCTION_NAME(sec) );
-      addMantra( new Falcon::Ext::FALCON_FUNCTION_NAME(cosec) );
-      addMantra( new Falcon::Ext::FALCON_FUNCTION_NAME(cotan) );
-
-      // Other
-      addMantra( new Falcon::Ext::FALCON_FUNCTION_NAME(lambda) );
-
-      // Standard
-      *this
-         << new Falcon::Ext::FALCON_FUNCTION_NAME(log)
-         << new Falcon::Ext::FALCON_FUNCTION_NAME(log10)
-         << new Falcon::Ext::FALCON_FUNCTION_NAME(log2)
-         << new Falcon::Ext::FALCON_FUNCTION_NAME(logN)
-         << new Falcon::Ext::FALCON_FUNCTION_NAME(exp)
-         << new Falcon::Ext::FALCON_FUNCTION_NAME(sqrt)
-         << new Falcon::Ext::FALCON_FUNCTION_NAME(mod)
-         << new Falcon::Ext::FALCON_FUNCTION_NAME(pow)
-         << new Falcon::Ext::FALCON_FUNCTION_NAME(sin)
-         << new Falcon::Ext::FALCON_FUNCTION_NAME(cos)
-         << new Falcon::Ext::FALCON_FUNCTION_NAME(tan)
-         << new Falcon::Ext::FALCON_FUNCTION_NAME(asin)
-         << new Falcon::Ext::FALCON_FUNCTION_NAME(acos)
-         << new Falcon::Ext::FALCON_FUNCTION_NAME(atan)
-         << new Falcon::Ext::FALCON_FUNCTION_NAME(atan2)
-         << new Falcon::Ext::FALCON_FUNCTION_NAME(rad2deg)
-         << new Falcon::Ext::FALCON_FUNCTION_NAME(deg2rad)
-         << new Falcon::Ext::FALCON_FUNCTION_NAME(fract)
-         << new Falcon::Ext::FALCON_FUNCTION_NAME(fint)
-         << new Falcon::Ext::FALCON_FUNCTION_NAME(round)
-         << new Falcon::Ext::FALCON_FUNCTION_NAME(floor)
-         << new Falcon::Ext::FALCON_FUNCTION_NAME(ceil)
-         << new Falcon::Ext::FALCON_FUNCTION_NAME(abs)
-         << new Falcon::Ext::FALCON_FUNCTION_NAME(factorial)
-         << new Falcon::Ext::FALCON_FUNCTION_NAME(permutations)
-         << new Falcon::Ext::FALCON_FUNCTION_NAME(combinations)
-               ;
-
-   }
-   virtual ~MathExtraModule() {}
-};
-
 FALCON_MODULE_DECL
 {
-   Falcon::Module* mod = new MathExtraModule;
+   Falcon::Module* mod = new Falcon::Feathers::ModuleMath;
    return mod;
 }
 

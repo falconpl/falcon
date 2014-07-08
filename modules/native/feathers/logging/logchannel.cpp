@@ -20,7 +20,7 @@
 #include <falcon/sys.h>
 
 namespace Falcon {
-namespace Mod {
+namespace Feathers {
 
 LogChannel::LogChannel( uint32 l ):
    m_level( l ),

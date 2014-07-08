@@ -1,6 +1,0 @@
-@echo off
-
-current_path=$~dp0
-current_path="%current_path%/../"
-mkdir %~dp1
-%current_path%/@FALCON_BIN_DIR@/falcon -c "%0" -o "%1"

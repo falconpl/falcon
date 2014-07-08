@@ -44,10 +44,10 @@ endif()
 # Target
 add_library(inet_fm MODULE
    inet.cpp
+   inet_fm.cpp
    inet_mod.cpp
-   inet_ext.cpp
    
-   inet_ext.h
+   inet_fm.h
    inet_mod.h
    ${SYS_SPECIFIC}
    ${SYS_RC}

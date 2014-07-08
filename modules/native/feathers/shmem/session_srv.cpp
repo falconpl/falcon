@@ -16,7 +16,7 @@
 #define SRC "modules/native/feathers/shmem/session_srv.cpp"
 
 #include "session_srv.h"
-#include "shmemmodule.h"
+#include "shmem_fm.h"
 #include "session.h"
 
 #include <falcon/engine.h>
@@ -27,7 +27,7 @@ SessionService::SessionService( Module* creator ):
    Service( SESSIONSERVICE_NAME, creator )
 {
    m_session = new Session();
-   Class* cls = static_cast<ShmemModule*>(module())->sessionClass();
+   Class* cls = static_cast<Feathers::ModuleShmem*>(module())->sessionClass();
    m_sessionLock = Engine::GC_lock(Item(cls, m_session));
 }
 

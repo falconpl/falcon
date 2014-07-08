@@ -5,9 +5,15 @@
 ####################################################################
 
 cmake_minimum_required(VERSION 2.6)
-project(Falcon_dynlib)
 
-find_package(Falcon REQUIRED)
+
+if(NOT FALCON_BUILD_DYNLIB )
+	message( STATUS "NOT building module: dynlib")
+	return()
+endif()
+message( STATUS "Building module: dynlib" )
+
+project(Falcon_dynlib)
 
 # Set here project-wide options
 option(FALCON_DYNLIB_WITH_TESTS  "Compile test_dynlib.c to generate the test library" OFF)

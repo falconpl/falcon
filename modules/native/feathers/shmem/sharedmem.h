@@ -16,8 +16,8 @@
 */
 
 
-#ifndef _FALCON_SHAREDMEM_H_
-#define _FALCON_SHAREDMEM_H_
+#ifndef _FALCON_FEATHERS_SHAREDMEM_H_
+#define _FALCON_FEATHERS_SHAREDMEM_H_
 
 #include <falcon/setup.h>
 #include <falcon/types.h>

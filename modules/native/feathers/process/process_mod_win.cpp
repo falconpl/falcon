@@ -22,7 +22,7 @@
 #include <falcon/pipestreams.h>
 
 #include "process_mod.h"
-#include "process_ext.h"
+#include "process_fm.h"
 #include "process.h"
 
 #include <tlhelp32.h>
@@ -146,7 +146,7 @@ ProcessEnum::ProcessEnum()
       delete ph;
       m_sysdata = 0;
 
-       throw FALCON_SIGN_XERROR( ::Falcon::Ext::ProcessError, FALCON_PROCESS_ERROR_ERRLIST3,
+       throw FALCON_SIGN_XERROR( ::Falcon::Feathers::ProcessError, FALCON_PROCESS_ERROR_ERRLIST3,
                .desc(FALCON_PROCESS_ERROR_ERRLIST3_MSG )
                .sysError((uint32) GetLastError() ));
    }
@@ -178,7 +178,7 @@ bool ProcessEnum::next()
       DWORD dwLastError = GetLastError();
       if( dwLastError != ERROR_NO_MORE_FILES )
       {
-         throw FALCON_SIGN_XERROR( ::Falcon::Ext::ProcessError, FALCON_PROCESS_ERROR_ERRLIST4,
+         throw FALCON_SIGN_XERROR( ::Falcon::Feathers::ProcessError, FALCON_PROCESS_ERROR_ERRLIST4,
                   .desc(FALCON_PROCESS_ERROR_ERRLIST4_MSG )
                   .sysError( dwLastError )
                   );
@@ -204,7 +204,7 @@ void ProcessEnum::close()
    {
       delete ph;
       m_sysdata = 0;
-      throw FALCON_SIGN_XERROR( ::Falcon::Ext::ProcessError,
+      throw FALCON_SIGN_XERROR( ::Falcon::Feathers::ProcessError,
                FALCON_PROCESS_ERROR_ERRLIST2,
                  .desc(FALCON_PROCESS_ERROR_ERRLIST2_MSG )
                  .sysError( (uint32) GetLastError() )
@@ -290,7 +290,7 @@ bool Process::terminate( bool )
 
    if( ! CloseHandle( _p->hChildProcess ) )
    {
-      throw FALCON_SIGN_XERROR(::Falcon::Ext::ProcessError,
+      throw FALCON_SIGN_XERROR(::Falcon::Feathers::ProcessError,
                FALCON_PROCESS_ERROR_TERMINATE,
                .desc(FALCON_PROCESS_ERROR_TERMINATE_MSG)
                .sysError((unsigned int) GetLastError() ) );
@@ -316,7 +316,7 @@ void Process::sys_wait()
 {
    if( WaitForSingleObject( _p->hChildProcess, INFINITE ) == WAIT_FAILED )
    {
-      throw FALCON_SIGN_XERROR( ::Falcon::Ext::ProcessError, FALCON_PROCESS_ERROR_WAITFAIL,
+      throw FALCON_SIGN_XERROR( ::Falcon::Feathers::ProcessError, FALCON_PROCESS_ERROR_WAITFAIL,
          .desc(FALCON_PROCESS_ERROR_WAITFAIL_MSG)
          .sysError( (uint32) GetLastError() ) );
    }
@@ -354,7 +354,7 @@ void Process::sys_open( const String& cmd, int params )
    {
       if ( !CreatePipe( &_p->hPipeInRd, &_p->hPipeInWr, &secAtt, 0 ) )
       {
-         throw FALCON_SIGN_XERROR( ::Falcon::Ext::ProcessError,
+         throw FALCON_SIGN_XERROR( ::Falcon::Feathers::ProcessError,
                FALCON_PROCESS_ERROR_OPEN_PIPE,
                .desc( FALCON_PROCESS_ERROR_OPEN_PIPE_MSG )
                .extra("IN pipe")
@@ -363,7 +363,7 @@ void Process::sys_open( const String& cmd, int params )
 
       if ( ! CreatePipe( &_p->hPipeOutRd, &_p->hPipeOutWr, &secAtt, 0 ) )
       {
-         throw FALCON_SIGN_XERROR( ::Falcon::Ext::ProcessError,
+         throw FALCON_SIGN_XERROR( ::Falcon::Feathers::ProcessError,
                FALCON_PROCESS_ERROR_OPEN_PIPE,
                .desc( FALCON_PROCESS_ERROR_OPEN_PIPE_MSG )
                .extra("OUT pipe")
@@ -379,7 +379,7 @@ void Process::sys_open( const String& cmd, int params )
       {
          if ( !CreatePipe( &_p->hPipeErrRd, &_p->hPipeErrWr, &secAtt, 0 ) )
          {
-            throw FALCON_SIGN_XERROR( ::Falcon::Ext::ProcessError,
+            throw FALCON_SIGN_XERROR( ::Falcon::Feathers::ProcessError,
                   FALCON_PROCESS_ERROR_OPEN_PIPE,
                   .desc( FALCON_PROCESS_ERROR_OPEN_PIPE_MSG )
                   .extra("AUX pipe")
@@ -440,7 +440,7 @@ void Process::sys_open( const String& cmd, int params )
    {
       _p->closeAll();
 
-      throw FALCON_SIGN_XERROR( ::Falcon::Ext::ProcessError,
+      throw FALCON_SIGN_XERROR( ::Falcon::Feathers::ProcessError,
                   FALCON_PROCESS_ERROR_OPEN,
                   .desc( FALCON_PROCESS_ERROR_OPEN_MSG )
                   .sysError(GetLastError()) );

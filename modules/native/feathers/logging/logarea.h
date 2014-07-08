@@ -22,7 +22,7 @@
 #include <falcon/refcounter.h>
 
 namespace Falcon {
-namespace Mod {
+namespace Feathers {
 
 class LogChannel;
 

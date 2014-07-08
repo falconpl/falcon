@@ -18,6 +18,7 @@ endif()
 
 # Sources files the module is built from.
 set(SRC_FILES 
+  containers.cpp
   containers_fm.cpp
   classcontainer.cpp
   classiterator.cpp

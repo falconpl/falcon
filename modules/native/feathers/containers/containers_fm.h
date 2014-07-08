@@ -17,6 +17,7 @@
 #include <falcon/module.h>
 
 namespace Falcon {
+namespace Feathers {
 
 // Module
 class ModuleContainers: public Module
@@ -34,6 +35,7 @@ public:
    Class* m_containerClass;
 };
 
+}
 }
 
 #endif

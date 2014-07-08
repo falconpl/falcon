@@ -7,6 +7,10 @@
 # Creates the proper module file name from the project name.
 falcon_define_module( CURRENT_MODULE regex )
 
+# Find our Find*.cmake files 
+list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules)
+
+
 if( WIN32 OR APPLE )
  set(_pcre_default ON)
 else( WIN32 OR APPLE )

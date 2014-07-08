@@ -169,6 +169,13 @@ namespace Falcon {
           // nothing to do
           return 0;
        }
+
+       bool ClassVM::op_init( VMContext* ctx, void* , int32 ) const
+       {
+          // we have nothing to configure
+          ctx->topData() = Item(this,0);
+          return false;
+       }
     }
 } // namespace Falcon::Ext
 

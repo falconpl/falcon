@@ -33,10 +33,7 @@
    the Falcon engine.
 */
 
-#include <falcon/module.h>
-#include <falcon/symbol.h>
-#include "hash_mod.h"
-#include "hash_ext.h"
+#include "hash_fm.h"
 
 /*#
     @module feathers.hash Hashing algorighms
@@ -244,7 +241,7 @@
 
 FALCON_MODULE_DECL
 {
-    return new Falcon::Ext::ModHash;
+    return new Falcon::Feathers::ModuleHash;
 }
 
 /* end of hash.cpp */

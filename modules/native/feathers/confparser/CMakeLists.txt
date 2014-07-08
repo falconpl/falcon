@@ -10,8 +10,13 @@ endif()
 
 add_library(confparser_fm MODULE
   confparser.cpp
+  confparser_fm.cpp
   confparser_ext.cpp
   confparser_mod.cpp
+  
+  confparser_ext.h
+  confparser_mod.h
+  confparser_fm.h
   ${SYS_RC}
 )
 

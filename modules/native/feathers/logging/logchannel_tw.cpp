@@ -19,7 +19,7 @@
 #include <falcon/textwriter.h>
 
 namespace Falcon {
-namespace Mod {
+namespace Feathers {
 
 LogChannelTW::LogChannelTW( TextWriter* s, int level ):
    LogChannel( level ),
