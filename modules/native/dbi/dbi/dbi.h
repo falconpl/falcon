@@ -31,17 +31,17 @@ public:
    DBIModule();
    virtual ~DBIModule();
 
-   ClassRecordset* recordsetClass() const { return m_recordsetClass; }
-   ClassHandle* handleClass() const { return m_handleClass; }
-   ClassStatement* statementClass() const { return m_statementClass; }
+   DBI::ClassRecordset* recordsetClass() const { return m_recordsetClass; }
+   DBI::ClassHandle* handleClass() const { return m_handleClass; }
+   DBI::ClassStatement* statementClass() const { return m_statementClass; }
 
    PStep* m_stepCatchSubmoduleLoadError;
    PStep* m_stepAfterSubmoduleLoad;
 
 private:
-   ClassRecordset* m_recordsetClass;
-   ClassHandle* m_handleClass;
-   ClassStatement* m_statementClass;
+   DBI::ClassRecordset* m_recordsetClass;
+   DBI::ClassHandle* m_handleClass;
+   DBI::ClassStatement* m_statementClass;
 
 };
 

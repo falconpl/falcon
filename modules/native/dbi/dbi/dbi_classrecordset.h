@@ -21,6 +21,7 @@
 #define _FALCON_DBI_CLASSRECORDSET_H_
 
 namespace Falcon {
+namespace DBI {
 
 class ClassRecordset: public Class
 {
@@ -38,6 +39,7 @@ public:
    PStep* m_stepStoreFetchedProperties;
 };
 
+}
 }
 
 #endif

@@ -424,9 +424,9 @@ DBIModule::DBIModule():
    m_stepCatchSubmoduleLoadError = new PStepCatchSubmoduleLoadError;
    m_stepAfterSubmoduleLoad = new PStepAfterSubmoduleLoad;
 
-   m_handleClass = new ClassHandle;
-   m_statementClass = new ClassStatement;
-   m_recordsetClass = new ClassRecordset;
+   m_handleClass = new DBI::ClassHandle;
+   m_statementClass = new DBI::ClassStatement;
+   m_recordsetClass = new DBI::ClassRecordset;
 
    *this
       << new Function_connect

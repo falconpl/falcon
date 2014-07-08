@@ -31,6 +31,8 @@
 /*# @beginmodule dbi */
 
 namespace Falcon {
+namespace DBI {
+
 
 namespace {
 
@@ -491,6 +493,7 @@ bool ClassRecordset::gcCheckInstance( void* instance, uint32 mark ) const
    return dbs->currentMark() >= mark;
 }
 
+}
 }
 
 /* end of dbi_classrecordset.cpp */

@@ -29,6 +29,8 @@
 /*# @beginmodule dbi */
 
 namespace Falcon {
+namespace DBI {
+
 
 namespace {
    /*#
@@ -508,6 +510,7 @@ bool ClassHandle::gcCheckInstance( void* instance, uint32 mark ) const
    return dbh->currentMark() >= mark;
 }
 
+}
 }
 
 /* end of dbi_classhandle.cpp */

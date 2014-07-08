@@ -21,6 +21,7 @@
 #define _FALCON_DBI_CLASSSTATEMENT_H_
 
 namespace Falcon {
+namespace DBI {
 
 class ClassStatement: public Class
 {
@@ -35,6 +36,7 @@ public:
    virtual bool gcCheckInstance( void* instance, uint32 mark ) const;
 };
 
+}
 }
 
 #endif
