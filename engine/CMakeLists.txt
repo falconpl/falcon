@@ -114,8 +114,7 @@ set( re2_SRCS
 
 #TODO re2 switch   
    
-add_library(falcon_engine SHARED
-#add_library(falcon_engine STATIC
+set( falcon_engine_SOURCES
   ${SYS_SPECIFIC}
 
   parser/lexer.cpp
@@ -448,10 +447,19 @@ add_library(falcon_engine SHARED
   ${re2_SRCS}
 )
 
-set_target_properties(falcon_engine PROPERTIES
-  VERSION "${FALCON_SONAME_VERSION}.${FALCON_SONAME_REVISION}.${FALCON_SONAME_AGE}"
-  SOVERSION "${FALCON_SONAME_VERSION}"
-)
+
+if( FALCON_STATIC_ENGINE )
+
+	add_library(falcon_engine STATIC ${falcon_engine_SOURCES} )
+
+else()
+	add_library(falcon_engine SHARED ${falcon_engine_SOURCES} )
+		
+	set_target_properties(falcon_engine PROPERTIES
+	  VERSION "${FALCON_SONAME_VERSION}.${FALCON_SONAME_REVISION}.${FALCON_SONAME_AGE}"
+	  SOVERSION "${FALCON_SONAME_VERSION}"
+	)
+endif()
 
 #In unix and mac we have to add extra libraries
 if(UNIX OR APPLE)

@@ -83,6 +83,9 @@
 // Controls the tracing of garbage collectible items
 #define  FALCON_TRACE_GC               @FALCON_TRACE_GC_VALUE@
 
+// Defined if the engine is statically compiled.
+#cmakedefine FALCON_STATIC_ENGINE
+
 // Defined if the feather modules are statically compiled in the Falcon system.
 #cmakedefine FALCON_STATIC_FEATHERS
 
