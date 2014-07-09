@@ -185,6 +185,9 @@ bool ModLoader::sourceEncoding( const String& encName )
 
 bool ModLoader::loadName( VMContext* tgtctx, const String& name, t_modtype type, Module* loader )
 {
+    if( m_owner->loadModule( tgtctx, name ) )
+        return true;
+
 	String logicalName, modName;
 	Module::computeLogicalName( name, logicalName, loader != 0 ? loader->name() : "" );
 

@@ -30,13 +30,15 @@
 namespace Falcon
 {
 
+Mutex StmtFastPrint::m_mtx;
+
 class StmtFastPrint::Private: public TSVector_Private<Expression>
 {
 public:
-   
+
    Private() {}
    ~Private() {}
-   
+
    Private( const Private& other, TreeStep* owner ):
       TSVector_Private<Expression>( other, owner )
    {}
@@ -45,7 +47,7 @@ public:
 
 StmtFastPrint::StmtFastPrint( int line, int chr ):
    Statement( line, chr ),
-   _p( new Private ),   
+   _p( new Private ),
    m_bAddNL( false )
 {
    FALCON_DECLARE_SYN_CLASS(stmt_fastprint)
@@ -64,7 +66,7 @@ StmtFastPrint::StmtFastPrint( int line, int chr, bool ):
 
 StmtFastPrint::StmtFastPrint( const StmtFastPrint& other ):
    Statement( other ),
-   _p( new Private(*other._p, this) ),   
+   _p( new Private(*other._p, this) ),
    m_bAddNL( other.m_bAddNL )
 {
    apply = apply_;
@@ -87,8 +89,8 @@ TreeStep* StmtFastPrint::nth( int32 n ) const
 
 bool StmtFastPrint::setNth( int32 n, TreeStep* ts )
 {
-   if( ts == 0 
-      || ts->category() != TreeStep::e_cat_expression ) 
+   if( ts == 0
+      || ts->category() != TreeStep::e_cat_expression )
    {
       return false;
    }
@@ -96,18 +98,18 @@ bool StmtFastPrint::setNth( int32 n, TreeStep* ts )
 }
 
 bool StmtFastPrint::insert( int32 n, TreeStep* ts )
-{   
-   if( ts == 0 
-      || ts->category() != TreeStep::e_cat_expression ) 
+{
+   if( ts == 0
+      || ts->category() != TreeStep::e_cat_expression )
    {
       return false;
    }
-   
+
    return _p->insert(n, static_cast<Expression*>(ts), this );
 }
 
 bool StmtFastPrint::remove( int32 n )
-{   
+{
    return _p->remove(n);
 }
 
@@ -157,16 +159,17 @@ void StmtFastPrint::render( TextWriter* tw, int32 depth ) const
 
 void StmtFastPrint::apply_( const PStep* ps, VMContext* ctx )
 {
-   const StmtFastPrint* self = static_cast< const StmtFastPrint*>( ps );   
+   const StmtFastPrint* self = static_cast< const StmtFastPrint*>( ps );
+   self->m_mtx.lock();
    Private::ExprVector& pl = self->_p->m_exprs;
    CodeFrame& cframe = ctx->currentCode();
    int seqId = cframe.m_seqId;
-   
+
    // can we print?
    if( seqId > 0 )
    {
       register Item& top = ctx->topData();
-            
+
       if( top.isString() )
       {
          ctx->process()->textOut()->write( *top.asString() );
@@ -186,7 +189,7 @@ void StmtFastPrint::apply_( const PStep* ps, VMContext* ctx )
                // hopefully, it will have transformed the data into a string.
                return;
             }
-            
+
             // else we can proceed here.
             if( top.isString() )
             {
@@ -203,13 +206,13 @@ void StmtFastPrint::apply_( const PStep* ps, VMContext* ctx )
             String temp;
             top.describe( temp, 1, 0 );
             ctx->process()->textOut()->write( temp );
-         }         
+         }
       }
-      
+
       // in any case, the data is gone.
       ctx->popData();
    }
-   
+
    // was this the last item?
    if( pl.size() <= (size_t) seqId )
    {
@@ -227,6 +230,7 @@ void StmtFastPrint::apply_( const PStep* ps, VMContext* ctx )
       ctx->currentCode().m_seqId = seqId + 1;
       ctx->pushCode( pl[seqId] );
    }
+   self->m_mtx.unlock();
 }
 
 }

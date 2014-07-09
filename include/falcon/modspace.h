@@ -117,6 +117,14 @@ class FALCON_DYN_CLASS ModSpace
 		 */
 		void add( Module* mod );
 
+        /** Adds a callback function to load modules given the name. Gets called in ModLoader::loadName
+         \param tgtctx The context to load the module in
+         \param name the name of the module to load
+         \return true if module is loaded
+        */
+		typedef bool ( *loadModule_cbfunction )( VMContext* tgtctx, const String& name );
+		void add( loadModule_cbfunction func );
+
 		/** Store a module without exporting its values.
 
 		    If the module is stored for load the caller should then call
@@ -156,6 +164,7 @@ class FALCON_DYN_CLASS ModSpace
 		 */
 		Process* loadModule( const String& name, bool isUri, bool asLoad, bool isMain = false );
 		Process* loadModule( const String& name, Stream* script, const String& path = "", ModLoader::t_modtype type = ModLoader::e_mt_source );
+		bool loadModule( VMContext* tgtctx, const String& name );
 
 		void loadModuleInProcess( const String& name, bool isUri, bool asLoad, bool isMain = false, Module* loader = 0 );
 		void loadModuleInProcess( Process* prc, const String& name, bool isUri, bool asLoad, bool isMain = false, Module* loader = 0 );
@@ -470,7 +479,7 @@ class FALCON_DYN_CLASS ModSpace
 		class PStepSetProcResult;
 		class PStepCallMain;
 
-
+        loadModule_cbfunction m_loadModuleCbFunc;
 
 		FALCON_REFERENCECOUNT_DECLARE_INCDEC( ModSpace );
 };
