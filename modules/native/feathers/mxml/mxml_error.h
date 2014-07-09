@@ -10,7 +10,7 @@
 #ifndef MXML_ERROR_H
 #define MXML_ERROR_H
 
-#include <mxml_element.h>
+#include "mxml_element.h"
 #include <falcon/string.h>
 
 namespace MXML {

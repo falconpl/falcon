@@ -28,6 +28,8 @@
 #ifndef FALCON_FEATHERS_RND_FM_H
 #define FALCON_FEATHERS_RND_FM_H
 
+#define FALCON_FEATHER_RND_NAME "rnd"
+
 #include <falcon/module.h>
 
 namespace Falcon { 

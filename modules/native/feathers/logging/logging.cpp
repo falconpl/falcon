@@ -165,11 +165,15 @@
       This is the default log area used by the @a glog function.
   */
 
+#ifndef FALCON_STATIC_FEATHERS
+
 FALCON_MODULE_DECL
 {
    Falcon::Module *self = new Falcon::Feathers::ModuleLogging;
    return self;
 }
+
+#endif
 
 /* end of logging.cpp */
 

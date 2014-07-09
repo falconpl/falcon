@@ -448,9 +448,46 @@ set( falcon_engine_SOURCES
 )
 
 
+set(FALCON_ENGINE_EXTRA_LINK_LIBS )
+if( FALCON_STATIC_FEATHERS )
+	set( FEATHER_DIRS
+		bitbuf
+		cmdline
+		confparser
+		containers
+		hash
+		inet
+		json
+		logging
+		math
+		mxml
+		process
+		regex
+		rnd
+		shmem
+		sys
+		vfs
+		vm
+		zlib
+	)
+	
+	foreach( item ${FEATHER_DIRS} )
+		include( "${CMAKE_SOURCE_DIR}/modules/native/feathers/${item}/CMakeLists.txt" )
+		LIST(APPEND falcon_engine_SOURCES "${${item}_SOURCES}")
+	endforeach()
+
+endif()
+
+
 if( FALCON_STATIC_ENGINE )
 
 	add_library(falcon_engine STATIC ${falcon_engine_SOURCES} )
+	
+	# If static, the inet functions are in the engine; 
+	# we got to link the engine with winsock2
+	if(WIN32)
+   		target_link_libraries(falcon_engine ws2_32)
+	endif()
 
 else()
 	add_library(falcon_engine SHARED ${falcon_engine_SOURCES} )
@@ -458,8 +495,9 @@ else()
 	set_target_properties(falcon_engine PROPERTIES
 	  VERSION "${FALCON_SONAME_VERSION}.${FALCON_SONAME_REVISION}.${FALCON_SONAME_AGE}"
 	  SOVERSION "${FALCON_SONAME_VERSION}"
-	)
+	)		
 endif()
+
 
 #In unix and mac we have to add extra libraries
 if(UNIX OR APPLE)
@@ -468,7 +506,7 @@ endif()
 
 #if this doesn't work on solaris, add dl and rt
 list(APPEND SYS_LIBS ${CMAKE_DL_LIBS})
-target_link_libraries(falcon_engine ${SYS_LIBS})
+target_link_libraries(falcon_engine ${SYS_LIBS} ${FALCON_ENGINE_EXTRA_LINK_LIBS})
 
 install(TARGETS falcon_engine 
   EXPORT falcon-core-targets

@@ -30,6 +30,8 @@
 #ifndef FALCON_FEATHERS_MODULE_BITBUF_H
 #define FALCON_FEATHERS_MODULE_BITBUF_H
 
+#define FALCON_FEATHER_BITBUF_NAME "bitbuf"
+
 #include <falcon/module.h>
 
 namespace Falcon {

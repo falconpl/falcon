@@ -30,7 +30,7 @@ generate_doxygen_documentation(
 
 #
 install(
-   DIRECTORY ${output_dir} DESTINATION ${Falcon_DOC_DIR}
+   DIRECTORY ${output_dir} DESTINATION "${FALCON_DOC_DIR}"
    OPTIONAL # if docs haven't been generated
 )
 

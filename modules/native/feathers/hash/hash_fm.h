@@ -38,6 +38,8 @@
 #include <falcon/module.h>
 #include <falcon/class.h>
 
+#define FALCON_FEATHER_HASH_NAME "hash"
+
 namespace Falcon {
 namespace Feathers {
 

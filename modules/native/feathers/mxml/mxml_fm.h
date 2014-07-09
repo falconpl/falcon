@@ -20,6 +20,8 @@
 #ifndef FALCON_FEATHERS_MXML_FM_H
 #define FALCON_FEATHERS_MXML_FM_H
 
+#define FALCON_FEATHER_MXML_NAME "mxml"
+
 #include <falcon/setup.h>
 #include <falcon/module.h>
 #include <falcon/error.h>

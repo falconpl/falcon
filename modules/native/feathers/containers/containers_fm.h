@@ -16,6 +16,8 @@
 
 #include <falcon/module.h>
 
+#define FALCON_FEATHER_CONTAINERS_NAME "containers"
+
 namespace Falcon {
 namespace Feathers {
 

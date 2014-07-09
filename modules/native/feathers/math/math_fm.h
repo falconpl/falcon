@@ -35,6 +35,8 @@
 
 #include <falcon/module.h>
 
+#define FALCON_FEATHER_MATH_NAME "math"
+
 namespace Falcon {
 namespace Feathers {
 
@@ -51,4 +53,3 @@ public:
 #endif
 
 /* end of math_ext.h */
-

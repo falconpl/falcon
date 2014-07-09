@@ -4,7 +4,7 @@
 # CMake configuration file for module Funcext
 ####################################################################
 
-if(WIN32)
+if(WIN32 AND NOT FALCON_STATIC_FEATHERS)
    SET( SYS_RC funcext.rc )
 endif()
 

@@ -32,7 +32,7 @@
 namespace Falcon {
 namespace Feathers {
 ModuleContainers::ModuleContainers():
-      Module("containers")
+      Module(FALCON_FEATHER_CONTAINERS_NAME)
 {
    m_containerClass = new ClassContainer;
    m_iteratorClass = new ClassIterator;

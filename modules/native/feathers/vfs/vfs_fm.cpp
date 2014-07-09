@@ -28,7 +28,7 @@ namespace Falcon {
 namespace Feathers {
 
 ModuleVFS::ModuleVFS():
-   Module("vfs")
+   Module(FALCON_FEATHER_VFS_NAME)
 {
    *this
       // Standard functions

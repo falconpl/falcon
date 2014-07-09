@@ -5,14 +5,16 @@
 ####################################################################
 
 include_directories(
-  ${CMAKE_CURRENT_SOURCE_DIR}
+  ${CMAKE_CURRENT_LIST_DIR}
 )
 
-if(WIN32 AND NOT MINGW)
+if(WIN32 AND NOT MINGW AND NOT FALCON_STATIC_FEATHERS)
    set(SYS_SPECIFIC  mxml.rc)
+else()
+	set(SYS_SPECIFIC )
 endif()
 
-add_library(mxml_fm MODULE
+set(SOURCES
   mxml.cpp
   mxml_fm.cpp
   mxml_attribute.cpp
@@ -33,6 +35,4 @@ add_library(mxml_fm MODULE
   ${SYS_SPECIFIC}
 )
 
-falcon_finalize_module( mxml_fm )
- 
-set(_project_targets ${_project_targets} mxml_fm PARENT_SCOPE)
+FalconDeclareFeather( "mxml" "${SOURCES}" "" )

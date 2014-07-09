@@ -44,8 +44,66 @@
 
 #include <deque>
 
+#if defined(FALCON_STATIC_FEATHERS)
+#include "../modules/native/feathers/bitbuf/bitbuf_fm.h"
+#include "../modules/native/feathers/cmdline/cmdline_fm.h"
+#include "../modules/native/feathers/confparser/confparser_fm.h"
+#include "../modules/native/feathers/containers/containers_fm.h"
+#include "../modules/native/feathers/hash/hash_fm.h"
+#include "../modules/native/feathers/inet/inet_fm.h"
+#include "../modules/native/feathers/json/json_fm.h"
+#include "../modules/native/feathers/logging/logging_fm.h"
+#include "../modules/native/feathers/math/math_fm.h"
+#include "../modules/native/feathers/mxml/mxml_fm.h"
+#include "../modules/native/feathers/process/process_fm.h"
+#include "../modules/native/feathers/regex/regex_fm.h"
+#include "../modules/native/feathers/rnd/rnd_fm.h"
+#include "../modules/native/feathers/shmem/shmem_fm.h"
+#include "../modules/native/feathers/sys/sys_fm.h"
+#include "../modules/native/feathers/vfs/vfs_fm.h"
+#include "../modules/native/feathers/vm/vm_fm.h"
+#include "../modules/native/feathers/zlib/zlib_fm.h"
+#endif
+
+#if defined(FALCON_STATIC_MODULES)
+#endif
+
 namespace Falcon
 {
+
+#if defined(FALCON_STATIC_FEATHERS) || defined(FALCON_STATIC_MODULES)
+
+Module* ModLoader::checkStaticModule(const String& logicalName)
+{
+   #if defined(FALCON_STATIC_FEATHERS)
+      if( logicalName == FALCON_FEATHER_BITBUF_NAME )       { return new Feathers::ModuleBitbuf(); }
+      if( logicalName == FALCON_FEATHER_CMDLINE_NAME )      { return new Feathers::ModuleCmdline(); }
+      if( logicalName == FALCON_FEATHER_CONFPARSER_NAME )   { return new Feathers::ModuleConfparser(); }
+      if( logicalName == FALCON_FEATHER_CONTAINERS_NAME )   { return new Feathers::ModuleContainers(); }
+      if( logicalName == FALCON_FEATHER_HASH_NAME )         { return new Feathers::ModuleHash(); }
+      if( logicalName == FALCON_FEATHER_INET_NAME )         { return new Feathers::ModuleInet(); }
+      if( logicalName == FALCON_FEATHER_JSON_NAME )         { return new Feathers::ModuleJSON(); }
+      if( logicalName == FALCON_FEATHER_LOGGING_NAME )      { return new Feathers::ModuleLogging(); }
+      if( logicalName == FALCON_FEATHER_MATH_NAME )         { return new Feathers::ModuleMath(); }
+      if( logicalName == FALCON_FEATHER_MXML_NAME )         { return new Feathers::ModuleMXML(); }
+      if( logicalName == FALCON_FEATHER_PROCESS_NAME )      { return new Feathers::ModuleProcess(); }
+      if( logicalName == FALCON_FEATHER_REGEX_NAME )        { return new Feathers::ModuleRegex(); }
+      if( logicalName == FALCON_FEATHER_RND_NAME )          { return new Feathers::ModuleRnd(); }
+      if( logicalName == FALCON_FEATHER_SHMEM_NAME )        { return new Feathers::ModuleShmem(); }
+      if( logicalName == FALCON_FEATHER_SYS_NAME )          { return new Feathers::ModuleSys(); }
+      if( logicalName == FALCON_FEATHER_VFS_NAME )          { return new Feathers::ModuleVFS(); }
+      if( logicalName == FALCON_FEATHER_VM_NAME )           { return new Feathers::ModuleVM(); }
+      if( logicalName == FALCON_FEATHER_ZLIB_NAME )         { return new Feathers::ModuleZLib(); }
+   #endif
+
+   #if defined(FALCON_STATIC_MODULES)
+   #endif
+
+   return 0;
+}
+
+#endif
+
 
 class ModLoader::Private
 {
@@ -130,6 +188,15 @@ bool ModLoader::loadName( VMContext* tgtctx, const String& name, t_modtype type,
 	String logicalName, modName;
 	Module::computeLogicalName( name, logicalName, loader != 0 ? loader->name() : "" );
 
+#if defined(FALCON_STATIC_FEATHERS) || defined(FALCON_STATIC_MODULES)
+	Module* built_in = ModLoader::checkStaticModule(logicalName);
+	if ( built_in != 0 )
+	{
+	   // we're done
+	   ModLoader::pushModule(tgtctx, built_in, true);
+	   return false;
+	}
+#endif
 	// change "." into "/"
 	modName = logicalName;  // we know it's a buffer.
 	length_t pos1 = modName.find( '.' );
@@ -726,6 +793,19 @@ void ModLoader::PStepSave::apply_( const PStep*, VMContext* ctx )
 
 	ctx->popData( 3 );
 	ctx->popCode();
+}
+
+void ModLoader::pushModule(VMContext* tgtctx, Module* mod, bool gc)
+{
+   static Class* modClass = Engine::instance()->stdHandlers()->moduleClass();
+   if (gc)
+   {
+      mod->incref();
+      tgtctx->pushData(FALCON_GC_STORE(modClass, mod));
+   }
+   else {
+      tgtctx->pushData(Item(modClass, mod));
+   }
 }
 
 }

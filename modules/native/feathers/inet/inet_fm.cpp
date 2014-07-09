@@ -1624,7 +1624,7 @@ Selectable* ClassSocketStream::getSelectableInterface( void* instance ) const
 //=================================================================
 
 ModuleInet::ModuleInet():
-         Module("inet")
+         Module(FALCON_FEATHER_INET_NAME)
 {
    m_clsAddress = new ClassAddress;
    m_clsSocket = new ClassSocket;

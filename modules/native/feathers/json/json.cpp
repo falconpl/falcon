@@ -33,10 +33,12 @@
 */
 
 /*#
-   @beginmodule feathers.json
+   @beginmodule json
 */
 
 #include "json_fm.h"
+
+#ifndef FALCON_STATIC_FEATHERS
 
 FALCON_MODULE_DECL
 {
@@ -45,6 +47,7 @@ FALCON_MODULE_DECL
    return self;
 }
 
+#endif
 
 /* end of funcext.cpp */
 

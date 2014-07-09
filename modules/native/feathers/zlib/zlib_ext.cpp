@@ -17,7 +17,7 @@
 #include <falcon/engine.h>
 #include <falcon/vmcontext.h>
 
-#include <falcon/errors/paramerror.h>
+#include <falcon/stderrors.h>
 
 #include "zlib.h"
 #include "zlib_ext.h"
@@ -67,7 +67,7 @@ FALCON_DEFINE_FUNCTION_P1( getVersion )
 {
    String *gsVersion = new String( zlibVersion() );
    gsVersion->bufferize();
-   ctx->returnFrame( gsVersion );
+   ctx->returnFrame( FALCON_GC_HANDLE(gsVersion) );
 }
 
 /*#
@@ -150,8 +150,10 @@ free( compData );
       allocLen = compLen;
    }
 
-   //MemBuf *result = new MemBuf_1( compData, allocLen, free( );
-   //ctx->returnFrame( result );
+   String* result = new String;
+   result->adopt((char*)compData, compLen, allocLen);
+   result->toMemBuf();
+   ctx->returnFrame( FALCON_GC_HANDLE(result) );
 }
 
 
@@ -230,8 +232,10 @@ free( compData );
       allocLen = compLen + 5;
    }
 
-   //MemBuf *result = new MemBuf_1( compData, allocLen, free( );
-   //ctx->returnFrame( result );
+   String* result = new String;
+   result->adopt((char*)compData, compLen, allocLen);
+   result->toMemBuf();
+   ctx->returnFrame( FALCON_GC_HANDLE(result) );
 }
 
 /*#
@@ -311,8 +315,10 @@ free( compData );
       allocLen = compLen;
    }
 
-   //MemBuf *result = new MemBuf_1( compData, allocLen, free( );
-   //ctx->returnFrame( result );
+   String* result = new String;
+   result->adopt((char*)compData, compLen, allocLen);
+   result->toMemBuf();
+   ctx->returnFrame( FALCON_GC_HANDLE(result) );
 }
 
 /*#
@@ -376,12 +382,12 @@ FALCON_DEFINE_FUNCTION_P1( uncompressText )
    String *result = new String;
    result->adopt( (char *) compData, compLen, compLen );
    // set correct manipulator
-   //if (dataIn[0] == 2 )
-      //result->manipulator( &csh::handler_buffer16 );
-   //else if( dataIn[0] == 4 )
-      //result->manipulator( &csh::handler_buffer32 );
+   if (dataIn[0] == 2 )
+      result->manipulator( &csh::handler_buffer16 );
+   else if( dataIn[0] == 4 )
+      result->manipulator( &csh::handler_buffer32 );
 
-   ctx->returnFrame( result );
+   ctx->returnFrame( FALCON_GC_HANDLE(result) );
 }
 
 

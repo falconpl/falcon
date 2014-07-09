@@ -58,12 +58,15 @@
    pseudo-random number generation.
 */
 
+#ifndef FALCON_STATIC_FEATHERS
 
 FALCON_MODULE_DECL
 {
    Falcon::Module* mod = new ::Falcon::Feathers::ModuleRnd;
    return mod;
 }
+
+#endif
 
 /* end of rnd.cpp */
 

@@ -6,10 +6,10 @@
    Author: Giancarlo Niccolai <gc@falconpl.org>
 */
 
-#include <mxml.h>
-#include <mxml_attribute.h>
-#include <mxml_error.h>
-#include <mxml_utility.h>
+#include "mxml.h"
+#include "mxml_attribute.h"
+#include "mxml_error.h"
+#include "mxml_utility.h"
 
 #include <falcon/fassert.h>
 

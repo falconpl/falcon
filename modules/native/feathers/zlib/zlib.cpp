@@ -22,11 +22,8 @@
  * scripts.
  */
 
-#include <falcon/module.h>
-#include "zlib_ext.h"
-#include "zlib.h"
+#include "zlib_fm.h"
 
-#include "version.h"
 /*#
    @module zlib ZLib basic binding.
    @ingroup feathers
@@ -56,12 +53,15 @@
 
    @beginmodule zlib
 */
+#ifndef FALCON_STATIC_FEATHERS
 
 FALCON_MODULE_DECL
 {
-   Falcon::Module* mod = new ::Falcon::Feathrs::ModuleZLib;
+   Falcon::Module* mod = new ::Falcon::Feathers::ModuleZLib;
    return mod;
 }
+
+#endif
 
 /* end of zlib.cpp */
 

@@ -19,6 +19,8 @@
 #include <falcon/setup.h>
 #include <falcon/module.h>
 
+#define FALCON_FEATHER_CONFPARSER_NAME "confparser"
+
 namespace Falcon {
 namespace Feathers {
 

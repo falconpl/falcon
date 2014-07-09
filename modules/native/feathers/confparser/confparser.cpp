@@ -16,6 +16,8 @@
 #define SRC "modules/native/feathers/confparser.cpp"
 #include "confparser_fm.h"
 
+#ifndef FALCON_STATIC_FEATHERS
+
 FALCON_MODULE_DECL
 {
    // setup DLL engine common data
@@ -23,6 +25,8 @@ FALCON_MODULE_DECL
    Falcon::Module *self = new Falcon::Feathers::ModuleConfparser();
    return self;
 }
+
+#endif
 
 /* end of confparser.cpp */
 

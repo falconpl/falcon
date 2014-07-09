@@ -19,11 +19,15 @@
 
 #include "mxml_fm.h"
 
+#ifndef FALCON_STATIC_FEATHERS
+
 FALCON_MODULE_DECL
 {
    Falcon::Module *self = new Falcon::Feathers::ModuleMXML();
    return self;
 }
+
+#endif
 
 /* end of sdl.cpp */
 

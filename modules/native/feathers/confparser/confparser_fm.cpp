@@ -122,7 +122,7 @@ namespace Falcon {
 namespace Feathers {
 
 ModuleConfparser::ModuleConfparser():
-         Module("confparser", true)
+         Module(FALCON_FEATHER_CONFPARSER_NAME, true)
 {
    Falcon::Class *c_cparser = Falcon::Ext::confparser_create();
    addMantra(c_cparser);

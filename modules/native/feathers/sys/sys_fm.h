@@ -16,6 +16,8 @@
 #ifndef FALCON_FEATHERS_SYS_FM_H
 #define FALCON_FEATHERS_SYS_FM_H
 
+#define FALCON_FEATHER_SYS_NAME "sys"
+
 #include <falcon/module.h>
 
 namespace Falcon {

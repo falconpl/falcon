@@ -15,8 +15,8 @@
 #include <list>
 #include <cassert>
 
-#include <mxml_error.h>
-#include <mxml_attribute.h>
+#include "mxml_error.h"
+#include "mxml_attribute.h"
 
 namespace MXML
 {
@@ -523,7 +523,7 @@ public:
    friend class Document;
 };
 
-#include <mxml_iterator.h>
+#include "mxml_iterator.h"
 
 } //namespace
 

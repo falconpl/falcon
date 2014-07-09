@@ -450,7 +450,7 @@ static void saveStatus( VMContext* ctx, uint32 lastParsed, uint32 status, const 
 
 
 ModuleCmdline::ModuleCmdline():
-         Module("cmdline")
+         Module(FALCON_FEATHER_CMDLINE_NAME)
 {
    class PStepGetOption: public PStep
    {

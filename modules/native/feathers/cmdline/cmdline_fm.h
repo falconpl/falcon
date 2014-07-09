@@ -16,6 +16,8 @@
 #ifndef FALCON_FEATHERS_MODULE_CMDLINE
 #define FALCON_FEATHERS_MODULE_CMDLINE
 
+#define FALCON_FEATHER_CMDLINE_NAME "cmdline"
+
 #include <falcon/setup.h>
 #include <falcon/module.h>
 

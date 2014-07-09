@@ -43,7 +43,7 @@ message( STATUS "CMAKE_INSTALL_PREFIX{${CMAKE_INSTALL_PREFIX}} - Installation pr
 Message("Build set selection options: ")
 set_default_opt( FALCON_BUILD_NATIVE_MODS "Build native (binary) non-feather modules" ON )
 set_default_opt( FALCON_BUILD_SOURCE_MODS "Compile source modules into .fam for faster script startup" ON )
-set_default_opt( FALCON_STRIP_SOURCE_MODS   "Don't install source .fal/ftd modules" OFF)
+set_default_opt( FALCON_STRIP_SOURCE_MODS "Don't install source .fal/ftd modules" OFF)
 
 set_default_opt( FALCON_BUILD_FWKS "Build Falcon frameworks" ON )
 set_default_opt( FALCON_BUILD_APPS "Build Falcon applications" ON )
@@ -55,6 +55,7 @@ set_default_opt( FALCON_BUILD_BINTESTS "Build embedding and other binary tests" 
 Message("Build installation options: ")
 
 set_default_opt( FALCON_INSTALL_TESTS "Copy test files in the final installation (under share/)" OFF )
+set_default_opt( FALCON_SYMLINK_VERSION "Create non-versioned symlinks to versioned install subdirs" OFF)
 set_default_opt( FALCON_BUILD_DIST "Prepare distribution helper scripts in dist/" OFF )
 
 Message("Build mode options: ")
@@ -62,6 +63,9 @@ Message("Build mode options: ")
 set_default_opt( FALCON_STATIC_ENGINE "Perform a static compilation of the falcon engine" OFF )
 set_default_opt( FALCON_STATIC_FEATHERS  "Perform a static compilation of the main modules" OFF )
 set_default_opt( FALCON_STATIC_MODS  "Perform a static compilation of the non-feathers canonical modules" OFF )
+set_default_opt( FALCON_WITH_INTERNAL_PCRE "Uses pre-configured PCRE library sources in Feathers" ON )
+set_default_opt( FALCON_WITH_INTERNAL_ZLIB "Uses pre-configured ZLIB library sources in Feathers" OFF )
+
 
 Message("Debug options: ")
 
@@ -90,9 +94,9 @@ if(WIN32)
 	set( default_FALCON_SHARE_DIR "share" )
 	set( default_FALCON_DOC_DIR "docs" )
 else()	
-	set( default_FALCON_APP_DIR "${FALCON_LIB_DIR}exec${LIB_SUFFIX}/falcon")
+	set( default_FALCON_APP_DIR "${FALCON_LIB_DIR}exec${LIB_SUFFIX}/falcon${FALCON_ID}")
 	set( default_FALCON_INC_DIR "include/falcon${FALCON_ID}" )
-	set( default_FALCON_MOD_DIR "${FALCON_LIB_DIR}/falcon" )
+	set( default_FALCON_MOD_DIR "${FALCON_LIB_DIR}/falcon${FALCON_ID}" )
 	set( default_FALCON_SHARE_DIR "share/falcon${FALCON_ID}" )
 endif()
 

@@ -6,7 +6,7 @@
 
 
 if(WIN32)
-   if (NOT MINGW)
+   if (NOT MINGW AND NOT FALCON_STATIC_FEATHERS)
       set( SYS_RC logging.rc )
    endif()
    set( SYS_SRC logchannel_syslog_win.cpp  )
@@ -15,7 +15,7 @@ else()
 endif()
 
 # Target
-add_library(logging_fm MODULE
+set(SOURCES
    logging.cpp
    logging_fm.cpp
    logarea.cpp
@@ -37,6 +37,5 @@ add_library(logging_fm MODULE
    ${SYS_RC}
 )
 
-falcon_finalize_module( logging_fm )
- 
-set(_project_targets ${_project_targets} logging_fm PARENT_SCOPE)
+FalconDeclareFeather( "logging" "${SOURCES}" "" )
+

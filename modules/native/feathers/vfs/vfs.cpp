@@ -22,10 +22,15 @@
  @brief Interface for abstract access to local and remote filesystems.
  @ingroup feathers
  */
+
+#ifndef FALCON_STATIC_FEATHERS
+
 FALCON_MODULE_DECL 
 {
    Falcon::Module* mod = new Falcon::Feathers::ModuleVFS;
    return mod;
 }
+
+#endif
 
 /* end of vfs.cpp */

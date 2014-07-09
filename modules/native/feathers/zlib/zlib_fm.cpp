@@ -19,13 +19,12 @@
 
 #include "zlib_ext.h"
 #include "zlib_fm.h"
-#include "version.h"
 
 namespace Falcon {
 namespace Feathers {
 
 ModuleZLib::ModuleZLib():
-   Module("zlib")
+   Module(FALCON_FEATHER_ZLIB_NAME)
 {
 
    //====================================
@@ -44,7 +43,7 @@ ModuleZLib::ModuleZLib():
    addMantra(Falcon::Ext::ClassZLibError::singleton());
 }
 
-ZLibModule::~ZLibModule() {};
+ModuleZLib::~ModuleZLib() {};
 
 }}
 

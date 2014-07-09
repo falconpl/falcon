@@ -27,6 +27,8 @@
 #include <falcon/classes/classshared.h>
 #include <falcon/module.h>
 
+#define FALCON_FEATHER_PROCESS_NAME "process"
+
 namespace Falcon {
 namespace Feathers {
 

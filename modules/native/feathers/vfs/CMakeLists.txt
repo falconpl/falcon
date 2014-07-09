@@ -9,11 +9,11 @@ include_directories(
 )
 
 #Specific system files
-if(WIN32 AND NOT MINGW)
+if(WIN32 AND NOT MINGW AND NOT FALCON_STATIC_FEATHERS)
    set( SYS_RC vfs.rc )
 endif()
 
-add_library(vfs_fm MODULE
+set(SOURCES
    vfs_ext.cpp
    vfs_fm.cpp
    classvfs.cpp
@@ -29,6 +29,4 @@ add_library(vfs_fm MODULE
    vfs.cpp
 )
 
-falcon_finalize_module( vfs_fm )
- 
-set(_project_targets ${_project_targets} vfs_fm PARENT_SCOPE)
+FalconDeclareFeather( "vfs" "${SOURCES}" "" )

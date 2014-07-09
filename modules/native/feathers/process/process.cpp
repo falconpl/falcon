@@ -63,6 +63,8 @@
    @beginmodule feathers.process
 */
 
+#ifndef FALCON_STATIC_FEATHERS
+
 FALCON_MODULE_DECL
 {
    // initialize the module
@@ -71,5 +73,6 @@ FALCON_MODULE_DECL
    return self;
 }
 
+#endif
 
 /* end of process.cpp */

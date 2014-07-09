@@ -15,6 +15,8 @@
 
 #include "cmdline_fm.h"
 
+#ifndef FALCON_STATIC_FEATHERS
+
 FALCON_MODULE_DECL
 {
    // setup DLL engine common data
@@ -23,3 +25,5 @@ FALCON_MODULE_DECL
 
    return self;
 }
+
+#endif

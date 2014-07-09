@@ -3,10 +3,6 @@
 #
 
 
-# Creates the proper module file name from the project name.
-falcon_define_module( CURRENT_MODULE shmem )
-
-
 #######################################################################
 # Targets
 #
@@ -18,18 +14,24 @@ include_directories(
 )
 
 if(WIN32)
+   if(NOT MINGW AND NOT FALCON_STATIC_FEATHERS)
+   	 set(SYS_RC shmem.rc )
+   endif()
    set( _files_sys 
         sharedmem_win.cpp
         ipsem_win.cpp
         sharedmem_private_win.h
+        ${SYS_RC}
    )
+   set( SYS_LIBS )
 else()
    set( _files_sys 
         sharedmem_posix.cpp
         ipsem_posix.cpp
-        sharedmem_private_posix.h
-        shmem.rc
+        sharedmem_private_posix.h        
    )
+   
+   set( SYS_LIBS rt)
 endif()
 
 
@@ -49,8 +51,13 @@ set(SRC_FILES
   shmem.cpp
   session.cpp
   session_ext.cpp
-  session_srv.cpp
-    
+  session_srv.cpp    
+)
+
+# These are actually not needed by cmake to build. But if omitted they won't be
+# listed in the virtual file tree of Visual Studio.
+set(HDR_FILES
+
   shmem_fm.h
   sharedmem.h
   session.h
@@ -61,20 +68,13 @@ set(SRC_FILES
   shmem_ext.h
   session_ext.h
   version.h
-)
 
-# These are actually not needed by cmake to build. But if omitted they won't be
-# listed in the virtual file tree of Visual Studio.
-set(HDR_FILES
 )
 
 # Builds and links from the source files
-add_library( ${CURRENT_MODULE} MODULE
+set( SOURCES
    ${SRC_FILES}
    ${HDR_FILES} # optional, see comment above.
 )
 
-# If your module needs some lib more, use the followings:
-target_link_libraries( ${CURRENT_MODULE} falcon_engine)
-
-falcon_install_module( ${CURRENT_MODULE} )
+FalconDeclareFeather( "shmem" "${SOURCES}" "${SYS_LIBS}" )

@@ -28,11 +28,14 @@
    @brief Shared and persistent memory extsnsions.
 */
 
+#ifndef FALCON_STATIC_FEATHERS
+
 FALCON_MODULE_DECL
 {
    Falcon::Module* mod = new Falcon::Feathers::ModuleShmem;
    return mod;
 }
 
+#endif
 /* end of shmem_fm.cpp */
 

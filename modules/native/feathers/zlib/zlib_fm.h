@@ -19,6 +19,8 @@
 #ifndef FALCON_FEATHERS_ZLIB_FM_H
 #define FALCON_FEATHERS_ZLIB_FM_H
 
+#define FALCON_FEATHER_ZLIB_NAME "zlib"
+
 #include <falcon/module.h>
 
 namespace Falcon {
@@ -28,7 +30,7 @@ class ModuleZLib: public Falcon::Module
 {
 public:
    ModuleZLib();
-   virtual ~ZLibModule();
+   virtual ~ModuleZLib();
 };
 
 }}

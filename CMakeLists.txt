@@ -68,6 +68,7 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/${FALCON_LIB_DIR}" CACHE
 )
 
 include_directories( include )
+include_directories( "${CMAKE_BINARY_DIR}/${FALCON_INC_DIR}" )
 
 #########################################################
 # Things to do at main level

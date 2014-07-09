@@ -797,7 +797,7 @@ void ClassProcessEnum::describe( void*, String& target, int, int ) const
 //=================================================================
 
 ModuleProcess::ModuleProcess():
-         Module("process")
+         Module(FALCON_FEATHER_PROCESS_NAME)
 {
    m_classProcess = new ClassProcess;
 

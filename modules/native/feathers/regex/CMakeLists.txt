@@ -4,9 +4,6 @@
 # CMake configuration file for module Regex
 ####################################################################
 
-# Creates the proper module file name from the project name.
-falcon_define_module( CURRENT_MODULE regex )
-
 # Find our Find*.cmake files 
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules)
 
@@ -18,9 +15,9 @@ else( WIN32 OR APPLE )
 endif( WIN32 OR APPLE)
 option(FALCON_WITH_INTERNAL_PCRE "Use internal pcre library" ${_pcre_default})
 
-if(WIN32 AND NOT MINGW)
+if(WIN32 AND NOT MINGW AND NOT FALCON_STATIC_FEATHERS)
  set( SYS_RC regex.rc)
-endif(WIN32 AND NOT MINGW)
+endif()
 
 if(FALCON_WITH_INTERNAL_PCRE)
  #include local headers BEFORE
@@ -65,19 +62,19 @@ else()
  include_directories(${PCRE_INCLUDE_DIR})
 endif()
 
-add_library(${CURRENT_MODULE} MODULE
+set(SOURCES
  regex.cpp
  regex_ext.cpp
  regex_mod.cpp
+ regex_fm.cpp
+ 
+ regex_ext.h
+ regex_mod.h
+ regex_fm.h
+ 
  ${PCRE_SOURCE}
  ${SYS_RC}
 )
 
-target_link_libraries(${CURRENT_MODULE}
- falcon_engine
- ${PCRE_LIBRARIES}
-)
 
-falcon_install_module( ${CURRENT_MODULE} )
-
-set(_project_targets ${_project_targets} ${CURRENT_MODULE} PARENT_SCOPE)
+FalconDeclareFeather( "regex" "${SOURCES}" "${PCRE_LIBRARIES}" )

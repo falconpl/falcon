@@ -4,22 +4,22 @@
 # CMake configuration file for Feather modules
 ####################################################################
 cmake_minimum_required(VERSION 2.6.2)
-PROJECT(Falcon_Feathers)
 
-find_package(Falcon
-   HINTS ${Falcon_Core_BINARY_DIR}/devtools
-         "$ENV{FALCON_ACTIVE_TREE}/*/*/cmake"
-         "$ENV{FALCON_ACTIVE_TREE}/*/cmake"
-         "$ENV{FALCON_ACTIVE_TREE}/cmake"
-   REQUIRED
-)
+Message(STATUS "Bulding Feather modules")
 
-include_directories(
-  ${PROJECT_SOURCE_DIR}/include
-  ${Falcon_INCLUDE_DIRS}
-)
+if(NOT FALCON_STATIC_FEATHERS )
+	PROJECT(Falcon_Feathers)
+endif()
 
-unset(_project_targets)
+#find_package(Falcon
+#   HINTS ${Falcon_Core_BINARY_DIR}/devtools
+#         "$ENV{FALCON_ACTIVE_TREE}/*/*/cmake"
+#         "$ENV{FALCON_ACTIVE_TREE}/*/cmake"
+#         "$ENV{FALCON_ACTIVE_TREE}/cmake"
+#   REQUIRED
+#)
+
+set(Falcon_Feathers_project_targets )
 #
 add_subdirectory(bitbuf)
 add_subdirectory(cmdline)
@@ -44,8 +44,9 @@ add_subdirectory(vm)
 # Virtual file system module.
 add_subdirectory(vfs)
 
-#
-add_custom_target(Falcon_Feathers)
-add_dependencies(Falcon_Feathers ${_project_targets})
-unset(_project_targets)
-
+if(NOT FALCON_STATIC_FEATHERS )
+	add_custom_target(Falcon_Feathers)
+	include_directories( "${CMAKE_BINARY_DIR}/${FALCON_INC_DIR}" )
+	add_dependencies(Falcon_Feathers "${Falcon_Feathers_project_targets}")
+	unset(Falcon_Feathers_project_targets)
+endif()

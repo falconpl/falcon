@@ -25,6 +25,8 @@
 #include <falcon/error_base.h>
 #include <falcon/error.h>
 
+#define FALCON_FEATHER_JSON_NAME "json"
+
 #ifndef FALCON_JSON_ERROR_BASE
    #define FALCON_JSON_ERROR_BASE        1210
 #endif

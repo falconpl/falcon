@@ -21,6 +21,8 @@
 #include <falcon/module.h>
 #include <falcon/error_base.h>
 
+#define FALCON_FEATHER_LOGGING_NAME "logging"
+
 #define LOGLEVEL_C   0
 #define LOGLEVEL_E   1
 #define LOGLEVEL_W   2

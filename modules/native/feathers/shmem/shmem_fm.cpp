@@ -36,7 +36,7 @@ namespace Feathers {
 
 // initialize the module
 ModuleShmem::ModuleShmem():
-   Module("shmem")
+   Module(FALCON_FEATHER_SHMEM_NAME)
 {
    m_classSession = new ClassSession;
 

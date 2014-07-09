@@ -26,9 +26,8 @@
 namespace Falcon {
 namespace Feathers {
 
-
 ModuleVM::ModuleVM():
-   Module("vm")
+   Module(FALCON_FEATHER_VM_NAME)
 {
    addObject(new Falcon::Ext::ClassVM, true);
 }

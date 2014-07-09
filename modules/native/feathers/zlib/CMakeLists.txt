@@ -15,8 +15,10 @@ include_directories(
   ${CMAKE_CURRENT_SOURCE_DIR}
 )
 
-if(WIN32)
+if(WIN32 AND NOT MINGW AND NOT FALCON_STATIC_FEATHERS)
    set(SYS_SPECIFIC zlib.rc)
+else()
+	set(SYS_SPECIFIC )
 endif()
 
 if(FALCON_WITH_INTERNAL_ZLIB)
@@ -41,7 +43,7 @@ else(FALCON_WITH_INTERNAL_ZLIB)
 endif(FALCON_WITH_INTERNAL_ZLIB)
 
 # Target
-add_library(zlib_fm MODULE
+set(SOURCES
    ${ZLIB_SOURCE}
    # ZLib module source
    zlib.cpp
@@ -51,8 +53,6 @@ add_library(zlib_fm MODULE
    #zlibstream.cpp
 )
 
-target_link_libraries(zlib_fm falcon_engine ${ZLIB_LIBRARIES})
+FalconDeclareFeather( "zlib" "${SOURCES}" "" )
 
-falcon_install_module( zlib_fm )
- 
-set(_project_targets ${_project_targets} zlib_fm PARENT_SCOPE)
+

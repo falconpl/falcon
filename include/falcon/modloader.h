@@ -125,7 +125,7 @@ public:
    */
    ModLoader( const String &path, ModSpace* owner, ModCompiler* mc = 0, FAMLoader* faml=0, DynLoader* dld=0 );
 
-   ~ModLoader();
+   virtual ~ModLoader();
 
 
    /** Gets the compiler used by this loader. */
@@ -142,14 +142,22 @@ public:
     \param type Detect the type of the resource to be loaded or provide a
     specific type.
     \param loader The module that originated the request, if any. Used to relativize file names.
-    \return 0 If the module could not be found
+    \return True if a load process has been initiated, false if the module is definitely found or not found.
     \throw Error* or appropriate error subclass in case of other errors.
 
-    \note The name of the module must be already de-relativized by adding
-    the proper parent module names in case of self.xxx or .xxx module naming
-    convnetion.
+    This method initiates a module loading sequence on the target context, after having
+    determined the kind of module to be loaded. If the module cannot be found, the method
+    will push a NIL item on the context, and return false. If the module can be immediately
+    loaded, for instance, because it's a built-in module, the method will push the module in the
+    context as an item of type Module (ClassModule|Module* pair), and will return false.
+
+    If the module has been found and the process for deserializing the module has been readied
+    on the context, the method returns true; to complete the loading, the context must then be
+    exectued by a process in a virtual machine.
+
+    \note Subclasses can override this definition to internally resolve modules.
     */
-   bool loadName( VMContext* tgtctx, const String& name, t_modtype type=e_mt_none, Module* loader = 0 );
+   virtual bool loadName( VMContext* tgtctx, const String& name, t_modtype type=e_mt_none, Module* loader = 0 );
 
    /** Loads a module through its physical path.
     \param path The path of the module.
@@ -167,6 +175,8 @@ public:
     the module path. If it is given, the name will be assigned to the loaded module, ingoring
     its actual path. The name will be eventually adapted using the loader name if it starts with a dot
     or it contains the self keyword.
+
+    \note Subclasses can override this definition to internally resolve modules.
     */
    bool loadFile( VMContext* tgtctx, const String& name, const String& path, t_modtype type=e_mt_none, bool bScan = true, Module* loader = 0 );
 
@@ -181,8 +191,10 @@ public:
     \throw Error* or appropriate error subclass in case of other errors.
 
     This version uses an URI instead of a String.
+
+    \note Subclasses can override this definition to internally resolve modules.
     */
-   bool loadFile( VMContext* tgtctx,  const String& name, const URI& uri, t_modtype type=e_mt_none, bool bScan = false, Module* loader = 0 );
+   virtual bool loadFile( VMContext* tgtctx,  const String& name, const URI& uri, t_modtype type=e_mt_none, bool bScan = false, Module* loader = 0 );
    bool loadMem( VMContext* tgtctx,  const String& name, Stream* script, const String& path = "", t_modtype type = e_mt_source );
    //============================================================
    // Compilation process setting
@@ -363,6 +375,21 @@ public:
    */
    static void pathToName( const URI &prefix, const URI &modFile, String &modName );
 
+protected:
+
+   /** Utility function to push a module on top of the context.
+    * \param tgtctx The context where to push the module
+    * \param mod The module to be pushed
+    * \param gc If true, prepare the items for GC collection.
+    *
+    * This method will push the module on top of the data stack of the given context;
+    * can be used as an utility for those module loaders providing personalized module
+    * resolution processes.
+    *
+    * Applicaitions providing internally generated static modules should set GC as false.
+    * If a new module is generated for each request, then @b gc should be true.
+    */
+   static void pushModule(VMContext* tgtctx, Module* mod, bool gc=false);
 
 private:
    class Private;
@@ -412,6 +439,10 @@ private:
    PStepSave m_stepSave;
 
    friend class PStepSave;
+
+#if defined(FALCON_STATIC_FEATHERS) || defined(FALCON_STATIC_MODULES)
+   static Module* checkStaticModule(const String& logicalName);
+#endif
 };
 
 }

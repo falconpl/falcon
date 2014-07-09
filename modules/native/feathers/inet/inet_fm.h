@@ -29,6 +29,8 @@
 #include <falcon/classes/classshared.h>
 #include <falcon/classes/classstream.h>
 
+#define FALCON_FEATHER_INET_NAME "inet"
+
 #ifndef FALCON_SOCKET_ERROR_BASE
    #define FALCON_SOCKET_ERROR_BASE        1170
 #endif

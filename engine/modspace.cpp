@@ -777,7 +777,7 @@ void ModSpace::loadModuleInContext( const String& name, bool isUri, bool isLoad,
 		loading = m_loader->loadName( tgtContext, name, ModLoader::e_mt_none, loader );
 	}
 
-	if( ! loading )
+	if( ! loading && tgtContext->topData().isNil() )
 	{
 		throw new IOError( ErrorParam( e_mod_notfound, __LINE__, SRC )
 		                   .module( loader == 0 ? "" : loader->name() )
@@ -861,7 +861,7 @@ void ModSpace::resolveDeps( VMContext* ctx, Module* mod )
 	if( mod->modRequestCount() > 0 )
 	{
 		mod->incref();
-		ctx->pushData( Item( modClass, mod ) );
+		ctx->pushData( Item(modClass, mod) );
 		ctx->pushCode( m_stepDisposeLoad );
 		ctx->pushCode( m_stepResolveModReq );
 	}

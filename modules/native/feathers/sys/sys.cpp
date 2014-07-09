@@ -30,11 +30,15 @@
    - host process control
 */
 
+#ifndef FALCON_STATIC_FEATHERS
+
 FALCON_MODULE_DECL
 {
    Falcon::Module* mod = new Falcon::Feathers::ModuleSys;
    return mod;
 }
+
+#endif
 
 /* end of sys.cpp */
 

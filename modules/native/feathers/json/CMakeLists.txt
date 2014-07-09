@@ -4,11 +4,11 @@
 # CMake configuration file for module json
 ####################################################################
 
-if(WIN32 AND NOT MINGW)
+if(WIN32 AND NOT MINGW AND NOT FALCON_STATIC_FEATHERS)
    SET( SYS_RC json.rc )
 endif()
 
-add_library(json_fm MODULE
+set( SOURCES
    json_mod.cpp
    json_fm.cpp
    json.cpp
@@ -18,6 +18,4 @@ add_library(json_fm MODULE
    ${SYS_RC}
 )
 
-falcon_finalize_module( json_fm )
- 
-set(_project_targets ${_project_targets} json_fm PARENT_SCOPE)
+FalconDeclareFeather( "json" "${SOURCES}" "" )

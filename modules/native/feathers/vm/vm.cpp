@@ -26,12 +26,15 @@
    @brief Interface to the Virtual Machine running this process.
 */
 
+#ifndef FALCON_STATIC_FEATHERS
 
 FALCON_MODULE_DECL
 {
    Falcon::Module* mod = new ::Falcon::Feathers::ModuleVM;
    return mod;
 }
+
+#endif
 
 /* end of vm.cpp */
 

@@ -29,8 +29,11 @@
 
 #include "bitbuf_fm.h"
 
+#ifndef FALCON_STATIC_FEATHERS
 FALCON_MODULE_DECL
 {
     return new Falcon::Feathers::ModuleBitbuf();
 }
+#endif
 
+/* bitbuf.cpp */

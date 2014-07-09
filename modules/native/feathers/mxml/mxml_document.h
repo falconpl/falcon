@@ -16,8 +16,8 @@
 #ifndef MXML_DOCUMENT_H
 #define MXML_DOCUMENT_H
 
-#include <mxml_node.h>
-#include <mxml_element.h>
+#include "mxml_node.h"
+#include "mxml_element.h"
 
 namespace Falcon {
    class VMachine;

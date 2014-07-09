@@ -35,6 +35,8 @@
 #define DEFALUT_FALCON_MODULE_INIT falcon_module_init
 #define DEFALUT_FALCON_MODULE_INIT_NAME "falcon_module_init"
 
+/** Macro for declaration of Falcon modules entry point.
+ */
 #define FALCON_MODULE_DECL \
    FALCON_MODULE_TYPE DEFALUT_FALCON_MODULE_INIT()
 

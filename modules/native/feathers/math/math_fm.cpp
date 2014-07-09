@@ -44,7 +44,7 @@ namespace Falcon {
 namespace Feathers {
 //Define the math_extra module class
 ModuleMath::ModuleMath():
-   Module("math")
+   Module(FALCON_FEATHER_MATH_NAME)
 {
    //============================================================
    // Api Declartion

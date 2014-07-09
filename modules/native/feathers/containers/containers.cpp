@@ -13,11 +13,14 @@
 
 #include "containers_fm.h"
 
+#ifndef FALCON_STATIC_FEATHERS
+
 FALCON_MODULE_DECL
 {
    Falcon::Module* mod = new Falcon::Feathers::ModuleContainers;
    return mod;
 }
 
-/* end of containers.cpp */
+#endif
 
+/* end of containers.cpp */

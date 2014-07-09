@@ -6,7 +6,7 @@
    Author: Giancarlo Niccolai <gian@niccolai.ws>
 */
 
-#include <mxml_error.h>
+#include "mxml_error.h"
 
 namespace MXML {
 

@@ -216,7 +216,7 @@ void* ClassJSON::createInstance() const
 //
 
 ModuleJSON::ModuleJSON():
-         Module("json", true)
+         Module(FALCON_FEATHER_JSON_NAME, true)
 {
    addMantra(new ClassJSON );
    addMantra( new ClassJSONError );

@@ -77,7 +77,7 @@
 */
 #define MXML_STYLE_NOESCAPE      0x0008
 
-#include <mxml_document.h>
-#include <mxml_error.h>
+#include "mxml_document.h"
+#include "mxml_error.h"
 
 #endif

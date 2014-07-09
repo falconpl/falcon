@@ -20,36 +20,33 @@
 namespace Falcon {
 namespace Feathers {
 
-//Define the math_extra module class
-class SysModule: public Falcon::Module
+// initialize the module
+ModuleSys::ModuleSys():
+   Module(FALCON_FEATHER_SYS_NAME)
 {
-public:
-   // initialize the module
-   SysModule():
-      Module("sys")
-   {
-       // As Windows and some UNIX flavor declare "environ" as a macro,
-       // we are forced to give the function a special name, and re-define
-       // its function-name in the module, after it's created.
-      Falcon::Function *ef = new Falcon::Ext::Function_falcon_environ__;
-      ef->name("environ");
+    // As Windows and some UNIX flavor declare "environ" as a macro,
+    // we are forced to give the function a special name, and re-define
+    // its function-name in the module, after it's created.
+   Falcon::Function *ef = new Falcon::Ext::Function_falcon_environ__;
+   ef->name("environ");
 
-      *this
-       << new Falcon::Ext::Function_stdIn
-       << new Falcon::Ext::Function_stdOut
-       << new Falcon::Ext::Function_stdErr
-       << new Falcon::Ext::Function_getEnv
-       << new Falcon::Ext::Function_setEnv
-       << ef
-       << new Falcon::Ext::Function_edesc
+   *this
+    << new Falcon::Ext::Function_stdIn
+    << new Falcon::Ext::Function_stdOut
+    << new Falcon::Ext::Function_stdErr
+    << new Falcon::Ext::Function_getEnv
+    << new Falcon::Ext::Function_setEnv
+    << ef
+    << new Falcon::Ext::Function_edesc
 
-       << new Falcon::Ext::Function_cores
-       << new Falcon::Ext::Function_epoch
-       << new Falcon::Ext::Function_systemType
-                ;
-   }
-   virtual ~SysModule() {}
-};
+    << new Falcon::Ext::Function_cores
+    << new Falcon::Ext::Function_epoch
+    << new Falcon::Ext::Function_systemType
+             ;
+}
+
+ModuleSys::~ModuleSys()
+{}
 
 }}
 

@@ -4,15 +4,12 @@
 # CMake configuration file for vm (Virtual Machine interface)
 ####################################################################
 
-# Creates the proper module file name from the project name.
-falcon_define_module( CURRENT_MODULE vm )
-
 # Inclusion settings
 include_directories(
   ${CMAKE_CURRENT_SOURCE_DIR}
 )
 
-if(WIN32 AND NOT MINGW)
+if(WIN32 AND NOT MINGW AND NOT FALCON_STATIC_FEATHERS)
    set( SYS_RC vm.rc)
 endif()
 
@@ -33,13 +30,9 @@ set(HDR_FILES
 )
 
 # Builds and links from the source files
-add_library( ${CURRENT_MODULE} MODULE
+set( SOURCES
    ${SRC_FILES}
    ${HDR_FILES} # optional, see comment above.
 )
 
-# If your module needs some lib more, use the followings:
-target_link_libraries( ${CURRENT_MODULE} falcon_engine)
-
-falcon_install_module( ${CURRENT_MODULE} )
-
+FalconDeclareFeather( "vm" "${SOURCES}" "" )

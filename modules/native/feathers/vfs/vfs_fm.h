@@ -16,6 +16,8 @@
 #ifndef FALCON_FEATHERS_VFS_FM_H
 #define FALCON_FEATHERS_VFS_FM_H
 
+#define FALCON_FEATHER_VFS_NAME "vfs"
+
 #include <falcon/module.h>
 
 namespace Falcon {

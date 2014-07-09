@@ -7,10 +7,10 @@
 
 */
 
-#include <mxml.h>
-#include <mxml_error.h>
-#include <mxml_node.h>
-#include <mxml_utility.h>
+#include "mxml.h"
+#include "mxml_error.h"
+#include "mxml_node.h"
+#include "mxml_utility.h"
 
 #include <ctype.h>
 

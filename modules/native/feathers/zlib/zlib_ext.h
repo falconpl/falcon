@@ -10,7 +10,6 @@
 
 #include <falcon/setup.h>
 #include <falcon/error.h>
-#include <falcon/errorclasses.h>
 #include <falcon/error_base.h>
 
 #include <falcon/function.h>

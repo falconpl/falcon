@@ -36,13 +36,13 @@ else()
    # endif()
 
    set(SYS_SPECIFIC inet_mod_win.cpp ../../../../engine/selectmpx.cpp winselectmpx.h winselectmpx.cpp)
-   if (NOT MINGW)
+   if (NOT MINGW AND NOT FALCON_STATIC_FEATHERS)
       set(SYS_RC inet.rc)
    endif()
 endif()
 
 # Target
-add_library(inet_fm MODULE
+set(SOURCES
    inet.cpp
    inet_fm.cpp
    inet_mod.cpp
@@ -53,17 +53,10 @@ add_library(inet_fm MODULE
    ${SYS_RC}
 )
 
-#Link
-target_link_libraries(inet_fm
-  falcon_engine
-  ${SYS_SPECIFIC_LIBS}
-  ${OPENSSL_LIBRARIES}
-)
 
 if(WIN32)
-   target_link_libraries(inet_fm ws2_32)
+   FalconDeclareFeather( "inet" "${SOURCES}" "ws2_32" )
+else()
+   FalconDeclareFeather( "inet" "${SOURCES}" "" )
 endif()
 
-falcon_install_module( inet_fm )
-
-set(_project_targets ${_project_targets} inet_fm PARENT_SCOPE)

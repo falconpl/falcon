@@ -1,5 +1,5 @@
 /* FALCON - The Falcon Programming Language.
- * FILE: math_extra.cpp
+ * FILE: math.cpp
  * 
  * Extra math functions
  * Main module file, providing the module object to the Falcon engine.
@@ -47,11 +47,15 @@
    - Combinatory calculus.
 */
 
+#ifndef FALCON_STATIC_FEATHERS
+
 FALCON_MODULE_DECL
 {
    Falcon::Module* mod = new Falcon::Feathers::ModuleMath;
    return mod;
 }
 
-/* end of math_extra.cpp */
+#endif
+
+/* end of math.cpp */
 

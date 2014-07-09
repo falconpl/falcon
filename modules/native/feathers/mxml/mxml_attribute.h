@@ -13,7 +13,7 @@
 #include <falcon/string.h>
 #include <falcon/textreader.h>
 #include <falcon/textwriter.h>
-#include <mxml_element.h>
+#include "mxml_element.h"
 
 namespace MXML {
 

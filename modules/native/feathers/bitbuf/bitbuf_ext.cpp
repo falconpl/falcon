@@ -329,7 +329,7 @@ static void set_rpos( const Class*, const String&, void* instance, const Item& v
 // Methods
 //============================================================================
 
-namespace CBitBuf {
+namespace {
 
 /*#
 @method write BitBuf
@@ -812,26 +812,26 @@ Class* init_classbitbuf()
    bitbuf->addProperty( "avail", get_avail );
    bitbuf->addProperty( "sysend", get_sysend, 0, true, false );
 
-   bitbuf->addMethod( new CBitBuf::Function_write );
-   bitbuf->addMethod( new CBitBuf::Function_read );
-   bitbuf->addMethod( new CBitBuf::Function_grab );
-   bitbuf->addMethod( new CBitBuf::Function_toString );
+   bitbuf->addMethod( new Function_write );
+   bitbuf->addMethod( new Function_read );
+   bitbuf->addMethod( new Function_grab );
+   bitbuf->addMethod( new Function_toString );
 
-   bitbuf->addMethod( new CBitBuf::Function_wbit );
-   bitbuf->addMethod( new CBitBuf::Function_rbit );
+   bitbuf->addMethod( new Function_wbit );
+   bitbuf->addMethod( new Function_rbit );
 
-   bitbuf->addMethod( new CBitBuf::Function_w8 );
-   bitbuf->addMethod( new CBitBuf::Function_w16 );
-   bitbuf->addMethod( new CBitBuf::Function_w32 );
-   bitbuf->addMethod( new CBitBuf::Function_w64 );
+   bitbuf->addMethod( new Function_w8 );
+   bitbuf->addMethod( new Function_w16 );
+   bitbuf->addMethod( new Function_w32 );
+   bitbuf->addMethod( new Function_w64 );
 
-   bitbuf->addMethod( new CBitBuf::Function_r8 );
-   bitbuf->addMethod( new CBitBuf::Function_r16 );
-   bitbuf->addMethod( new CBitBuf::Function_r32 );
-   bitbuf->addMethod( new CBitBuf::Function_r64 );
+   bitbuf->addMethod( new Function_r8 );
+   bitbuf->addMethod( new Function_r16 );
+   bitbuf->addMethod( new Function_r32 );
+   bitbuf->addMethod( new Function_r64 );
 
-   bitbuf->addMethod( new CBitBuf::Function_wbits );
-   bitbuf->addMethod( new CBitBuf::Function_rbits );
+   bitbuf->addMethod( new Function_wbits );
+   bitbuf->addMethod( new Function_rbits );
 
    return bitbuf;
 }

@@ -4,11 +4,11 @@
 # CMake configuration file for module ConfParser
 ####################################################################
 
-if(WIN32 AND NOT MINGW)
+if(WIN32 AND NOT MINGW AND NOT FALCON_STATIC_FEATHERS)
    set( SYS_RC confparser.rc )
 endif()
 
-add_library(confparser_fm MODULE
+set(SOURCES
   confparser.cpp
   confparser_fm.cpp
   confparser_ext.cpp
@@ -20,6 +20,4 @@ add_library(confparser_fm MODULE
   ${SYS_RC}
 )
 
-falcon_finalize_module( confparser_fm )
- 
-set(_project_targets ${_project_targets} confparser_fm PARENT_SCOPE) 
+FalconDeclareFeather( "confparser" "${SOURCES}" "" )

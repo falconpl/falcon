@@ -141,3 +141,109 @@ macro( FalconMakeBinding module lib desc )
    endif()
 
 endmacro()
+
+
+
+#################################################################
+# Macro for generation of standard falcon modules.
+# OPTNAME - the name of the FALCON_BUILD_<option>
+# LIBNAME - The name of the module as a library.
+# 
+
+macro( FalconDeclareCanonical OPTNAME LIBNAME )
+	option( FALCON_BUILD_${OPTNAME} "Build ${OPTNAME} module" OFF)
+
+	if(NOT FALCON_BUILD_${OPTNAME} )
+		message( STATUS "NOT building module: ${LIBNAME}")
+	return()
+	endif()
+	message( STATUS "Building module: ${LIBNAME}" )
+	set( ${OPTNAME} "${LIBNAME}_fm" )
+
+	project(Falcon_${LIBNAME})
+endmacro()
+
+#################################################################
+# Declares a feathers module
+# LIBNAME - The name of the module as a library.
+# SOURCES - The list of source files.
+# EXTLIBS - The Extra libraries needed by this module.
+
+macro(FalconDeclareFeather LIBNAME SOURCES EXTLIBS)		
+	if( FALCON_STATIC_FEATHERS )
+	   foreach(item ${SOURCES} )      	
+	   	 LIST(APPEND "${LIBNAME}_SOURCES" "${CMAKE_SOURCE_DIR}/modules/native/feathers/${LIBNAME}/${item}")
+	   	 LIST(APPEND FALCON_ENGINE_EXTRA_LINK_LIBS "${EXTLIBS}")
+	   endforeach()
+	else()
+		set( CURRENT_MODULE "${LIBNAME}_fm" )
+        set( CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/${FALCON_MOD_DIR}" )
+        
+		# Builds and links from the source files
+		add_library( ${CURRENT_MODULE} MODULE
+		   ${SOURCES}
+		)
+		target_link_libraries( ${CURRENT_MODULE} falcon_engine ${EXTLIBS})
+
+		if(APPLE)
+	      set_target_properties(${CURRENT_MODULE} PROPERTIES
+	         PREFIX ""
+	         SUFFIX ".dylib" )
+	   else()
+	      set_target_properties(${CURRENT_MODULE} PROPERTIES
+	         PREFIX "" )
+	   endif()
+	
+	   install( TARGETS ${CURRENT_MODULE}
+	            DESTINATION  "${FALCON_MOD_DIR}" )
+		
+	   LIST(APPEND Falcon_Feathers_project_targets ${CURRENT_MODULE})
+	endif()
+		
+endmacro()
+	
+#################################################################
+# Declares a canonical module
+# LIBNAME - The name of the module as a library.
+# SOURCES - The list of source files.
+# EXTLIBS - The Extra libraries needed by this module.
+# SUBDIR  - Subdirectory under which the canonical module is to be placed.
+#
+
+macro(FalconBuildCanonical LIBNAME SOURCES EXTLIBS SUBDIR)		
+	if( FALCON_STATIC_MODULES )
+	   foreach(item ${SOURCES} )      	
+	   	 LIST(APPEND "${LIBNAME}_SOURCES" "${CMAKE_SOURCE_DIR}/modules/native/feathers/${LIBNAME}/${item}")
+	   	 LIST(APPEND FALCON_ENGINE_EXTRA_LINK_LIBS "${EXTLIBS}")
+	   endforeach()
+	else()
+		set( CURRENT_MODULE "${LIBNAME}_fm" )
+        set( CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/${FALCON_MOD_DIR}" )
+						
+		# Builds and links from the source files
+		add_library( ${CURRENT_MODULE} MODULE
+		   ${SOURCES}
+		)
+		target_link_libraries( ${CURRENT_MODULE} falcon_engine ${EXTLIBS})
+
+		if(APPLE)
+	      set_target_properties(${CURRENT_MODULE} PROPERTIES
+	         PREFIX ""
+	         SUFFIX ".dylib" )
+	   else()
+	      set_target_properties(${CURRENT_MODULE} PROPERTIES
+	         PREFIX "" )
+	   endif()
+	   
+	   if(SUBDIR)
+	   	  set(TARGET_DIR "${FALCON_MOD_DIR}/${SUBDIR}" )
+	   else()
+	   	  set(TARGET_DIR "${FALCON_MOD_DIR}" )
+	   end()
+	
+	   install( TARGETS ${CURRENT_MODULE}
+	            DESTINATION  "${TARGET_DIR}/" )		
+	endif()
+		
+endmacro()
+	

@@ -39,7 +39,7 @@ namespace Falcon {
 namespace Feathers {
 
 ModuleBitbuf::ModuleBitbuf():
-         Module("bitbuf", true)
+         Module(FALCON_FEATHER_BITBUF_NAME, true)
 {
    this->addConstant( "NATIVE_ENDIAN", (Falcon::int64)Falcon::Ext::BitBuf::e_endian_same );
    this->addConstant( "LITTLE_ENDIAN", (Falcon::int64)Falcon::Ext::BitBuf::e_endian_little );
@@ -51,6 +51,9 @@ ModuleBitbuf::ModuleBitbuf():
    this->addMantra( bitbuf, true );
    this->addMantra( new Falcon::Ext::ClassBitBufError, true );
 }
+
+ModuleBitbuf::~ModuleBitbuf()
+{}
 
 }
 }

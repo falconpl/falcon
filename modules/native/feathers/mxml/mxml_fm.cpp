@@ -1741,7 +1741,7 @@ ClassErrorCode::~ClassErrorCode()
 */
 
 ModuleMXML::ModuleMXML():
-         Module("mxml", true)
+         Module(FALCON_FEATHER_MXML_NAME, true)
 {
    m_clsNode =  new ClassNode;
    m_clsDoc = new ClassDocument;

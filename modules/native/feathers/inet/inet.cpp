@@ -45,8 +45,10 @@
       load socket
       @endcode
 
-   @beginmodule feathers.inet
+   @beginmodule inet
 */
+
+#ifndef FALCON_STATIC_FEATHERS
 
 FALCON_MODULE_DECL
 {
@@ -58,6 +60,8 @@ FALCON_MODULE_DECL
    Falcon::Module *self = new Falcon::Feathers::ModuleInet();
    return self;
 }
+
+#endif
 
 /* end of socket.cpp */
 /* vim: set ai et sw=3 ts= sts=3: */

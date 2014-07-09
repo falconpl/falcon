@@ -1439,7 +1439,7 @@ FALCON_DEFINE_FUNCTION_P1(LOGD2)
 }
 
 ModuleLogging::ModuleLogging():
-         Module("LoggingModule")
+         Module(FALCON_FEATHER_LOGGING_NAME)
 {
    this->addConstant( "LOGFMT_TRACE", "[%s %M.%f]\t%m");
    this->addConstant( "LOGFMT_ERROR", "%T\t%L%C\t[%a]\t%m");

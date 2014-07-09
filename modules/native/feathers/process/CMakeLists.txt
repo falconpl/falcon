@@ -7,7 +7,7 @@
 if(UNIX)
    set(SYS_SPECIFIC process_mod_posix.cpp)
 else()
-   if (NOT MINGW)
+   if (NOT MINGW AND NOT FALCON_STATIC_FEATHERS)
       set(SYS_RC process.rc)
    endif()
    set(SYS_SPECIFIC process_mod_win.cpp ${SYS_RC})
@@ -16,7 +16,7 @@ else()
    )
 endif()
 
-add_library(process_fm MODULE
+set( SOURCES
    process.cpp
    process_fm.cpp
    process_mod.cpp
@@ -27,6 +27,4 @@ add_library(process_fm MODULE
    ${SYS_SPECIFIC}
 )
 
-falcon_finalize_module( process_fm )
-
-set(_project_targets ${_project_targets} process_fm PARENT_SCOPE)
+FalconDeclareFeather( "process" "${SOURCES}" "" )

@@ -17,19 +17,11 @@
   Regular expression extension
 */
 
-#include <falcon/module.h>
-#include "regex_ext.h"
-
-#include <stdio.h>
-
-#undef PCRE_EXP_DATA_DECL
-// create the data function pointers in this code
-#define PCRE_EXP_DATA_DECL
-#include <pcre.h>
-
+#include "regex_fm.h"
 
 /*#
-   @module feathers.regex Regular Expression
+   @module regex Regular Expression
+   @ingroup feathers
    @brief Regular expression based string matching and substitution (PCRE binding).
    
    Regular expressions are a powerful mean to search for patterns in strings and to
@@ -117,78 +109,18 @@ A minimal example would look like the following:
    Of course, the former is more readable and natural when dealing with regular
    expressions.
 
-   @beginmodule feathers.regex
+   @beginmodule regex
 */
 
-class RegexModule: public Falcon::Module
-{
-public:
-   // setup DLL engine common data
-   RegexModule():
-      Module("regex")
-   {
-
-
-      //language( "en_US" );
-      //engineVersion( FALCON_VERSION_NUM );
-      //version( VERSION_MAJOR, VERSION_MINOR, VERSION_REVISION );
-
-      
-
-      //====================================
-      // Message setting
-      //#include "regex_st.h"
-
-      //============================================================
-      // Regex class
-      //
-      /*Falcon::Symbol *regex_c = self->addClass( "Regex", Falcon::Ext::Regex_init );
-      self->addClassMethod( regex_c, "study", &Falcon::Ext::Regex_study );
-      self->addClassMethod( regex_c, "match", &Falcon::Ext::Regex_match ).asSymbol()->
-         addParam("string");
-      self->addClassMethod( regex_c, "grab", &Falcon::Ext::Regex_grab ).asSymbol()->
-         addParam("string");
-      self->addClassMethod( regex_c, "split", &Falcon::Ext::Regex_split ).asSymbol()->
-         addParam("string")->addParam("count")->addParam("gettoken");
-      self->addClassMethod( regex_c, "find", &Falcon::Ext::Regex_find ).asSymbol()->
-         addParam("string")->addParam("start");
-      self->addClassMethod( regex_c, "findAll", &Falcon::Ext::Regex_findAll ).asSymbol()->
-         addParam("string")->addParam("start")->addParam("maxcount");
-      self->addClassMethod( regex_c, "findAllOverlapped", &Falcon::Ext::Regex_findAllOverlapped ).asSymbol()->
-         addParam("string")->addParam("start")->addParam("maxcount");
-      self->addClassMethod( regex_c, "replace", &Falcon::Ext::Regex_replace ).asSymbol()->
-         addParam("string")->addParam("replacer");
-      self->addClassMethod( regex_c, "replaceAll", &Falcon::Ext::Regex_replaceAll ).asSymbol()->
-         addParam("string")->addParam("replacer");
-      self->addClassMethod( regex_c, "subst", &Falcon::Ext::Regex_subst ).asSymbol()->
-         addParam("string")->addParam("replacer");
-      self->addClassMethod( regex_c, "capturedCount", &Falcon::Ext::Regex_capturedCount );
-      self->addClassMethod( regex_c, "captured", &Falcon::Ext::Regex_captured ).asSymbol()->
-         addParam("count");
-      self->addClassMethod( regex_c, "compare", &Falcon::Ext::Regex_compare ).asSymbol()->
-         addParam("string");
-      self->addClassMethod( regex_c, "version", &Falcon::Ext::Regex_version );*/
-      addMantra(new Falcon::Ext::ClassRegex);
-
-
-      //==================================================
-      // Error class
-
-      addMantra(new Falcon::Ext::ClassRegexError );
-   }
-   virtual ~RegexModule() {};
-};
+#ifndef FALCON_STATIC_FEATHERS
 
 FALCON_MODULE_DECL
 {
-   // Initialzie pcre -- todo, import data from app.
-   pcre_malloc = malloc;
-   pcre_free = free;
-   pcre_stack_malloc = malloc;
-   pcre_stack_free = free;
-   Falcon::Module* mod = new RegexModule;
+   Falcon::Module* mod = new ::Falcon::Feathers::ModuleRegex;
    return mod;
 }
+
+#endif
 
 /* end of regex.cpp */
 

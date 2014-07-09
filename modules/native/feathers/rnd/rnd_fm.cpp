@@ -38,7 +38,7 @@ namespace Feathers {
 
 // initialize the module
 ModuleRnd::ModuleRnd():
-   Module("rnd", true)
+   Module(FALCON_FEATHER_RND_NAME, true)
 {
    // Standard
    *this

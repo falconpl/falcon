@@ -16,6 +16,8 @@
 #ifndef _FALCON_FEATHERS_SHMEM_FM_H_
 #define _FALCON_FEATHERS_SHMEM_FM_H_
 
+#define FALCON_FEATHER_SHMEM_NAME "shmem"
+
 #include <falcon/module.h>
 
 namespace Falcon {
