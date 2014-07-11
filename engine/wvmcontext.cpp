@@ -205,10 +205,18 @@ void WVMContext::gcPerformMark()
 bool WVMContext::wait(int32 to) const
 {
    bool result = m_evtComplete->wait(to);
+
+   m_mtxCompletionError.lock();
    if ( m_completionError != 0 )
    {
-      throw m_completionError;
+      Error* error = m_completionError;
+      m_mtxCompletionError.unlock();
+      throw error;
    }
+   else {
+      m_mtxCompletionError.unlock();
+   }
+
    return result;
 }
 
@@ -216,13 +224,17 @@ bool WVMContext::wait(int32 to) const
 void WVMContext::completeWithError( Error* error )
 {
    error->incref();
+   Error* old;
 
-   if ( m_completionError != 0 )
-   {
-      m_completionError->decref();
-   }
-
+   m_mtxCompletionError.lock();
+   old = m_completionError;
    m_completionError = error;
+   m_mtxCompletionError.lock();
+
+   if( old != 0 )
+   {
+      old->decref();
+   }
 
    swapOut();
 }
@@ -230,10 +242,16 @@ void WVMContext::completeWithError( Error* error )
 void WVMContext::reset()
 {
    VMContext::reset();
-   if( m_completionError != 0 )
+   Error* old;
+
+   m_mtxCompletionError.lock();
+   old = m_completionError;
+   m_completionError = 0;
+   m_mtxCompletionError.unlock();
+
+   if( old != 0 )
    {
-      m_completionError->decref();
-      m_completionError = 0;
+      old->decref();
    }
 
    call(m_baseFrame);

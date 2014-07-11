@@ -158,6 +158,7 @@ private:
    Error* m_completionError;
 
    Function* m_baseFrame;
+   mutable Mutex m_mtxCompletionError;
 };
 
 }
