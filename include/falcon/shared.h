@@ -26,9 +26,9 @@ class ContextManager;
 class Class;
 
 /**
- An abstract shared resource as seen by the scheduler and the VM contexts.
+ A base, semaphore-like shared resource as seen by the scheduler and the VM contexts.
 
- Shared resources have a semaphore semantic. They can be posted with more
+ This base resource has a semaphore semantic. It can be posted with more
  signals, that are then consumed by the waiters. When there are no more signals
  to be consumed, waiters are forced to wait for some signal to become available.
 
@@ -56,7 +56,15 @@ class Class;
 
  Shared subclasses should present a Class handler that is then used by the Falcon engine
  to expose the resource to the scripts. However, concrete shared resources need not to
- be exposed, as they could also be used by the
+ be exposed, as they could also be used by the extensions transparently with respect
+ to the final script.
+
+ As such, is perfectly legal to present a Shared without a class handler (handler = 0),
+ in case the shared is completely controlled by reachable code and needs not to be
+ handled by the garbage collector.
+
+ If the resource must be assigned to the garbage collector,
+ the ClassShared* handler provided in the Engine::stdHandlers() can be used.
  */
 class FALCON_DYN_CLASS Shared
 {
