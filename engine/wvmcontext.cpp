@@ -229,7 +229,7 @@ void WVMContext::completeWithError( Error* error )
    m_mtxCompletionError.lock();
    old = m_completionError;
    m_completionError = error;
-   m_mtxCompletionError.lock();
+   m_mtxCompletionError.unlock();
 
    if( old != 0 )
    {
