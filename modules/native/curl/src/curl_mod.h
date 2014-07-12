@@ -189,6 +189,9 @@ public:
 
    uint32 currentMark() const { return m_mark; }
 
+   bool acquireAll(VMContext* ctx);
+   void releaseAll();
+
 private:
    CURLM* m_handle;
    Mutex* m_mtx;

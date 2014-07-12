@@ -148,7 +148,7 @@ static void internal_curl_init( Function* func, VMContext* , Mod::CurlHandle* h,
    page of the Falcon programming language site:
 
    @code
-   import from curl
+   import from curl in curl
 
    try
       h = curl.Handle( "http://www.falconpl.org" )
@@ -1323,6 +1323,24 @@ FALCON_DEFINE_FUNCTION_P1(remove)
    The calling application should call repeatedly this method
    until it returns 0, indicating that all the transfers are
    compelete.
+
+   Example:
+
+   @code
+   import from curl in curl
+      h1 = curl.Handle("http://www.falconpl.org")
+      h2 = curl.Handle("http://www.falconpl.org")
+
+      h1.setOutCallback({data => >"Reading data: ", data.len})
+      h2.setOutString()
+      multi = curl.Multi(h1,h2)
+      while (active = multi.perform()) != 0
+         > "Working transfers... ", active
+         sleep(0.250)
+      end
+      > h2.getData()
+   @endcode
+
 */
 FALCON_DECLARE_FUNCTION(perform, "")
 FALCON_DEFINE_FUNCTION_P1(perform)
@@ -1331,10 +1349,17 @@ FALCON_DEFINE_FUNCTION_P1(perform)
 
    int rh = 0;
    CURLMcode ret;
+   if (! mh->acquireAll(ctx) )
+   {
+      throw FALCON_SIGN_XERROR(CodeError, e_concurrence, .extra("Curl handle"));
+   }
+
    do{
       ret = curl_multi_perform( mh->handle(), &rh );
    }
    while ( ret == CURLM_CALL_MULTI_PERFORM );
+
+   mh->releaseAll();
 
    if ( ret != CURLM_OK )
    {

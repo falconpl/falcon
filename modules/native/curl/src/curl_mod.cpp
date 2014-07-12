@@ -54,6 +54,7 @@ CurlHandle::CurlHandle(const Class* maker):
    m_handle = curl_easy_init();
    m_class = maker;
 
+   m_inUse = 0;
    m_context = 0;
 
    if (m_handle)
@@ -71,6 +72,7 @@ CurlHandle::CurlHandle( const CurlHandle &other ):
 {
    m_class = other.m_class;
    m_context = 0;
+   m_inUse = 0;
 
    if ( other.m_handle != 0 )
       m_handle = curl_easy_duphandle( other.m_handle );
@@ -189,7 +191,6 @@ size_t CurlHandle::write_callback( void *ptr, size_t size, size_t nmemb, void *d
 
    // start the falcon routine in a parallel context.
    WVMContext* ctx = self->context();
-   ctx->reset();
    ctx->startItem( self->m_iDataCallback, 1, params);
    // this might throw
    ctx->wait();
@@ -198,10 +199,12 @@ size_t CurlHandle::write_callback( void *ptr, size_t size, size_t nmemb, void *d
 
    if( result.isNil() || (result.isBoolean() && result.asBoolean() ) )
    {
+      ctx->reset();
       return size*nmemb;
    }
    else if( result.isOrdinal() )
    {
+      ctx->reset();
       return (size_t) result.forceInteger();
    }
 
@@ -336,11 +339,12 @@ size_t CurlHandle::read_callback( void *ptr, size_t size, size_t nmemb, void *da
    params[0].setUser(temp.handler(), &temp);
    params[1].setInteger(((int64)size) * ((int64)nmemb));
 
-   ctx->reset();
    ctx->startItem(self->m_iReadCallback, 2, params);
    ctx->wait();
+   size_t result = (size_t) ctx->result().forceInteger();
+   ctx->reset();
 
-   return (size_t) ctx->result().forceInteger();
+   return result;
 }
 
 
@@ -461,31 +465,83 @@ void CurlMultiHandle::gcMark( uint32 mark )
 
 bool CurlMultiHandle::addHandle( CurlHandle* h )
 {
+   m_mtx->lock();
    for ( uint32 i = 0; i < m_handles.length(); ++i )
    {
       if ( m_handles[i].asInst() == h )
+      {
+         m_mtx->unlock();
          return false;
+      }
    }
 
    m_handles.append( Item( h->cls(), h) );
    curl_multi_add_handle( handle(), h->handle() );
+   m_mtx->unlock();
    return true;
 }
 
 
 bool CurlMultiHandle::removeHandle( CurlHandle* h )
 {
+   m_mtx->lock();
    for ( uint32 i = 0; i < m_handles.length(); ++i )
    {
       if ( m_handles[i].asInst() == h )
       {
          curl_multi_remove_handle( handle(), h->handle() );
          m_handles.remove( i );
+         m_mtx->unlock();
          return true;
       }
    }
 
+   m_mtx->unlock();
    return false;
+}
+
+
+bool CurlMultiHandle::acquireAll(VMContext* ctx)
+{
+   bool bAcquired = true;
+
+   Process* prc = ctx->process();
+
+   // try to acquire all the handles
+   m_mtx->lock();
+   for ( uint32 i = 0; i < m_handles.length(); ++i )
+   {
+      CurlHandle* h = static_cast<CurlHandle*>(m_handles[i].asInst());
+      // if we can't acquire one...
+      if ( ! h->acquire(prc) )
+      {
+         bAcquired = false;
+         //... release all the prevuos handlers
+         for ( uint32 j = 0; j < i; ++j )
+         {
+            CurlHandle* hj = static_cast<CurlHandle*>(m_handles[j].asInst());
+            hj->release();
+         }
+         break;
+      }
+   }
+
+   m_mtx->unlock();
+   return bAcquired;
+}
+
+
+void CurlMultiHandle::releaseAll()
+{
+   m_mtx->lock();
+
+   for ( uint32 i = 0; i < m_handles.length(); ++i )
+   {
+      CurlHandle* h = static_cast<CurlHandle*>(m_handles[i].asInst());
+      h->release();
+   }
+
+   m_mtx->unlock();
 }
 
 
