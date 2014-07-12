@@ -27,7 +27,7 @@ add_subdirectory(feathers)
 # Note: Some module are disabled in ALPHA
 
 # add_subdirectory(conio)
-#add_subdirectory(curl)
+add_subdirectory(curl)
 add_subdirectory(dbi)
 # add_subdirectory(dbus)
 add_subdirectory(dmtx)

@@ -32,54 +32,221 @@
    Interface extension functions - header file
 */
 
-#ifndef curl_ext_H
-#define curl_ext_H
+#ifndef FALCON_MODULE_CURL_EXT_H
+#define FALCON_MODULE_CURL_EXT_H
 
-#include <falcon/module.h>
-
-#ifndef FALCON_ERROR_CURL_BASE
-#define FALCON_ERROR_CURL_BASE            2350
-#endif
-
-#define FALCON_ERROR_CURL_INIT            (FALCON_ERROR_CURL_BASE+0)
-#define FALCON_ERROR_CURL_EXEC            (FALCON_ERROR_CURL_BASE+1)
-#define FALCON_ERROR_CURL_PM              (FALCON_ERROR_CURL_BASE+2)
-#define FALCON_ERROR_CURL_SETOPT          (FALCON_ERROR_CURL_BASE+3)
-#define FALCON_ERROR_CURL_GETINFO         (FALCON_ERROR_CURL_BASE+4)
-#define FALCON_ERROR_CURL_HISIN           (FALCON_ERROR_CURL_BASE+5)
-#define FALCON_ERROR_CURL_HNOIN           (FALCON_ERROR_CURL_BASE+6)
-#define FALCON_ERROR_CURL_MULTI           (FALCON_ERROR_CURL_BASE+7)
+#include <falcon/class.h>
+#include <falcon/function.h>
+#include <falcon/error.h>
 
 namespace Falcon {
-namespace Ext {
+class PStep;
 
-FALCON_FUNC  curl_dload( ::Falcon::VMachine *vm );
-FALCON_FUNC  curl_version( ::Falcon::VMachine *vm );
-FALCON_FUNC  Handle_init( ::Falcon::VMachine *vm );
-FALCON_FUNC  Handle_exec( ::Falcon::VMachine *vm );
-FALCON_FUNC  Handle_setOutConsole( ::Falcon::VMachine *vm );
-FALCON_FUNC  Handle_setOutString( ::Falcon::VMachine *vm );
-FALCON_FUNC  Handle_setOutStream( ::Falcon::VMachine *vm );
-FALCON_FUNC  Handle_setOutCallback( ::Falcon::VMachine *vm );
-FALCON_FUNC  Handle_getInfo( ::Falcon::VMachine *vm );
+namespace Curl {
 
-FALCON_FUNC  Handle_setInCallback( ::Falcon::VMachine *vm );
-FALCON_FUNC  Handle_setInStream( ::Falcon::VMachine *vm );
+FALCON_DECLARE_FUNCTION(dload, "uri:S|Uri,stream:[Stream]");
 
-FALCON_FUNC  Handle_postData( ::Falcon::VMachine *vm );
-FALCON_FUNC  Handle_setOption( ::Falcon::VMachine *vm );
-FALCON_FUNC  Handle_setOptions( ::Falcon::VMachine *vm );
-//FALCON_FUNC  Handle_setOutMessage( ::Falcon::VMachine *vm );
-FALCON_FUNC  Handle_cleanup( ::Falcon::VMachine *vm );
-FALCON_FUNC  Handle_getData( ::Falcon::VMachine *vm );
+class ClassHandle: public ::Falcon::Class
+{
+public:
+   ClassHandle();
+   virtual ~ClassHandle();
 
-FALCON_FUNC  Multi_init( ::Falcon::VMachine *vm );
-FALCON_FUNC  Multi_add( ::Falcon::VMachine *vm );
-FALCON_FUNC  Multi_remove( ::Falcon::VMachine *vm );
-FALCON_FUNC  Multi_perform( ::Falcon::VMachine *vm );
+   virtual void dispose( void* instance ) const;
+   virtual void* clone( void* instance ) const;
+   virtual void* createInstance() const;
+
+   virtual void gcMarkInstance( void* instance, uint32 mark ) const;
+   virtual bool gcCheckInstance( void* instance, uint32 mark ) const;
+
+   const PStep* afterExec() const { return m_afterExec; }
+
+private:
+   PStep* m_afterExec;
+};
 
 
-FALCON_FUNC  CurlError_init ( ::Falcon::VMachine *vm );
+class ClassMulti: public ::Falcon::Class
+{
+public:
+   ClassMulti();
+   virtual ~ClassMulti();
+
+   virtual void dispose( void* instance ) const;
+   virtual void* clone( void* instance ) const;
+   virtual void* createInstance() const;
+
+   virtual void gcMarkInstance( void* instance, uint32 mark ) const;
+   virtual bool gcCheckInstance( void* instance, uint32 mark ) const;
+};
+
+
+class ClassCURL: public ::Falcon::Class
+{
+public:
+   ClassCURL();
+   virtual ~ClassCURL();
+
+   virtual void dispose( void* instance ) const;
+   virtual void* clone( void* instance ) const;
+   virtual void* createInstance() const;
+};
+
+
+class ClassOPT: public ::Falcon::Class
+{
+public:
+   ClassOPT();
+   virtual ~ClassOPT() {}
+
+   virtual void dispose( void* ) const {}
+   virtual void* clone( void* ) const {return 0;}
+   virtual void* createInstance() const {return 0;}
+};
+
+
+class ClassINFO: public ::Falcon::Class
+{
+public:
+   ClassINFO();
+   virtual ~ClassINFO() {}
+
+   virtual void dispose( void* ) const {}
+   virtual void* clone( void* ) const {return 0;}
+   virtual void* createInstance() const {return 0;}
+};
+
+
+class ClassPROXY: public ::Falcon::Class
+{
+public:
+   ClassPROXY();
+   virtual ~ClassPROXY() {}
+
+   virtual void dispose( void* ) const {}
+   virtual void* clone( void* ) const {return 0;}
+   virtual void* createInstance() const {return 0;}
+};
+
+class ClassNETRC: public ::Falcon::Class
+{
+public:
+   ClassNETRC();
+   virtual ~ClassNETRC() {}
+
+   virtual void dispose( void* ) const {}
+   virtual void* clone( void* ) const {return 0;}
+   virtual void* createInstance() const {return 0;}
+};
+
+class ClassAUTH: public ::Falcon::Class
+{
+public:
+   ClassAUTH();
+   virtual ~ClassAUTH() {}
+
+   virtual void dispose( void* ) const {}
+   virtual void* clone( void* ) const {return 0;}
+   virtual void* createInstance() const {return 0;}
+};
+
+class ClassHTTP: public ::Falcon::Class
+{
+public:
+   ClassHTTP();
+   virtual ~ClassHTTP() {}
+
+   virtual void dispose( void* ) const {}
+   virtual void* clone( void* ) const {return 0;}
+   virtual void* createInstance() const {return 0;}
+};
+
+class ClassUSESSL: public ::Falcon::Class
+{
+public:
+   ClassUSESSL();
+   virtual ~ClassUSESSL() {}
+
+   virtual void dispose( void* ) const {}
+   virtual void* clone( void* ) const {return 0;}
+   virtual void* createInstance() const {return 0;}
+};
+
+
+class ClassFTPAUTH: public ::Falcon::Class
+{
+public:
+   ClassFTPAUTH();
+   virtual ~ClassFTPAUTH() {}
+
+   virtual void dispose( void* ) const {}
+   virtual void* clone( void* ) const {return 0;}
+   virtual void* createInstance() const {return 0;}
+};
+
+
+class ClassSSL_CCC: public ::Falcon::Class
+{
+public:
+   ClassSSL_CCC();
+   virtual ~ClassSSL_CCC() {}
+
+   virtual void dispose( void* ) const {}
+   virtual void* clone( void* ) const {return 0;}
+   virtual void* createInstance() const {return 0;}
+};
+
+
+class ClassFTPMETHOD: public ::Falcon::Class
+{
+public:
+   ClassFTPMETHOD();
+   virtual ~ClassFTPMETHOD() {}
+
+   virtual void dispose( void* ) const {}
+   virtual void* clone( void* ) const {return 0;}
+   virtual void* createInstance() const {return 0;}
+};
+
+
+class ClassIPRESOLVE: public ::Falcon::Class
+{
+public:
+   ClassIPRESOLVE();
+   virtual ~ClassIPRESOLVE() {}
+
+   virtual void dispose( void* ) const {}
+   virtual void* clone( void* ) const {return 0;}
+   virtual void* createInstance() const {return 0;}
+};
+
+
+class ClassSSLVERSION: public ::Falcon::Class
+{
+public:
+   ClassSSLVERSION();
+   virtual ~ClassSSLVERSION() {}
+
+   virtual void dispose( void* ) const {}
+   virtual void* clone( void* ) const {return 0;}
+   virtual void* createInstance() const {return 0;}
+};
+
+
+class ClassSSH_AUTH: public ::Falcon::Class
+{
+public:
+   ClassSSH_AUTH();
+   virtual ~ClassSSH_AUTH() {}
+
+   virtual void dispose( void* ) const {}
+   virtual void* clone( void* ) const {return 0;}
+   virtual void* createInstance() const {return 0;}
+};
+
+
+FALCON_DECLARE_ERROR( CurlError );
+
 }
 }
 

@@ -32,33 +32,21 @@
                   and Falcon modules.
 */
 
-//WARNING: the missing of usual #ifndef/#define pair
-//         is intentional!
+#ifndef FALCON_MODULES_CURL_ST_H
+#define FALCON_MODULES_CURL_ST_H
 
-// See the contents of this header file for a deeper overall
-// explanation of the MODSTR system.
-#include <falcon/message_defs.h>
+#define curl_err_desc "CURL error code:"
+#define curl_err_init "Error during intialization"
+#define curl_err_exec "Error during transfer"
+#define curl_err_resources "Not enough resources to complete the operation"
+#define curl_err_pm "Curl handle already closed"
+#define curl_err_setopt "Type of parameter incompatible for this option"
+#define curl_err_unkopt "Unknown option for setOption"
+#define curl_err_getinfo "Error while reading required information."
+#define curl_err_easy_already_in "Handle already added"
+#define curl_err_easy_not_in "Handle currently not present"
+#define curl_err_multi_error "Error in CURL multiple operation"
 
-// The first parameter is an unique identifier in your project that
-// will be bound to the correct entry in the module string table.
-// Falcon::VMachine::moduleString( curl_msg_1 ) will
-// return the associated string or the internationalized version.
-// FAL_STR( curl_msg_1 ) macro can be used in standard
-// functions as a shortcut.
-
-FAL_MODSTR( curl_err_desc, "CURL error code:" );
-FAL_MODSTR( curl_err_init, "Error during intialization" );
-FAL_MODSTR( curl_err_exec, "Error during transfer" );
-FAL_MODSTR( curl_err_resources, "Not enough resources to complete the operation" );
-FAL_MODSTR( curl_err_pm, "Curl handle already closed" );
-FAL_MODSTR( curl_err_setopt, "Type of parameter incompatible for this option" );
-FAL_MODSTR( curl_err_unkopt, "Unknown option for setOption" );
-FAL_MODSTR( curl_err_getinfo, "Error while reading required information." );
-FAL_MODSTR( curl_err_easy_already_in, "Handle already added" );
-FAL_MODSTR( curl_err_easy_not_in, "Handle currently not present" );
-FAL_MODSTR( curl_err_multi_error, "Error in CURL multiple operation" );
-
-
-//... add here your messages, and remove or configure the above one
+#endif
 
 /* end of curl_st.h */

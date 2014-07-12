@@ -134,33 +134,33 @@ Message("#################################################################")
 
 #########################################################
 
-if( FALCON_BUILD_NATIVE_MODS )
-	set_default_opt( FALCON_NATMODS_AUTO "Select automatically all the modules that have support" ON )
+#if( FALCON_BUILD_NATIVE_MODS )
+#	set_default_opt( FALCON_NATMODS_AUTO "Select automatically all the modules that have support" ON )
 	
 	# Native modules, usually compiled
-	set_default_opt( FALCON_BUILD_DBI "Build DBI module" ON )
-	set_default_opt( FALCON_BUILD_DYNLIB "Build DYNLIB module" OFF)
-	set_default_opt( FALCON_BUILD_MONGODB "Build MongoDB module" ON )
-	set_default_opt( FALCON_BUILD_VFS_PROVIDERS "Build VFS modules" ON )
-	set_default_opt( FALCON_BUILD_WOPI "Build Web Oriented Programming Interface" OFF  )
+#	set_default_opt( FALCON_BUILD_DBI "Build DBI module" ON )
+#	set_default_opt( FALCON_BUILD_DYNLIB "Build DYNLIB module" OFF)
+#	set_default_opt( FALCON_BUILD_MONGODB "Build MongoDB module" ON )
+#	set_default_opt( FALCON_BUILD_VFS_PROVIDERS "Build VFS modules" ON )
+#	set_default_opt( FALCON_BUILD_WOPI "Build Web Oriented Programming Interface" OFF  )
 	
 	# Bindings -- native modules requiring external libraries.
-	FalconMakeBinding( CURL CURL "Install CURL binding" )
-	FalconMakeBinding( SDL SDL "Install SDL binding" )
+#	FalconMakeBinding( CURL CURL "Install CURL binding" )
+#	FalconMakeBinding( SDL SDL "Install SDL binding" )
 
-else()
+#else()
 
-	option( FALCON_NATMODS_AUTO "Select automatically all the modules that have support" OFF )
+#	option( FALCON_NATMODS_AUTO "Select automatically all the modules that have support" OFF )
 	
 	# Native modules, usually compiled
-	option( FALCON_BUILD_DBI "Build DBI module" OFF )
-	option( FALCON_BUILD_DYNLIB "Build DYNLIB module" OFF)
-	option( FALCON_BUILD_MONGODB "Build MongoDB module" OFF )
-	option( FALCON_BUILD_VFS_PROVIDERS "Build VFS modules" OFF )
-	option( FALCON_BUILD_WOPI "Build Web Oriented Programming Interface" OFF  )
+#	option( FALCON_BUILD_DBI "Build DBI module" OFF )
+#	option( FALCON_BUILD_DYNLIB "Build DYNLIB module" OFF)
+#	option( FALCON_BUILD_MONGODB "Build MongoDB module" OFF )
+#	option( FALCON_BUILD_VFS_PROVIDERS "Build VFS modules" OFF )
+#	option( FALCON_BUILD_WOPI "Build Web Oriented Programming Interface" OFF  )
 	
 	# Bindings -- native modules requiring external libraries.
-	option( FALCON_BUILD_CURL "Install CURL binding" OFF )
-	option( FALCON_BUILD_SDL  "Install SDL binding" OFF )
+#	option( FALCON_BUILD_CURL "Install CURL binding" OFF )
+#	option( FALCON_BUILD_SDL  "Install SDL binding" OFF )
 
-endif()
+#endif()

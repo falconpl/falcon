@@ -35,19 +35,26 @@
 #ifndef curl_mod_H
 #define curl_mod_H
 
-#include <falcon/falconobject.h>
 #include <falcon/itemarray.h>
 #include <falcon/error.h>
-#include <falcon/coreslot.h>
+#include <falcon/shared.h>
+#include <falcon/mt.h>
+#include <falcon/wvmcontext.h>
+#include <falcon/atomic.h>
+#include <falcon/shared.h>
 #include <curl/curl.h>
+
+#include <list>
 
 namespace Falcon {
 namespace Mod {
 
-class CurlHandle: public CacheObject
+class SimpleCurlRequest;
+
+class CurlHandle
 {
 public:
-   CurlHandle( const CoreClass* cls, bool bDeser = false );
+   CurlHandle( const Class* maker);
    CurlHandle( const CurlHandle &other );
 
    virtual ~CurlHandle();
@@ -57,21 +64,15 @@ public:
 
    virtual void gcMark( uint32 mark );
 
-   virtual bool serialize( Stream *stream, bool bLive ) const;
-   virtual bool deserialize( Stream *stream, bool bLive );
-
-   static CoreObject* Factory( const CoreClass *cls, void *data, bool );
-
    void setOnDataCallback( const Item& callable );
    void setOnDataStream( Stream* s );
-   void setOnDataMessage( const String& msgName );
    void setOnDataGetString();
    void setOnDataStdOut();
 
    void setReadCallback( const Item& callable );
    void setReadStream( Stream* read );
 
-   CoreString* getData();
+   String* getData();
 
    void cleanup();
 
@@ -80,7 +81,7 @@ public:
     *  Returns zero if some elements of ca are not strings.
     *
     */
-   struct curl_slist* slistFromArray( CoreArray* ca );
+   struct curl_slist* slistFromArray( ItemArray* ca );
 
    /** Stores data for post operations.
     * Saves a copy of the string in a local buffer, that is destroyed
@@ -90,6 +91,28 @@ public:
     * Multiple operations will cause the previous buffer to be discarded.
     */
    void postData( const String& str );
+
+   uint32 currentMark() const { return m_mark; }
+
+   /** Sets the request context that has caused this handle to be processed now.
+    *
+    * Used in callback functions to access the context information about
+    * the request that caused this handle to be used.
+    */
+   void request( SimpleCurlRequest* r ) {m_ownerRequest = r; }
+   SimpleCurlRequest* request() const {return m_ownerRequest; }
+
+   /** Prevent execution from parallel processes.
+    *  If true, the resource is acquired atomically; every other request
+    *  before release() will fail.
+    */
+   bool acquire( Process* prc );
+   void release() { atomicCAS(m_inUse,1,0); }
+
+   // The handler class for this handle
+   const Class* cls() const { return m_class; }
+
+   WVMContext* context() const { return m_context; }
 
 protected:
    /** Callback modes.
@@ -108,7 +131,6 @@ private:
 
    static size_t write_stdout( void *ptr, size_t size, size_t nmemb, void *data);
    static size_t write_stream( void *ptr, size_t size, size_t nmemb, void *data);
-   static size_t write_msg( void *ptr, size_t size, size_t nmemb, void *data);
    static size_t write_string( void *ptr, size_t size, size_t nmemb, void *data);
    static size_t write_callback( void *ptr, size_t size, size_t nmemb, void *data);
 
@@ -118,9 +140,10 @@ private:
    CURL* m_handle;
 
    Item m_iDataCallback;
-   CoreString* m_sReceived;
+   String* m_sReceived;
    Stream* m_dataStream;
    String m_sSlot;
+   const Class* m_class;
 
    /** Callback mode, determining which of the method to notify the app is used. */
    t_cbmode m_cbMode;
@@ -129,17 +152,29 @@ private:
    Stream* m_readStream;
 
    // lists of lists to be destroyed at exit.
-   List m_slists;
+   typedef std::list<curl_slist*> CurlList;
+   CurlList m_slists;
 
    void* m_pPostBuffer;
+
+   uint32 m_mark;
+   SimpleCurlRequest* m_ownerRequest;
+
+   atomic_int m_inUse;
+
+
+   WVMContext* m_context;
+
+   void setOutStream( Stream* stream );
+   void setInStream( Stream* stream );
 };
 
 
 
-class CurlMultiHandle: public CacheObject
+class CurlMultiHandle
 {
 public:
-   CurlMultiHandle( const CoreClass* cls, bool bDeser = false );
+   CurlMultiHandle();
    CurlMultiHandle( const CurlMultiHandle &other );
 
    virtual ~CurlMultiHandle();
@@ -147,15 +182,12 @@ public:
 
    CURLM* handle() const { return m_handle; }
 
-   virtual bool serialize( Stream *stream, bool bLive ) const;
-   virtual bool deserialize( Stream *stream, bool bLive );
-
-   static CoreObject* Factory( const CoreClass *cls, void *data, bool );
-
    virtual void gcMark( uint32 mark );
 
    bool addHandle( CurlHandle* h );
    bool removeHandle( CurlHandle* );
+
+   uint32 currentMark() const { return m_mark; }
 
 private:
    CURLM* m_handle;
@@ -163,18 +195,32 @@ private:
    int* m_refCount;
 
    ItemArray m_handles;
+   uint32 m_mark;
 };
 
-class CurlError: public ::Falcon::Error
+
+class SimpleCurlRequest: public Runnable
 {
 public:
-   CurlError():
-      Error( "CurlError" )
-   {}
+   SimpleCurlRequest( CurlHandle* handle, ::Falcon::Process* prc );
+   virtual ~SimpleCurlRequest();
 
-   CurlError( const ErrorParam &params  ):
-      Error( "CurlError", params )
-      {}
+   virtual void* run();
+
+   void start();
+
+   Error* exitError() const { return m_error; }
+   CURLcode exitCode() const { return m_retval; }
+
+   Shared& complete() const {return *m_complete; }
+private:
+
+   mutable Shared* m_complete;
+   SysThread* m_thread;
+   CurlHandle* m_curlHandle;
+
+   CURLcode m_retval;
+   Error* m_error;
 };
 
 }

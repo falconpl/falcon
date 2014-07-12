@@ -230,18 +230,18 @@ macro(FalconBuildCanonical LIBNAME SOURCES EXTLIBS SUBDIR)
 	      set_target_properties(${CURRENT_MODULE} PROPERTIES
 	         PREFIX ""
 	         SUFFIX ".dylib" )
-	   else()
+	    else()
 	      set_target_properties(${CURRENT_MODULE} PROPERTIES
 	         PREFIX "" )
-	   endif()
+	    endif()
 	   
-	   if(SUBDIR)
+	    if(SUBDIR)
 	   	  set(TARGET_DIR "${FALCON_MOD_DIR}/${SUBDIR}" )
-	   else()
+	    else()
 	   	  set(TARGET_DIR "${FALCON_MOD_DIR}" )
-	   end()
+	    endif()
 	
-	   install( TARGETS ${CURRENT_MODULE}
+	    install( TARGETS ${CURRENT_MODULE}
 	            DESTINATION  "${TARGET_DIR}/" )		
 	endif()
 		

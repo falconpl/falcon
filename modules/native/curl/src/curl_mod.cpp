@@ -35,10 +35,8 @@
 #include "curl_mod.h"
 #include <falcon/stream.h>
 #include <falcon/vm.h>
-#include <falcon/coreslot.h>
-#include <falcon/vmmsg.h>
-#include <falcon/membuf.h>
 #include <falcon/autocstring.h>
+#include <falcon/wvmcontext.h>
 
 #include <stdio.h>
 #include <string.h>
@@ -46,32 +44,34 @@
 namespace Falcon {
 namespace Mod {
 
-CurlHandle::CurlHandle( const CoreClass* cls, bool bDeser ):
-   CacheObject( cls, bDeser ),
+CurlHandle::CurlHandle(const Class* maker):
    m_sReceived(0),
    m_dataStream(0),
    m_cbMode( e_cbmode_stdout ),
    m_readStream(0),
    m_pPostBuffer(0)
 {
-   if ( bDeser )
-      m_handle = 0;
-   else
+   m_handle = curl_easy_init();
+   m_class = maker;
+
+   m_context = 0;
+
+   if (m_handle)
    {
-      m_handle = curl_easy_init();
-      if (m_handle)
-         curl_easy_setopt( m_handle, CURLOPT_WRITEFUNCTION, write_stdout );
+      curl_easy_setopt( m_handle, CURLOPT_WRITEFUNCTION, write_stdout );
    }
 }
 
 CurlHandle::CurlHandle( const CurlHandle &other ):
-   CacheObject( other ),
    m_iDataCallback( other.m_iDataCallback ),
    m_sReceived(0),
    m_dataStream( other.m_dataStream ),
    m_sSlot( other.m_sSlot ),
    m_cbMode( e_cbmode_stdout )
 {
+   m_class = other.m_class;
+   m_context = 0;
+
    if ( other.m_handle != 0 )
       m_handle = curl_easy_duphandle( other.m_handle );
    else
@@ -81,8 +81,32 @@ CurlHandle::CurlHandle( const CurlHandle &other ):
 CurlHandle::~CurlHandle()
 {
    cleanup();
+   if( m_context != 0 )
+   {
+      m_context->decref();
+   }
 }
 
+
+bool CurlHandle::acquire( Process* prc )
+{
+   if(atomicCAS(m_inUse,0,1) == 1 ) {
+      if( m_context != 0 )
+      {
+         if( m_context->process() != prc ) {
+            m_context->decref();
+            m_context = new WVMContext(prc);
+         }
+      }
+      else {
+         m_context = new WVMContext(prc);
+      }
+
+      return true;
+   }
+
+   return false;
+}
 
 CurlHandle* CurlHandle::clone() const
 {
@@ -96,12 +120,13 @@ void CurlHandle::cleanup()
       curl_easy_cleanup( m_handle );
       m_handle = 0;
 
-      ListElement* head = m_slists.begin();
-      while( head != 0 )
+
+      CurlList::iterator iter = m_slists.begin();
+      while( iter != m_slists.end() )
       {
-         struct curl_slist* slist = (struct curl_slist*) head->data();
+         struct curl_slist* slist = (struct curl_slist*) *iter;
          curl_slist_free_all( slist );
-         head = head->next();
+         ++iter;
       }
    }
 
@@ -112,53 +137,19 @@ void CurlHandle::cleanup()
    }
 }
 
-bool CurlHandle::serialize( Stream *stream, bool bLive ) const
-{
-   if ( ! bLive )
-   {
-      return false;
-   }
-
-   uint64 ptr = endianInt64( (uint64) m_handle );
-   stream->write( &ptr, sizeof(ptr) );
-
-   return CacheObject::serialize( stream, bLive );
-}
-
-bool CurlHandle::deserialize( Stream *stream, bool bLive )
-{
-   if ( ! bLive )
-      return false;
-
-   fassert( m_handle == 0 );
-
-   uint64 ptr;
-   if( stream->read( &ptr, sizeof(ptr) ) != sizeof(ptr) )
-   {
-      return false;
-   }
-
-   ptr = endianInt64( ptr );
-   m_handle = (CURL*) ptr;
-
-   return true;
-}
 
 void CurlHandle::gcMark( uint32 mark )
 {
-   memPool->markItem( m_iDataCallback );
-   memPool->markItem( m_iReadCallback );
+   if( m_mark != mark )
+   {
+      m_iDataCallback.gcMark(mark);
+      m_iReadCallback.gcMark(mark);
 
-   if( m_sReceived != 0 )
-      m_sReceived->mark( mark );
+      if( m_sReceived != 0 )
+         m_sReceived->gcMark( mark );
 
-   if( m_dataStream != 0 )
-      m_dataStream->gcMark( mark );
-
-   if( m_readStream != 0 )
-      m_readStream->gcMark( mark );
-
-   CacheObject::gcMark( mark );
+      m_mark = mark;
+   }
 }
 
 size_t CurlHandle::write_stdout( void *ptr, size_t size, size_t nmemb, void *)
@@ -173,30 +164,12 @@ size_t CurlHandle::write_stream( void *ptr, size_t size, size_t nmemb, void *dat
    return s->write( ptr, size * nmemb );
 }
 
-size_t CurlHandle::write_msg( void *ptr, size_t size, size_t nmemb, void *data)
-{
-   VMachine* vm = VMachine::getCurrent();
-
-   if( vm != 0 )
-   {
-      CurlHandle* cs = (CurlHandle*) data;
-      VMMessage* vmmsg = new VMMessage( cs->m_sSlot );
-      vmmsg->addParam( cs );
-      CoreString* str = new CoreString;
-      str->adopt( (char*) ptr, (int32) size * nmemb, 0 );
-      str->bufferize();
-      vmmsg->addParam( str );
-      vm->postMessage( vmmsg );
-   }
-
-   return size * nmemb;
-}
 
 size_t CurlHandle::write_string( void *ptr, size_t size, size_t nmemb, void *data)
 {
    CurlHandle* h = (CurlHandle*) data;
    if ( h->m_sReceived == 0 )
-      h->m_sReceived = new CoreString( size * nmemb );
+      h->m_sReceived = new String( size * nmemb );
 
    String str;
    str.adopt( (char*) ptr, (int32) size * nmemb, 0 );
@@ -204,31 +177,58 @@ size_t CurlHandle::write_string( void *ptr, size_t size, size_t nmemb, void *dat
    return size * nmemb;
 }
 
+
 size_t CurlHandle::write_callback( void *ptr, size_t size, size_t nmemb, void *data)
 {
-   VMachine* vm = VMachine::getCurrent();
-   if( vm != 0 )
-   {
-      CurlHandle* self = (CurlHandle*) data;
-      CoreString* str = new CoreString;
-      str->adopt( ( char*) ptr, (int32) size * nmemb, 0 );
-      vm->pushParameter( str );
-      vm->callItemAtomic( self->m_iDataCallback, 1 );
+   CurlHandle* self = (CurlHandle*) data;
 
-      if( vm->regA().isNil() || (vm->regA().isBoolean() && vm->regA().asBoolean() ) )
-         return size * nmemb;
-      else if( vm->regA().isOrdinal() )
-         return (size_t) vm->regA().forceInteger();
+   String* str = new String;
+   str->adopt( ( char*) ptr, (int32) size * nmemb, 0 );
+   Item params[1];
+   params[0] = FALCON_GC_HANDLE( str );
+
+   // start the falcon routine in a parallel context.
+   WVMContext* ctx = self->context();
+   ctx->reset();
+   ctx->startItem( self->m_iDataCallback, 1, params);
+   // this might throw
+   ctx->wait();
+
+   const Item& result = ctx->result();
+
+   if( result.isNil() || (result.isBoolean() && result.asBoolean() ) )
+   {
+      return size*nmemb;
+   }
+   else if( result.isOrdinal() )
+   {
+      return (size_t) result.forceInteger();
    }
 
    return 0;
 }
 
 
+void CurlHandle::setOutStream( Stream* stream )
+{
+   if( m_dataStream != 0 ){ m_dataStream->decref(); }
+   if( stream != 0 ) {stream->incref();}
+   m_dataStream = stream;
+}
+
+
+void CurlHandle::setInStream( Stream* stream )
+{
+   if( m_readStream != 0 ){ m_readStream->decref(); }
+   if( stream != 0 ) {stream->incref();}
+   m_readStream = stream;
+}
+
+
 void CurlHandle::setOnDataCallback( const Item& itm )
 {
    m_sReceived = 0;
-   m_dataStream = 0;
+   setOutStream(0);
 
    m_iDataCallback = itm;
    m_cbMode = e_cbmode_callback;
@@ -247,7 +247,8 @@ void CurlHandle::setOnDataStream( Stream* s )
    m_iDataCallback.setNil();
    m_sReceived = 0;
 
-   m_dataStream = s;
+   setOutStream(s);
+   s->incref();
    m_cbMode = e_cbmode_stream;
 
    if( m_handle != 0 )
@@ -258,30 +259,13 @@ void CurlHandle::setOnDataStream( Stream* s )
 }
 
 
-void CurlHandle::setOnDataMessage( const String& msg )
-{
-   m_sReceived = 0;
-   m_iDataCallback.setNil();
-   m_dataStream = 0;
-
-   m_sSlot = msg;
-   m_cbMode = e_cbmode_slot;
-
-   if( m_handle != 0 )
-   {
-      curl_easy_setopt( m_handle, CURLOPT_WRITEFUNCTION, write_msg );
-      curl_easy_setopt( m_handle, CURLOPT_WRITEDATA, this );
-   }
-
-}
-
 
 void CurlHandle::setOnDataGetString()
 {
    // the string is initialized by the callback
    m_sReceived = 0;
    m_iDataCallback.setNil();
-   m_dataStream = 0;
+   setOutStream(0);
 
    m_cbMode = e_cbmode_string;
 
@@ -298,7 +282,7 @@ void CurlHandle::setOnDataStdOut()
    // the string is initialized by the callback
    m_sReceived = 0;
    m_iDataCallback.setNil();
-   m_dataStream = 0;
+   setOutStream(0);
 
    m_cbMode = e_cbmode_stdout;
    if( m_handle != 0 )
@@ -311,7 +295,7 @@ void CurlHandle::setReadCallback( const Item& callable )
 {
    // the string is initialized by the callback
    m_iReadCallback = callable;
-   m_readStream = 0;
+   setInStream(0);
 
    if( m_handle != 0 )
    {
@@ -324,7 +308,7 @@ void CurlHandle::setReadStream( Stream* stream )
 {
    // the string is initialized by the callback
    m_iReadCallback.setNil();
-   m_readStream = stream;
+   setInStream( stream );
 
    if( m_handle != 0 )
    {
@@ -334,29 +318,29 @@ void CurlHandle::setReadStream( Stream* stream )
 }
 
 
-CoreString* CurlHandle::getData()
+String* CurlHandle::getData()
 {
-   CoreString* ret = m_sReceived;
+   String* ret = m_sReceived;
    m_sReceived = 0;
    return ret;
 }
 
 size_t CurlHandle::read_callback( void *ptr, size_t size, size_t nmemb, void *data)
 {
-   VMachine* vm = VMachine::getCurrent();
-   if ( vm != 0 )
-   {
-      CurlHandle* h = (CurlHandle *) data;
-      MemBuf_1 m( (byte*) ptr, size* nmemb, 0 );
-      vm->pushParameter( (MemBuf*) &m );
-      vm->callItemAtomic( h->m_iReadCallback, 1 );
+   CurlHandle* self = (CurlHandle*) data;
+   WVMContext* ctx = self->context();
 
-      if( vm->regA().isOrdinal() )
-         return (size_t) vm->regA().forceInteger();
+   String temp;
+   temp.adoptMemBuf((byte*) ptr, size*nmemb, size*nmemb);
+   Item params[2];
+   params[0].setUser(temp.handler(), &temp);
+   params[1].setInteger(((int64)size) * ((int64)nmemb));
 
-   }
+   ctx->reset();
+   ctx->startItem(self->m_iReadCallback, 2, params);
+   ctx->wait();
 
-   return 0;
+   return (size_t) ctx->result().forceInteger();
 }
 
 
@@ -371,7 +355,7 @@ size_t CurlHandle::read_stream( void *ptr, size_t size, size_t nmemb, void *data
    return CURL_READFUNC_ABORT;
 }
 
-struct curl_slist* CurlHandle::slistFromArray( CoreArray* ca )
+struct curl_slist* CurlHandle::slistFromArray( ItemArray* ca )
 {
    struct curl_slist* sl = NULL;
 
@@ -381,19 +365,24 @@ struct curl_slist* CurlHandle::slistFromArray( CoreArray* ca )
       if( ! current.isString() )
       {
          if( sl != 0 )
-            m_slists.pushBack( sl );
+         {
+            m_slists.push_back( sl );
+         }
          return 0;
       }
 
-      AutoCString str( current );
+      AutoCString str( *current.asString() );
       sl = curl_slist_append( sl, str.c_str() );
    }
 
    if( sl != 0 )
-      m_slists.pushBack( sl );
+   {
+      m_slists.push_back( sl );
+   }
 
    return sl;
 }
+
 
 void CurlHandle::postData( const String& str )
 {
@@ -409,34 +398,18 @@ void CurlHandle::postData( const String& str )
 
 
 
-
-CoreObject* CurlHandle::Factory( const CoreClass *cls, void *data, bool deser )
-{
-   return new CurlHandle( cls, deser );
-}
-
-
-
-
 //==============================================================
 //
 
-CurlMultiHandle::CurlMultiHandle( const CoreClass* cls, bool bDeser ):
-   CacheObject( cls, bDeser )
+CurlMultiHandle::CurlMultiHandle()
 {
-   if ( bDeser )
-      m_handle = 0;
-   else
-   {
-      m_handle = curl_multi_init();
-      m_mtx = new Mutex;
-      m_refCount = new int(1);
-   }
+   m_handle = curl_multi_init();
+   m_mtx = new Mutex;
+   m_refCount = new int(1);
 }
 
 
-CurlMultiHandle::CurlMultiHandle( const CurlMultiHandle &other ):
-   CacheObject( other )
+CurlMultiHandle::CurlMultiHandle( const CurlMultiHandle &other )
 {
    if( other.m_handle != 0 )
    {
@@ -478,70 +451,11 @@ CurlMultiHandle* CurlMultiHandle::clone() const
    return new CurlMultiHandle( *this );
 }
 
-bool CurlMultiHandle::serialize( Stream *stream, bool bLive ) const
-{
-   if ( ! bLive )
-      return false;
-
-   // incref immediately
-   m_mtx->lock();
-   (*m_refCount)++;
-   m_mtx->unlock();
-
-   uint64 ptrh = endianInt64( (uint64) m_handle );
-   uint64 ptrm = endianInt64( (uint64) m_mtx );
-   uint64 ptrrc = endianInt64( (uint64) m_refCount );
-   stream->write( &ptrh, sizeof(ptrh) );
-   stream->write( &ptrm, sizeof(ptrm) );
-   stream->write( &ptrrc, sizeof(ptrrc) );
-
-   bool bOk = CacheObject::serialize( stream, bLive );
-
-   if( ! bOk )
-   {
-      m_mtx->lock();
-      (*m_refCount)--;
-      m_mtx->unlock();
-   }
-
-   return true;
-}
-
-bool CurlMultiHandle::deserialize( Stream *stream, bool bLive )
-{
-   if ( ! bLive )
-      return false;
-
-   fassert( m_handle == 0 );
-
-   uint64 ptrh;
-   uint64 ptrm;
-   uint64 ptrrc;
-
-   if( stream->read( &ptrh, sizeof(ptrh) ) != sizeof( ptrh )  ||
-       stream->read( &ptrm, sizeof(ptrm) ) != sizeof( ptrm )  ||
-       stream->read( &ptrrc, sizeof(ptrrc) ) != sizeof( ptrrc )  )
-   {
-      return false;
-   }
-
-   m_handle = (CURLM*) endianInt64( ptrh );
-   m_mtx = (Mutex*) endianInt64( ptrm );
-   m_refCount = (int*) endianInt64( ptrrc );
-
-   return true;
-}
-
-CoreObject* CurlMultiHandle::Factory( const CoreClass *cls, void *data, bool bDeser )
-{
-   return new CurlMultiHandle( cls, bDeser );
-}
 
 
 void CurlMultiHandle::gcMark( uint32 mark )
 {
    m_handles.gcMark( mark );
-   CacheObject::gcMark( mark );
 }
 
 
@@ -549,11 +463,11 @@ bool CurlMultiHandle::addHandle( CurlHandle* h )
 {
    for ( uint32 i = 0; i < m_handles.length(); ++i )
    {
-      if ( m_handles[i].asObjectSafe() == h )
+      if ( m_handles[i].asInst() == h )
          return false;
    }
 
-   m_handles.append( h );
+   m_handles.append( Item( h->cls(), h) );
    curl_multi_add_handle( handle(), h->handle() );
    return true;
 }
@@ -563,7 +477,7 @@ bool CurlMultiHandle::removeHandle( CurlHandle* h )
 {
    for ( uint32 i = 0; i < m_handles.length(); ++i )
    {
-      if ( m_handles[i].asObjectSafe() == h )
+      if ( m_handles[i].asInst() == h )
       {
          curl_multi_remove_handle( handle(), h->handle() );
          m_handles.remove( i );
@@ -574,6 +488,46 @@ bool CurlMultiHandle::removeHandle( CurlHandle* h )
    return false;
 }
 
+
+//=============================================================================
+//SimpleCurlRequest
+//=============================================================================
+SimpleCurlRequest::SimpleCurlRequest( CurlHandle* handle, ::Falcon::Process* prc ):
+         m_curlHandle(handle)
+{
+   m_thread = new SysThread(this);
+   m_complete = new Shared(&prc->vm()->contextManager());
+   m_retval = CURLE_OK;
+   m_error = 0;
+}
+
+SimpleCurlRequest::~SimpleCurlRequest()
+{
+   m_complete->decref();
+}
+
+void SimpleCurlRequest::start()
+{
+   m_thread->start(ThreadParams().detached(true));
+}
+
+void* SimpleCurlRequest::run()
+{
+   CURL* curl = m_curlHandle->handle();
+
+   try {
+      // callback functions can throw
+      m_retval = curl_easy_perform(curl);
+   }
+   catch(::Falcon::Error* e )
+   {
+      m_error = e;
+   }
+
+   m_complete->signal();
+
+   return 0;
+}
 
 }
 }
