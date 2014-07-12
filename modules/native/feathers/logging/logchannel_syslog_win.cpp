@@ -18,8 +18,10 @@
 
 #include "logchannel_syslog.h"
 #include "logging_mod.h"
+#include "logging_fm.h"
 #include <falcon/autowstring.h>
 #include <falcon/stderrors.h>
+
 
 #include <windows.h>
 
