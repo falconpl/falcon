@@ -46,6 +46,8 @@
 #define FALCON_ERROR_CURL_HNOIN           (FALCON_ERROR_CURL_BASE+6)
 #define FALCON_ERROR_CURL_MULTI           (FALCON_ERROR_CURL_BASE+7)
 
+#define FALCON_CANONICAL_CURL_NAME "curl"
+
 namespace Falcon {
 namespace Canonical {
 

@@ -62,7 +62,7 @@ Message("Build mode options: ")
 
 set_default_opt( FALCON_STATIC_ENGINE "Perform a static compilation of the falcon engine" OFF )
 set_default_opt( FALCON_STATIC_FEATHERS  "Perform a static compilation of the main modules" OFF )
-set_default_opt( FALCON_STATIC_MODS  "Perform a static compilation of the non-feathers canonical modules" OFF )
+set_default_opt( FALCON_STATIC_MODULES  "Perform a static compilation of the non-feathers canonical modules" OFF )
 set_default_opt( FALCON_WITH_INTERNAL_PCRE "Uses pre-configured PCRE library sources in Feathers" ON )
 set_default_opt( FALCON_WITH_INTERNAL_ZLIB "Uses pre-configured ZLIB library sources in Feathers" OFF )
 

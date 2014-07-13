@@ -478,16 +478,24 @@ if( FALCON_STATIC_FEATHERS )
 
 endif()
 
+if( FALCON_STATIC_MODULES )
+	set( MODULE_DIRS
+		curl
+	)	
+	
+	foreach( item ${MODULE_DIRS} )
+		include( "${CMAKE_SOURCE_DIR}/modules/native/${item}/src/CMakeLists.txt" )
+		Message( "TEST: ${${item}_SOURCES}" )
+		LIST(APPEND falcon_engine_SOURCES "${${item}_SOURCES}")
+	endforeach()
+
+endif()
+
+
 
 if( FALCON_STATIC_ENGINE )
 
 	add_library(falcon_engine STATIC ${falcon_engine_SOURCES} )
-	
-	# If static, the inet functions are in the engine; 
-	# we got to link the engine with winsock2
-	if(WIN32)
-   		target_link_libraries(falcon_engine ws2_32)
-	endif()
 
 else()
 	add_library(falcon_engine SHARED ${falcon_engine_SOURCES} )

@@ -37,7 +37,7 @@ namespace Canonical {
 int ModuleCurl::init_count = 0;
 
 ModuleCurl::ModuleCurl():
-   Module("curl", true)
+   Module(FALCON_CANONICAL_CURL_NAME, true)
 {
    if( init_count == 0 )
    {

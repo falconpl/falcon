@@ -16,6 +16,7 @@
 #undef SRC
 #define SRC "engine/modloader.cpp"
 
+#include <falcon/config.h>
 #include <falcon/log.h>
 #include <falcon/trace.h>
 #include <falcon/modloader.h>
@@ -66,6 +67,9 @@
 #endif
 
 #if defined(FALCON_STATIC_MODULES)
+   #if defined(FALCON_BUILD_CURL)
+   #include "../modules/native/curl/src/curl_fm.h"
+   #endif
 #endif
 
 namespace Falcon
@@ -97,6 +101,9 @@ Module* ModLoader::checkStaticModule(const String& logicalName)
    #endif
 
    #if defined(FALCON_STATIC_MODULES)
+   #if defined(FALCON_BUILD_CURL)
+      if( logicalName == FALCON_CANONICAL_CURL_NAME )         { return new Canonical::ModuleCurl(); }
+   #endif
    #endif
 
    return 0;

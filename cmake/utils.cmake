@@ -213,7 +213,7 @@ endmacro()
 macro(FalconBuildCanonical LIBNAME SOURCES EXTLIBS SUBDIR)		
 	if( FALCON_STATIC_MODULES )
 	   foreach(item ${SOURCES} )      	
-	   	 LIST(APPEND "${LIBNAME}_SOURCES" "${CMAKE_SOURCE_DIR}/modules/native/feathers/${LIBNAME}/${item}")
+	   	 LIST(APPEND "${LIBNAME}_SOURCES" "${CMAKE_SOURCE_DIR}/modules/native/${LIBNAME}/src/${item}")
 	   	 LIST(APPEND FALCON_ENGINE_EXTRA_LINK_LIBS "${EXTLIBS}")
 	   endforeach()
 	else()
@@ -242,7 +242,7 @@ macro(FalconBuildCanonical LIBNAME SOURCES EXTLIBS SUBDIR)
 	    endif()
 	
 	    install( TARGETS ${CURRENT_MODULE}
-	            DESTINATION  "${TARGET_DIR}/" )		
+	            DESTINATION  "${TARGET_DIR}/" )
 	endif()
 		
 endmacro()

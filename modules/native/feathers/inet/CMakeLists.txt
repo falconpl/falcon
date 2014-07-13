@@ -6,6 +6,16 @@
 
 find_package( OpenSSL )
 if ( OPENSSL_FOUND )
+	option(FALCON_BUILD_INET_WITH_SSL "Build inet modules using SSL library" ON )
+else()
+	option(FALCON_BUILD_INET_WITH_SSL "Build inet modules using SSL library" OFF )
+endif()
+
+if( FALCON_BUILD_INET_WITH_SSL AND NOT OPENSSL_FOUND )
+	Message(FATAL "Cannot find SSL libraries in the system") 
+endif()
+
+if( FALCON_BUILD_INET_WITH_SSL AND OPENSSL_FOUND )
     add_definitions( -DWITH_OPENSSL=1 )
     include_directories( BEFORE ${OPENSSL_INCLUDE_DIR} )
 else()
@@ -20,7 +30,8 @@ if(UNIX OR MAC)
    if( "${CMAKE_SYSTEM_NAME}" STREQUAL "SunOS" )
       set(SYS_SPECIFIC_LIBS /lib/libsocket.so)
    endif( "${CMAKE_SYSTEM_NAME}" STREQUAL "SunOS" )
-
+	
+   set(LINK_LIBS "${OPENSSL_LIBRARIES}")
 else()
    #We must configure inet_sys_win.cpp.in with the correct location of SDK
    #Not necessary since I fixed it to use the mingw includes.
@@ -39,6 +50,8 @@ else()
    if (NOT MINGW AND NOT FALCON_STATIC_FEATHERS)
       set(SYS_RC inet.rc)
    endif()
+   
+   set(LINK_LIBS "${OPENSSL_LIBRARIES}" "ws2_32" )
 endif()
 
 # Target
@@ -54,9 +67,4 @@ set(SOURCES
 )
 
 
-if(WIN32)
-   FalconDeclareFeather( "inet" "${SOURCES}" "ws2_32" )
-else()
-   FalconDeclareFeather( "inet" "${SOURCES}" "" )
-endif()
-
+FalconDeclareFeather( "inet" "${SOURCES}" "${LINK_LIBS}" )

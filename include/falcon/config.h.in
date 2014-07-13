@@ -91,6 +91,7 @@
 
 // Defined if the canonical modules are statically compiled in the Falcon system.
 #cmakedefine FALCON_STATIC_MODULES
+#cmakedefine FALCON_BUILD_CURL
 
 #endif
 

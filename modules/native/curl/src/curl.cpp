@@ -87,6 +87,8 @@
    define in the original C API of libcurl).
 */
 
+#ifndef FALCON_STATIC_MODULES
+
 FALCON_MODULE_DECL
 {
    // initialize the module
@@ -94,5 +96,7 @@ FALCON_MODULE_DECL
    return self;
 
 }
+
+#endif
 
 /* end of curl.cpp */
