@@ -99,22 +99,9 @@ VMContext::VMContext( Process* prc, ContextGroup* grp ):
 
    m_firstWeakRef = 0;
    m_callerLine = 0;
+   m_registeredInGC = 0;
 
    pushBaseElements();
-
-   // Declare there's a new kid on the block -- and tell the GC to wait for us to be ready.
-   // At the moment, we'll wait for the context to be registered by the garbage collector;
-   // This prevents the GC to kick in while the context is being prepared, and the code
-   // creating the context to create new GC-sensible data while the GC doesn't know
-   // that the context is being created.
-
-   // An ideal solution would be that of having a separate garbage collection ring where to
-   // store gc-sensible data prior the context starts, and to relinquish that data to the
-   // GC at start.
-   Event cb;
-   Engine::collector()->registerContext(this, &cb);
-   cb.wait(-1);
-
 }
 
 
@@ -126,6 +113,17 @@ VMContext::~VMContext()
    clearSignaledResource();
 
    if( m_lastRaised != 0 ) m_lastRaised->decref();
+}
+
+
+void VMContext::registerInGC()
+{
+   if ( atomicCAS(m_registeredInGC, 0, 1) )
+   {
+      Event cb;
+      Engine::collector()->registerContext(this, &cb);
+      cb.wait(-1);
+   }
 }
 
 
@@ -2113,7 +2111,7 @@ void VMContext::onTerminated()
 
    // we're off from the collector...
    Engine::collector()->unregisterContext(this);
-
+   atomicSet(m_registeredInGC, 0);
 }
 
 

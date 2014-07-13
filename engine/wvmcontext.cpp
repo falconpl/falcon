@@ -135,6 +135,9 @@ void WVMContext::onComplete()
       m_completeCbFunc( this, m_completeData );
    }
 
+   // unregister from GC and live contexts
+   VMContext::onComplete();
+
    // then set the event...
    m_evtComplete->set();
 }

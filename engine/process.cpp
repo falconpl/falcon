@@ -548,6 +548,9 @@ void Process::startContext( VMContext* ctx ) {
    ctx->incref();
    ctx->setStatus(VMContext::statusReady);
 
+   // the context might have been registered in GC before, but we try again
+   ctx->registerInGC();
+
    // prepare the GC to handle it. As soon as the GC is done, the context will be handled to the manager.
    vm()->contextManager().onContextReady(ctx);
 }

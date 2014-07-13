@@ -208,6 +208,31 @@ public:
     */
    void unregisterOnTerminate( WeakRef* subscriber );
 
+   /** Registers this context in the garbage collector.
+    *
+    * Used by the process to register the context before starting it.
+    *
+    * Can be called multiple times; it will be ignored if the context is already
+    * registered.
+    *
+    * This method should be called after creation and before start,
+    * if the caller needs to prepare some GC-sensible data right before
+    * starting the context.
+    *
+    * The method will wait for the garbage collector to actually register
+    * the context before to proceed.
+    *
+    * The collector is not able to start a collection loop until the
+    * context reaches an executable state; so creating GC sensible data
+    * after registration of a new context with the wait option set to true,
+    * and before its start, makes that data intrinsically GC-safe.
+    *
+    * Also, be sure to hold a newly-registered context outside execution
+    * for as little as possible, as no GC activity can take place in that
+    * section.
+    */
+   void registerInGC();
+
    //=========================================================
    // Varaibles - stack management
    //=========================================================
@@ -1908,6 +1933,8 @@ private:
 
    template<class _returner>
    void returnFrame_base( const Item& value );
+
+   atomic_int m_registeredInGC;
 };
 
 }
