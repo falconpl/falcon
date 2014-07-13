@@ -35,9 +35,11 @@ if( "${CMAKE_GENERATOR}" STREQUAL "MinGW Makefiles" )
    set( FALCON_ENGINE_LIB "libFalcon_engine.dll.a" )
    
    find_library(MINGW_MD_RUNTIME mingwm10)
-   get_filename_component(_filename ${MINGW_MD_RUNTIME} NAME)
-   configure_file( ${MINGW_MD_RUNTIME} ${Falcon_BINARY_DIR}/${_filename} COPYONLY)
-   
+   if( NOT "${MINGW_MD_RUNTIME}" STREQUAL "MINGW_MD_RUNTIME-NOTFOUND" )
+      get_filename_component(_filename ${MINGW_MD_RUNTIME} NAME)
+      configure_file( ${MINGW_MD_RUNTIME} ${Falcon_BINARY_DIR}/${_filename} COPYONLY)
+   endif() 
+  
    set( FALCON_BUILD_NAME "MinGW" )
    
 else()

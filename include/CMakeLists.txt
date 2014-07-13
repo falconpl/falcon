@@ -25,7 +25,7 @@ file( GLOB falcon_tc falcon/tc/*.h)
 
 set(FALCON_HEADERS
    ${falcon_files}
-   ${FALCON_INC_DIR}/falcon/config.h)
+   ${PROJECT_BINARY_DIR}/include/falcon/config.h)
 
 install(FILES ${FALCON_HEADERS} DESTINATION ${FALCON_INC_DIR}/falcon)
 install(FILES ${falcon_classes} DESTINATION ${FALCON_INC_DIR}/falcon/classes)
