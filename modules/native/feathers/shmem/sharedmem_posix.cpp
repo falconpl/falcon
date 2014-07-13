@@ -213,7 +213,8 @@ bool SharedMem::internal_write( const void* data, int64 size, int64 offset, bool
 
    // resize the underlying file, if necessary
    // -- if write is larger, or if it's smaller but trunc is required.
-   if( (bTrunc && d->bd->size != offset + size) || (offset + size > d->bd->size) )
+   if( (bTrunc && static_cast<int64>(d->bd->size) != static_cast<int64>(offset + size))
+            || (static_cast<int64>(offset + size) > static_cast<int64>(d->bd->size)) )
    {
       // actually resize the underlying file
       if ( ftruncate( d->filefd, offset + size + sizeof(BufferData) ) != 0 )
