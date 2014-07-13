@@ -52,6 +52,8 @@ namespace Falcon {
 @prop pdict (static) Dictionary of actual parameter values sent to the current function.
 @prop vcount (static) Count of variable parameters (total parameters minus declared parameters).
 @prop vp (static) Array of extra variable parameters sent to the current function.
+@prop caller (static) The caller function or method of the current function (nil if none).
+@prop invoker (static) Object from where the current function was invoked (nil if not an object).
 
 @prop name Name of the given function
 @prop fullname Name of the given function, including method prefixes.
@@ -215,6 +217,62 @@ static void get_plist( const Class*, const String&, void* instance, Item& value 
 
    value = FALCON_GC_HANDLE(params);
 }
+
+static void get_caller( const Class*, const String&, void*, Item& value )
+{
+   Processor* prc = Processor::currentProcessor();
+   if( prc == 0 )
+   {
+      value.setNil();
+   }
+   else
+   {
+      VMContext* ctx = prc->currentContext();
+      if( ctx->callDepth() < 2 )
+      {
+         value.setNil();
+      }
+      else {
+         const CallFrame& cf = ctx->callerFrame(1);
+         if(cf.m_bMethodic)
+         {
+            value = cf.m_self;
+            value.methodize(cf.m_function);
+         }
+         else {
+            value.setFunction(cf.m_function);
+         }
+      }
+   }
+}
+
+static void get_invoker( const Class*, const String&, void*, Item& value )
+{
+   Processor* prc = Processor::currentProcessor();
+   if( prc == 0 )
+   {
+      value.setNil();
+   }
+   else
+   {
+      VMContext* ctx = prc->currentContext();
+      if( ctx->callDepth() < 2 )
+      {
+         value.setNil();
+      }
+      else {
+         const CallFrame& cf = prc->currentContext()->callerFrame(1);
+         if(cf.m_bMethodic)
+         {
+            value = cf.m_self;
+         }
+         else {
+            value.setNil();
+         }
+      }
+   }
+}
+
 
 namespace CFunction {
 /*#
@@ -503,6 +561,8 @@ ClassFunction::ClassFunction(ClassMantra* parent):
    addProperty("vp", &get_vp, 0, true );
    addProperty("vcount", &get_vcount, 0, true );
    addProperty("pdict", &get_pdict, 0, true );
+   addProperty("caller", &get_caller, 0, true );
+   addProperty("invoker", &get_invoker, 0, true );
 
    addProperty("name", &get_name );
    addProperty("fullname", &get_fullname );
@@ -548,7 +608,7 @@ void ClassFunction::op_toString( VMContext* ctx, void* self ) const
    Function* func = static_cast<Function*>(self);
    String* ret = new String(func->name());
    ret->append("()");
-   ctx->pushData( FALCON_GC_HANDLE( ret ) );
+   ctx->topData() = FALCON_GC_HANDLE( ret );
 }
 
 void ClassFunction::op_iter( VMContext* ctx, void* instance ) const
