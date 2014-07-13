@@ -28,6 +28,7 @@ class Stream;
 class TextReader;
 class SynTree;
 class Transcoder;
+class Item;
 
 /** Dynamic compiler.
  * This compiler is meant to compile some dynamic code from a string
@@ -79,6 +80,52 @@ public:
     * \return target if the parameter is not zero, or a new syntree.
     */
    SynTree* compile( TextReader* reader, SynTree* target = 0 );
+
+   /** Utility to return a single value from a compilation.
+    * \param str The code to be compiled
+    * \param target Where to place the generated valye
+    * \return true if the compiled code is a single-value generating code.
+    *
+    * This is particularly useful in case you want to compile a code
+    * which generates a single value, as, for example
+    * \code
+    * '"Hello"'
+    * '{() > "some code snippet"}'
+    * 'fuction test(a,b); > a + b; end'
+    * \endcode
+    *
+    * All the above expression would normally generate a syntactic tree
+    * containing a single Expression-Value, which, if evaluated, would
+    * return the desired expression.
+    *
+    * IN other words, compiling something as "fuction test(a,b); > a + b; end"
+    * would not return a function, but a syntactic tree that, if evaluated,
+    * would then yield the function.
+    *
+    * This method checks if the generated syntree contains a single expression-value,
+    * and if it does, it then returns true and fills the \b target item.
+    */
+   bool compileValue( Item& target, const String& str );
+
+
+   /** Utility to return a single value from a compilation.
+    * \param stream The stream from which to read code to be compiled
+    * \param tr A transcoder to be used to parse the text from the stream
+    * \param target Where to place the generated valye
+    * \return true if the compiled code is a single-value generating code.
+    *
+    * \see  bool compileValue( const String& str, Item& target );
+    */
+   bool compileValue( Item& target, Stream* stream, Transcoder* tr = 0 );
+
+   /** Utility to return a single value from a compilation.
+    * \param reader The stream from which to read code to be compiled
+    * \param target Where to place the generated valye
+    * \return true if the compiled code is a single-value generating code.
+    *
+    * \see  bool compileValue( const String& str, Item& target );
+    */
+   bool compileValue( Item& target, TextReader* reader );
 
 private:
    VMContext* m_ctx;

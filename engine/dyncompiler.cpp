@@ -30,11 +30,9 @@
 #include <falcon/stringstream.h>
 #include <falcon/falconclass.h>
 #include <falcon/stderrors.h>
-
-
-
-
-
+#include <falcon/item.h>
+#include <falcon/expression.h>
+#include <falcon/psteps/exprvalue.h>
 
 
 #include <falcon/sp/parser_arraydecl.h>
@@ -1502,6 +1500,53 @@ SynTree* DynCompiler::compile( TextReader* reader, SynTree* target)
       throw e;
    }
    return 0;
+}
+
+
+
+static bool checkValue( const SynTree& st, Item& target)
+{
+   if( st.arity() == 1 )
+   {
+      TreeStep* ts1 = st.nth(0);
+      if( ts1->category() == TreeStep::e_cat_expression )
+      {
+         Expression* expr = static_cast<Expression*>(ts1);
+         if( expr->trait() == Expression::e_trait_value )
+         {
+            ExprValue* ev = static_cast<ExprValue*>(expr);
+            target = ev->item();
+         }
+      }
+   }
+
+   return false;
+}
+
+
+bool DynCompiler::compileValue( Item& target, const String& str )
+{
+   SynTree st;
+   compile(str,&st);
+   return checkValue(st, target);
+}
+
+
+
+bool DynCompiler::compileValue( Item& target, Stream* stream, Transcoder* tr )
+{
+   SynTree st;
+   compile(stream, tr, &st);
+   return checkValue(st, target);
+}
+
+
+bool DynCompiler::compileValue( Item& target, TextReader* reader )
+{
+   SynTree st;
+   compile(reader, &st);
+   return checkValue(st, target);
+
 }
 
 }
