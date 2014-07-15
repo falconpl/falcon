@@ -249,7 +249,8 @@ void Node::read( Falcon::TextReader &in, const int style, const int l, const int
                iStatus =  STATUS_END_COMMENT2;
             else {
                iStatus = STATUS_READ_COMMENT;
-               m_data += "-" + chr;
+               m_data += "-";
+               m_data += chr;
             }
          break;
 
