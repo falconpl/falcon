@@ -24,6 +24,14 @@ if(WIN32)
         ${SYS_RC}
    )
    set( SYS_LIBS )
+elseif(APPLE)
+   set( _files_sys 
+        sharedmem_posix.cpp
+        ipsem_darwin.cpp
+        sharedmem_private_posix.h        
+   )
+   
+   set( SYS_LIBS rt)
 else()
    set( _files_sys 
         sharedmem_posix.cpp

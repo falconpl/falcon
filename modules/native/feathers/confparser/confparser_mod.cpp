@@ -659,6 +659,9 @@ ConfigFile::ConfigFile():
    m_bUseUnixSpecs( false )
 {
    _p = new Private;
+    
+   m_bUseUnixSpecs = false;
+   m_bUseUnixComments = false;
 }
 
 
