@@ -405,7 +405,7 @@ namespace Feathers {
 // Main module part.
 //================================================================================================
 
-static void callACallback( VMContext* ctx, uint32 lastParsed, const String& method, ... )
+static void callACallback( VMContext* ctx, uint32 lastParsed, const String& method, char dummy,  ... )
 {
    FalconInstance *self = static_cast<FalconInstance*>(ctx->self().asInst());
 
@@ -418,7 +418,7 @@ static void callACallback( VMContext* ctx, uint32 lastParsed, const String& meth
    if ( i_method.isCallable() )
    {
      va_list params;
-     va_start(params, method);
+     va_start(params, dummy);
 
      ctx->pushData( i_method );
      uint32 count = 0;
@@ -494,13 +494,13 @@ ModuleCmdline::ModuleCmdline():
               if ( state == PARSE_LOCAL_STAUS_WAITING )
               {
                  saveStatus( ctx, i+1, 0, currentOpt );
-                 callACallback( ctx, i, PARSE_PROPERTY_ONVALUE, &currentOpt, &i_opt, 0 );
+                 callACallback( ctx, i, PARSE_PROPERTY_ONVALUE, 'e', &currentOpt, &i_opt, 0 );
                  return;
               }
               else if( opt.length() == 0 || (opt.getCharAt( 0 ) != '-' || opt.length() == 1) || state == PARSE_LOCAL_STAUS_ALLFREE )
               {
                  saveStatus( ctx, i+1, state, Item() );
-                 callACallback( ctx, i, PARSE_PROPERTY_ONFREE, &i_opt, 0 );
+                 callACallback( ctx, i, PARSE_PROPERTY_ONFREE, 'e', &i_opt, 0 );
                  return;
               }
               else if ( opt == "--" && ! passMM )
@@ -520,7 +520,7 @@ ModuleCmdline::ModuleCmdline():
                     ModuleCmdline* mod = static_cast<ModuleCmdline*>( ctx->currentFrame().m_function->module() );
                     // ... see you after the call.
                     ctx->pushCode( mod->m_stepAfterCall );
-                    callACallback( ctx, i, PARSE_PROPERTY_ONOPTION, &i_option, 0 );
+                    callACallback( ctx, i, PARSE_PROPERTY_ONOPTION, 'e', &i_option, 0 );
                  }
                  else {
                     // are we a -x- switch-off setting?
@@ -529,13 +529,13 @@ ModuleCmdline::ModuleCmdline():
                        // switch turnoff.
                        Item i_option = FALCON_GC_HANDLE( new String(opt.subString(1,2) ) );
                        saveStatus( ctx, i+1, PARSE_LOCAL_STAUS_NONE, Item() );
-                       callACallback( ctx, i, PARSE_PROPERTY_ONSWITCHOFF, &i_option, 0 );
+                       callACallback( ctx, i, PARSE_PROPERTY_ONSWITCHOFF, 'e', &i_option, 0 );
                     }
                     else {
                        Item i_option = FALCON_GC_HANDLE( new String(opt.subString(1) ) );
                        saveStatus( ctx, i+1, PARSE_LOCAL_STAUS_NONE, i_option );
                        ctx->pushCode(mod->m_stepAfterCall);
-                       callACallback( ctx, i, PARSE_PROPERTY_ONOPTION, &i_option, 0 );
+                       callACallback( ctx, i, PARSE_PROPERTY_ONOPTION, 'e', &i_option, 0 );
                     }
                  }
 
