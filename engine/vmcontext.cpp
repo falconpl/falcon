@@ -867,7 +867,7 @@ VMContext::t_unrollResult VMContext::unrollToNext( const _checker& check )
             uint32 depth = static_cast<uint32>( curCode - m_codeStack.m_base );
             if ( depth < m_finallyStack.m_top->m_depth )
             {
-               const TreeStep* finallyHandler = m_finallyStack.m_top->m_finstep;
+               const PStep* finallyHandler = m_finallyStack.m_top->m_finstep;
                m_finallyStack.pop();
                check.handleFinally( this, finallyHandler );
                return e_unroll_suspended;
@@ -897,7 +897,7 @@ VMContext::t_unrollResult VMContext::unrollToNext( const _checker& check )
          m_callStack.m_top = curFrame;
 
          // set the code stack accordingly to the finally step
-         const TreeStep* finallyHandler = m_finallyStack.m_top->m_finstep;
+         const PStep* finallyHandler = m_finallyStack.m_top->m_finstep;
          m_codeStack.unroll( m_finallyStack.m_top->m_depth );
          CodeFrame* curCode = m_codeStack.m_top;
 
@@ -938,7 +938,7 @@ public:
 
    inline void onBaseFound( VMContext* ) const {}
 
-   inline void handleFinally( VMContext* ctx, const TreeStep* handler ) const
+   inline void handleFinally( VMContext* ctx, const PStep* handler ) const
    {
       static PStep* ps = &Engine::instance()->stdSteps()->m_unrollToNext;
       ctx->pushCode( ps );
@@ -965,7 +965,7 @@ public:
 
    inline void onCrossFinally( VMContext* ) const {}
 
-   inline void handleFinally( VMContext* ctx, const TreeStep* handler ) const
+   inline void handleFinally( VMContext* ctx, const PStep* handler ) const
    {
       static PStep* ps = &Engine::instance()->stdSteps()->m_unrollToLoop;
       ctx->pushCode( ps );
@@ -1009,7 +1009,7 @@ public:
 
    inline void onBaseFound( VMContext* ) const {}
 
-   inline void handleFinally( VMContext* ctx, const TreeStep* handler ) const
+   inline void handleFinally( VMContext* ctx, const PStep* handler ) const
    {
       static PStep* ps = &Engine::instance()->stdSteps()->m_raiseTop;
 
@@ -1084,7 +1084,7 @@ public:
 
    inline void onBaseFound( VMContext* ) const {}
 
-   inline void handleFinally( VMContext* ctx, const TreeStep* handler ) const
+   inline void handleFinally( VMContext* ctx, const PStep* handler ) const
    {
       static PStep* ps = &Engine::instance()->stdSteps()->m_raiseTop;
 
@@ -1570,7 +1570,7 @@ void VMContext::exitLocalFrame( bool exec )
          {
             static PStep* pop = &Engine::instance()->stdSteps()->m_pop;
 
-            const TreeStep* fd = m_finallyStack.m_top->m_finstep;
+            const PStep* fd = m_finallyStack.m_top->m_finstep;
             m_finallyStack.pop();
             m_codeStack.m_top = top;
             if( exec ) {
@@ -1636,7 +1636,7 @@ void VMContext::returnFrame_base( const Item& value )
 
    if( topCall->m_codeBase < m_finallyStack.m_top->m_depth )
    {
-      const TreeStep* fd = m_finallyStack.m_top->m_finstep;
+      const PStep* fd = m_finallyStack.m_top->m_finstep;
       m_finallyStack.pop();
       pushData(value);
       pushCode(ps_return);

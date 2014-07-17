@@ -257,11 +257,13 @@ FAL_ERRORDECL( e_attrib_already, 350, "Attribute already declared" );
 FAL_ERRORDECL( e_marshall_not_found, 351, "Message event handler not found" );
 FAL_ERRORDECL( e_not_responding, 352, "Summoned entity isn't responding to a mandatory summon");
 FAL_ERRORDECL( e_non_delegable, 353, "The target item doesn't support delegation");
+FAL_ERRORDECL( e_msg_unhandled, 355, "Unhandled message/event");
 
 
 FAL_ERRORDECL( e_state, 400, "Unknown state in state-oriented operation" );
 FAL_ERRORDECL( e_underflow, 401, "Generic underflow in code flow" );
 FAL_ERRORDECL( e_setup, 402, "Required prerequisite steps were not performed" );
+FAL_ERRORDECL( e_int_error, 403, "Generic Internal Error" );
 
 FAL_ERRORDECL( e_fmt_convert, 500, "Format not applicable to object" );
 FAL_ERRORDECL( e_async_seq_modify, 501, "Underlying object modified while performing a sequential operation" );

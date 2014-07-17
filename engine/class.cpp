@@ -35,6 +35,8 @@
 #include <falcon/function.h>
 #include <falcon/extfunc.h>
 
+#include <falcon/childclass.h>
+
 #include <map>
 
 namespace Falcon {
@@ -1104,6 +1106,11 @@ void Class::op_next( VMContext* ctx, void* ) const
    Item item;
    item.setBreak();
    ctx->pushData(item);
+}
+
+Class* Class::createChild(const String& name, int64 typeID) const
+{
+   return new ChildClass(name, this, typeID);
 }
 
 }

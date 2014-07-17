@@ -60,6 +60,8 @@
 #include <falcon/classes/classsymbol.h>
 #include <falcon/classes/classrawmem.h>
 
+#include <falcon/classes/classeventcourier.h>
+
 namespace Falcon
 {
 
@@ -120,6 +122,8 @@ void StdHandlers::subscribe(Engine* engine)
    m_uriClass = new ClassURI;
    m_pathClass = new ClassPath;
 
+   m_eventCourierClass = new ClassEventCourier;
+
    engine->addMantra( m_functionClass );
    engine->addMantra( m_stringClass );
    engine->addMantra( m_arrayClass );
@@ -154,6 +158,8 @@ void StdHandlers::subscribe(Engine* engine)
 
    engine->addMantra(m_uriClass);
    engine->addMantra(m_pathClass);
+
+   engine->addMantra(m_eventCourierClass);
 
    engine->addMantra( new ClassComposition );
 }

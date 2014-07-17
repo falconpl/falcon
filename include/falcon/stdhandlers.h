@@ -439,6 +439,18 @@ public:
    Class* pathClass() const { return m_pathClass; }
 
 
+
+   /** Returns the global instance of the ClassEventCourier class.
+   \return the Engine instance of the ClassEventCourier handler.
+
+    Method init() must have been called before.
+
+    @note This method will assert and terminate the program if compiled in debug mode
+    in case the engine has not been initialized. In release, it will just
+    return a null pointer.
+    */
+   Class* eventCourierClass() const { return m_eventCourierClass; }
+
 private:
    //===============================================
    // Global type handlers
@@ -484,6 +496,8 @@ private:
 
    Class* m_uriClass;
    Class* m_pathClass;
+
+   Class* m_eventCourierClass;
 };
 
 }

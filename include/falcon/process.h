@@ -116,6 +116,12 @@ public:
     */
    bool startScript( const URI& script, bool addPathToLoadPath = true );
 
+   /** Starts a String given an input string as a text. */
+   bool startScript( const String& text, bool isFTD = false, const String& modName = "main", const String& modPath = "<main>" );
+
+   /** Starts a String given a transcoder */
+   bool startScript( TextReader* tc, bool isFTD = false, const String& modName = "main", const String& modPath = "<main>" );
+
    /**
     * Starts a context that is ready to run.
     *

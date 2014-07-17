@@ -130,7 +130,11 @@ public:
    BreakByIdMap m_breaksById;
    Mutex m_mtx_breaks;
 
-   Private() {
+   SynFunc m_loaderFunc;
+
+   Private():
+      m_loaderFunc("__loader__")
+   {
       m_transTable = 0;
       m_tempTable = 0;
    }
@@ -162,7 +166,62 @@ public:
       }
 
    }
+
+   class PStepRunMain: public PStep
+   {
+   public:
+      PStepRunMain() { apply = apply_; }
+      virtual ~PStepRunMain() {}
+      virtual void describeTo( String& tgt ) const {
+         tgt = "Process::PStepRunMain";
+      }
+
+      static void apply_( const PStep*, VMContext* ctx )
+      {
+         static Log* LOG =  Engine::instance()->log();
+
+         // the module we're working on is at top data stack.
+         Module* mod = static_cast<Module*>(ctx->topData().asInst());
+         mod->setMain(true);
+
+         Function* mainFunc = mod->getMainFunction();
+         if( mainFunc != 0 )
+         {
+            ctx->popCode();
+
+            LOG->log(Log::fac_engine, Log::lvl_info, String("Launching main script function on: ") + mod->uri() );
+            ctx->call( mainFunc );
+         }
+         else {
+            LOG->log(Log::fac_engine, Log::lvl_info, String("Module has no main script function: ") + mod->uri() );
+            throw FALCON_SIGN_XERROR(CodeError, e_no_main, .extra(mod->uri()) );
+         }
+      }
+   }
+   m_stepRunMain;
+
+
+   class PStepSetResult: public PStep
+      {
+      public:
+      PStepSetResult() { apply = apply_; }
+         virtual ~PStepSetResult() {}
+         virtual void describeTo( String& tgt ) const {
+            tgt = "Process::PStepSetResult";
+         }
+
+         static void apply_( const PStep*, VMContext* ctx )
+         {
+            static Log* LOG =  Engine::instance()->log();
+
+            LOG->log(Log::fac_engine, Log::lvl_info, "Execution complete" );
+            // exit from the top __loader__ frame function
+            ctx->returnFrame( ctx->topData() );
+         }
+      }
+      m_stepSetResult;
 };
+
 
 Process::Process( VMachine* owner, ModSpace* ms ):
    m_vm(owner),
@@ -197,6 +256,7 @@ Process::Process( VMachine* owner, ModSpace* ms ):
       ms->incref();
    }
 
+   m_context->registerInGC();
    inheritStreams();
 }
 
@@ -411,32 +471,18 @@ bool Process::startScript( const URI& script, bool addPathToLoadPath )
       modSpace()->modLoader()->addDirectoryFront( script.path().fulloc() );
    }
 
-   Process* loadProc = modSpace()->loadModule( script.encode(), true, true, true );
+   mainContext()->reset();
+   mainContext()->pushData(Item());
+   mainContext()->call(&_p->m_loaderFunc);
+   mainContext()->pushCode( &_p->m_stepSetResult );
+   mainContext()->pushCode( &_p->m_stepRunMain );
 
    LOG->log(Log::fac_engine, Log::lvl_info, String("Internally starting loader process on: ") + script.encode() );
-   loadProc->start();
-   loadProc->wait();
-   LOG->log(Log::fac_engine, Log::lvl_info, String("Internally started loader process complete on: ") + script.encode() );
-
-   // get the main module
-   Module* mod = static_cast<Module*>(loadProc->result().asInst());
-   loadProc->decref();
-
-   Function* mainFunc = mod->getMainFunction();
-   if( mainFunc != 0 )
-   {
-      LOG->log(Log::fac_engine, Log::lvl_info, String("Launching main script function on: ") + script.encode() );
-
-      mainContext()->call( mainFunc );
-      launch();
-   }
-   else {
-      LOG->log(Log::fac_engine, Log::lvl_info, String("Module has no main script function: ") + script.encode() );
-      throw FALCON_SIGN_XERROR(CodeError, e_no_main, .extra(script.encode()) );
-   }
-
+   modSpace()->loadModuleInContext( script.encode(), true, true, true, mainContext(),0,true );
+   launch();
    return true;
 }
+
 
 
 const Item& Process::result() const

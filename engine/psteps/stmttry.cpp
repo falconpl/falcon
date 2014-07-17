@@ -88,7 +88,6 @@ StmtTry::StmtTry( const StmtTry& other ):
    {
       m_body = other.m_body->clone();
       m_body->setParent( this );
-      setTry();
    }
    
    if( other.m_fbody )

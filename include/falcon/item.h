@@ -172,10 +172,11 @@ public:
       setSymbol( sym );
    }
 
-   void setOpaque( const char* name, const void* opaque ) {
+   Item& setOpaque( const char* name, const void* opaque ) {
       type( FLC_ITEM_OPAQUE );
       content.data.opaque.pOpaqueName = name;
       content.data.opaque.pOpaque = (void*) opaque;
+      return *this;
    }
 
    /** Creates a String item.

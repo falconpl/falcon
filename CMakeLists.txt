@@ -90,7 +90,7 @@ add_subdirectory(clt)
 add_subdirectory(modules)
 add_subdirectory( apps )
 add_subdirectory( docs )
-add_subdirectory( tests/bin )
+add_subdirectory( tests )
 add_subdirectory( dist )
 
 

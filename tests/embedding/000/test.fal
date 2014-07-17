@@ -1,0 +1,9 @@
+> "Hello!"
+retval = m""
+for i in args
+ > "Arg: ", i
+ retval += i
+end
+
+return retval
+

@@ -1638,7 +1638,7 @@ public:
    VMachine* vm() const { return m_process->vm(); }
 
    /** Adds a finally handler at current code position */
-   void registerFinally( TreeStep* finHandler ) {
+   void registerFinally( const PStep* finHandler ) {
       FinallyData& dt = *m_finallyStack.addSlot();
       dt.m_depth = codeDepth();
       dt.m_finstep = finHandler;
@@ -1765,13 +1765,13 @@ protected:
    /** Class holding registered finally points */
    class FinallyData {
    public:
-      const TreeStep* m_finstep;
+      const PStep* m_finstep;
       uint32 m_depth;
 
       FinallyData()
       {}
 
-      FinallyData( TreeStep* fs, uint32 d ):
+      FinallyData( const PStep* fs, uint32 d ):
          m_finstep(fs),
          m_depth(d)
       {}

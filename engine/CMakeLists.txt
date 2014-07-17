@@ -284,6 +284,7 @@ set( falcon_engine_SOURCES
   classes/classcomposition.cpp
   classes/classdict.cpp
   classes/classerror.cpp
+  classes/classeventcourier.cpp
   classes/classformat.cpp
   classes/classfunction.cpp
   classes/classint.cpp
@@ -334,6 +335,7 @@ set( falcon_engine_SOURCES
   autocstring.cpp
   autowstring.cpp
   bom.cpp
+  childclass.cpp
   class.cpp
   closeddata.cpp
   closure.cpp
@@ -353,6 +355,7 @@ set( falcon_engine_SOURCES
   dynloader.cpp
   engine.cpp
   error.cpp
+  eventcourier.cpp
   eventmarshal.cpp
   extfunc.cpp
   expression.cpp

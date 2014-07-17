@@ -624,7 +624,7 @@ public:
    virtual bool op_init( VMContext* ctx, void* instance, int32 pcount ) const;
 
    /** Called back when the VM wants to negate an item.
-     \param vm the virtual machine that will receive the result.
+     \param ctx the virtual machine context that will receive the result.
      \param instance the instance (or 0 on flat items)
 
     \note The operand is unary -- requires OpToken with 1 parameter.
@@ -633,7 +633,7 @@ public:
    virtual void op_neg( VMContext* ctx, void* instance ) const;
 
    /** Called back when the VM wants to add something.
-     \param vm the virtual machine that will receive the result.
+     \param ctx the virtual machine context that will receive the result.
      \param instance the instance (or 0 on flat items)
 
     \note The operand is binary -- requires OpToken with 2 parameters.
@@ -642,7 +642,7 @@ public:
    virtual void op_add( VMContext* ctx, void* instance ) const;
 
    /** Called back when the VM wants to subtract something.
-     \param vm the virtual machine that will receive the result.
+     \param ctx the virtual machine context that will receive the result.
      \param instance the instance (or 0 on flat items)
 
     \note The operand is binary -- requires OpToken with 2 parameters.
@@ -651,7 +651,7 @@ public:
    virtual void op_sub( VMContext* ctx, void* instance ) const;
 
    /** Called back when the VM wants to multiply something.
-     \param vm the virtual machine that will receive the result.
+     \param ctx the virtual machine context that will receive the result.
      \param instance the instance (or 0 on flat items)
 
     \note The operand is binary -- requires OpToken with 2 parameters.
@@ -660,7 +660,7 @@ public:
    virtual void op_mul( VMContext* ctx, void* instance ) const;
 
    /** Called back when the VM wants to divide something.
-     \param vm the virtual machine that will receive the result.
+     \param ctx the virtual machine context that will receive the result.
      \param instance the instance (or 0 on flat items)
 
     \note The operand is binary -- requires OpToken with 2 parameters.
@@ -669,7 +669,7 @@ public:
    virtual void op_div( VMContext* ctx, void* instance ) const;
 
    /** Called back when the VM wants to apply the modulo operator.
-     \param vm the virtual machine that will receive the result.
+     \param ctx the virtual machine context that will receive the result.
      \param instance the instance (or 0 on flat items)
 
     \note The operand is binary -- requires OpToken with 2 parameters.
@@ -678,7 +678,7 @@ public:
    virtual void op_mod( VMContext* ctx, void* instance ) const;
 
    /** Called back when the VM wants to apply the power operator on.
-     \param vm the virtual machine that will receive the result.
+     \param ctx the virtual machine context that will receive the result.
      \param instance the instance (or 0 on flat items)
 
     \note The operand is binary -- requires OpToken with 2 parameters.
@@ -687,7 +687,7 @@ public:
    virtual void op_pow( VMContext* ctx, void* instance ) const;
 
    /** Called back when the VM wants to apply the shift right operator.
-     \param vm the virtual machine that will receive the result.
+     \param ctx the virtual machine context that will receive the result.
      \param instance the instance (or 0 on flat items)
 
     \note The operand is binary -- requires OpToken with 2 parameters.
@@ -696,7 +696,7 @@ public:
    virtual void op_shr( VMContext* ctx, void* instance ) const;
 
    /** Called back when the VM wants to apply the shift left operator.
-     \param vm the virtual machine that will receive the result.
+     \param ctx the virtual machine context that will receive the result.
      \param instance the instance (or 0 on flat items)
 
     \note The operand is binary -- requires OpToken with 2 parameters.
@@ -705,7 +705,7 @@ public:
    virtual void op_shl( VMContext* ctx, void* instance ) const;
 
    /** Called back when the VM wants to add something to an item.
-     \param vm the virtual machine that will receive the result.
+     \param ctx the virtual machine context that will receive the result.
      \param instance the instance (or 0 on flat items)
 
     \note The operand is binary -- requires OpToken with 2 parameters.
@@ -713,7 +713,7 @@ public:
    virtual void op_aadd( VMContext* ctx, void* instance) const;
 
    /** Called back when the VM wants to subtract something to an item.
-     \param vm the virtual machine that will receive the result.
+     \param ctx the virtual machine context that will receive the result.
      \param instance the instance (or 0 on flat items)
 
     \note The operand is binary -- requires OpToken with 2 parameters.
@@ -721,7 +721,7 @@ public:
    virtual void op_asub( VMContext* ctx, void* instance ) const;
 
    /** Called back when the VM wants to multiply something to an item.
-     \param vm the virtual machine that will receive the result.
+     \param ctx the virtual machine context that will receive the result.
      \param instance the instance (or 0 on flat items)
 
     \note The operand is binary -- requires OpToken with 2 parameters.
@@ -729,7 +729,7 @@ public:
    virtual void op_amul( VMContext* ctx, void* instance ) const;
 
    /** Called back when the VM wants to divide something to an item.
-     \param vm the virtual machine that will receive the result.
+     \param ctx the virtual machine context that will receive the result.
      \param instance the instance (or 0 on flat items)
 
     \note The operand is binary -- requires OpToken with 2 parameters.
@@ -737,7 +737,7 @@ public:
    virtual void op_adiv( VMContext* ctx, void* instance ) const;
 
    /** Called back when the VM wants to apply the modulo something to an item.
-     \param vm the virtual machine that will receive the result.
+     \param ctx the virtual machine context that will receive the result.
      \param instance the instance in op1 (or 0 on flat items)
      \param op1 The original first operand (where the instasnce was stored),
       that is also the place where to store the result.
@@ -746,7 +746,7 @@ public:
    virtual void op_amod( VMContext* ctx, void* instance ) const;
 
    /** Called back when the VM wants to get the power of an item.
-     \param vm the virtual machine that will receive the result.
+     \param ctx the virtual machine context that will receive the result.
      \param instance the instance (or 0 on flat items)
 
     \note The operand is binary -- requires OpToken with 2 parameters.
@@ -754,7 +754,7 @@ public:
    virtual void op_apow( VMContext* ctx, void* instance ) const;
 
    /** Called back when the VM wants to apply get the power of an item.
-     \param vm the virtual machine that will receive the result.
+     \param ctx the virtual machine context that will receive the result.
      \param instance the instance (or 0 on flat items)
 
     \note The operand is binary -- requires OpToken with 2 parameters.
@@ -762,7 +762,7 @@ public:
    virtual void op_ashr( VMContext* ctx, void* instance ) const;
 
    /** Called back when the VM wants to apply get the shift-left of an item.
-     \param vm the virtual machine that will receive the result.
+     \param ctx the virtual machine context that will receive the result.
      \param instance the instance (or 0 on flat items)
 
     \note The operand is binary -- requires OpToken with 2 parameters.
@@ -770,53 +770,53 @@ public:
    virtual void op_ashl( VMContext* ctx, void* instance ) const;
 
    /** Called back when the VM wants to increment (prefix) an item.
-     \param vm the virtual machine that will receive the result.
+     \param ctx the virtual machine context that will receive the result.
      \param instance the instance in op1 (or 0 on flat items)
      \param instance the instance (or 0 on flat items)
 
     \note The operand is unary -- requires OpToken with 1 parameter.
    */
-   virtual void op_inc( VMContext* vm, void* instance ) const;
+   virtual void op_inc( VMContext* ctx, void* instance ) const;
 
    /* Called back when the VM wants to decrement (prefix) an item.
-     \param vm the virtual machine that will receive the result.
+     \param ctx the virtual machine context that will receive the result.
      \param instance the instance in op1 (or 0 on flat items)
      \param instance the instance (or 0 on flat items)
 
     \note The operand is unary -- requires OpToken with 1 parameter.
    */
-   virtual void op_dec(VMContext* vm, void* instance) const;
+   virtual void op_dec(VMContext* ctx, void* instance) const;
 
    /** Called back when the VM wants to increment (postfix) an item.
-     \param vm the virtual machine that will receive the result.
+     \param ctx the virtual machine context that will receive the result.
      \param instance the instance in op1 (or 0 on flat items)
      \param instance the instance (or 0 on flat items)
 
     \note The operand is unary -- requires OpToken with 1 parameter.
    */
-   virtual void op_incpost(VMContext* vm, void* instance ) const;
+   virtual void op_incpost(VMContext* ctx, void* instance ) const;
 
    /** Called back when the VM wants to decrement (postfix) an item.
-     \param vm the virtual machine that will receive the result.
+     \param ctx the virtual machine context that will receive the result.
      \param instance the instance in op1 (or 0 on flat items)
      \param instance the instance (or 0 on flat items)
 
     \note The operand is unary -- requires OpToken with 1 parameter.
    */
-   virtual void op_decpost(VMContext* vm, void* instance ) const;
+   virtual void op_decpost(VMContext* ctx, void* instance ) const;
 
    /** Called back when the VM wants to get an index out of an item.
-     \param vm the virtual machine that will receive the result.
+     \param ctx the virtual machine context that will receive the result.
      \param instance the instance (or 0 on flat items)
 
     \note The operand is binary -- requires OpToken with 2 parameters.
 
     The first operand is instance, the second operand is the index to be accessed.
    */
-   virtual void op_getIndex(VMContext* vm, void* instance ) const;
+   virtual void op_getIndex(VMContext* ctx, void* instance ) const;
 
    /** Called back when the VM wants to get an index out of an item.
-     \param vm the virtual machine that will receive the result.
+     \param ctx the virtual machine context that will receive the result.
      \param instance the instance (or 0 on flat items)
 
     \note The operand is ternary -- requires OpToken with 3 parameters.
@@ -838,10 +838,10 @@ public:
     value the implementor wants to pass back.
 
    */
-   virtual void op_setIndex(VMContext* vm, void* instance ) const;
+   virtual void op_setIndex(VMContext* ctx, void* instance ) const;
 
    /** Called back when the VM wants to get the value of a property of an item
-     \param vm the virtual machine that will receive the result.
+     \param ctx the virtual machine context that will receive the result.
      \param instance the instance (or 0 on flat items)
     \param prop The property to be accessed.
 
@@ -850,7 +850,7 @@ public:
    virtual void op_getProperty( VMContext* ctx, void* instance, const String& prop) const;
 
    /** Called back when the VM wants to set a value of a property in an item.
-     \param vm the virtual machine that will receive the result.
+     \param ctx the virtual machine context that will receive the result.
      \param instance the instance (or 0 on flat items)
     \param prop The property to be accessed.
 
@@ -865,7 +865,7 @@ public:
    virtual void op_setProperty( VMContext* ctx, void* instance, const String& prop ) const;
 
    /** Called back when the VM wants to get the value of a property of this class (static property).
-     \param vm the virtual machine that will receive the result.
+     \param ctx the virtual machine context that will receive the result.
     \param prop The property to be accessed.
 
     This operator gets the following parameters in the stack:
@@ -877,7 +877,7 @@ public:
    virtual void op_getClassProperty( VMContext* ctx, const String& prop) const;
 
    /** Called back when the VM wants to set a value of a property in an item.
-     \param vm the virtual machine that will receive the result.
+     \param ctx the virtual machine context that will receive the result.
     \param prop The property to be accessed.
 
     \note The operand is binary -- requires OpToken with 2 parameters.
@@ -885,7 +885,7 @@ public:
    virtual void op_setClassProperty( VMContext* ctx, const String& prop ) const;
 
    /** Called back when the VM wants to compare an item to this instance.
-     \param vm the virtual machine that will receive the result.
+     \param ctx the virtual machine context that will receive the result.
      \param instance the instance (or 0 on flat items)
 
     \note Signature: (1: Comparand) (0: self item) --> (0: result)
@@ -905,7 +905,7 @@ public:
    virtual void op_compare( VMContext* ctx, void* instance ) const;
 
    /** Called back when the VM wants to know if an item is true.
-     \param vm the virtual machine that will receive the result.
+     \param ctx the virtual machine context that will receive the result.
      \param instance the instance (or 0 on flat items)
 
     \note The operand is unary -- requires OpToken with 1 parameter.
@@ -918,7 +918,7 @@ public:
    virtual void op_isTrue( VMContext* ctx, void* instance ) const;
 
    /** Called back when the VM wants to know if an item is true.
-     \param vm the virtual machine that will receive the result.
+     \param ctx the virtual machine context that will receive the result.
      \param instance the instance (or 0 on flat items)
 
     \note The operand is binary -- requires OpToken with 2 parameters.
@@ -953,7 +953,7 @@ public:
    virtual void op_call( VMContext* ctx, int32 paramCount, void* instance ) const;
 
    /** Implements textification operator for the Virtual Macine.
-    \param ctx the virtual machine context that will receive the result.
+    \param ctx the virtual machine context context that will receive the result.
     \param instance the instance.
     \note The operand is unary -- requires OpToken with 1 parameter.
 
@@ -971,7 +971,7 @@ public:
    virtual void op_toString( VMContext* ctx, void* instance ) const;
 
    /** Prepares iteration.
-    \param ctx the virtual machine context that will receive the result.
+    \param ctx the virtual machine context context that will receive the result.
     \param instance the instance (or 0 on flat items)
     \note The operand unary, and generates an item.
 
@@ -991,7 +991,7 @@ public:
    virtual void op_iter( VMContext* ctx, void* instance ) const;
 
    /** Continues iteration.
-    \param ctx the virtual machine context that will receive the result.
+    \param ctx the virtual machine context context that will receive the result.
     \param instance the instance (or 0 on flat items)
     \note The operand is binary and leaves a new item in the stack.
 
@@ -1011,7 +1011,7 @@ public:
    virtual void op_next( VMContext* ctx, void* instance ) const;
 
    /** Summon an instance.
-    \param ctx the virtual machine context that will receive the result.
+    \param ctx the virtual machine context context that will receive the result.
     \param instance the summoned instance (or 0 on flat items)
     \param message The message sent to the summoned object
     \param pCount number of parameters for the summoning
@@ -1068,6 +1068,28 @@ public:
    /** Handler class for this class. */
    Class* handler() const;
    
+   /** Creates an "automatic" child class.
+    *
+    * \param name The name of the child class
+    * \param typeID an optional type ID for the class instances.
+    *
+    * This method is intended to create simple child classes out of
+    * standard engine classes, or base classes provided in extension
+    * modules, to be then configured via addMethod, addProperty and so on.
+    *
+    * The instance returned is an instance of ChildClass, which,
+    * by default, has all the (relevant) virtual members overridden with
+    * a method that calls that same member in the parent class (this one).
+    *
+    * For instance, the op_add operator of the child class will invoke
+    * the same op_add of this class.
+    *
+    * By default, the new class takes the same type ID of the parent class.
+    * Also, instance flatness and other relevant characteristics of the parent
+    * class (this one) are copied.
+    */
+   Class* createChild(const String& name, int64 typeID=-1 ) const;
+
    /** Returns the destruction order of this class.
     *
     * Higher classes priorities are destroyed later when the collector performs a clear loop.

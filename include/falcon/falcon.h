@@ -20,6 +20,10 @@
 #include <falcon/engine.h>
 #include <falcon/log.h>
 
+#include <falcon/string.h>
+#include <falcon/autocstring.h>
+#include <falcon/autowstring.h>
+
 #include <falcon/expression.h>
 #include <falcon/statement.h>
 #include <falcon/psteps/exprrule.h>
