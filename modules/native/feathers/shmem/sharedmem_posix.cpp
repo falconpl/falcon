@@ -18,7 +18,9 @@
 #define SRC "modules/feathers/shmem/sharedmem_posix.cpp"
 
 // To make SUNC happy
+#ifdef __SUNPRO_CC
 #define _POSIX_C_SOURCE 3
+#endif
 
 #include <falcon/autocstring.h>
 #include <falcon/stderrors.h>
