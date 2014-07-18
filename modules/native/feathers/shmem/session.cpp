@@ -86,7 +86,7 @@ public:
    public:
       PStepRestore( Session* s ): m_session(s) { apply = apply_; }
       virtual ~PStepRestore() {}
-      virtual void describeTo( String& s ) { s = "Session::Private::PStepRestore"; }
+      virtual void describeTo( String& s ) const { s = "Session::Private::PStepRestore"; }
 
       static void apply_(const PStep* ps, VMContext* ctx );
 
@@ -102,7 +102,7 @@ public:
       public:
          PStepStore( Session* s ): m_session(s) { apply = apply_; }
          virtual ~PStepStore() {}
-         virtual void describeTo( String& s ) { s = "Session::Private::PStepStore"; }
+         virtual void describeTo( String& s ) const { s = "Session::Private::PStepStore"; }
 
          static void apply_(const PStep* ps, VMContext* ctx );
 

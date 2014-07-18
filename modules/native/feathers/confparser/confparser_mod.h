@@ -208,6 +208,8 @@ public:
    };
 
    void enumerateSections( SectionEnumerator& es ) const;
+    
+   
 
 private:
    String m_fileName;
@@ -216,9 +218,10 @@ private:
    String m_errorMsg;
    uint32 m_errorLine;
    uint32 m_mark;
+
    bool m_bUseUnixComments;
    bool m_bUseUnixSpecs;
-
+    
    mutable Mutex m_mtx;
 
    class Private;
