@@ -489,10 +489,6 @@ bool Process::startScript( const URI& script, bool addPathToLoadPath )
 /** Starts a String given an input string as a text. */
 bool Process::startScript( const String& text, bool isFTD, const String& modName, const String& modPath )
 {
-   if (! checkRunning() ) {
-      return false;
-   }
-
    StringStream ss(text);
    TextReader tr (&ss);
    return startScript(&tr, isFTD, modName, modPath );
@@ -510,6 +506,11 @@ bool Process::startScript( TextReader* tc, bool isFTD, const String& modName, co
 
    ModCompiler mc;
    Module * mod = mc.compile(tc, modPath, modName, isFTD);
+   if( mod == 0 )
+   {
+      throw mc.makeError();
+   }
+
    mod->setMain(true);
 
    VMContext* ctx = mainContext();
@@ -525,6 +526,8 @@ bool Process::startScript( TextReader* tc, bool isFTD, const String& modName, co
       LOG->log(Log::fac_engine, Log::lvl_info, String("Module has no main script function: ") + modName );
       throw FALCON_SIGN_XERROR(CodeError, e_no_main, .extra(modName) );
    }
+
+   launch();
 
    return true;
 }

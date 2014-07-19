@@ -138,7 +138,7 @@ int main(int argc, char* argv[] )
 
       // let's try to run the script.
       try {
-         myProcess->startScript(Falcon::URI(argv[1]), true);
+         myProcess->startScript(Falcon::URI(argv[1]), true );
          // wait for the process to complete.
          myProcess->wait();
 
