@@ -171,7 +171,7 @@ FALCON_DECLARE_FUNCTION(init, "uri:[S|Uri]")
 FALCON_DEFINE_FUNCTION_P1(init)
 {
    // setup our options
-   Mod::CurlHandle* h = ctx->tself<Mod::CurlHandle*>();
+   Mod::CurlHandle* h = ctx->tself<Mod::CurlHandle>();
    Item* i_uri = ctx->param(0);
 
    internal_curl_init( this, ctx, h, i_uri );
@@ -199,7 +199,7 @@ FALCON_DECLARE_FUNCTION(exec, "")
 FALCON_DEFINE_FUNCTION_P1(exec)
 {
    // setup our options
-   Mod::CurlHandle* h = ctx->tself<Mod::CurlHandle*>();
+   Mod::CurlHandle* h = ctx->tself<Mod::CurlHandle>();
    CURL* curl = h->handle();
 
    if ( curl == 0 )
@@ -241,7 +241,7 @@ public:
    static void apply_(const PStep*, VMContext* ctx )
    {
       // get the request and "release" the old request.
-      Mod::CurlHandle* h = ctx->tself<Mod::CurlHandle*>();
+      Mod::CurlHandle* h = ctx->tself<Mod::CurlHandle>();
       Mod::SimpleCurlRequest* r = h->request();
       h->request(0);
 
@@ -280,7 +280,7 @@ FALCON_DECLARE_FUNCTION(setOutConsole, "")
 FALCON_DEFINE_FUNCTION_P1(setOutConsole)
 {
    // setup our options
-   Mod::CurlHandle* h = ctx->tself<Mod::CurlHandle*>();
+   Mod::CurlHandle* h = ctx->tself<Mod::CurlHandle>();
 
    if ( h->handle() == 0 )
    {
@@ -305,7 +305,7 @@ FALCON_DECLARE_FUNCTION(setOutString, "")
 FALCON_DEFINE_FUNCTION_P1(setOutString)
 {
    // setup our options
-   Mod::CurlHandle* h = ctx->tself<Mod::CurlHandle*>();
+   Mod::CurlHandle* h = ctx->tself<Mod::CurlHandle>();
 
    if ( h->handle() == 0 )
       throw new CurlError( ErrorParam( FALCON_ERROR_CURL_PM, __LINE__, SRC )
@@ -332,7 +332,7 @@ FALCON_DEFINE_FUNCTION_P1(setOutStream)
    static Class* clsStream = Engine::instance()->stdHandlers()->streamClass();
 
    // setup our options
-   Mod::CurlHandle* h = ctx->tself<Mod::CurlHandle*>();
+   Mod::CurlHandle* h = ctx->tself<Mod::CurlHandle>();
 
    if ( h->handle() == 0 )
    {
@@ -371,7 +371,7 @@ FALCON_DECLARE_FUNCTION(setOutCallback, "cb:C")
 FALCON_DEFINE_FUNCTION_P1(setOutCallback)
 {
    // setup our options
-   Mod::CurlHandle* h = ctx->tself<Mod::CurlHandle*>();
+   Mod::CurlHandle* h = ctx->tself<Mod::CurlHandle>();
 
    if ( h->handle() == 0 )
    {
@@ -403,7 +403,7 @@ FALCON_DECLARE_FUNCTION(cleanup, "")
 FALCON_DEFINE_FUNCTION_P1(cleanup)
 {
    // setup our options
-   Mod::CurlHandle* h = ctx->tself<Mod::CurlHandle*>();
+   Mod::CurlHandle* h = ctx->tself<Mod::CurlHandle>();
 
    if ( h->handle() == 0 )
    {
@@ -438,7 +438,7 @@ FALCON_DECLARE_FUNCTION(setInCallback, "cb:C")
 FALCON_DEFINE_FUNCTION_P1(setInCallback)
 {
    // setup our options
-   Mod::CurlHandle* h = ctx->tself<Mod::CurlHandle*>();
+   Mod::CurlHandle* h = ctx->tself<Mod::CurlHandle>();
 
    if ( h->handle() == 0 )
    {
@@ -474,7 +474,7 @@ FALCON_DEFINE_FUNCTION_P1(setInStream)
    static Class* clsStream = Engine::instance()->stdHandlers()->streamClass();
 
    // setup our options
-   Mod::CurlHandle* h = ctx->tself<Mod::CurlHandle*>();
+   Mod::CurlHandle* h = ctx->tself<Mod::CurlHandle>();
 
    if ( h->handle() == 0 )
    {
@@ -507,7 +507,7 @@ FALCON_DECLARE_FUNCTION(getData, "")
 FALCON_DEFINE_FUNCTION_P1(getData)
 {
    // setup our options
-   Mod::CurlHandle* h = ctx->tself<Mod::CurlHandle*>();
+   Mod::CurlHandle* h = ctx->tself<Mod::CurlHandle>();
 
    String* s = h->getData();
    if( s != 0 )
@@ -783,7 +783,7 @@ FALCON_DEFINE_FUNCTION_P1(setOption)
    }
 
    // setup our options
-   Mod::CurlHandle* h = ctx->tself<Mod::CurlHandle*>();
+   Mod::CurlHandle* h = ctx->tself<Mod::CurlHandle>();
 
    if ( h->handle() == 0 )
    {
@@ -814,7 +814,7 @@ FALCON_DEFINE_FUNCTION_P1(setOptions)
    }
 
    // setup our options
-   Mod::CurlHandle* h = ctx->tself<Mod::CurlHandle*>();
+   Mod::CurlHandle* h = ctx->tself<Mod::CurlHandle>();
 
    if ( h->handle() == 0 )
    {
@@ -886,7 +886,7 @@ FALCON_DEFINE_FUNCTION_P1(postData)
    }
 
    // setup our options
-   Mod::CurlHandle* h = ctx->tself<Mod::CurlHandle*>();
+   Mod::CurlHandle* h = ctx->tself<Mod::CurlHandle>();
 
    if ( h->handle() == 0 )
    {
@@ -982,7 +982,7 @@ FALCON_DEFINE_FUNCTION_P1(getInfo)
    }
 
    // setup our options
-   Mod::CurlHandle* h = ctx->tself<Mod::CurlHandle*>();
+   Mod::CurlHandle* h = ctx->tself<Mod::CurlHandle>();
 
    if ( h->handle() == 0 )
    {
@@ -1216,7 +1216,7 @@ static void internal_handle_add( Function* func, VMContext *ctx, Item* i_handle 
       throw func->paramError();
    }
 
-   Mod::CurlMultiHandle* mh = ctx->tself< Mod::CurlMultiHandle* >();
+   Mod::CurlMultiHandle* mh = ctx->tself< Mod::CurlMultiHandle >();
    Mod::CurlHandle* sh = static_cast< Mod::CurlHandle* >(i_handle->asInst());
 
    if( ! mh->addHandle(sh) )
@@ -1302,7 +1302,7 @@ FALCON_DEFINE_FUNCTION_P1(remove)
       throw paramError();
    }
 
-   Mod::CurlMultiHandle* mh = ctx->tself< Mod::CurlMultiHandle* >();
+   Mod::CurlMultiHandle* mh = ctx->tself< Mod::CurlMultiHandle >();
    Mod::CurlHandle* sh = static_cast< Mod::CurlHandle* >(i_handle->asInst());
 
 
@@ -1345,7 +1345,7 @@ FALCON_DEFINE_FUNCTION_P1(remove)
 FALCON_DECLARE_FUNCTION(perform, "")
 FALCON_DEFINE_FUNCTION_P1(perform)
 {
-   Mod::CurlMultiHandle* mh = ctx->tself< Mod::CurlMultiHandle* >();
+   Mod::CurlMultiHandle* mh = ctx->tself< Mod::CurlMultiHandle >();
 
    int rh = 0;
    CURLMcode ret;

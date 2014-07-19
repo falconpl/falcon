@@ -504,6 +504,8 @@ public:
    Class* asMethodClass() const { return content.mth.base; }
 
    void* asInst() const { return content.data.ptr.pInst; }
+   /** Synonymous of asInst() */
+   void* asUser() const { return content.data.ptr.pInst; }
 
    /** Shortcut to get the parent data of an instance.
     * @param parent the parent base class.

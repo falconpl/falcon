@@ -243,7 +243,7 @@ FALCON_DEFINE_FUNCTION_P1(addGlobal)
       throw paramError(__LINE__, SRC);
    }
 
-   Module* module = ctx->tself<Module*>();
+   Module* module = ctx->tself<Module>();
    const String& name = *i_name->asString();
    bool bExport = i_export == 0 ? false : i_export->isTrue();
    bool bOk = module->addGlobal(name, *i_value, bExport ) != 0;
@@ -265,7 +265,7 @@ FALCON_DEFINE_FUNCTION_P1(setGlobal)
       throw paramError(__LINE__, SRC);
    }
 
-   Module* module = ctx->tself<Module*>();
+   Module* module = ctx->tself<Module>();
    const String& name = *i_name->asString();
    Item* value = module->resolve(name);
    if( value != 0 )
@@ -291,7 +291,7 @@ FALCON_DEFINE_FUNCTION_P1(getGlobal)
       throw paramError(__LINE__, SRC);
    }
 
-   Module* module = ctx->tself<Module*>();
+   Module* module = ctx->tself<Module>();
    const String& name = *i_name->asString();
    Item* value = module->resolve(name);
    Item result;

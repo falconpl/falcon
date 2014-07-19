@@ -1,0 +1,27 @@
+// Store-restore a point.
+load vfs
+
+if args.len != 2
+	> "Please, pass 2 integer coordinates as paramters."
+	return 1
+end
+
+try 
+	x = int(args[0])
+	y = int(args[1])
+catch
+	> "Parameters are not integer coordinates."
+	return 1
+end
+
+pt = Point(x,y)
+
+> "Serializing into 'point.dat'"
+
+file = OutputStream('point.dat')
+storer = Storer()
+storer.store( pt )
+storer.commit(file)
+file.close()
+
+> "Done."

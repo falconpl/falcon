@@ -339,7 +339,7 @@ FALCON_DECLARE_FUNCTION(close, "remove:[B]")
 FALCON_DEFINE_FUNCTION_P1(close)
 {
    Item* i_remove = ctx->param(0);
-   SharedIPSem* sip = ctx->tself<SharedIPSem*>();
+   SharedIPSem* sip = ctx->tself<SharedIPSem>();
    bool bRemove = i_remove == 0 ? false: i_remove->isTrue();
    sip->semaphore().close( bRemove );
    ctx->returnFrame();
@@ -374,7 +374,7 @@ FALCON_DEFINE_FUNCTION_P1(post)
       }
    }
 
-   SharedIPSem* sip = ctx->tself<SharedIPSem*>();
+   SharedIPSem* sip = ctx->tself<SharedIPSem>();
    while( count > 0 )
    {
       sip->semaphore().post();

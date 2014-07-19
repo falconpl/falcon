@@ -1,0 +1,19 @@
+// Testing inheritance:
+
+class NewPoint(x,y,z) from Point(x,y)
+	z = z
+	
+	function describe()
+		return @"NewPoint (${self.x}, ${self.y}, ${self.z})"
+	end	
+end
+
+p0 = Point(3,4)
+p1 = NewPoint( 2,3, 4)
+
+> p0.describe()
+> p1.describe()
+
+// as you can see, distance() method will get the base C structure in Point
+> "old-styled distance: ", p0.distance(p1) 
+

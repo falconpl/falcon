@@ -445,7 +445,6 @@ set( falcon_engine_SOURCES
   vmcontext.cpp
   writer.cpp
   wvmcontext.cpp
-  qvmcontext.cpp
   
   ${re2_SRCS}
 )

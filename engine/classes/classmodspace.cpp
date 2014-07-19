@@ -717,7 +717,7 @@ FALCON_DECLARE_FUNCTION(makeChild, "path:[S],srcenc:[S],savePC:[N],useSources:[N
 FALCON_DEFINE_FUNCTION_P1(makeChild)
 {
 
-   ModSpace* self = ctx->tself<ModSpace*>();
+   ModSpace* self = ctx->tself<ModSpace>();
    ModSpace* ms = configure_ms(this, ctx, self);
    ms->setParent( self );
    ctx->returnFrame(FALCON_GC_STORE(this->methodOf(),ms));
@@ -742,7 +742,7 @@ FALCON_DEFINE_FUNCTION_P1(getExport)
    }
 
    const String& varname = *i_varname->asString();
-   ModSpace* ms = ctx->tself<ModSpace*>();
+   ModSpace* ms = ctx->tself<ModSpace>();
    Item* val = ms->findExportedValue(varname);
 
    if( val != 0 )
@@ -775,7 +775,7 @@ FALCON_DEFINE_FUNCTION_P1(setExport)
       throw paramError(__LINE__, SRC);
    }
 
-   ModSpace* ms = ctx->tself<ModSpace*>();
+   ModSpace* ms = ctx->tself<ModSpace>();
    const String& varname = *i_varname->asString();
    ms->setExportValue(varname, *i_value);
    ctx->returnFrame();
@@ -794,7 +794,7 @@ FALCON_DEFINE_FUNCTION_P1(setExport)
 FALCON_DECLARE_FUNCTION(addCore, "")
 FALCON_DEFINE_FUNCTION_P1(addCore)
 {
-   ModSpace* ms = ctx->tself<ModSpace*>();
+   ModSpace* ms = ctx->tself<ModSpace>();
    ms->add(Engine::instance()->getCore());
    ctx->returnFrame(ctx->self());
 }

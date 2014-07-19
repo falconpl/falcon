@@ -1,0 +1,22 @@
+// Basic test for the point class
+
+pt = Point(3,4)
+
+> "Created: ", pt.describe()
+
+pt1 = Point(1,5)
+
+> @"$pt - $pt1 = ", pt.distance(pt1)
+
+> "Access to elements:"
+> "X: ", pt.x
+> "Y: ", pt.y
+
+> "Changing..."
+
+pt.x = 9
+pt.y = 3
+> "X: ", pt.x
+> "Y: ", pt.y
+
+

@@ -138,7 +138,7 @@ public:
 FALCON_DECLARE_FUNCTION( iterator, "" )
 FALCON_DEFINE_FUNCTION_P1( iterator )
 {
-   Container* cnt = ctx->tself<Container*>();
+   Container* cnt = ctx->tself<Container>();
    ModuleContainers* mod = static_cast<ModuleContainers*>(methodOf()->module());
    const Class* icls = mod->iteratorClass();
    Iterator* iter = cnt->iterator();
@@ -154,7 +154,7 @@ FALCON_DEFINE_FUNCTION_P1( iterator )
 FALCON_DECLARE_FUNCTION( riterator, "" )
 FALCON_DEFINE_FUNCTION_P1( riterator )
 {
-   Container* cnt = ctx->tself<Container*>();
+   Container* cnt = ctx->tself<Container>();
    ModuleContainers* mod = static_cast<ModuleContainers*>(methodOf()->module());
    const Class* icls = mod->iteratorClass();
    Iterator* iter = cnt->riterator();
@@ -169,7 +169,7 @@ FALCON_DEFINE_FUNCTION_P1( riterator )
 FALCON_DECLARE_FUNCTION( clean, "" )
 FALCON_DEFINE_FUNCTION_P1( clean )
 {
-   Container* cnt = ctx->tself<Container*>();
+   Container* cnt = ctx->tself<Container>();
    cnt->clear();
    ctx->returnFrame();
 }
@@ -193,7 +193,7 @@ FALCON_DEFINE_FUNCTION_P( contains )
       throw paramError(__LINE__, SRC);
    }
 
-   Container* cnt = ctx->tself<Container*>();
+   Container* cnt = ctx->tself<Container>();
    const Item& item = *ctx->param(0);
    long depth = ctx->codeDepth();
    if( cnt->contains(ctx, item) )

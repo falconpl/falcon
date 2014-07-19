@@ -1,0 +1,14 @@
+// Store-restore a point.
+// NOTICE: You must have vfs_fm dynamic library reachable to run this test.
+ 
+load vfs
+
+> "Restoring the point from into 'point.dat'"
+
+file = InputStream('point.dat')
+r = Restorer()
+r.restore(file)
+pt = r.next()
+> "Restored: ", pt.describe()
+ 
+> "Done."

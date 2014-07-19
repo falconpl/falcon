@@ -1,0 +1,7 @@
+// We have a "replicate" function and a "Point" class imported from our module
+
+>> "replicate( 5, \"hello\" ): "
+> replicate( 5, "hello" )
+> "replicate( 5 ): >", replicate(5), "<"
+ 
+

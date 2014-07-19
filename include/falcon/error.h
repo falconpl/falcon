@@ -604,7 +604,7 @@ private:
  *@note Remember to add the ';' after the macro.
  */
 #define FALCON_SIGN_XERROR( Error_Class__, error_code__, Extra__ ) \
-         (new Error_Class__(ErrorParam(error_code__, __LINE__, SRC ).line(-1) Extra__ ))
+         (new Error_Class__(Falcon::ErrorParam(error_code__, __LINE__, SRC ).line(-1) Extra__ ))
 
 
 /**
@@ -615,7 +615,7 @@ private:
  */
 #define FALCON_RESIGN_XERROR( Error_Class__, error_code__, VMContext__, Extra__ ) \
          VMContext__ = VMContext__;\
-         throw new Error_Class__(ErrorParam(error_code__, __LINE__, SRC ).line(-1) Extra__ );
+         throw new Error_Class__(Falcon::ErrorParam(error_code__, __LINE__, SRC ).line(-1) Extra__ );
 
          //(VMContext__->raiseError(new Error_Class__(ErrorParam(error_code__, __LINE__, SRC ) Extra__ ))->decref())
 /**
@@ -623,13 +623,13 @@ private:
  */
 
 #define FALCON_SIGN_ROPROP_ERROR( prop ) \
-      (new AccessError(ErrorParam(e_prop_ro, __LINE__, SRC  ).extra(prop) ))
+      (new Falcon::AccessError(Falcon::ErrorParam(e_prop_ro, __LINE__, SRC  ).extra(prop) ))
 
 /**
  * Prepare a read-only-property error on the given property
  */
 #define FALCON_RESIGN_ROPROP_ERROR( prop, VMContext__ ) \
-         (VMContext__->raiseError(new AccessError(ErrorParam(e_prop_ro, __LINE__, SRC  ).extra(prop) ))->decref())
+         (VMContext__->raiseError(new Falcon::AccessError(Falcon::ErrorParam(e_prop_ro, __LINE__, SRC  ).extra(prop) ))->decref())
 
 
 #define FALCON_DECLARE_ERROR_CLASS_EX( __name__, __extra__ ) \

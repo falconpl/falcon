@@ -138,7 +138,7 @@ void Function_next::invoke(VMContext* ctx, int32 )
 FALCON_DECLARE_FUNCTION( init, "sequence:[X]" );
 void Function_init::invoke(VMContext* ctx, int32 pCount )
 {
-   SIterCarrier* ic = ctx->tself<SIterCarrier*>();
+   SIterCarrier* ic = ctx->tself<SIterCarrier>();
 
    if ( pCount >= 1 )
    {

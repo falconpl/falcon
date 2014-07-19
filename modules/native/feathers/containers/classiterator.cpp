@@ -59,7 +59,7 @@ namespace {
 FALCON_DECLARE_FUNCTION( next, "" )
 FALCON_DEFINE_FUNCTION_P1( next )
 {
-   Iterator* cnt = ctx->tself<Iterator*>();
+   Iterator* cnt = ctx->tself<Iterator>();
    Item item;
    if( ! cnt->next(item) )
    {
@@ -80,7 +80,7 @@ FALCON_DEFINE_FUNCTION_P1( next )
 FALCON_DECLARE_FUNCTION( current, "" )
 FALCON_DEFINE_FUNCTION_P1( current )
 {
-   Iterator* cnt = ctx->tself<Iterator*>();
+   Iterator* cnt = ctx->tself<Iterator>();
    Item item;
    if( ! cnt->current(item) )
    {
@@ -97,7 +97,7 @@ FALCON_DEFINE_FUNCTION_P1( current )
 FALCON_DECLARE_FUNCTION( reset, "" )
 FALCON_DEFINE_FUNCTION_P1( reset )
 {
-   Iterator* cnt = ctx->tself<Iterator*>();
+   Iterator* cnt = ctx->tself<Iterator>();
    cnt->reset();
    ctx->returnFrame();
 }
@@ -113,7 +113,7 @@ FALCON_DEFINE_FUNCTION_P1( reset )
 FALCON_DECLARE_FUNCTION( erase, "" )
 FALCON_DEFINE_FUNCTION_P1( erase )
 {
-   Iterator* iter = ctx->tself<Iterator*>();
+   Iterator* iter = ctx->tself<Iterator>();
    Container* cnt = iter->container();
 
    if( ! cnt->erase(iter) )
@@ -139,7 +139,7 @@ FALCON_DEFINE_FUNCTION_P( insert )
       throw paramError(__LINE__, SRC);
    }
 
-   Iterator* iter = ctx->tself<Iterator*>();
+   Iterator* iter = ctx->tself<Iterator>();
    Container* cnt = iter->container();
 
    for( int32 i = 0; i < pCount; ++i )

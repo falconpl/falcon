@@ -195,7 +195,7 @@ public:
 
 
       // the courier object is the self of our frame.
-      EventCourier* courier = ctx->tself<EventCourier*>();
+      EventCourier* courier = ctx->tself<EventCourier>();
       EventCourier::Token* tk = courier->popEvent();
       TRACE2("Entering ClassEventCourier::PStepAfterWait courier: %p token%p", courier, tk);
 

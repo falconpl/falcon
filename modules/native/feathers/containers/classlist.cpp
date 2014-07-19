@@ -55,7 +55,7 @@ FALCON_DEFINE_FUNCTION_P( push )
       throw paramError(__LINE__, SRC);
    }
 
-   List* cnt = ctx->tself<List*>();
+   List* cnt = ctx->tself<List>();
    for( int32 i = 0; i < pCount; ++i )
    {
       const Item& item = *ctx->param(i);
@@ -81,7 +81,7 @@ FALCON_DEFINE_FUNCTION_P( unshift )
       throw paramError(__LINE__, SRC);
    }
 
-   List* cnt = ctx->tself<List*>();
+   List* cnt = ctx->tself<List>();
    for( int32 i = 0; i < pCount; ++i )
    {
       const Item& item = *ctx->param(i);
@@ -101,7 +101,7 @@ FALCON_DEFINE_FUNCTION_P( unshift )
 FALCON_DECLARE_FUNCTION( pop, "" )
 FALCON_DEFINE_FUNCTION_P1( pop )
 {
-   List* cnt = ctx->tself<List*>();
+   List* cnt = ctx->tself<List>();
    Item last;
    if( ! cnt->back(last) )
    {
@@ -122,7 +122,7 @@ FALCON_DEFINE_FUNCTION_P1( pop )
 FALCON_DECLARE_FUNCTION( shift, "" )
 FALCON_DEFINE_FUNCTION_P1( shift )
 {
-   List* cnt = ctx->tself<List*>();
+   List* cnt = ctx->tself<List>();
    Item last;
    if( ! cnt->front(last) )
    {
@@ -144,7 +144,7 @@ FALCON_DEFINE_FUNCTION_P1( shift )
 FALCON_DECLARE_FUNCTION( front, "" )
 FALCON_DEFINE_FUNCTION_P1( front )
 {
-   List* cnt = ctx->tself<List*>();
+   List* cnt = ctx->tself<List>();
    Item last;
    if( cnt->front(last) )
    {
@@ -164,7 +164,7 @@ FALCON_DEFINE_FUNCTION_P1( front )
 FALCON_DECLARE_FUNCTION( back, "" )
 FALCON_DEFINE_FUNCTION_P1( back )
 {
-   List* cnt = ctx->tself<List*>();
+   List* cnt = ctx->tself<List>();
    Item last;
    if( cnt->back(last) )
    {

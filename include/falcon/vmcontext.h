@@ -636,7 +636,7 @@ public:
     * Return a typeized pointer to the self instance.
     */
    template<typename _T>
-      _T tself() { return static_cast<_T>(currentFrame().m_self.asInst()); }
+      _T* tself() { return static_cast<_T*>(currentFrame().m_self.asInst()); }
 
    const CallFrame& previousFrame( uint32 n ) const { return *(&currentFrame()-n); }
 

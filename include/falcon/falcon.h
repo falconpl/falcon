@@ -69,8 +69,9 @@
 //--- error headers ---
 #include <falcon/classes/classerror.h>
 #include <falcon/stderrors.h>
-
+#include <falcon/error.h>
 
 #endif	/* FALCON_H */
 
 /* end of falcon.h */
+

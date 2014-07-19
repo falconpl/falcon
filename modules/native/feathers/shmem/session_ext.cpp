@@ -123,7 +123,7 @@ FALCON_DEFINE_FUNCTION_P1(init)
       throw paramError( "Invalid mode", __LINE__, SRC);
    }
 
-   Session* session = ctx->tself<Session*>();
+   Session* session = ctx->tself<Session>();
    const String& id = *i_id->asString();
    session->setID(id);
    session->setOpenMode(static_cast<Session::t_openmode>(mode));
@@ -141,7 +141,7 @@ static void internal_add_remove( Function* func, VMContext* ctx, int32 pCount, b
       throw func->paramError(__LINE__);
    }
 
-   Session* session = ctx->tself<Session*>();
+   Session* session = ctx->tself<Session>();
 
    for(int32 i = 0; i < pCount; i++ )
    {
@@ -225,7 +225,7 @@ FALCON_DEFINE_FUNCTION_P(remove)
 FALCON_DECLARE_FUNCTION(open, "apply:[B]")
 FALCON_DEFINE_FUNCTION_P(open)
 {
-   Session* session = ctx->tself<Session*>();
+   Session* session = ctx->tself<Session>();
    bool bApply = pCount > 0 ? ctx->param(0)->isTrue() : true;
    TRACE1("Session.open(%s)", bApply ? "true" : "false" );
 
@@ -270,7 +270,7 @@ FALCON_DECLARE_FUNCTION(create, "symbol:[S|Symbol],..." )
 FALCON_DEFINE_FUNCTION_P(create)
 {
    TRACE1("Session.create() with %d parameters", ctx->paramCount() );
-   Session* session = ctx->tself<Session*>();
+   Session* session = ctx->tself<Session>();
 
 #ifndef NDEBUG
    String id;
@@ -307,7 +307,7 @@ FALCON_DEFINE_FUNCTION_P(create)
 FALCON_DECLARE_FUNCTION(start, "symbol:[S|Symbol],...")
 FALCON_DEFINE_FUNCTION_P(start)
 {
-   Session* session = ctx->tself<Session*>();
+   Session* session = ctx->tself<Session>();
    TRACE1("Session.start() with %d parameters", ctx->paramCount() );
 
    try {
@@ -355,7 +355,7 @@ FALCON_DECLARE_FUNCTION(close, "")
 FALCON_DEFINE_FUNCTION_P1(close)
 {
    MESSAGE("Session.close()" );
-   Session* session = ctx->tself<Session*>();
+   Session* session = ctx->tself<Session>();
    session->close();
 
    ctx->returnFrame();
@@ -370,7 +370,7 @@ FALCON_DECLARE_FUNCTION(apply, "")
 FALCON_DEFINE_FUNCTION_P1(apply)
 {
    MESSAGE("Session.apply()" );
-   Session* session = ctx->tself<Session*>();
+   Session* session = ctx->tself<Session>();
    // we must operate in caller's frame.
    ctx->returnFrame();
 
@@ -385,7 +385,7 @@ FALCON_DECLARE_FUNCTION(record, "")
 FALCON_DEFINE_FUNCTION_P1(record)
 {
    MESSAGE("Session.apply()" );
-   Session* session = ctx->tself<Session*>();
+   Session* session = ctx->tself<Session>();
    // we must operate in caller's frame.
    ctx->returnFrame();
 
@@ -410,7 +410,7 @@ FALCON_DEFINE_FUNCTION_P1(save)
 
    Item* i_record = ctx->param(0);
    TRACE("Session.save(%s)", i_record == 0 || i_record->isTrue() ? "true" : "false" );
-   Session* session = ctx->tself<Session*>();
+   Session* session = ctx->tself<Session>();
 
    if( i_record == 0 || i_record->isTrue() )
    {
@@ -457,7 +457,7 @@ FALCON_DEFINE_FUNCTION_P1(get)
 
    TRACE("Session.get(\"%s\")", sym->name().c_ize() );
    Item value;
-   Session* session = ctx->tself<Session*>();
+   Session* session = ctx->tself<Session>();
    bool found = session->get(sym, value);
 
    if ( i_symbol->isString() )
@@ -517,7 +517,7 @@ FALCON_DEFINE_FUNCTION_P1(set)
 
    TRACE("Session.set(\"%s\", ...)", sym->name().c_ize() );
    Item value;
-   Session* session = ctx->tself<Session*>();
+   Session* session = ctx->tself<Session>();
    session->addSymbol(sym, *i_value);
 
    ctx->returnFrame();
@@ -532,7 +532,7 @@ FALCON_DECLARE_FUNCTION(getAll, "")
 FALCON_DEFINE_FUNCTION_P1(getAll)
 {
    MESSAGE("getAll()");
-   Session* session = ctx->tself<Session*>();
+   Session* session = ctx->tself<Session>();
 
    ItemDict* dict = new ItemDict;
 

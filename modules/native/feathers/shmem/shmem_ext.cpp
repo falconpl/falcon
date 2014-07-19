@@ -65,7 +65,7 @@ FALCON_DECLARE_FUNCTION(init, "name:S, store:[B]");
 FALCON_DEFINE_FUNCTION_P1(init)
 {
    TRACE1( "ClassSharedMem::init(%d)", ctx->paramCount() );
-   internal_open( ctx->tself<SharedMem*>(), this, ctx, true );
+   internal_open( ctx->tself<SharedMem>(), this, ctx, true );
    ctx->returnFrame(ctx->self());
 }
 
@@ -121,7 +121,7 @@ FALCON_DEFINE_FUNCTION_P1(close)
    Item* i_remove = ctx->param(0);
 
    bool bRemove = i_remove == 0 ? false: i_remove->isTrue();
-   SharedMem* shm = ctx->tself<SharedMem*>();
+   SharedMem* shm = ctx->tself<SharedMem>();
    shm->close(bRemove);
    ctx->returnFrame(ctx->self());
 }
@@ -129,7 +129,7 @@ FALCON_DEFINE_FUNCTION_P1(close)
 
 static void internal_read( VMContext* ctx, String* storage, Item* i_size, Item* i_offset )
 {
-   SharedMem* shm = ctx->tself<SharedMem*>();
+   SharedMem* shm = ctx->tself<SharedMem>();
    int64 size = i_size == 0 ? 0 : (i_size->isNil() ? 0 : i_size->forceInteger());
    int64 offset = i_offset == 0 ? 0 : i_offset->forceInteger();
    if( offset < 0 )
@@ -294,7 +294,7 @@ FALCON_DEFINE_FUNCTION_P1(write)
      throw paramError();
    }
 
-   SharedMem* shm = ctx->tself<SharedMem*>();
+   SharedMem* shm = ctx->tself<SharedMem>();
 
    String* storage = i_storage->asString();
    int64 size = storage->size();
@@ -329,7 +329,7 @@ FALCON_DEFINE_FUNCTION_P1(set)
      throw paramError();
    }
 
-   SharedMem* shm = ctx->tself<SharedMem*>();
+   SharedMem* shm = ctx->tself<SharedMem>();
 
    String* storage = i_storage->asString();
    int64 size = storage->size();

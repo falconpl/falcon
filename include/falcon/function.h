@@ -291,9 +291,12 @@ protected:
 
 #define FALCON_PCHECK_GET( _pname , _pCheck, _tgt ) ( _pname != 0 && _pname->is##_pCheck() && ((_tgt= _pname->as##_pCheck()) || true) )
 #define FALCON_PCHECK_O_GET( _pname , _pCheck, _tgt, _dflt ) ( \
-        ((_pname == 0 || _pname->isNil()) && ((_tgt=_dflt) || true)) || \
-        ( _pname->is##_pCheck() && ((_tgt=_pname->as##_pCheck()) || true) ) \
+        ((_pname == 0 || _pname->isNil()) && ((_tgt=_dflt) != 0|| true)) || \
+        ( _pname->is##_pCheck() && ((_tgt=_pname->as##_pCheck()) != 0|| true) ) \
         )
+
+#define FALCON_NPCHECK_GET( _pnum , _pCheck, _tgt ) FALCON_PCHECK_GET( (ctx->param(_pnum)), _pCheck, _tgt )
+#define FALCON_NPCHECK_O_GET( _pnum , _pCheck, _tgt, _dflt ) FALCON_PCHECK_O_GET( (ctx->param(_pnum)), _pCheck, _tgt, _dflt )
 
 }
 

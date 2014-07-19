@@ -233,7 +233,7 @@ FALCON_DEFINE_FUNCTION_P1( init )
 FALCON_DECLARE_FUNCTION( next, "" );
 FALCON_DEFINE_FUNCTION_P1( next )
 {
-   MultiTokenizer* tk = ctx->tself<MultiTokenizer*>();
+   MultiTokenizer* tk = ctx->tself<MultiTokenizer>();
    if( ! tk->next() )
    {
       ctx->returnFrame();
@@ -252,7 +252,7 @@ FALCON_DEFINE_FUNCTION_P1( next )
 FALCON_DECLARE_FUNCTION( rewind, "" );
 FALCON_DEFINE_FUNCTION_P1( rewind )
 {
-   MultiTokenizer* tk = ctx->tself<MultiTokenizer*>();
+   MultiTokenizer* tk = ctx->tself<MultiTokenizer>();
 
    tk->rewind();
    ctx->returnFrame();
@@ -272,7 +272,7 @@ FALCON_DEFINE_FUNCTION_P1( rewind )
 FALCON_DECLARE_FUNCTION( setSource, "source:S|TextReader" );
 FALCON_DEFINE_FUNCTION_P1( setSource )
 {
-   MultiTokenizer* tk = ctx->tself<MultiTokenizer*>();
+   MultiTokenizer* tk = ctx->tself<MultiTokenizer>();
    internal_setSource(this, ctx, tk);
    ctx->returnFrame();
 }
@@ -290,7 +290,7 @@ FALCON_DEFINE_FUNCTION_P1( setSource )
 FALCON_DECLARE_FUNCTION( clearTokens, "" );
 FALCON_DEFINE_FUNCTION_P1( clearTokens )
 {
-   MultiTokenizer* tk = ctx->tself<MultiTokenizer*>();
+   MultiTokenizer* tk = ctx->tself<MultiTokenizer>();
    tk->clearTokens();
    ctx->returnFrame();
 }
@@ -326,7 +326,7 @@ static void internal_add( Function* caller, VMContext* ctx )
       throw caller->paramError();
    }
 
-   MultiTokenizer* tk = ctx->tself<MultiTokenizer*>();
+   MultiTokenizer* tk = ctx->tself<MultiTokenizer>();
    if (i_token->isRE())
    {
       re2::RE2* re = static_cast<re2::RE2*>(i_token->asInst());
@@ -502,7 +502,7 @@ FALCON_DEFINE_FUNCTION_P( add )
       throw paramError(__LINE__, SRC);
    }
 
-   MultiTokenizer* mt = ctx->tself<MultiTokenizer*>();
+   MultiTokenizer* mt = ctx->tself<MultiTokenizer>();
 
    for( int i = 0; i < pCount; i++ )
    {

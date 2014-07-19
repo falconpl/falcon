@@ -89,7 +89,7 @@ FALCON_DEFINE_FUNCTION_P1( init )
 FALCON_DECLARE_FUNCTION( next, "" );
 FALCON_DEFINE_FUNCTION_P1( next )
 {
-   StringTokenizer* tk = ctx->tself<StringTokenizer*>();
+   StringTokenizer* tk = ctx->tself<StringTokenizer>();
    const Ext::ClassTokenizer* cls = static_cast<const Ext::ClassTokenizer*>(methodOf());
 
    if( tk->hasNext() )
