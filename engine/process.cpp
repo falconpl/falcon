@@ -40,6 +40,8 @@
 #include <falcon/modloader.h>
 #include <falcon/log.h>
 #include <falcon/module.h>
+#include <falcon/stringstream.h>
+#include <falcon/modcompiler.h>
 
 #include <set>
 #include <map>
@@ -480,6 +482,50 @@ bool Process::startScript( const URI& script, bool addPathToLoadPath )
    LOG->log(Log::fac_engine, Log::lvl_info, String("Internally starting loader process on: ") + script.encode() );
    modSpace()->loadModuleInContext( script.encode(), true, true, true, mainContext(),0,true );
    launch();
+   return true;
+}
+
+
+/** Starts a String given an input string as a text. */
+bool Process::startScript( const String& text, bool isFTD, const String& modName, const String& modPath )
+{
+   if (! checkRunning() ) {
+      return false;
+   }
+
+   StringStream ss(text);
+   TextReader tr (&ss);
+   return startScript(&tr, isFTD, modName, modPath );
+
+}
+
+/** Starts a String given a transcoder */
+bool Process::startScript( TextReader* tc, bool isFTD, const String& modName, const String& modPath )
+{
+   static Log* LOG =  Engine::instance()->log();
+
+   if (! checkRunning() ) {
+      return false;
+   }
+
+   ModCompiler mc;
+   Module * mod = mc.compile(tc, modPath, modName, isFTD);
+   mod->setMain(true);
+
+   VMContext* ctx = mainContext();
+   ctx->reset();
+
+   Function* mainFunc = mod->getMainFunction();
+   if( mainFunc != 0 )
+   {
+      LOG->log(Log::fac_engine, Log::lvl_info, String("Launching main script function on: ") + modName );
+      ctx->call( mainFunc );
+   }
+   else {
+      LOG->log(Log::fac_engine, Log::lvl_info, String("Module has no main script function: ") + modName );
+      throw FALCON_SIGN_XERROR(CodeError, e_no_main, .extra(modName) );
+   }
+
    return true;
 }
 
