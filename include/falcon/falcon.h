@@ -50,7 +50,6 @@
 #include <falcon/vm.h>
 #include <falcon/vmcontext.h>
 #include <falcon/wvmcontext.h>
-#include <falcon/qvmcontext.h>
 #include <falcon/application.h>
 
 #include <falcon/cm/coremodule.h>

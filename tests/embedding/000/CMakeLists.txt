@@ -6,11 +6,11 @@ include_directories(
   ${PROJECT_SOURCE_DIR}/include
 )
 
-add_executable( 000
+add_executable( embed_000
    main.cpp  
 )
 
-target_link_libraries( 000
+target_link_libraries( embed_000
   falcon_engine
 )
 

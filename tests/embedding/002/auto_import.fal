@@ -1,0 +1,17 @@
+// This test shows how an application module can become a catch-all for
+// implicit import request
+
+// This directive tells falcon to pass implicit requests to your AppModule
+import from AppModule
+
+> "Some dynamically created functions"
+> "This functions are not even explicitly requested in the application module"
+
+// as this are undeclared, the engine will try to search them where possible,
+// and in particular in the modules that have been marked for implicit imports.
+> func1()
+> extraFunc()
+> coolFunc()
+
+>"..."
+

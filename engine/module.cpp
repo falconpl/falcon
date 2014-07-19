@@ -379,7 +379,7 @@ Item* Module::resolveGlobally( const Symbol* sym )
 Item* Module::resolveLocally(const String& name)
 {
    const Symbol* sym = Engine::getSymbol(name);
-   Item* value = m_globals.getValue( sym );
+   Item* value = resolveLocally(sym);
    sym->decref();
    return value;
 }

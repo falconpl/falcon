@@ -1,0 +1,10 @@
+// In this test, we show how to produce items from explicit import requests:
+
+import func1, extraFunc, coolFunc from AppModule
+
+> "Some dynamically created functions"
+> func1()
+> extraFunc()
+> coolFunc()
+
+>"..."
