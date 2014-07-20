@@ -39,7 +39,7 @@ public:
 
    ModSpace* modSpace() const { return m_ms; }
 
-   Module* mainModule() { return m_mainModule; }
+   Module* mainModule() const;
 
    void setMainModule( Module* mod );
 

@@ -545,6 +545,62 @@ void ClassMulti::op_setIndex( VMContext* ctx, void* self ) const
 }
 
 
+bool ClassMulti::getProperty( const String& name, void* instance, Item& target ) const
+{
+   Private_base::PropMap::const_iterator iter = _p_base->m_props.find( name );
+   if( iter != _p_base->m_props.end() )
+   {
+      const Property& prop = iter->second;
+      ItemArray* ia = static_cast<ItemArray*>(instance);
+
+      // if < 0 it's a class.
+      if( prop.m_itemId < 0 )
+      {
+         // so, turn the thing in the "self" of the class.
+         target.copyFromRemote(ia->at(-prop.m_itemId));
+         return true;
+      }
+      else
+      {
+         Class* cls;
+         void* udata;
+         ia->at(prop.m_itemId).forceClassInst( cls, udata );
+         return cls->getProperty( name, udata, target );
+      }
+   }
+
+   return false;
+}
+
+
+bool ClassMulti::setProperty( const String& name, void* instance, const Item& target ) const
+{
+   Private_base::PropMap::const_iterator iter = _p_base->m_props.find( name );
+   if( iter != _p_base->m_props.end() )
+   {
+      const Property& prop = iter->second;
+      ItemArray* ia = static_cast<ItemArray*>(instance);
+
+      // if < 0 it's a class.
+      if( prop.m_itemId < 0 )
+      {
+         // so, turn the thing in the "self" of the class.
+         ia->at(-prop.m_itemId).copyFromLocal(target);
+         return true;
+      }
+      else
+      {
+         Class* cls;
+         void* udata;
+         ia->at(prop.m_itemId).forceClassInst( cls, udata );
+         return cls->setProperty( name, udata, target );
+      }
+   }
+
+   return false;
+}
+
+
 void ClassMulti::op_getProperty( VMContext* ctx, void* self, const String& propName ) const
 {
    Class* cls;

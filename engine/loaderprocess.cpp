@@ -46,7 +46,7 @@ void LoaderProcess::loadModule( const String& modUri, bool isUri, bool launchMai
    m_context->call( m_loaderEntry );
    m_context->pushCode( &m_stepSetupMain );
 
-   m_ms->loadModule( modUri, isUri, false, launchMain );
+   m_ms->loadModuleInContext( modUri, isUri, false, launchMain, mainContext(), 0, true );
    start();
 }
 
@@ -62,6 +62,12 @@ void LoaderProcess::setMainModule( Module* mod )
    }
 
    m_mainModule = mod;
+}
+
+Module* LoaderProcess::mainModule() const
+{
+   m_mainModule->incref();
+   return m_mainModule;
 }
 
 

@@ -39,6 +39,9 @@ public:
    ClassMulti( const String& name, int TypeID );
    virtual ~ClassMulti();
 
+   virtual bool getProperty( const String& name, void* instance, Item& target ) const;
+   virtual bool setProperty( const String& name, void* instance, const Item& target ) const;
+
    //=========================================================
    // Operators.
    //

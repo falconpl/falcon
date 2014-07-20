@@ -47,6 +47,9 @@ public:
    virtual void flatten( VMContext* ctx, ItemArray& subItems, void* instance ) const;
    virtual void unflatten( VMContext* ctx, ItemArray& subItems, void* instance ) const;
 
+   virtual bool getProperty( const String& name, void* instance, Item& target ) const;
+   virtual bool setProperty( const String& name, void* instance, const Item& target ) const;
+
    //=========================================================
    // Class management
    //

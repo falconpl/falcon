@@ -336,7 +336,7 @@ int main(int argc, char* argv[] )
    Falcon::VMachine vm;
 
    std::cout << "The Falcon Programming Language" << std::endl
-             << "Embedding test 001 -- Advanced embedding" << std::endl
+             << "Embedding test 001 -- Application pushing symbols in scripts." << std::endl
             ;
 
    if( argc < 2 )

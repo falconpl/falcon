@@ -438,6 +438,16 @@ public:
 
    virtual void delegate( void* instance, Item* target, const String& message ) const;
 
+   /** Get the raw property
+    *
+    */
+   virtual bool getProperty( const String& name, void* instance, Item& target ) const;
+
+   /** Set the raw property
+    *
+    */
+   virtual bool setProperty( const String& name, void* instance, const Item& target ) const;
+
    //=========================================================
    // Class management
    //

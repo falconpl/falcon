@@ -2,7 +2,7 @@
    FALCON - The Falcon Programming Language.
    FILE: main.cpp
 
-   Example of application provided functions, classes and modules.
+   Script pulling symbols from application.
 
    This progam demonstrates how the script can pull entities
    from the host application, via a dynamic name resolution
@@ -119,12 +119,12 @@ int main(int argc, char* argv[] )
    Falcon::VMachine vm;
 
    std::cout << "The Falcon Programming Language" << std::endl
-             << "Embedding test 002 -- Advanced embedding" << std::endl
+             << "Embedding test 002 -- Script pulling symbols from application." << std::endl
             ;
 
    if( argc < 2 )
    {
-      std::cout << "Usage: 002 <scriptname> <arg1>...<argN>" << std::endl;
+      std::cout << "Usage: 002 <scriptname>" << std::endl;
    }
    else
    {

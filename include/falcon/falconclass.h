@@ -264,6 +264,9 @@ public:
     */
    const Property* getProperty( const String& name ) const;
 
+   virtual bool getProperty( const String& name, void* instance, Item& target ) const;
+   virtual bool setProperty( const String& name, void* instance, const Item& target ) const;
+
    /** Adds a state to this class.
       \param state The state to be added.
       \return True if the state could be added, false if the state name was

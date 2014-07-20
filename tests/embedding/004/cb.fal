@@ -1,0 +1,27 @@
+
+function on_one()
+	> "ON ONE: ", passvp().describe()
+	return "on one"
+end
+
+function on_two()
+	> "ON TWO: ", passvp().describe()
+	return "on two"
+end
+
+object Handler
+	init
+		> "** Callback loaded **"
+	end
+	
+	function on_A()
+		> "MTH ON A: ", passvp().describe()
+		return "on a"
+	end
+	
+	function on_B()
+		> "MTH ON B: ", passvp().describe()
+		return "on b"
+	end
+end
+	

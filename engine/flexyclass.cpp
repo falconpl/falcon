@@ -313,6 +313,43 @@ void FlexyClass::op_setProperty( VMContext* ctx, void* self, const String& prop 
    dict.insert( prop, value );
 }
 
+bool FlexyClass::getProperty( const String& name, void* self, Item& target ) const
+{
+   FlexyDict& dict = *static_cast<FlexyDict*>(self);
+   Item* result = dict.find( name );
+
+   if( result != 0 )
+   {
+      if( result->isFunction() )
+      {
+        Function* func = result->asFunction();
+        target.setUser(this, self);
+        target.methodize( func );
+      }
+      else {
+         target = *result; // should be already copied by insert
+      }
+      return true;
+   }
+
+   return false;
+}
+
+
+bool FlexyClass::setProperty( const String& name, void* instance, const Item& target ) const
+{
+   FlexyDict& dict = *static_cast<FlexyDict*>(instance);
+   Item* result = dict.find( name );
+
+   if( result != 0 )
+   {
+      result->copyFromLocal(target);
+      return true;
+   }
+
+   return false;
+}
+
 
 //=========================================================================
 //

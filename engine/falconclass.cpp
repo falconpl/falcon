@@ -531,6 +531,19 @@ const FalconClass::Property* FalconClass::getProperty( const String& name ) cons
 }
 
 
+bool FalconClass::getProperty( const String& name, void* instance, Item& target ) const
+{
+   FalconInstance* inst = static_cast<FalconInstance*>(instance);
+   return inst->getProperty(name, target);
+}
+
+bool FalconClass::setProperty( const String& name, void* instance, const Item& target ) const
+{
+   FalconInstance* inst = static_cast<FalconInstance*>(instance);
+   return inst->setProperty(name, target);
+}
+
+
 void FalconClass::gcMark( uint32 mark )
 {
    if( m_mark != mark )

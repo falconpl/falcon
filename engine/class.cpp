@@ -631,6 +631,48 @@ Selectable* Class::getSelectableInterface( void* ) const
 {
    return 0;
 }
+
+
+bool Class::getProperty( const String& name, void* instance, Item& target ) const
+{
+   Private::PropertyMap::iterator iter = _p->m_props.find( name );
+   if( iter != _p->m_props.end() )
+   {
+      Property& prop = iter->second;
+      if( prop.method != 0 )
+      {
+         target.setUser(this, instance);
+         target.methodize(prop.method);
+      }
+      else if (prop.bConst )
+      {
+         target = prop.value;
+      }
+      else
+      {
+         prop.getFunc( this, iter->first, instance, target );
+      }
+      return true;
+   }
+
+   return false;
+}
+
+bool Class::setProperty( const String& name, void* instance, const Item& target ) const
+{
+   Private::PropertyMap::iterator iter = _p->m_props.find( name );
+   if( iter != _p->m_props.end() )
+   {
+      Property& prop = iter->second;
+      if( !prop.bConst && prop.setFunc != 0 )
+      {
+         prop.setFunc( this, iter->first, instance, target );
+      }
+   }
+
+   return 0;
+}
+
 //=====================================================================
 // VM Operator override.
 //
