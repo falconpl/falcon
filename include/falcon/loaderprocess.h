@@ -28,7 +28,8 @@ class VMContext;
 class SynFunc;
 
 /** VM Process specialized in loading modules into the VM.
- *
+ * \note THIS IS A TODO / work in progress. Do not use
+ * for production.
  */
 class FALCON_DYN_CLASS LoaderProcess: public Process
 {

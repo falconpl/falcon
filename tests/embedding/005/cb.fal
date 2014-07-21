@@ -1,0 +1,18 @@
+
+function cb_1()
+	> "CB one: ", passvp().describe()
+end
+
+function cb_2()
+	> "CB two: ", passvp().describe()
+end
+
+> "Registering events:"
+
+Events.register( Events.EVT_1, cb_1 )
+Events.register( Events.EVT_2, cb_2 )
+Events.register( Events.EVT_A, {=> > "CB A: ", passvp().describe() } )
+Events.register( Events.EVT_B, {=> > "CB B: ", passvp().describe() } )
+
+> "Events have been registered."
+
