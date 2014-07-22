@@ -173,7 +173,7 @@ void SharedMem::close( bool bRemove )
       munmap( d->bd, sizeof(BufferData) + d->mapsize );
    }
 
-   int res;
+   int res = 0;
    if( d->shmfd > 0 )
    {
       res = ::close( d->shmfd );
