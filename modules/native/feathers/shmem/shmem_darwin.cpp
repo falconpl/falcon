@@ -1,4 +1,18 @@
-#ifdef __APPLE__
+/*
+ FALCON - The Falcon Programming Language.
+ FILE: shmem_darwin.cpp
+ 
+ Semaphore timed wait for APPLE
+ 
+ -------------------------------------------------------------------
+ Author: Chris Misztur
+ Begin: Tue, 22 Jul 2014
+ 
+ -------------------------------------------------------------------
+ (C) Copyright 2014: the FALCON developers (see list in AUTHORS file)
+ 
+ See LICENSE file for licensing details.
+ */
 
 #include "shmem_darwin.h"
 #include <errno.h>
@@ -36,5 +50,3 @@ int sem_timedwait_mach(semaphore_t* sem, long timeout_ms) {
 	}
 	return -1;
 }
-
-#endif
