@@ -877,6 +877,10 @@ void Class::op_getProperty( VMContext* ctx, void* data, const String& propName )
 
       return;
    }
+   else if( m_parent != 0 )
+   {
+      return m_parent->op_getProperty(ctx, data, propName);
+   }
 
    // try to find a valid BOM propery.
    BOM::handler handler = bom->get( propName );
@@ -905,6 +909,11 @@ void Class::op_setProperty( VMContext* ctx, void* data, const String& prop ) con
       }
       return;
    }
+   else if( m_parent != 0 )
+   {
+      return m_parent->op_setProperty(ctx, data, prop);
+   }
+
    FALCON_RESIGN_XERROR( AccessError, e_prop_acc, ctx,
                    .extra(prop) );
 }
@@ -1087,6 +1096,10 @@ void Class::op_getClassProperty( VMContext* ctx, const String& prop) const
          prop.getFunc( this, iter->first, 0, ctx->topData() );
       }
       return;
+   }
+   else if( m_parent != 0 )
+   {
+      return m_parent->op_getClassProperty(ctx, prop);
    }
 
    // try to find a valid BOM propery.

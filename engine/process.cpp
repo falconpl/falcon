@@ -375,6 +375,33 @@ void Process::terminateWithError( Error* error )
    terminate();
 }
 
+
+void Process::reset()
+{
+   m_mtxRunning.lock();
+   if( m_running )
+   {
+      m_running = false;
+
+      atomicSet(m_terminated,0);
+      if( m_error !=0 ) {
+         m_error->decref();
+         m_error = 0;
+      }
+
+      m_result.setNil();
+      if( m_resultLock != 0 )
+      {
+         m_resultLock->item().setNil();
+      }
+
+      m_context->reset();
+      m_event.reset();
+   }
+   m_mtxRunning.unlock();
+}
+
+
 void Process::adoptModSpace( ModSpace* hostSpace )
 {
    hostSpace->incref();

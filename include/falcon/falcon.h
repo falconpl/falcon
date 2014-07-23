@@ -64,6 +64,7 @@
 #include <falcon/itemarray.h>
 
 #include <falcon/gclock.h>
+#include <falcon/eventcourier.h>
 
 //--- error headers ---
 #include <falcon/classes/classerror.h>

@@ -251,6 +251,7 @@ class FALCON_DYN_CLASS ModSpace
 		 * On success, the exporter should discard the item it was previously associated
 		 * with the symbol, and use the returned value instead.
 		 */
+		bool exportSymbol( const String& symName, Item* value );
 		bool exportSymbol( const Symbol* sym, Item* value );
 
 		void setExportValue( const String& symName, const Item& value );

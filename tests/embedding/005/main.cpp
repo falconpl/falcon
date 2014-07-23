@@ -326,13 +326,11 @@ int main(int argc, char* argv[] )
 
    std::cout << "The Falcon Programming Language" << std::endl
              << "Embedding test 005 -- Script self-registered entry points." << std::endl
-             << EVENT_1_HANDLER << ": handler of the '1' event." << std::endl
-             << EVENT_2_HANDLER << ": handler of the '2' event." << std::endl
-             << EVENT_OBJECT_HANDLER << ": An object containing the following callbacks:" << std::endl
-             << "   " << EVENT_A_HANDLER << ": handler responding to 'a' event." << std::endl
-             << "   " << EVENT_B_HANDLER << ": handler responding to 'b' event." << std::endl
+             << "This application provides the singleton Events with the method 'register'" << std::endl
+             << "to let the scripts register their own code as event handlers." << std::endl
              << std::endl
              << "To generate an event, write 1, 2, a or b followed by a list of paramters." << std::endl
+
              ;
 
    if( argc < 2 )

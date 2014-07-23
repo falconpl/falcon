@@ -247,6 +247,17 @@ public:
 
    bool isTerminated() const { return atomicFetch(m_terminated) > 0; }
 
+   /** Resets the process to the initial status.
+    *
+    * The main context is reset, and the process exit status is cleared,
+    * so that the process itself can be launched again.
+    *
+    * The structure of the module space, instead, is kept unchanged.
+    *
+    * Use this before launch, or after a succesful wait().
+    */
+   void reset();
+
    //=========================================================
    // VM Streams
    //=========================================================

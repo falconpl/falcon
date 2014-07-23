@@ -231,25 +231,6 @@ void ChildClass::op_setIndex(VMContext* ctx, void* instance ) const
    m_parent->op_setIndex( ctx, instance );
 }
 
-void ChildClass::op_getProperty( VMContext* ctx, void* instance, const String& prop) const
-{
-   m_parent->op_getProperty( ctx, instance, prop );
-}
-
-void ChildClass::op_setProperty( VMContext* ctx, void* instance, const String& prop ) const
-{
-   m_parent->op_setProperty( ctx, instance, prop );
-}
-
-void ChildClass::op_getClassProperty( VMContext* ctx, const String& prop) const
-{
-   m_parent->op_getClassProperty( ctx, prop );
-}
-
-void ChildClass::op_setClassProperty( VMContext* ctx, const String& prop ) const
-{
-   m_parent->op_setClassProperty( ctx, prop );
-}
 
 void ChildClass::op_compare( VMContext* ctx, void* instance ) const
 {

@@ -2,7 +2,7 @@
    FALCON - The Falcon Programming Language.
    FILE: eventcurrier.cpp
 
-
+   Event-driven Embedding support class.
    -------------------------------------------------------------------
    Author: Giancarlo Niccolai
    Begin: Sun, 13 Jul 2014 18:19:51 +0200
@@ -22,12 +22,15 @@
 #include <falcon/error.h>
 #include <falcon/vmcontext.h>
 #include <falcon/shared.h>
+#include <falcon/vm.h>
 
 #include <map>
 #include <deque>
 #include <set>
 
 namespace Falcon{
+
+const Class* EventCourier::m_handlerClass = 0;
 
 class EventCourier::Private
 {
@@ -37,7 +40,9 @@ public:
    public:
       int64 m_group;
 
-      CBData()
+      CBData():
+         m_group(0),
+         m_lock(0)
       {}
 
       CBData(const Item& data, const String& message=""):
@@ -65,7 +70,8 @@ public:
       {
          if( other.m_lock != 0 )
          {
-            m_lock = Engine::instance()->collector()->lock(other.m_lock->item());
+            Item copy = other.m_lock->item();
+            m_lock = Engine::instance()->collector()->lock(copy);
          }
          else {
             m_lock = 0;
@@ -76,9 +82,13 @@ public:
       void data( const Item& dt ) {
          if( m_lock == 0 )
          {
-            Engine::instance()->collector()->lock(Item());
+            m_lock = Engine::instance()->collector()->lock(dt);
          }
-         m_lock->item().copyFromLocal(dt);
+         else
+         {
+            m_lock->item().copyFromLocal(dt);
+         }
+
       }
 
       const String& message() const { return m_message; }
@@ -173,21 +183,61 @@ public:
    }
 };
 
+
+class PStepKickIn: public PStep
+{
+public:
+   PStepKickIn(EventCourier* owner): m_owner(owner) { apply = apply_; }
+   virtual ~PStepKickIn() {}
+   virtual void describeTo(String& target) const { target = "EventCourier::PStepKickIn"; }
+
+   static void apply_(const PStep* ps, VMContext* ctx )
+   {
+      const PStepKickIn* self = static_cast<const PStepKickIn*>(ps);
+      TRACE("PStepKickIn: EventCourier %p kicking in now", self->m_owner)
+      ctx->popCode();
+      self->m_owner->kickIn();
+   }
+
+private:
+   EventCourier* m_owner;
+};
+
 EventCourier::EventCourier()
 {
    m_mark = 0;
    m_lastGroupID = 0;
    _p = new Private;
    m_throwOnUnhandled = true;
+
+   m_onKickIn = new PStepKickIn(this);
+
+   if( m_handlerClass == 0 )
+   {
+      m_handlerClass = Engine::instance()->stdHandlers()->eventCourierClass();
+   }
 }
 
 EventCourier::~EventCourier()
 {
    delete _p;
+   delete m_onKickIn;
+
    if( m_defaultHanlderLock != 0 )
    {
       m_defaultHanlderLock->dispose();
    }
+}
+
+
+void EventCourier::kickIn()
+{
+   m_kickIn.set();
+}
+
+void EventCourier::waitForKickIn(int32 to)
+{
+   m_kickIn.wait(to);
 }
 
 /*
@@ -228,13 +278,35 @@ void EventCourier::prepareContext( VMContext* ctx )
    static const ClassEventCourier* cls =
             static_cast<ClassEventCourier*>(Engine::instance()->stdHandlers()->eventCourierClass());
 
+   if ( m_sharedPosted != 0)
+   {
+      throw FALCON_SIGN_XERROR( CodeError, e_state, .extra("Already assigned to a different context") );
+   }
+
    Item self(cls, this);
    self.methodize(cls->waitFunction());
    ctx->callItem(self);
+
+   // push a pstep to allow the application to know when we're in control
+   // ctx->pushCode( m_onKickIn );
+}
+
+void EventCourier::createShared( VMContext* ctx )
+{
+   if( m_sharedPosted != 0 )
+   {
+      m_sharedPosted->decref();
+   }
+
+   m_sharedPosted = new Shared(&ctx->process()->vm()->contextManager());
 }
 
 void EventCourier::terminate()
 {
+   Token* tk = allocToken();
+   tk->prepare(0, 0, -1);
+   _p->sendToken(tk);
+   tk->decref();
 }
 
 
@@ -292,7 +364,7 @@ void EventCourier::poolSize( length_t pz )
 }
 
 
-const Item* EventCourier::getHandler( int64 eventID, String& message ) const
+const Item* EventCourier::getCallback( int64 eventID, String& message ) const
 {
    const Item* ret = 0;
 
@@ -307,6 +379,21 @@ const Item* EventCourier::getHandler( int64 eventID, String& message ) const
    _p->m_mtxSubs.unlock();
 
    return ret;
+}
+
+bool EventCourier::hasCallback( int64 eventID ) const
+{
+   String dummy;
+   const Item* ret = getCallback(eventID, dummy);
+   return ret != 0;
+}
+
+
+bool EventCourier::hasDefaultCallback() const
+{
+   String dummy;
+   const Item* ret = getDefaultCallback(dummy);
+   return ret != 0;
 }
 
 
@@ -325,6 +412,7 @@ EventCourier::Token* EventCourier::allocToken()
       _p->m_mtxPool.unlock();
    }
 
+   tk->m_refcount = 1;
    return tk;
 }
 
@@ -343,7 +431,7 @@ void EventCourier::release( Token* token )
 }
 
 
-const Item* EventCourier::getDefaultHandler() const
+const Item* EventCourier::getDefaultCallback( String& msg ) const
 {
    const Item* result = 0;
 
@@ -351,6 +439,7 @@ const Item* EventCourier::getDefaultHandler() const
    if( m_defaultHanlderLock != 0 )
    {
       result = m_defaultHanlderLock->itemPtr();
+      msg = m_defaultHandlerMsg;
    }
    m_mtxDflt.unlock();
 
@@ -358,7 +447,7 @@ const Item* EventCourier::getDefaultHandler() const
 }
 
 
-void EventCourier::setDefaultHandler( const Item& df )
+void EventCourier::setDefaultCallback( const Item& df, String& msg )
 {
    m_mtxDflt.lock();
    if( m_defaultHanlderLock == 0 )
@@ -368,6 +457,7 @@ void EventCourier::setDefaultHandler( const Item& df )
    else {
       m_defaultHanlderLock->item().copyFromLocal( df );
    }
+   m_defaultHandlerMsg = msg;
    m_mtxDflt.unlock();
 }
 
@@ -412,11 +502,13 @@ EventCourier::Token* EventCourier::popEvent() throw()
 
 void EventCourier::onUnhandled( Token* tk, VMContext* )
 {
-   tk->unhandled();
-
    if (throwOnUnhandled())
    {
-      throw FALCON_SIGN_XERROR( CodeError, e_msg_unhandled, .extra(String("").N(tk->eventID())) );
+      Error* error = FALCON_SIGN_XERROR( CodeError, e_msg_unhandled, .extra(String("").N(tk->eventID())) );
+      tk->aborted(error);
+   }
+   else{
+      tk->unhandled();
    }
 }
 
@@ -440,6 +532,7 @@ EventCourier::Token::Token(EventCourier* owner):
    m_mode = mode_none;
    m_error = 0;
    m_gcLockResult = 0;
+   m_refcount = 1;
 }
 
 
@@ -460,6 +553,7 @@ bool EventCourier::Token::wait(Item& result, int64 to)
    {
       if( m_error != 0 )
       {
+         m_error->incref();
          throw m_error;
       }
       result.copyFromRemote( m_gcLockResult->item() );
@@ -521,9 +615,15 @@ void EventCourier::Token::prepare( int64 id, Item* params, int32 pcount, Callbac
 
 void EventCourier::Token::prepare( int64 id, Item* params, int32 pcount )
 {
-   m_mode = mode_none;
    m_evtID = id;
-   fillParams( params, pcount );
+   if(params == 0 )
+   {
+      m_mode = mode_terminate;
+   }
+   else {
+      m_mode = mode_none;
+      fillParams( params, pcount );
+   }
 }
 
 void EventCourier::Token::fillParams( Item* params, int32 pcount )
@@ -555,7 +655,7 @@ void EventCourier::Token::completed( const Item& result )
       m_completion.shared->signal();
       break;
 
-   case mode_none:
+   case mode_none: case mode_terminate:
       /* Nothing to do */
       break;
 
@@ -583,7 +683,7 @@ void EventCourier::Token::aborted( Error* e )
       m_completion.shared->signal();
       break;
 
-   case mode_none:
+   case mode_none: case mode_terminate:
       /* Nothing to do */
       break;
    }

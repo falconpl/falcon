@@ -355,7 +355,7 @@ void OverridableClass::op_setIndex( VMContext* ctx, void* ) const
    }
    else
    {
-      throw new OperandError( ErrorParam(__LINE__, e_invop ).extra(OVERRIDE_OP_SETINDEX) );
+      throw new OperandError( ErrorParam( e_invop, __LINE__, SRC ).extra(OVERRIDE_OP_SETINDEX) );
    }
 }
 
@@ -483,7 +483,7 @@ void OverridableClass::op_call( VMContext* ctx, int32 paramCount, void* self ) c
    }
    else
    {
-      throw new OperandError( ErrorParam(__LINE__, e_invop ).extra(OVERRIDE_OP_CALL) );
+      throw new OperandError( ErrorParam( e_invop, __LINE__, SRC ).extra(OVERRIDE_OP_CALL) );
    }
 }
 

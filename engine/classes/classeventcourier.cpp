@@ -26,6 +26,9 @@
 #include <falcon/stdhandlers.h>
 #include <falcon/shared.h>
 #include <falcon/itemarray.h>
+#include <falcon/vm.h>
+#include <falcon/syntree.h>
+#include <falcon/classes/classshared.h>
 
 namespace Falcon
 {
@@ -85,15 +88,148 @@ FALCON_DEFINE_FUNCTION_P1(engage)
 {
    ClassEventCourier* cevt = static_cast<ClassEventCourier*>(this->methodOf());
 
+   // add a local that we need to store the traveling tokens.
+   ctx->addLocals(1);
+
+   // TODO: A serious catch-gate
+   if( cevt->stepAfterHandling() == 0 )
+   {
+      cevt->init();
+   }
+
+   EventCourier* evt = ctx->tself<EventCourier>();
+   evt->createShared( ctx );
+   evt->kickIn();
+
    ctx->stepIn(cevt->stepEngage());
+}
+
+
+/*# @method send EventCourier
+ @brief Sends an event and return immediately.
+ @param evtID The event ID to be sent.
+ @optparam ... Parameters to be sent to the event.
+*/
+FALCON_DECLARE_FUNCTION(send, "evtID:N,...")
+FALCON_DEFINE_FUNCTION_P(send)
+{
+   EventCourier* evt = ctx->tself<EventCourier>();
+   int64 evtID;
+   if( ! FALCON_NPCHECK_GET(0,Ordinal,evtID) )
+   {
+      throw paramError(__LINE__, SRC);
+   }
+
+   evt->sendEvent(evtID, ctx->params()+1, pCount-1 );
+   ctx->returnFrame();
+}
+
+
+
+/*# @method sendWait EventCourier
+ @brief Sends an event and wait for the event to be completed
+ @param evtID The event ID to be sent.
+ @optparam ... Parameters to be sent to the event.
+ @return The return value of the event handler
+ @raise An error if the event handler raised an error.
+*/
+FALCON_DECLARE_FUNCTION(sendWait, "evtID:N,...")
+FALCON_DEFINE_FUNCTION_P(sendWait)
+{
+   ClassEventCourier* cevt = static_cast<ClassEventCourier*>(this->methodOf());
+
+   EventCourier* evt = ctx->tself<EventCourier>();
+   int64 evtID;
+   if( ! FALCON_NPCHECK_GET(0,Ordinal,evtID) )
+   {
+      throw paramError(__LINE__, SRC);
+   }
+
+   Shared* shared = new Shared(&ctx->vm()->contextManager(), Engine::instance()->stdHandlers()->sharedClass());
+
+   ctx->addLocals(2);
+   EventCourier::Token* tk = evt->sendEvent(evtID, ctx->params()+1, pCount-1, shared );
+   *ctx->local(0) = FALCON_GC_STORE(cevt->tokenClass(), tk);
+   *ctx->local(1) = FALCON_GC_HANDLE(shared);
+
+   // ...and a handler for the normal operation
+   ctx->pushCode( cevt->stepAfterSendWait() );
+
+   // and engage the wait
+   ctx->addWait(shared);
+   ctx->engageWait(-1);
+
+   // do not return
+}
+
+
+/*# @method subscribe EventCourier
+ @param evtID A numeric event ID to be handled.
+ @param handler the object or code handling the event.
+ @optparam message A summon message to be sent to the given handler
+ @return The self object
+*/
+
+FALCON_DECLARE_FUNCTION(subscribe, "evtID:N,handler:X,message:[S]")
+FALCON_DEFINE_FUNCTION_P1(subscribe)
+{
+   int64 evtID = 0;
+   Item* i_handler = 0;
+   String* msg = 0;
+   String dfltMsg;
+
+   if ( ! (
+            FALCON_NPCHECK_GET(0,Integer, evtID )
+            && (i_handler = ctx->param(1)) != 0
+            && FALCON_NPCHECK_O_GET(2,String,msg, &dfltMsg)
+            )
+   )
+   {
+      throw paramError(__LINE__, SRC);
+   }
+
+   EventCourier* evtc = ctx->tself<EventCourier>();
+   evtc->setCallback(evtID, *i_handler, *msg);
+   ctx->returnFrame(ctx->self());
+}
+
+
+/*# @method onUnknown EventCourier
+ @param handler the object or code handling the default event.
+ @optparam message A summon message to be sent to the given handler
+ @return The self object
+*/
+
+FALCON_DECLARE_FUNCTION(onUnknown, "handler:X,message:[S]")
+FALCON_DEFINE_FUNCTION_P1(onUnknown)
+{
+   Item* i_handler = 0;
+   String* msg = 0;
+   String dfltMsg;
+
+   if ( ! (
+            (i_handler = ctx->param(0)) != 0
+            && FALCON_NPCHECK_O_GET(1,String,msg, &dfltMsg)
+            )
+   )
+   {
+      throw paramError(__LINE__, SRC);
+   }
+
+   EventCourier* evtc = ctx->tself<EventCourier>();
+   evtc->setDefaultCallback( *i_handler, *msg);
+   ctx->returnFrame(ctx->self());
 }
 
 
 class PStepAfterHandlingCatch: public StmtTry
 {
 public:
-   PStepAfterHandlingCatch() {
-      apply = apply_;
+   PStepAfterHandlingCatch()
+   {
+      TreeStep* dflt = new SynTree;
+      dflt->apply = apply_;
+      catchSelect().append( dflt );
    }
 
    virtual ~PStepAfterHandlingCatch() {}
@@ -105,11 +241,26 @@ public:
 
    static void apply_( const PStep*, VMContext* ctx )
    {
-      MESSAGE2("Entering ClassEventCourier::PStepAfterHandlingFinally");
+      MESSAGE2("Entering ClassEventCourier::PStepAfterHandlingCatch");
 
-      fassert( String("EventCourier::Token") == ctx->topData().asOpaqueName());
-      EventCourier::Token* tk = static_cast<EventCourier::Token*>(ctx->topData().asOpaque());
-      tk->aborted(ctx->thrownError());
+      EventCourier::Token* tk = static_cast<EventCourier::Token*>(ctx->local(0)->asInst());
+      Error* error;
+      if ( ctx->thrownError() == 0 )
+      {
+         // we have a raised item
+         UncaughtError* ce = new UncaughtError( ErrorParam( e_uncaught, __LINE__, SRC )
+                  .origin(ErrorParam::e_orig_vm));
+         ce->raised( ctx->raised() );
+         error = ce;
+         tk->aborted(error);
+      }
+      else {
+         error = ctx->thrownError();
+         tk->aborted(error);
+         error->decref();
+      }
+
+      // we have now an extra reference
       tk->decref();
       ctx->popCode();
    }
@@ -137,10 +288,10 @@ public:
       Item retval = ctx->topData();
       ctx->popData();
 
-      fassert( String("EventCourier::Token") == ctx->topData().asOpaqueName());
-      EventCourier::Token* tk = static_cast<EventCourier::Token*>(ctx->topData().asOpaque());
+      EventCourier::Token* tk = static_cast<EventCourier::Token*>(ctx->local(0)->asInst());
       tk->completed(retval);
       tk->decref();
+      // kill also the catch below us.
       ctx->popCode(2);
    }
 };
@@ -177,22 +328,52 @@ public:
    }
 };
 
+class PStepAfterSendWait: public PStep
+{
+public:
+   PStepAfterSendWait() { apply = apply_; }
+   virtual ~PStepAfterSendWait() {}
+   virtual void describeTo( String& target ) const
+   {
+      target = "ClassEventCourier::PStepAfterSendWait";
+   }
+
+
+   static void apply_( const PStep*, VMContext* ctx )
+   {
+      MESSAGE2("Entering ClassEventCourier::PStepAfterSendWait");
+
+      EventCourier::Token* tk = static_cast<EventCourier::Token*>(ctx->local(0)->asInst());
+      if( tk->error() )
+      {
+         Error* error = tk->error();
+         tk->decref();
+         throw error;
+      }
+      else {
+         ctx->returnFrame(tk->result());
+         tk->decref();
+      }
+   }
+};
+
 
 class PStepEngage: public PStep
 {
 public:
-   PStepEngage() { apply = apply_; }
+   PStepEngage(ClassEventCourier* owner):m_owner(owner) { apply = apply_; }
    virtual ~PStepEngage() {}
    virtual void describeTo( String& target ) const
    {
       target = "ClassEventCourier::PStepEngage";
    }
 
-   static void apply_( const PStep*, VMContext* ctx )
+   static void apply_( const PStep* ps, VMContext* ctx )
    {
       static ClassEventCourier* cls =
                static_cast<ClassEventCourier*>(Engine::instance()->stdHandlers()->eventCourierClass());
 
+      const PStepEngage* self = static_cast<const PStepEngage*>(ps);
 
       // the courier object is the self of our frame.
       EventCourier* courier = ctx->tself<EventCourier>();
@@ -206,33 +387,38 @@ public:
          Item* i_to = ctx->param(0);
          int64 to = i_to == 0 || i_to->isNil() ? 0 :  i_to->forceInteger();
 
-         // we'll wait on the event.
-         ctx->pushCode( cls->stepAfterHandling() );
-         ctx->pushCodeWithUnrollPoint( cls->stepAfterHandlingCatch() );
-
+         // we'll be called back again here.
          ctx->addWait( courier->eventPosted() );
          ctx->engageWait(to);
+      }
+      else if( tk->isTerminate() )
+      {
+         tk->decref();
+         ctx->returnFrame();
       }
       else
       {
          // have we got an event handler...
          String message;
-         const Item* cb = courier->getHandler( tk->eventID(), message );
+         const Item* cb = courier->getCallback( tk->eventID(), message );
          if( cb == 0 )
          {
             // or a generic handler...
-            cb = courier->getDefaultHandler();
+            cb = courier->getDefaultCallback(message);
          }
 
          // we have something to do
          if( cb != 0 )
          {
+            // Set a gate for catching errors...
+            ctx->pushCodeWithUnrollPoint( cls->stepAfterHandlingCatch() );
+            // ...and a handler for the normal operation
             ctx->pushCode( cls->stepAfterHandling() );
 
-            // we push the token in the stack to have a nice place where to get it
-            ctx->pushData( Item().setOpaque("EventCourier::Token", tk) );
+            // The token is at local (0) in our frame function
+            ctx->local(0)->setUser(self->m_owner->tokenClass(), tk);
 
-            // compose the call directly
+            // prepare the base item for call internal
             ctx->pushData(*cb);
             // push first the event ID
             ctx->pushData(Item().setInteger(tk->eventID()));
@@ -242,8 +428,18 @@ public:
                const Item& value = tk->params()[i];
                ctx->pushData(value);
             }
+
             // perform the internal call.
-            ctx->callInternal(*cb, (int)tk->params().length() );
+            if( message.empty() )
+            {
+               ctx->callInternal(*cb, (int)tk->params().length()+1 );
+            }
+            else {
+               Class* cls = 0;
+               void* inst = 0;
+               cb->forceClassInst(cls, inst);
+               cls->op_summon(ctx, inst, message, (int)tk->params().length()+1, false );
+            }
          }
          else {
             // can throw
@@ -252,6 +448,9 @@ public:
          }
       }
    }
+
+private:
+   ClassEventCourier* m_owner;
 };
 
 }
@@ -260,13 +459,21 @@ ClassEventCourier::ClassEventCourier():
          Class("EventCourier")
 {
    m_funcWait = new FALCON_FUNCTION_NAME(engage);
-   m_stepEngage = new PStepEngage;
+   addMethod(m_funcWait);
+   addMethod(new FALCON_FUNCTION_NAME(subscribe));
+   addMethod(new FALCON_FUNCTION_NAME(onUnknown));
+   addMethod(new FALCON_FUNCTION_NAME(send));
+   addMethod(new FALCON_FUNCTION_NAME(sendWait));
+}
+
+void ClassEventCourier::init()
+{
+   m_stepEngage = new PStepEngage(this);
    m_stepAfterWait = new PStepAfterWait;
    m_stepAfterHandling = new PStepAfterHandling;
-   //m_stepAfterHandlingCatch =  new PStepAfterHandlingCatch;
+   m_stepAfterHandlingCatch = new PStepAfterHandlingCatch;
    m_tokenClass = new ClassToken;
-
-   addMethod(m_funcWait);
+   m_stepAfterSendWait = new PStepAfterSendWait;
 }
 
 ClassEventCourier::~ClassEventCourier()
@@ -276,6 +483,7 @@ ClassEventCourier::~ClassEventCourier()
    delete m_stepEngage;
    delete m_stepAfterWait;
    delete m_stepAfterHandling;
+   delete m_stepAfterSendWait;
 }
 
 

@@ -83,10 +83,12 @@ public:
   virtual void op_decpost(VMContext* vm, void* instance ) const;
   virtual void op_getIndex(VMContext* vm, void* instance ) const;
   virtual void op_setIndex(VMContext* vm, void* instance ) const;
-  virtual void op_getProperty( VMContext* ctx, void* instance, const String& prop) const;
-  virtual void op_setProperty( VMContext* ctx, void* instance, const String& prop ) const;
-  virtual void op_getClassProperty( VMContext* ctx, const String& prop) const;
-  virtual void op_setClassProperty( VMContext* ctx, const String& prop ) const;
+  // DO NOT override get/set property, as the base Class already makes room for standard
+  // search of properties in the parent.
+  //virtual void op_getProperty( VMContext* ctx, void* instance, const String& prop) const;
+  //virtual void op_setProperty( VMContext* ctx, void* instance, const String& prop ) const;
+  //virtual void op_getClassProperty( VMContext* ctx, const String& prop) const;
+  //virtual void op_setClassProperty( VMContext* ctx, const String& prop ) const;
   virtual void op_compare( VMContext* ctx, void* instance ) const;
   virtual void op_isTrue( VMContext* ctx, void* instance ) const;
   virtual void op_in( VMContext* ctx, void* instance ) const;

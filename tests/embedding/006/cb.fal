@@ -1,0 +1,51 @@
+// Simple callback handler
+
+function cb_1()
+	> "CB one: ", passvp().describe()
+	return "1:" + " ".merge(passvp()[1:])
+end
+
+function cb_2()
+	> "CB two: ", passvp().describe()
+	raise "Explicitly and volountarily generated error"
+end
+
+> "Registering events:"
+
+inspect(AppCourier)
+
+// Normal subscription
+AppCourier.subscribe( AppCourier.EVT_1, cb_1 )
+AppCourier.subscribe( AppCourier.EVT_2, cb_2 )
+
+object OtherCB
+	function cb_a()
+		> "OTHER CB A: ", passvp().describe() 
+		return "A-delegated:" + " ".merge(passvp()[1:])
+	end
+end
+
+object TestCB
+	function cb_a()
+		> "CB A: ", passvp().describe() 
+		// a bit of lulz
+		self::delegate[OtherCB "cb_a"] 
+		return "A:" + " ".merge(passvp()[1:])
+	end
+	
+	function cb_unknown()
+		params = passvp()
+		> "Unknown: ", params.describe() 
+		return "" + params[0] +":"+ " ".merge(params[1:])
+	end
+end
+		
+// deliver a summon message to an entity
+AppCourier.subscribe( AppCourier.EVT_A, TestCB, "cb_a" )
+
+// or, via a normal method call
+AppCourier.onUnknown( TestCB.cb_unknown )
+
+> "Events have been registered."
+
+ 

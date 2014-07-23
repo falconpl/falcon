@@ -2,7 +2,7 @@
    FALCON - The Falcon Programming Language.
    FILE: eventcurrier.h
 
-
+   Event-driven Embedding support class.
    -------------------------------------------------------------------
    Author: Giancarlo Niccolai
    Begin: Sun, 13 Jul 2014 18:19:51 +0200
@@ -25,6 +25,8 @@
 #include <falcon/itemarray.h>
 
 namespace Falcon {
+
+class PStep;
 
 /** Main class for embedding support.
  *
@@ -67,7 +69,11 @@ public:
    void clearCallback( int64 id );
 
    void prepareContext( VMContext* ctx );
+   void createShared( VMContext* ctx );
    void terminate();
+
+   // Shortcut for Engine::instance()->stdHandlers()->eventCourierClass();
+   const Class* handler() const { return m_handlerClass; }
 
    /** Callback functor used to notify completion of event management.
     *
@@ -119,6 +125,7 @@ public:
       void gcMark( uint32 md );
       uint32 currentMark() const { return  m_mark; }
 
+      bool isTerminate() const { return m_mode == mode_terminate; }
    private:
 
       EventCourier* m_owner;
@@ -136,7 +143,8 @@ public:
          mode_none,
          mode_event,
          mode_shared,
-         mode_cb
+         mode_cb,
+         mode_terminate
       }
       t_mode;
       t_mode m_mode;
@@ -211,9 +219,13 @@ public:
     * \return 0 if there isn't any registered handler for that event, a valid Item* if there is a handler.
     *
     */
-   const Item* getHandler( int64 eventID, String& tgtMessage ) const;
-   const Item* getDefaultHandler() const;
-   void setDefaultHandler( const Item& df );
+   const Item* getCallback( int64 eventID, String& tgtMessage ) const;
+
+   bool hasCallback( int64 eventID ) const;
+
+   const Item* getDefaultCallback(String& tgtMessage) const;
+   bool hasDefaultCallback() const;
+   void setDefaultCallback( const Item& df, String& tgtMessage );
 
    void gcMark(uint32 mark);
    uint32 currentMark() const { return m_mark; }
@@ -253,6 +265,9 @@ public:
    bool throwOnUnhandled() const { return m_throwOnUnhandled;  }
    void throwOnUnhandled( bool b ) { m_throwOnUnhandled = b;  }
 
+   void kickIn();
+   void waitForKickIn(int32 to=-1);
+
 protected:
    Token* allocToken();
 
@@ -261,13 +276,17 @@ private:
    uint32 m_mark;
 
    GCLock* m_defaultHanlderLock;
+   String m_defaultHandlerMsg;
    mutable Mutex m_mtxDflt;
+   Event m_kickIn;
 
    Shared* m_sharedPosted;
    class Private;
    Private* _p;
 
    bool m_throwOnUnhandled;
+   static const Class* m_handlerClass;
+   PStep* m_onKickIn;
 };
 
 }

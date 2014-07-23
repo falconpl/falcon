@@ -922,6 +922,15 @@ bool ModSpace::exportFromModule( Module* mod, Error*& link_errors )
 }
 
 
+bool ModSpace::exportSymbol( const String& name, Item* value )
+{
+   const Symbol* sym = Engine::getSymbol(name);
+   bool ret = exportSymbol(sym, value);
+   sym->decref();
+   return ret;
+}
+
+
 bool ModSpace::exportSymbol( const Symbol* sym, Item* value )
 {
 	TRACE1( "ModSpace::exportSymbol %s", sym->name().c_ize() );

@@ -326,6 +326,7 @@ void InterruptibleEvent::interrupt()
 void InterruptibleEvent::reset()
 {
    struct int_evt* evt = (struct int_evt*) m_sysdata;
+   ResetEvent( evt->evtIntr );
    ResetEvent( evt->evtMain );
 }
 

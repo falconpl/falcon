@@ -381,6 +381,7 @@ void InterruptibleEvent::reset()
 
    pthread_mutex_lock( &evt->mtx );
    evt->isInterrupted = false;
+   evt->isSet = false;
    pthread_mutex_unlock( &evt->mtx );
 }
 

@@ -32,6 +32,9 @@ public:
    ClassEventCourier();
    virtual ~ClassEventCourier();
 
+   /// Called by the engine to configure the class post creation.
+   void init();
+
    virtual void dispose( void* instance ) const;
    virtual void* clone( void* instance ) const;
    virtual void* createInstance() const;
@@ -44,6 +47,7 @@ public:
    const PStep* stepAfterWait() const { return m_stepAfterWait; }
    const PStep* stepAfterHandling() const { return m_stepAfterHandling; }
    const PStep* stepAfterHandlingCatch() const { return m_stepAfterHandlingCatch; }
+   const PStep* stepAfterSendWait() const { return m_stepAfterSendWait; }
    const Class* tokenClass() const { return m_tokenClass; }
 
 private:
@@ -53,6 +57,7 @@ private:
    PStep* m_stepAfterWait;
    PStep* m_stepAfterHandling;
    PStep* m_stepAfterHandlingCatch;
+   PStep* m_stepAfterSendWait;
 
    Class* m_tokenClass;
 };
