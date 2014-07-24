@@ -3,7 +3,7 @@
                               Skeleton Module
 
 
-Date: 2010-10-08 12:19:05 CEST
+Date: Wed, 23 Jul 2014 13:41:27 +0200
 
 Table of Contents
 =================
@@ -29,29 +29,14 @@ module writing startup phase.
 The skeleton module is divided into several files to provide better
 customizability:
 
-fmodskel.cpp - The main module file; here exported the module object is
-        created and exported functions are defined.
+skeleton.cpp - Entry point of the dynamic library.
 
-fmodskel_ext.cpp/.h - this files declare and define the extension (script
-   interface) functions. Add new functions here.
+skeleton_fm.cpp/.h - Module main file. Here, the Module subclass is defined.
 
-fmodskel_mod.cpp/.h - this files declare and define the module internal
-   logic. If the module is extremely symple, or if it has not an internal
+skeleton_mod.cpp/.h - this files declare and define the module internal
+   logic. If the module is extremely simple, or if it has not an internal
    logic that may be exported or treated separately with resepect to the
    extension functions, you may remove this files.
-
-fmodskel_srv.cpp/.h - this files declares the service exported by the module.
-   A service is a re-publishing of the internal logic (mod) towards C++
-   application via a fully virtual class. The service is published to the
-   module and to all the VM where the module is linked. Applications may
-   then load the module and access the service by knowing only its name
-   and including the header file. In this way it is possible to reuse the
-   internal logic that scripts may access also through C++ code.
-
-fmodskel_st.cpp/.h - this files are the string table for module
-   internationalization. See the directions in the files to get more
-   details on how to use this table to provide translations for
-   binary falcon modules.
 
 Other than these, there are project files/make files working on the supported
 platform, and a set of "template" files to be used when creating new sources.

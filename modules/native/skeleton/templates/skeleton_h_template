@@ -1,0 +1,31 @@
+/*
+   @{MAIN_PRJ}@
+   FILE: @{PROJECT_NAME}@.h
+
+   @{DESCRIPTION}@
+   Interface extension functions
+   -------------------------------------------------------------------
+   Author: @{AUTHOR}@
+   Begin: @{DATE}@
+
+   -------------------------------------------------------------------
+   (C) Copyright @{YEAR}@: @{COPYRIGHT}@
+
+   @{LICENSE}@
+*/
+
+/** \file
+   Place here the reason this file is meant for.
+*/
+
+#ifndef _@{PROJECT_NAME}@_something_here_H_
+#define _@{PROJECT_NAME}@_something_here_H_
+
+
+namespace Falcon {
+
+} // namespace Falcon
+
+#endif
+
+/* End of @{PROJECT_NAME}@.h */

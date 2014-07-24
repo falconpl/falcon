@@ -104,8 +104,6 @@ inline void generic_apply( const ExprIndex* self, VMContext* ctx )
          break;
    }
 
-   // we're done here.
-   ctx->popCode();
 
    // now apply the index.
    Class* cls;
@@ -113,8 +111,12 @@ inline void generic_apply( const ExprIndex* self, VMContext* ctx )
 
    //acquire the class
    (&ctx->topData()-1)->forceClassInst(cls, instance);
+
+   // we're done here.
    // apply the set or get index
-   activity::operate( cls, ctx, instance );
+   FALCON_POPCODE_CONDITIONAL(ctx, self,
+            activity::operate( cls, ctx, instance );
+   );
 }
 
 void ExprIndex::apply_( const PStep* ps, VMContext* ctx )

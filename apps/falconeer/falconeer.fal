@@ -26,53 +26,30 @@
 */
 
 load regex
+load vfs
+load cmdline
 
 //==========================================
 // Global definitions
 //
-
-// name used for skeleton files
-const skelname = "fmodskel"
+skelname = "skeleton"
 
 // using falcon string concatenation to prevent cmake
 // to mangle with this values.
-var_prjname = "@{"+skelname+"_PROJECT_NAME}@"
-var_desc    = "@{"+skelname+"_DESCRIPTION}@"
-var_author  = "@{"+skelname+"_AUTHOR}@"
-var_date    = "@{"+skelname+"_DATE}@"
-var_year    = "@{"+skelname+"_YEAR}@"
-var_copy    = "@{"+skelname+"_COPYRIGHT}@"
-var_license = "@{"+skelname+"_LICENSE}@"
-var_mainprj = "@{"+skelname+"_MAIN_PRJ}@"
-
-const default_license = '
-      Licensed under the Falcon Programming Language License,
-      Version 1.1 (the "License"); you may not use this file
-      except in compliance with the License. You may obtain
-      a copy of the License at
-
-         http://www.falconpl.org/?page_id=license_1_1
-
-      Unless required by applicable law or agreed to in writing,
-      software distributed under the License is distributed on
-      an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
-      KIND, either express or implied. See the License for the
-      specific language governing permissions and limitations
-      under the License.
-'
-
-const default_prj = "FALCON - The Falcon Programming Language."
+var_prjname = "@{PROJECT_NAME}@"
+var_desc    = "@{DESCRIPTION}@"
+var_author  = "@{AUTHOR}@"
+var_date    = "@{DATE}@"
+var_year    = "@{YEAR}@"
+var_copy    = "@{COPYRIGHT}@"
+var_license = "@{LICENSE}@"
+var_mainprj = "@{MAIN_PRJ}@"
+var_modname = "@{MODULE_NAME}@"
 
 files = [\
    "src/" + skelname + ".cpp",
-   "src/" + skelname + "_ext.cpp",
-   "src/" + skelname + "_ext.h",
-   "src/" + skelname + "_st.cpp",
-   "src/" + skelname + "_st.h",
-   "src/" + skelname + "_mod.cpp",
-   "src/" + skelname + "_mod.h",
-   "src/" + skelname + "_srv.cpp",
-   "src/" + skelname + "_srv.h",
+   "src/" + skelname + "_fm.cpp",
+   "src/" + skelname + "_fm.h",
    "src/" + skelname + "_CMakeLists.txt:src/CMakeLists.txt",
    "src/" + skelname + "_version.h:src/version.h",
    "templates/"+ skelname + "_cpp_template",
@@ -90,14 +67,29 @@ variables = [=>]
 // Configuration options parser
 //
 
-object MyParser from CmdlineParser
+object MyParser from Parser
    prj_name = nil
    author = "Unknown author"
    description = ""
-   date = CurrentTime()
+   date = TimeStamp().setCurrent()
    copyright = "The above AUTHOR"
-   licplate = default_license
-   mainprj = default_prj
+   licplate = '
+      Licensed under the Falcon Programming Language License,
+      Version 1.1 (the "License"); you may not use this file
+      except in compliance with the License. You may obtain
+      a copy of the License at
+
+         http://www.falconpl.org/?page_id=license_1_1
+
+      Unless required by applicable law or agreed to in writing,
+      software distributed under the License is distributed on
+      an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+      KIND, either express or implied. See the License for the
+      specific language governing permissions and limitations
+      under the License.
+'
+
+   mainprj = "FALCON - The Falcon Programming Language."
 
    function onOption( option )
       switch option
@@ -133,17 +125,17 @@ object MyParser from CmdlineParser
             self.licplate +=data
          end
          inf.close()
-      catch IoError in e
+      catch IOError in e
          > "falconeer.fal: FATAL: cannot load license plate file ", param
          > e
-         exit(1)
+         quit(1)
       end
    end
 
    function unrecognized( option )
       printl( "Unrecognized option \"", option, "\"\n\n" );
       self.usage()
-      exit(1)
+      quit(1)
    end
 
    function usage()
@@ -174,7 +166,8 @@ function parse_file( fileName, destName )
 
    try
       fin = InputStream( fileName )
-   catch IoError in error
+      fin = TextReader(fin)
+   catch IOError in error
       > "Skipping file ", fileName
       return
    end
@@ -190,7 +183,7 @@ function parse_file( fileName, destName )
    try
       // open the output file name
       fout = OutputStream( foutName )
-      line = ""
+      line = m""
 
       // read the line
       loop
@@ -198,11 +191,11 @@ function parse_file( fileName, destName )
 
          // scan and substitute the variables
          for key, value in variables
-            pos = strFind( line, key )
+            pos = line.find( key )
             // can be more than one per line
             while pos >= 0
-               line[pos : pos + key.len()] = value
-               pos = strFind( line, key )
+               line[pos : pos + key.len] = value
+               pos = line.find( key )
             end
          end
          // now we can write the line
@@ -222,7 +215,8 @@ function parse_file( fileName, destName )
    // remove the old file
    // TODO: set an option to prevent this
    try
-      fileRemove( fileName )
+      vfs = VFS("file")
+      vfs.erase( fileName )
    catch in error
       > @"Error removing $fileName"
       > error
@@ -236,7 +230,7 @@ end
 MyParser.parse()
 if not MyParser.prj_name
    MyParser.usage()
-   exit( 1 )
+   quit( 1 )
 end
 
 // create the variables
@@ -248,11 +242,12 @@ variables[var_year   ] = MyParser.date.year.toString()
 variables[var_copy   ] = MyParser.copyright
 variables[var_license] = MyParser.licplate
 variables[var_mainprj] = MyParser.mainprj
+variables[var_modname] = MyParser.prj_name[0].upper() + MyParser.prj_name[1:]
 
 for file in files
 
    if ":" in file
-      orig, dest = strSplit( file, ":", 2 )
+      orig, dest = file.split( ":", 2 )
    else
       orig = file
       dest = nil

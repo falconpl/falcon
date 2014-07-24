@@ -1,0 +1,19 @@
+get_filename_component(current_dir ${CMAKE_CURRENT_LIST_FILE} PATH)
+
+if(NOT TARGET falcon_engine)
+  include("${current_dir}/falcon-targets.cmake")
+endif()
+
+option( FALCON_INTERNAL_BUILD "Set ON to be able to build a module from witin the engine build" OFF)
+
+list(APPEND Falcon_INCLUDE_DIRS "@FALCON_INC_DIR@")
+
+if( FALCON_INTERNAL_BUILD )
+	#this file won't be installed on a generic installation.
+	#it is just present in the build dir.
+	include("${current_dir}/falcon-config-internal.cmake")
+endif()
+
+set(Falcon_LIBRARIES falcon_engine)
+set(Falcon_MOD_DIR "@FALCON_MOD_DIR@")
+

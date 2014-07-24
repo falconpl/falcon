@@ -2747,13 +2747,6 @@ void ClassString::op_getIndex( VMContext* ctx, void* self ) const
          InstanceLock::Locker( &m_lock, &str );
          int64 strLen = str.length();
 
-         // do some validation checks before proceeding
-         if ( start >= strLen || start < ( strLen * -1 )  || end > strLen || end < ( strLen * -1 ) )
-         {
-            delete s;
-            throw new AccessError( ErrorParam( e_arracc, __LINE__ ).extra( "index out of range" ) );
-         }
-
          if ( rng.isOpen() )
          {
             // If negative number count from the end of the array
@@ -2772,6 +2765,13 @@ void ClassString::op_getIndex( VMContext* ctx, void* self ) const
                reverse = true;
                if ( rng.step() == 0 ) step = -1;
             }
+         }
+
+         // do some validation checks before proceeding
+         if ( start >= strLen || start < ( strLen * -1 )  || end > strLen || end < ( strLen * -1 ) )
+         {
+            delete s;
+            throw new AccessError( ErrorParam( e_arracc, __LINE__ ).extra( "index out of range" ) );
          }
 
          if ( reverse )
@@ -2859,7 +2859,7 @@ void ClassString::op_in( VMContext* ctx, void* instance ) const
 {
    if( ! ctx->topData().isString() )
    {
-      throw new OperandError( ErrorParam( e_op_params, __LINE__ ).extra( "S" ) );
+      throw new OperandError( ErrorParam( e_op_params, __LINE__ ).extra( "op_in 'S'" ) );
       return;
    }
 
@@ -3065,9 +3065,9 @@ void ClassString::op_setIndex( VMContext* ctx, void* self ) const
    Item* value, *arritem, *index;
    ctx->operands( value, arritem, index );
 
-   if ( ! value->isString() && ! value->isOrdinal())
+   if ( ! value->isString() && ! value->isOrdinal() )
    {
-      throw new OperandError( ErrorParam( e_op_params, __LINE__ ).extra( "S" ) );
+      throw new OperandError( ErrorParam( e_op_params, __LINE__ ).extra( "S|I in op_setIndex " ) );
    }
 
    if ( index->isOrdinal() )
@@ -3111,11 +3111,15 @@ void ClassString::op_setIndex( VMContext* ctx, void* self ) const
          if ( end < 0 ) end = strLen + end;
 
          // do some validation checks before proceeding
-         if ( start >= strLen  || end > strLen )
+         if ( start >= strLen )
          {
             throw new AccessError( ErrorParam( e_arracc, __LINE__ ).extra("index out of range") );
          }
 
+         if( end > strLen )
+         {
+            end = strLen;
+         }
          if ( value->isString() )  // should be a string
          {
             String& strVal = *value->asString();

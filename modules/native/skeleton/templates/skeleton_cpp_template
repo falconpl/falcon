@@ -1,0 +1,23 @@
+/*
+   @{MAIN_PRJ}@
+   FILE: @{PROJECT_NAME}@.cpp
+
+   @{DESCRIPTION}@
+   Interface extension functions
+   -------------------------------------------------------------------
+   Author: @{AUTHOR}@
+   Begin: @{DATE}@
+
+   -------------------------------------------------------------------
+   (C) Copyright @{YEAR}@: @{COPYRIGHT}@
+
+   @{LICENSE}@
+*/
+
+/** \file
+   Place here the reason this file is meant for.
+*/
+
+
+
+/* End of @{PROJECT_NAME}@.cpp */

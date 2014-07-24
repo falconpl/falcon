@@ -519,6 +519,9 @@ list(APPEND SYS_LIBS ${CMAKE_DL_LIBS})
 target_link_libraries(falcon_engine ${SYS_LIBS} ${FALCON_ENGINE_EXTRA_LINK_LIBS})
 
 install(TARGETS falcon_engine 
-  EXPORT falcon-core-targets
   DESTINATION ${FALCON_INSTALL_DESTINATIONS}
+)
+
+export( TARGETS falcon_engine
+	FILE ../cmake/config/falcon-targets.cmake
 )

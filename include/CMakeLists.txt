@@ -8,11 +8,14 @@
 # we want to have include hierarcy as /usr/bin/include/falcon1.0.0/falcon
 # while the symlink include/falcon will point not to falcon1.0.0 but to "falcon1.0.0/falcon"
  
-set( TARGET_INCLUDE_DIR "${PROJECT_BINARY_DIR}/${FALCON_INC_DIR}/falcon" )
+set( FALCON_BINARY_INCLUDE_DIR "${PROJECT_BINARY_DIR}/${FALCON_INC_DIR}" )
+set( TARGET_DIR "${FALCON_BINARY_INCLUDE_DIR}/falcon" )
 configure_file( 
-  falcon/config.h.in  "${TARGET_INCLUDE_DIR}/config.h"
+  falcon/config.h.in  "${TARGET_DIR}/config.h"
   @ONLY 
 )
+
+
 
 file( GLOB falcon_files falcon/*.h)
 file( GLOB falcon_classes falcon/classes/*.h)
@@ -25,7 +28,7 @@ file( GLOB falcon_tc falcon/tc/*.h)
 
 set(FALCON_HEADERS
    ${falcon_files}
-   ${TARGET_INCLUDE_DIR}/config.h)
+   ${TARGET_DIR}/config.h)
 
 install(FILES ${FALCON_HEADERS} DESTINATION ${FALCON_INC_DIR}/falcon)
 install(FILES ${falcon_classes} DESTINATION ${FALCON_INC_DIR}/falcon/classes)
@@ -46,4 +49,5 @@ if(FALCON_SYMLINK_VERSION AND (UNIX OR APPLE) )
 endif()
 
 set(FALCON_HEADERS ${FALCON_HEADERS} PARENT_SCOPE)
+set(FALCON_BINARY_INCLUDE_DIR "${FALCON_BINARY_INCLUDE_DIR}" PARENT_SCOPE)
 

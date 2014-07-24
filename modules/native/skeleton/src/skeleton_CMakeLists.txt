@@ -1,11 +1,11 @@
 ####################################################################
-# @{fmodskel_MAIN_PRJ}@
+# @{MAIN_PRJ}@
 #
-# CMake configuration file for @{fmodskel_PROJECT_NAME}@
+# CMake configuration file for @{PROJECT_NAME}@
 ####################################################################
 
 # Creates the proper module file name from the project name.
-falcon_define_module( CURRENT_MODULE @{fmodskel_PROJECT_NAME}@ )
+set( CURRENT_MODULE "@{PROJECT_NAME}@_fm" )
 
 # Inclusion settings
 include_directories(
@@ -18,21 +18,15 @@ include_directories(
 
 # Sources files the module is built from.
 set(SRC_FILES 
-  @{fmodskel_PROJECT_NAME}@.cpp
-  @{fmodskel_PROJECT_NAME}@_ext.cpp
-  @{fmodskel_PROJECT_NAME}@_mod.cpp
-  @{fmodskel_PROJECT_NAME}@_srv.cpp
-  @{fmodskel_PROJECT_NAME}@_st.cpp
+  @{PROJECT_NAME}@.cpp
+  @{PROJECT_NAME}@_fm.cpp
   # add more source files starting here:
 )
 
 # These are actually not needed by cmake to build. But if omitted they won't be
 # listed in the virtual file tree of Visual Studio.
 set(HDR_FILES
-  @{fmodskel_PROJECT_NAME}@_ext.h
-  @{fmodskel_PROJECT_NAME}@_mod.h
-  @{fmodskel_PROJECT_NAME}@_srv.h
-  @{fmodskel_PROJECT_NAME}@_st.h
+  @{PROJECT_NAME}@_fm.h
   version.h
   # add more header files starting here:
 )
@@ -44,8 +38,20 @@ add_library( ${CURRENT_MODULE} MODULE
    ${HDR_FILES} # optional, see comment above.
 )
 
-# If your module needs some lib more, use the followings:
-target_link_libraries( ${CURRENT_MODULE} falcon_engine)
+# If your module needs some more libraries, add them here:
+target_link_libraries( ${CURRENT_MODULE} 
+	${Falcon_LIBRARIES}
+)
 
+if(APPLE)
+  set_target_properties(${CURRENT_MODULE} PROPERTIES
+     PREFIX ""
+     SUFFIX ".dylib" )
+else()
+  set_target_properties(${CURRENT_MODULE} PROPERTIES
+     PREFIX "" )
+endif()
 
-falcon_install_module( ${CURRENT_MODULE} )
+install( TARGETS ${CURRENT_MODULE}
+	DESTINATION "${Falcon_MOD_DIR}" )
+	
