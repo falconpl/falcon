@@ -30,6 +30,8 @@
 #include <falcon/mantra.h>
 #include <falcon/itemdict.h>
 #include <falcon/stdhandlers.h>
+#include <falcon/processor.h>
+#include <falcon/stdsteps.h>
 
 #include <falcon/datawriter.h>
 #include <falcon/datareader.h>
@@ -46,7 +48,7 @@ namespace Falcon
     @prop name The logical name of the module
     @prop uri The logical URI location of the module.
     @prop globals A dictionary containing all the global values in the module.
-
+    @prop current (static) The module of the currently running function.
     */
 
    /*#
@@ -150,7 +152,15 @@ FALCON_DEFINE_FUNCTION_P1(getAttribute)
       return;
    }
 
-   ctx->returnFrame(attr->value());
+   if( attr->value().isTreeStep() )
+   {
+      static const PStep* psReturn = &Engine::instance()->stdSteps()->m_returnFrameWithTop;
+      ctx->pushCode( psReturn );
+      ctx->pushCode( static_cast<PStep*>(attr->value().asInst()) );
+   }
+   else {
+      ctx->returnFrame(attr->value());
+   }
 }
 
 
@@ -360,6 +370,26 @@ static void get_name( const Class*, const String&, void* instance, Item& value )
    value = FALCON_GC_HANDLE(new String(mod->name()));
 }
 
+static void get_current( const Class* cls, const String&, void*, Item& value )
+{
+   Processor* proc = Processor::currentProcessor();
+   value.setNil();
+
+   if( proc != 0 )
+   {
+      VMContext* ctx = proc->currentContext();
+      if( ctx != 0 )
+      {
+         // we're of course interested in the caller's module.
+         Function* func = ctx->currentFrame().m_function;
+         if( func != 0 )
+         {
+            value.setUser(cls, func->module());
+         }
+      }
+   }
+}
+
 }
 
 ClassModule::ClassModule():
@@ -380,6 +410,7 @@ ClassModule::ClassModule():
    addProperty("uri", &get_uri );
    addProperty("globals",&get_globals);
 
+   addProperty("current",&get_current, 0, true );
 }
 
 ClassModule::~ClassModule()

@@ -29,6 +29,7 @@
 #include <falcon/itemarray.h>
 #include <falcon/module.h>
 #include <falcon/stdhandlers.h>
+#include <falcon/stdsteps.h>
 #include <falcon/classes/classmodule.h>
 
 #include <falcon/modspace.h>
@@ -330,7 +331,15 @@ void ClassMantra::GetAttributeMethod::invoke( VMContext* ctx, int32 )
       return;
    }
 
-   ctx->returnFrame(attr->value());
+   if( attr->value().isTreeStep() )
+   {
+      static const PStep* psReturn = &Engine::instance()->stdSteps()->m_returnFrameWithTop;
+      ctx->pushCode( psReturn );
+      ctx->pushCode( static_cast<PStep*>(attr->value().asInst()) );
+   }
+   else {
+      ctx->returnFrame(attr->value());
+   }
 }
 
 ClassMantra::SetAttributeMethod::SetAttributeMethod():
