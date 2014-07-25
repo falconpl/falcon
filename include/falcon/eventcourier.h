@@ -67,6 +67,8 @@ public:
 
    void setCallback( int64 id, const Item& callback, const String& msg = "" );
    void clearCallback( int64 id );
+   void clearDefaultCallback();
+
 
    void prepareContext( VMContext* ctx );
    void createShared( VMContext* ctx );

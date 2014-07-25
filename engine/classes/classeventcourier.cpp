@@ -168,6 +168,17 @@ FALCON_DEFINE_FUNCTION_P(sendWait)
  @param handler the object or code handling the event.
  @optparam message A summon message to be sent to the given handler
  @return The self object
+
+ If handler is @b nil, the message is unsubscribed.
+
+ If @b message is given, the handler won't be directly invoked;
+ instead, it will be summoned as if invoked with
+ @code
+    handler::message[...]
+ @endocde
+
+ This allows to set or reset plain propeties, or delegate the summoning
+ to other objects without changing the event handler.
 */
 
 FALCON_DECLARE_FUNCTION(subscribe, "evtID:N,handler:X,message:[S]")
@@ -189,15 +200,24 @@ FALCON_DEFINE_FUNCTION_P1(subscribe)
    }
 
    EventCourier* evtc = ctx->tself<EventCourier>();
-   evtc->setCallback(evtID, *i_handler, *msg);
+   if( i_handler->isNil() )
+   {
+      evtc->clearCallback(evtID);
+   }
+   else {
+      evtc->setCallback(evtID, *i_handler, *msg);
+   }
    ctx->returnFrame(ctx->self());
 }
 
 
 /*# @method onUnknown EventCourier
+ *
  @param handler the object or code handling the default event.
  @optparam message A summon message to be sent to the given handler
  @return The self object
+
+ If @b handler is @b nil, the event handler is cleared.
 */
 
 FALCON_DECLARE_FUNCTION(onUnknown, "handler:X,message:[S]")
@@ -217,7 +237,13 @@ FALCON_DEFINE_FUNCTION_P1(onUnknown)
    }
 
    EventCourier* evtc = ctx->tself<EventCourier>();
-   evtc->setDefaultCallback( *i_handler, *msg);
+   if( i_handler->isNil() )
+   {
+      evtc->clearDefaultCallback();
+   }
+   else {
+      evtc->setDefaultCallback( *i_handler, *msg);
+   }
    ctx->returnFrame(ctx->self());
 }
 

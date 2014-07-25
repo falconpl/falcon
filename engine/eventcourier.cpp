@@ -381,6 +381,20 @@ const Item* EventCourier::getCallback( int64 eventID, String& message ) const
    return ret;
 }
 
+void EventCourier::clearDefaultCallback()
+{
+   _p->m_mtxSubs.lock();
+   GCLock* dflt = m_defaultHanlderLock;
+   m_defaultHanlderLock = 0;
+   _p->m_mtxSubs.unlock();
+
+   if( dflt != 0 )
+   {
+      dflt->dispose();
+   }
+}
+
+
 bool EventCourier::hasCallback( int64 eventID ) const
 {
    String dummy;
