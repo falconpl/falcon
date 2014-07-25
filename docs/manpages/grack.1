@@ -1,0 +1,181 @@
+.\" Process this file with
+.\" groff -man -Tascii grack.1
+.\"
+.TH grack 1 "April 2007" "Falcon toolset" "Falcon User Manuals"
+.SH NAME
+
+grack \- Grammar Checker for Falcon Grammar Definition files
+
+.SH SYNOPSIS
+
+.B grack [options] <FGD file>
+
+.SH DESCRIPTION
+
+Falcon 
+.B genparser
+(generic parser) standard module provides support for
+generic grammar parsing, via a file format called 
+.B FGD 
+(Falcon Grammar Definition).
+
+.B FGD 
+is an EBNF-like grammar that allows for Falcon code snippets
+to be used as grammar recognition handlers.
+
+The 
+.B grack 
+application helps to develop FGD files by performing
+several formal checks on the generated grammar, and can then
+generate an EBNF rendering of it to be included in the 
+documentation of a certain software.
+
+
+.SH OPTIONS
+
+.IP \-c
+Compile but do not execute. This makes falcon to compile
+the given module into a .fam file and then terminate.
+By default, the .fam file is written to a file with
+the same name as the input one, with the .fam extension.
+.IP \-C
+Check for memory leaks in VM execution. Like the \-M option of
+faltest, this function sets the falcon engine memory allocators
+to slower functions that checks for memory to be allocated and
+deallocated correctly during the execution of a module. If the script
+is executed, before Falcon exits it writes a small report to the
+standard output.
+.IP "\-d <directive>=<value>"
+Sets the given directive to the desired value. Compilation directives
+and their values are the ones that scripts can set through the
+directive statement.
+.IP "\-D <constant>=<value>"
+Sets the given constant to the desired value. Constants are made
+available at compile time, and can be employed
+in macro and meta compilation.
+.IP \-e\ <enc>
+Set given encoding as default for VM I/O. Unless the scripts
+select a different I/O encoding, the streams that are provided
+to the falcon VM (like the output stream for printf) are encoded
+using the given ISO encoding. This overrides the default encoding
+that is detected by reading the environment settings. In example,
+if your system uses iso\-8859\-1 encoding by default, but you want
+your script to read and write utf\-8 files, use the option
+.I "\-e utf\-8"
+
+The
+.B \-e
+option also determines the default encoding of the source
+files. To override this, use
+.B \-E
+.
+.IP \-E\ <enc>
+Set source script encoding. As
+.B \-e
+, but this determines only the encoding used by falcon when
+loading the source scripts. This options overrides
+.B \-e
+values, so it can be used to set the script encoding
+when they have to read and write from different encodings.
+.IP \-f
+Force recompilation of modules even when .fam are found.
+.IP "\-h or \-?"
+Prints a brief help on stdout and exits.
+.IP \-i
+Interactive mode. Falcon interpreter reads language statements
+from a prompt and present evaluation results to the user.
+.IP "\-l <lang_code>"
+Select a different language code for internationalized programs.
+This option loads an alternate string table for all the modules
+loaded. If the table doesn't exist or if the modules doesn't have a
+.B \.ftr
+file containing the translation, the operation silently files
+and the original strings are used instead. Language codes should
+be in the international ISO format of five characters with a language
+name, an underscore and the regional code, like in
+.B en_US
+.
+.IP "\-L <path>"
+Changes the default load path. This overrides both the internal
+built in settings and the contents of environment variable
+FALCON_LOAD_PATH. Each directory in the path should be separated
+by ";" and use forward slashes, like this:
+
+.I "falcon \-L \"./;/usr/share/falcon_mod;./myapp\""
+
+.IP \-m
+Use temporary files for intermediate steps. By default
+compilation is completely performed in memory; this option
+makes falcon to use temporary files instead.
+.IP \-M
+Do NOT save the compiled modules in '.fam' files.
+
+.IP \-o\ <fn>
+Redirects output to <fn>. This is useful to control the output of falcon
+when using options as \-c, \-a, \-S etc.
+If
+.B <fn>
+is a dash (\-) the output is sent to stdout.
+.IP \-p\ <module>
+Preloads the given module as if it were loaded by the main script.
+.IP \-P
+Ignore default load paths and uses only the paths set via the \-L switch.
+.IP \-r
+Ignore source files and only use available .fam. This does not affects the main script;
+use the \-x option if also the main script is a pre\-compiled .fam module and source
+script must be ignored.
+.IP \-S
+Produce an assembly output. Writes an assembly representation of the given
+script to the standard output aznd the exit. Use \-o to change file destination.
+.IP \-t
+Generates a syntactic tree of the source and writes it to the standard output,
+then exits. The syntactic tree is a representation of the script that is known
+by the compiler and used by the generators to create the final code. This option
+is useful when debugging the compiler and to test for the correct working of
+optimization algorithm.
+.IP \-T
+Force input parsing as .ftd (Falcon Template Document). Normally, only files ending with
+".ftd" (case sensitive) are parsed as template document; when this switch is selected,
+the input is treated as a template document regardless of its name.
+.IP \-v
+Prints copyright notice and version and exits.
+.IP \-w
+After execution, requires the user to confirm program termination by pressing <enter>.
+This helps in point & click environments, where Falcon window is closed as
+soon as the program terminates.
+.IP \-x
+Executes a pre\-compiled .fam module.
+.IP \-y
+Creates a template file for internationalization.
+This option creates a single .ftt file from a single source, .fam
+module or binary module. By default, the name of the template is the same as
+the module plus ".temp.ftt" added at the end; it is possible to change the
+destination template file using the
+.B "\-o"
+option.
+
+.SH FILES
+
+.I /usr/libexec/apps/falcon/grack
+.RS
+Default location of the grack application
+.RE
+
+.I /usr/lib/falcon/genparser.fam
+.RS
+Default path to Falcon generic parser module.
+.RE
+
+.SH AUTHOR
+
+Giancarlo Niccolai <gc@falconpl.org>
+
+.SH "SEE ALSO"
+
+.BR falcon (1)
+
+.SH LICENSE
+This document is released under the "GNU Free Documentation License, version 1.2".
+On Debian systems, the complete text of the Free Documentation License, version 1.2,
+can be found in /usr/share/common\-licenses/.
+

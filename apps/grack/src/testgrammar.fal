@@ -1,0 +1,129 @@
+#!/usr/bin/env falcon
+/*
+   FALCON - The Falcon Programming Language.
+   FILE: grack.fal
+
+   Falcon Grammar Definition tool
+   ------------------------------------------------------------
+
+   Copyright (C) 2014 Giancarlo Niccolai
+
+   Licensed under the Falcon Programming Language License,
+   Version 1.1 (the "License") or GPLv2.0 or following,
+   at your choice; you may not use this file except in
+   compliance with on of the Licenses. You may obtain
+   a copy of the Licenses at
+
+      http://www.falconpl.org/?page_id=license_1_1
+      http://www.gnu.org/licenses/old-licenses/gpl-2.0.html
+
+   Unless required by applicable law or agreed to in writing,
+   software distributed under the License is distributed on
+   an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+   KIND, either express or implied. See the License for the
+   specific language governing permissions and limitations
+   under the License.
+*/
+
+
+import from grammar
+import InputStream from vfs
+import from cmdline in cl
+
+:author => "Giancarlo Niccolai"
+:license => "FPLLv1.1/GPLv2"
+:version => "1.0"
+
+
+import from cmdline in cl
+
+object Options from cl.Parser
+   script = nil
+   help = false
+   generate = false
+   grammarOnly = false
+   printVersion = false
+   
+   
+   function onOption( option )
+      switch option
+         case "?", "help"
+            self.usage()
+         case "g"
+            self.generate = true
+         case "n"
+            self.grammarOnly = true
+         case "v"
+            self.printVersion = true
+         default
+            self.unrecognized( option )
+      end
+   end
+   
+   
+   function onFree( param )
+      if self.script
+         > "Can process one script at a time only"
+         quit(1)
+      end
+      
+      self.script = param
+   end
+
+   function onSwitchOff( sw )
+      self.used = true
+      switch sw
+         case "k"
+            self.sw_k = 0
+         case "n"
+            self.sw_n = 0
+         default
+            self.unrecognized( sw )
+      end
+   end
+
+   function unrecognized( option )
+      printl( "Unrecognized option \"", option, "\"\n" );
+      self.usage()
+      quit(0)
+   end
+
+   function usage()      
+      printl('
+     -?,--help       Prints this help
+     -g              Generate an EBNF tree in output.
+     -n              Ignore script snippets.
+     -v              Print version.
+     '
+   end
+
+   function version()
+      > "The Falcon Programming Language"
+      > "  grack - Grammar Checker v. ", Module.current.getAttribute("version")
+   end
+end
+
+//====================================================
+// Main program
+//====================================================
+
+Options.parse(args)
+if not Options.script
+   > @"Usage: ${scriptname} [options|-?] <file.fgd>"
+   return 1
+end
+
+if Options.printVersion: Options.version()
+
+parsed = InputStream(args[0])
+
+x = GrammarParser()
+grammar = x.parse( TextReader(parsed, "utf8") )
+if grammar
+   x.compileSnippets( grammar )
+end
+
+> "Errors: ", x.errors
+
+if grammar: grammar.dump(VMProcess.current.stdOut())
+> "Done"

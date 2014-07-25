@@ -1,0 +1,37 @@
+/*
+   This is the prologue
+*/
+{
+   > "Hello world!"
+   > r"Hello again"il
+}
+
+[main]
+
+FILE::= ELEMENT:l FILE:tree  { /* comments in code */ tree.current.addBelow(l); return tree }.
+
+FILE ::= {Tree()}.
+
+ELEMENT ::= TITLE | TEXT.
+
+/* More comments */
+TITLE ::= r"^=":rexp /* comment in rule */ TEXT*:node r"=*" EOL { node.type = "h1" }.
+
+EOL ::= "\n"+.
+EOL ::= eof.
+
+TEXT ::= WORD? {Node("text")} => second.
+
+WORD ::= R"[A-Za-z]"*.
+
+
+[second:main]
+# { > "This shall be the preamble" }
+=> { > "This shall be the postamble" }
+
+SEMIWORD::= "?" (TITLE TEXT | ( TEXT | WORD EOL ) )+:oneOrOther "?"  => ###.
+
+[third]
+
+NEW_STATE::= STATE.
+STATE ::=.

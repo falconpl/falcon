@@ -1,0 +1,18 @@
+         The Falcon Programming Language
+
+                    GRACK 1.0
+            
+Grammar Check for Falcon Grammar Definition files.
+
+Falcon "generic parser" standard module provides support for
+generic grammar parsing, via a file format called FGD (Falcon
+Grammar Definition).
+
+FGD is an EBNF-like grammar that allows for Falcon code snippets
+to be used as grammar recognition handlers.
+
+The GRACK application helps to develop FGD files by performing
+several formal checks on the generated grammar, and can then
+generate an EBNF rendering of it to be included in the 
+documentation of a certain software.
+
