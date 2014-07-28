@@ -1,0 +1,56 @@
+/*
+   FALCON - Grammar Parser
+
+   FILE: stdgrammars.fal
+
+   Loader for standard grammars.
+   -------------------------------------------------------------------
+   Author: Giancarlo Niccolai
+   Begin: Wed, 02 Jul 2014 14:37:04 +0200
+
+   -------------------------------------------------------------------
+   (C) Copyright 2014: the FALCON developers (see list in AUTHORS file)
+
+   See LICENSE file for licensing details.
+*/
+
+/*# @module stdgramars 
+   @brief Standard Grammar Loaders
+   
+   This module contains some useful functions that can
+   be used to load and compile 
+   the standard grammar files out of the engine directory.
+*/
+
+import GrammarParser from parser.grammar
+import InputStream from vfs
+
+_path = Path(URI(Module.current.uri).path).fulloc
+_stdpath = _path + "/grammars"
+
+/*# @brief Reads a standard grammar
+   @param name the name of the standard grammar to read.
+   @return the compiled grammar.
+*/
+function std_grammar( name )
+   path = _stdpath + "/" + name + ".fgd"   
+   > "Reading: " + path
+    
+   x = GrammarParser()
+   x.verbose = 1
+   parsed = InputStream(path)
+   grammar = x.parse( TextReader(parsed, "utf8") )
+   
+   if grammar
+      x.compileSnippets( grammar )
+      return grammar
+   end
+end
+
+
+/*# @brief Reads the faldoc non-source standard grammar.
+   @return the compiled grammar.
+*/
+function faldoc_text_grammar()
+   return std_grammar( "faldoc_text" )   
+end

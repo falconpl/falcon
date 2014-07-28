@@ -118,10 +118,10 @@ parsed = InputStream(Options.script)
 x = GrammarParser()
 grammar = x.parse( TextReader(parsed, "utf8") )
 if grammar
-   x.compileSnippets( grammar )
+   if not Options.grammarOnly
+      x.compileSnippets( grammar )
+   end
+   grammar.dump(VMProcess.current.stdOut())
+else
+   > "Errors: ", x.errors
 end
-
-> "Errors: ", x.errors
-
-if grammar: grammar.dump(VMProcess.current.stdOut())
-> "Done"

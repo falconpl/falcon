@@ -1,0 +1,16 @@
+{
+   data = ["Tree"=>nil, "Node"=>nil ]
+   include("struct.tree", nil, nil, data )
+
+   Tree = data["Tree"]
+   Node = data["Node"]
+}
+
+[main]
+
+FILE ::= COMMENT_BLOCK:cb  FILE:tree { /* comments in code */ tree.current.addBelow(cb); return tree }.
+FILE ::= {Tree()}.
+
+COMMENT_BLOCK ::= "/*#" TEXT:text "*/" {return text}.
+
+TEXT ::= any.
