@@ -16,11 +16,10 @@
 
 #include "shmem_darwin.h"
 #include <errno.h>
-#include <common/msg.h>
 #include <time.h>
 
 // Mac OS X timedwait wrapper
-int sem_timedwait_mach(semaphore_t* sem, long timeout_ms) {
+/*int sem_timedwait_mach(semaphore_t* sem, long timeout_ms) {
 	int retval = 0;
 	mach_timespec_t mts;
 	if (timeout_ms >= 0) {
@@ -48,5 +47,34 @@ int sem_timedwait_mach(semaphore_t* sem, long timeout_ms) {
             errno =  EINVAL;
             break;
 	}
+	return -1;
+}*/
+
+int sem_timedwait_mach(sem_t *sem, const struct timespec *abs_timeout)
+{
+	int retval = 0;
+    
+	mach_timespec_t mts;
+    
+    mts.tv_nsec = abs_timeout->tv_nsec;
+    mts.tv_sec = abs_timeout->tv_sec;
+    
+    retval = semaphore_timedwait(*sem, mts);
+    
+	switch (retval)
+    {
+        case KERN_SUCCESS:
+            return 0;
+        case KERN_OPERATION_TIMED_OUT:
+            errno = ETIMEDOUT;
+            break;
+        case KERN_ABORTED:
+            errno = EINTR;
+            break;
+        default:
+            errno =  EINVAL;
+            break;
+	}
+    
 	return -1;
 }

@@ -21,11 +21,15 @@
 // Mac OS X does not have a working implementation of sem_init, sem_timedwait, ...
 // use Mach semaphores instead
 #include <mach/mach.h>
-#include <mach/semaphore.h>
+//#include <mach/semaphore.h>
 #include <mach/task.h>
+
+#include <semaphore.h>
+
 
 // Mac OS X timedwait wrapper
 //int sem_timedwait_mach(semaphore_t* sem, long timeout_ms);
+//int sem_timedwait_mach(sem_t *sem, const struct timespec *abs_timeout);
 int sem_timedwait_mach(sem_t *sem, const struct timespec *abs_timeout);
 
 #endif
