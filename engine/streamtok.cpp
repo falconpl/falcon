@@ -428,7 +428,8 @@ bool StreamTokenizer::next()
    m_hasLastToken = false;
    bool readNext = m_bufLen == 0;
 
-   while( true )
+   bool over = false;
+   while( ! over )
    {
       if( readNext )
       {
@@ -436,8 +437,8 @@ bool StreamTokenizer::next()
          {
             // the running text is m_bufPos -> buflen (might be 0)
             running->fromUTF8(m_buffer, m_bufLen );
-            // do not declare having found a token.
-            break;
+            // This is the last loop in search for tokens
+            over = true;
          }
 
          if( m_bufLen + 5 >= m_bufSize )
@@ -601,7 +602,6 @@ bool StreamTokenizer::findNext( int32& id, length_t& pos )
          }
       }
 
-
       ++iter;
    }
 
@@ -616,15 +616,25 @@ length_t StreamTokenizer::findText( const char* token, length_t len )
       return String::npos;
    }
 
-   length_t tpos;
-   if( m_bufLen >= m_maxTokenSize )
+   // find the first character of the token
+   // -- for its nature, this function will never be called with a length larger than the maximum token length
+   length_t tpos = 0;
+   char* buf = m_buffer;
+   while( tpos < m_bufLen )
    {
-      tpos = m_bufLen - m_maxTokenSize;
+      if( *buf == *token )
+      {
+         // found it
+         break;
+      }
+      ++tpos;
+      ++buf;
    }
-   else {
-      tpos = 0;
+
+   if( *buf != *token || len + tpos > m_bufLen )
+   {
+      return String::npos;
    }
-   char* buf = m_buffer + tpos;
 
    while( len > 0 )
    {
