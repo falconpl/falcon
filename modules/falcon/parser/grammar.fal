@@ -603,6 +603,7 @@ class GrammarParser
    // List of predefined tokens
    predefined = .[
       "eof"       // End of file
+      "any"       // any non-matching text
       "error"     // matches everything in case of error.
    ]
    
@@ -626,6 +627,19 @@ class GrammarParser
    errors = 0
    
    mt = nil
+   
+   commands = .[
+               "::="
+               
+               "r\'" "r\"" "R'" "R\"" "=>" "/*" 
+               
+               '"' "'" "*" "+" "?" "|" "[" "]"
+               "(" ")" "#"
+               ":" "." "{" "}" 
+               
+               ]
+   whiteSpaces = .[" " "\n" "\r" "\t"]
+
 
    /*#
       @brief Parses a Falcon Parser Definition (FPD).
@@ -646,15 +660,10 @@ class GrammarParser
          raise ParamError( 1001, "Invalid paramters", "Need a string or TextReader" )
       end
       
-      commands = .["::=" "/*" "r\'" "r\"" "R'" "R\"" ":" "." "{" "}" 
-                   '"' "'" "*" "+" "?" "|" "[" "]"
-                   "(" ")"
-                   "=>" "#"
-                   ]
-      whiteSpaces = .[" " "\n" "\r" "\t"]
-      call( mt.add, commands )
-      call( mt.add, whiteSpaces )
       mt.giveTokens = true
+      
+      self.mt = mt
+      self.resetTokens()
 
       syms = .["start" "dfn" "quote" "defBody"
                "defPreamble" "defPostamble"
@@ -668,6 +677,7 @@ class GrammarParser
       call( makeEnum, map({[v] "S." + v}, syms ) )
       self._resetParsing()
       
+      commands = self.commands
       self.mt = mt
 
       parCount = 0
@@ -707,7 +717,7 @@ class GrammarParser
          // manage comments
          //  -- notice that in code the lexer changes state, 
          //  -- so we can't parse the comments in codeblocks.
-         if tok == "/*"
+         if tok == "/*" and self._state != ~S..quote and self._state != ~S..escape
             oldState = self._state
             self._state = ~S..comment
             mt.clearTokens()
@@ -836,7 +846,7 @@ class GrammarParser
                if tok != "::="
                   self.xerror(self.curLine, "Need ::= after token specification.")
                else
-                  currentNT, currentAlt = self.pushNT(currentToken)
+                  currentNT, currentAlt = self.pushNT(currentToken)                  
                   self.changeState(~S..defBody, tok)
                end
                
@@ -894,7 +904,7 @@ class GrammarParser
                      quoteType = (tok[-1] == '"')
                      Rquote = (tok[0] == 'R' or tok[0] == 'r')
                      quoteText = m""
-                     self.changeState( ~S..quote, tok )
+                     self.enterQuote(tok)                     
                                           
                   case "=>"
                      self.changeState( ~S..transition, tok )
@@ -952,7 +962,7 @@ class GrammarParser
                      else
                         self.commitText(quoteText, currentAlt )
                         self.changeState( ~S..defName1, tok )
-                     end
+                     end                     
                   else
                      quoteText += tok
                   end
@@ -982,9 +992,7 @@ class GrammarParser
                      // are we done?
                      if parCount == 0
                         // reset the parser to the normal status
-                        mt.clearTokens()
-                        call( mt.add, commands )
-                        call( mt.add, whiteSpaces )
+                        self.resetTokens()
                         
                         switch codeStage
                            case 0
@@ -1060,9 +1068,7 @@ class GrammarParser
             case ~S..comment
                if tok == "*/"
                   self._state = oldState
-                  mt.clearTokens()
-                  call(mt.add, commands)
-                  call(mt.add, whiteSpaces)
+                  self.resetTokens()
                end
                
          end /* Switch */
@@ -1090,6 +1096,21 @@ class GrammarParser
       
       // shall generate the grammar?
       return self.errors == 0 ? grammar : nil
+   end
+   
+   
+   function resetTokens()
+      self.trace( "resetTokens()" )
+      self.mt.clearTokens()
+      call( self.mt.add, self.commands )
+      call( self.mt.add, self.whiteSpaces )
+   end
+   
+   function enterQuote(tok)
+      self.trace( "enterQuote()" )
+      self.mt.clearTokens()
+      self.mt.add('"', "'", "\\", "\n")
+      self.changeState( ~S..quote, tok )
    end
 
    function enterCode(status)   
@@ -1211,6 +1232,8 @@ class GrammarParser
       catch in e
          self.xerror( self.curLine, "Invalid regular expression: " + e )
       end
+      
+      self.resetTokens()
    end
 
    /*
@@ -1222,6 +1245,7 @@ class GrammarParser
       self.trace( "commitText '", text )
       alt.sequence += Token(Token.tString, text, nil, self.curLine )
       if text notin self._cgs.tokens: self._cgs.tokens += text
+      self.resetTokens()      
    end
    
    /*
@@ -1232,6 +1256,7 @@ class GrammarParser
    function commitCode( code, alt )
       self.trace( "commitCode()" )
       alt.code = code
+      self.resetTokens()
    end
 
    /*
