@@ -318,14 +318,14 @@ class Token(type, content, name, line)
    static tAsterisk = -1
    static tPlus = -2
    static tQMark = -3
-   
+      
    type = type
    content = content
    name = name
    pname = nil
    repeat = 0
    resolved = false
-   line = line ? line: 0
+   line = line ? line: 0      
    
    function dump(output, purged)
       tok = self
@@ -423,6 +423,19 @@ class NonTerminal(name)
    // list of zero or more NTAlt
    alts = []
    
+   // If the non terminal contains just one alternative with just one terminal, 
+   // then it's a terminal.
+   terminal = nil
+   
+   static tANone = 0
+   static tALeft = 1
+   static tARight = 2
+
+   //# Priority of this token
+   prio = 0
+   
+   //# Associativity of this token
+   assoc = 0
 
    function dump(output, purged)
       entry = self
@@ -475,6 +488,11 @@ class GrammarState(name, line)
    
    //# list of lexer tokens known to the state
    tokens = []
+   
+   //# list of tokens that the parser must ignore
+   eat = []
+   
+   _prioRule = nil
    
    //# Code to be exucted when entering this state
    preamble = nil
@@ -541,7 +559,20 @@ class GrammarState(name, line)
             entry.dump( output, purged )
             output.write("\n") /* white line */
          end
-      end      
+      end
+      
+      if self._prioRule
+         self._prioRule.dump(output, purged)
+         output.write("\n") /* white line */
+      end
+      
+      for token in self.eat
+         forfirst: output.write( "eat ::= " )
+         output.write( token )
+         formiddle: output.write( " " )
+         forlast: output.write( ".\n" ) 
+      end
+      
    end
 
 end
@@ -859,7 +890,7 @@ class GrammarParser
                      if parLevel > 0
                         self.error(self.curLine, "Unbalanced open parenthesis at rule closing")
                      else
-                        self.commitNT()
+                        self.commitNT( currentNT )
                      end
                      // anyhow reset the rule
                      self.changeState(~S..start, tok)
@@ -1121,11 +1152,31 @@ class GrammarParser
       self.changeState( status )
    end
 
-   function commitNT()
-      self.trace( "commitNT()" )
+   function commitNT( nt )
+      self.trace( "commitNT()" )   
       if self._NTStack.empty
          self.error( self.curLine, "Internal error: committed empty stack" )
       end
+      
+      // check for a named terminal
+      if nt.alts.len == 1 and nt.alts[0].sequence.len == 1
+         tk = nt.alts[0].sequence[0]
+         if tk.type == Token.tString or tk.type == Token.tRE
+            nt.terminal = nt.alts[0]
+         elif tk.type == Token.tNT and tk.content.terminal != nil
+            nt.terminal = tk.content.terminal
+         end
+      end
+      
+      if nt.name == "eat"
+         self._cgs.eat = nt.alts[0]
+         self._cgs.entries -= "eat"
+      elif nt.name == "priority"
+         self._calcPriority( nt )
+         self._cgs.entries -= "priority"
+         self._cgs._prioRule = nt
+      end
+      
       self._NTStack.clear()
    end
    
@@ -1526,6 +1577,29 @@ class GrammarParser
       if self.verbose
          > " ".merge(map( {[v] v.toString()}, passvp() ))
       end
+   end
+   
+   function _calcPriority( nt )
+      self.trace( "Calculating priority in state ", self._cgs.name)
+      prio = nt.alts.len
+      for alt in nt.alts
+         nameList = m""
+         for token in alt.sequence
+            if token.type == Token.tNT and token.content
+               content = token.content
+               if token.pname == "right"
+                  content.assoc = NonTerminal.tARight
+               else
+                  content.assoc = NonTerminal.tALeft
+               end
+               content.prio = prio
+            end
+         
+            nameList += " " + token.name 
+         end
+         self.trace( "-- Priority ", prio, " tokens:", nameList )
+         prio--
+      end      
    end
    
    /*

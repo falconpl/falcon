@@ -39,6 +39,7 @@ object Options from cl.Parser
    generate = false
    grammarOnly = false
    printVersion = false
+   verbose = false
    
    function onOption( option )
       switch option
@@ -50,6 +51,8 @@ object Options from cl.Parser
             self.grammarOnly = true
          case "v"
             self.printVersion = true
+         case "V"
+            self.verbose = true
          default
             self.unrecognized( option )
       end
@@ -66,15 +69,6 @@ object Options from cl.Parser
 
 
    function onSwitchOff( sw )
-      self.used = true
-      switch sw
-         case "k"
-            self.sw_k = 0
-         case "n"
-            self.sw_n = 0
-         default
-            self.unrecognized( sw )
-      end
    end
 
    function unrecognized( option )
@@ -116,8 +110,13 @@ parsed = InputStream(Options.script)
 //parsed = InputStream(args[0])
 
 x = GrammarParser()
+if Options.verbose
+   > "Going verbose"
+   x.verbose = true
+end
 grammar = x.parse( TextReader(parsed, "utf8") )
 if grammar
+   
    if not Options.grammarOnly
       x.compileSnippets( grammar )
    end

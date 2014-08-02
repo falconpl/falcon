@@ -34,7 +34,6 @@ _stdpath = _path + "/grammars"
 */
 function std_grammar( name )
    path = _stdpath + "/" + name + ".fgd"   
-   > "Reading: " + path
     
    x = GrammarParser()
    x.verbose = 1
@@ -53,4 +52,12 @@ end
 */
 function faldoc_text_grammar()
    return std_grammar( "faldoc_text" )   
+end
+
+
+/*# @brief Reads the basic_expr standard grammar.
+   @return the compiled grammar.
+*/
+function basic_expr_grammar()
+   return std_grammar( "basic_expr" )   
 end
