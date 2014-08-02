@@ -135,9 +135,10 @@ bool ModCompiler::Context::onOpenFunc( Function* function )
          mod->addAnonMantra( function );
 
          m_owner->m_sp.addError( new CodeError(
-            ErrorParam(e_already_def, function->declaredAt(), m_owner->m_module->uri() )
+            ErrorParam(e_already_def, __LINE__, SRC )
             .extra(function->name())
-            // TODO add source reference of the imported def
+            .line(function->declaredAt())
+            .module(m_owner->m_module->uri())
             .symbol( function->name() )
             .origin(ErrorParam::e_orig_compiler)
             ));
@@ -155,9 +156,12 @@ void ModCompiler::Context::onOpenMethod( Class* cls, Function* function )
    if( static_cast<FalconClass*>(cls)->getProperty(function->name()) != 0 )
    {
       m_owner->m_sp.addError( new CodeError(
-             ErrorParam(e_prop_adef, function->declaredAt(), m_owner->m_module->uri() )
+             ErrorParam(e_prop_adef, __LINE__ , SRC )
              // TODO add source reference of the imported def
-             .symbol( function->name() )
+             .module(m_owner->m_module->uri())
+             .line( function->declaredAt() )
+             .symbol( cls->name() )
+             .extra( function->name() )
              .origin(ErrorParam::e_orig_compiler)
              ));
    }
@@ -199,9 +203,10 @@ bool ModCompiler::Context::onOpenClass( Class* cls, bool isObject )
       mod->addAnonMantra( cls );
 
       m_owner->m_sp.addError( new CodeError(
-         ErrorParam(e_already_def, cls->declaredAt(), m_owner->m_module->uri() )
+         ErrorParam(e_already_def, __LINE__, SRC )
+         .line(cls->declaredAt())
+         .module( m_owner->m_module->uri() )
          .extra(cls->name())
-         // TODO add source reference of the imported def
          .origin(ErrorParam::e_orig_compiler)
          ));
    }
