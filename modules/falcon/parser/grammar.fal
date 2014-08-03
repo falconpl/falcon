@@ -568,7 +568,7 @@ class GrammarState(name, line)
       
       for token in self.eat
          forfirst: output.write( "eat ::= " )
-         output.write( token )
+         output.write( "\"" + token.content.escape() +"\"" )
          formiddle: output.write( " " )
          forlast: output.write( ".\n" ) 
       end
@@ -761,7 +761,7 @@ class GrammarParser
             if self._state == ~S..Rafter
                // time to create the RE
                self.commitRE( quoteText, currentAlt, Rignore ?"i":"" )
-               self.changeState( ~S..defBody )
+               self.changeState( ~S..defsdBody )
             elif self._state == ~S..code
                code += tok
             elif self._state == ~S..quote
@@ -993,16 +993,23 @@ class GrammarParser
                      else
                         self.commitText(quoteText, currentAlt )
                         self.changeState( ~S..defName1, tok )
-                     end                     
+                     end
+                     self.resetTokens()
                   else
                      quoteText += tok
                   end
                end
                
             case ~S..escape
-               quoteText += tok
-               self.changeState( ~S..quote, tok )
+               switch tok
+                  case "r": quoteText += "\r"
+                  case "n": quoteText += "\n"
+                  case "t": quoteText += "\t"
+                  case "\\": quoteText += "\\"
+                  default: quoteText += tok
+               end
                
+               self.changeState( ~S..quote, tok )               
                    
             case ~S..Rafter
                // time to create the RE
@@ -1015,7 +1022,7 @@ class GrammarParser
                
                if Rignore: opts += "i"
                self.commitRE( quoteText, currentAlt, opts )               
-               self.changeState( ~S..defName1 )
+               self.changeState( ~S..defName1, tok )
                
             case ~S..code               
                switch tok 
@@ -1169,7 +1176,7 @@ class GrammarParser
       end
       
       if nt.name == "eat"
-         self._cgs.eat = nt.alts[0]
+         self._cgs.eat = nt.alts[0].sequence
          self._cgs.entries -= "eat"
       elif nt.name == "priority"
          self._calcPriority( nt )

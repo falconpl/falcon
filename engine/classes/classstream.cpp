@@ -427,14 +427,16 @@ static void register_on(ClassStream* cls )
 {
    cls->addProperty( "error", &get_error );
    cls->addProperty( "moved", &get_moved );
-   cls->addProperty( "position", &get_position, &set_position );
+   // property is hidden, as many streams don't provide this
+   cls->addProperty( "position", &get_position, &set_position, false, true );
    cls->addProperty( "status", &get_status );
    cls->addProperty( "eof", &get_eof );
    cls->addProperty( "bad", &get_bad );
    cls->addProperty( "good", &get_good );
    cls->addProperty( "isopen", &get_isopen );
    cls->addProperty( "buffer", &get_buffer, &set_buffer );
-   cls->addProperty( "userItem", &get_userItem, &set_userItem );
+   // Hidden, as not normally used
+   cls->addProperty( "userItem", &get_userItem, &set_userItem, false, true );
    
    cls->addMethod( new Function_read );
    cls->addMethod( new Function_write );
