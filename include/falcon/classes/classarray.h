@@ -89,6 +89,8 @@ public:
    PStep* m_stepQSortPartHigh;
 
    PStep* m_stepCompareNext;
+
+   PStep* m_stepSieveNext;
 };
 
 }

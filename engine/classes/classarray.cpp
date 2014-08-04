@@ -1501,6 +1501,83 @@ void Function_clear::invoke(VMContext* ctx, int32 )
    ctx->returnFrame(*array_x);
 }
 
+/*#
+   @method sieve Array
+   @brief Removes elements not matching a criterion in place.
+   @param checker Code invoked to check for items to be filtered.
+   @return this same array.
+
+   The @b checker parameter is evaluated and given each element as a
+   paramter. If it returns true, the item is kept, otherwise it's removed
+   from the array, and the array is resized accordingly.
+
+   This uses the same source array, and if the original array is not needed,
+   it results in being more efficient than the @a filter() generic function,
+   which creates a new array copying there the items for which the check
+   is true.
+*/
+FALCON_DECLARE_FUNCTION(sieve,"checker:C");
+void Function_sieve::invoke(VMContext* ctx, int32 )
+{
+   Item *i_code = ctx->param(0);
+
+   if ( i_code == 0 )
+   {
+      throw paramError( __LINE__, SRC );
+   }
+
+   ItemArray *array = ctx->tself<ItemArray>();
+   ConcurrencyGuard::Reader gr( ctx, array->guard());
+   if( array->length() == 0 )
+   {
+      ctx->returnFrame(ctx->self());
+      return;
+   }
+
+   ctx->addLocals(1);
+   ctx->local(0)->setInteger(0); // we'll start from 1
+   ClassArray* carr = static_cast<ClassArray*>(methodOf());
+   ctx->pushCode(carr->m_stepSieveNext);
+   ctx->callerLine(__LINE__+1);
+   ctx->callItem(*i_code, 1, &array->at(0));
+}
+
+class PStepSieveNext: public PStep
+{
+public:
+   PStepSieveNext() { apply = apply_; }
+   virtual ~PStepSieveNext() {}
+   virtual void describeTo(String& tgt) const {
+      tgt = "Array::PStepSieveNext";
+   }
+
+   static void apply_(const PStep*, VMContext* ctx )
+   {
+      ItemArray *array = ctx->tself<ItemArray>();
+      int64 id = ctx->local(0)->asInteger();
+      bool opRes = ctx->topData().isTrue();
+
+      // what's the result of the sieve?
+      ConcurrencyGuard::Writer gr( ctx, array->guard());
+      if ( ! opRes )
+      {
+         array->remove(id);
+      }
+      else {
+         ctx->local(0)->setInteger(++id);
+      }
+
+      if( static_cast<length_t>(id) >= array->length() )
+      {
+         ctx->returnFrame(ctx->self());
+      }
+      else
+      {
+         Item *i_code = ctx->param(0);
+         ctx->callItem(*i_code, 1, &array->at(id));
+      }
+   }
+};
 
 }
 
@@ -1549,6 +1626,7 @@ ClassArray::ClassArray():
    // Non-methodic functions
    addMethod( new _classArray::Function_reserve );
    addMethod( new _classArray::Function_clone );
+   addMethod( new _classArray::Function_sieve );
 
    m_stepScanInvoke = new _classArray::PStepScanInvoke;
 
@@ -1556,6 +1634,8 @@ ClassArray::ClassArray():
    m_stepQSortPartLow = new _classArray::PStepQSortLow;
    m_stepQSortPartHigh = new _classArray::PStepQSortPartHigh;
    m_stepCompareNext = new _classArray::PStepCompareNext;
+
+   m_stepSieveNext = new _classArray::PStepSieveNext;
 }
 
 
@@ -1567,6 +1647,8 @@ ClassArray::~ClassArray()
    delete m_stepQSortPartLow;
    delete m_stepQSortPartHigh;
    delete m_stepCompareNext;
+
+   delete m_stepSieveNext;
 }
 
 int64 ClassArray::occupiedMemory( void* instance ) const
