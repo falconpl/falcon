@@ -27,6 +27,7 @@ if(WIN32)
 elseif(APPLE)
    set( _files_sys 
         sharedmem_posix.cpp
+	shmem_darwin.cpp
         ipsem_darwin.cpp
         sharedmem_private_posix.h        
    )
