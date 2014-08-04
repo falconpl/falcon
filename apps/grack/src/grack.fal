@@ -29,7 +29,9 @@
 :license => "FPLLv1.1/GPLv2"
 :version => "1.0"
 
-import from parser.grammar
+import Grammar from parser.grammar
+import Parser from parser.genparser as GenParser
+
 import InputStream from vfs
 import from cmdline in cl
 
@@ -40,6 +42,9 @@ object Options from cl.Parser
    grammarOnly = false
    printVersion = false
    verbose = false
+   dump = false
+   
+   parseThrough = []   
    
    function onOption( option )
       switch option
@@ -47,18 +52,32 @@ object Options from cl.Parser
             self.usage()
          case "g"
             self.generate = true
+         case "d"
+            self.dump = true
          case "n"
             self.grammarOnly = true
          case "v"
             self.printVersion = true
          case "V"
             self.verbose = true
+            
+         case "p"
+            self.expectValue()
+
          default
             self.unrecognized( option )
       end
    end
       
+   function onValue( option, value )
+      switch option
+         case "p"
+            self.parseThrough += value
+      end
+   end
+   
    function onFree( param )
+      > "On free: ", param
       if self.script
          > "Can process one script at a time only"
          quit(1)
@@ -82,6 +101,8 @@ object Options from cl.Parser
      -?,--help       Prints this help
      -g              Generate an EBNF tree in output.
      -n              Ignore script snippets.
+     -d              Dump the rendering of the grammar file.
+     -p <input>      Process the given file through the given grammar.
      -v              Print version.
      ')
    end
@@ -105,22 +126,75 @@ end
 
 if Options.printVersion: Options.version()
 
-parsed = InputStream(Options.script)
-
-//parsed = InputStream(args[0])
+try
+   parsed = InputStream(Options.script)
+catch in e
+   > "ERROR while opening the grammar file: "
+   > e.toString()
+   return 1
+end
 
 x = GrammarParser()
 if Options.verbose
    > "Going verbose"
    x.verbose = true
 end
+
 grammar = x.parse( TextReader(parsed, "utf8") )
 if grammar
    
    if not Options.grammarOnly
       x.compileSnippets( grammar )
    end
-   grammar.dump(VMProcess.current.stdOut())
+   
+   if Options.dump
+      grammar.dump(VMProcess.current.stdOut())
+   end
+   
+   for file in Options.parseThrough
+      parseFile( grammar, file )
+   end
 else
    > "Errors: ", x.errors
 end
+
+//====================================================
+// Utilities
+//====================================================
+
+function parseFile( grammar, file )
+   > "="*70
+   > "Processing input file ", file
+   >
+   
+   // open the file
+   try
+      inp = InputStream( file )
+   catch in e
+      > "Cannot open input file: "
+      > e.toString()
+      return
+   end
+   
+   // open the grammar
+   try
+      //inspect(grammar)
+      //> "DERIVED: ", grammar.derivedFrom(Grammar)
+      parser = GenParser(grammar)
+   catch in e
+      > "Malformed grammar for the generic parser: "
+      > e.toString()
+      return 
+   end
+   
+   try
+      // process the input
+      parser.parse(TextReader(inp,"utf8"))
+   catch in e
+      > "Error while parsing the stream: "
+      > e.toString()
+   end
+end
+
+// end
+

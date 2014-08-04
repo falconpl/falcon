@@ -310,11 +310,21 @@ void ModSpace::PStepResolveModReq::apply_( const PStep* self, VMContext* ctx )
 			Module* found = 0;
 			if( mreq->isUri() )
 			{
-				found = ms->findByURI( mreq->name() );
+			   URI p(mreq->name());
+			   if (p.scheme().empty())
+			   {
+			      URI modp(mod->uri());
+			      p.path().absolutize(modp.path().encode());
+			   }
+
+				found = ms->findByURI( p.encode() );
 			}
 			else
 			{
-				found = ms->findByName( mreq->name() );
+			   // absolutize the name.
+			   String target;
+			   Module::computeLogicalName( mreq->name(), target, mod->name() );
+				found = ms->findByName( target );
 			}
 
 			if( found != 0 )
@@ -331,6 +341,7 @@ void ModSpace::PStepResolveModReq::apply_( const PStep* self, VMContext* ctx )
 				// start the load process.
 				ctx->pushCode( ms->m_stepStoreModReq );
 				ctx->currentCode().m_seqId = seqId - 1;
+				// relativization (if necessary) is re-done during load.
 				ms->loadModuleInContext( mreq->name(), mreq->isUri(), mreq->isLoad(), false, ctx, mod, true );
 				return;
 			}
@@ -827,13 +838,15 @@ void ModSpace::store( Module* mod )
 	mod->incref();
 
 	Private::ModMap::iterator iter = _p->m_modmap.find( mod->name() );
-	if( iter != _p->m_modmap.end() )
+	while( iter != _p->m_modmap.end() )
 	{
 		String name = mod->name();
 		int count = 1;
-		while( iter != _p->m_modmap.end() && name == iter->second->name() )
+		Module* other;
+		do
 		{
-			if( mod == iter->second )
+		   other = iter->second;
+			if( mod == other )
 			{
 				// we already have this module.
 				mod->decref();
@@ -842,8 +855,10 @@ void ModSpace::store( Module* mod )
 
 			name = mod->name() + "-";
 			name.N( count );
-			++iter;
+			iter =  _p->m_modmap.find( name );
 		}
+      while( iter != _p->m_modmap.end() );
+
 		// add the module with this name.
 		mod->name( name );
 	}

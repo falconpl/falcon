@@ -325,7 +325,20 @@ class Token(type, content, name, line)
    pname = nil
    repeat = 0
    resolved = false
-   line = line ? line: 0      
+   line = line ? line: 0
+   
+   /*# 
+   @brief check if this token represents a terminal symbol.
+   @return true if this is a terminal symbol.
+   */
+   function isTerminal()
+      return \
+         self.type == self.tString or \
+         self.type == self.tRE or \
+         self.type == self.tPredef or \
+         (self.type == self.tNT and self.content.terminal != nil)
+   end
+
    
    function dump(output, purged)
       tok = self

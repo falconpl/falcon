@@ -218,7 +218,6 @@ bool Module::resolveImports( Error*& error )
       ImportDef* idef = def.m_def;
       if( idef != 0 && idef->modReq() != 0 && idef->modReq()->module() != 0 )
       {
-
          Module* srcMod = idef->modReq()->module();
          value = srcMod->resolveLocally( def.m_srcSym );
       }
