@@ -287,6 +287,14 @@
             
       Of course, if the value associated with the repeated token is originally an array,
       it will be incapsulated again an another array, becoming an array-of-array.
+      
+   @section precedence Defining precedence
+   
+   The special rule "precedence" is used to determine tokens precedence and associativity.
+   
+   @section eating Removal of meaningless token.
+   
+   The special rule "eat" can contain a set of tokens that are to be ignored in the given state.
 */
 
 
@@ -581,7 +589,7 @@ class GrammarState(name, line)
       
       for token in self.eat
          forfirst: output.write( "eat ::= " )
-         output.write( "\"" + token.content.escape() +"\"" )
+         output.write( "\"" + token.escape() +"\"" )
          formiddle: output.write( " " )
          forlast: output.write( ".\n" ) 
       end
@@ -1189,7 +1197,7 @@ class GrammarParser
       end
       
       if nt.name == "eat"
-         self._cgs.eat = nt.alts[0].sequence
+         self._cgs.eat = map( {x=>x.content}, nt.alts[0].sequence )
          self._cgs.entries -= "eat"
       elif nt.name == "priority"
          self._calcPriority( nt )
