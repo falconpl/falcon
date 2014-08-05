@@ -315,12 +315,11 @@
    NonTerminal.
 */
 class Token(type, content, name, line)
-   static tString = 0
-   static tRE = 1
-   static tNT = 2
-   static tPredef = 3
+   static tT = 0
+   static tNT = 1
+   static tPredef = 2
    // sub alternative
-   static tSubAlt = 4
+   static tSubAlt = 3
    
    static tSingle = 0
    static tAsterisk = -1
@@ -335,26 +334,12 @@ class Token(type, content, name, line)
    resolved = false
    line = line ? line: 0
    
-   /*# 
-   @brief check if this token represents a terminal symbol.
-   @return true if this is a terminal symbol.
-   */
-   function isTerminal()
-      return \
-         self.type == self.tString or \
-         self.type == self.tRE or \
-         self.type == self.tPredef or \
-         (self.type == self.tNT and self.content.terminal != nil)
-   end
-
    
    function dump(output, purged)
       tok = self
       
-      if tok.type == Token.tString
-         output.write( '"' + tok.content.escape() + '"' )
-      elif tok.type == Token.tRE
-         output.write( tok.content.toString() )
+      if tok.type == Token.tT
+         tok.content.dump(output, nil, true)
       elif tok.name == nil
          // anonymous non-terminal token
          output.write( "( " )
@@ -429,6 +414,58 @@ end
 
 
 /*#
+   @b Terminal entry 
+   
+   A nonterminal is a colleciton of 0 or more alternatives,
+   each being a @a NTAlt, which fully defines a certain non terminal
+   pattern.
+   
+   @note A NonTerminal can be anonymous if it's generated out of
+   a locally defined alternative (a parentezised alternative within a sequence).
+   
+*/
+class Terminal( type, name, content )
+   static tString = 0
+   static tRE = 1
+   
+   static tNone = 0
+   static tLeft = 1
+   static tRight = 2
+
+   type = type
+   name = name
+   content = content
+   prio = 0
+   assoc = Terminal.tNone
+   
+   static isTerminal = true
+   
+   // a terminal has no alternatives.
+   static alts = nil
+   
+   function dump(output, dummy, inline)
+      // manage inline anonymous non terminals
+      if self.name 
+         output.write( self.name )
+         if not inline      
+            output.write( " :- " )
+         end
+      end
+      
+      if self.type == self.tString
+         output.write( '"' + self.content.escape() + '"' )
+      elif self.type == self.tRE
+         output.write( self.content.toString() )
+      end
+      
+      if not inline     
+         a = self.assoc == self.tNone ? "N" : (self.assoc == self.tLeft ? "L" : "R")
+         output.write( @"   /* p=${self.prio} a=$a */" )
+      end
+   end
+end
+
+/*#
    @b Non terminal entry in a gramamr definition.
    
    A nonterminal is a colleciton of 0 or more alternatives,
@@ -444,9 +481,7 @@ class NonTerminal(name)
    // list of zero or more NTAlt
    alts = []
    
-   // If the non terminal contains just one alternative with just one terminal, 
-   // then it's a terminal.
-   terminal = nil
+   static isTerminal = false
    
    static tANone = 0
    static tALeft = 1
@@ -497,6 +532,9 @@ class GrammarState(name, line)
 
    // "ID" => [NonTerminal]
    entries = [=>]
+   
+   // "Text"/r"RE" => Terminal
+   terminals = [=>]
    
    // NonTerminal at top of the entry tree
    top = nil
@@ -586,7 +624,7 @@ class GrammarState(name, line)
          self._prioRule.dump(output, purged)
          output.write("\n") /* white line */
       end
-      
+
       for token in self.eat
          forfirst: output.write( "eat ::= " )
          output.write( "\"" + token.escape() +"\"" )
@@ -683,7 +721,7 @@ class GrammarParser
    commands = .[
                "::="
                
-               "r\'" "r\"" "R'" "R\"" "=>" "/*" 
+               "r\'" "r\"" "R'" "R\"" "=>" "/*" ":-"
                
                '"' "'" "*" "+" "?" "|" "[" "]"
                "(" ")" "#"
@@ -725,6 +763,7 @@ class GrammarParser
                "comment"
                "defState" "defPState" "defPState2" "postState"
                "transition"
+               "termName"
                ]
       call( makeEnum, map({[v] "S." + v}, syms ) )
       self._resetParsing()
@@ -749,6 +788,7 @@ class GrammarParser
       quoteText = nil
       oldState = nil
       stateName = nil
+      termName = nil
       
       codeStage = 0
       // level of parenthesis inside an alternative.
@@ -895,12 +935,27 @@ class GrammarParser
                end
                
             case ~S..dfn
-               if tok != "::="
-                  self.xerror(self.curLine, "Need ::= after token specification.")
-               else
+               if tok == "::="
                   currentNT, currentAlt = self.pushNT(currentToken)                  
                   self.changeState(~S..defBody, tok)
+               elif tok == ":-"
+                  termName = currentToken
+                  self.changeState(~S..termName, tok)
+               else
+                  self.xerror(self.curLine, "Need ::= after token specification.")
                end
+               
+            case ~S..termName
+               switch tok
+                  case "r\'", "R'", "r\"", "R\"", '"', "'"
+                     Rignore = (tok == "R'" or tok == "R\"")
+                     quoteType = (tok[-1] == '"')
+                     Rquote = (tok[0] == 'R' or tok[0] == 'r')
+                     quoteText = m""
+                     self.enterQuote(tok)
+                  default
+                     self.xerror(self.curLine, "Named terminal definition must be a single string")
+                  end                  
                
             case ~S..defBody
                // now things get interesting.
@@ -1012,8 +1067,14 @@ class GrammarParser
                      if Rquote
                         self.changeState( ~S..Rafter, tok )
                      else
-                        self.commitText(quoteText, currentAlt )
-                        self.changeState( ~S..defName1, tok )
+                        if termName
+                           self.commitTerminal(termName, quoteText )
+                           termName = nil
+                           self.changeState( ~S..start, tok )
+                        else
+                           self.commitText(quoteText, currentAlt )
+                           self.changeState( ~S..defName1, tok )
+                        end
                      end
                      self.resetTokens()
                   else
@@ -1035,6 +1096,13 @@ class GrammarParser
             case ~S..Rafter
                // time to create the RE
                if tok in commands
+                  if termName
+                     termName = nil
+                     self.changeState( ~S..start, tok )
+                     self.xerror(self.curLine, "Terminal definition cannot have more commmands" )
+                     continue
+                  end
+                  
                   take = false   
                   opts = m""
                else
@@ -1042,8 +1110,14 @@ class GrammarParser
                end
                
                if Rignore: opts += "i"
-               self.commitRE( quoteText, currentAlt, opts )               
-               self.changeState( ~S..defName1, tok )
+               if termName
+                  self.commitToken(termName, quoteText, opts )
+                  termName = nil
+                  self.changeState( ~S..start, tok )
+               else
+                  self.commitRE( quoteText, currentAlt, opts )               
+                  self.changeState( ~S..defName1, tok )
+               end
                
             case ~S..code               
                switch tok 
@@ -1186,18 +1260,9 @@ class GrammarParser
          self.error( self.curLine, "Internal error: committed empty stack" )
       end
       
-      // check for a named terminal
-      if nt.alts.len == 1 and nt.alts[0].sequence.len == 1
-         tk = nt.alts[0].sequence[0]
-         if tk.type == Token.tString or tk.type == Token.tRE
-            nt.terminal = nt.alts[0]
-         elif tk.type == Token.tNT and tk.content.terminal != nil
-            nt.terminal = tk.content.terminal
-         end
-      end
-      
+      // check for a named terminal      
       if nt.name == "eat"
-         self._cgs.eat = map( {x=>x.content}, nt.alts[0].sequence )
+         self._cgs.eat = map( {x=>x.content.content}, nt.alts[0].sequence )
          self._cgs.entries -= "eat"
       elif nt.name == "priority"
          self._calcPriority( nt )
@@ -1302,11 +1367,20 @@ class GrammarParser
       opt -- Regular expression options
    */
    function commitRE( text, alt, opts )
-      self.trace( "commitRE '", text )
+      self.trace( "commitRE '", text, "'" )      
+      terminals = self._cgs.terminals
       
       try
          re = RE( text, opts )
-         alt.sequence += Token(Token.tRE, re, nil, self.curLine )
+         term = terminals.find( re, nil )
+         if not term
+            self.trace( "commitRE -- creating new anonymous terminal for >", text, "<" )     
+            term = Terminal(Terminal.tRE, nil, re )
+            terminals[re] = term
+         end
+         
+         alt.sequence += Token(Token.tT, term, nil, self.curLine )
+         
          if re notin self._cgs.tokens: self._cgs.tokens += re
       catch in e
          self.xerror( self.curLine, "Invalid regular expression: " + e )
@@ -1321,10 +1395,68 @@ class GrammarParser
       alt -- the forming alternative (a NTAlt instance)
    */
    function commitText( text, alt )
-      self.trace( "commitText '", text )
-      alt.sequence += Token(Token.tString, text, nil, self.curLine )
+      self.trace( "commitText '", text, "'" )
+      terminals = self._cgs.terminals
+      
+      term = terminals.find( text, nil )
+      if not term
+         self.trace( "commitText -- creating new anonymous terminal for >", text, "<" )     
+         term = Terminal(Terminal.tString, nil, text )
+         terminals[text] = term
+      end
+         
+      alt.sequence += Token(Token.tT, term, nil , self.curLine )
+      
       if text notin self._cgs.tokens: self._cgs.tokens += text
       self.resetTokens()      
+   end
+   
+   /*
+      Commits a declared terminal (in form of name :- value)
+      name -- the name of the terminal
+      text -- The text
+      opts -- If not nil (even an empty string), the text is interpreted as a RE, 
+              and these are the options.
+   */
+   function commitTerminal( name, text, opts )
+      self.trace( "commitTerminal, ",name," => '", text, "' ", (opts != nil ?"(RE)":"") )  
+      
+      if opts != nil
+         try
+            text = RE( text, opts )
+         catch in e
+            self.xerror( self.curLine, "Invalid regular expression: " + e )
+            return
+         end
+      end
+      
+      entries = self._cgs.entries
+      if name in entries
+         self.xerror( self.curLine, "Terminal name '" + name + "' cannot be duplicated" )
+         return
+      end      
+            
+      terminals = self._cgs.terminals
+      term = terminals.find( text, nil )
+      if not term
+         self.trace( "commitTerminal -- creating new terminal ", name, "=> '", text, "'" )     
+         term = Terminal( (opts != nil ? Terminal.tRE : Terminal.tString), name, text )
+         terminals[text] = term
+      else
+         if not term.name 
+            self.trace( "commitTerminal -- Assigning ", name, "=> '", text, "'" )
+            term.name = name
+         else
+            self.xerror( self.curLine, "Named terminal '" + name + "' had previous name '" + term.name + "'" )
+            return
+         end            
+      end
+      
+      // add the terminal to the entries too.
+      entries[name] = term
+      self._cgs.unresolved -= name
+      // CHECK
+      if text notin self._cgs.tokens: self._cgs.tokens += text
    end
    
    /*
@@ -1389,7 +1521,7 @@ class GrammarParser
       for sname,state in self._grammar.states
          self.trace( "Picking the root node of ", state.name )
          refs = state.entries.values()
-         for name, nt in state.entries       
+         for name, nt in state.entries 
             self.removeNTs( refs, nt )            
          end
          
@@ -1408,6 +1540,10 @@ class GrammarParser
    end
    
    function removeNTs( refs, nt )
+      if nt.isTerminal
+         refs -= nt
+         return
+      end
       
       for alt in nt.alts
          for tok in alt.sequence
