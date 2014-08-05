@@ -291,10 +291,53 @@
    @section precedence Defining precedence
    
    The special rule "precedence" is used to determine tokens precedence and associativity.
+   You can define named terminals using the :- operator:
    
-   @section eating Removal of meaningless token.
+   @code
+      EXPR ::= EXPR plus EXPR.
+      
+      plus :- '+'
+   @endcode
    
-   The special rule "eat" can contain a set of tokens that are to be ignored in the given state.
+   Notice the lack of the '.' terminator after the ':-' named terminal specifier.
+   
+   Once you have given a name to a terminal, you can use the @b precedence special rule
+   to determine the precedence and associativity of each named terminal. 
+   
+   The terminals specified first will have higher precedence, and lower precedence
+   operators can be specified separating each sublist with the '|' separator. Adding the
+   ':right' specifier will declare the operators as right-associative, while all the other
+   terminal tokens declared in the precedence list will be left-associative.
+   
+   Check out the following example:
+   
+   @code
+   plus :- '+'
+   minus :- '-'
+   times :- '*'
+   divided :- '/'
+   pow  :- '^'
+
+   precedence ::=
+      pow
+      | times divided:right
+      | plus minus.      
+   @endcode
+   
+   @note The proproty declaration is local to the current parser state.
+   
+   @section eating Removal of meaningless tokens.
+   
+   The special rule "eat" can contain a set of terminal unnamed tokens that are to be 
+   ignored in the given state.
+   
+   For example:
+   
+   @code
+   eat ::= " " "\n" "\r" "\t".
+   @endcode
+   
+   This means that the current state must ignore all the white-spaces.
 */
 
 
@@ -1264,9 +1307,9 @@ class GrammarParser
       if nt.name == "eat"
          self._cgs.eat = map( {x=>x.content.content}, nt.alts[0].sequence )
          self._cgs.entries -= "eat"
-      elif nt.name == "priority"
+      elif nt.name == "precedence"
          self._calcPriority( nt )
-         self._cgs.entries -= "priority"
+         self._cgs.entries -= "precedence"
          self._cgs._prioRule = nt
       end
       
@@ -1744,7 +1787,7 @@ class GrammarParser
    end
    
    function _calcPriority( nt )
-      self.trace( "Calculating priority in state ", self._cgs.name)
+      self.trace( "Calculating precedence in state ", self._cgs.name)
       prio = nt.alts.len
       for alt in nt.alts
          nameList = m""
