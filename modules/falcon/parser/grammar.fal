@@ -180,26 +180,26 @@
                   |- name
                   |- preamble/postamble
                   + includes [GrammarState]
-                  + top NonTerminal
-                         + alts [NTAlt]
+                  + top DefSymbol
+                         + alts [DefRule]
                                  | line
                                  | code
                                  | transition
-                                 + sequence [Token]
+                                 + sequence [DefEntry]
                                              | line
                                              | name
                                              | repeat
                                              | type
-                                             + content (NonTerminal|String)
+                                             + content (DefSymbol)
       @endcode
       
       The grammar has a list of @a GrammarState entities. Each one represents a
       grammar state, that can include other GrammarState entities (by direct reference)
-      and has a top rule of type @a NonTerminal. The @a NonTerminal entity is
-      constituted by one or more @a NTAlt (alternatives), each being basically a
-      sequence of @a Token entities. Depending on their type, tokens can be terminal,
+      and has a top rule of type @a DefSymbol. The @a DefSymbol entity is
+      constituted by one or more @a DefRule (alternatives), each being basically a
+      sequence of @a DefEntry entities. Depending on their type, tokens can be terminal,
       in which case their content is a string, or a regular expression, or can be
-      non-terminal, in which case their content is child @a NonTerminal entity.
+      non-terminal, in which case their content is child @a DefSymbol entity.
 
       This tree structure can be used by the final parser to generate a grammar parsing
       table, inspected, modified, rendered back to a grammar textual definition document
@@ -282,7 +282,7 @@
       
       Will assign an array of sorted words to the SORTED token. 
       
-      @note Tokens repeated with the '?' repetition indicator will be seen in code slices
+      @note DefEntrys repeated with the '?' repetition indicator will be seen in code slices
             as arrays with 0 or 1 elements.
             
       Of course, if the value associated with the repeated token is originally an array,
@@ -342,9 +342,9 @@
 
 
 /*#
-   @brief Single token (entry in a NonTerminal entry sequence)
+   @brief Single token (entry in a DefSymbol entry sequence)
    @param type tString, tRE, tNT  (tPredef for predefined terminals)
-   @param content either a string, a re or a NonTerminal
+   @param content either a string, a re or a DefSymbol
    @param name non-terminal name, if this is a non-terminal
    @param repeat 0/nil - single, -1: asterisk, -2: plus, -3: question mark
    @param line Where the token was defined.
@@ -352,51 +352,31 @@
    The content is determined by the type:
    - tString or tPredef: @b content is a String
    - tRE: @b content is a RE
-   - tNT: @b Content is an instance of NonTerminal
+   - tNT: @b Content is an instance of DefSymbol
    
    @note The token name can be nil if the token content is an anonymous
-   NonTerminal.
+   DefSymbol.
 */
-class Token(type, content, name, line)
-   static tT = 0
-   static tNT = 1
-   static tPredef = 2
-   // sub alternative
-   static tSubAlt = 3
-   
+class DefEntry(sym, line)
    static tSingle = 0
    static tAsterisk = -1
    static tPlus = -2
    static tQMark = -3
       
-   type = type
-   content = content
-   name = name
+   symbol = sym
    pname = nil
    repeat = 0
-   resolved = false
-   line = line ? line: 0
-   
+   line = line ? line: 0   
    
    function dump(output, purged)
-      tok = self
+      tok = self      
+      tok.symbol.dump(output, purged, true)      
       
-      if tok.type == Token.tT
-         tok.content.dump(output, nil, true)
-      elif tok.name == nil
-         // anonymous non-terminal token
-         output.write( "( " )
-         tok.content.dump(output, purged)
-         output.write( " )" )         
-      else
-         output.write( tok.name )
-      end
-      
-      if tok.repeat == Token.tAsterisk
+      if tok.repeat == DefEntry.tAsterisk
          output.write( "*" )
-      elif tok.repeat == Token.tPlus
+      elif tok.repeat == DefEntry.tPlus
          output.write( "+" )
-      elif tok.repeat == Token.tQMark
+      elif tok.repeat == DefEntry.tQMark
          output.write( "?" )
       end
       
@@ -414,11 +394,11 @@ end
 Each alternative definition will have its own NTDef
    - line: Line at which this alternative is declared
 */
-class NTAlt(line)   
+class DefRule(line)   
    // line where the definition is declared
    line = line ? line: 0
    
-   // sequence of Tokens
+   // sequence of DefEntrys
    sequence = []
    
    // raw text code
@@ -457,78 +437,45 @@ end
 
 
 /*#
-   @b Terminal entry 
+   @brief General entry in a gramamr definition.
    
-   A nonterminal is a colleciton of 0 or more alternatives,
-   each being a @a NTAlt, which fully defines a certain non terminal
+   A Terminal entry has a single content.
+   
+   A Non-Ternminal entry is a colleciton of 0 or more alternatives,
+   each being a @a DefRule, which fully defines a certain non terminal
    pattern.
    
-   @note A NonTerminal can be anonymous if it's generated out of
+   @note A DefSymbol can be anonymous if it's generated out of
    a locally defined alternative (a parentezised alternative within a sequence).
    
 */
-class Terminal( type, name, content )
+class DefSymbol(name, type, content)
+   static tUnresolved = -1
    static tString = 0
    static tRE = 1
-   
-   static tNone = 0
-   static tLeft = 1
-   static tRight = 2
-
-   type = type
-   name = name
-   content = content
-   prio = 0
-   assoc = Terminal.tNone
-   
-   static isTerminal = true
-   
-   // a terminal has no alternatives.
-   static alts = nil
-   
-   function dump(output, dummy, inline)
-      // manage inline anonymous non terminals
-      if self.name 
-         output.write( self.name )
-         if not inline      
-            output.write( " :- " )
-         end
-      end
-      
-      if self.type == self.tString
-         output.write( '"' + self.content.escape() + '"' )
-      elif self.type == self.tRE
-         output.write( self.content.toString() )
-      end
-      
-      if not inline     
-         a = self.assoc == self.tNone ? "N" : (self.assoc == self.tLeft ? "L" : "R")
-         output.write( @"   /* p=${self.prio} a=$a */" )
-      end
-   end
-end
-
-/*#
-   @b Non terminal entry in a gramamr definition.
-   
-   A nonterminal is a colleciton of 0 or more alternatives,
-   each being a @a NTAlt, which fully defines a certain non terminal
-   pattern.
-   
-   @note A NonTerminal can be anonymous if it's generated out of
-   a locally defined alternative (a parentezised alternative within a sequence).
-   
-*/
-class NonTerminal(name)
-   name = name
-   // list of zero or more NTAlt
-   alts = []
-   
-   static isTerminal = false
+   static tNT = 2
+   static tPredef = 3
    
    static tANone = 0
    static tALeft = 1
    static tARight = 2
+
+   //# type of this entry
+   type = nil
+   
+   //# Name of this entry
+   name = name
+   
+   //# Content for terminal entries.
+   content = content
+   
+   /*# 
+      @brief List of zero or more DefRule
+    
+     Will be initialized to an empty array ui the type of the symbol
+     is non-terminal.
+   */
+   alts = nil      
 
    //# Priority of this token
    prio = 0
@@ -536,31 +483,118 @@ class NonTerminal(name)
    //# Associativity of this token
    assoc = 0
 
-   function dump(output, purged)
-      entry = self
+   //# DefSymbols in which this token is used.
+   parents = []
+   
+   init
+      self.resolveAs( type )
+   end
+   
+   function isTerminal()
+      return self.type != self.tNT
+   end
+   
+   /*# Set a non-unresolved type for this entry.
+   
+      If the type set is @b tNT, the @b alts member
+      gets initialized to an empty array.
+   */
+      
+   function resolveAs( type )
+      self.type = type != nil ? type : self.tUnresolved 
+      if type == self.tNT: self.alts = []
+   end
+   
+   /*# Renders this definition symbol to an output stream.
+      @param Output the output stream
+      @param purged If true, remove code snippets from alternatives.
+      @param inline If true, render this as inline, 
+         otherwise render this as a definition.
+   */
+   function dump( output, purged, inline )
+      
+      // DEBUG CODE:
+      if not inline
+         if self.parents.len > 0
+            output.write( "/* Included in: " )
+            for p in self.parents
+               output.write( p.name )
+               formiddle: output.write(", ")
+            end
+            output.write( "*/\n" )
+         end
+      end
+      // -- end DEBUG CODE
+      
+      if self.type == self.tPredef or self.type == self.tUnresolved
+         output.write( self.name )
+      elif self.type == self.tNT
+         self._dumpNonTerminal(output, purged, inline)
+      else
+         self._dumpTerminal(output, inline)
+      end         
+   end
+      
+      
+   function _dumpNonTerminal(output, purged, inline)
       
       // manage inline anonymous non terminals
-      if entry.name
-         output.write( entry.name + " ::= " )
-      end
+      if inline 
+         if self.name 
+            output.write( self.name )
+         else
+            output.write( "(" )
+         end
+      else
+         output.write( self.name + " ::= " )
+      end               
       
-      for alt in entry.alts         
-         alt.dump(output, purged)
-         
-         forfirst
-            if entry.name and entry.alts.len > 1
-               output.write( "\n     " )
+      if not inline or not self.name
+         for alt in self.alts
+            alt.dump(output, purged )
+            
+            forfirst
+               if self.name and self.alts.len > 1
+                  output.write( "\n     " )
+               end
+            end
+            
+            formiddle
+               if not inline: output.write("\n  ")
+               output.write( " | " )
             end
          end
-         
-         formiddle
-            if entry.name: output.write("\n  ")
-            output.write( " | " )
+      end
+
+      if not inline: output.write( "." )
+   end
+   
+   
+   function _dumpTerminal(output, inline)
+      
+      if inline
+         if self.name
+            output.write( self.name )
+         end
+      else
+         output.write( self.name + " :- " )
+      end
+            
+      
+      if not inline or not self.name
+         if self.type == self.tString
+            output.write( '"' + self.content.escape() + '"' )
+         elif self.type == self.tRE
+            output.write( self.content.toString() )
          end
       end
       
-      if entry.name: output.write( "." )
+      if not inline   
+         a = self.assoc == self.tANone ? "N" : (self.assoc == self.tALeft ? "L" : "R")
+         output.write( @"   /* p=${self.prio} a=$a */" )
+      end
    end
+   
 end
 
 
@@ -573,16 +607,16 @@ class GrammarState(name, line)
    // master grammar states
    includes = []
 
-   // "ID" => [NonTerminal]
+   // "ID" => [DefSymbol]
    entries = [=>]
    
    // "Text"/r"RE" => Terminal
    terminals = [=>]
    
-   // NonTerminal at top of the entry tree
+   // DefSymbol at top of the entry tree
    top = nil
    
-   // "ID" => [NTAlt] -- still unresolved entries.
+   // "ID" => [DefRule] -- still unresolved entries.
    unresolved = [=>]
    
    // line where the state is declared
@@ -605,6 +639,26 @@ class GrammarState(name, line)
    postamble = nil
    postamble_line = nil
    postamble_compiled = nil
+   
+   /*#
+      @brief Finds an entry in this state, or in the included states.
+      @param name The name of the entry to be found.
+      @return a valid DefEntry, or nil if not found.
+   */
+   
+   function findEntry(name)
+      entry = self.entries.find(name,nil)
+      if entry: return entry
+      // try in the parents
+      for parent in self.includes
+         entry = parent.findEntry(name)
+         if entry: return entry
+      end
+      
+      // failure
+      return nil
+   end
+   
    
    /*#
       @brief Reverse rendering for the state grammar
@@ -650,7 +704,8 @@ class GrammarState(name, line)
       // for convention, write the root on top
       root = self.top
       if root
-         root.dump(output, purged)
+      // all the entries are generated outline here.
+         root.dump(output, purged, false)
          output.write("\n") /* white line */
       else
          output.write("/* This state has no root */\n")
@@ -658,7 +713,8 @@ class GrammarState(name, line)
       
       for name, entry in self.entries
          if entry != root
-            entry.dump( output, purged )
+            // all the entries are generated outline here.
+            entry.dump( output, purged, false )
             output.write("\n") /* white line */
          end
       end
@@ -735,9 +791,9 @@ class GrammarParser
    
    // List of predefined tokens
    predefined = .[
-      "eof"       // End of file
-      "any"       // any non-matching text
-      "error"     // matches everything in case of error.
+      "eof" => DefSymbol("eof",DefSymbol.tPredef)      // End of file
+      "any" => DefSymbol("any",DefSymbol.tPredef)      // any non-matching text
+      "error" => DefSymbol("error",DefSymbol.tPredef)  // matches everything in case of error.
    ]
    
    /*#
@@ -818,10 +874,10 @@ class GrammarParser
       code = m""
       
       // cached token (name)
-      currentToken = nil
-      // cached NTAlt we're working on
+      currentDefName = nil
+      // cached DefRule we're working on
       currentAlt = nil
-      // cached NonTerminal at top of the NTStack.
+      // cached DefSymbol at top of the NTStack.
       currentNT = nil
       
       // variables controlling quotes
@@ -864,7 +920,7 @@ class GrammarParser
             // but if we are after a regular expression, change state
             if self._state == ~S..Rafter
                // time to create the RE
-               self.commitRE( quoteText, currentAlt, Rignore ?"i":"" )
+               self.commitRE( quoteText, currentNT, Rignore ?"i":"" )
                self.changeState( ~S..defsdBody )
             elif self._state == ~S..code
                code += tok
@@ -912,7 +968,7 @@ class GrammarParser
                   self.xerror(self.curLine, "invalid declaration")
                else               
                   self.changeState( ~S..dfn, tok )
-                  currentToken = tok
+                  currentDefName = tok
                end
                
             
@@ -979,10 +1035,10 @@ class GrammarParser
                
             case ~S..dfn
                if tok == "::="
-                  currentNT, currentAlt = self.pushNT(currentToken)                  
+                  currentNT, currentAlt = self.pushNT(currentDefName)                  
                   self.changeState(~S..defBody, tok)
                elif tok == ":-"
-                  termName = currentToken
+                  termName = currentDefName
                   self.changeState(~S..termName, tok)
                else
                   self.xerror(self.curLine, "Need ::= after token specification.")
@@ -1014,21 +1070,21 @@ class GrammarParser
                      // anyhow reset the rule
                      self.changeState(~S..start, tok)
                      // current cache reset
-                     currentAlt = currentNT = currentToken = nil
+                     currentAlt = currentNT = currentDefName = nil
                      
                   case "|"
                      // new alternative
-                     currentAlt = NTAlt( self.curLine )
+                     currentAlt = DefRule( self.curLine )
                      currentNT.alts += currentAlt
                      // stay in defbody state
                      
                   case "(" 
                      parLevel++
-                     topTok = Token(Token.tNT, nil, nil, self.curLine)
+                     newNT, newAlt = self.pushNT()                     
+                     topTok = DefEntry(newNT, self.curLine)                     
                      currentAlt.sequence += topTok
-                     currentNT, currentAlt = self.pushNT()
-                     topTok.content = currentNT
-                     
+                     newNT.parents += currentNT
+                     currentNT, currentAlt = newNT, newAlt                     
                      
                   case ")"
                      if parLevel == 0
@@ -1063,8 +1119,8 @@ class GrammarParser
                      if tok in commands
                         self.xerror(self.curLine, "Unexpected token '" + tok + "'" )
                      else
-                        // the token is a non-terminal in this alternative
-                        self.commitToken( tok, currentAlt )
+                        // the token is a named token (we don't know of what kind) in this alternative
+                        self.commitDefEntry( tok, currentNT )
                         // enter in defName states
                         self.changeState( ~S..defName1, tok )
                      end
@@ -1077,13 +1133,13 @@ class GrammarParser
                   self.changeState( ~S..defName2, tok )
                elif tok == "*" or tok == "+" or tok == "?"
                   lastTok = currentAlt.sequence[-1]
-                  if lastTok.repeat != Token.tSingle
+                  if lastTok.repeat != DefEntry.tSingle
                      self.xerror(self.curLine, "Conflicting repetition type" )                        
                   else                     
                      switch tok
-                        case "*": lastTok.repeat = Token.tAsterisk 
-                        case "+": lastTok.repeat = Token.tPlus
-                        case "?": lastTok.repeat = Token.tQMark
+                        case "*": lastTok.repeat = DefEntry.tAsterisk 
+                        case "+": lastTok.repeat = DefEntry.tPlus
+                        case "?": lastTok.repeat = DefEntry.tQMark
                      end
                   end
                   // stay in this state.
@@ -1097,7 +1153,7 @@ class GrammarParser
                if tok in commands
                   self.xerror(self.curLine, "Waiting for token name but received '" + tok + "'" )
                else                  
-                  self.trace( "Assigning name '", tok, "' to token ", currentAlt.sequence[-1].name )
+                  self.trace( "Assigning name '", tok, "' to token ", currentAlt.sequence[-1].symbol.name )
                   currentAlt.sequence[-1].pname = tok
                   self.changeState( ~S..defBody, tok )
                end
@@ -1111,11 +1167,11 @@ class GrammarParser
                         self.changeState( ~S..Rafter, tok )
                      else
                         if termName
-                           self.commitTerminal(termName, quoteText )
+                           self.commitTerminal(termName, quoteText)
                            termName = nil
                            self.changeState( ~S..start, tok )
                         else
-                           self.commitText(quoteText, currentAlt )
+                           self.commitText(quoteText, currentNT )
                            self.changeState( ~S..defName1, tok )
                         end
                      end
@@ -1154,11 +1210,11 @@ class GrammarParser
                
                if Rignore: opts += "i"
                if termName
-                  self.commitToken(termName, quoteText, opts )
+                  self.commitTerminal(termName, quoteText, opts )
                   termName = nil
                   self.changeState( ~S..start, tok )
                else
-                  self.commitRE( quoteText, currentAlt, opts )               
+                  self.commitRE( quoteText, currentNT, opts )               
                   self.changeState( ~S..defName1, tok )
                end
                
@@ -1256,14 +1312,11 @@ class GrammarParser
          self.error( self.curLine, "Unterminated definition at end of file" )
       end
       
-      // and check for undefined
-      if self.resolveStates()
-         // if states are inconsistent, we can't resolve tokens across states
-         self.resolveTokens()
-         if self.errors == 0 
-            // And if nodes are consistent, we can try to resolve the roots
-            self.resolveRoots()            
-         end
+      self.reportUnresolved()
+      self.resolveTransitions()
+      if self.errors == 0 
+         // if states are inconsistent, we can't resolve the root tokens.
+         self.resolveRoots()            
       end
       
       // deref unused stuff
@@ -1305,7 +1358,7 @@ class GrammarParser
       
       // check for a named terminal      
       if nt.name == "eat"
-         self._cgs.eat = map( {x=>x.content.content}, nt.alts[0].sequence )
+         self._cgs.eat = map( {x=>x.symbol.content}, nt.alts[0].sequence )
          self._cgs.entries -= "eat"
       elif nt.name == "precedence"
          self._calcPriority( nt )
@@ -1318,7 +1371,7 @@ class GrammarParser
    
    /*
       Pushes a new token in the sequence of forming tokens.
-      @return [NonTerminal, NTAlt]
+      @return [DefSymbol, DefRule]
    */
    function pushNT( tokenName )
       self.trace( @"pushNT($tokenName)" )
@@ -1329,27 +1382,30 @@ class GrammarParser
          nt = state.entries.find(tokenName,nil)
          if not nt
             // if not found, create anew...
-            nt = NonTerminal(tokenName, self.curLine )
+            self.trace( @"pushNT($tokenName) -- creating new non-terminal" )
+            nt = DefSymbol(tokenName, DefSymbol.tNT )
             state.entries[tokenName] = nt
-            // ... and try to see if it was waited for.
-            
-            // now, were we in wait of this non-terminal?
-            undefs = state.unresolved.find(tokenName, nil)
-            // if we were, assign this nonterminal to all the previously undefined tokens
-            for utok in undefs
-               utok.content = nt
+         elif nt.type != DefSymbol.tNT 
+            // Could be an undefined, or a previously defined terminal            
+            self.trace( @"pushNT($tokenName) -- Resolved previously undefined symbol" )
+            if nt.type != DefSymbol.tUnresolved
+               self.xerror(self.curLine, @"Cannot redefine the type of \"${tokenName}\"" )
+               // but go on as if we can.
+               if not nt.alts: nt.alts = []
+            else
+               state.unresolved -= tokenName
+               nt.resolveAs( DefSymbol.tNT )
             end
-            state.unresolved -= tokenName
          end
       else
          // anonymous non-terminal
-         nt = NonTerminal( nil, self.curLine )
+         nt = DefSymbol(nil, DefSymbol.tNT)
       end
       
       self._NTStack.push(nt)
       
       // add a first alternative to the new token
-      alt = NTAlt( self.curLine )
+      alt = DefRule( self.curLine )
       nt.alts += alt            
       
       return [nt, alt]
@@ -1357,7 +1413,7 @@ class GrammarParser
    
    /*
       Removes the topmost NT and return the previous one.
-      @return [NonTerminal, NTAlt] or nil
+      @return [DefSymbol, DefRule] or nil
    */
    function popNT()
       self.trace( "popNT()" )
@@ -1371,45 +1427,40 @@ class GrammarParser
    end
    
    /*
-      Commits a non terminal token into a forming alternative.
+      Commits a token into the currently forming non-terminal
       name -- the name of the non-terminal 
-      alt -- the forming alternative (a NTAlt instance)
+      NT -- the forming non-terminal (a DefSymbol instance)
    */
-   function commitToken(name, alt)
-      self.trace( "commitToken", name )
+   function commitDefEntry(name, NT)
+      self.trace( "commitDefEntry(", name,")" )
    
       state = self._cgs
-      nt = state.entries.find( name, nil )
-      // for the token -- if the non terminal is undefined, nt will be nil
-      type = name in self.predefined ? Token.tPredef : Token.tNT
-      token = Token( type, nt, name, self.curLine )
+      symbol = state.findEntry( name )
+
+      if not symbol
+         symbol = self.predefined.find(name,nil)
+      end
+      // not even a predefined?
       
-      if not nt
-         // of course, we won't find predefined symbols
-         if type != Token.tPredef 
-            // it's undefined, add to the undefined list         
-            undefList = state.unresolved.find(name, nil)
-            // do we already have a undefined list for this non-terminal name?
-            if not undefList
-               // if not add an entry
-               undefList = []
-               state.unresolved[name] = undefList
-            end
-         
-            undefList += token
-         end
+      if not symbol
+         // create an undefined symbol
+         symbol = DefSymbol(name)
+         state.unresolved[name] = symbol
+         state.entries[name] = symbol
       end
       
-      alt.sequence += token
+      if NT notin symbol.parents: symbol.parents += NT
+      token = DefEntry(symbol, self.curLine)
+      NT.alts[-1].sequence += token
    end
    
    /*
       Commits a regular expression terminal token into a forming alternative.
       text -- The regular expression text
-      alt -- the forming alternative (a NTAlt instance)
+      NT -- the forming non-terminal (a DefRule instance)
       opt -- Regular expression options
    */
-   function commitRE( text, alt, opts )
+   function commitRE( text, NT, opts )
       self.trace( "commitRE '", text, "'" )      
       terminals = self._cgs.terminals
       
@@ -1418,14 +1469,17 @@ class GrammarParser
          term = terminals.find( re, nil )
          if not term
             self.trace( "commitRE -- creating new anonymous terminal for >", text, "<" )     
-            term = Terminal(Terminal.tRE, nil, re )
+            term = DefSymbol(nil, DefSymbol.tRE, re )
             terminals[re] = term
          end
+                  
+         NT.alts[-1].sequence += DefEntry(term, self.curLine)
+         if NT notin term.parents: term.parents += NT
          
-         alt.sequence += Token(Token.tT, term, nil, self.curLine )
          
+         //CHECK
          if re notin self._cgs.tokens: self._cgs.tokens += re
-      catch in e
+      catch ParseError in e
          self.xerror( self.curLine, "Invalid regular expression: " + e )
       end
       
@@ -1435,21 +1489,23 @@ class GrammarParser
    /*
       Commits a text terminal token into a forming alternative.
       text -- The text
-      alt -- the forming alternative (a NTAlt instance)
+      alt -- The forming non-terminal rule
    */
-   function commitText( text, alt )
+   function commitText( text, NT )
       self.trace( "commitText '", text, "'" )
       terminals = self._cgs.terminals
       
       term = terminals.find( text, nil )
       if not term
          self.trace( "commitText -- creating new anonymous terminal for >", text, "<" )     
-         term = Terminal(Terminal.tString, nil, text )
+         term = DefSymbol(nil, DefSymbol.tString, text )
          terminals[text] = term
       end
          
-      alt.sequence += Token(Token.tT, term, nil , self.curLine )
+      NT.alts[-1].sequence += DefEntry(term, self.curLine)
+      if NT notin term.parents: term.parents += NT
       
+      //CHECK
       if text notin self._cgs.tokens: self._cgs.tokens += text
       self.resetTokens()      
    end
@@ -1467,37 +1523,48 @@ class GrammarParser
       if opts != nil
          try
             text = RE( text, opts )
-         catch in e
+         catch ParseError in e
             self.xerror( self.curLine, "Invalid regular expression: " + e )
             return
          end
       end
       
+      // find the terminal as a named entry
       entries = self._cgs.entries
-      if name in entries
-         self.xerror( self.curLine, "Terminal name '" + name + "' cannot be duplicated" )
-         return
-      end      
-            
-      terminals = self._cgs.terminals
-      term = terminals.find( text, nil )
-      if not term
-         self.trace( "commitTerminal -- creating new terminal ", name, "=> '", text, "'" )     
-         term = Terminal( (opts != nil ? Terminal.tRE : Terminal.tString), name, text )
-         terminals[text] = term
-      else
-         if not term.name 
-            self.trace( "commitTerminal -- Assigning ", name, "=> '", text, "'" )
-            term.name = name
-         else
-            self.xerror( self.curLine, "Named terminal '" + name + "' had previous name '" + term.name + "'" )
+      term = entries.find( name, nil )
+      if term
+         if term.type != DefSymbol.tUnresolved
+            self.xerror( self.curLine, "Terminal name '" + name + "' cannot be duplicated" )
             return
-         end            
+         end
+         
+         // we redefine this as resolved.
+         self.trace( "commitTerminal -- Defining terminal ", name, "=> '", text, "'" )     
+         term.resolveAs( opts != nil ? DefSymbol.tRE : DefSymbol.tString )
+         term.content = text
+         // remove from undefined list.
+         self._cgs.unresolved -= name
+      else         
+         // was the terminal already existing?
+         terminals = self._cgs.terminals
+         term = terminals.find( text, nil )
+         if term 
+            if term.name
+               self.xerror( self.curLine, "Named terminal '" + name + "' had previous name '" + term.name + "'" )
+               return
+            else
+               self.trace( "commitTerminal -- giving name to previously unnamed terminal ", name, "=> '", text, "'" )
+               term.name = name
+            end
+         else               
+            // here term is nil
+            self.trace( "commitTerminal -- creating new terminal ", name, "=> '", text, "'" )
+            term = DefSymbol( name, (opts != nil ? DefSymbol.tRE : DefSymbol.tString), text )
+            terminals[text] = term
+            entries[name] = term
+         end         
       end
-      
-      // add the terminal to the entries too.
-      entries[name] = term
-      self._cgs.unresolved -= name
+            
       // CHECK
       if text notin self._cgs.tokens: self._cgs.tokens += text
    end
@@ -1505,7 +1572,7 @@ class GrammarParser
    /*
       Commits a code into a forming alternative.
       text -- The text
-      alt -- the forming alternative (a NTAlt instance)
+      alt -- the forming alternative (a DefRule instance)
    */
    function commitCode( code, alt )
       self.trace( "commitCode()" )
@@ -1513,48 +1580,6 @@ class GrammarParser
       self.resetTokens()
    end
 
-   /*
-      Changes name-oriented state inclusion into object references,
-      and check for formal errors (i.e. loops).
-   */
-   function resolveStates()
-      self.trace( "Resolving states" )
-      
-      grammar = self._grammar
-      
-      for sname, state in grammar.states 
-         objs = nil
-         inc = state.includes
-         self.trace( @"Resolving inclusion for state \"${sname}\"" )
-         
-         // initially, states are just names.
-         for name in inc
-            self.trace( @"Resolving included state \"${name}\"" )
-            
-            // if we have something to do, create an array
-            forfirst: objs = []
-            
-            objState = grammar.states.find(name, nil)            
-            if objState == nil
-               self.error( state.line, @"In state [${state.name}] unresolved inclusion of ${element.name}" )                              
-            else
-               objs += objState
-            end            
-         end
-         
-         if objs
-            state.includes = objs
-            self.trace( @"Completed include resolution of state \"${sname}\"" )
-         end
-         
-         // now do a formal check for recursive definitions
-         if not self.checkStateRecursion( state.includes, 0, [] )
-            return false
-         end
-      end
-      
-      return true
-   end
    
    /*
       Pick the top rule in states
@@ -1565,13 +1590,13 @@ class GrammarParser
          self.trace( "Picking the root node of ", state.name )
          refs = state.entries.values()
          for name, nt in state.entries 
-            self.removeNTs( refs, nt )            
+            self._removeNTs( refs, nt )            
          end
          
          if refs.len > 1
             self.error( state.line, "Multiple roots in state " + state.name )
             for nt in refs
-               self.error( state.line, "Token '" + nt.name + "' is a non-unique root in state " + state.name )
+               self.error( state.line, "DefEntry '" + nt.name + "' is a non-unique root in state " + state.name )
             end
          elif refs.len == 0 and state.entries.len > 0
             self.error( state.line, "State " + state.name +" has no root entry"  )
@@ -1582,19 +1607,19 @@ class GrammarParser
       end
    end
    
-   function removeNTs( refs, nt )
-      if nt.isTerminal
+   function _removeNTs( refs, nt )
+      if nt.isTerminal()
          refs -= nt
          return
       end
-      
+
       for alt in nt.alts
          for tok in alt.sequence
-            if tok.type == Token.tNT
-               child_nt = tok.content
+            child_nt = tok.symbol
+            if child_nt.type == DefSymbol.tNT               
                if child_nt != nt and child_nt in refs
                   refs -= child_nt
-                  self.removeNTs( refs, child_nt )
+                  self._removeNTs( refs, child_nt )
                end
             end
          end
@@ -1603,26 +1628,25 @@ class GrammarParser
       return true
    end
 
+   
+   function reportUnresolved()
+      self.trace( "Report still unresolved tokens" )
+      
+      grammar = self._grammar
+      for sname, state in grammar.states               
+         for name, undef in state.unresolved
+            self.error( state.line, @"In state [${state.name}] unresolved token ${name}" )
+         end
+      end
+   end
+      
    /*
-      Checks for undefined tokens.
+      Resolve transitions.
    */
-   function resolveTokens()
-      self.trace( "Resolving tokens" )
+   function resolveTransitions()
+      self.trace( "Resolving transitions" )
       grammar = self._grammar
       for sname, state in grammar.states         
-         for name, undefs in state.unresolved
-            self.trace( @"Searching token \"${name}\" in includes" )
-            tok = self.findInIncludes(name, state)
-            if tok
-               self.trace( @"Token \"${name}\" resolved in includes" )
-               for element in undefs
-                  element.content = tok
-               end
-            else
-               self.error( state.line, @"In state [${state.name}] unresolved token ${name}" )
-            end         
-         end
-
          // resolve transitions in alternatives.
          for name, entry in state.entries
             for alt in entry.alts
@@ -1661,16 +1685,6 @@ class GrammarParser
       return self.checkStateRecursion(includes, position+1, parents)
    end
    
-   function findInIncludes(name, state)
-      for pstate in state.includes
-         tok = pstate.entries.find( name, nil )
-         if tok: return tok
-         tok = self.findInIncludes(name, pstate)
-         if tok: return tok
-      end
-      
-      return nil
-   end
    
    /*#
       @brief Separately compile code snippets.
@@ -1771,8 +1785,22 @@ class GrammarParser
    end
 
    function addGStateInclude( name )
-      self.trace( "Adding Inclusion of Grammar State: ", name , "to", self._cgs.name)
-      self._cgs.includes += name
+      state = self._cgs
+      self.trace( "Adding Inclusion of Grammar State: ", name , " to ", state.name)      
+      
+      objState = self._grammar.states.find(name, nil)            
+      
+      if objState == nil
+         self.error( state.line, @"In state [${state.name}] unresolved inclusion of ${name}" )                              
+         return
+      end
+            
+      // can we add the state?
+      if self.checkStateRecursion( state.includes + objState, 0, [] )
+         state.includes += objState
+         self.trace( @"Completed include resolution of state \"${name}\"" )
+      end
+         
    end
    
    function changeState( newState, tok )
@@ -1792,17 +1820,17 @@ class GrammarParser
       for alt in nt.alts
          nameList = m""
          for token in alt.sequence
-            if token.type == Token.tNT and token.content
-               content = token.content
+            content = token.symbol
+            if content.isTerminal()
                if token.pname == "right"
-                  content.assoc = NonTerminal.tARight
+                  content.assoc = DefSymbol.tARight
                else
-                  content.assoc = NonTerminal.tALeft
+                  content.assoc = DefSymbol.tALeft
                end
                content.prio = prio
             end
          
-            nameList += " " + token.name 
+            nameList += " " + content.name
          end
          self.trace( "-- Priority ", prio, " tokens:", nameList )
          prio--
