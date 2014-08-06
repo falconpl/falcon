@@ -73,7 +73,7 @@
    
    STATE-DECLARATION::= '[' NAME INCLUDES? ']' <end of line>.
    
-   STATE-BODY::= PREAMBLE? POSTAMBLE? *RULE.
+   STATE-BODY::= PREAMBLE? POSTAMBLE? RULE* NAMED_TERMINAL* PRECEDENCE_RULE? EAT_RULE?.
    
    PREAMBLE ::= '#' CODE.
    
@@ -87,6 +87,8 @@
    
    RULE ::= NAME '::=' RULE-BODY '.' .
    
+   NAMED_TERMINAL ::= NAME ':-' STRING | REGEX .
+   
    RULE-BODY::= ALTERNATIVE NEXT-ALTERNATIVE*.
    
    ALTERNATIVE ::= TOKEN* ACTION? TRANSITION?.
@@ -99,15 +101,19 @@
             
    SUB-ALTERNATIVE ::= '(' TOKEN+ ')'.
    
-   PREDEFINED ::= 'eof' | 'error'.
+   PREDEFINED ::= 'eof' | 'error' | 'any'.
    
    REPETITION ::= '?' | '+' | '*'.
    
    TRANSITION ::= '=>' NAME | POP-STATE-DIRECTIVE.
    
-   POP-STATE-DIRECTIVE ::= +'#'.
+   POP-STATE-DIRECTIVE ::= '#'+.
    
    TOKEN-SPEC ::= ':' NAME.
+   
+   PRECEDENCE_RULE ::= 'precedence' '::=' NAME+ ('|' NAME+)* '.' .
+   
+   EAT_RULE ::= 'eat' '::=' TERMINAL+ '.' .
    
    TERMINAL::= STRING | REGEX.
    
@@ -180,26 +186,40 @@
                   |- name
                   |- preamble/postamble
                   + includes [GrammarState]
+                  + entries [name => DefSymbol]
+                  + terminals [String|RE => DefSymbol]
                   + top DefSymbol
-                         + alts [DefRule]
-                                 | line
-                                 | code
-                                 | transition
+                        |- type
+                        |- name
+                        |- content (String | RE)
+                        + parents [DefSymbols]
+                        + alts [DefRule]
+                                 |- line
+                                 |- code
+                                 |- transition
                                  + sequence [DefEntry]
-                                             | line
-                                             | name
-                                             | repeat
-                                             | type
-                                             + content (DefSymbol)
+                                             |- line
+                                             |- pname
+                                             |- repeat
+                                             + symbol (DefSymbol)
       @endcode
       
       The grammar has a list of @a GrammarState entities. Each one represents a
       grammar state, that can include other GrammarState entities (by direct reference)
-      and has a top rule of type @a DefSymbol. The @a DefSymbol entity is
+      and has a top rule of type @a DefSymbol. The @a DefSymbol entity is either a terminal
+      or non-terminal symbol. If it's non-terminal, it's constituted
       constituted by one or more @a DefRule (alternatives), each being basically a
-      sequence of @a DefEntry entities. Depending on their type, tokens can be terminal,
-      in which case their content is a string, or a regular expression, or can be
-      non-terminal, in which case their content is child @a DefSymbol entity.
+      sequence of @a DefEntry entities, each holding a DefSymbol in its symbol member.
+      
+      A @a GrammarState entity has also a map of @a DefSymbol entities declared in the state, 
+      which is organized by entity name, and a map of terminal DefSymbols. 
+      The @a GrammarState.terminal map holds all the terminals that have been implicitly or
+      explicitly declared, and is organized by the String or Regular Expression that is the
+      actual terminal contained in the DefSymbol. The @a GrammarState.entry map holds all the
+      DefSymbols that have been explicitly or implicitly declared and that can be associated
+      with a symbol name. So anonymous terminals can be found in the terminal maps, while
+      named symbols, even undefined ones, are found in the entry map. Anonymous non-terminal
+      symbols are not referenced in this maps.
 
       This tree structure can be used by the final parser to generate a grammar parsing
       table, inspected, modified, rendered back to a grammar textual definition document
