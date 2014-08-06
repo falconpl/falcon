@@ -1784,7 +1784,7 @@ void ClassArray::op_getIndex( VMContext* ctx, void* self ) const
 
       if( v < 0 ) v = array.length() + v;
 
-      if( v >= array.length() )
+      if( v < 0 || v >= array.length() )
       {
          throw new AccessError( ErrorParam( e_arracc, __LINE__ ).extra( "out of range" ) );
       }
@@ -1891,7 +1891,7 @@ void ClassArray::op_setIndex( VMContext* ctx, void* self ) const
 
       if( v < 0 ) v = array.length() + v;
 
-      if( v >= array.length() )
+      if( v < 0 || v >= array.length() )
       {
          throw new AccessError( ErrorParam( e_arracc, __LINE__ ).extra( "index out of range" ) );
       }
