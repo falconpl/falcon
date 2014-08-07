@@ -20,7 +20,7 @@ caseSensitive: true
  ---
 Checking: r'ab(?P<first>c)..(?P<second>d)'
 captures: 2
-groupNames: ["first" => 1, "second" => 2]
+groupNames: [m"first" => 1, m"second" => 2]
 caseSensitive: true
  ---
 @endoutput

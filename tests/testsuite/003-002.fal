@@ -6,8 +6,8 @@
 With ignore: R'abc'
 With match longest: r'abc'l
 With ignore \n: r'abc'n
-With one line: r'abc'o
-With all: R'abc'oln
+With multiline line: r'abc'm
+With all: R'abc'mln
 @endoutput
 */
 
@@ -17,7 +17,7 @@ x = RE('abc', "l")
 > "With match longest: ", x
 x = RE('abc', "n")
 > "With ignore \\n: ", x
-x = RE('abc', "o")
-> "With one line: ", x
-x = RE('abc', "ilno")
+x = RE('abc', "m")
+> "With multiline line: ", x
+x = RE('abc', "ilnm")
 > "With all: ", x

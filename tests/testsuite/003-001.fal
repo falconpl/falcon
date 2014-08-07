@@ -7,8 +7,8 @@ With ignore: R'abc'
 With ignore 2: R'abc'
 With match longest: r'abc'l
 With ignore \n: r'abc'n
-With one line: r'abc'o
-With all: R'abc'oln
+With multiline line: r'abc'm
+With all: R'abc'mln
 @endoutput
 */
 
@@ -20,7 +20,7 @@ x = r'abc'l
 > "With match longest: ", x
 x = r'abc'n
 > "With ignore \\n: ", x
-x = r'abc'o
-> "With one line: ", x
-x = r'abc'ilno
+x = r'abc'm
+> "With multiline line: ", x
+x = r'abc'ilnm
 > "With all: ", x
