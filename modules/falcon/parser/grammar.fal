@@ -1489,7 +1489,7 @@ class GrammarParser
          term = terminals.find( re, nil )
          if not term
             self.trace( "commitRE -- creating new anonymous terminal for >", text, "<" )     
-            term = DefSymbol(nil, DefSymbol.tRE, re )
+            term = DefSymbol(text, DefSymbol.tRE, re )
             terminals[re] = term
          end
                   
@@ -1518,7 +1518,7 @@ class GrammarParser
       term = terminals.find( text, nil )
       if not term
          self.trace( "commitText -- creating new anonymous terminal for >", text, "<" )     
-         term = DefSymbol(nil, DefSymbol.tString, text )
+         term = DefSymbol(text, DefSymbol.tString, text )
          terminals[text] = term
       end
          
@@ -1552,6 +1552,7 @@ class GrammarParser
       // find the terminal as a named entry
       entries = self._cgs.entries
       term = entries.find( name, nil )
+      terminals = self._cgs.terminals
       if term
          if term.type != DefSymbol.tUnresolved
             self.xerror( self.curLine, "Terminal name '" + name + "' cannot be duplicated" )
@@ -1564,9 +1565,11 @@ class GrammarParser
          term.content = text
          // remove from undefined list.
          self._cgs.unresolved -= name
+         // redo.
+         terminals[text] = term
       else         
          // was the terminal already existing?
-         terminals = self._cgs.terminals
+         
          term = terminals.find( text, nil )
          if term 
             if term.name

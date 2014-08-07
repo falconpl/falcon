@@ -166,7 +166,7 @@ class Parser(grammar)
          end
          
       
-         > "TOK: >", tok, "<"
+         > "TOK: >", tok.describe(), "<"
       end
    end
    
@@ -187,13 +187,23 @@ class Parser(grammar)
       self._line = 1
       self._gs = []
       self._ts = []
-      self._states = []
-      
+      self._states = []      
    end
    
    function _enter(state)
-      self._mt.clearTokens()
-      call( self._mt.add, state.tokens )
+      mt = self._mt
+      mt.clearTokens()
+      for value, entry in state.terminals
+         //> "Value: >", value.describe(), "< => ", entry.describe()
+         
+         proto = p{token = entry; name = entry.name}
+         mt.addToken( value, {(t) (^~proto).value = t; ^= (^~proto) })
+      end
+      //proto = p{value=nil; token = nil}
+      //mt.onText = {t => proto.value = t; return proto }
+      
+      //call( self._mt.add, state.tokens )
+      
       if self._states
          oldState = self.states[-1]
          self._runCode("Postamble of " + oldState.name, oldState.postamble_code)
