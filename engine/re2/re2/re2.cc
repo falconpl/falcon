@@ -119,7 +119,7 @@ RE2::RE2(const StringPiece& pattern, const Options& options) {
 int RE2::Options::FlagsToNumber() const
 {
    int val1 =
-                        (encoding_ == RE2::RE2::Options::EncodingUTF8 ? 1 : 0)
+                        (encoding_ == RE2::Options::EncodingUTF8 ? 1 : 0)
                       | (posix_syntax_ ? 1 << 1 : 0)
                       | (longest_match_ ? 1 << 2: 0 )
                       | (log_errors_ ? 1 << 3: 0 )
@@ -888,7 +888,7 @@ bool RE2::DoMatch(const StringPiece& text,
     if (!args[i]->Parse(s.data(), s.size())) {
       // TODO: Should we indicate what the error was?
       VLOG(1) << "Parse error on #" << i << " " << s << " "
-	      << (void*)s.data() << "/" << s.size();
+          << (void*)s.data() << "/" << s.size();
       delete[] heapvec;
       return false;
     }

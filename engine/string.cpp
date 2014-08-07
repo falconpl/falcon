@@ -937,6 +937,31 @@ String::String( const String &other, length_t begin, length_t end ):
       other.m_class->subString( &other, begin, end, this );
 }
 
+String::String() :
+m_class( &csh::handler_static ),
+m_allocated( 0 ),
+m_size( 0 ),
+m_storage( 0 ),
+m_lastMark( 0 ),
+m_bImmutable( false )
+{
+
+}
+
+String::String( const String &other ) :
+m_allocated( 0 ),
+m_lastMark( other.m_lastMark ),
+m_bImmutable( false )
+{
+    copy( other );
+}
+
+
+String::~String()
+{
+    m_class->destroy( this );
+}
+
 
 void String::copy( const String &other )
 {
@@ -1453,7 +1478,7 @@ length_t String::toWideString( wchar_t *target, length_t bufsize ) const
          target[ i ] = getCharAt( i );
       }
    }
-	target[len] = 0;
+    target[len] = 0;
 
    return len;
 }
@@ -3100,6 +3125,7 @@ bool String::isISO( uint32 chr )
 {
    return CC_ISO()(chr);
 }
+
 
 }
 

@@ -483,6 +483,13 @@ private:
 
 ClassEventCourier::ClassEventCourier():
          Class("EventCourier")
+         , m_funcWait(NULL)
+         , m_stepEngage(NULL)
+         , m_stepAfterWait(NULL)
+         , m_stepAfterHandling(NULL)
+         , m_stepAfterHandlingCatch(NULL)
+         , m_stepAfterSendWait(NULL)
+         , m_tokenClass(NULL)
 {
    m_funcWait = new FALCON_FUNCTION_NAME(engage);
    addMethod(m_funcWait);

@@ -27,6 +27,7 @@
 #include <cstddef>
 #include <iosfwd>
 #include <string>
+#include <algorithm>
 
 #include <falcon/types.h>
 #include <falcon/string.h>

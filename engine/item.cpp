@@ -279,8 +279,8 @@ int Item::compare( const Item& other ) const
          int32 comp = re1->getPattern().compare( re2->getPattern() );
          if( comp == 0 )
          {
-            const RE2::RE2::Options& opt1 = re1->options();
-            const RE2::RE2::Options& opt2 = re2->options();
+            const RE2::Options& opt1 = re1->options();
+            const RE2::Options& opt2 = re2->options();
             return (int64) (opt1.FlagsToNumber() - opt2.FlagsToNumber());
          }
 

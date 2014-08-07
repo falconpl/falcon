@@ -5,6 +5,7 @@
 #include "util/util.h"
 
 #ifdef _MSC_VER
+#undef va_copy
 #define va_copy( a,b ) a = b
 #endif
 

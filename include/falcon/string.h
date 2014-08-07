@@ -355,15 +355,7 @@ public:
     * The string is created non-zero terminated with length 0. It has also
     * no valid internal storage at creation time.
     */
-   String():
-      m_class( &csh::handler_static ),
-      m_allocated( 0 ),
-      m_size( 0 ),
-      m_storage( 0 ),
-      m_lastMark( 0 ),
-      m_bImmutable(false)
-   {
-   }
+   String();
 
 
    /** Adopt a static buffer as the internal buffer.
@@ -467,13 +459,7 @@ public:
 
       Use bufferize() on this string to ensure that it is deep-copied.
    */
-   String( const String &other ):
-      m_allocated( 0 ),
-      m_lastMark( other.m_lastMark ),
-      m_bImmutable(false)
-   {
-      copy( other );
-   }
+   String( const String &other );
 
 
    /** Substring constructor.
@@ -496,10 +482,7 @@ public:
       As the method is not virtual (neither the class is), different kind of strings
       are destroyed by calling the destroy() method of their manipulators.
    */
-   ~String()
-   {
-      m_class->destroy( this );
-   }
+   ~String();
 
    static Class* handler();
 

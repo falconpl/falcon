@@ -228,7 +228,7 @@ void apply_array_entry_expr( const NonTerminal&, Parser&p )
       if( decl->m_FirstExpr != 0 )
       {
          Expression* second = 0;
-         decl->m_forming->push_back( std::make_pair<Expression*, Expression*>(decl->m_FirstExpr, second ) );
+         decl->m_forming->push_back( std::make_pair(decl->m_FirstExpr, second ) );
          decl->bFirstGiven = true;
       }
 
@@ -238,7 +238,7 @@ void apply_array_entry_expr( const NonTerminal&, Parser&p )
    else if ( decl->state == StmtTempArrayDecl::second_expr )
    {
       // we wouldn't be in this state if not authorized.
-      decl->m_forming->push_back( std::make_pair<Expression*, Expression*>(decl->m_FirstExpr, expr) );
+      decl->m_forming->push_back( std::make_pair(decl->m_FirstExpr, expr) );
       decl->m_FirstExpr = 0;
       decl->bFirstGiven = true;
       decl->advance_state();
@@ -355,7 +355,7 @@ void apply_array_entry_close( const NonTerminal&, Parser& p )
       // but if we wait for a comma, we can get the generated first
       if( decl->m_FirstExpr )
       {
-         decl->m_forming->push_back( std::make_pair<Expression*, Expression*>(decl->m_FirstExpr,0) );
+         decl->m_forming->push_back( std::make_pair(decl->m_FirstExpr,(Expression*)0) );
          decl->m_FirstExpr = 0;
       }
    }

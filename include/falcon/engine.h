@@ -456,9 +456,7 @@ protected:
    #define FALCON_GC_STORELOCKED_SRCLINE( cls, data, src, line ) (::Falcon::Engine::GC_storeLocked( cls, (void*) data ))
 #endif  //FALCON_TRACE_GC
 
-template<typename _T>
-GCToken* FALCON_GC_HANDLE( _T data ) { return FALCON_GC_STORE(data->handler(), data); }
-
+#define FALCON_GC_HANDLE( data )    FALCON_GC_STORE(data->handler(), data)
 
 }
 
