@@ -131,9 +131,11 @@ public:
    static Collector* collector();
 
    static GCToken* GC_store( const Class* cls, void* data );
+   template <class _T> static GCToken* GC_handle( _T* data );
    static GCLock* GC_storeLocked( const Class* cls, void* data );
 #ifdef FALCON_TRACE_GC
    static GCToken* GC_H_store( const Class* cls, void* data, const String& src, int line );
+   template <class _T> static GCToken* GC_H_handle( _T* data, const String& src, int line );
    static GCLock* GC_H_storeLocked( const Class* cls, void* data, const String& src, int line );
 #endif
    static GCLock* GC_lock( const Item& item );
@@ -423,6 +425,10 @@ protected:
          ::Falcon::Engine::GC_H_store( cls, (void*) data, SRC, __LINE__ ): \
          ::Falcon::Engine::GC_store( cls, (void*) data ))
 
+   #define FALCON_GC_HANDLE( data ) ( ::Falcon::Engine::collector()->trace() ?\
+         ::Falcon::Engine::GC_H_handle( data, SRC, __LINE__ ): \
+         ::Falcon::Engine::GC_handle( data ))
+
    #define FALCON_GC_STORE_IN( ctx, cls, data ) ( ::Falcon::Engine::collector()->trace() ?\
                   (::Falcon::Engine::instance()->collector()->H_store_in( ctx, cls,data, SRC, __LINE__ )): \
                   (::Falcon::Engine::instance()->collector()->store_in( ctx, cls,data)))
@@ -439,11 +445,20 @@ protected:
          ::Falcon::Engine::GC_H_storeLocked( cls, (void*) data, src, line ): \
          ::Falcon::Engine::GC_storeLocked( cls, (void*) data ))
 
+   template <class _T>
+   GCToken* Engine::GC_H_handle( _T* data, const String& file, int line )
+   {
+      fassert( m_instance != 0 );
+      fassert( m_instance->m_collector != 0 );
+      return m_instance->m_collector->H_store( data->handler(), (void*) data, file, line );
+   }
+
 #else  //FALCON_TRACE_GC
    /** This macro can be used to activate the history recording of GC entities.
     See the main body class.
     */
    #define FALCON_GC_STORE( cls, data ) (::Falcon::Engine::GC_store( cls, (void*) data ))
+   #define FALCON_GC_HANDLE( data )    (::Falcon::Engine::GC_handle( data )
    #define FALCON_GC_STORE_IN( ctx, cls, data ) (::Falcon::Engine::instance()->collector()->store_in(ctx, cls, data) )
 
    #define FALCON_GC_STORE_SRCLINE( cls, data, src, line ) (::Falcon::Engine::GC_store( cls, (void*) data ))
@@ -456,7 +471,14 @@ protected:
    #define FALCON_GC_STORELOCKED_SRCLINE( cls, data, src, line ) (::Falcon::Engine::GC_storeLocked( cls, (void*) data ))
 #endif  //FALCON_TRACE_GC
 
-#define FALCON_GC_HANDLE( data )    FALCON_GC_STORE(data->handler(), data)
+
+template <class _T>
+GCToken* Engine::GC_handle( _T* data )
+{
+   fassert( m_instance != 0 );
+   fassert( m_instance->m_collector != 0 );
+   return m_instance->m_collector->store( data->handler(), (void*) data );
+}
 
 }
 
