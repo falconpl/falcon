@@ -131,11 +131,11 @@ public:
    static Collector* collector();
 
    static GCToken* GC_store( const Class* cls, void* data );
-   template <class _T> static GCToken* GC_handle( _T* data );
+   template <class _T> static GCToken* GC_handle( const _T* data );
    static GCLock* GC_storeLocked( const Class* cls, void* data );
 #ifdef FALCON_TRACE_GC
    static GCToken* GC_H_store( const Class* cls, void* data, const String& src, int line );
-   template <class _T> static GCToken* GC_H_handle( _T* data, const String& src, int line );
+   template <class _T> static GCToken* GC_H_handle(const _T* data, const String& src, int line );
    static GCLock* GC_H_storeLocked( const Class* cls, void* data, const String& src, int line );
 #endif
    static GCLock* GC_lock( const Item& item );
@@ -446,7 +446,7 @@ protected:
          ::Falcon::Engine::GC_storeLocked( cls, (void*) data ))
 
    template <class _T>
-   GCToken* Engine::GC_H_handle( _T* data, const String& file, int line )
+   GCToken* Engine::GC_H_handle( const _T* data, const String& file, int line )
    {
       fassert( m_instance != 0 );
       fassert( m_instance->m_collector != 0 );
@@ -473,7 +473,7 @@ protected:
 
 
 template <class _T>
-GCToken* Engine::GC_handle( _T* data )
+GCToken* Engine::GC_handle( const _T* data )
 {
    fassert( m_instance != 0 );
    fassert( m_instance->m_collector != 0 );
