@@ -215,9 +215,10 @@ byte *StringStream::data() const
 }
 
 
-Class* StringStream::handler()
+const Class* StringStream::handler() const
 {
-   return Engine::handlers()->stringStreamClass();
+   static const Class* cls = Engine::handlers()->stringStreamClass();
+   return cls;
 }
 
 
@@ -250,6 +251,7 @@ bool StringStream::close()
 size_t StringStream::read( void *buffer, size_t size )
 {
    m_b->m_mtx.lock();
+
    if ( m_b->m_str == 0 ) {
       m_status = t_error;
       m_b->m_mtx.unlock();
@@ -259,7 +261,12 @@ size_t StringStream::read( void *buffer, size_t size )
 
    uint32 bsize =  m_b->m_str->size();
 
-   if ( m_posRead >= bsize ) {
+   if ( m_posRead >= bsize )
+   {
+      if(! m_bPipeMode )
+      {
+         m_status = m_status | t_eof;
+      }
       m_b->m_mtx.unlock();
       
       return 0;
@@ -272,9 +279,6 @@ size_t StringStream::read( void *buffer, size_t size )
    if(! m_bPipeMode )
    {
       m_posWrite = m_posRead;
-      if ( m_posRead >= bsize ) {
-         m_status = m_status | t_eof;
-      }
    }
 
    m_b->m_mtx.unlock();
