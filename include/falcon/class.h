@@ -1076,7 +1076,7 @@ public:
    void userFlags( int32 uf ) { m_userFlags = uf; }
    
    /** Handler class for this class. */
-   Class* handler() const;
+   virtual const Class* handler() const;
    
    /** Creates an "automatic" child class.
     *

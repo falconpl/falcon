@@ -38,7 +38,7 @@ MetaFalconClass::~MetaFalconClass()
 {
 }
 
-Class* MetaFalconClass::handler() const
+const Class* MetaFalconClass::handler() const
 {
    static Class* cls = Engine::handlers()->metaFalconClass();   
    return cls;

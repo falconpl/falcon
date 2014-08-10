@@ -42,7 +42,7 @@ ExprAutoClone::ExprAutoClone( int line, int chr ):
 }
 
 
-ExprAutoClone::ExprAutoClone( Class* cls, void* data, int line, int chr ):
+ExprAutoClone::ExprAutoClone( const Class* cls, void* data, int line, int chr ):
       Expression( line, chr ),
       m_cls(cls),
       m_data(data)

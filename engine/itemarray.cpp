@@ -31,8 +31,6 @@
 namespace Falcon
 {
 
-Class* ItemArray::m_handler = 0;
-
 //========================================================
 // Inline utilities
 //
@@ -103,11 +101,9 @@ ItemArray::ItemArray( const ItemArray& other ):
 }
 
 
-Class* ItemArray::handler()
+const Class* ItemArray::handler()
 {
-   if(m_handler == 0 ) {
-      m_handler = Engine::handlers()->arrayClass();
-   }
+   static const Class* m_handler = Engine::handlers()->arrayClass();
    return m_handler;
 }
 

@@ -47,9 +47,9 @@ SynFunc::~SynFunc()
 }
 
 
-Class* SynFunc::handler() const
+const Class* SynFunc::handler() const
 {
-   static Class* cls = Engine::handlers()->synFuncClass();
+   static const Class* cls = Engine::handlers()->synFuncClass();
    return cls;
 }
 

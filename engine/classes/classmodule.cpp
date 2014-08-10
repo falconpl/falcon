@@ -867,7 +867,7 @@ void ClassModule::flatten( VMContext* ctx, ItemArray& subItems, void* instance )
          // skip hyperclasses
          if( ! mantra->isCompatibleWith( Mantra::e_c_hyperclass ))
          {
-            Class* cls = mantra->handler();
+            const Class* cls = mantra->handler();
             TRACE1("Mantra %s has handler %s(%p)", fi->first.c_ize(), cls->name().c_ize(), cls );
             subItems.append( Item(cls, mantra) );
          }

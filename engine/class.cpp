@@ -189,9 +189,9 @@ Class::~Class()
 }
 
 
-Class* Class::handler() const
+const Class* Class::handler() const
 {
-   static Class* meta = Engine::handlers()->metaClass();
+   static const Class* meta = Engine::handlers()->metaClass();
    return meta;
 }
 

@@ -35,7 +35,7 @@ class Storer::Private
 {
 public:   
    /** Map connecting each class with its own serialization ID. */
-   typedef std::map<Class*, uint32> ClassMap;
+   typedef std::map<const Class*, uint32> ClassMap;
    
    /** Map connecting each each object with its own serialization ID. */
    typedef std::map<const void*, uint32> ObjectMap;
@@ -87,7 +87,7 @@ public:
    
    typedef std::vector<ObjectData*> ObjectDataVector;
    typedef std::vector<ObjectData*> ObjectDataPtrVector;
-   typedef std::vector<Class*> ClassVector;
+   typedef std::vector<const Class*> ClassVector;
    // Vector storing items of classes having flat data.
    InstanceList m_flatInstances;
    
@@ -120,7 +120,7 @@ public:
    }
    
    
-   ObjectData* addObject( Class* cls, const void* obj, bool& bIsNew, bool isGarbage = false )
+   ObjectData* addObject( const Class* cls, const void* obj, bool& bIsNew, bool isGarbage = false )
    {
       // if the object is flat, it's never there.
       if( cls->isFlatInstance() )
@@ -203,7 +203,7 @@ Storer::~Storer()
 }
 
    
-bool Storer::store( VMContext* ctx, Class* handler, const void* data, bool bInGarbage )
+bool Storer::store( VMContext* ctx, const Class* handler, const void* data, bool bInGarbage )
 {
    if( _p == 0 )
    {
@@ -259,7 +259,7 @@ bool Storer::commit( VMContext* ctx, Stream* dataStream )
 }
 
 
-bool Storer::traverse( VMContext* ctx, Class* handler, const void* data, bool isGarbage, bool isTopLevel, void** obj )
+bool Storer::traverse( VMContext* ctx, const Class* handler, const void* data, bool isGarbage, bool isTopLevel, void** obj )
 {
    TRACE( "Entering traverse on handler %s ", handler->name().c_ize() );
    
@@ -375,7 +375,7 @@ void Storer::writeClassTable( DataWriter* wr )
    while( iter != end )
    {
       // for each class we must write its name and the module it is found in.
-      Class* cls = *iter;
+      const Class* cls = *iter;
       Module* mod = cls->module();
       wr->write(cls->name());
       
@@ -486,7 +486,7 @@ bool Storer::writeObject( VMContext* ctx, uint32 pos, DataWriter* wr )
    
    // first, get the class that must serialize us.
    const Private::ObjectData& obd = *_p->m_objVector[pos];
-   Class* cls = 0;
+   const Class* cls = 0;
    // is this object a flattened mantra?
    if( isFlatMantra( obd.m_data ) ) {
       cls = clsMantra; // save only flat

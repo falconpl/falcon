@@ -37,14 +37,14 @@ class FALCON_DYN_CLASS ExprAutoClone: public Expression
 {
 public:
    ExprAutoClone( int line = 0, int chr = 0 );
-   ExprAutoClone( Class* cls, void* data, int line = 0, int chr = 0 );
+   ExprAutoClone( const Class* cls, void* data, int line = 0, int chr = 0 );
    ExprAutoClone( const ExprAutoClone& other );
 
    virtual ~ExprAutoClone();
    static void apply_( const PStep* s1, VMContext* ctx );
 
    void set( Class* cls, void* data );
-   Class* cloneHandler() const { return m_cls; }
+   const Class* cloneHandler() const { return m_cls; }
    void* cloneData() const { return m_data; }
 
    virtual ExprAutoClone* clone() const;
@@ -52,7 +52,7 @@ public:
    virtual bool isStandAlone() const { return false; }
 
 private:
-   Class* m_cls;
+   const Class* m_cls;
    void* m_data;
 };
 

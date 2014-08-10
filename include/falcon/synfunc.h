@@ -63,7 +63,7 @@ public:
    void setConstructor();
    bool isConstructor() const { return m_bIsConstructor; }
    
-   Class* handler() const;
+   const Class* handler() const;
    
    void renderFunctionBody( TextWriter* tgt, int32 depth ) const;
 

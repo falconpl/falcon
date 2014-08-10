@@ -235,9 +235,9 @@ void ItemDict::describe( String& target, int depth, int maxlen ) const
    target += "]";
 }
 
-Class* ItemDict::handler()
+const Class* ItemDict::handler()
 {
-   static Class* handler = Engine::handlers()->dictClass();
+   static const Class* handler = Engine::handlers()->dictClass();
    return handler;
 }
 

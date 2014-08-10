@@ -37,9 +37,9 @@ void Symbol::decref() const
    Engine::releaseSymbol( this );
 }
 
-Class* Symbol::handler()
+const Class* Symbol::handler()
 {
-   static Class* h = Engine::instance()->handlers()->symbolClass();
+   static const Class* h = Engine::instance()->handlers()->symbolClass();
    return h;
 }
 

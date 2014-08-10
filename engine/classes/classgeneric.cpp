@@ -73,9 +73,9 @@ bool ClassGeneric::gcCheckInstance( void* self, uint32 mark ) const
 }
 
 
-Class* GenericData::handler()
+const Class* GenericData::handler()
 {
-   static Class* gen = Engine::handlers()->genericClass();
+   static const Class* gen = Engine::handlers()->genericClass();
    return gen;
 }
 

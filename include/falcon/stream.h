@@ -247,7 +247,7 @@ public:
     * handler.
     *
     */
-   virtual Class* handler();
+   virtual const Class* handler() const;
 
    /**
     * Underlying real stream for virtual streams.

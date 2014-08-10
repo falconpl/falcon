@@ -48,7 +48,7 @@ public:
    virtual void flatten( VMContext* ctx, ItemArray& subItems ) const;
    virtual void unflatten( VMContext* ctx, ItemArray& subItems, uint32 pos = 0 );
 
-   Class* handler() const;
+   const Class* handler() const;
 
    /** Analyzes the function and the context and closes the needed values.
     \param ctx the context where the closed data is to be found.

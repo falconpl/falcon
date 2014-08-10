@@ -68,7 +68,7 @@ public:
    void merge( const ItemDict& other );
    void clear();
 
-   static Class* handler();
+   static const Class* handler();
 
    /** Iterator used by ClassDict to iterate with op_first/op_next. */
    class Iterator: public GenericData

@@ -137,7 +137,7 @@ public:
     The base class returns a very simple ClassMantra class, which
     handles an abstract mantra.
     */
-   virtual Class* handler() const;
+   virtual const Class* handler() const;
    
     /** Sets the module of this mantra.
     Mainly, this information is used for debugging (i.e. to know where a function

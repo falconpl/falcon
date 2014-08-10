@@ -56,9 +56,9 @@ bool Stream::flush()
 }
 
 
-Class* Stream::handler()
+const Class* Stream::handler() const
 {
-   static Class* sc = Engine::handlers()->streamClass();
+   static const Class* sc = Engine::handlers()->streamClass();
    return sc;
 }
 

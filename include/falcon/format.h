@@ -168,7 +168,7 @@ public:
 
    virtual ~Format();
 
-   static Class* handler();
+   static const Class* handler();
 
    /** Parses a format string.
       Transforms a format string into a setup for this format object.

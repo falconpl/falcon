@@ -108,9 +108,9 @@ void Closure::unflatten( VMContext*, ItemArray& subItems, uint32 pos )
 }
 
 
-Class* Closure::handler() const
+const Class* Closure::handler() const
 {
-   static Class* cls = Engine::handlers()->closureClass();
+   static const Class* cls = Engine::handlers()->closureClass();
    return cls;
 }
 

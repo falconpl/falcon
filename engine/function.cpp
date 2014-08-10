@@ -71,9 +71,9 @@ String Function::fullName() const
 }
 
 
-Class* Function::handler() const
+const Class* Function::handler() const
 {
-   static Class* cls = Engine::handlers()->functionClass();   
+   static const Class* cls = Engine::handlers()->functionClass();
    return cls;
 }
 

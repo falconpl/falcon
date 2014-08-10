@@ -52,7 +52,7 @@ public:
    uint32 allocated() const;
    byte *data() const;
 
-   virtual Class* handler();
+   virtual const Class* handler() const;
 
    /** Transfers a string stream buffer into this one.
       The original buffer is emptied, and this buffer aqcuires the

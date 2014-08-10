@@ -83,7 +83,7 @@ public:
    void incref() const;
    void decref() const;
 
-   static Class* handler();
+   static const Class* handler();
 
 private:
    friend class SymbolPool;

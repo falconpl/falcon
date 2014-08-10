@@ -555,9 +555,9 @@ void ModSpace::PStepSetProcResult::apply_( const PStep*, VMContext* ctx )
 //========================================================================
 // Main ModSpace class
 //========================================================================
-Class* ModSpace::handler()
+const Class* ModSpace::handler()
 {
-	static Class* ms = Engine::handlers()->modSpaceClass();
+	static const Class* ms = Engine::handlers()->modSpaceClass();
 	return ms;
 }
 

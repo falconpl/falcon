@@ -284,7 +284,7 @@ class FALCON_DYN_CLASS ModSpace
 		/**
 		 * Returns the engine-wide visible instance of ClassModSpace;
 		 */
-		static Class* handler();
+		static const Class* handler();
 
 		Module* mainModule() const
 		{

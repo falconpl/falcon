@@ -117,9 +117,9 @@ void MetaHyperClass::unflatten( VMContext*, ItemArray& subItems, void* instance 
 }
 
 
-Class* MetaHyperClass::handler() const
+const Class* MetaHyperClass::handler() const
 {
-   Class* cls = Engine::handlers()->metaHyperClass();
+   static const Class* cls = Engine::handlers()->metaHyperClass();
    return cls;
 }
 

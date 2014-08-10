@@ -47,7 +47,7 @@ public:
    virtual void describe( String& target ) const = 0;
    
    /** Returns an instance of ClassGeneric */
-   static Class* handler();
+   static const Class* handler();
 
 private:
    String m_name;

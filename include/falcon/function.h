@@ -219,7 +219,7 @@ public:
    /**
     * Returns the appropriate engine class handler for this Function.
     */
-   virtual Class* handler() const;
+   virtual const Class* handler() const;
    
    const SymbolMap& parameters() const  { return m_params; }
    SymbolMap& parameters() { return m_params; }

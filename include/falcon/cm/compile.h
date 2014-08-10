@@ -25,13 +25,6 @@
 namespace Falcon {
 namespace Ext {
 
-/*#
-   @function compile
-   @param code Compiles dynamic code in a string
-   @return A syntactic tree containing the compiled code.
-
-
-*/
 
 class FALCON_DYN_CLASS Compile: public Function
 {

@@ -63,6 +63,13 @@ public:
       \return current line reached by the lexer.
    */
    int line() const { return m_line; }
+   /** Change the current line.
+      \param l New current line.
+
+      Useful for macro compilation, or compiling sources in embedded code, so that
+      the starting line of the compilation is not 1.
+   */
+   void line( int l ) { m_line = l; }
 
    /** Return current lexer character.
       \return current line reached by the lexer.

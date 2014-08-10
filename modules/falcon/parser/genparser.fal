@@ -43,9 +43,9 @@ end
 
 
 /* Tau */
-class _Tau(v)
-   value = v
-   token = nil   
+class _Tau(value, token)
+   value = value
+   token = token   
 end
 
 /*#
@@ -101,13 +101,10 @@ class Parser(grammar)
    
    // Current line
    _line = nil
-   
-   // The guess stack
+
+   // Guess stack
    _gs = nil
    
-   // The token stack
-   _ts = nil
-
    // The state stack
    _states = nil
    
@@ -134,6 +131,7 @@ class Parser(grammar)
    function parse(idata)
       try
          mt = MultiTokenizer(idata)
+         mt.countLines = true
          self._mt = mt
       catch ParamError 
          raise ParamError( 1001, "Invalid paramters", "Need a string or TextReader" )
@@ -164,7 +162,6 @@ class Parser(grammar)
          else
             take = true
          end
-         
       
          > "TOK: >", tok.describe(), "<"
       end
@@ -186,7 +183,6 @@ class Parser(grammar)
       self._mt.giveTokens = true
       self._line = 1
       self._gs = []
-      self._ts = []
       self._states = []      
    end
    
@@ -194,15 +190,19 @@ class Parser(grammar)
       mt = self._mt
       mt.clearTokens()
       for value, entry in state.terminals
-         //> "Value: >", value.describe(), "< => ", entry.describe()
+         //> "Value: >", value.describe(), "< => ", entry.describe()         
          
-         proto = p{token = entry; name = entry.name}
-         mt.addToken( value, {(t) (^~proto).value = t; ^= (^~proto) })
+         // esclude "eat" terminals from well-formed terminals.
+         if value in state.eat: continue
+         
+         // On a valid token, return a TAU of the actual token and parser entry.
+         mt.addToken( value, {(t) ^= _Tau(t, ^~entry) })
       end
-      //proto = p{value=nil; token = nil}
-      //mt.onText = {t => proto.value = t; return proto }
       
-      //call( self._mt.add, state.tokens )
+      // on generic text, yield an unnamed tau.
+      mt.onText = {(t) ^= (t ? _Tau(t, nil) : nil) }
+      
+      call( self._mt.add, state.eat )
       
       if self._states
          oldState = self.states[-1]

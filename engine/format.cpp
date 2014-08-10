@@ -56,9 +56,9 @@ void Format::reset()
 }
 
 
-Class* Format::handler()
+const Class* Format::handler()
 {
-   static Class* cls = Engine::handlers()->formatClass();
+   static const Class* cls = Engine::handlers()->formatClass();
    return cls;
 }
 

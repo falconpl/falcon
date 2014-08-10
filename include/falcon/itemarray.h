@@ -222,7 +222,7 @@ public:
     */
    uint32 currentMark() const { return m_mark; }
    
-   static Class* handler();
+   static const Class* handler();
 
    /** Copies items from a Item pointer buffer.
     * \param data The data to be copied
@@ -246,9 +246,6 @@ private:
    length_t m_growth;
    uint32 m_mark;
    mutable ConcurrencyGuard m_guard;
-
-
-   static Class* m_handler;
 
    ItemArray( Item *buffer, length_t size, length_t alloc );
 

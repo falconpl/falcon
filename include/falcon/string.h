@@ -484,7 +484,7 @@ public:
    */
    ~String();
 
-   static Class* handler();
+   static const Class* handler();
 
    /** Copies the original string as-is.
       If the original string is of a static type, the buffer is just
@@ -1387,8 +1387,6 @@ public:
    void gcMark( uint32 mark ) { m_lastMark = mark; }
    uint32 currentMark() const { return m_lastMark; }
    String* clone() const { return new String(*this); }
-
-   static Class* m_class_handler;
 
    bool isImmutable() const { return m_bImmutable; }
    void setImmutable( bool i ) {  m_bImmutable = i; }

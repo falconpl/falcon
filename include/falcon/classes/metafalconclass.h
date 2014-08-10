@@ -42,7 +42,7 @@ public:
    virtual void flatten( VMContext* ctx, ItemArray& subItems, void* instance ) const;
    virtual void unflatten( VMContext* ctx, ItemArray& subItems, void* instance ) const;
    
-   Class* handler() const;
+   const Class* handler() const;
 
    //=========================================================================
    // Initialize

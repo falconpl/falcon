@@ -378,7 +378,7 @@ public:
     */
    void pushInitExprStep( VMContext* ctx );
 
-   virtual Class* handler() const;
+   virtual const Class* handler() const;
 
    /** Used by the module link system to prepare attribute generation for methods.
     *

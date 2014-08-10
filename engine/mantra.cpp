@@ -45,9 +45,9 @@ Mantra::Mantra( const String& name, Module* module, int32 line, int32 chr ):
 {}
 
 
-Class* Mantra::handler() const
+const Class* Mantra::handler() const
 {
-   static Class* cls = Engine::handlers()->mantraClass();
+   static const Class* cls = Engine::handlers()->mantraClass();
 
    return cls;
 }

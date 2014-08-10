@@ -947,9 +947,9 @@ void FalconClass::pushInitExprStep( VMContext* ctx )
 }
 
 
-Class* FalconClass::handler() const
+const Class* FalconClass::handler() const
 {
-   static Class* cls = Engine::handlers()->metaFalconClass();
+   static const Class* cls = Engine::handlers()->metaFalconClass();
    return cls;
 }
 
