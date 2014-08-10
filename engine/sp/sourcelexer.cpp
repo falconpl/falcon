@@ -65,6 +65,8 @@ SourceLexer::SourceLexer( const String& uri, Parsing::Parser* p, TextReader* rea
    m_string_type( e_st_normal ),
    m_bRegexIgnoreCase(true)
 {
+   m_line = 1;
+   m_chr = 1;
 }
 
 SourceLexer::~SourceLexer()
@@ -100,13 +102,6 @@ Parsing::TokenInstance* SourceLexer::readOutscape()
    char_t chr;
    state = e_normal;
 
-   // if we exited, then we completed a token.
-   if( m_chr == 0 )
-   {
-      // start the count
-      m_chr = 1;
-      m_line = 1;
-   }
    m_sline = m_line;
    m_schr = m_chr;
 
@@ -321,10 +316,8 @@ Parsing::TokenInstance* SourceLexer::nextToken()
       }
 
       // start the char-line count
-      if( m_chr == 0 )
+      if( m_line == 1 && m_chr == 1 )
       {
-         m_chr = 1;
-         m_line = 1;
          if ( chr == '#' )
          {
             m_state = state_shebang1;
