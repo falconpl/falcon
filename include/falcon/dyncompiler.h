@@ -18,7 +18,7 @@
 
 
 #include <falcon/setup.h>
-#include <falcon/dyncompiler.h>
+#include <falcon/string.h>
 
 namespace Falcon {
 
@@ -48,11 +48,8 @@ class Item;
 class FALCON_DYN_CLASS DynCompiler
 {
 public:
-   DynCompiler(VMContext* ctx):
-      m_ctx(ctx)
-   {}
-
-   ~DynCompiler() {}
+   DynCompiler(VMContext* ctx);
+   ~DynCompiler();
 
    /** Compiles a dynamic code coming from a falcon string.
     * \param reader The source input.
@@ -127,8 +124,31 @@ public:
     */
    bool compileValue( Item& target, TextReader* reader );
 
+
+   /** Returns the line from which the compilation starts.
+    *  \return the line from which the compilation starts.
+    */
+   int startLine() const { return m_line; }
+
+   /** Changed the initial compilation line
+    * \param l New initial line (defaults to 1).
+    */
+   void startLine( int l ) { m_line = l; }
+
+   /** Returns the symbolic module name used in lexing.
+    */
+   const String& sourceName() const { return m_name; }
+   /** Set the name for lexing compilation.
+    *
+    * This name is the name of the source as reported in syntactic errors.
+    * It defaults to "<internal>"
+    */
+   void sourceName( const String& value ) { m_name = value; }
+
 private:
    VMContext* m_ctx;
+   int m_line;
+   String m_name;
 };
 
 }

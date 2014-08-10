@@ -47,6 +47,17 @@ Compile::~Compile()
 {
 }
 
+/*#
+   @function compile
+   @brief Compiles dynamic code in a string
+   @param code a string, a @a Stream or a @a TextReader containing code to compile.
+   @optparam name A symbolic name associated with the input code.
+   @optparam line Starting line.
+
+   @return A syntactic tree containing the compiled code.
+
+*/
+
 void Compile::invoke( VMContext* ctx , int32 params )
 {
    static Class* streamClass = Engine::handlers()->streamClass();
@@ -88,11 +99,32 @@ void Compile::invoke( VMContext* ctx , int32 params )
       }
    }
 
-   if( reader == 0 ) {
+   Item* i_sourceName = ctx->param(1);
+   Item* i_startLine = ctx->param(2);
+
+   if( reader == 0
+      || (i_sourceName != 0 && ! (i_sourceName->isNil() || i_sourceName->isString()))
+      || (i_startLine != 0 && ! (i_startLine->isNil() || i_startLine->isOrdinal()))
+      )
+   {
       throw paramError(__LINE__, SRC );
    }
 
    DynCompiler dynComp( ctx );
+
+   // set the correct source name
+   if (i_sourceName != 0 && ! i_sourceName->isNil() )
+   {
+      dynComp.sourceName( * i_sourceName->asString() );
+   }
+
+   // set the correct starting line.
+   if (i_startLine != 0 && ! i_startLine->isNil() )
+   {
+      int l = (int) i_startLine->forceInteger();
+      if ( l < 1 ) { l = 1; }
+      dynComp.startLine(l);
+   }
 
    try
    {
