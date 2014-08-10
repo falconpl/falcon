@@ -90,6 +90,10 @@ public:
    void giveTokens(bool b);
    void groupTokens(bool b);
 
+   bool countLines() const { return m_countLines; }
+   void countLines( bool mode ) { m_countLines = mode; }
+
+   int32 line() const { return m_line; }
 
    void clearTokens();
 
@@ -123,6 +127,9 @@ private:
    int32 m_tokenID;
 
    uint32 m_maxTokenSize;
+
+   int32 m_line;
+   bool m_countLines;
 
    class Private;
    Private* _p;

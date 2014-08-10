@@ -214,6 +214,9 @@ void StreamTokenizer::init()
    m_buffer = new char[m_bufSize];
    m_maxTokenSize = 0;
 
+   m_line = 1;
+   m_countLines = false;
+
    m_tr = 0;
    m_tokenID = 0;
    _p = new Private;
@@ -435,6 +438,11 @@ bool StreamTokenizer::next()
       {
          if( ! getNextChar(nextChar) )
          {
+            if (m_countLines && nextChar == '\n')
+            {
+               m_line++;
+            }
+
             // the running text is m_bufPos -> buflen (might be 0)
             running->fromUTF8(m_buffer, m_bufLen );
             // This is the last loop in search for tokens
@@ -461,6 +469,19 @@ bool StreamTokenizer::next()
       {
          Token* tk = _p->m_tlist[id];
          uint32 toklen = tk->m_result.length();
+
+         // should we check for \n in tokens?
+         if (m_countLines)
+         {
+            char* start = m_buffer+pos;
+            char* nbuf = (char*) memchr(start, '\n', toklen);
+            while(nbuf != 0)
+            {
+               ++m_line;
+               ++nbuf;
+               nbuf = (char*) memchr(nbuf, '\n', toklen-(nbuf-start));
+            }
+         }
 
          if( m_giveTokens || m_groupTokens )
          {
@@ -508,6 +529,17 @@ bool StreamTokenizer::next()
    void* resData = _p->m_resData;
    bool bOwnText = m_bOwnText;
    _p->m_mtx.unlock();
+
+   // should we find \n in text?
+   if (m_countLines)
+   {
+      length_t pos = running->find('\n');
+      while(pos != String::npos )
+      {
+         m_line++;
+         pos = running->find('\n',pos+1);
+      }
+   }
 
    onTextFound( running, resData );
 

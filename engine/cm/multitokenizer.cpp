@@ -201,6 +201,8 @@ static MultiTokenizer* internal_setSource(Function* caller, VMContext* ctx, Mult
 
  @prop giveTokens if true, tokens will be given back as part of the iterations.
  @prop groupTokens if true, subsequent identical tokens will be discarded.
+ @prop countLines if true, lines ('\n' characters) will be counted while parsing.
+ @prop line Current line; will be updated if countLines is set to true.
 */
 FALCON_DECLARE_FUNCTION( init, "source:S|TextReader,give:[B],group:[B]" );
 FALCON_DEFINE_FUNCTION_P1( init )
@@ -482,6 +484,27 @@ static void set_groupTokens(const Class*, const String&, void* inst, const Item&
    tk->groupTokens(value.isTrue());
 }
 
+static void get_countLines(const Class*, const String&, void* inst, Item& value )
+{
+   MultiTokenizer* tk = static_cast<MultiTokenizer*>(inst);
+   value.setBoolean( tk->countLines() );
+}
+
+
+static void set_countLines(const Class*, const String&, void* inst, const Item& value )
+{
+   MultiTokenizer* tk = static_cast<MultiTokenizer*>(inst);
+   tk->countLines(value.isTrue());
+}
+
+static void get_line(const Class*, const String&, void* inst, Item& value )
+{
+   MultiTokenizer* tk = static_cast<MultiTokenizer*>(inst);
+   value= (int64) tk->line();
+}
+
+
+
 /*#
  @method add MultiTokenizer
  @brief Adds multiple tokens or regular expressions to the tokenizer.
@@ -550,6 +573,8 @@ ClassMultiTokenizer::ClassMultiTokenizer():
    addProperty("groupTokens", &get_groupTokens, &set_groupTokens );
    addProperty("onText", &get_onText, &set_onText );
    addProperty("onToken", &get_onToken, &set_onToken );
+   addProperty("countLines", &get_countLines, &set_countLines );
+   addProperty("line", &get_line );
 }
 
 
