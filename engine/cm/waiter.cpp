@@ -327,8 +327,8 @@ void Function_remove::invoke(VMContext* ctx, int32 )
       throw paramError(__LINE__, SRC);
    }
 
-   int32 pos = self->m_waited.find(*i_added);
-   if( pos < 0)
+   length_t pos = self->m_waited.find(*i_added);
+   if( pos != ItemArray::npos )
    {
       self->m_waited.remove(pos);
       Shared* sh = static_cast<Shared*>(cls->getParentData(clsShared, inst));
@@ -399,7 +399,7 @@ void ClassWaiter::op_in( VMContext* ctx, void* instance ) const
    }
 
    // no need to lock, we're using just the top array.
-   ctx->opcodeParam(1).setBoolean(self->m_waited.find(ctx->topData()) >= 0 );
+   ctx->opcodeParam(1).setBoolean(self->m_waited.find(ctx->topData()) != ItemArray::npos );
    ctx->popCode();
 }
 
@@ -427,8 +427,8 @@ void* ClassWaiter::clone( void* instance ) const
    while( iter != end )
    {
       Shared* sh = iter->first;
-      int32 pos = self->m_waited.find(Item(sh->handler(), sh));
-      if( pos >= 0 )
+      length_t pos = self->m_waited.find(Item(sh->handler(), sh));
+      if( pos != ItemArray::npos )
       {
          Shared* newShared = static_cast<Shared*>(nData->m_waited.at(pos).asInst());
          nData->m_callbacks[newShared] = iter->second;

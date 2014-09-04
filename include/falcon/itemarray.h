@@ -38,6 +38,8 @@ public:
 
    virtual ~ItemArray();
 
+   static const length_t npos = (length_t)-1;
+
    Item *elements() const { return m_data; }
    void elements( Item *d ) { m_data = d; }
    length_t allocated() const { return m_alloc; }
@@ -104,7 +106,15 @@ public:
    bool remove( length_t pos );
    bool remove( length_t first, length_t count );
    bool change( const ItemArray &other, length_t begin, length_t count );
-   int32 find( const Item &itm ) const;
+   /**
+    *
+    */
+   length_t find( const Item &itm ) const;
+
+   /**
+    *
+    */
+   length_t rfind( const Item &itm ) const;
    bool insertSpace( length_t pos, length_t size );
 
    void resize( length_t size );

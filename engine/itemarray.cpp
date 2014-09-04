@@ -334,15 +334,28 @@ bool ItemArray::remove( length_t first )
 }
 
 
-int32 ItemArray::find( const Item &itm ) const
+length_t ItemArray::find( const Item &itm ) const
 {
-   for( uint32 i = 0; i < m_size; i ++ )
+   for( length_t i = 0; i < m_size; i ++ )
    {
       if ( itm.compare(m_data[ i ]) == 0 )
-         return (int32) i;
+         return i;
    }
 
-   return -1;
+   return npos;
+}
+
+length_t ItemArray::rfind( const Item &itm ) const
+{
+   length_t i = m_size;
+   while( i > 0 )
+   {
+      --i;
+      if ( itm.compare(m_data[ i ]) == 0 )
+         return i;
+   }
+
+   return npos;
 }
 
 bool ItemArray::change( const ItemArray &other, length_t begin, length_t rsize )
