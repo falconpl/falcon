@@ -397,8 +397,8 @@ void Function_erase::invoke(VMContext* ctx, int32 pCount )
    bool bRemoved = false;
    for( int i = base; i < pCount; ++i )
    {
-      int32 pos = array->find( *ctx->param(i) );
-      if ( pos >= 0 )
+      length_t pos = array->find( *ctx->param(i) );
+      if ( pos != ItemArray::npos )
       {
          bRemoved = true;
          array->remove(pos);
@@ -445,8 +445,8 @@ void Function_eraseAll::invoke(VMContext* ctx, int32 pCount )
    for( int i = base; i < pCount; ++i )
    {
       Item& current =  *ctx->param(i);
-      int32 pos = array->find(current);
-      while ( pos >= 0 )
+      length_t pos = array->find(current);
+      while ( pos != ItemArray::npos )
       {
          bRemoved = true;
          array->remove(pos);
@@ -851,11 +851,86 @@ void Function_find::invoke(VMContext* ctx, int32 )
    ItemArray *array = i_array->asArray();
 
    int64 pos;
+   length_t ipos;
    {
       ConcurrencyGuard::Reader gw(ctx, array->guard());
-      pos = (int64) array->find( *i_item );
+      ipos = array->find( *i_item );
    }
+   pos = (ipos == ItemArray::npos ? static_cast<int64>(-1) : static_cast<int64>(ipos) );
    ctx->returnFrame( pos );
+}
+
+/*#
+   @method rfind Array
+   @brief Searches for an item in the array starting from the end.
+   @param item The item to be searched.
+   @return The position where the item is found, or -1 if not found.
+
+   @note When used statically, this method takes a target array as first parameter.
+
+*/
+FALCON_DECLARE_FUNCTION(rfind,"array:A,item:X");
+void Function_rfind::invoke(VMContext* ctx, int32 )
+{
+   Item *i_array, *i_item;
+   ctx->getMethodicParams(i_array, i_item);
+
+   if ( i_array == 0 || ! i_array->isArray() || i_item == 0 )
+   {
+      throw paramError( __LINE__, SRC, ctx->isMethodic() );
+   }
+
+   ItemArray *array = i_array->asArray();
+
+   int64 pos;
+   length_t ipos;
+   {
+      ConcurrencyGuard::Reader gw(ctx, array->guard());
+      ipos = array->rfind( *i_item );
+   }
+   pos = (ipos == ItemArray::npos ? static_cast<int64>(-1) : static_cast<int64>(ipos) );
+   ctx->returnFrame( pos );
+}
+
+
+
+
+static void internal_scan( Function* caller, VMContext* ctx, bool bReverse )
+{
+   Item *i_array, *i_code;
+   ctx->getMethodicParams(i_array, i_code);
+
+   if ( i_array == 0 || ! i_array->isArray() || i_code == 0 )
+   {
+      throw caller->paramError( __LINE__, SRC, ctx->isMethodic() );
+   }
+
+   ItemArray *array = i_array->asArray();
+   ConcurrencyGuard::Reader gr( ctx, array->guard());
+   if( array->length() == 0 )
+   {
+      ctx->returnFrame(-1);
+      return;
+   }
+
+   ctx->addLocals(1);
+
+   ClassArray* carr = static_cast<ClassArray*>(caller->methodOf());
+   ctx->pushCode(carr->m_stepScanInvoke);
+   Item* first;
+   if (bReverse) {
+      ctx->currentCode().m_seqId = 1;        // mark as a reverse scan
+      uint32 last = array->length()-1;
+      ctx->local(0)->setInteger((int64) last ); // we'll start from array length
+      first = &array->at( last );
+   }
+   else {
+      ctx->local(0)->setInteger(0); // we'll start from 1
+      first = &array->at(0);
+   }
+
+   ctx->callerLine(__LINE__+1);
+   ctx->callItem(*i_code, 1, first );
 }
 
 /*#
@@ -874,28 +949,27 @@ void Function_find::invoke(VMContext* ctx, int32 )
 FALCON_DECLARE_FUNCTION(scan,"array:A,checker:X");
 void Function_scan::invoke(VMContext* ctx, int32 )
 {
-   Item *i_array, *i_code;
-   ctx->getMethodicParams(i_array, i_code);
+   internal_scan(this,ctx,false);
+}
 
-   if ( i_array == 0 || ! i_array->isArray() || i_code == 0 )
-   {
-      throw paramError( __LINE__, SRC, ctx->isMethodic() );
-   }
 
-   ItemArray *array = i_array->asArray();
-   ConcurrencyGuard::Reader gr( ctx, array->guard());
-   if( array->length() == 0 )
-   {
-      ctx->returnFrame(-1);
-      return;
-   }
+/*#
+   @method rscan Array
+   @brief Searches for an item in the array (starting from the last element) using an external method to check it.
+   @param checker Code invoked to check for the item.
+   @return The position at which the checker code evaluates to true.
 
-   ctx->addLocals(1);
-   ctx->local(0)->setInteger(0); // we'll start from 1
-   ClassArray* carr = static_cast<ClassArray*>(methodOf());
-   ctx->pushCode(carr->m_stepScanInvoke);
-   ctx->callerLine(__LINE__+1);
-   ctx->callItem(*i_code, 1, &array->at(0));
+   The @b checker parameter is evaluated and given each element as a
+   paramter. When (if) it returns true, the position of the element
+   that was passed to it is returned.
+
+   @note When used statically, this method takes a target array as first parameter.
+
+*/
+FALCON_DECLARE_FUNCTION(rscan,"array:A,checker:X");
+void Function_rscan::invoke(VMContext* ctx, int32 )
+{
+   internal_scan(this,ctx,true);
 }
 
 class PStepScanInvoke: public PStep
@@ -917,17 +991,27 @@ public:
 
       // no, better luck next time.
       ctx->popData();
-      int64 id = ctx->local(0)->asInteger()+1;
+      int64 id = ctx->local(0)->asInteger();
+      // reverse?
+      if (ctx->currentCode().m_seqId)
+      {
+         id--;
+      }
+      else {
+         id++;
+      }
       Item *i_array, *i_code;
       ctx->getMethodicParams(i_array, i_code);
       ItemArray *array = i_array->asArray();
 
       // guard from now on.
       ConcurrencyGuard::Reader gr( ctx, array->guard());
-      if( id >= array->length() )
+      // no matter the direction, our id can never be the array length or 0,
+      //   as we started it at that position -- so when we meet it, we can stop.
+      if( id >= array->length() || id == 0 )
       {
          // failed.
-         ctx->returnFrame(-1);
+         ctx->returnFrame((int64)-1);
          return;
       }
 
@@ -1612,7 +1696,9 @@ ClassArray::ClassArray():
    addMethod( new _classArray::Function_unshift, true );
 
    addMethod( new _classArray::Function_find, true );
+   addMethod( new _classArray::Function_rfind, true );
    addMethod( new _classArray::Function_scan, true );
+   addMethod( new _classArray::Function_rscan, true );
 
    addMethod( new _classArray::Function_copy, true );
    addMethod( new _classArray::Function_slice, true );
@@ -2047,8 +2133,8 @@ void ClassArray::op_sub( VMContext* ctx, void* self ) const
       result->merge( *array );
    }
 
-   int32 pos = result->find(*op2);
-   if( pos >= 0 )
+   length_t pos = result->find(*op2);
+   if( pos != ItemArray::npos )
    {
       result->remove(pos);
    }
@@ -2063,8 +2149,8 @@ void ClassArray::op_asub( VMContext* ctx, void* self ) const
 
    {
       ConcurrencyGuard::Writer gr(ctx,array->guard());
-      int32 pos = array->find(ctx->topData());
-      if( pos >= 0 )
+      length_t pos = array->find(ctx->topData());
+      if( pos != ItemArray::npos )
       {
          array->remove(pos);
       }
@@ -2165,8 +2251,8 @@ void ClassArray::op_shr( VMContext* ctx, void* self ) const
       for( length_t pos = 0; pos < other->length(); ++pos )
       {
          Item& elem = (*other)[pos];
-         int32 posl = result->find(elem);
-         if( posl >= 0 )
+         length_t posl = result->find(elem);
+         if( posl != ItemArray::npos )
          {
             result->remove(posl);
          }
@@ -2203,8 +2289,8 @@ void ClassArray::op_ashr( VMContext* ctx, void* self ) const
       for( length_t pos = 0; pos < other->length(); ++pos )
       {
          Item& elem = (*other)[pos];
-         int32 posl = array->find(elem);
-         if( posl >= 0 )
+         length_t posl = array->find(elem);
+         if( posl != ItemArray::npos )
          {
             array->remove(posl);
          }
@@ -2230,7 +2316,7 @@ void ClassArray::op_in( VMContext* ctx, void* instance ) const
    ItemArray& array = *static_cast<ItemArray*>(instance);
    {
       ConcurrencyGuard::Reader rg( ctx, array.guard());
-      res = array.find( *index ) >= 0;
+      res = array.find( *index ) != ItemArray::npos;
    }
 
    ctx->popData();
