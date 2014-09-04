@@ -59,12 +59,6 @@ void Inspector::inspect_r( const Item& itm, int32 depth, int32 maxdepth, int32 m
       depth = -depth;
    }
 
-   if( maxdepth > 0 && depth == maxdepth )
-   {
-      m_tw->write("...");
-      return;
-   }
-
    // normally, inspect asks the describe function of the class to do the hard work,
    // but in case of classes, prototypes, arrays and dictionaries, it does a special work.
    switch( itm.type() )
@@ -129,7 +123,7 @@ void Inspector::inspect_r( const Item& itm, int32 depth, int32 maxdepth, int32 m
             Item& item = ia->at(pos);
             inspect_r( item, depth+1, maxdepth, maxsize );
          }
-
+         m_tw->write("\n");
          m_tw->write( PStep::renderPrefix(depth) );
          m_tw->write("]");
       }
@@ -145,8 +139,6 @@ void Inspector::inspect_r( const Item& itm, int32 depth, int32 maxdepth, int32 m
       }
       else
       {
-         m_tw->write("[\n");
-
          class Rator: public ItemDict::Enumerator
          {
          public:
@@ -166,7 +158,7 @@ void Inspector::inspect_r( const Item& itm, int32 depth, int32 maxdepth, int32 m
                m_count++;
                m_insp->inspect_r( key, m_depth, m_maxdepth, m_maxsize );
                m_tw->write( " => ");
-               m_insp->inspect_r( value, m_depth, m_maxdepth, m_maxsize );
+               m_insp->inspect_r( value, -m_depth, m_maxdepth, m_maxsize );
             }
 
          private:
@@ -178,10 +170,18 @@ void Inspector::inspect_r( const Item& itm, int32 depth, int32 maxdepth, int32 m
             int32 m_maxsize;
          };
 
-         Rator rator(this, m_tw, depth+1, maxdepth, maxsize);
-         id->enumerate(rator);
-         m_tw->write( PStep::renderPrefix(depth ) );
-         m_tw->write("\n]");
+         if( maxdepth > 0 && depth >= maxdepth )
+         {
+            m_tw->write("[=>...]");
+         }
+         else {
+            m_tw->write("[\n");
+            Rator rator(this, m_tw, depth+1, maxdepth, maxsize);
+            id->enumerate(rator);
+            m_tw->write("\n");
+            m_tw->write( PStep::renderPrefix(depth ) );
+            m_tw->write("]");
+         }
       }
    }
    break;
@@ -196,8 +196,6 @@ void Inspector::inspect_r( const Item& itm, int32 depth, int32 maxdepth, int32 m
       }
       else
       {
-         m_tw->write("p{\n");
-
          class Rator: public Class::PVEnumerator
          {
          public:
@@ -223,10 +221,17 @@ void Inspector::inspect_r( const Item& itm, int32 depth, int32 maxdepth, int32 m
             int32 m_maxsize;
          };
 
-         Rator rator(this, m_tw, depth+1, maxdepth, maxsize);
-         fd->enumeratePV(rator);
-         m_tw->write( PStep::renderPrefix(depth ) );
-         m_tw->write("}");
+         if( maxdepth > 0 && depth >= maxdepth )
+         {
+            m_tw->write("p{...}");
+         }
+         else {
+            Rator rator(this, m_tw, depth+1, maxdepth, maxsize);
+            fd->enumeratePV(rator);
+            m_tw->write("p{\n");
+            m_tw->write( PStep::renderPrefix(depth ) );
+            m_tw->write("}");
+         }
       }
    }
    break;
@@ -236,10 +241,6 @@ void Inspector::inspect_r( const Item& itm, int32 depth, int32 maxdepth, int32 m
 
       if( cls->isFalconClass() )
       {
-         m_tw->write("Class ");
-         m_tw->write( cls->name() );
-         m_tw->write("{");
-
          class Rator: public Class::PropertyEnumerator {
          public:
             Rator(Inspector* insp, TextWriter* tw, int32 depth, int32 maxdepth, int32 maxsize, FalconInstance* fi, FalconClass* fcls ):
@@ -263,13 +264,13 @@ void Inspector::inspect_r( const Item& itm, int32 depth, int32 maxdepth, int32 m
                   m_fi->getProperty( propName, item );
                   m_tw->write( propName );
                   m_tw->write( " = " );
-                  m_insp->inspect_r(item, -(m_depth+1), m_maxdepth, m_maxsize );
+                  m_insp->inspect_r(item, -(m_depth), m_maxdepth, m_maxsize );
                   break;
 
                case FalconClass::Property::t_inh:
                   m_tw->write( "from " );
                   m_fi->getProperty( propName, item );
-                  m_insp->inspect_r(item, -(m_depth+1), m_maxdepth, m_maxsize );
+                  m_insp->inspect_r(item, -(m_depth), m_maxdepth, m_maxsize );
                   break;
 
                case FalconClass::Property::t_state:
@@ -300,23 +301,30 @@ void Inspector::inspect_r( const Item& itm, int32 depth, int32 maxdepth, int32 m
             int32 count;
          };
 
-         FalconInstance* fi = static_cast<FalconInstance*>( data );
-         FalconClass* fcls = static_cast<FalconClass*>(cls);
+         m_tw->write("Class ");
+         m_tw->write( cls->name() );
+         m_tw->write("{");
 
-         Rator rator( this, m_tw, depth+1, maxdepth, maxsize, fi, fcls );
-         fcls->enumerateProperties(data, rator);
+         if( maxdepth > 0 && depth >= maxdepth )
+         {
+            m_tw->write("...");
+         }
+         else {
+            FalconInstance* fi = static_cast<FalconInstance*>( data );
+            FalconClass* fcls = static_cast<FalconClass*>(cls);
 
-         m_tw->write( PStep::renderPrefix(depth) );
-         if( rator.count != 0 ) { m_tw->write("\n"); }
+            Rator rator( this, m_tw, depth+1, maxdepth, maxsize, fi, fcls );
+            fcls->enumerateProperties(data, rator);
+
+            m_tw->write( PStep::renderPrefix(depth) );
+            if( rator.count != 0 ) { m_tw->write("\n"); }
+         }
+
          m_tw->write("}");
 
       }
       else if (itm.type() == FLC_ITEM_USER)
       {
-         m_tw->write("Class ");
-         m_tw->write( cls->name() );
-         m_tw->write("{");
-
          class Rator: public Class::PVEnumerator
          {
          public:
@@ -356,9 +364,22 @@ void Inspector::inspect_r( const Item& itm, int32 depth, int32 maxdepth, int32 m
          }
          rator(this, m_tw, depth + 1, maxdepth, maxsize);
 
-         cls->enumeratePV( data, rator );
-         m_tw->write( PStep::renderPrefix(depth) );
-         if( rator.count != 0 ) { m_tw->write("\n"); m_tw->write( PStep::renderPrefix(depth) ); }
+         m_tw->write("Class /*native*/ ");
+         m_tw->write( cls->name() );
+         m_tw->write("{");
+
+         if( maxdepth > 0 && depth >= maxdepth )
+         {
+            m_tw->write("...");
+         }
+         else {
+            cls->enumeratePV( data, rator );
+            m_tw->write( PStep::renderPrefix(depth) );
+            if( rator.count != 0 ) {
+               m_tw->write("\n");
+               m_tw->write( PStep::renderPrefix(depth) );
+            }
+         }
          m_tw->write("}");
       }
       else {
