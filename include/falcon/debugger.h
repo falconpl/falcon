@@ -57,6 +57,8 @@ public:
    void write(const String& str) const;
    void writeLine(const String& str) const;
 
+   void showCode() { m_showCode = true; }
+
    PStep* m_stepPostEval;
    PStep* m_stepAfterNext;
 
@@ -69,6 +71,7 @@ private:
 
    String m_lastCommand;
    bool m_hello;
+   bool m_showCode;
    bool m_bActive;
 
    TextWriter* m_tw;

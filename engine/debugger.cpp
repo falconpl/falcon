@@ -281,6 +281,7 @@ public:
    virtual void execute( VMContext* ctx, const String& )
    {
       m_debugger->writeLine( "**: single step" );
+      m_debugger->showCode();
       ctx->setBreakpointEvent();
       m_debugger->exitDebugger();
    }
@@ -301,6 +302,7 @@ public:
    virtual void execute( VMContext* ctx, const String& )
    {
       m_debugger->writeLine( "**: long step" );
+      m_debugger->showCode();
       ctx->process()->addNegativeBreakpoint( ctx, ctx->currentCode().m_step );
       ctx->setSwapEvent();
       m_debugger->exitDebugger();
@@ -780,7 +782,8 @@ public:
 //========================================================================
 
 Debugger::Debugger() :
-    m_hello(true)
+    m_hello(true),
+    m_showCode(true)
 {
    StmtTry* t = new PStepPostEval;
    m_stepPostEval = t;
@@ -875,7 +878,11 @@ void Debugger::onBreak( Process* p, Processor*, VMContext* ctx )
       m_hello = false;
    }
 
-   printCode( ctx );
+   if( m_showCode )
+   {
+      printCode( ctx );
+      m_showCode = false;
+   }
 
    m_bActive = true;
    do
