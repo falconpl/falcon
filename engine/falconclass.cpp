@@ -900,9 +900,13 @@ void FalconClass::describe( void* instance, String& target, int depth, int maxle
             }
             theItem.describe( temp, m_depth-1, m_maxlen );
          }
+         /*
+          we don't want to see the statics in describe.
+
          else if( p->m_type == Property::t_static_prop ) {
             p->m_dflt.describe( temp, m_depth-1, m_maxlen );
          }
+         */
 
          if( ! temp.empty() )
          {
