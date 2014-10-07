@@ -85,7 +85,7 @@
    
    INCLUDES::= ':' NAME+.
    
-   RULE ::= NAME '::=' RULE-BODY '.' .
+   RULE ::= NAME '::=' '!'? RULE-BODY '.' .
    
    NAMED_TERMINAL ::= NAME ':-' STRING | REGEX .
    
@@ -192,11 +192,12 @@
                         |- type
                         |- name
                         |- content (String | RE)
-                        + parents [DefSymbols]
+                        + parents [DefRule]
                         + alts [DefRule]
                                  |- line
                                  |- code
                                  |- transition
+                                 |- symbol [DefSymbol]
                                  + sequence [DefEntry]
                                              |- line
                                              |- pname
@@ -358,6 +359,14 @@
    @endcode
    
    This means that the current state must ignore all the white-spaces.
+   
+   @section safe_points Safe Points
+   
+   The '!' marker at the beginning of a production rule indicates a "safe point". 
+   This means that, when the rule is recognized, that frame is considered safe and thus
+   the corresponding parsing tree is generated, and the actions are invoked.
+   
+   Rules involving state transitions are also considered safe points.
 */
 
 
@@ -405,20 +414,45 @@ class DefEntry(sym, line)
       end
    end
    
+   function toString()
+      ret = m""
+      sym = self.symbol
+      if sym.name
+         ret += sym.name
+      else
+         if sym.type == DefSymbol.tNT
+            ret += "(ANON)"
+         elif sym.type == DefSymbol.tRE
+            ret += sym.content.toString()
+         else
+            ret += '"'+sym.content.escape()+'"'
+         end
+      end
+            
+      if self.repeat == DefEntry.tAsterisk
+         ret += "*"
+      elif self.repeat == DefEntry.tPlus
+         ret += "+"
+      elif self.repeat == DefEntry.tQMark
+         ret += "?"
+      end
+      
+      return ret
+   end
 end
 
 
 /*#
-@brief Single Entry of a Non Terminal specification.
+@brief Single Entry of a Non Terminal specification, or Production Rule.
+@param sym The non-terminal symbol that this rule produces.
+@param line The line where this rule is (initially) declared.
 
-Each alternative definition will have its own NTDef
-   - line: Line at which this alternative is declared
 */
-class DefRule(line)   
+class DefRule(sym, line)   
    // line where the definition is declared
    line = line ? line: 0
    
-   // sequence of DefEntrys
+   //# sequence of DefEntrys
    sequence = []
    
    // raw text code
@@ -432,6 +466,23 @@ class DefRule(line)
    
    // or... pop to different states
    transpop = 0
+   
+   //# Target for this symbol for this rule.
+   symbol = sym
+   
+   //# priority of this rule
+   prio = 0
+   
+   //# associativity of this rule
+   assoc = 0
+   
+   //# adds an entry to the rule
+   function add(dentry)
+      self.sequence += dentry
+      if self.prio < dentry.symbol.prio: self.prio = dentry.symbol.prio
+      if self.assoc < dentry.symbol.assoc: self.assoc = dentry.symbol.assoc
+   end
+   
    
    function dump( output, purged )
    
@@ -466,7 +517,8 @@ end
    pattern.
    
    @note A DefSymbol can be anonymous if it's generated out of
-   a locally defined alternative (a parentezised alternative within a sequence).
+   a locally defined alternative (a parentezised alternative within a sequence), or
+   if it's an unnamed regular expression or string terminal.
    
 */
 class DefSymbol(name, type, content)
@@ -503,8 +555,13 @@ class DefSymbol(name, type, content)
    //# Associativity of this token
    assoc = 0
 
-   //# DefSymbols in which this token is used.
+   //# DefRules in which this token is used.
    parents = []
+   
+   /*# if true, when this symbol is recognized, the parse tree is flushed and the parsing 
+      is considered complete up to this point.
+   */
+   complete = false
    
    init
       self.resolveAs( type )
@@ -512,6 +569,10 @@ class DefSymbol(name, type, content)
    
    function isTerminal()
       return self.type != self.tNT
+   end
+   
+   function higher(prio, assoc)
+      return self.prio > prio or (self.prio == prio and self.assoc > assoc)
    end
    
    /*# Set a non-unresolved type for this entry.
@@ -538,7 +599,7 @@ class DefSymbol(name, type, content)
          if self.parents.len > 0
             output.write( "/* Included in: " )
             for p in self.parents
-               output.write( p.name )
+               output.write( p.symbol.name )
                formiddle: output.write(", ")
             end
             output.write( "*/\n" )
@@ -567,6 +628,9 @@ class DefSymbol(name, type, content)
          end
       else
          output.write( self.name + " ::= " )
+         if self.complete
+            output.write( "! " )
+         end
       end               
       
       if not inline or not self.name
@@ -613,6 +677,20 @@ class DefSymbol(name, type, content)
          a = self.assoc == self.tANone ? "N" : (self.assoc == self.tALeft ? "L" : "R")
          output.write( @"   /* p=${self.prio} a=$a */" )
       end
+   end
+   
+   /*# Returns true if the given symbol appears in a parent rule for this symbol. */
+   function isParent( symbol, traversed )
+      for rp in self.parents
+         if symbol == rp.symbol: return true
+         candidate = rp.symbol
+         if not traversed: traversed = []
+         if candidate in traversed: return false
+         traversed += candidate
+         if rp.symbol.isParent(symbol, traversed): return true
+      end
+      
+      return false
    end
    
 end
@@ -669,9 +747,9 @@ class GrammarState(name, line)
    function findEntry(name)
       entry = self.entries.find(name,nil)
       if entry: return entry
-      // try in the parents
-      for parent in self.includes
-         entry = parent.findEntry(name)
+      // try in the include states
+      for included in self.includes
+         entry = included.findEntry(name)
          if entry: return entry
       end
       
@@ -763,10 +841,20 @@ class Grammar
    //# Map of grammar states.
    states = [=>]
    
+   //# Root of the grammar, or meta-rule from the main state.
+   root = nil
+   
    //# Code to be executed at initialization
    initcode = nil
    initcode_line = 0
    initcode_compiled = nil
+   
+      // List of predefined tokens
+   predefined = .[
+      "eof" => DefSymbol("eof",DefSymbol.tPredef)      // End of file
+      "any" => DefSymbol("any",DefSymbol.tPredef)      // any non-matching text
+      "error" => DefSymbol("error",DefSymbol.tPredef)  // matches everything in case of error.
+   ]
    
    //# Reverse rendering for the state grammar
    function dump( output, purged )
@@ -809,13 +897,6 @@ class GrammarParser
    // set to true to have tracing on
    verbose = false
    
-   // List of predefined tokens
-   predefined = .[
-      "eof" => DefSymbol("eof",DefSymbol.tPredef)      // End of file
-      "any" => DefSymbol("any",DefSymbol.tPredef)      // any non-matching text
-      "error" => DefSymbol("error",DefSymbol.tPredef)  // matches everything in case of error.
-   ]
-   
    /*#
       @brief Error handler function
       
@@ -844,9 +925,9 @@ class GrammarParser
                
                '"' "'" "*" "+" "?" "|" "[" "]"
                "(" ")" "#"
-               ":" "." "{" "}" 
-               
+               ":" "." "!" "{" "}"                
                ]
+               
    whiteSpaces = .[" " "\n" "\r" "\t"]
 
 
@@ -1080,6 +1161,9 @@ class GrammarParser
                // now things get interesting.
                switch tok
                
+                  case "!"
+                     currentNT.complete = true
+               
                   case "."
                      // done
                      if parLevel > 0
@@ -1094,7 +1178,7 @@ class GrammarParser
                      
                   case "|"
                      // new alternative
-                     currentAlt = DefRule( self.curLine )
+                     currentAlt = DefRule( currentNT, self.curLine )
                      currentNT.alts += currentAlt
                      // stay in defbody state
                      
@@ -1102,8 +1186,8 @@ class GrammarParser
                      parLevel++
                      newNT, newAlt = self.pushNT()                     
                      topTok = DefEntry(newNT, self.curLine)                     
-                     currentAlt.sequence += topTok
-                     newNT.parents += currentNT
+                     currentAlt.add(topTok)
+                     newNT.parents += currentAlt
                      currentNT, currentAlt = newNT, newAlt                     
                      
                   case ")"
@@ -1425,7 +1509,7 @@ class GrammarParser
       self._NTStack.push(nt)
       
       // add a first alternative to the new token
-      alt = DefRule( self.curLine )
+      alt = DefRule( nt, self.curLine )
       nt.alts += alt            
       
       return [nt, alt]
@@ -1458,7 +1542,7 @@ class GrammarParser
       symbol = state.findEntry( name )
 
       if not symbol
-         symbol = self.predefined.find(name,nil)
+         symbol = self._grammar.predefined.find(name,nil)
       end
       // not even a predefined?
       
@@ -1468,10 +1552,8 @@ class GrammarParser
          state.unresolved[name] = symbol
          state.entries[name] = symbol
       end
-      
-      if NT notin symbol.parents: symbol.parents += NT
-      token = DefEntry(symbol, self.curLine)
-      NT.alts[-1].sequence += token
+
+      self._appendToNT(NT, symbol)
    end
    
    /*
@@ -1489,13 +1571,11 @@ class GrammarParser
          term = terminals.find( re, nil )
          if not term
             self.trace( "commitRE -- creating new anonymous terminal for >", text, "<" )     
-            term = DefSymbol(text, DefSymbol.tRE, re )
+            term = DefSymbol(nil, DefSymbol.tRE, re )
             terminals[re] = term
          end
                   
-         NT.alts[-1].sequence += DefEntry(term, self.curLine)
-         if NT notin term.parents: term.parents += NT
-         
+         self._appendToNT(NT, term)
          
          //CHECK
          if re notin self._cgs.tokens: self._cgs.tokens += re
@@ -1518,12 +1598,11 @@ class GrammarParser
       term = terminals.find( text, nil )
       if not term
          self.trace( "commitText -- creating new anonymous terminal for >", text, "<" )     
-         term = DefSymbol(text, DefSymbol.tString, text )
+         term = DefSymbol(nil, DefSymbol.tString, text )
          terminals[text] = term
       end
-         
-      NT.alts[-1].sequence += DefEntry(term, self.curLine)
-      if NT notin term.parents: term.parents += NT
+      
+      self._appendToNT(NT, term)
       
       //CHECK
       if text notin self._cgs.tokens: self._cgs.tokens += text
@@ -1608,8 +1687,9 @@ class GrammarParser
       Pick the top rule in states
    */
    function resolveRoots()
+      g = self._grammar
       // every state must have exactly one token that is not referenced.
-      for sname,state in self._grammar.states
+      for sname,state in g.states
          self.trace( "Picking the root node of ", state.name )
          refs = state.entries.values()
          for name, nt in state.entries 
@@ -1628,6 +1708,20 @@ class GrammarParser
             self.trace( "In state", state.name, "token", state.top.name, "is the root node." )
          end
       end
+      
+      // Create the meta-rule for the main state.
+      main = g.states["main"]
+      
+      top = main.top
+      root = DefSymbol("<root>", DefSymbol.tNT)
+      eof = self._grammar.predefined["eof"]
+      df = DefRule(root,0)
+      df.sequence = [DefEntry(top), DefEntry(eof)]
+      root.alts = [df]
+      top.parents = [df]
+      eof.parents += root
+      
+      g.root = root
    end
    
    function _removeNTs( refs, nt )
@@ -1763,7 +1857,7 @@ class GrammarParser
          if params: fullcode = fullcode + "," + ",".merge(params)  
          fullcode = fullcode + "=> " + code + "}"
          self.trace( "Compiling " + fullcode )
-         gen = compile( fullcode )         
+         gen = compile( fullcode, nil, line )         
          // this compile a function generator; we must invoke it to get the funcion
          comp = gen()
          return comp
@@ -1779,6 +1873,13 @@ class GrammarParser
    // Utilities
    //========================================================================
    
+   function _appendToNT(NT, symbol)
+      alt = NT.alts[-1]
+      if alt notin symbol.parents: symbol.parents += alt
+      token = DefEntry(symbol, self.curLine)
+      alt.add(token)
+   end
+
    function _resetParsing()
       self._state = ~S..start
       self.curLine = 1
