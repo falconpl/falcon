@@ -52,6 +52,7 @@
 
 //--- core function headers ---
 #include <falcon/cm/coremodule.h>
+#include <falcon/builtin/call.h>
 #include <falcon/builtin/compare.h>
 #include <falcon/builtin/derivedfrom.h>
 #include <falcon/builtin/len.h>
@@ -298,6 +299,7 @@ Engine::Engine()
    addMantra(new Ext::Properties);
    addMantra(new Ext::Approp);
    addMantra(new Ext::Foreach);
+   addMantra(new Ext::Call);
 
    //============================================
    // Creating singletons

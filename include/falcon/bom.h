@@ -81,6 +81,7 @@ void derivedFrom(VMContext* ctx, const Class* cls, void* data);
 
 void render(VMContext* ctx, const Class* cls, void* data);
 void foreach(VMContext* ctx, const Class* cls, void* data);
+void call(VMContext* ctx, const Class* cls, void* data);
 void approp(VMContext* ctx, const Class* cls, void* data);
 void exprop(VMContext* ctx, const Class* cls, void* data);
 

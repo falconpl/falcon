@@ -35,7 +35,6 @@ FALCON_DECLARE_FUNCTION(int, "item:N|S");
 FALCON_DECLARE_FUNCTION(numeric, "item:N|S");
 FALCON_DECLARE_FUNCTION(input, "");
 FALCON_DECLARE_FUNCTION(passvp, "citem:[C]");
-FALCON_DECLARE_FUNCTION(call, "callee:C, params:[A]")
 
 FALCON_DECLARE_FUNCTION(map, "mapper:C, data:X")
 FALCON_DECLARE_FUNCTION(filter, "flt:C, data:X")

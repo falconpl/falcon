@@ -368,61 +368,6 @@ static void mth_ctor( VMContext* ctx, int32 )
 }
 
 
-/*#
- @method call Funciton
- @brief Invokes the given function passing the parameters from an array.
- @optparam params Array of parameters to be sent to the function.
- @return The value returned by the invoked function.
-
- This function can be used to efficiently invoke a function for which
- the parameters have been stored in a an array.
-
- The called function replaces this method in the call stack, as if
- it was directly called.
-
- The following calls are equivalent:
- @code
-    function test(a,b)
-       > "A: ", a
-       > "B: ", b
-    end
-
-    test("a","b")
-    [test, "a"]("b")
-    test.call( ["a","b"])
- @endcode
-
- @see passvp
- */
-FALCON_DECLARE_FUNCTION(call, "params:[A]")
-void Function_call::invoke( VMContext* ctx, int32 )
-{
-   Item* iParams = ctx->param(0);
-   if(iParams != 0 && ! iParams->isArray())
-   {
-      throw paramError(__LINE__, SRC);
-   }
-
-   ItemArray* ir = iParams == 0 ? 0 : iParams->asArray();
-   Item self = ctx->self();
-   ctx->returnFrame();
-   ctx->popData();
-
-   if( ir == 0 )
-   {
-      ctx->callerLine(__LINE__+1);
-      ctx->callItem(self);
-   }
-   else {
-      ItemArray local;
-      // mutlitasking wise...
-      local.copyOnto( *ir );
-      ctx->callerLine(__LINE__+1);
-      ctx->callItem( self, local.length(), local.elements() );
-   }
-}
-
-
 class PStepRedo: public PStep
 {
 public:
@@ -573,7 +518,6 @@ ClassFunction::ClassFunction(ClassMantra* parent):
    addProperty("plist", &get_plist );
 
    addMethod(new CFunction::Function_parameter, true);
-   addMethod(new CFunction::Function_call );
    addMethod(new CFunction::Function_redo, true );
    setConstuctor( &CFunction::mth_ctor, "name:[S]");
 

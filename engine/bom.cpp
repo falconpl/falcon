@@ -221,6 +221,7 @@ BOM::BOM():
 
    hm["render"] = &BOMH::render;
    hm["foreach"] = &BOMH::foreach;
+   hm["call"] = &BOMH::call;
 }
 
 BOM::~BOM()
@@ -405,6 +406,14 @@ void foreach(VMContext* ctx, const Class*, void*)
   value.methodize(func);
 }
 
+void call(VMContext* ctx, const Class*, void*)
+{
+  static Function* func = static_cast<Function*>(Engine::instance()->getMantra("call"));
+  fassert( func != 0 );
+
+  Item &value = ctx->topData();
+  value.methodize(func);
+}
 
 void approp(VMContext* ctx, const Class*, void*)
 {

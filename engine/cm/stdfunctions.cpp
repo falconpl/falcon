@@ -402,58 +402,6 @@ FALCON_DEFINE_FUNCTION_P(passvp)
    }
 }
 
-/*#
- @function call
- @brief Invokes the given function passing the parameters from an array.
- @param callee Item to be invocked.
- @optparam params Array of parameters to be sent to the function.
- @return The value returned by the invoked function.
-
- This function can be used to efficiently invoke a function for which
- the parameters have been stored in a an array.
-
- The called function replaces this method in the call stack, as if
- it was directly called.
-
- The following calls are equivalent:
- @code
-    function test(a,b)
-       > "A: ", a
-       > "B: ", b
-    end
-
-    test("a","b")
-    [test, "a"]("b")
-    call(test, ["a","b"])
- @endcode
-
- @see passvp
- */
-
-void Function_call::invoke( VMContext* ctx, int32 )
-{
-   Item* iItem = ctx->param(0);
-   Item* iParams = ctx->param(1);
-   if( iItem == 0 || (iParams != 0 && ! iParams->isArray()))
-   {
-      throw paramError(__LINE__, SRC);
-   }
-
-   ItemArray* ir = iParams == 0 ? 0 : iParams->asArray();
-   ctx->returnFrame();
-   //ctx->popData();
-
-   if( ir == 0 )
-   {
-      ctx->callItem(*iItem);
-   }
-   else {
-      ItemArray local;
-      // mutlitasking wise...
-      local.copyOnto( *ir );
-      ctx->callItem( *iItem, local.length(), local.elements() );
-   }
-}
 
 
 inline static void genNext( VMContext* ctx )

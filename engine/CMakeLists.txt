@@ -125,6 +125,7 @@ set( falcon_engine_SOURCES
   parser/tokeninstance.cpp
   
   builtin/baseclass.cpp
+  builtin/call.cpp
   builtin/classname.cpp
   builtin/clone.cpp
   builtin/compare.cpp
