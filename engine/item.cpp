@@ -243,18 +243,23 @@ bool Item::clone( Item& target ) const
    return true;
 }
 
-int Item::compare( const Item& other ) const
+int64 Item::compare( const Item& other ) const
 {
    register const Item* i1 = this;
    register const Item* i2 = &other;
    
-   int typeDiff = i1->type() - i2->type();
+   int64 typeDiff = i1->type() - i2->type();
    if( typeDiff == 0 )
    {
       switch( i1->type() ) {
       case FLC_ITEM_NIL: return 0;
-      case FLC_ITEM_INT: return (int) (i1->asInteger() - i2->asInteger());
-      case FLC_ITEM_NUM: return (int) (i1->asNumeric() - i2->asNumeric());
+      case FLC_ITEM_INT: return (int64) (i1->asInteger() - i2->asInteger());
+      case FLC_ITEM_NUM:
+      {
+         numeric num1 = (numeric) i1->asNumeric();
+         numeric num2 = (numeric) i2->asNumeric();
+         return (int64) (num1 > num2 ? 1 : (num1 < num2 ? -1 : 0));
+      }
       case FLC_ITEM_BOOL:
          if( i1->isTrue() )
          {
@@ -294,6 +299,18 @@ int Item::compare( const Item& other ) const
       }
    }
 
+   if( i1->isInteger() && i2->isNumeric() )
+   {
+      numeric num1 = (numeric) i1->asInteger();
+      numeric num2 = (numeric) i2->asNumeric();
+      return (int64)(num1 > num2 ? 1 : (num1 < num2 ? -1 : 0));
+   }
+   else if( i1->isNumeric() && i2->isInteger() )
+   {
+      numeric num1 = (numeric) i1->asNumeric();
+      numeric num2 = (numeric) i2->asInteger();
+      return (int64)(num1 > num2 ? 1 : (num1 < num2 ? -1 : 0));
+   }
    return typeDiff;
 }
 

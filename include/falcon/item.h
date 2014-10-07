@@ -649,7 +649,7 @@ public:
    bool operator>=(const Item &other) const { return compare( other ) >= 0; }
 
    bool exactlyEqual( const Item &other ) const;
-   int compare( const Item& other ) const;
+   int64 compare( const Item& other ) const;
 
    /** Flags, used for internal vm needs. */
    byte flags() const { return content.base.bits.flags; }

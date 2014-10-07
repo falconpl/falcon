@@ -54,7 +54,7 @@ bool ClassNumeric::op_init( VMContext* ctx, void* instance, int pcount ) const
       
       if( param->isOrdinal() )
       {
-         ctx->stackResult( pcount + 1, param->forceNumeric() );
+         item->setNumeric( param->forceNumeric() );
       }
       else if( param->isString() )
       {

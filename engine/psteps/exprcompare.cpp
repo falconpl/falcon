@@ -115,7 +115,7 @@ void generic_apply_( const PStep* ps, VMContext* ctx )
       break;
 
    case FLC_ITEM_NUM << 8 | FLC_ITEM_NUM:
-      op1.setBoolean( _cpr::pass( op1.asNumeric(), op2.asNumeric() ) );
+      op1.setBoolean( _cpr::passn( op1.asNumeric(), op2.asNumeric() ) );
       ctx->popData();
       break;
 
