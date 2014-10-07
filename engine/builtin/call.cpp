@@ -96,16 +96,16 @@ The following calls are equivalent:
 
 void Call::invoke( VMContext* ctx, int32 )
 {
-   Item* self;
+   Item self;
    Item* iParams;
    if ( ctx->isMethodic() )
    {
-      self = &ctx->self();
+      self = ctx->self();
       iParams = ctx->param(0);
    }
    else
    {
-      self = ctx->param(0);
+      self = *ctx->param(0);
       if( self == 0 )
       {
          throw paramError(__LINE__, SRC);
@@ -125,14 +125,14 @@ void Call::invoke( VMContext* ctx, int32 )
    if( ir == 0 )
    {
       ctx->callerLine(__LINE__+1);
-      ctx->callItem(*self);
+      ctx->callItem(self);
    }
    else {
       ItemArray local;
       // mutlitasking wise...
       local.copyOnto( *ir );
       ctx->callerLine(__LINE__+1);
-      ctx->callItem( *self, local.length(), local.elements() );
+      ctx->callItem( self, local.length(), local.elements() );
    }
 }
 
