@@ -344,7 +344,7 @@ class Parser(grammar)
       self._trace("Predicting new items for ", de.symbol.name )
       for r in de.symbol.alts
          itm = _EarleyItem( r, id )         
-         self._trace("Adding new prediction ", itm.describe() )
+         self._trace("Adding new prediction ", itm )
          chart.add( itm )
       end
       
@@ -362,7 +362,7 @@ class Parser(grammar)
          if charts.len == id
             self._trace("Adding a new chart")
             charts += _EarleyChart(id)
-         end
+         end                 
          
          itm = item.clone()
          itm.dot++
@@ -383,13 +383,38 @@ class Parser(grammar)
          // copying the completed entity
          de = itm.nextDefEntry()
          if de and de.symbol == symbol
+             // filter priority items.
+            if item.prod.pcheck()
+               // we can add it only if there isn't an intersecting completed arc of lower priority
+               frame = itm.dot + itm.orig
+               if self._filterPrec( charts[frame], item.prod.leftPrec, item.prod.leftAssoc )
+                  self._trace("Ignoring this item because frame ", frame, " has completed priority: ", itm )
+                  continue
+               end
+            end
+            
             itm = itm.clone()
             itm.dot ++ 
+            self._trace("Adding new completion ", itm )
             charts[id].add( itm )
          end
       end            
    end
 
+   function _filterPrec( chart, prec, assoc )      
+      for i = 0 to chart.list.len-1
+         item = chart.list[i]
+         
+         if item.prod.leftPrec > 0
+            if item.prod.leftPrec < prec or \
+               (item.prod.leftPrec == prec and item.prod.leftAssoc <= assoc )
+               return true
+            end
+         end
+      end
+      
+      return false
+   end
    
    // error step of the parser loop
    function _error()

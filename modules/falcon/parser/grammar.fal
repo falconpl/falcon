@@ -469,20 +469,58 @@ class DefRule(sym, line)
    
    //# Target for this symbol for this rule.
    symbol = sym
+
+   /*# Rule left priority ( first operator priority ).
+      
+      This is valid only after calling "pcheck()"
+   */
+   leftPrec = 0
    
-   //# priority of this rule
-   prio = 0
+   /*# Rule left associativity ( first operator associativity )
+      
+      This is valid only after calling "pcheck()"
+   */
+   leftAssoc = 0
    
-   //# associativity of this rule
-   assoc = 0
+   /*# Rule right priority ( last operator priority )
+      
+      This is valid only after calling "pcheck()"
+   */
+   rightPrec = 0
+   
+   /*# Rule right associativity ( last operator associativity )
+      
+      This is valid only after calling "pcheck()"
+   */
+   rightAssoc = 0
+   
+   _pc = false
    
    //# adds an entry to the rule
    function add(dentry)
-      self.sequence += dentry
-      if self.prio < dentry.symbol.prio: self.prio = dentry.symbol.prio
-      if self.assoc < dentry.symbol.assoc: self.assoc = dentry.symbol.assoc
+      self.sequence += dentry      
    end
    
+   /*# Checks the precedence of this rule.
+      @return true if this rule has precedence operators, false otherwise.
+   */
+   function pcheck()
+      // shortcut.
+      if self._pc: return self.leftPrec != 0
+       
+      for dentry in self.sequence
+         // the left priority is the one first priority met (0 is ok)
+         if self.leftPrec == 0: self.leftPrec = dentry.symbol.prec
+         if self.leftAssoc == 0: self.leftAssoc = dentry.symbol.assoc
+         
+         // the right priority is the last met
+         if dentry.symbol.prec != 0: self.rightPrec = dentry.symbol.prec
+         if dentry.symbol.assoc != 0: self.rightAssoc = dentry.symbol.assoc
+      end
+      
+      self._pc = true
+      return self.leftPrec != 0 
+   end
    
    function dump( output, purged )
    
@@ -550,7 +588,7 @@ class DefSymbol(name, type, content)
    alts = nil      
 
    //# Priority of this token
-   prio = 0
+   prec = 0
    
    //# Associativity of this token
    assoc = 0
@@ -571,8 +609,8 @@ class DefSymbol(name, type, content)
       return self.type != self.tNT
    end
    
-   function higher(prio, assoc)
-      return self.prio > prio or (self.prio == prio and self.assoc > assoc)
+   function higher(prec, assoc)
+      return self.prec > prec or (self.prec == prec and self.assoc > assoc)
    end
    
    /*# Set a non-unresolved type for this entry.
@@ -675,7 +713,7 @@ class DefSymbol(name, type, content)
       
       if not inline   
          a = self.assoc == self.tANone ? "N" : (self.assoc == self.tALeft ? "L" : "R")
-         output.write( @"   /* p=${self.prio} a=$a */" )
+         output.write( @"   /* p=${self.prec} a=$a */" )
       end
    end
    
@@ -726,7 +764,7 @@ class GrammarState(name, line)
    //# list of tokens that the parser must ignore
    eat = []
    
-   _prioRule = nil
+   _precRule = nil
    
    //# Code to be exucted when entering this state
    preamble = nil
@@ -817,8 +855,8 @@ class GrammarState(name, line)
          end
       end
       
-      if self._prioRule
-         self._prioRule.dump(output, purged)
+      if self._precRule
+         self._precRule.dump(output, purged)
          output.write("\n") /* white line */
       end
 
@@ -1467,7 +1505,7 @@ class GrammarParser
       elif nt.name == "precedence"
          self._calcPriority( nt )
          self._cgs.entries -= "precedence"
-         self._cgs._prioRule = nt
+         self._cgs._precRule = nt
       end
       
       self._NTStack.clear()
@@ -1940,7 +1978,7 @@ class GrammarParser
    
    function _calcPriority( nt )
       self.trace( "Calculating precedence in state ", self._cgs.name)
-      prio = nt.alts.len
+      prec = nt.alts.len
       for alt in nt.alts
          nameList = m""
          for token in alt.sequence
@@ -1951,13 +1989,13 @@ class GrammarParser
                else
                   content.assoc = DefSymbol.tALeft
                end
-               content.prio = prio
+               content.prec = prec
             end
          
             nameList += " " + content.name
          end
-         self.trace( "-- Priority ", prio, " tokens:", nameList )
-         prio--
+         self.trace( "-- Priority ", prec, " tokens:", nameList )
+         prec--
       end      
    end
    
