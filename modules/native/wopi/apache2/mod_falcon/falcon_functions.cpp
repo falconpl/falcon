@@ -44,6 +44,7 @@
 
 void ap_log_error_cb( const Falcon::String& msg, void* data )
 {
+   APLOG_USE_MODULE(mod_falcon);
    Falcon::AutoCString cmsg( msg );
    request_rec* request = (request_rec*) data;
 
@@ -99,6 +100,7 @@ static int falcon_handler(request_rec *request)
    bool phand = false;
    bool force_ftd = false;
 
+   APLOG_USE_MODULE(mod_falcon);
    // should we handle this as a special path?
    if ( strcmp( request->handler, FALCON_PROGRAM_HANDLER) == 0 )
    {
