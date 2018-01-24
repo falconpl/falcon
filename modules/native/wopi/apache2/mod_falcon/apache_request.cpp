@@ -213,7 +213,7 @@ void ApacheRequest::process()
    if( m_request->filename != 0 ) m_base->m_filename = m_request->filename;
    if( m_request->protocol != 0 ) m_base->m_protocol = m_request->protocol;
    if( m_request->args != 0 ) m_base->m_args = m_request->args;
-   if( m_request->connection->remote_ip != 0 ) m_base->m_remote_ip = m_request->connection->remote_ip;
+   if( m_request->connection->client_ip != 0 ) m_base->m_remote_ip = m_request->connection->client_ip;
    if( m_request->unparsed_uri != 0 ) m_base->m_sUri = m_request->unparsed_uri;
 
    m_base->m_request_time = (Falcon::int64) m_request->request_time;

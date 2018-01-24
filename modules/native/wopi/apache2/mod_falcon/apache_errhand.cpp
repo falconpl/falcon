@@ -27,6 +27,8 @@
 
 void ApacheErrorHandler::handleError( Falcon::Error *error )
 {
+   APLOG_USE_MODULE(mod_falcon);
+
    // we do different things depending on our level.
    if ( m_notifyMode == FM_ERROR_MODE_SILENT )
       return;
