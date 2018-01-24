@@ -25,10 +25,12 @@
 #include "apache_errhand.h"
 #include "mod_falcon_config.h"
 
+#ifdef APLOG_USE_MODULE
+   APLOG_USE_MODULE(falcon);
+#endif
+
 void ApacheErrorHandler::handleError( Falcon::Error *error )
 {
-   APLOG_USE_MODULE(mod_falcon);
-
    // we do different things depending on our level.
    if ( m_notifyMode == FM_ERROR_MODE_SILENT )
       return;

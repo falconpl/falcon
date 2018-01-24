@@ -23,6 +23,10 @@ extern module AP_MODULE_DECLARE_DATA falcon_module;
 
 falcon_mod_config *the_falcon_config;
 
+#ifdef APLOG_USE_MODULE
+   APLOG_USE_MODULE(falcon);
+#endif
+
 //=============================================================
 // APACHE hooks
 //
@@ -219,7 +223,6 @@ int falcon_mod_load_config( falcon_mod_config *cfg )
 {
    char buffer[256];
 
-   APLOG_USE_MODULE(mod_falcon);
    ap_log_perror( APLOG_MARK, APLOG_INFO, 0, cfg->pool,
       "Performing lazy initialization of Falcon Config file %s",
       cfg->init_file );
