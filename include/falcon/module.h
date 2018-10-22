@@ -184,7 +184,7 @@ public:
    /** Add a string to the module string table and eventually exports it.
       If the string already exists, the previous entry is returned.
       This method also set the "exported" bit of the returned string,
-      so that the string can be directly used in exported intenrationalization
+      so that the string can be directly used in exported internationalization
       tables.
       \param st the string to be added.
       \param exported set to true to make this string subject to
