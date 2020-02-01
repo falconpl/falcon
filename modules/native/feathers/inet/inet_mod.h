@@ -605,7 +605,7 @@ public:
    virtual bool truncate( off_t pos=-1 );
    virtual off_t seek( off_t pos, e_whence w );
 
-   virtual Class* handler();
+   virtual const Class* handler() const;
 
    class Selectable: public FDSelectable
    {

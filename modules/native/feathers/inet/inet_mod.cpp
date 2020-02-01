@@ -1489,7 +1489,7 @@ void SocketStream::setHandler( Class* handler )
    m_socketStreamHandler = handler;
 }
 
-Class* SocketStream::handler()
+const Class* SocketStream::handler() const
 {
    return m_socketStreamHandler;
 }

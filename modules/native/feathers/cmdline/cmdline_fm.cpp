@@ -405,7 +405,7 @@ namespace Feathers {
 // Main module part.
 //================================================================================================
 
-static void callACallback( VMContext* ctx, uint32 lastParsed, const String& method, char dummy,  ... )
+static void callACallback( VMContext* ctx, uint32 lastParsed, const String& method, int dummy,  ... )
 {
    FalconInstance *self = static_cast<FalconInstance*>(ctx->self().asInst());
 
