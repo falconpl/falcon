@@ -28,7 +28,6 @@ Document::Document( Document &doc )
 }
 
 Document::Document( Falcon::Stream &in, const int style )
-   throw( MalformedError )
 {
    m_style = style;
    m_root = new Node( Node::typeDocument );
@@ -60,7 +59,6 @@ void Document::write( Falcon::Stream &stream, const int style ) const
 
 
 void Document::read( Falcon::Stream &stream )
-   throw( MalformedError )
 {
    setPosition( 1, 1);
    if ( m_root->child() != 0 ) {
