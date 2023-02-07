@@ -21,6 +21,10 @@
 
 #include <mysql.h>
 
+#ifndef IS_LONGDATA
+#define IS_LONGDATA(t) ((t) >= MYSQL_TYPE_TINY_BLOB && (t) <= MYSQL_TYPE_STRING)
+#endif
+
 namespace Falcon
 {
 
