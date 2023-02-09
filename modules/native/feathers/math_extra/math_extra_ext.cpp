@@ -247,7 +247,7 @@ namespace Falcon {
             Item *num2 = vm->param( 1 );
 
             // The arguments must be ordinal and must be greater than 0
-            if ( num1 <= (Item*) 0 || ! num1->isOrdinal() || num2 <= (Item*) 0 || ! num2->isOrdinal() )
+            if ( (*num1) <= 0 || ! num1->isOrdinal() || (*num2) <= 0 || ! num2->isOrdinal() )
             {
                 throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ).extra("N") );
             }
