@@ -789,13 +789,13 @@ SSLData::ssl_error_t TCPSocket::sslConfig( bool asServer,
    switch ( sslVer )
    {
 #ifndef OPENSSL_NO_SSL2
-   case SSLData::SSLv2:  sslD->sslMethod = (SSL_METHOD*) SSLv2_method(); break;
+   //case SSLData::SSLv2:  sslD->sslMethod = (SSL_METHOD*) SSLv2_method(); break;
 #endif
-   case SSLData::SSLv3:  sslD->sslMethod = (SSL_METHOD*) SSLv3_method(); break;
+   //case SSLData::SSLv3:  sslD->sslMethod = (SSL_METHOD*) SSLv3_method(); break;
    case SSLData::SSLv23: sslD->sslMethod = (SSL_METHOD*) SSLv23_method(); break;
    case SSLData::TLSv1:  sslD->sslMethod = (SSL_METHOD*) TLSv1_method(); break;
    case SSLData::DTLSv1: sslD->sslMethod = (SSL_METHOD*) DTLSv1_method(); break;
-   default: sslD->sslMethod = (SSL_METHOD*) SSLv3_method();
+   default: sslD->sslMethod = (SSL_METHOD*) SSLv23_method();
    }
 
    // create context

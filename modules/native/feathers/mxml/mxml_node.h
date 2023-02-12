@@ -233,8 +233,7 @@ public:
       @throws MXML::MalformedError if the node is invalid
       @throws MXML::IOError in case of hard errors on the stream
    */
-   void read( Falcon::Stream &in, const int style = 0, const int line=1, const int pos=0  )
-      throw( MalformedError );
+   void read( Falcon::Stream &in, const int style = 0, const int line=1, const int pos=0  );
 
    /** Copy constructor.
       See clone()
@@ -310,8 +309,7 @@ public:
       @return the attribute value, if it exists
       @throws MXML::NotFoundError if the attribute name can't be found.
    */
-   const Falcon::String getAttribute( const Falcon::String &name ) const
-      throw( NotFoundError );
+   const Falcon::String getAttribute( const Falcon::String &name ) const;
 
    /** Sets the value of a given attribute.
       This is a shortcut instead of searching for an attribute in
@@ -320,8 +318,7 @@ public:
       @return the attribute value, if it exists
       @throws MXML::NotFoundError if the attribute name can't be found.
    */
-   void setAttribute( const Falcon::String &name, const Falcon::String &value )
-      throw( NotFoundError );
+   void setAttribute( const Falcon::String &name, const Falcon::String &value );
 
    /** Returns true if the node has a given attribute.
       The found attribute is cached, so if you make this method follow
@@ -373,7 +370,7 @@ public:
       @param child the node to be removed
       @throw NotFoundError if the node is not in the child list
    */
-   void removeChild( Node *child ) throw( NotFoundError );
+   void removeChild( Node *child );
 
 
    Node *parent() const { return m_parent; }

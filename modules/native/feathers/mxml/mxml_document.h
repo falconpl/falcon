@@ -79,7 +79,7 @@ public:
       \param style the mode in which the document is read/written
       \see stylemacros
    */
-   Document( Falcon::Stream &in, const int style = 0 ) throw( MalformedError );
+   Document( Falcon::Stream &in, const int style = 0 );
 
    /** Destroys the document.
       If you provided a stream at document creation, the stream is NOT colsed.
@@ -165,7 +165,7 @@ public:
       \param stream the input stream used for reading the data.
       \see Node::read()
    */
-   virtual void read( Falcon::Stream &stream ) throw(MalformedError);
+   virtual void read( Falcon::Stream &stream );
 
    /** Falcon MXML extension. */
    Node *find( const Falcon::String &name, const Falcon::String &attr,

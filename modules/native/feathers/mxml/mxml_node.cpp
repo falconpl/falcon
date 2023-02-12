@@ -59,7 +59,6 @@ Node::Node( const type tp, const Falcon::String &name, const Falcon::String &dat
 
 
 void Node::read( Falcon::Stream &in, const int style, const int l, const int pos )
-   throw( MalformedError )
 {
    setPosition( l, pos );
    // variables to optimize data node promotion in tag nodes
@@ -509,7 +508,6 @@ Node::~Node()
 /* Search routines */
 
 const Falcon::String Node::getAttribute( const Falcon::String &name ) const
-   throw( NotFoundError )
 {
    AttribList::const_iterator iter = m_attrib.begin();
 
@@ -522,7 +520,6 @@ const Falcon::String Node::getAttribute( const Falcon::String &name ) const
 }
 
 void Node::setAttribute( const Falcon::String &name, const Falcon::String &value )
-   throw( NotFoundError )
 {
    AttribList::iterator iter = m_attrib.begin();
 
@@ -550,7 +547,6 @@ bool Node::hasAttribute( const Falcon::String &name ) const
 
 /* unlink routines */
 void Node::removeChild( Node *child )
-   throw( NotFoundError )
 {
    if (child->parent() != this )
       throw NotFoundError( Error::errHyerarcy, this );

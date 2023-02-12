@@ -201,7 +201,7 @@ bool StringStream::errorDescription( String &description ) const
    switch( m_lastError )
    {
       case 0:  description = "None"; return true;
-      case -1: description = "Out of Memory"; return true;
+      case (long long unsigned int) -1: description = "Out of Memory"; return true;
    }
 
    return false;
