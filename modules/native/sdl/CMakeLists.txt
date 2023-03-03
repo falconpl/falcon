@@ -6,7 +6,7 @@
 if(COMMAND cmake_policy)
    cmake_policy(SET CMP0003 OLD)
 endif(COMMAND cmake_policy)
-cmake_minimum_required(VERSION 2.6)
+cmake_minimum_required(VERSION 3.16.3)
 PROJECT(Falcon_SDL)
 
 

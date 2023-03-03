@@ -5,7 +5,7 @@
 ####################################################################
 
 PROJECT(gd2)
-cmake_minimum_required(VERSION 2.6)
+cmake_minimum_required(VERSION 3.16.3)
 MESSAGE(STATUS "Building GD2 module" )
 
 

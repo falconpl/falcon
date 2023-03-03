@@ -4,7 +4,7 @@
 # CMake configuration file for dynlib
 ####################################################################
 
-cmake_minimum_required(VERSION 2.6)
+cmake_minimum_required(VERSION 3.16.3)
 project(Falcon_dynlib)
 
 find_package(Falcon REQUIRED)
