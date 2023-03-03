@@ -1,7 +1,7 @@
 #
 # Configurator for NSIS installer
 #
-cmake_minimum_required(VERSION 2.6)
+cmake_minimum_required(VERSION 3.16.3)
 
 #
 # Files to be configured

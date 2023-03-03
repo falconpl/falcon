@@ -4,7 +4,7 @@
 # CMake configuration file for Feather modules
 ####################################################################
 
-cmake_minimum_required(VERSION 2.6.2)
+cmake_minimum_required(VERSION 3.16.3)
 project(falcon-app-faldoc)
 
 set(FALDOC_DIR "${FALCON_APP_DIR}/faldoc" )
