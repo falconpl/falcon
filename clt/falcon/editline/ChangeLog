@@ -1,9 +1,270 @@
    * See also NetBSD changelog:
 	http://cvsweb.netbsd.org/bsdweb.cgi/src/lib/libedit
 
-2009-09-23 Jess Thrysoee
+2022-10-30 Jess Thrysoee
 
-   * all: apply Apple patches from: 
+   * src/sys.h, src/reallocarr.c: Remove unused sys/cdefs.h include, to compile against musl libc
+	Reported by Matt Boehlke
+
+   * version-info: 0:70:0
+
+2022-10-09 Jess Thrysoee
+
+   * version-info: 0:69:0
+
+   * src/sys.h: Add __sun guard around sys/types.h in sys.h
+
+   * all: sync with upstream source
+
+2021-09-10 Jess Thrysoee
+
+   * all: sync with upstream source
+
+2021-07-14 Jess Thrysoee
+
+   * all: sync with upstream source
+
+   * src/histedit.h: Add wcsdup declaration when ifndef HAVE_WCSDUP. Patch by Rainer Jung.
+
+   * examples/wtc1.c: Fix warnings and add missing brace. Patch by Rainer Jung.
+
+2021-05-22 Jess Thrysoee
+
+   * version-info: 0:66:0
+
+   * all: sync with upstream source
+
+   * src/el.c: editrc not read on systems without issetugid
+	Patch by Trevor Cordes
+
+2021-04-19 Jess Thrysoee
+
+   * version-info: 0:65:0
+
+   * all: sync with upstream source
+
+   * src/getline.c,src/sys.h: Provide getline.c implementation if not available
+	Patch by Claes Nästén
+
+   * src/makelist: Use Posix locale; mainly to get ASCII character classes in e.g. `tr`
+	Patch by Claes Nästén
+
+  * examples/test_filecompletion.c, examples/wtc1.c: err.h not supported by
+	Solaris
+
+2021-02-16 Jess Thrysoee
+
+   * version-info: 0:64:0
+
+   * all: sync with upstream source
+
+2019-12-31 Jess Thrysoee
+
+   * version-info: 0:63:0
+
+   * configure.ac: Support -ltinfo as split in newer ncurses
+	The newer versions of ncurses support building terminfo routines as a split -ltinfo library.
+	Patch by Michał Górny
+
+2019-12-11 Jess Thrysoee
+
+   * version-info: 0:62:0
+
+   * all: sync with upstream source
+
+2019-10-25 Jess Thrysoee
+
+   * version-info: 0:61:0
+
+   * all: sync with upstream source
+
+2019-03-24 Jess Thrysoee
+
+   * version-info: 0:60:0
+
+   * all: sync with upstream source
+
+2018-12-09 Jess Thrysoee
+
+   * version-info: 0:59:0
+
+   * all: sync with upstream source
+
+2018-05-25 Jess Thrysoee
+
+   * version-info: 0:58:0
+
+   * all: sync with upstream source
+
+2017-05-22 Jess Thrysoee
+
+   * version-info: 0:57:0
+
+   * all: sync with upstream source
+
+   * libedit.pc.in: Ncurses should not be a part of public link interface.
+	Patch by Yegor Timoshenko
+
+2017-03-29 Jess Thrysoee
+
+   * version-info: 0:56:0
+
+   * all: sync with upstream source
+
+2016-09-03 Jess Thrysoee
+
+   * version-info: 0:55:0
+
+   * all: sync with upstream source
+
+2016-06-18 Jess Thrysoee
+
+   * version-info: 0:54:0
+
+   * all: sync with upstream source
+
+   * deprecate option --enable-widec.
+	Upstream now always build with unicode (wide-char/UTF-8) support.
+
+2015-03-25 Jess Thrysoee
+
+   * version-info: 0:53:0
+
+   * all: sync with upstream source
+
+2014-10-30 Jess Thrysoee
+
+   * version-info: 0:52:0
+
+   * all: sync with upstream source
+
+   * configura.ac: Fix posix shell portability issue. Patch by Ryo Onodera.
+
+2014-06-20 Jess Thrysoee
+
+   * version-info: 0:51:0
+
+   * all: sync with upstream source
+
+2014-06-18 Jess Thrysoee
+
+   * version-info: 0:50:0
+
+   * all: sync with upstream source - add weak alias patches
+
+2014-06-18 Jess Thrysoee
+
+   * version-info: 0:49:0
+
+   * all: sync with upstream source.
+
+2014-02-13 Jess Thrysoee
+
+   * version-info: 0:48:0
+
+   * all: sync with upstream source.
+
+   * examples/fileman.c: Fix typo. Patch by Kamil Dudka.
+
+   * Makefile.am, configure.ac: Add --enable-examples configure parameter.
+	Make it possible to enable/disable building of the examples programs.
+	Patch by James Le Cuirot.
+
+2013-07-12 Jess Thrysoee
+
+   * version-info: 0:47:0
+
+   * all: sync with upstream source.
+
+   * examples/fileman.c, examples/tc1.c: fix pedantic compiler warnings
+
+2013-07-10 Jess Thrysoee
+
+   * version-info: 0:46:0
+
+   * configure.ac, src/el.c: ~/.editrc was never sourced on Linux.
+	On Linux issetugid is not available. When unable to determine if
+	the current process is tainted, we did not trust the HOME environment
+	variable and therefore could not load ~/.editrc.
+	Now instead use secure_getenv or a issetugid based implementation of secure_getenv.
+	Patch by Paolo Tosco.
+
+2013-06-11 Jess Thrysoee
+
+   * version-info: 0:45:0
+
+   * configure.ac: fix AM_CONDITIONAL regression for strlcpy, strlcat, vis,
+	unvis checks.
+
+2013-06-08 Jess Thrysoee
+
+   * version-info: 0:44:0
+
+   * configure.ac, src/Makefile.am: Prevent 'ranlib: has no symbols' build
+	warnings for systems that has strlcpy, strlcat, vis, unvis.
+
+2013-06-01 Jess Thrysoee
+
+   * version-info: 0:43:0
+
+   * all: sync with upstream source.
+
+2012-12-13 Jess Thrysoee
+
+   * version-info: 0:42:0
+
+   * all: sync with upstream source.
+
+2012-06-01 Jess Thrysoee
+
+   * version-info: 0:41:0
+
+   * all: sync with upstream source.
+
+2012-05-22 Jess Thrysoee
+
+   * version-info: 0:40:0
+
+   * all: sync with upstream source.
+
+2012-03-11 Jess Thrysoee
+
+   * version-info: 0:39:0
+
+   * all: sync with upstream source.
+
+2011-08-02 Jess Thrysoee
+
+   * version-info: 0:38:0
+
+   * all: sync with upstream source.
+
+2011-07-09 Jess Thrysoee
+
+   * version-info: 0:37:0
+
+   * all: sync with upstream source.
+
+2011-02-27 Jess Thrysoee
+
+   * version-info: 0:36:0
+
+   * all: sync with upstream source.
+
+2010-04-24 Jess Thrysoee
+
+   * version-info: 0:35:0
+
+   * all: sync with upstream source.
+	Now with UTF-8 support. To enable this run 'configure --enable-widec'.
+	For now an UTF-32 encoded wchar_t is required.
+	This requirement is met on NetBSD, Solaris and OS X for any UTF-8 locale,
+	and any system that define __STDC_ISO_10646__ (e.g. GNU libc on Linux).
+
+2009-09-23 Jess Thrysoee
+   * version-info: 0:34:0
+
+   * all: apply Apple patches from:
 	http://opensource.apple.com/source/libedit/libedit-11/patches
 
 2009-09-05 Jess Thrysoee
@@ -58,7 +319,7 @@
 	information.
 
    * examples/fileman.c: cast stat struct members, st_nlink and st_size,
-	appropriately (see also 'man 2 stat'). Patch by Alex Elder. 
+	appropriately (see also 'man 2 stat'). Patch by Alex Elder.
 
    * all: sync with upstream source. MINOR version is now 11.
 
@@ -136,7 +397,7 @@
    * patches/cvs_export.sh: strlcat.c and strlcpy.c was moved to
 	src/common/lib/libc/string in the upstream cvs repository.
 
-   * all: sync with upstream source. 
+   * all: sync with upstream source.
 
 2005-10-22  Jess Thrysoee
 
@@ -145,7 +406,7 @@
    * patches/*.patch, configure.ac: define SCCSID, undef LIBC_SCCS. Remove
 	fourteen cosmetic patches.
 
-   * all: sync with upstream source. 
+   * all: sync with upstream source.
 
 2005-09-11  Jess Thrysoee
 
@@ -170,19 +431,19 @@
    * acinclude.m4: added EL_GETPW_R_DRAFT test and use AC_TRY_LINK instead
 	of AC_TRY_COMPILE. Suggested by Norihiko Murase.
 
-   * all: sync with upstream source. 
+   * all: sync with upstream source.
 
 2005-08-16  Jess Thrysoee
 
    * version-info: 0:13:0
 
-   * all: sync with upstream source. 
+   * all: sync with upstream source.
 
 2005-08-05  Jess Thrysoee
 
    * version-info: 0:12:0
 
-   * all: sync with upstream source. 
+   * all: sync with upstream source.
 
 2005-07-24  Jess Thrysoee
 
@@ -213,7 +474,7 @@
 
    * version-info: 0:8:0
 
-   * all: sync with upstream source. 
+   * all: sync with upstream source.
 
 2005-06-01  Jess Thrysoee
 
@@ -224,7 +485,7 @@
    * src/readline.c, src/filecomplete.c: Solaris use POSIX draft versions
 	of getpwent_r, getpwnam_r and getpwuid_r which return 'struct passwd *'.
 	Define HAVE_GETPW_R_POSIX if these functions are (non draft) POSIX
-	compatible. Patch by Julien Torr�s.
+	compatible. Patch by Julien Torrès.
 
 2005-05-28  Jess Thrysoee
 
@@ -257,7 +518,7 @@
 
    * all: sync with upstream source.
 
-   * doc/Makefile.am: If mdoc2man fails, remove empty file. Patch by 
+   * doc/Makefile.am: If mdoc2man fails, remove empty file. Patch by
 	Darren Tucker.
 
 2004-10-14  Jess Thrysoee
