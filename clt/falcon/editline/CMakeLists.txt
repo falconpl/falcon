@@ -56,7 +56,7 @@ if ( HAVE_DIRENT_H )
     HAVE_DIRENT_DIR
   )
   if ( NOT HAVE_DIRENT_DIR )
-    unset( HAVE_DIRENT_H CACHE )
+    set( HAVE_DIRENT_H OFF )
   else()
     check_symbol_exists(
       _DIRENT_HAVE_D_NAMLEN dirent.h HAVE_STRUCT_DIRENT_D_NAMLEN
@@ -69,9 +69,7 @@ if ( HAVE_DIRENT_H )
     if ( NOT CLOSEDIR_INT )
       set( CLOSEDIR_VOID ON )
     endif()
-    unset( CLOSEDIR_INT CACHE )
   endif()
-  unset( HAVE_DIRENT_DIR CACHE )
 endif()
 
 # ndir.h
@@ -83,9 +81,8 @@ if ( HAVE_NDIR_H )
     HAVE_NDIR_DIR
   )
   if ( NOT HAVE_NDIR_DIR )
-    unset(HAVE_NDIR_H CACHE )
+    set( HAVE_NDIR_H OFF )
   endif()
-  unset( HAVE_NDIR_DIR CACHE )
 endif()
 
 # pwd.h
@@ -97,8 +94,6 @@ if ( HAVE_PWD_H )
   if ( HAVE_GETPWNAM_R_POSIX AND HAVE_GETPWUID_R_POSIX )
     set( HAVE_GETPW_R_POSIX ON )
   endif()
-  unset( HAVE_GETPWNAM_R_POSIX CACHE )
-  unset( HAVE_GETPWUID_R_POSIX CACHE )
 endif()
 
 # regex.h
@@ -124,7 +119,7 @@ if ( HAVE_STRING_H )
   check_symbol_exists( strchr string.h HAVE_STRCHR )
   check_symbol_exists( strcspn string.h HAVE_STRCSPN )
   check_symbol_exists( strdup string.h HAVE_STRDUP )
-  check_symbol_exists( strerror string.h HAVE STRERROR )
+  check_symbol_exists( strerror string.h HAVE_STRERROR )
   check_symbol_exists( strlcat string.h HAVE_STRLCAT )
   check_symbol_exists( strlcpy string.h HAVE_STRLCPY )
   check_symbol_exists( strrchr string.h HAVE_STRRCHR )
@@ -146,9 +141,8 @@ if ( HAVE_SYS_DIR_H )
     HAVE_SYS_DIR_DIR
   )
   if ( NOT HAVE_SYS_DIR_DIR )
-    unset( HAVE_SYS_DIR_H CACHE )
+    set( HAVE_SYS_DIR_H OFF )
   endif()
-  unset( HAVE_SYS_DIR_DIR CACHE )
 endif()
 
 # sys/ndir.h
@@ -160,9 +154,8 @@ if ( HAVE_SYS_NDIR_H )
     HAVE_SYS_NDIR_DIR
   )
   if ( NOT HAVE_SYS_NDIR_DIR )
-    unset( HAVE_SYS_NDIR_H CACHE )
+    set( HAVE_SYS_NDIR_H OFF )
   endif()
-  unset( HAVE_SYS_NDIR_DIR CACHE )
 endif()
 
 # termcap.h
