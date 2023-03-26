@@ -1,7 +1,7 @@
-/*	$NetBSD: fgetln.c,v 1.9 2008/04/29 06:53:03 martin Exp $	*/
+/*	$NetBSD: getline.c,v 1.2 2014/09/16 17:23:50 christos Exp $	*/
 
 /*-
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -33,9 +33,9 @@
 #include "nbtool_config.h"
 #endif
 
-#if !HAVE_FGETLN
-#include <config.h>
+#if !HAVE_GETLINE
 #include <stdlib.h>
+
 #ifndef HAVE_NBTOOL_CONFIG_H
 /* These headers are required, but included from nbtool_config.h */
 #include <stdio.h>
@@ -44,49 +44,53 @@
 #include <string.h>
 #endif
 
-char *
-fgetln(FILE *fp, size_t *len)
+ssize_t
+getdelim(char **buf, size_t *bufsiz, int delimiter, FILE *fp)
 {
-	static char *buf = NULL;
-	static size_t bufsiz = 0;
-	char *ptr;
+	char *ptr, *eptr;
 
 
-	if (buf == NULL) {
-		bufsiz = BUFSIZ;
-		if ((buf = malloc(bufsiz)) == NULL)
-			return NULL;
+	if (*buf == NULL || *bufsiz == 0) {
+		*bufsiz = BUFSIZ;
+		if ((*buf = malloc(*bufsiz)) == NULL)
+			return -1;
 	}
 
-	if (fgets(buf, bufsiz, fp) == NULL)
-		return NULL;
-
-	*len = 0;
-	while ((ptr = strchr(&buf[*len], '\n')) == NULL) {
-		size_t nbufsiz = bufsiz + BUFSIZ;
-		char *nbuf = realloc(buf, nbufsiz);
-
-		if (nbuf == NULL) {
-			int oerrno = errno;
-			free(buf);
-			errno = oerrno;
-			buf = NULL;
-			return NULL;
-		} else
-			buf = nbuf;
-
-		if (fgets(&buf[bufsiz], BUFSIZ, fp) == NULL) {
-			buf[bufsiz] = '\0';
-			*len = strlen(buf);
-			return buf;
+	for (ptr = *buf, eptr = *buf + *bufsiz;;) {
+		int c = fgetc(fp);
+		if (c == -1) {
+			if (feof(fp)) {
+				ssize_t diff = (ssize_t)(ptr - *buf);
+				if (diff != 0) {
+					*ptr = '\0';
+					return diff;
+				}
+			}
+			return -1;
 		}
-
-		*len = bufsiz;
-		bufsiz = nbufsiz;
+		*ptr++ = c;
+		if (c == delimiter) {
+			*ptr = '\0';
+			return ptr - *buf;
+		}
+		if (ptr + 2 >= eptr) {
+			char *nbuf;
+			size_t nbufsiz = *bufsiz * 2;
+			ssize_t d = ptr - *buf;
+			if ((nbuf = realloc(*buf, nbufsiz)) == NULL)
+				return -1;
+			*buf = nbuf;
+			*bufsiz = nbufsiz;
+			eptr = nbuf + nbufsiz;
+			ptr = nbuf + d;
+		}
 	}
+}
 
-	*len = (ptr - buf) + 1;
-	return buf;
+ssize_t
+getline(char **buf, size_t *bufsiz, FILE *fp)
+{
+	return getdelim(buf, bufsiz, '\n', fp);
 }
 
 #endif
@@ -95,13 +99,13 @@ fgetln(FILE *fp, size_t *len)
 int
 main(int argc, char *argv[])
 {
-	char *p;
-	size_t len;
+	char *p = NULL;
+	ssize_t len;
+	size_t n = 0;
 
-	while ((p = fgetln(stdin, &len)) != NULL) {
-		(void)printf("%zu %s", len, p);
-		free(p);
-	}
+	while ((len = getline(&p, &n, stdin)) != -1)
+		(void)printf("%zd %s", len, p);
+	free(p);
 	return 0;
 }
 #endif

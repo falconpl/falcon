@@ -1,38 +1,63 @@
-/* Define to 1 if you have `alloca', as a function or macro. */
-#cmakedefine HAVE_ALLOCA
+/* config.h.cmake */
 
-/* Define to 1 if you have <alloca.h> and it should be used (not on Ultrix).
-   */
-#cmakedefine HAVE_ALLOCA_H
-
-/* Define to 1 if you have the <curses.h> header file. */
+/* Define if you have the <curses.h> header file. */
 #cmakedefine HAVE_CURSES_H
 
-/* Define to 1 if you have the <ncurses.h> header file. */
-#cmakedefine HAVE_NCURSES_H
-
-/* Define to 1 if you have getpwnam_r and getpwuid_r that are draft POSIX.1
+/* Define if you have getpwnam_r and getpwuid_r that are draft POSIX.1
    versions. */
 #cmakedefine HAVE_GETPW_R_DRAFT
 
-/* Define to 1 if you have getpwnam_r and getpwuid_r that are POSIX.1
+/* Define if you have getpwnam_r and getpwuid_r that are POSIX.1
    compatible. */
 #cmakedefine HAVE_GETPW_R_POSIX
 
-/* Define to 1 if you have the `issetugid' function. */
+/* Define if you have the `issetugid' function. */
 #cmakedefine HAVE_ISSETUGID
 
+/* Define if you have the <ncurses.h> header file. */
+#cmakedefine HAVE_NCURSES_H
 
-/* Define to 1 if you have the <sys/cdefs.h> header file. */
-#cmakedefine HAVE_SYS_CDEFS_H
+/* Define if you have the `reallocarr' function. */
+#cmakedefine HAVE_REALLOCARR
 
-/* Define to 1 if you have the <term.h> header file. */
+/* Define if you have the `secure_getenv' function. */
+#cmakedefine HAVE_SECURE_GETENV
+
+/* Define if you have the <stdint.h> header file. */
+#cmakedefine HAVE_STDINT_H
+
+/* Define if you have the `strlcat' function. */
+#cmakedefine HAVE_STRLCAT
+
+/* Define if you have the `strlcpy' function. */
+#cmakedefine HAVE_STRLCPY
+
+/* Define if you have the <sys/types.h> header file. */
+#cmakedefine HAVE_SYS_TYPES_H
+
+/* Define if you have the <termcap.h> header file. */
+#cmakedefine HAVE_TERMCAP_H
+
+/* Define if you have the <term.h> header file. */
 #cmakedefine HAVE_TERM_H
 
-/* Define to 1 if the system has the type `u_int32_t'. */
+/* Define if the system has the type `u_int32_t'. */
 #cmakedefine HAVE_U_INT32_T
 
-#include <sys.h>
-#define SCCSID
-#undef LIBC_SCCS
+/* Define if you have the `vis' function. */
+#cmakedefine HAVE_VIS
 
+/* Define if you have the `wcsdup' function. */
+#cmakedefine HAVE_WCSDUP
+
+/* Define if you have the `__secure_getenv' function. */
+#cmakedefine HAVE___SECURE_GETENV
+
+#ifndef _GNU_SOURCE
+# define _GNU_SOURCE
+#endif
+
+#include "sys.h"
+#undef SCCSID
+#undef LIBC_SCCS
+#undef lint

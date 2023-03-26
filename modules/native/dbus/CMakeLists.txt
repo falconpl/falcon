@@ -5,7 +5,7 @@
 ####################################################################
 
 PROJECT(dbus)
-cmake_minimum_required(VERSION 2.6)
+cmake_minimum_required(VERSION 3.16.3)
 
 INCLUDE( ${CMAKE_ROOT}/Modules/FindPkgConfig.cmake)
 

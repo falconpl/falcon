@@ -4,7 +4,7 @@
 # CMake configuration file for @PROJECT_NAME@
 ####################################################################
 
-cmake_minimum_required(VERSION 2.6)
+cmake_minimum_required(VERSION 3.16.3)
 project(conio)
 
 # find the falcon installation.  Set CMAKE_INSTALL_PREFIX to the falcon root 

@@ -17,7 +17,7 @@
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <config.h>
+#include "config.h"
 
 #if defined(LIBC_SCCS) && !defined(lint)
 __RCSID("$NetBSD: strlcpy.c,v 1.3 2007/06/04 18:19:27 christos Exp $");
@@ -33,7 +33,7 @@ __weak_alias(strlcpy, _strlcpy)
 # endif
 #endif
 
-#if !HAVE_STRLCPY
+#ifndef HAVE_STRLCPY
 /*
  * Copy src to string dst of size siz.  At most siz-1 characters
  * will be copied.  Always NUL terminates (unless siz == 0).
