@@ -467,7 +467,7 @@ void Byte::reserve( String *str, uint32 size, bool relative, bool block ) const
    if ( relative )
       size += str->m_allocated;
 
-   register int32 chs = charSize();
+   int32 chs = charSize();
    if ( block )
    {
       if ( size % FALCON_STRING_ALLOCATION_BLOCK != 0 )
@@ -2377,7 +2377,7 @@ void String::escapeQuotes()
 
    while( i < len )
    {
-      register uint32 chr =  getCharAt(i);
+      uint32 chr =  getCharAt(i);
       switch( chr )
       {
       case '\'': case '\"':
@@ -2400,7 +2400,7 @@ void String::unescapeQuotes()
 
    while( i < len )
    {
-      register uint32 chr =  getCharAt(i);
+      uint32 chr =  getCharAt(i);
       switch( chr )
       {
       case '\'': case '\"':

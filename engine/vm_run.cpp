@@ -49,7 +49,7 @@
 namespace Falcon {
 
 
-Item *VMachine::getOpcodeParam( register uint32 bc_pos )
+Item *VMachine::getOpcodeParam( uint32 bc_pos )
 {
    Item *ret;
 
@@ -96,7 +96,7 @@ Item *VMachine::getOpcodeParam( register uint32 bc_pos )
 
       case P_PARAM_GLOBID:
       {
-         register int32 id = *reinterpret_cast< int32 * >( m_currentContext->code() + m_currentContext->pc_next() );
+         int32 id = *reinterpret_cast< int32 * >( m_currentContext->code() + m_currentContext->pc_next() );
          m_currentContext->pc_next()+=sizeof( int32 );
          return &moduleItem( id );
       }
@@ -219,7 +219,7 @@ void VMachine::run()
 *****************************************************/
 
 // 0
-void opcodeHandler_END( register VMachine *vm )
+void opcodeHandler_END( VMachine *vm )
 {
    vm->regA().setNil();
    vm->terminateCurrentContext();
@@ -227,25 +227,25 @@ void opcodeHandler_END( register VMachine *vm )
 
 
 // 1
-void opcodeHandler_NOP( register VMachine *vm )
+void opcodeHandler_NOP( VMachine *vm )
 {
 }
 
 // 2
-void opcodeHandler_PSHN( register VMachine *vm )
+void opcodeHandler_PSHN( VMachine *vm )
 {
    vm->stack().append( Item() );
 }
 
 // 3
-void opcodeHandler_RET( register VMachine *vm )
+void opcodeHandler_RET( VMachine *vm )
 {
    vm->retnil();
    vm->callReturn();
 }
 
 // 4
-void opcodeHandler_RETA( register VMachine *vm )
+void opcodeHandler_RETA( VMachine *vm )
 {
    vm->callReturn();
 
@@ -255,9 +255,9 @@ void opcodeHandler_RETA( register VMachine *vm )
 }
 
 // 5
-void opcodeHandler_PTRY( register VMachine *vm )
+void opcodeHandler_PTRY( VMachine *vm )
 {
-   register int32 target = vm->getNextNTD32();
+   int32 target = vm->getNextNTD32();
    while( target > 0 )
    {
       vm->popTry( false );
@@ -267,35 +267,35 @@ void opcodeHandler_PTRY( register VMachine *vm )
 
 
 // 6
-void opcodeHandler_LNIL( register VMachine *vm )
+void opcodeHandler_LNIL( VMachine *vm )
 {
-   register Item *op1 = vm->getOpcodeParam( 1 )->dereference();
+   Item *op1 = vm->getOpcodeParam( 1 )->dereference();
    op1->setNil();
 }
 
 // 7
-void opcodeHandler_RETV(register VMachine *vm)
+void opcodeHandler_RETV(VMachine *vm)
 {
    vm->regA() = *vm->getOpcodeParam( 1 )->dereference();
    vm->callReturn();
 }
 
 // 8
-void opcodeHandler_BOOL( register VMachine *vm )
+void opcodeHandler_BOOL( VMachine *vm )
 {
    vm->regA().setBoolean( vm->getOpcodeParam( 1 )->dereference()->isTrue() );
 }
 
 // 9
-void opcodeHandler_JMP( register VMachine *vm )
+void opcodeHandler_JMP( VMachine *vm )
 {
    vm->m_currentContext->pc_next() = vm->getNextNTD32();
 }
 
 // 0A
-void opcodeHandler_GENA( register VMachine *vm )
+void opcodeHandler_GENA( VMachine *vm )
 {
-   register uint32 size = (uint32) vm->getNextNTD32();
+   uint32 size = (uint32) vm->getNextNTD32();
    CoreArray *array = new CoreArray( size );
    vm->regA().setArray( array );
 
@@ -308,9 +308,9 @@ void opcodeHandler_GENA( register VMachine *vm )
 }
 
 // 0B
-void opcodeHandler_GEND( register VMachine *vm )
+void opcodeHandler_GEND( VMachine *vm )
 {
-   register uint32 length = (uint32) vm->getNextNTD32();
+   uint32 length = (uint32) vm->getNextNTD32();
    LinearDict *dict = new LinearDict( length );
 
    // copy the m-topmost items in the stack into the array
@@ -329,7 +329,7 @@ void opcodeHandler_GEND( register VMachine *vm )
 
 
 // 0C
-void opcodeHandler_PUSH( register VMachine *vm )
+void opcodeHandler_PUSH( VMachine *vm )
 {
    /** \TODO Raise a stack overflow error on VM stack boundary limit. */
    Item *data = vm->getOpcodeParam( 1 )->dereference();
@@ -343,7 +343,7 @@ void opcodeHandler_PUSH( register VMachine *vm )
 }
 
 // 0D
-void opcodeHandler_PSHR( register VMachine *vm )
+void opcodeHandler_PSHR( VMachine *vm )
 {
    Item *referenced = vm->getOpcodeParam( 1 );
    if ( ! referenced->isReference() )
@@ -357,7 +357,7 @@ void opcodeHandler_PSHR( register VMachine *vm )
 
 
 // 0E
-void opcodeHandler_POP( register VMachine *vm )
+void opcodeHandler_POP( VMachine *vm )
 {
    if ( vm->stack().length() == 0 ) {
       vm->raiseHardError( e_stackuf, "POP", __LINE__ );
@@ -370,14 +370,14 @@ void opcodeHandler_POP( register VMachine *vm )
 
 
 // 0F
-void opcodeHandler_INC( register VMachine *vm )
+void opcodeHandler_INC( VMachine *vm )
 {
    Item *operand =  vm->getOpcodeParam( 1 );
    operand->inc(vm->regA());
 }
 
 // 10
-void opcodeHandler_DEC( register VMachine *vm )
+void opcodeHandler_DEC( VMachine *vm )
 {
    Item *operand =  vm->getOpcodeParam( 1 );
    operand->dec(vm->regA());
@@ -385,7 +385,7 @@ void opcodeHandler_DEC( register VMachine *vm )
 
 
 // 11
-void opcodeHandler_NEG( register VMachine *vm )
+void opcodeHandler_NEG( VMachine *vm )
 {
    Item *operand = vm->getOpcodeParam( 1 );
    operand->neg( vm->regA() );
@@ -393,14 +393,14 @@ void opcodeHandler_NEG( register VMachine *vm )
 
 
 // 12
-void opcodeHandler_NOT( register VMachine *vm )
+void opcodeHandler_NOT( VMachine *vm )
 {
    vm->regA().setInteger( vm->getOpcodeParam( 1 )->dereference()->isTrue() ? 0 : 1 );
 }
 
 
 //13
-void opcodeHandler_TRAL( register VMachine *vm )
+void opcodeHandler_TRAL( VMachine *vm )
 {
    if ( vm->stack().length() < 1 ) {
       vm->raiseHardError( e_stackuf, "TRAL", __LINE__ );
@@ -425,9 +425,9 @@ void opcodeHandler_TRAL( register VMachine *vm )
 
 
 //14
-void opcodeHandler_IPOP( register VMachine *vm )
+void opcodeHandler_IPOP( VMachine *vm )
 {
-   register uint32 amount = (uint32) vm->getNextNTD32();
+   uint32 amount = (uint32) vm->getNextNTD32();
    if ( vm->stack().length() < amount ) {
       vm->raiseHardError( e_stackuf, "IPOP", __LINE__ );
       return;
@@ -437,7 +437,7 @@ void opcodeHandler_IPOP( register VMachine *vm )
 }
 
 //15
-void opcodeHandler_XPOP( register VMachine *vm )
+void opcodeHandler_XPOP( VMachine *vm )
 {
    Item *operand = vm->getOpcodeParam( 1 )->dereference();
    // use copy constructor.
@@ -447,29 +447,29 @@ void opcodeHandler_XPOP( register VMachine *vm )
 }
 
 //16
-void opcodeHandler_GEOR( register VMachine *vm )
+void opcodeHandler_GEOR( VMachine *vm )
 {
    vm->regA().setRange(
       new CoreRange( (int32) vm->getOpcodeParam( 1 )->dereference()->forceIntegerEx() ) );
 }
 
 //17
-void opcodeHandler_TRY( register VMachine *vm )
+void opcodeHandler_TRY( VMachine *vm )
 {
    vm->pushTry( vm->getNextNTD32() );
 }
 
 //18
-void opcodeHandler_JTRY( register VMachine *vm )
+void opcodeHandler_JTRY( VMachine *vm )
 {
-   register int32 target = vm->getNextNTD32();
+   int32 target = vm->getNextNTD32();
 
    vm->popTry( false );  // underflows are checked here
    vm->m_currentContext->pc_next() = target;
 }
 
 //19
-void opcodeHandler_RIS( register VMachine *vm )
+void opcodeHandler_RIS( VMachine *vm )
 {
    // todo - when this will be in the main loop,
    // we may use directly handleRaisedEvent()
@@ -477,9 +477,9 @@ void opcodeHandler_RIS( register VMachine *vm )
 }
 
 //1A
-void opcodeHandler_BNOT( register VMachine *vm )
+void opcodeHandler_BNOT( VMachine *vm )
 {
-   register Item *operand = vm->getOpcodeParam( 1 )->dereference();
+   Item *operand = vm->getOpcodeParam( 1 )->dereference();
    if ( operand->type() == FLC_ITEM_INT ) {
       vm->regA().setInteger( ~operand->asInteger() );
    }
@@ -488,9 +488,9 @@ void opcodeHandler_BNOT( register VMachine *vm )
 }
 
 //1B
-void opcodeHandler_NOTS( register VMachine *vm )
+void opcodeHandler_NOTS( VMachine *vm )
 {
-   register Item *operand1 = vm->getOpcodeParam( 1 )->dereference();
+   Item *operand1 = vm->getOpcodeParam( 1 )->dereference();
 
    if ( operand1->isOrdinal() )
       operand1->setInteger( ~operand1->forceInteger() );
@@ -499,9 +499,9 @@ void opcodeHandler_NOTS( register VMachine *vm )
 }
 
 //1c
-void opcodeHandler_PEEK( register VMachine *vm )
+void opcodeHandler_PEEK( VMachine *vm )
 {
-   register Item *operand = vm->getOpcodeParam( 1 )->dereference();
+   Item *operand = vm->getOpcodeParam( 1 )->dereference();
 
    if ( vm->stack().length() == 0 ) {
       vm->raiseHardError( e_stackuf, "PEEK", __LINE__ );
@@ -511,7 +511,7 @@ void opcodeHandler_PEEK( register VMachine *vm )
 }
 
 // 1D
-void opcodeHandler_FORK( register VMachine *vm )
+void opcodeHandler_FORK( VMachine *vm )
 {
    uint32 pSize = (uint32) vm->getNextNTD32();
    uint32 pJump = (uint32) vm->getNextNTD32();
@@ -526,7 +526,7 @@ void opcodeHandler_FORK( register VMachine *vm )
 // 1D - Missing
 
 // 1E
-void opcodeHandler_LD( register VMachine *vm )
+void opcodeHandler_LD( VMachine *vm )
 {
    Item *operand1 =  vm->getOpcodeParam( 1 )->dereference();
    Item *operand2 =  vm->getOpcodeParam( 2 )->dereference();
@@ -570,7 +570,7 @@ void opcodeHandler_LD( register VMachine *vm )
 }
 
 // 1F
-void opcodeHandler_LDRF( register VMachine *vm )
+void opcodeHandler_LDRF( VMachine *vm )
 {
    // don't dereference
    Item *operand1 =  vm->getOpcodeParam( 1 );
@@ -596,7 +596,7 @@ void opcodeHandler_LDRF( register VMachine *vm )
 }
 
 // 20
-void opcodeHandler_ADD( register VMachine *vm )
+void opcodeHandler_ADD( VMachine *vm )
 {
    Item *operand1 = vm->getOpcodeParam( 1 );
    Item *operand2 = vm->getOpcodeParam( 2 );
@@ -607,7 +607,7 @@ void opcodeHandler_ADD( register VMachine *vm )
 }
 
 // 21
-void opcodeHandler_SUB( register VMachine *vm )
+void opcodeHandler_SUB( VMachine *vm )
 {
    Item *operand1 =  vm->getOpcodeParam( 1 );
    Item *operand2 =  vm->getOpcodeParam( 2 );
@@ -618,7 +618,7 @@ void opcodeHandler_SUB( register VMachine *vm )
 }
 
 // 22
-void opcodeHandler_MUL( register VMachine *vm )
+void opcodeHandler_MUL( VMachine *vm )
 {
    Item *operand1 =  vm->getOpcodeParam( 1 );
    Item *operand2 =  vm->getOpcodeParam( 2 );
@@ -626,7 +626,7 @@ void opcodeHandler_MUL( register VMachine *vm )
 }
 
 // 23
-void opcodeHandler_DIV( register VMachine *vm )
+void opcodeHandler_DIV( VMachine *vm )
 {
    Item *operand1 =  vm->getOpcodeParam( 1 );
    Item *operand2 =  vm->getOpcodeParam( 2 );
@@ -635,7 +635,7 @@ void opcodeHandler_DIV( register VMachine *vm )
 
 
 //24
-void opcodeHandler_MOD( register VMachine *vm )
+void opcodeHandler_MOD( VMachine *vm )
 {
    Item *operand1 =  vm->getOpcodeParam( 1 );
    Item *operand2 =  vm->getOpcodeParam( 2 );
@@ -643,7 +643,7 @@ void opcodeHandler_MOD( register VMachine *vm )
 }
 
 // 25
-void opcodeHandler_POW( register VMachine *vm )
+void opcodeHandler_POW( VMachine *vm )
 {
    Item *operand1 =  vm->getOpcodeParam( 1 );
    Item *operand2 =  vm->getOpcodeParam( 2 );
@@ -651,7 +651,7 @@ void opcodeHandler_POW( register VMachine *vm )
 }
 
 // 26
-void opcodeHandler_ADDS( register VMachine *vm )
+void opcodeHandler_ADDS( VMachine *vm )
 {
    Item *operand1 = vm->getOpcodeParam( 1 )->dereference();
    Item *operand2 = vm->getOpcodeParam( 2 );
@@ -662,7 +662,7 @@ void opcodeHandler_ADDS( register VMachine *vm )
 }
 
 //27
-void opcodeHandler_SUBS( register VMachine *vm )
+void opcodeHandler_SUBS( VMachine *vm )
 {
    Item *operand1 = vm->getOpcodeParam( 1 )->dereference();
    Item *operand2 = vm->getOpcodeParam( 2 );
@@ -675,7 +675,7 @@ void opcodeHandler_SUBS( register VMachine *vm )
 
 //28
 
-void opcodeHandler_MULS( register VMachine *vm )
+void opcodeHandler_MULS( VMachine *vm )
 {
    Item *operand1 = vm->getOpcodeParam( 1 )->dereference();
    Item *operand2 = vm->getOpcodeParam( 2 );
@@ -686,7 +686,7 @@ void opcodeHandler_MULS( register VMachine *vm )
 }
 
 //29
-void opcodeHandler_DIVS( register VMachine *vm )
+void opcodeHandler_DIVS( VMachine *vm )
 {
    Item *operand1 = vm->getOpcodeParam( 1 )->dereference();
    Item *operand2 = vm->getOpcodeParam( 2 );
@@ -698,7 +698,7 @@ void opcodeHandler_DIVS( register VMachine *vm )
 
 
 //2A
-void opcodeHandler_MODS( register VMachine *vm )
+void opcodeHandler_MODS( VMachine *vm )
 {
    Item *operand1 = vm->getOpcodeParam( 1 )->dereference();
    Item *operand2 = vm->getOpcodeParam( 2 );
@@ -709,7 +709,7 @@ void opcodeHandler_MODS( register VMachine *vm )
 }
 
 //2B
-void opcodeHandler_BAND( register VMachine *vm )
+void opcodeHandler_BAND( VMachine *vm )
 {
    Item *operand1 =  vm->getOpcodeParam( 1 )->dereference();
    Item *operand2 =  vm->getOpcodeParam( 2 )->dereference();
@@ -722,7 +722,7 @@ void opcodeHandler_BAND( register VMachine *vm )
 }
 
 //2C
-void opcodeHandler_BOR( register VMachine *vm )
+void opcodeHandler_BOR( VMachine *vm )
 {
    Item *operand1 =  vm->getOpcodeParam( 1 )->dereference();
    Item *operand2 =  vm->getOpcodeParam( 2 )->dereference();
@@ -735,7 +735,7 @@ void opcodeHandler_BOR( register VMachine *vm )
 }
 
 //2D
-void opcodeHandler_BXOR( register VMachine *vm )
+void opcodeHandler_BXOR( VMachine *vm )
 {
    Item *operand1 =  vm->getOpcodeParam( 1 )->dereference();
    Item *operand2 =  vm->getOpcodeParam( 2 )->dereference();
@@ -748,7 +748,7 @@ void opcodeHandler_BXOR( register VMachine *vm )
 }
 
 //2E
-void opcodeHandler_ANDS( register VMachine *vm )
+void opcodeHandler_ANDS( VMachine *vm )
 {
    Item *operand1 =  vm->getOpcodeParam( 1 )->dereference();
    Item *operand2 =  vm->getOpcodeParam( 2 )->dereference();
@@ -761,7 +761,7 @@ void opcodeHandler_ANDS( register VMachine *vm )
 }
 
 //2F
-void opcodeHandler_ORS( register VMachine *vm )
+void opcodeHandler_ORS( VMachine *vm )
 {
    Item *operand1 =  vm->getOpcodeParam( 1 )->dereference();
    Item *operand2 =  vm->getOpcodeParam( 2 )->dereference();
@@ -774,7 +774,7 @@ void opcodeHandler_ORS( register VMachine *vm )
 }
 
 //30
-void opcodeHandler_XORS( register VMachine *vm )
+void opcodeHandler_XORS( VMachine *vm )
 {
    Item *operand1 =  vm->getOpcodeParam( 1 )->dereference();
    Item *operand2 =  vm->getOpcodeParam( 2 )->dereference();
@@ -787,7 +787,7 @@ void opcodeHandler_XORS( register VMachine *vm )
 }
 
 //31
-void opcodeHandler_GENR( register VMachine *vm )
+void opcodeHandler_GENR( VMachine *vm )
 {
    Item *operand1 =  vm->getOpcodeParam( 1 )->dereference();
    Item *operand2 =  vm->getOpcodeParam( 2 )->dereference();
@@ -820,7 +820,7 @@ void opcodeHandler_GENR( register VMachine *vm )
 }
 
 //32
-void opcodeHandler_EQ( register VMachine *vm )
+void opcodeHandler_EQ( VMachine *vm )
 {
    Item *operand1 =  vm->getOpcodeParam( 1 );
    Item *operand2 =  vm->getOpcodeParam( 2 );
@@ -828,7 +828,7 @@ void opcodeHandler_EQ( register VMachine *vm )
 }
 
 //33
-void opcodeHandler_NEQ( register VMachine *vm )
+void opcodeHandler_NEQ( VMachine *vm )
 {
    Item *operand1 =  vm->getOpcodeParam( 1 );
    Item *operand2 =  vm->getOpcodeParam( 2 );
@@ -836,7 +836,7 @@ void opcodeHandler_NEQ( register VMachine *vm )
 }
 
 //34
-void opcodeHandler_GT( register VMachine *vm )
+void opcodeHandler_GT( VMachine *vm )
 {
    Item *operand1 =  vm->getOpcodeParam( 1 );
    Item *operand2 =  vm->getOpcodeParam( 2 );
@@ -844,7 +844,7 @@ void opcodeHandler_GT( register VMachine *vm )
 }
 
 //35
-void opcodeHandler_GE( register VMachine *vm )
+void opcodeHandler_GE( VMachine *vm )
 {
    Item *operand1 =  vm->getOpcodeParam( 1 );
    Item *operand2 =  vm->getOpcodeParam( 2 );
@@ -852,7 +852,7 @@ void opcodeHandler_GE( register VMachine *vm )
 }
 
 //36
-void opcodeHandler_LT( register VMachine *vm )
+void opcodeHandler_LT( VMachine *vm )
 {
    Item *operand1 =  vm->getOpcodeParam( 1 );
    Item *operand2 =  vm->getOpcodeParam( 2 );
@@ -860,7 +860,7 @@ void opcodeHandler_LT( register VMachine *vm )
 }
 
 //37
-void opcodeHandler_LE( register VMachine *vm )
+void opcodeHandler_LE( VMachine *vm )
 {
    Item *operand1 =  vm->getOpcodeParam( 1 );
    Item *operand2 =  vm->getOpcodeParam( 2 );
@@ -868,7 +868,7 @@ void opcodeHandler_LE( register VMachine *vm )
 }
 
 //38
-void opcodeHandler_IFT( register VMachine *vm )
+void opcodeHandler_IFT( VMachine *vm )
 {
    uint32 pNext = (uint32) vm->getNextNTD32();
    Item *operand2 =  vm->getOpcodeParam( 2 )->dereference();
@@ -878,7 +878,7 @@ void opcodeHandler_IFT( register VMachine *vm )
 }
 
 //39
-void opcodeHandler_IFF( register VMachine *vm )
+void opcodeHandler_IFF( VMachine *vm )
 {
    uint32 pNext = (uint32) vm->getNextNTD32();
    Item *operand2 =  vm->getOpcodeParam( 2 )->dereference();
@@ -888,7 +888,7 @@ void opcodeHandler_IFF( register VMachine *vm )
 }
 
 //3A
-void opcodeHandler_CALL( register VMachine *vm )
+void opcodeHandler_CALL( VMachine *vm )
 {
    uint32 pNext = (uint32) vm->getNextNTD32();
    Item *operand2 = vm->getOpcodeParam( 2 )->dereference();
@@ -897,7 +897,7 @@ void opcodeHandler_CALL( register VMachine *vm )
 }
 
 //3B
-void opcodeHandler_INST( register VMachine *vm )
+void opcodeHandler_INST( VMachine *vm )
 {
    uint32 pNext = (uint32) vm->getNextNTD32();
    Item *operand2 =  vm->getOpcodeParam( 2 )->dereference();
@@ -917,7 +917,7 @@ void opcodeHandler_INST( register VMachine *vm )
 }
 
 //3C
-void opcodeHandler_ONCE( register VMachine *vm )
+void opcodeHandler_ONCE( VMachine *vm )
 {
    uint32 pNext = (uint32) vm->getNextNTD32();
    Item *operand2 =  vm->getOpcodeParam( 2 )->dereference();
@@ -936,7 +936,7 @@ void opcodeHandler_ONCE( register VMachine *vm )
    if ( call != 0 && call->isFunction() )
    {
       // we suppose we're in the same module as the function things we are...
-      register uint32 itemId = call->getFuncDef()->onceItemId();
+      uint32 itemId = call->getFuncDef()->onceItemId();
       if ( vm->moduleItem( itemId ).isNil() )
          vm->moduleItem( itemId ).setInteger( 1 );
       else
@@ -948,7 +948,7 @@ void opcodeHandler_ONCE( register VMachine *vm )
 }
 
 //3D
-void opcodeHandler_LDV( register VMachine *vm )
+void opcodeHandler_LDV( VMachine *vm )
 {
    Item *operand1 =  vm->getOpcodeParam( 1 );
    Item *operand2 =  vm->getOpcodeParam( 2 );
@@ -959,7 +959,7 @@ void opcodeHandler_LDV( register VMachine *vm )
 }
 
 //3E
-void opcodeHandler_LDP( register VMachine *vm )
+void opcodeHandler_LDP( VMachine *vm )
 {
    Item *operand1 =  vm->getOpcodeParam( 1 );
    Item *operand2 =  vm->getOpcodeParam( 2 )->dereference();
@@ -979,7 +979,7 @@ void opcodeHandler_LDP( register VMachine *vm )
 
 
 // 3F
-void opcodeHandler_TRAN( register VMachine *vm )
+void opcodeHandler_TRAN( VMachine *vm )
 {
    if ( vm->stack().length() < 1 ) {
       vm->raiseHardError( e_stackuf, "TRAN", __LINE__ );
@@ -1004,7 +1004,7 @@ void opcodeHandler_TRAN( register VMachine *vm )
 }
 
 //40
-void opcodeHandler_LDAS( register VMachine *vm )
+void opcodeHandler_LDAS( VMachine *vm )
 {
    uint32 size = (uint32) vm->getNextNTD32();
    Item *operand2 =  vm->getOpcodeParam( 2 )->dereference();
@@ -1035,7 +1035,7 @@ void opcodeHandler_LDAS( register VMachine *vm )
 }
 
 //41
-void opcodeHandler_SWCH( register VMachine *vm )
+void opcodeHandler_SWCH( VMachine *vm )
 {
    uint32 pNext = (uint32) vm->getNextNTD32();
    Item *operand2 =  vm->getOpcodeParam( 2 )->dereference();
@@ -1109,7 +1109,7 @@ void opcodeHandler_SWCH( register VMachine *vm )
 
 
 //46
-void opcodeHandler_IN( register VMachine *vm )
+void opcodeHandler_IN( VMachine *vm )
 {
    Item *operand1 =  vm->getOpcodeParam( 1 )->dereference();
    Item *operand2 =  vm->getOpcodeParam( 2 )->dereference();
@@ -1173,7 +1173,7 @@ void opcodeHandler_IN( register VMachine *vm )
 }
 
 //47
-void opcodeHandler_NOIN( register VMachine *vm )
+void opcodeHandler_NOIN( VMachine *vm )
 {
    // do not decode operands; IN will do it
    opcodeHandler_IN( vm );
@@ -1181,7 +1181,7 @@ void opcodeHandler_NOIN( register VMachine *vm )
 }
 
 //48
-void opcodeHandler_PROV( register VMachine *vm )
+void opcodeHandler_PROV( VMachine *vm )
 {
    Item *operand1 =  vm->getOpcodeParam( 1 )->dereference();
    Item *operand2 =  vm->getOpcodeParam( 2 )->dereference();
@@ -1219,7 +1219,7 @@ void opcodeHandler_PROV( register VMachine *vm )
 
 
 //49
-void opcodeHandler_STVS( register VMachine *vm )
+void opcodeHandler_STVS( VMachine *vm )
 {
    if(  vm->stack().empty() )
    {
@@ -1238,7 +1238,7 @@ void opcodeHandler_STVS( register VMachine *vm )
 }
 
 //4A
-void opcodeHandler_STPS( register VMachine *vm )
+void opcodeHandler_STPS( VMachine *vm )
 {
    if( vm->stack().empty() )
    {
@@ -1263,7 +1263,7 @@ void opcodeHandler_STPS( register VMachine *vm )
 }
 
 //4B
-void opcodeHandler_AND( register VMachine *vm )
+void opcodeHandler_AND( VMachine *vm )
 {
    Item *operand1 =  vm->getOpcodeParam( 1 )->dereference();
    Item *operand2 =  vm->getOpcodeParam( 2 )->dereference();
@@ -1272,7 +1272,7 @@ void opcodeHandler_AND( register VMachine *vm )
 }
 
 //4C
-void opcodeHandler_OR( register VMachine *vm )
+void opcodeHandler_OR( VMachine *vm )
 {
    Item *operand1 =  vm->getOpcodeParam( 1 )->dereference();
    Item *operand2 =  vm->getOpcodeParam( 2 )->dereference();
@@ -1281,7 +1281,7 @@ void opcodeHandler_OR( register VMachine *vm )
 }
 
 //50
-void opcodeHandler_STV( register VMachine *vm )
+void opcodeHandler_STV( VMachine *vm )
 {
    Item *operand1 = vm->getOpcodeParam( 1 );
    Item *operand2 = vm->getOpcodeParam( 2 );
@@ -1295,7 +1295,7 @@ void opcodeHandler_STV( register VMachine *vm )
 }
 
 //51
-void opcodeHandler_STP( register VMachine *vm )
+void opcodeHandler_STP( VMachine *vm )
 {
    Item *target = vm->getOpcodeParam( 1 );
    Item *method = vm->getOpcodeParam( 2 )->dereference();
@@ -1353,7 +1353,7 @@ void opcodeHandler_STP( register VMachine *vm )
 }
 
 //52
-void opcodeHandler_LDVT( register VMachine *vm )
+void opcodeHandler_LDVT( VMachine *vm )
 {
    Item *operand1 =  vm->getOpcodeParam( 1 );
    Item *operand2 =  vm->getOpcodeParam( 2 );
@@ -1364,7 +1364,7 @@ void opcodeHandler_LDVT( register VMachine *vm )
 }
 
 //53
-void opcodeHandler_LDPT( register VMachine *vm )
+void opcodeHandler_LDPT( VMachine *vm )
 {
    Item *operand1 =  vm->getOpcodeParam( 1 );
    Item *operand2 =  vm->getOpcodeParam( 2 )->dereference();
@@ -1383,7 +1383,7 @@ void opcodeHandler_LDPT( register VMachine *vm )
 }
 
 //54
-void opcodeHandler_STVR( register VMachine *vm )
+void opcodeHandler_STVR( VMachine *vm )
 {
    Item *operand1 = vm->getOpcodeParam( 1 );
    Item *operand2 = vm->getOpcodeParam( 2 );
@@ -1406,7 +1406,7 @@ void opcodeHandler_STVR( register VMachine *vm )
 }
 
 //55
-void opcodeHandler_STPR( register VMachine *vm )
+void opcodeHandler_STPR( VMachine *vm )
 {
    Item *target = vm->getOpcodeParam( 1 );
    Item *method = vm->getOpcodeParam( 2 )->dereference();
@@ -1424,7 +1424,7 @@ void opcodeHandler_STPR( register VMachine *vm )
 }
 
 //56
-void opcodeHandler_TRAV( register VMachine *vm )
+void opcodeHandler_TRAV( VMachine *vm )
 {
 
    // get the jump label.
@@ -1533,7 +1533,7 @@ void opcodeHandler_TRAV( register VMachine *vm )
 
 
 //57
-void opcodeHandler_INCP( register VMachine *vm )
+void opcodeHandler_INCP( VMachine *vm )
 {
    Item *operand =  vm->getOpcodeParam( 1 )->dereference();
    Item temp;
@@ -1544,7 +1544,7 @@ void opcodeHandler_INCP( register VMachine *vm )
 }
 
 //58
-void opcodeHandler_DECP( register VMachine *vm )
+void opcodeHandler_DECP( VMachine *vm )
 {
    Item *operand =  vm->getOpcodeParam( 1 )->dereference();
    Item temp;
@@ -1555,7 +1555,7 @@ void opcodeHandler_DECP( register VMachine *vm )
 }
 
 //59
-void opcodeHandler_SHL( register VMachine *vm )
+void opcodeHandler_SHL( VMachine *vm )
 {
    Item *operand1 = vm->getOpcodeParam( 1 )->dereference();
    Item *operand2 = vm->getOpcodeParam( 2 )->dereference();
@@ -1569,7 +1569,7 @@ void opcodeHandler_SHL( register VMachine *vm )
 }
 
 //5A
-void opcodeHandler_SHR( register VMachine *vm )
+void opcodeHandler_SHR( VMachine *vm )
 {
    Item *operand1 = vm->getOpcodeParam( 1 )->dereference();
    Item *operand2 = vm->getOpcodeParam( 2 )->dereference();
@@ -1582,7 +1582,7 @@ void opcodeHandler_SHR( register VMachine *vm )
 }
 
 //5B
-void opcodeHandler_SHLS( register VMachine *vm )
+void opcodeHandler_SHLS( VMachine *vm )
 {
    Item *operand1 = vm->getOpcodeParam( 1 )->dereference();
    Item *operand2 = vm->getOpcodeParam( 2 )->dereference();
@@ -1595,7 +1595,7 @@ void opcodeHandler_SHLS( register VMachine *vm )
 }
 
 //5C
-void opcodeHandler_SHRS( register VMachine *vm )
+void opcodeHandler_SHRS( VMachine *vm )
 {
    Item *operand1 = vm->getOpcodeParam( 1 )->dereference();
    Item *operand2 = vm->getOpcodeParam( 2 )->dereference();
@@ -1608,7 +1608,7 @@ void opcodeHandler_SHRS( register VMachine *vm )
 }
 
 //5D
-void opcodeHandler_CLOS( register VMachine *vm )
+void opcodeHandler_CLOS( VMachine *vm )
 {
    uint32 size = (uint32) vm->getNextNTD32();
    Item *tgt = vm->getOpcodeParam( 2 )->dereference();
@@ -1637,14 +1637,14 @@ void opcodeHandler_CLOS( register VMachine *vm )
 }
 
 // 5D
-void opcodeHandler_PSHL( register VMachine *vm )
+void opcodeHandler_PSHL( VMachine *vm )
 {
    vm->stack().append( *vm->getOpcodeParam( 1 ) );
 }
 
 
 // 5E
-void opcodeHandler_POWS( register VMachine *vm )
+void opcodeHandler_POWS( VMachine *vm )
 {
    Item *operand1 = vm->getOpcodeParam( 1 )->dereference();
    Item *operand2 = vm->getOpcodeParam( 2 );
@@ -1655,7 +1655,7 @@ void opcodeHandler_POWS( register VMachine *vm )
 }
 
 //5F
-void opcodeHandler_LSB( register VMachine *vm )
+void opcodeHandler_LSB( VMachine *vm )
 {
    Item *operand1 = vm->getOpcodeParam( 1 )->dereference();
    Item *operand2 = vm->getOpcodeParam( 2 )->dereference();
@@ -1681,7 +1681,7 @@ void opcodeHandler_LSB( register VMachine *vm )
 }
 
 // 60
-void opcodeHandler_EVAL( register VMachine *vm )
+void opcodeHandler_EVAL( VMachine *vm )
 {
    // We know the first operand must be a string
    Item *operand1 =  vm->getOpcodeParam( 1 )->dereference();
@@ -1717,7 +1717,7 @@ void opcodeHandler_EVAL( register VMachine *vm )
 }
 
 //61
-void opcodeHandler_SELE( register VMachine *vm )
+void opcodeHandler_SELE( VMachine *vm )
 {
    uint32 pNext = (uint32) vm->getNextNTD32();
    Item *real_op2 = vm->getOpcodeParam( 2 );
@@ -1767,7 +1767,7 @@ void opcodeHandler_SELE( register VMachine *vm )
 }
 
 //62
-void opcodeHandler_INDI( register VMachine *vm )
+void opcodeHandler_INDI( VMachine *vm )
 {
    Item *operand1 = vm->getOpcodeParam( 1 )->dereference();
 
@@ -1784,7 +1784,7 @@ void opcodeHandler_INDI( register VMachine *vm )
 }
 
 //63
-void opcodeHandler_STEX( register VMachine *vm )
+void opcodeHandler_STEX( VMachine *vm )
 {
    Item *operand1 = vm->getOpcodeParam( 1 )->dereference();
 
@@ -1824,7 +1824,7 @@ void opcodeHandler_STEX( register VMachine *vm )
 }
 
 //64
-void opcodeHandler_TRAC( register VMachine *vm )
+void opcodeHandler_TRAC( VMachine *vm )
 {
    if ( vm->stack().length() < 1 ) {
       vm->raiseHardError( e_stackuf, "TRAC", __LINE__ );
@@ -1842,7 +1842,7 @@ void opcodeHandler_TRAC( register VMachine *vm )
 }
 
 //65
-void opcodeHandler_WRT( register VMachine *vm )
+void opcodeHandler_WRT( VMachine *vm )
 {
    Item *operand1 = vm->getOpcodeParam( 1 )->dereference();
 
@@ -1868,7 +1868,7 @@ void opcodeHandler_WRT( register VMachine *vm )
 }
 
 
-void opcodeHandler_STO( register VMachine *vm )
+void opcodeHandler_STO( VMachine *vm )
 {
    // STO is like LD, but it doesn't dereference param 1.
    Item *operand1 =  vm->getOpcodeParam( 1 );
@@ -1883,7 +1883,7 @@ void opcodeHandler_STO( register VMachine *vm )
 }
 
 // 0x67
-void opcodeHandler_FORB( register VMachine *vm )
+void opcodeHandler_FORB( VMachine *vm )
 {
    // We know the first operand must be a string
    Item *operand1 =  vm->getOpcodeParam( 1 );
@@ -1900,7 +1900,7 @@ void opcodeHandler_FORB( register VMachine *vm )
 }
 
 // 0x68
-void opcodeHandler_OOB( register VMachine *vm )
+void opcodeHandler_OOB( VMachine *vm )
 {
    uint32 pmode = (uint32) vm->getNextNTD32();
    Item *operand =  vm->getOpcodeParam( 2 )->dereference();
@@ -1927,7 +1927,7 @@ void opcodeHandler_OOB( register VMachine *vm )
 }
 
 // 0x69
-void opcodeHandler_TRDN( register VMachine *vm )
+void opcodeHandler_TRDN( VMachine *vm )
 {
    if ( vm->stack().length() < 1 ) {
       vm->raiseHardError( e_stackuf, "TRAC", __LINE__ );
@@ -1963,7 +1963,7 @@ void opcodeHandler_TRDN( register VMachine *vm )
 }
 
 // 0x70
-void opcodeHandler_EXEQ( register VMachine *vm )
+void opcodeHandler_EXEQ( VMachine *vm )
 {
    Item *operand1 =  vm->getOpcodeParam( 1 );
    Item *operand2 =  vm->getOpcodeParam( 2 );

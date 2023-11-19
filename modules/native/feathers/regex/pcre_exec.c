@@ -428,7 +428,7 @@ Returns:       MATCH_MATCH if matched            )  these values are >= 0
 */
 
 static int
-match(REGISTER USPTR eptr, REGISTER const uschar *ecode, USPTR mstart,
+match(REGISTER USPTR eptr, constuschar *ecode, USPTR mstart,
   int offset_top, match_data *md, unsigned long int ims, eptrblock *eptrb,
   int flags, unsigned int rdepth)
 {
@@ -436,8 +436,8 @@ match(REGISTER USPTR eptr, REGISTER const uschar *ecode, USPTR mstart,
 so they can be ordinary variables in all cases. Mark some of them with
 "register" because they are used a lot in loops. */
 
-register int  rrc;         /* Returns from recursive calls */
-register int  i;           /* Used for loops not involving calls to RMATCH() */
+int  rrc;         /* Returns from recursive calls */
+int  i;           /* Used for loops not involving calls to RMATCH() */
 register unsigned int c;   /* Character values not kept over RMATCH() calls */
 register BOOL utf8;        /* Local copy of UTF-8 flag for speed */
 
@@ -4674,8 +4674,8 @@ initialize them to avoid reading uninitialized locations. */
 
 if (md->offset_vector != NULL)
   {
-  register int *iptr = md->offset_vector + ocount;
-  register int *iend = iptr - resetcount/2 + 1;
+  int *iptr = md->offset_vector + ocount;
+  int *iend = iptr - resetcount/2 + 1;
   while (--iptr >= iend) *iptr = -1;
   }
 
@@ -4724,8 +4724,8 @@ for(;;)
 
   if (md->offset_vector != NULL)
     {
-    register int *iptr = md->offset_vector;
-    register int *iend = iptr + resetcount;
+    int *iptr = md->offset_vector;
+    int *iend = iptr + resetcount;
     while (iptr < iend) *iptr++ = -1;
     }
 
@@ -4861,7 +4861,7 @@ for(;;)
         {
         while (p < end_subject)
           {
-          register int pp = *p++;
+          int pp = *p++;
           if (pp == req_byte || pp == req_byte2) { p--; break; }
           }
         }

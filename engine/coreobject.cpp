@@ -112,7 +112,7 @@ bool CoreObject::hasProperty( const String &key ) const
 {
    fassert( m_generatedBy != 0 );
 
-   register uint32 pos;
+   uint32 pos;
    const PropertyTable &pt = m_generatedBy->properties();
    return pt.findKey( key, pos );
 }
@@ -122,7 +122,7 @@ bool CoreObject::defaultProperty( const String &key, Item &prop ) const
 {
    fassert( m_generatedBy != 0 );
 
-   register uint32 pos;
+   uint32 pos;
    const PropertyTable &pt = m_generatedBy->properties();
    if ( pt.findKey( key, pos ) )
    {
@@ -138,7 +138,7 @@ void CoreObject::readOnlyError( const String &key ) const
 {
    fassert( m_generatedBy != 0 );
 
-   register uint32 pos;
+   uint32 pos;
    const PropertyTable &pt = m_generatedBy->properties();
    if( pt.findKey( key, pos ) )
    {

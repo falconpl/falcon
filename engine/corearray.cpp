@@ -196,7 +196,7 @@ void CoreArray::readIndex( const Item &index, Item &target )
    {
       case FLC_ITEM_INT:
       {
-         register int32 pos = (int32) index.asInteger();
+         int32 pos = (int32) index.asInteger();
          if ( pos < 0 )
          {
             if ( -pos <= (int32) length() )
@@ -218,7 +218,7 @@ void CoreArray::readIndex( const Item &index, Item &target )
 
       case FLC_ITEM_NUM:
       {
-         register int32 pos = (int32) index.asNumeric();
+         int32 pos = (int32) index.asNumeric();
          if ( pos < 0 )
          {
             if ( -pos <= (int32) length() )
@@ -250,7 +250,7 @@ void CoreArray::readIndex( const Item &index, Item &target )
             return;
          }
 
-         register int32 end = (int32)(index.asRangeIsOpen() ? length() : index.asRangeEnd());
+         int32 end = (int32)(index.asRangeIsOpen() ? length() : index.asRangeEnd());
          CoreArray* array = partition( (int32) index.asRangeStart(), end );
          if ( array != 0 )
          {
@@ -315,7 +315,7 @@ void CoreArray::writeIndex( const Item &index, const Item &target )
    {
       case FLC_ITEM_INT:
       {
-         register int32 pos = (int32) index.asInteger();
+         int32 pos = (int32) index.asInteger();
          if ( pos < 0 )
          {
             if ( -pos <= (int32) length() )
@@ -343,7 +343,7 @@ void CoreArray::writeIndex( const Item &index, const Item &target )
 
       case FLC_ITEM_NUM:
       {
-         register int32 pos = (int32) index.asNumeric();
+         int32 pos = (int32) index.asNumeric();
          if ( pos < 0 )
          {
             if ( -pos <= (int32) length() )

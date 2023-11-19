@@ -17238,8 +17238,8 @@ SQLITE_PRIVATE void sqlite3VXPrintf(
           bufpt -= 2;
         }
         {
-          register const char *cset;      /* Use registers for speed */
-          register int base;
+          constchar *cset;      /* Use registers for speed */
+          int base;
           cset = &aDigits[infop->charset];
           base = infop->base;
           do{                                           /* Convert to ascii */
@@ -17520,7 +17520,7 @@ SQLITE_PRIVATE void sqlite3VXPrintf(
     ** the output.
     */
     if( !flag_leftjustify ){
-      register int nspace;
+      int nspace;
       nspace = width-length;
       if( nspace>0 ){
         appendSpace(pAccum, nspace);
@@ -17530,7 +17530,7 @@ SQLITE_PRIVATE void sqlite3VXPrintf(
       sqlite3StrAccumAppend(pAccum, bufpt, length);
     }
     if( flag_leftjustify ){
-      register int nspace;
+      int nspace;
       nspace = width-length;
       if( nspace>0 ){
         appendSpace(pAccum, nspace);
@@ -52878,7 +52878,7 @@ SQLITE_API int sqlite3_found_count = 0;
 #endif
 
 /*
-** Convert the given register into a string if it isn't one
+** Convert the given into a string if it isn't one
 ** already. Return non-zero if a malloc() fails.
 */
 #define Stringify(P, enc) \

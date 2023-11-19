@@ -79,7 +79,7 @@ public:
 
    ~MyDBIOutBind() {}
 
-   my_bool bIsNull;
+   bool bIsNull;
    unsigned long nLength;
 };
 

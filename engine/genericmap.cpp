@@ -64,9 +64,6 @@ Map::~Map()
       destroyPage( m_treeTop );
       m_treeTop = 0;
    }
-   else {
-      throw "Double destruction";
-   }
 }
 
 //======================================
@@ -158,7 +155,7 @@ bool Map::find( const void *key, MapIterator &iter ) const
 
 bool Map::subFind( const void *key, MapIterator &iter, MAP_PAGE *currentPage ) const
 {
-   register int count = currentPage->m_count;
+   int count = currentPage->m_count;
 
    // By design, this page cannot have zero elements
 
@@ -205,7 +202,7 @@ bool Map::subFind( const void *key, MapIterator &iter, MAP_PAGE *currentPage ) c
 bool Map::scanPage( const void *key, MAP_PAGE *currentPage, uint16 higher, uint16 &ret_pos ) const
 {
    // by design, higher can't be zero.
-   register uint16 lower = 0, point;
+   uint16 lower = 0, point;
    higher --;
 
    point = higher / 2;

@@ -159,9 +159,9 @@ static void tiger_block(struct tiger_ctx *ctx, const byte *str)
 /* The compress function is a function. Requires smaller cache?    */
 void tiger_compress(word64 *str, word64 *state)
 {
-    register word64 a, b, c, tmpa;
+    word64 a, b, c, tmpa;
     word64 aa, bb, cc;
-    register word64 x0, x1, x2, x3, x4, x5, x6, x7;
+    word64 x0, x1, x2, x3, x4, x5, x6, x7;
     int pass_no;
 
     a = state[0];
@@ -210,7 +210,7 @@ void tiger_update(tiger_ctx *ctx, const byte *buffer, word32 len)
 
 void tiger_finalize(tiger_ctx *ctx)
 {
-    register word64 i, j;
+    word64 i, j;
     byte temp[64];
     i = ctx->index;
 #ifdef BIG_ENDIAN

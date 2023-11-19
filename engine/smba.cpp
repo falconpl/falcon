@@ -103,7 +103,7 @@ SmallMemBlockAlloc::~SmallMemBlockAlloc()
    
 void* SmallMemBlockAlloc::alloc( unsigned int bytes )
 {
-   register int index;
+   int index;
    
    if ( bytes <= 8 )
    {
@@ -143,7 +143,7 @@ void* SmallMemBlockAlloc::alloc( unsigned int bytes )
    }
    else 
    {
-      register int size = (8 << index);
+      int size = (8 << index);
       
       // see if we have some space on the last page.
       PAGE_HEADER* pageNode = page_lists[index];
