@@ -730,7 +730,7 @@ else
       c = 0;
       while ((digitab[*pt] & ctype_xdigit) != 0)
         {
-        register int cc = *pt++;
+        int cc = *pt++;
         if (c == 0 && cc == CHAR_0) continue;     /* Leading zeroes */
         count++;
 
@@ -1348,7 +1348,7 @@ find_fixedlength(uschar *code, int options)
 {
 int length = -1;
 
-register int branchlength = 0;
+int branchlength = 0;
 register uschar *cc = code + 1 + LINK_SIZE;
 
 /* Scan along the opcodes for this branch. If we get to the end of the
@@ -1357,7 +1357,7 @@ branch, check the length against that of the other branches. */
 for (;;)
   {
   int d;
-  register int op = *cc;
+  int op = *cc;
   switch (op)
     {
     case OP_CBRA:
@@ -1538,7 +1538,7 @@ find_bracket(const uschar *code, BOOL utf8, int number)
 {
 for (;;)
   {
-  register int c = *code;
+  int c = *code;
   if (c == OP_END) return NULL;
 
   /* XCLASS is used for classes that cannot be represented just by a bit
@@ -1641,7 +1641,7 @@ find_recurse(const uschar *code, BOOL utf8)
 {
 for (;;)
   {
-  register int c = *code;
+  int c = *code;
   if (c == OP_END) return NULL;
   if (c == OP_RECURSE) return code;
 
@@ -1740,7 +1740,7 @@ Returns:      TRUE if what is matched could be empty
 static BOOL
 could_be_empty_branch(const uschar *code, const uschar *endcode, BOOL utf8)
 {
-register int c;
+int c;
 for (code = first_significant_code(code + _pcre_OP_lengths[*code], NULL, 0, TRUE);
      code < endcode;
      code = first_significant_code(code + _pcre_OP_lengths[c], NULL, 0, TRUE))
@@ -2030,7 +2030,7 @@ static int
 check_posix_name(const uschar *ptr, int len)
 {
 const char *pn = posix_names;
-register int yield = 0;
+int yield = 0;
 while (posix_name_lengths[yield] != 0)
   {
   if (len == posix_name_lengths[yield] &&
@@ -2587,7 +2587,7 @@ int req_caseopt, reqvary, tempreqvary;
 int options = *optionsptr;
 int after_manual_callout = 0;
 int length_prevgroup = 0;
-register int c;
+int c;
 register uschar *code = *codeptr;
 uschar *last_code = code;
 uschar *orig_code = code;
@@ -3002,7 +3002,7 @@ for (;; ptr++)
         {
         BOOL local_negate = FALSE;
         int posix_class, taboffset, tabopt;
-        register const uschar *cbits = cd->cbits;
+        constuschar *cbits = cd->cbits;
         uschar pbits[32];
 
         if (ptr[1] != CHAR_COLON)
@@ -3106,7 +3106,7 @@ for (;; ptr++)
 
         if (c < 0)
           {
-          register const uschar *cbits = cd->cbits;
+          constuschar *cbits = cd->cbits;
           class_charcount += 2;     /* Greater than 1 is what matters */
 
           /* Save time by not doing this in the pre-compile phase. */
@@ -4045,7 +4045,7 @@ we set the flag only if there is a literal "\r" or "\n" in the class. */
     else if (*previous == OP_BRA  || *previous == OP_CBRA ||
              *previous == OP_ONCE || *previous == OP_COND)
       {
-      register int i;
+      int i;
       int ketoffset = 0;
       int len = code - previous;
       uschar *bralink = NULL;
@@ -5916,13 +5916,13 @@ Returns:     TRUE or FALSE
 */
 
 static BOOL
-is_anchored(register const uschar *code, int *options, unsigned int bracket_map,
+is_anchored(constuschar *code, int *options, unsigned int bracket_map,
   unsigned int backref_map)
 {
 do {
    const uschar *scode = first_significant_code(code + _pcre_OP_lengths[*code],
      options, PCRE_MULTILINE, FALSE);
-   register int op = *scode;
+   int op = *scode;
 
    /* Non-capturing brackets */
 
@@ -5998,7 +5998,7 @@ is_startline(const uschar *code, unsigned int bracket_map,
 do {
    const uschar *scode = first_significant_code(code + _pcre_OP_lengths[*code],
      NULL, 0, FALSE);
-   register int op = *scode;
+   int op = *scode;
 
    /* If we are at the start of a conditional assertion group, *both* the
    conditional assertion *and* what follows the condition must satisfy the test
@@ -6094,12 +6094,12 @@ Returns:     -1 or the fixed first char
 static int
 find_firstassertedchar(const uschar *code, int *options, BOOL inassert)
 {
-register int c = -1;
+int c = -1;
 do {
    int d;
    const uschar *scode =
      first_significant_code(code + 1+LINK_SIZE, options, PCRE_CASELESS, TRUE);
-   register int op = *scode;
+   int op = *scode;
 
    switch(op)
      {

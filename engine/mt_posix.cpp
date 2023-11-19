@@ -41,7 +41,7 @@ ThreadSpecific::ThreadSpecific( void (*destructor)(void*) )
 int32 atomicInc( volatile int32 &data )
 {
    s_cs.lock();
-   register int32 res = ++data;
+   int32 res = ++data;
    s_cs.unlock();
    return res;
 }
@@ -50,7 +50,7 @@ int32 atomicInc( volatile int32 &data )
 int32 atomicDec( volatile int32 &data )
 {
    s_cs.lock();
-   register int32 res = --data;
+   int32 res = --data;
    s_cs.unlock();
    return res;
 }

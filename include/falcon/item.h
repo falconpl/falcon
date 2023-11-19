@@ -504,7 +504,7 @@ public:
    void copy( const Item &other )
    {
       #ifdef _SPARC32_ITEM_HACK
-      register int32 *pthis, *pother;
+      int32 *pthis, *pother;
       pthis = (int32*) this;
       pother = (int32*) &other;
       pthis[0]= pother[0];

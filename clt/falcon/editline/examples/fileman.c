@@ -139,7 +139,7 @@ main (int argc, char **argv)
 int
 execute_line (char *line)
 {
-   register int i;
+   int i;
    COMMAND *command;
    char *word;
 
@@ -178,7 +178,7 @@ execute_line (char *line)
 COMMAND *
 find_command (char *name)
 {
-   register int i;
+   int i;
 
    for (i = 0; commands[i].name; i++)
       if (strcmp (name, commands[i].name) == 0)
@@ -192,7 +192,7 @@ find_command (char *name)
 char *
 stripwhite (char *string)
 {
-   register char *s, *t;
+   char *s, *t;
 
    for (s = string; isspace (*s); s++)
       ;
@@ -380,7 +380,7 @@ com_delete (char *arg)
 int
 com_help (char *arg)
 {
-   register int i;
+   int i;
    int printed = 0;
 
    for (i = 0; commands[i].name; i++)
@@ -482,7 +482,7 @@ valid_argument (char *caller, char *arg)
 void *
 xmalloc (size_t size)
 {
-   register void *value = (void*)malloc(size);
+   void *value = (void*)malloc(size);
    if (value == 0)
       fprintf(stderr, "virtual memory exhausted");
    return value;

@@ -588,7 +588,7 @@ bool ModuleLoader::applyLangTable( Module *mod, const String &file_path )
    if( fsin_p == 0 )
       return false;
       
-   std::auto_ptr<Stream> fsin( fsin_p );
+   std::unique_ptr<Stream> fsin( fsin_p );
 
    // check if this is a regular tab file.
    char buf[16];
@@ -709,7 +709,7 @@ Module *ModuleLoader::loadModule( const String &path )
 
    {
       // loadModule may throw, so we need an autoptr not to leak in case of errors.
-      std::auto_ptr<Stream> in( openResource( path, t_vmmod ));
+      std::unique_ptr<Stream> in( openResource( path, t_vmmod ));
       mod = loadModule( in.get() );
 
       if( mc != 0 ) mod = mc->add( path, mod );
@@ -867,7 +867,7 @@ Module *ModuleLoader::loadSource( const String &file )
    // use the base load source routine
    // ask for detection, but default to falcon source
    // will throw on error
-   std::auto_ptr<Stream> in( openResource( file, t_source ) );
+   std::unique_ptr<Stream> in( openResource( file, t_source ) );
 
    String modName;
    getModuleName( file, modName );

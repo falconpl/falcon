@@ -86,7 +86,7 @@ bool CacheObject::setProperty( const String &propName, const Item &value )
 {
    fassert( m_generatedBy != 0 );
 
-   register uint32 pos;
+   uint32 pos;
    const PropertyTable &pt = m_generatedBy->properties();
    if ( pt.findKey( propName, pos ) )
    {
@@ -105,7 +105,7 @@ bool CacheObject::getProperty( const String &propName, Item &ret ) const
 {
    fassert( m_generatedBy != 0 );
 
-   register uint32 pos;
+   uint32 pos;
    const PropertyTable &pt = m_generatedBy->properties();
 
    if ( pt.findKey( propName, pos ) )

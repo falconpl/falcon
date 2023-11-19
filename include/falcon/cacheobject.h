@@ -54,7 +54,7 @@ public:
 
    Item *cachedProperty( const String &name ) const
    {
-      register uint32 pos;
+      uint32 pos;
       if ( ! m_generatedBy->properties().findKey( name, pos ) )
          return 0;
 

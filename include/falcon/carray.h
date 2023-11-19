@@ -184,7 +184,7 @@ public:
    */
     bool checkPosBound( int32 &pos )
     {
-      register int s = length();
+      int s = length();
       if ( pos < 0 )
          pos = s + pos;
       if ( pos < 0 || pos >= s )

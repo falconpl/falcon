@@ -1044,7 +1044,7 @@ public:
    */
     bool checkPosBound( int32 &pos )
     {
-      register int s = length();
+      int s = length();
       if ( pos < 0 )
          pos = s + pos;
       if ( pos < 0 || pos >= s )
@@ -1061,7 +1061,7 @@ public:
    */
     bool checkRangeBound( int32 &begin, int32 &end )
     {
-      register int s = length();
+      int s = length();
       if ( begin < 0 )
          begin = s + begin;
       if ( begin < 0 || begin >= s )

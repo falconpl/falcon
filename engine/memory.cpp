@@ -157,7 +157,7 @@ size_t gcMemAllocated()
       s_gcMutex = new Mutex;
 
    s_gcMutex->lock();
-   register uint32 val = s_allocatedMem;
+   uint32 val = s_allocatedMem;
    s_gcMutex->unlock();
 
    return val;

@@ -86,7 +86,7 @@ void MyDBIInBind::onItemChanged( int num )
    // set to null
    case DBIBindItem::t_nil:
       myitem.buffer_type = MYSQL_TYPE_NULL;
-      *((my_bool*) item.data()) = 1;
+      *((bool*) item.data()) = 1;
       break;
 
    case DBIBindItem::t_bool:

@@ -139,7 +139,7 @@ void String::readIndex( const Item &index, Item &target )
 void String::writeIndex( const Item &index, const Item &target )
 {
 
-   register int32 pos;
+   int32 pos;
 
    switch( index.type() )
    {
@@ -155,8 +155,8 @@ void String::writeIndex( const Item &index, const Item &target )
       {
          if ( target.isString() )
          {
-            register int pos = (int) index.asRangeStart();
-            register int end = (int) (index.asRangeIsOpen() ? this->length() :  index.asRangeEnd());
+            int pos = (int) index.asRangeStart();
+            int end = (int) (index.asRangeIsOpen() ? this->length() :  index.asRangeEnd());
             if ( checkRangeBound( pos, end ) )
             {
                if ( change( pos, end, *target.asString() ) )

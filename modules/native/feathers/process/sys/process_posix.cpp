@@ -134,8 +134,8 @@ int ProcessEnum::next( String &name, uint64 &pid, uint64 &ppid, String &commandL
    }
    if ( !de ) return 0; // EOF
    
-   char statent[ 64 ];
-   snprintf( statent, 64, "/proc/%s/stat", de->d_name );
+   char statent[ 256 ];
+   snprintf( statent, 256, "/proc/%s/stat", de->d_name );
    FILE* fp = fopen( statent, "r" );
    if ( !fp ) return -1;
    
