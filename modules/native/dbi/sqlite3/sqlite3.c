@@ -52878,7 +52878,7 @@ SQLITE_API int sqlite3_found_count = 0;
 #endif
 
 /*
-** Convert the given into a string if it isn't one
+** Convert the given register into a string if it isn't one
 ** already. Return non-zero if a malloc() fails.
 */
 #define Stringify(P, enc) \
