@@ -3,7 +3,7 @@
 #
 # CMake configuration file for dynlib - TESTS
 ####################################################################
-cmake_minimum_required(VERSION 2.6)
+cmake_minimum_required(VERSION 3.16.3)
 
 include_directories(
   ${CMAKE_CURRENT_SOURCE_DIR}
